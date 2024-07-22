@@ -1,2 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using Pollus.ECS;
+
+var entity = new Entity(0, 0);
+
+partial struct TestComponent : IComponent
+{
+    public static ComponentLookup.Info Info => ComponentLookup.Register<TestComponent>();
+}
