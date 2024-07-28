@@ -3,29 +3,22 @@ namespace Pollus.ECS;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
-[StructLayout(LayoutKind.Explicit)]
-public record struct BitSet
+public record struct BitSet256
 {
-    [FieldOffset(0)]
-    public Vector256<long> bitset;
-    [FieldOffset(0)]
     public long l0;
-    [FieldOffset(8)]
     public long l1;
-    [FieldOffset(16)]
     public long l2;
-    [FieldOffset(24)]
     public long l3;
 
-    public BitSet()
+    public BitSet256()
     {
-        bitset = Vector256<long>.Zero;
+
     }
 
-    public BitSet(Span<int> indices)
+    public BitSet256(Span<int> indices)
     {
-        bitset = Vector256<long>.Zero;
         foreach (var idx in indices)
         {
             Set(idx);
@@ -89,7 +82,7 @@ public record struct BitSet
         };
     }
 
-    public bool HasAll(BitSet other)
+    public bool HasAll(BitSet256 other)
     {
         return (l0 & other.l0) == other.l0 &&
                (l1 & other.l1) == other.l1 &&
@@ -97,7 +90,7 @@ public record struct BitSet
                (l3 & other.l3) == other.l3;
     }
 
-    public bool HasAny(BitSet other)
+    public bool HasAny(BitSet256 other)
     {
         return (l0 & other.l0) != 0 ||
                (l1 & other.l1) != 0 ||

@@ -1,123 +1,175 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace Pollus.ECS;
 
-public record struct ArchetypeID(int ID, int Hash, int Version = 0);
-
-public static class ArchetypeCounter
+public record struct ArchetypeID(int Hash)
 {
-    volatile static int counter = 0;
-    public static int Next()
+    public static ArchetypeID Create(int hash)
     {
-        return Interlocked.Increment(ref counter);
+        return new ArchetypeID(hash);
+    }
+
+    public static ArchetypeID Create(Span<ComponentID> cids)
+    {
+        var hash = 0;
+        for (int i = 0; i < cids.Length; i++)
+        {
+            hash = HashCode.Combine(hash, cids[i]);
+        }
+        return new ArchetypeID(hash);
+    }
+
+    public static implicit operator int(ArchetypeID id) => id.Hash;
+    public static implicit operator ArchetypeID(int hash) => new(hash);
+}
+
+public class Archetypes : IDisposable
+{
+    readonly Dictionary<ArchetypeID, Archetype> archetypes = [];
+
+    public void Dispose()
+    {
+        foreach (var archetype in archetypes.Values)
+        {
+            archetype.Dispose();
+        }
     }
 }
 
-public class Archetype
+public class Archetype : IDisposable
 {
-    record class Row
+    const uint MAX_CHUNK_SIZE = 1u << 16;
+
+    public record struct ChunkInfo
     {
-        public Entity Entity;
-        public int ChunkIndex;
-        public int RowIndex;
+        public int RowsPerChunk { get; init; }
+        public ComponentID[] ComponentIDs { get; init; }
     }
 
-    public int RowSize { get; init; }
-    public ArchetypeID ID => id;
-
-    internal int[] components { get; init; }
-
-    List<Row> entities;
-    List<ArchetypeChunk> chunks;
-    ArchetypeID id;
-
-    public Archetype(Span<ComponentID> cids)
+    public record struct EntityInfo
     {
-        chunks = [];
-        entities = [];
-        components = [.. cids];
+        public int ChunkIndex { get; init; }
+        public int RowIndex { get; init; }
+    }
 
-        var compHash = 0;
+    readonly ArchetypeID id;
+    readonly ChunkInfo chunkInfo;
+
+    NativeArray<ArchetypeChunk> chunks;
+    int entityCount;
+
+    public ArchetypeID ID => id;
+    public Span<ArchetypeChunk> Chunks => chunks.AsSpan();
+    public int EntityCount => entityCount;
+    public ChunkInfo GetChunkInfo() => chunkInfo;
+
+    public Archetype(Span<ComponentID> cids) : this(ArchetypeID.Create(cids), cids) { }
+
+    public Archetype(ArchetypeID aid, Span<ComponentID> cids)
+    {
+        id = aid;
+
+        var rowStride = 0;
         foreach (var cid in cids)
         {
-            RowSize += Component.GetInfo(cid).Size;
-            compHash = HashCode.Combine(compHash, (int)cid);
+            var cinfo = Component.GetInfo(cid);
+            rowStride += cinfo.SizeInBytes;
         }
+        var rowsPerChunk = MAX_CHUNK_SIZE / (uint)rowStride;
 
-        id = new ArchetypeID(ArchetypeCounter.Next(), compHash);
-    }
-
-    public bool Has<C1>() where C1 : unmanaged, IComponent
-    {
-        return components.Contains(Component.GetInfo<C1>().ID);
-    }
-
-    public bool Has(ComponentID cid)
-    {
-        return components.Contains(cid);
-    }
-
-    public bool HasAll(Span<ComponentID> cids)
-    {
-        foreach (var component in cids)
+        chunkInfo = new ChunkInfo
         {
-            if (!components.Contains(component)) return false;
-        }
-
-        return true;
+            RowsPerChunk = (int)rowsPerChunk,
+            ComponentIDs = [.. cids],
+        };
+        chunks = new(0);
     }
 
-    public bool HasAny(Span<ComponentID> cids)
-    {
-        foreach (var component in cids)
-        {
-            if (components.Contains(component)) return true;
-        }
-
-        return false;
-    }
-
-    public void Insert(Entity entity)
-    {
-        var chunk = FirstVacantChunk();
-
-        entities.Add(new()
-        {
-            Entity = entity,
-            ChunkIndex = chunk.Index,
-            RowIndex = chunk.Insert()
-        });
-    }
-
-    public void Remove(Entity entity)
-    {
-        var row = entities.Find(e => e.Entity == entity);
-        var chunk = chunks[row.ChunkIndex];
-        chunk.Remove(row.RowIndex);
-        entities.Remove(row);
-    }
-
-    public void Set<C1>(Entity entity, C1 component) where C1 : unmanaged, IComponent
-    {
-        var row = entities.Find(e => e.Entity == entity);
-        var chunk = chunks[row.ChunkIndex];
-        chunk.Set(row.RowIndex, component);
-    }
-
-    public ref C1 Get<C1>(Entity entity) where C1 : unmanaged, IComponent
-    {
-        var row = entities.Find(e => e.Entity == entity);
-        var chunk = chunks[row.ChunkIndex];
-        return ref chunk.Get<C1>(row.RowIndex);
-    }
-
-    ArchetypeChunk FirstVacantChunk()
+    public void Dispose()
     {
         foreach (var chunk in chunks)
         {
-            if (!chunk.IsFull) return chunk;
+            chunk.Dispose();
+        }
+        chunks.Dispose();
+    }
+
+    public EntityInfo AddEntity()
+    {
+        entityCount++;
+
+        ref var chunk = ref GetVacantChunk();
+        var row = chunk.AddEntity();
+        return new()
+        {
+            ChunkIndex = chunks.Length - 1,
+            RowIndex = row
+        };
+    }
+
+    public void RemoveEntity(in EntityInfo info)
+    {
+        entityCount--;
+
+        ref var chunk = ref chunks[info.ChunkIndex];
+        ref var lastChunk = ref Unsafe.NullRef<ArchetypeChunk>();
+        for (int i = chunks.Length - 1; i >= 0; i--)
+        {
+            if (chunks[i].Count > 0)
+            {
+                lastChunk = ref chunks[i];
+                break;
+            }
         }
 
-        var created = new ArchetypeChunk(this, chunks.Count);
-        chunks.Add(created);
-        return created;
+        if (lastChunk.Count == 0)
+        {
+            chunk.RemoveEntity();
+            return;
+        }
+
+        chunk.SwapMoveEntity(info.RowIndex, ref lastChunk);
+        chunk.RemoveEntity();
+    }
+
+    public void SetComponent<C>(in EntityInfo info, in C component) where C : unmanaged, IComponent
+    {
+        ref var chunk = ref chunks[info.ChunkIndex];
+        chunk.SetComponent(info.RowIndex, component);
+    }
+
+    public ref C GetComponent<C>(in EntityInfo info) where C : unmanaged, IComponent
+    {
+        ref var chunk = ref chunks[info.ChunkIndex];
+        return ref chunk.GetComponent<C>(info.RowIndex);
+    }
+
+    public void Optimize()
+    {
+        int newLength = chunks.Length;
+        for (int i = chunks.Length - 1; i >= 0; i--)
+        {
+            if (chunks[i].Count == 0)
+            {
+                chunks[i].Dispose();
+                newLength--;
+            }
+        }
+
+        if (newLength != chunks.Length)
+        {
+            chunks.Resize(newLength);
+        }
+    }
+
+    ref ArchetypeChunk GetVacantChunk()
+    {
+        if (chunks.Length == 0 || chunks[^1].Count >= chunkInfo.RowsPerChunk)
+        {
+            chunks.Resize(chunks.Length + 1);
+            chunks[^1] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
+        }
+        return ref chunks[^1];
     }
 }

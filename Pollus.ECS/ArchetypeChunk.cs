@@ -1,48 +1,125 @@
 namespace Pollus.ECS;
 
-public class ArchetypeChunk
+using System.Runtime.CompilerServices;
+
+public struct ArchetypeChunk : IDisposable
 {
-    public Archetype Archetype { get; init; }
-    List<ComponentColumn> columns;
-    BitSet occupancy;
+    NativeMap<ComponentID, NativeArray<byte>> components;
 
-    public bool IsFull => occupancy.FirstClearBit() == -1;
-    public int Index { get; init; }
+    int count;
+    int length;
 
-    public ArchetypeChunk(Archetype archetype, int chunkIndex)
+    public int Count => count;
+    public int Length => length;
+
+    public ArchetypeChunk(Span<ComponentID> cids, int rows = 0)
     {
-        Archetype = archetype;
-        Index = chunkIndex;
-        occupancy = new();
-        columns = [];
+        length = rows;
+        count = 0;
 
-        foreach (var cid in archetype.components)
+        foreach (var cid in cids)
         {
-            columns.Add(ComponentColumn.From(cid));
+            var cinfo = Component.GetInfo(cid);
+            components.Add(cid, new(rows * cinfo.SizeInBytes));
         }
     }
 
-    public void Set<C1>(int row, C1 component) where C1 : unmanaged, IComponent
+    public int AddEntity()
     {
-        var column = columns.Find(c => c.ComponentID == Component.GetInfo<C1>().ID);
-        column.Set(row, component);
+        if (count >= length) return -1;
+        return count++;
     }
 
-    public ref C1 Get<C1>(int row) where C1 : unmanaged, IComponent
+    public void RemoveEntity()
     {
-        var column = columns.Find(c => c.ComponentID == Component.GetInfo<C1>().ID);
-        return ref column.Get<C1>(row);
+        count--;
     }
 
-    public int Insert()
+    unsafe public void MoveEntity(int row, ref ArchetypeChunk destination)
     {
-        var row = occupancy.FirstClearBit();
-        occupancy.Set(row);
-        return row;
+        if (destination.count >= destination.length) return;
+
+        for (int i = 0; i < components.Count; i++)
+        {
+            var cid = components.Keys[i];
+            var cinfo = Component.GetInfo(cid);
+            var srcArray = components.Values[i];
+            var dstArray = destination.components.Get(cid);
+
+            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, destination.count * cinfo.SizeInBytes),
+                             Unsafe.Add<byte>(srcArray.Data, row * cinfo.SizeInBytes),
+                             (uint)cinfo.SizeInBytes);
+        }
+
+        destination.count++;
     }
 
-    public void Remove(int row)
+    unsafe public void SwapMoveEntity(int row, ref ArchetypeChunk source)
     {
-        occupancy.Unset(row);
+        for (int i = 0; i < components.Count; i++)
+        {
+            var cid = components.Keys[i];
+            if (source.HasComponent(cid) is false) continue;
+
+            var cinfo = Component.GetInfo(cid);
+            var srcArray = source.components.Get(cid);
+            var dstArray = components.Get(cid);
+
+            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, count * cinfo.SizeInBytes),
+                             Unsafe.Add<byte>(srcArray.Data, row * cinfo.SizeInBytes),
+                             (uint)cinfo.SizeInBytes);
+        }
+
+        count++;
+        source.count--;
+    }
+
+    unsafe public Span<C> GetComponents<C>()
+        where C : unmanaged, IComponent
+    {
+        var cinfo = Component.GetInfo<C>();
+        var array = components.Get(cinfo.ID);
+        return new Span<C>(array.Data, count);
+    }
+
+    unsafe public void SetComponent<C>(int row, in C component)
+        where C : unmanaged, IComponent
+    {
+        var cinfo = Component.GetInfo<C>();
+        ref var array = ref components.Get(cinfo.ID);
+        Unsafe.Write(Unsafe.Add<C>(array.Data, row), component);
+    }
+
+    unsafe public ref C GetComponent<C>(int row)
+        where C : unmanaged, IComponent
+    {
+        var cid = Component.GetInfo<C>().ID;
+        var array = components.Get(cid);
+        return ref *(C*)Unsafe.Add<C>(array.Data, row);
+    }
+
+    public void SetCount(int newCount)
+    {
+        count = newCount;
+    }
+
+    public bool HasComponent<C>()
+        where C : unmanaged, IComponent
+    {
+        return components.Has(Component.GetInfo<C>().ID);
+    }
+
+    public bool HasComponent(ComponentID cid)
+    {
+        return components.Has(cid);
+    }
+
+    public void Dispose()
+    {
+        foreach (var value in components.Values)
+        {
+            value.Dispose();
+        }
+        components.Dispose();
     }
 }

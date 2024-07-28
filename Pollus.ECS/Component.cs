@@ -20,7 +20,7 @@ public static class Component
     public class Info
     {
         public ComponentID ID { get; init; }
-        public int Size { get; init; }
+        public int SizeInBytes { get; init; }
         public Type Type { get; init; }
     }
 
@@ -46,7 +46,7 @@ public static class Component
         var info = new Info
         {
             ID = new ComponentID(componentIDs.Count),
-            Size = Unsafe.SizeOf<T>(),
+            SizeInBytes = Unsafe.SizeOf<T>(),
             Type = type
         };
 

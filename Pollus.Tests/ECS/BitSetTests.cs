@@ -7,7 +7,7 @@ public class BitSetTests
     [Fact]
     public void bitset_Has()
     {
-        var bitset = new BitSet();
+        var bitset = new BitSet256();
         bitset.Set(0);
         bitset.Set(64);
         bitset.Set(128);
@@ -22,12 +22,12 @@ public class BitSetTests
     [Fact]
     public void bitset_HasAll()
     {
-        var bitset = new BitSet();
+        var bitset = new BitSet256();
         bitset.Set(0);
         bitset.Set(64);
         bitset.Set(128);
 
-        var other = new BitSet();
+        var other = new BitSet256();
         other.Set(0);
         other.Set(64);
         other.Set(128);
@@ -41,12 +41,12 @@ public class BitSetTests
     [Fact]
     public void bitset_HasAny()
     {
-        var bitset = new BitSet();
+        var bitset = new BitSet256();
         bitset.Set(0);
         bitset.Set(64);
         bitset.Set(128);
 
-        var other = new BitSet();
+        var other = new BitSet256();
         other.Set(0);
         other.Set(64);
         other.Set(128);
@@ -63,7 +63,7 @@ public class BitSetTests
     [Fact]
     public void bitset_FirstClearBit()
     {
-        var bitset = new BitSet();
+        var bitset = new BitSet256();
 
         bitset.Set([0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
         Assert.Equal(6, bitset.FirstClearBit());
