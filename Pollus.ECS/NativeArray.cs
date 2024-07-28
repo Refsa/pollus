@@ -3,62 +3,6 @@ namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-unsafe public struct NativeMap<TKey, TValue> : IDisposable
-    where TKey : unmanaged, IEquatable<TKey>
-    where TValue : unmanaged
-{
-    NativeArray<TKey> keys;
-    NativeArray<TValue> values;
-    int count = 0;
-
-    public readonly NativeArray<TKey> Keys => keys;
-    public readonly NativeArray<TValue> Values => values;
-    public readonly int Count => count;
-
-    public NativeMap(int capacity)
-    {
-        keys = new(capacity);
-        values = new(capacity);
-    }
-
-    public void Dispose()
-    {
-        keys.Dispose();
-        values.Dispose();
-    }
-
-    public void Add(TKey key, TValue value)
-    {
-        keys.Resize(count + 1);
-        values.Resize(count + 1);
-        keys.Set(count, key);
-        values.Set(count, value);
-        count++;
-    }
-
-    public bool Has(TKey key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (keys[i].Equals(key))
-                return true;
-        }
-
-        return false;
-    }
-
-    public ref TValue Get(TKey key)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            if (keys[i].Equals(key))
-                return ref values[i];
-        }
-
-        return ref Unsafe.NullRef<TValue>();
-    }
-}
-
 unsafe public struct NativeArray<T> : IDisposable
     where T : unmanaged
 {
@@ -105,6 +49,13 @@ unsafe public struct NativeArray<T> : IDisposable
     public ref T Get(int index)
     {
         return ref data[index];
+    }
+
+    public void SwapRemove(int index)
+    {
+        data[index] = data[length - 1];
+        data[length - 1] = default;
+        length--;
     }
 
     public Span<T> AsSpan() => new(data, length);

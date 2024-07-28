@@ -82,9 +82,23 @@ public class ArchetypeTests
         Assert.True(map.Has(1));
         Assert.True(map.Has(2));
 
+        Assert.False(map.Has(3));
+        Assert.False(map.Has(100));
+        Assert.False(map.Has(10000));
+
         Assert.Equal(10, map.Get(0));
         Assert.Equal(20, map.Get(1));
         Assert.Equal(30, map.Get(2));
+    }
+
+    [Fact]
+    public void NativeMap_Large()
+    {
+        using var map = new NativeMap<int, int>(0);
+        for (int i = 0; i < 1_000_000; i++)
+        {
+            map.Add(i, i);
+        }
     }
 
     [Fact]
@@ -164,26 +178,27 @@ public class ArchetypeTests
 
         using var archetype = new Archetype(ArchetypeID.Create(cids), cids);
 
-        var entity = archetype.AddEntity();
+        var entity = archetype.AddEntity(new(archetype.EntityCount));
         Assert.Equal(1, archetype.EntityCount);
         Assert.Equal(1, archetype.Chunks.Length);
         Assert.Equal(1, archetype.Chunks[0].Count);
 
         for (int i = 0; i < archetype.GetChunkInfo().RowsPerChunk - 1; i++)
         {
-            archetype.AddEntity();
+            archetype.AddEntity(new(archetype.EntityCount));
         }
 
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.Chunks[0].Count);
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.EntityCount);
 
-        var nextEntity = archetype.AddEntity();
+        var nextEntity = archetype.AddEntity(new(archetype.EntityCount));
         Assert.Equal(2, archetype.Chunks.Length);
         Assert.Equal(1, archetype.Chunks[1].Count);
 
         archetype.RemoveEntity(entity);
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.Chunks[0].Count);
         Assert.Equal(0, archetype.Chunks[1].Count);
+        Assert.Equal(nextEntity.Entity, archetype.Chunks[0].GetEntities()[0]);
 
         archetype.Optimize();
         Assert.Equal(1, archetype.Chunks.Length);
@@ -203,7 +218,7 @@ public class ArchetypeTests
 
         for (int i = 0; i < 1_000_000; i++)
         {
-            archetype.AddEntity();
+            archetype.AddEntity(new(archetype.EntityCount));
         }
 
         Assert.Equal(1_000_000, archetype.EntityCount);

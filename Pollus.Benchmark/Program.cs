@@ -9,6 +9,7 @@ public static class Program
 {
     public static void Main()
     {
-        BenchmarkRunner.Run<TestBenchmarks>();
+        // BenchmarkRunner.Run<TestBenchmarks>();
+        BenchmarkRunner.Run<NativeMapBenchmarks>();
     }
 }

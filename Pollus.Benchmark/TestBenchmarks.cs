@@ -36,8 +36,9 @@ public class TestBenchmarks
             nativeArray[i] = comp;
             chunk.SetComponent(i, comp);
 
-            var entity = archetype.AddEntity();
-            archetype.SetComponent(entity, comp);
+            var entity = new Entity(i);
+            var entityInfo = archetype.AddEntity(entity);
+            archetype.SetComponent(entityInfo, comp);
         }
     }
 
@@ -135,26 +136,4 @@ public class TestBenchmarks
             RowIndex = 0
         }).First;
     }
-
-    /* [Benchmark]
-    public int Float3_Add()
-    {
-        Float3 sum = new(0, 0, 0);
-        for (int i = 0; i < SIZE; i++)
-        {
-            sum += new Float3(i, i, i);
-        }
-        return (int)(sum.X + sum.Y + sum.Z);
-    }
-
-    [Benchmark]
-    public int Float3_SIMD_Add()
-    {
-        Float3_SIMD sum = new(0, 0, 0);
-        for (int i = 0; i < SIZE; i++)
-        {
-            sum += new Float3_SIMD(i, i, i);
-        }
-        return (int)(sum.X + sum.Y + sum.Z);
-    } */
 }

@@ -24,19 +24,6 @@ public record struct ArchetypeID(int Hash)
     public static implicit operator ArchetypeID(int hash) => new(hash);
 }
 
-public class Archetypes : IDisposable
-{
-    readonly Dictionary<ArchetypeID, Archetype> archetypes = [];
-
-    public void Dispose()
-    {
-        foreach (var archetype in archetypes.Values)
-        {
-            archetype.Dispose();
-        }
-    }
-}
-
 public class Archetype : IDisposable
 {
     const uint MAX_CHUNK_SIZE = 1u << 16;
@@ -49,6 +36,7 @@ public class Archetype : IDisposable
 
     public record struct EntityInfo
     {
+        public Entity Entity { get; init; }
         public int ChunkIndex { get; init; }
         public int RowIndex { get; init; }
     }
@@ -76,7 +64,7 @@ public class Archetype : IDisposable
             var cinfo = Component.GetInfo(cid);
             rowStride += cinfo.SizeInBytes;
         }
-        var rowsPerChunk = MAX_CHUNK_SIZE / (uint)rowStride;
+        var rowsPerChunk = (MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>()) / (uint)rowStride;
 
         chunkInfo = new ChunkInfo
         {
@@ -95,14 +83,15 @@ public class Archetype : IDisposable
         chunks.Dispose();
     }
 
-    public EntityInfo AddEntity()
+    public EntityInfo AddEntity(in Entity entity)
     {
         entityCount++;
 
         ref var chunk = ref GetVacantChunk();
-        var row = chunk.AddEntity();
+        var row = chunk.AddEntity(entity);
         return new()
         {
+            Entity = entity,
             ChunkIndex = chunks.Length - 1,
             RowIndex = row
         };
@@ -125,12 +114,11 @@ public class Archetype : IDisposable
 
         if (lastChunk.Count == 0)
         {
-            chunk.RemoveEntity();
+            chunk.RemoveEntity(info.RowIndex);
             return;
         }
 
-        chunk.SwapMoveEntity(info.RowIndex, ref lastChunk);
-        chunk.RemoveEntity();
+        chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
     }
 
     public void SetComponent<C>(in EntityInfo info, in C component) where C : unmanaged, IComponent

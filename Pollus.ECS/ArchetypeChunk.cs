@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 public struct ArchetypeChunk : IDisposable
 {
     NativeMap<ComponentID, NativeArray<byte>> components;
+    NativeArray<Entity> entities;
 
     int count;
     int length;
@@ -16,6 +17,8 @@ public struct ArchetypeChunk : IDisposable
     {
         length = rows;
         count = 0;
+        entities = new(rows);
+        components = new(cids.Length);
 
         foreach (var cid in cids)
         {
@@ -24,14 +27,27 @@ public struct ArchetypeChunk : IDisposable
         }
     }
 
-    public int AddEntity()
+    public void Dispose()
+    {
+        foreach (var value in components.Values)
+        {
+            value.Dispose();
+        }
+        components.Dispose();
+        entities.Dispose();
+    }
+
+    public int AddEntity(in Entity entity)
     {
         if (count >= length) return -1;
+
+        entities[count] = entity;
         return count++;
     }
 
-    public void RemoveEntity()
+    public void RemoveEntity(int row)
     {
+        entities.SwapRemove(row);
         count--;
     }
 
@@ -54,7 +70,7 @@ public struct ArchetypeChunk : IDisposable
         destination.count++;
     }
 
-    unsafe public void SwapMoveEntity(int row, ref ArchetypeChunk source)
+    unsafe public void SwapRemoveEntity(int row, ref ArchetypeChunk source)
     {
         for (int i = 0; i < components.Count; i++)
         {
@@ -70,8 +86,13 @@ public struct ArchetypeChunk : IDisposable
                              (uint)cinfo.SizeInBytes);
         }
 
-        count++;
+        entities[row] = source.entities[source.count - 1];
         source.count--;
+    }
+
+    unsafe public Span<Entity> GetEntities()
+    {
+        return new Span<Entity>(entities.Data, count);
     }
 
     unsafe public Span<C> GetComponents<C>()
@@ -112,14 +133,5 @@ public struct ArchetypeChunk : IDisposable
     public bool HasComponent(ComponentID cid)
     {
         return components.Has(cid);
-    }
-
-    public void Dispose()
-    {
-        foreach (var value in components.Values)
-        {
-            value.Dispose();
-        }
-        components.Dispose();
     }
 }
