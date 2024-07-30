@@ -7,7 +7,7 @@ using Pollus.ECS;
 // [ReturnValueValidator(failOnError: true)]
 public class NativeMapBenchmarks
 {
-    const int SIZE = 100_000;
+    const int SIZE = 1_000_000;
 
     Dictionary<int, int> dictionary;
     NativeMap<int, int> nativeMap;
@@ -18,15 +18,18 @@ public class NativeMapBenchmarks
         nativeMap = new NativeMap<int, int>(SIZE);
         for (int i = 0; i < SIZE; i++)
         {
-            dictionary.Add(i, i);
-            nativeMap.Add(i, i);
+            if (i % 2 == 0)
+            {
+                dictionary.Add(i, i);
+                nativeMap.Add(i, i);
+            }
         }
     }
 
     ~NativeMapBenchmarks()
     {
         nativeMap.Dispose();
-    }	
+    }
 
     [Benchmark]
     [BenchmarkCategory("Add")]
@@ -36,7 +39,25 @@ public class NativeMapBenchmarks
 
         for (int i = 0; i < SIZE; i++)
         {
-            dict.Add(i, i);
+            if (i % 2 == 0)
+            {
+                dict.Add(i, i);
+            }
+        }
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("Add")]
+    public void DictionaryAdd_PreAlloc()
+    {
+        var dict = new Dictionary<int, int>(SIZE);
+
+        for (int i = 0; i < SIZE; i++)
+        {
+            if (i % 2 == 0)
+            {
+                dict.Add(i, i);
+            }
         }
     }
 
@@ -48,7 +69,25 @@ public class NativeMapBenchmarks
 
         for (int i = 0; i < SIZE; i++)
         {
-            map.Add(i, i);
+            if (i % 2 == 0)
+            {
+                map.Add(i, i);
+            }
+        }
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("Add")]
+    public void NativeMapAdd_PreAlloc()
+    {
+        using var map = new NativeMap<int, int>(SIZE);
+
+        for (int i = 0; i < SIZE; i++)
+        {
+            if (i % 2 == 0)
+            {
+                map.Add(i, i);
+            }
         }
     }
 
@@ -59,7 +98,10 @@ public class NativeMapBenchmarks
         var sum = 0;
         for (int i = 0; i < SIZE; i++)
         {
-            sum += dictionary[i];
+            if (i % 2 == 0)
+            {
+                sum += dictionary[i];
+            }
         }
         return sum;
     }
@@ -71,7 +113,10 @@ public class NativeMapBenchmarks
         var sum = 0;
         for (int i = 0; i < SIZE; i++)
         {
-            sum += nativeMap.Get(i);
+            if (i % 2 == 0)
+            {
+                sum += nativeMap.Get(i);
+            }
         }
         return sum;
     }

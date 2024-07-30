@@ -64,7 +64,11 @@ public class Archetype : IDisposable
             var cinfo = Component.GetInfo(cid);
             rowStride += cinfo.SizeInBytes;
         }
-        var rowsPerChunk = (MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>()) / (uint)rowStride;
+        var rowsPerChunk = rowStride switch
+        {
+            > 0 => (MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>()) / (uint)rowStride,
+            _ => 0,
+        };
 
         chunkInfo = new ChunkInfo
         {
@@ -131,6 +135,11 @@ public class Archetype : IDisposable
     {
         ref var chunk = ref chunks[info.ChunkIndex];
         return ref chunk.GetComponent<C>(info.RowIndex);
+    }
+
+    public ref ArchetypeChunk GetChunk(int chunkIndex)
+    {
+        return ref chunks[chunkIndex];
     }
 
     public void Optimize()

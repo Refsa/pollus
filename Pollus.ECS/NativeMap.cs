@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 unsafe public struct NativeMap<TKey, TValue> : IDisposable
     where TKey : unmanaged, IEquatable<TKey>
@@ -11,7 +10,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     static NativeMap()
     {
         var temp = stackalloc byte[Unsafe.SizeOf<TKey>()];
-        Unsafe.InitBlock(temp, byte.MaxValue, (uint)Unsafe.SizeOf<TKey>());
+        Unsafe.InitBlock(temp, byte.MaxValue - 1, (uint)Unsafe.SizeOf<TKey>());
         sentinel = *(TKey*)temp;
     }
 
@@ -23,6 +22,8 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     public readonly NativeArray<TKey> Keys => keys;
     public readonly NativeArray<TValue> Values => values;
     public readonly int Count => count;
+
+    public NativeMap() : this(0) { }
 
     public NativeMap(int initialCapacity)
     {
@@ -43,12 +44,14 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         values.Dispose();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int Hash(TKey key)
     {
-        return key.GetHashCode() % capacity;
+        var hash = key.GetHashCode();
+        return hash * int.Sign(hash) % capacity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     void Resize(int newCapacity)
     {
         NativeArray<TKey> newKeys = new NativeArray<TKey>(newCapacity);
@@ -91,6 +94,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         capacity = newCapacity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Add(TKey key, TValue value)
     {
         if (count == capacity)
@@ -128,12 +132,14 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         }
     }
 
-    public bool Has(TKey key)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public bool Has(in TKey key)
     {
         return GetIndex(key) != -1;
     }
 
-    public ref TValue Get(TKey key)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public ref TValue Get(in TKey key)
     {
         int index = GetIndex(key);
         if (index != -1)
@@ -143,7 +149,21 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         return ref Unsafe.NullRef<TValue>();
     }
 
-    int GetIndex(TKey key)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public bool TryGetValue(in TKey key, out TValue value)
+    {
+        int index = GetIndex(key);
+        if (index != -1)
+        {
+            value = values.Get(index);
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    int GetIndex(in TKey key)
     {
         int index = Hash(key);
         var keySpan = keys.AsSpan();

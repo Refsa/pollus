@@ -10,8 +10,18 @@ struct Component1 : IComponent
     public int First;
 }
 
+struct Component2 : IComponent
+{
+    public int First;
+}
+
+struct Component3 : IComponent
+{
+    public int First;
+}
+
 [MemoryDiagnoser]
-[ReturnValueValidator(failOnError: true)]
+// [ReturnValueValidator(failOnError: true)]
 public class TestBenchmarks
 {
     const int SIZE = 100_000;
@@ -117,7 +127,7 @@ public class TestBenchmarks
         return span[0].First;
     } */
 
-    [Benchmark]
+    /* [Benchmark]
     public int ArchetypeIteration()
     {
         for (int i = 0; i < archetype.Chunks.Length; i++)
@@ -135,5 +145,40 @@ public class TestBenchmarks
             ChunkIndex = 0,
             RowIndex = 0
         }).First;
+    } */
+
+    [Benchmark]
+    public void ArchetypeStore_CreateEntityWithOneComponent()
+    {
+        using var world = new World();
+        for (int i = 0; i < SIZE; i++)
+        {
+            Entity.With(new Component1()).Spawn(world);
+        }
+    }
+
+    [Benchmark]
+    public void ArchetypeStore_CreateEntityWithTwoComponents()
+    {
+        using var world = new World();
+        for (int i = 0; i < SIZE; i++)
+        {
+            Entity.With(new Component1())
+                .With(new Component2())
+                .Spawn(world);
+        }
+    }
+
+    [Benchmark]
+    public void ArchetypeStore_CreateEntityWithThreeComponents()
+    {
+        using var world = new World();
+        for (int i = 0; i < SIZE; i++)
+        {
+            Entity.With(new Component1())
+                .With(new Component2())
+                .With(new Component3())
+                .Spawn(world);
+        }
     }
 }

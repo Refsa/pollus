@@ -74,21 +74,43 @@ public class ArchetypeTests
     {
         using var map = new NativeMap<int, int>(0);
 
-        map.Add(0, 10);
-        map.Add(1, 20);
-        map.Add(2, 30);
+        map.Add(1, 10);
+        map.Add(2, 20);
+        map.Add(3, 30);
 
-        Assert.True(map.Has(0));
         Assert.True(map.Has(1));
         Assert.True(map.Has(2));
+        Assert.True(map.Has(3));
 
-        Assert.False(map.Has(3));
+        Assert.False(map.Has(4));
         Assert.False(map.Has(100));
         Assert.False(map.Has(10000));
 
-        Assert.Equal(10, map.Get(0));
-        Assert.Equal(20, map.Get(1));
-        Assert.Equal(30, map.Get(2));
+        Assert.Equal(10, map.Get(1));
+        Assert.Equal(20, map.Get(2));
+        Assert.Equal(30, map.Get(3));
+    }
+
+    [Fact]
+    public void NativeMap_NegativeKey()
+    {
+        using var map = new NativeMap<int, int>(0);
+
+        map.Add(-1, 10);
+        map.Add(-2, 20);
+        map.Add(-3, 30);
+
+        Assert.True(map.Has(-1));
+        Assert.True(map.Has(-2));
+        Assert.True(map.Has(-3));
+
+        Assert.False(map.Has(-4));
+        Assert.False(map.Has(-100));
+        Assert.False(map.Has(-10000));
+
+        Assert.Equal(10, map.Get(-1));
+        Assert.Equal(20, map.Get(-2));
+        Assert.Equal(30, map.Get(-3));
     }
 
     [Fact]
@@ -231,5 +253,16 @@ public class ArchetypeTests
 
         int expectedChunkCount = 1_000_000 / archetype.GetChunkInfo().RowsPerChunk + 1;
         Assert.Equal(expectedChunkCount, archetype.Chunks.Length);
+    }
+
+    [Fact]
+    public void ArchetypeStore_CreateEntity()
+    {
+        using var world = new World();
+        var entity = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
+        for (int i = 0; i < 1_000; i++)
+        {
+            Entity.With(new TestComponent1 { Value = i }).Spawn(world);
+        }
     }
 }
