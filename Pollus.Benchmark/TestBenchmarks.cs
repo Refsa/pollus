@@ -5,17 +5,22 @@ using BenchmarkDotNet.Attributes;
 using Pollus.ECS;
 using Pollus.Engine.Mathematics;
 
-struct Component1 : IComponent
+public struct Component1 : IComponent
 {
     public int First;
 }
 
-struct Component2 : IComponent
+public struct Component2 : IComponent
 {
     public int First;
 }
 
-struct Component3 : IComponent
+public struct Component3 : IComponent
+{
+    public int First;
+}
+
+public struct Component4 : IComponent
 {
     public int First;
 }
@@ -163,9 +168,8 @@ public class TestBenchmarks
         using var world = new World();
         for (int i = 0; i < SIZE; i++)
         {
-            Entity.With(new Component1())
-                .With(new Component2())
-                .Spawn(world);
+            // (new Component1(), new Component2()).Builder().Spawn(world);
+            world.Spawn(new Component1(), new Component2());
         }
     }
 
@@ -175,10 +179,18 @@ public class TestBenchmarks
         using var world = new World();
         for (int i = 0; i < SIZE; i++)
         {
-            Entity.With(new Component1())
-                .With(new Component2())
-                .With(new Component3())
-                .Spawn(world);
+            // (new Component1(), new Component2(), new Component3()).Builder().Spawn(world);
+            world.Spawn(new Component1(), new Component2(), new Component3());
+        }
+    }
+
+    [Benchmark]
+    public void ArchetypeStore_CreateEntityWithFourComponents()
+    {
+        using var world = new World();
+        for (int i = 0; i < SIZE; i++)
+        {
+            world.Spawn(new Component1(), new Component2(), new Component3(), new Component4());
         }
     }
 }

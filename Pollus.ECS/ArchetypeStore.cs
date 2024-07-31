@@ -4,9 +4,25 @@ public class ArchetypeStore : IDisposable
 {
     public record struct EntityInfo
     {
-        public int ArchetypeIndex { get; init; }
-        public int ChunkIndex { get; init; }
-        public int RowIndex { get; init; }
+        public int ArchetypeIndex { get; set; }
+        public int ChunkIndex { get; set; }
+        public int RowIndex { get; set; }
+    }
+
+    public struct EntityRef
+    {
+        public EntityRef(Entity entity, Archetype archetype, int chunkIndex, int rowIndex)
+        {
+            Entity = entity;
+            Archetype = archetype;
+            ChunkIndex = chunkIndex;
+            RowIndex = rowIndex;
+        }
+
+        public Entity Entity { get; set; }
+        public Archetype Archetype { get; set; }
+        public int ChunkIndex { get; set; }
+        public int RowIndex { get; set; }
     }
 
     readonly List<Archetype> archetypes = [];
@@ -59,19 +75,12 @@ public class ArchetypeStore : IDisposable
         return entity;
     }
 
-    public (Entity entity, EntityInfo entityInfo, Archetype archetype) CreateEntity<TBuilder>(in TBuilder builder)
+    public EntityRef CreateEntity<TBuilder>()
         where TBuilder : struct, IEntityBuilder
     {
         var entity = new Entity(entityCounter++);
-        var archetype = GetArchetype(TBuilder.ArchetypeID);
-        archetype ??= CreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        var archetype = GetArchetype(TBuilder.ArchetypeID) ?? CreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeInfo = archetype.AddEntity(entity);
-        var entityInfo = new EntityInfo
-        {
-            ArchetypeIndex = archetypeLookup.Get(TBuilder.ArchetypeID),
-            ChunkIndex = archetypeInfo.ChunkIndex,
-            RowIndex = archetypeInfo.RowIndex
-        };
-        return (entity, entityInfo, archetype);
+        return new(entity, archetype, archetypeInfo.ChunkIndex, archetypeInfo.RowIndex);
     }
 }

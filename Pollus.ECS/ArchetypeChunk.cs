@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 public struct ArchetypeChunk : IDisposable
 {
-    NativeMap<ComponentID, NativeArray<byte>> components;
+    NativeMap<int, NativeArray<byte>> components;
     NativeArray<Entity> entities;
 
     int count;
@@ -106,8 +106,8 @@ public struct ArchetypeChunk : IDisposable
     unsafe public void SetComponent<C>(int row, in C component)
         where C : unmanaged, IComponent
     {
-        var cinfo = Component.GetInfo<C>();
-        ref var array = ref components.Get(cinfo.ID);
+        var cid = Component.GetInfo<C>().ID;
+        ref var array = ref components.Get(cid);
         Unsafe.Write(Unsafe.Add<C>(array.Data, row), component);
     }
 

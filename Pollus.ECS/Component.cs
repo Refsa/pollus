@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 public interface IComponent
@@ -17,14 +16,14 @@ public record struct ComponentID(int ID)
 
 public static class Component
 {
-    public class Info
+    public readonly struct Info
     {
         public ComponentID ID { get; init; }
         public int SizeInBytes { get; init; }
         public Type Type { get; init; }
     }
 
-    class Lookup<C> where C : unmanaged, IComponent
+    static class Lookup<C> where C : unmanaged, IComponent
     {
         public static readonly Info Info;
 
@@ -56,11 +55,13 @@ public static class Component
         return info;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Info GetInfo(ComponentID cid)
     {
         return componentInfos[cid];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Info GetInfo<T>() where T : unmanaged, IComponent
     {
         return Lookup<T>.Info;

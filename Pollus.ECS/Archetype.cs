@@ -1,7 +1,6 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-
 namespace Pollus.ECS;
+
+using System.Runtime.CompilerServices;
 
 public record struct ArchetypeID(int Hash)
 {
@@ -24,7 +23,7 @@ public record struct ArchetypeID(int Hash)
     public static implicit operator ArchetypeID(int hash) => new(hash);
 }
 
-public class Archetype : IDisposable
+public partial class Archetype : IDisposable
 {
     const uint MAX_CHUNK_SIZE = 1u << 16;
 
@@ -34,9 +33,8 @@ public class Archetype : IDisposable
         public ComponentID[] ComponentIDs { get; init; }
     }
 
-    public record struct EntityInfo
+    public readonly record struct EntityInfo
     {
-        public Entity Entity { get; init; }
         public int ChunkIndex { get; init; }
         public int RowIndex { get; init; }
     }
@@ -95,7 +93,6 @@ public class Archetype : IDisposable
         var row = chunk.AddEntity(entity);
         return new()
         {
-            Entity = entity,
             ChunkIndex = chunks.Length - 1,
             RowIndex = row
         };

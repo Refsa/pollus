@@ -9,56 +9,163 @@ namespace Pollus.ECS.Generators
     {
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            context.RegisterPostInitializationOutput(Generate);
+            context.RegisterPostInitializationOutput(GenerateEntityBuilders);
+            context.RegisterPostInitializationOutput(GenerateConstructorsOnEntity);
+            context.RegisterPostInitializationOutput(GenerateTupleExtensions);
         }
 
-        void Generate(IncrementalGeneratorPostInitializationContext context)
+        void GenerateTupleExtensions(IncrementalGeneratorPostInitializationContext context)
+        {
+            const string TEMPLATE =
+@"namespace Pollus.ECS;
+using System.Runtime.CompilerServices;
+
+public static class TupleEntityBuilder
+{
+    $methods$
+}";
+            const string METHOD_TEMPLATE =
+@"
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static EntityBuilder<$gen_args$> Builder<$gen_args$>(this in ($tuple_params$) tuple)
+        $gen_constraints$
+    {
+        return new($tuple_args$);
+    }";
+
+            var sb = new StringBuilder(TEMPLATE);
+
+            var methods = new StringBuilder();
+            var gen_args = "C0, ";
+            var gen_constraints = "where C0 : unmanaged, IComponent\n";
+            var tuple_params = "C0 c0, ";
+            var tuple_args = "tuple.c0, ";
+
+            for (int i = 1; i < 15; i++)
+            {
+                gen_args += $"C{i}";
+                gen_constraints += $"where C{i} : unmanaged, IComponent";
+                tuple_params += $"C{i} c{i}";
+                tuple_args += $"tuple.c{i}";
+
+                methods.AppendLine(METHOD_TEMPLATE
+                    .Replace("$gen_args$", gen_args)
+                    .Replace("$tuple_params$", tuple_params)
+                    .Replace("$gen_constraints$", gen_constraints)
+                    .Replace("$tuple_args$", tuple_args)
+                );
+
+                gen_args += ", ";
+                gen_constraints += "\n";
+                tuple_params += ", ";
+                tuple_args += ", ";
+            }
+
+            sb.Replace("$methods$", methods.ToString());
+            context.AddSource("TupleEntityBuilder.gen.cs", sb.ToString());
+        }
+
+        void GenerateConstructorsOnEntity(IncrementalGeneratorPostInitializationContext context)
+        {
+            const string TEMPLATE =
+@"
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static EntityBuilder<$gen_args$> With<$gen_args$>($parameters$)
+        $gen_constraints$
+    {
+        return new($args$);
+    }
+";
+
+            var sb = new StringBuilder();
+            sb.AppendLine("namespace Pollus.ECS;");
+            sb.AppendLine("using System.Runtime.CompilerServices;");
+            sb.AppendLine("public partial record struct Entity");
+            sb.AppendLine("{");
+
+            var gen_args = "";
+            var gen_constraints = "";
+            var parameters = "";
+            var args = "";
+
+            for (int i = 0; i < 15; i++)
+            {
+                gen_args += $"C{i}";
+                gen_constraints += $"where C{i} : unmanaged, IComponent\n";
+                parameters += $"in C{i} c{i}";
+                args += $"c{i}";
+
+                sb.AppendLine(TEMPLATE
+                    .Replace("$gen_args$", gen_args)
+                    .Replace("$parameters$", parameters)
+                    .Replace("$gen_constraints$", gen_constraints)
+                    .Replace("$args$", args)
+                );
+
+                gen_args += ", ";
+                parameters += ", ";
+                args += ", ";
+            }
+
+            sb.AppendLine("}");
+            context.AddSource("Entity.gen.cs", sb.ToString());
+        }
+
+        void GenerateEntityBuilders(IncrementalGeneratorPostInitializationContext context)
         {
             var sb = new StringBuilder();
             for (int i = 2; i < 16; i++)
             {
                 sb.Clear();
                 Generate(sb, i, i < 15);
-                context.AddSource($"EntityBuilder_{i}.cs", sb.ToString());
+                context.AddSource($"EntityBuilder_{i}.gen.cs", sb.ToString());
             }
         }
 
         static readonly string BASE_TEMPLATE =
 @"namespace Pollus.ECS;
+using System.Runtime.CompilerServices;
 
-public struct EntityBuilder<$gen_args> : IEntityBuilder
-$gen_constraints
+public struct EntityBuilder<$gen_args$> : IEntityBuilder
+$gen_constraints$
 {
-    static readonly ComponentID[] componentIDs = [$component_ids];
+    static readonly ComponentID[] componentIDs = [$component_ids$];
     public static ComponentID[] ComponentIDs => componentIDs;
     static readonly ArchetypeID archetypeID = ArchetypeID.Create(componentIDs);
     public static ArchetypeID ArchetypeID => archetypeID;
 
-$fields
+$fields$
 
-    public EntityBuilder($constructor_args)
+    public EntityBuilder($constructor_args$)
     {
-$set_fields
+$set_fields$
     }
 
+    public static implicit operator EntityBuilder<$gen_args$>(in ($tuple_args$) tuple)
+    {
+        return new($tuple_set$);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
-        var (entity, entityInfo, archetype) = world.Archetypes.CreateEntity(this);
-        ref var chunk = ref archetype.GetChunk(entityInfo.ChunkIndex);
+        var entityRef = world.Archetypes.CreateEntity<EntityBuilder<$gen_args$>>();
+        ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         
-$chunk_set_component
+$chunk_set_component$
 
-        return entity;
+        return entityRef.Entity;
     }
 
-    $with_method
+    $with_method$
 }";
 
         static readonly string WITH_METHOD_TEMPLATE = @"
-    public EntityBuilder<$gen_args, $next_gen_arg> With<$next_gen_arg>(in $next_gen_arg $next_gen_arg_name)
-        where $next_gen_arg : unmanaged, IComponent
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityBuilder<$gen_args$, $next_gen_arg$> With<$next_gen_arg$>(in $next_gen_arg$ $next_gen_arg_name$)
+        where $next_gen_arg$ : unmanaged, IComponent
     {
-        return new EntityBuilder<$gen_args, $next_gen_arg>($with_args);
+        return new($with_args$);
     }";
 
         void Generate(StringBuilder sb, int genArgCount, bool genWith)
@@ -73,6 +180,8 @@ $chunk_set_component
             var next_gen_arg_name = $"c{genArgCount}";
             var with_args = new StringBuilder();
             var chunk_set_component = new StringBuilder();
+            var tuple_args = new StringBuilder();
+            var tuple_set = new StringBuilder();
 
             for (int i = 0; i < genArgCount; i++)
             {
@@ -85,26 +194,30 @@ $chunk_set_component
                 constructor_args.AppendFormat("in C{0} c{0}{1}", i, isLast ? "" : ", ");
                 set_fields.AppendFormat("\t\tComponent{0} = c{0};{1}", i, isLast ? "" : "\n");
                 with_args.AppendFormat("Component{0}, ", i);
-                chunk_set_component.AppendFormat("\t\tchunk.SetComponent(entityInfo.RowIndex, Component{0});{1}", i, isLast ? "" : "\n");
+                chunk_set_component.AppendFormat("\t\tchunk.SetComponent(entityRef.RowIndex, Component{0});{1}", i, isLast ? "" : "\n");
+                tuple_args.AppendFormat("C{0} c{0}{1}", i, isLast ? "" : ", ");
+                tuple_set.AppendFormat("tuple.c{0}{1}", i, isLast ? "" : ", ");
             }
 
             with_args.Append(next_gen_arg_name);
 
             sb.Append(BASE_TEMPLATE)
-                .Replace("$gen_args", gen_args.ToString())
-                .Replace("$gen_constraints", gen_constraints.ToString())
-                .Replace("$component_ids", component_ids.ToString())
-                .Replace("$fields", fields.ToString())
-                .Replace("$constructor_args", constructor_args.ToString())
-                .Replace("$set_fields", set_fields.ToString())
-                .Replace("$next_gen_arg", next_gen_arg)
-                .Replace("$chunk_set_component", chunk_set_component.ToString())
-                .Replace("$with_method", genWith is false ? "" : WITH_METHOD_TEMPLATE
-                    .Replace("$gen_args", gen_args.ToString())
-                    .Replace("$next_gen_arg_name", next_gen_arg_name)
-                    .Replace("$next_gen_arg", next_gen_arg)
-                    .Replace("$with_args", with_args.ToString())
-                );
+                .Replace("$with_method$", genWith is false ? "" : WITH_METHOD_TEMPLATE)
+                .Replace("$gen_args$", gen_args.ToString())
+                .Replace("$gen_constraints$", gen_constraints.ToString())
+                .Replace("$component_ids$", component_ids.ToString())
+                .Replace("$fields$", fields.ToString())
+                .Replace("$constructor_args$", constructor_args.ToString())
+                .Replace("$set_fields$", set_fields.ToString())
+                .Replace("$next_gen_arg$", next_gen_arg)
+                .Replace("$chunk_set_component$", chunk_set_component.ToString())
+                .Replace("$gen_args$", gen_args.ToString())
+                .Replace("$next_gen_arg_name$", next_gen_arg_name)
+                .Replace("$next_gen_arg$", next_gen_arg)
+                .Replace("$with_args$", with_args.ToString())
+                .Replace("$tuple_args$", tuple_args.ToString())
+                .Replace("$tuple_set$", tuple_set.ToString())
+            ;
         }
     }
 }
