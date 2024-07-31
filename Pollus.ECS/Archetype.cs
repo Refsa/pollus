@@ -35,6 +35,7 @@ public partial class Archetype : IDisposable
 
     public readonly record struct EntityInfo
     {
+        public Entity Entity { get; init; }
         public int ChunkIndex { get; init; }
         public int RowIndex { get; init; }
     }
@@ -98,7 +99,7 @@ public partial class Archetype : IDisposable
         };
     }
 
-    public void RemoveEntity(in EntityInfo info)
+    public EntityInfo? RemoveEntity(in EntityInfo info)
     {
         entityCount--;
 
@@ -113,25 +114,31 @@ public partial class Archetype : IDisposable
             }
         }
 
-        if (lastChunk.Count == 0)
+        var movedEntity = chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
+        if (movedEntity != Entity.NULL)
         {
-            chunk.RemoveEntity(info.RowIndex);
-            return;
+            var movedInfo = new EntityInfo
+            {
+                Entity = movedEntity,
+                ChunkIndex = chunks.Length - 1,
+                RowIndex = lastChunk.Count - 1
+            };
+            return movedInfo;
         }
 
-        chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
+        return null;
     }
 
-    public void SetComponent<C>(in EntityInfo info, in C component) where C : unmanaged, IComponent
+    public void SetComponent<C>(int chunkIndex, int rowIndex, in C component) where C : unmanaged, IComponent
     {
-        ref var chunk = ref chunks[info.ChunkIndex];
-        chunk.SetComponent(info.RowIndex, component);
+        ref var chunk = ref chunks[chunkIndex];
+        chunk.SetComponent(rowIndex, component);
     }
 
-    public ref C GetComponent<C>(in EntityInfo info) where C : unmanaged, IComponent
+    public ref C GetComponent<C>(int chunkIndex, int rowIndex) where C : unmanaged, IComponent
     {
-        ref var chunk = ref chunks[info.ChunkIndex];
-        return ref chunk.GetComponent<C>(info.RowIndex);
+        ref var chunk = ref chunks[chunkIndex];
+        return ref chunk.GetComponent<C>(rowIndex);
     }
 
     public ref ArchetypeChunk GetChunk(int chunkIndex)

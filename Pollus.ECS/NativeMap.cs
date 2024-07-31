@@ -162,6 +162,17 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Remove(in TKey key)
+    {
+        int index = GetIndex(key);
+        if (index != -1)
+        {
+            keys.Set(index, sentinel);
+            count--;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int GetIndex(in TKey key)
     {

@@ -45,32 +45,7 @@ public struct ArchetypeChunk : IDisposable
         return count++;
     }
 
-    public void RemoveEntity(int row)
-    {
-        entities.SwapRemove(row);
-        count--;
-    }
-
-    unsafe public void MoveEntity(int row, ref ArchetypeChunk destination)
-    {
-        if (destination.count >= destination.length) return;
-
-        for (int i = 0; i < components.Count; i++)
-        {
-            var cid = components.Keys[i];
-            var cinfo = Component.GetInfo(cid);
-            var srcArray = components.Values[i];
-            var dstArray = destination.components.Get(cid);
-
-            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, destination.count * cinfo.SizeInBytes),
-                             Unsafe.Add<byte>(srcArray.Data, row * cinfo.SizeInBytes),
-                             (uint)cinfo.SizeInBytes);
-        }
-
-        destination.count++;
-    }
-
-    unsafe public void SwapRemoveEntity(int row, ref ArchetypeChunk source)
+    unsafe public Entity SwapRemoveEntity(int row, ref ArchetypeChunk source)
     {
         for (int i = 0; i < components.Count; i++)
         {
@@ -81,13 +56,15 @@ public struct ArchetypeChunk : IDisposable
             var srcArray = source.components.Get(cid);
             var dstArray = components.Get(cid);
 
-            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, count * cinfo.SizeInBytes),
-                             Unsafe.Add<byte>(srcArray.Data, row * cinfo.SizeInBytes),
+            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, row * cinfo.SizeInBytes),
+                             Unsafe.Add<byte>(srcArray.Data, (source.count - 1) * cinfo.SizeInBytes),
                              (uint)cinfo.SizeInBytes);
         }
 
         entities[row] = source.entities[source.count - 1];
         source.count--;
+
+        return entities[row];
     }
 
     unsafe public Span<Entity> GetEntities()

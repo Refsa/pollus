@@ -1,3 +1,5 @@
+using Microsoft.VisualBasic;
+
 namespace Pollus.ECS;
 
 public class ArchetypeStore : IDisposable
@@ -9,9 +11,9 @@ public class ArchetypeStore : IDisposable
         public int RowIndex { get; set; }
     }
 
-    public struct EntityRef
+    public struct EntityChange
     {
-        public EntityRef(Entity entity, Archetype archetype, int chunkIndex, int rowIndex)
+        public EntityChange(Entity entity, Archetype archetype, int chunkIndex, int rowIndex)
         {
             Entity = entity;
             Archetype = archetype;
@@ -75,12 +77,64 @@ public class ArchetypeStore : IDisposable
         return entity;
     }
 
-    public EntityRef CreateEntity<TBuilder>()
+    public EntityChange CreateEntity<TBuilder>()
         where TBuilder : struct, IEntityBuilder
     {
         var entity = new Entity(entityCounter++);
         var archetype = GetArchetype(TBuilder.ArchetypeID) ?? CreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeInfo = archetype.AddEntity(entity);
+        entities.Add(entity, new EntityInfo
+        {
+            ArchetypeIndex = archetypes.Count - 1,
+            ChunkIndex = archetypeInfo.ChunkIndex,
+            RowIndex = archetypeInfo.RowIndex
+        });
         return new(entity, archetype, archetypeInfo.ChunkIndex, archetypeInfo.RowIndex);
+    }
+
+    public void DestroyEntity(in Entity entity)
+    {
+        if (entities.TryGetValue(entity, out var info))
+        {
+            entities.Remove(entity);
+            var archetype = archetypes[info.ArchetypeIndex];
+            var movedEntityInfo = archetype.RemoveEntity(new()
+            {
+                ChunkIndex = info.ChunkIndex,
+                RowIndex = info.RowIndex
+            });
+
+            if (movedEntityInfo is not null)
+            {
+                ref var movedEntity = ref entities.Get(movedEntityInfo.Value.Entity);
+                movedEntity.ChunkIndex = movedEntityInfo.Value.ChunkIndex;
+                movedEntity.RowIndex = movedEntityInfo.Value.RowIndex;
+            }
+        }
+    }
+
+    public ref C GetComponent<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        if (entities.TryGetValue(entity, out var info))
+        {
+            var archetype = archetypes[info.ArchetypeIndex];
+            return ref archetype.GetComponent<C>(info.ChunkIndex, info.RowIndex);
+        }
+        throw new ArgumentException("Entity does not exist");
+    }
+
+    public void AddComponent<C>(in Entity entity, in C component)
+        where C : unmanaged, IComponent
+    {
+        if (entities.TryGetValue(entity, out var info))
+        {
+            
+        }
+    }
+
+    public bool EntityExists(in Entity entity)
+    {
+        return entities.Has(entity);
     }
 }

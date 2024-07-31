@@ -1,10 +1,11 @@
 namespace Pollus.ECS;
 
 using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
+using System.Runtime.CompilerServices;
 
+/// <summary>
+/// Non allocating 256 bit wide bitset
+/// </summary>
 public record struct BitSet256
 {
     public long l0;
@@ -110,5 +111,115 @@ public record struct BitSet256
         if (b3 < 64) return b3 + 192;
 
         return -1;
+    }
+}
+
+/// <summary>
+/// growing bitset
+/// </summary>
+public record struct BitSet : IDisposable
+{
+    NativeArray<long> data;
+
+    public BitSet(int bitcount)
+    {
+        data = new(bitcount / 64 + 1);
+    }
+
+    public void Dispose()
+    {
+        data.Dispose();
+    }
+
+    public void Set(int idx)
+    {
+        int bucket = idx / 64;
+        if (bucket >= data.Length)
+        {
+            Resize();
+        }
+        data[bucket] |= 1L << idx % 64;
+    }
+
+    public void Unset(int idx)
+    {
+        int bucket = idx / 64;
+        if (bucket >= data.Length) return;
+        data[bucket] &= ~(1L << idx % 64);
+    }
+
+    public bool Has(int idx)
+    {
+        int bucket = idx / 64;
+        if (bucket >= data.Length) return false;
+        return (data[bucket] & 1L << idx % 64) != 0;
+    }
+
+    public bool HasAll(BitSet other)
+    {
+        if (data.Length != other.data.Length) return false;
+
+        for (int i = 0; i < data.Length; i++)
+        {
+            if ((data[i] & other.data[i]) != other.data[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public bool HasAny(BitSet other)
+    {
+        for (int i = 0; i < int.Min(data.Length, other.data.Length); i++)
+        {
+            if ((data[i] & other.data[i]) != 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int FirstClearBit()
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            var b = BitOperations.TrailingZeroCount(~data[i]);
+            if (b < 64)
+            {
+                return i * 64 + b;
+            }
+        }
+        return -1;
+    }
+
+    public int FirstSetBit()
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            var b = BitOperations.TrailingZeroCount(data[i]);
+            if (b < 64)
+            {
+                return i * 64 + b;
+            }
+        }
+        return -1;
+    }
+
+    public void Clear()
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] = 0;
+        }
+    }
+
+    unsafe void Resize()
+    {
+        var newData = new NativeArray<long>(data.Length * 2);
+        Unsafe.CopyBlock(data.Data, newData.Data, (uint)data.Length * sizeof(long));
+        data.Dispose();
+        data = newData;
     }
 }

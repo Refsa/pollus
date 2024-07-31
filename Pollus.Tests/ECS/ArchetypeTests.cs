@@ -4,141 +4,6 @@ using Pollus.ECS;
 
 public class ArchetypeTests
 {
-    /* [Fact]
-    public void archetype_Create()
-    {
-        var archetype = new Archetype([
-            Component.GetInfo<TestComponent1>().ID,
-            Component.GetInfo<TestComponent2>().ID,
-            Component.GetInfo<TestComponent3>().ID,
-        ]);
-
-        Assert.True(archetype.Has<TestComponent1>());
-        Assert.True(archetype.Has<TestComponent2>());
-        Assert.True(archetype.Has<TestComponent3>());
-    }
-
-    [Fact]
-    public void archetype_Insert_One()
-    {
-        var archetype = new Archetype([
-            Component.GetInfo<TestComponent1>().ID,
-        ]);
-
-        var entity = new Entity(0);
-        archetype.Insert(entity);
-        archetype.Set(entity, new TestComponent1 { Value = 10 });
-
-        var tc1 = archetype.Get<TestComponent1>(entity);
-        Assert.Equal(10, tc1.Value);
-    }
-
-    [Fact]
-    public void archetype_Insert_Many()
-    {
-        var archetype = new Archetype([
-            Component.GetInfo<TestComponent1>().ID,
-        ]);
-
-        for (int i = 0; i < 512; i++)
-        {
-            var entity = new Entity(i);
-            archetype.Insert(entity);
-            archetype.Set(entity, new TestComponent1 { Value = i });
-        }
-
-        for (int i = 0; i < 512; i++)
-        {
-            var entity = new Entity(i);
-            var tc1 = archetype.Get<TestComponent1>(entity);
-            Assert.Equal(i, tc1.Value);
-        }
-    }
-
-    [Fact]
-    public void archetype_Remove()
-    {
-        var archetype = new Archetype([
-            Component.GetInfo<TestComponent1>().ID,
-        ]);
-
-        var entity = new Entity(0);
-        archetype.Insert(entity);
-        archetype.Set(entity, new TestComponent1 { Value = 10 });
-
-        archetype.Remove(entity);
-    } */
-
-    [Fact]
-    public void NativeMap_Test()
-    {
-        using var map = new NativeMap<int, int>(0);
-
-        map.Add(1, 10);
-        map.Add(2, 20);
-        map.Add(3, 30);
-
-        Assert.True(map.Has(1));
-        Assert.True(map.Has(2));
-        Assert.True(map.Has(3));
-
-        Assert.False(map.Has(4));
-        Assert.False(map.Has(100));
-        Assert.False(map.Has(10000));
-
-        Assert.Equal(10, map.Get(1));
-        Assert.Equal(20, map.Get(2));
-        Assert.Equal(30, map.Get(3));
-    }
-
-    [Fact]
-    public void NativeMap_NegativeKey()
-    {
-        using var map = new NativeMap<int, int>(0);
-
-        map.Add(-1, 10);
-        map.Add(-2, 20);
-        map.Add(-3, 30);
-
-        Assert.True(map.Has(-1));
-        Assert.True(map.Has(-2));
-        Assert.True(map.Has(-3));
-
-        Assert.False(map.Has(-4));
-        Assert.False(map.Has(-100));
-        Assert.False(map.Has(-10000));
-
-        Assert.Equal(10, map.Get(-1));
-        Assert.Equal(20, map.Get(-2));
-        Assert.Equal(30, map.Get(-3));
-    }
-
-    [Fact]
-    public void NativeMap_Large()
-    {
-        using var map = new NativeMap<int, int>(0);
-        for (int i = 0; i < 1_000_000; i++)
-        {
-            map.Add(i, i);
-        }
-    }
-
-    [Fact]
-    public void NativeArray_Test()
-    {
-        using var array = new NativeArray<int>(1_000);
-
-        for (int i = 0; i < 1_000; i++)
-        {
-            array.Set(i, i);
-        }
-
-        for (int i = 0; i < 1_000; i++)
-        {
-            Assert.Equal(i, array.Get(i));
-        }
-    }
-
     [Fact]
     public void ArchetypeChunk_SetGet()
     {
@@ -265,5 +130,29 @@ public class ArchetypeTests
         {
             Entity.With(new TestComponent1 { Value = i }).Spawn(world);
         }
+    }
+
+    [Fact]
+    public void ArchetypeStore_DestroyEntity()
+    {
+        using var world = new World();
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
+        var entity2 = Entity.With(new TestComponent1 { Value = 20 }).Spawn(world);
+
+        world.Archetypes.DestroyEntity(entity1);
+
+        Assert.False(world.Archetypes.EntityExists(entity1));
+        Assert.True(world.Archetypes.EntityExists(entity2));
+
+        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity2);
+        Assert.Equal(20, c1.Value);
+    }
+
+    [Fact]
+    public void ArchetypeStore_AddComponent()
+    {
+        using var world = new World();
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
+
     }
 }
