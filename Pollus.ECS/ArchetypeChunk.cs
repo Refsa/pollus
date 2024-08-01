@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 public struct ArchetypeChunk : IDisposable
 {
@@ -88,12 +89,25 @@ public struct ArchetypeChunk : IDisposable
         Unsafe.Write(Unsafe.Add<C>(array.Data, row), component);
     }
 
+    unsafe public void SetComponent(int row, ComponentID cid, in ReadOnlySpan<byte> component)
+    {
+        ref var array = ref components.Get(cid);
+        var dst = Unsafe.Add<byte>(array.Data, row * component.Length);
+        component.CopyTo(new Span<byte>(dst, component.Length));
+    }
+
     unsafe public ref C GetComponent<C>(int row)
         where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
         var array = components.Get(cid);
         return ref *(C*)Unsafe.Add<C>(array.Data, row);
+    }
+
+    unsafe public Span<byte> GetComponent(int row, ComponentID cid)
+    {
+        var array = components.Get(cid);
+        return new Span<byte>(Unsafe.Add<byte>(array.Data, row * Component.GetInfo(cid).SizeInBytes), Component.GetInfo(cid).SizeInBytes);
     }
 
     public void SetCount(int newCount)

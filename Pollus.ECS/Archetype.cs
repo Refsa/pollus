@@ -42,6 +42,7 @@ public partial class Archetype : IDisposable
 
     readonly ArchetypeID id;
     readonly ChunkInfo chunkInfo;
+    readonly int index;
 
     NativeArray<ArchetypeChunk> chunks;
     int entityCount;
@@ -101,7 +102,8 @@ public partial class Archetype : IDisposable
 
     public EntityInfo? RemoveEntity(in EntityInfo info)
     {
-        entityCount--;
+        entityCount = int.Max(0, entityCount - 1);
+        if (entityCount == 0) return null;
 
         ref var chunk = ref chunks[info.ChunkIndex];
         ref var lastChunk = ref Unsafe.NullRef<ArchetypeChunk>();
@@ -120,13 +122,30 @@ public partial class Archetype : IDisposable
             var movedInfo = new EntityInfo
             {
                 Entity = movedEntity,
-                ChunkIndex = chunks.Length - 1,
-                RowIndex = lastChunk.Count - 1
+                ChunkIndex = info.ChunkIndex,
+                RowIndex = info.RowIndex,
             };
             return movedInfo;
         }
 
         return null;
+    }
+
+    public EntityInfo? MoveEntity(in EntityInfo srcInfo, Archetype destination, in EntityInfo dstInfo)
+    {
+        ref var srcChunk = ref chunks[srcInfo.ChunkIndex];
+        ref var dstChunk = ref destination.chunks[dstInfo.ChunkIndex];
+
+        for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)
+        {
+            var cid = chunkInfo.ComponentIDs[i];
+            if (destination.HasComponent(cid) is false) continue;
+
+            var comp = srcChunk.GetComponent(srcInfo.RowIndex, cid);
+            dstChunk.SetComponent(dstInfo.RowIndex, cid, comp);
+        }
+
+        return RemoveEntity(srcInfo);
     }
 
     public void SetComponent<C>(int chunkIndex, int rowIndex, in C component) where C : unmanaged, IComponent
@@ -139,6 +158,17 @@ public partial class Archetype : IDisposable
     {
         ref var chunk = ref chunks[chunkIndex];
         return ref chunk.GetComponent<C>(rowIndex);
+    }
+
+    public bool HasComponent<C>()
+        where C : unmanaged, IComponent
+    {
+        return chunkInfo.ComponentIDs.Contains(Component.GetInfo<C>().ID);
+    }
+
+    public bool HasComponent(ComponentID cid)
+    {
+        return chunkInfo.ComponentIDs.Contains(cid);
     }
 
     public ref ArchetypeChunk GetChunk(int chunkIndex)

@@ -144,9 +144,19 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         int index = GetIndex(key);
         if (index != -1)
         {
-            return ref values.Get(index);
+            return ref values[index];
         }
         return ref Unsafe.NullRef<TValue>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Set(in TKey key, in TValue value)
+    {
+        int index = GetIndex(key);
+        if (index != -1)
+        {
+            values.Set(index, value);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -155,7 +165,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         int index = GetIndex(key);
         if (index != -1)
         {
-            value = values.Get(index);
+            value = values[index];
             return true;
         }
         value = default;

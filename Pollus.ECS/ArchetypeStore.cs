@@ -85,7 +85,7 @@ public class ArchetypeStore : IDisposable
         var archetypeInfo = archetype.AddEntity(entity);
         entities.Add(entity, new EntityInfo
         {
-            ArchetypeIndex = archetypes.Count - 1,
+            ArchetypeIndex = archetypeLookup.Get(TBuilder.ArchetypeID),
             ChunkIndex = archetypeInfo.ChunkIndex,
             RowIndex = archetypeInfo.RowIndex
         });
@@ -129,7 +129,28 @@ public class ArchetypeStore : IDisposable
     {
         if (entities.TryGetValue(entity, out var info))
         {
+            var archetype = archetypes[info.ArchetypeIndex];
+            Span<ComponentID> cids = [.. archetype.GetChunkInfo().ComponentIDs, Component.GetInfo<C>().ID];
+            var aid = ArchetypeID.Create(cids);
+            var nextArchetype = GetArchetype(aid) ?? CreateArchetype(aid, cids);
+            var nextArchetypeInfo = nextArchetype.AddEntity(entity);
             
+            entities.Set(entity, new EntityInfo
+            {
+                ArchetypeIndex = archetypeLookup.Get(aid),
+                ChunkIndex = nextArchetypeInfo.ChunkIndex,
+                RowIndex = nextArchetypeInfo.RowIndex
+            });
+
+            nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
+
+            var movedInfo = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
+            if (movedInfo is not null)
+            {
+                ref var movedEntity = ref entities.Get(movedInfo.Value.Entity);
+                movedEntity.ChunkIndex = movedInfo.Value.ChunkIndex;
+                movedEntity.RowIndex = movedInfo.Value.RowIndex;
+            }
         }
     }
 
