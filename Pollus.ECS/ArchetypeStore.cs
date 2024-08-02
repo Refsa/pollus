@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.VisualBasic;
 
 namespace Pollus.ECS;
@@ -13,14 +14,6 @@ public class ArchetypeStore : IDisposable
 
     public struct EntityChange
     {
-        public EntityChange(Entity entity, Archetype archetype, int chunkIndex, int rowIndex)
-        {
-            Entity = entity;
-            Archetype = archetype;
-            ChunkIndex = chunkIndex;
-            RowIndex = rowIndex;
-        }
-
         public Entity Entity { get; set; }
         public Archetype Archetype { get; set; }
         public int ChunkIndex { get; set; }
@@ -28,7 +21,7 @@ public class ArchetypeStore : IDisposable
     }
 
     readonly List<Archetype> archetypes = [];
-    NativeMap<ArchetypeID, int> archetypeLookup;
+    NativeMap<int, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
     volatile int entityCounter = 0;
 
@@ -39,7 +32,7 @@ public class ArchetypeStore : IDisposable
 
         var aid = ArchetypeID.Create([]);
         archetypes.Add(new Archetype(aid, []));
-        archetypeLookup.Add(aid, 0);
+        archetypeLookup.Add((int)aid, 0);
     }
 
     public void Dispose()
@@ -52,23 +45,37 @@ public class ArchetypeStore : IDisposable
         archetypeLookup.Dispose();
     }
 
-    public Archetype? GetArchetype(in ArchetypeID id)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public (Archetype archetype, int index)? GetArchetype(in ArchetypeID aid)
     {
-        if (archetypeLookup.TryGetValue(id, out var index))
+        if (archetypeLookup.TryGetValue((int)aid, out var index))
         {
-            return archetypes[index];
+            return (archetypes[index], index);
         }
         return null;
     }
 
-    Archetype CreateArchetype(in ArchetypeID aid, in Span<ComponentID> cids)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Archetype GetArchetype(int index)
     {
-        var archetype = new Archetype(aid, cids);
-        archetypes.Add(archetype);
-        archetypeLookup.Add(aid, archetypes.Count - 1);
-        return archetype;
+        return archetypes[index];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, in Span<ComponentID> cids)
+    {
+        if (archetypeLookup.TryGetValue((int)aid, out var index))
+        {
+            return (archetypes[index], index);
+        };
+
+        var archetype = new Archetype(aid, cids);
+        archetypes.Add(archetype);
+        archetypeLookup.Add((int)aid, archetypes.Count - 1);
+        return (archetype, archetypes.Count - 1);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity CreateEntity()
     {
         var entity = new Entity(entityCounter++);
@@ -77,19 +84,26 @@ public class ArchetypeStore : IDisposable
         return entity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public EntityChange CreateEntity<TBuilder>()
         where TBuilder : struct, IEntityBuilder
     {
         var entity = new Entity(entityCounter++);
-        var archetype = GetArchetype(TBuilder.ArchetypeID) ?? CreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        var (archetype, archetypeIndex) = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeInfo = archetype.AddEntity(entity);
-        entities.Add(entity, new EntityInfo
+        entities.Add(entity, new()
         {
-            ArchetypeIndex = archetypeLookup.Get(TBuilder.ArchetypeID),
+            ArchetypeIndex = archetypeIndex,
             ChunkIndex = archetypeInfo.ChunkIndex,
             RowIndex = archetypeInfo.RowIndex
         });
-        return new(entity, archetype, archetypeInfo.ChunkIndex, archetypeInfo.RowIndex);
+        return new()
+        {
+            Entity = entity,
+            Archetype = archetype,
+            ChunkIndex = archetypeInfo.ChunkIndex,
+            RowIndex = archetypeInfo.RowIndex
+        };
     }
 
     public void DestroyEntity(in Entity entity)
@@ -113,6 +127,7 @@ public class ArchetypeStore : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref C GetComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -130,17 +145,20 @@ public class ArchetypeStore : IDisposable
         if (entities.TryGetValue(entity, out var info))
         {
             var archetype = archetypes[info.ArchetypeIndex];
-            Span<ComponentID> cids = [.. archetype.GetChunkInfo().ComponentIDs, Component.GetInfo<C>().ID];
-            var aid = ArchetypeID.Create(cids);
-            var nextArchetype = GetArchetype(aid) ?? CreateArchetype(aid, cids);
+            if (archetype.HasComponent<C>()) return;
+
+            Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length + 1];
+            archetype.GetChunkInfo().ComponentIDs.CopyTo(cids);
+            cids[^1] = Component.GetInfo<C>().ID;
+
+            var nextAid = ArchetypeID.Create(cids);
+            var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
             var nextArchetypeInfo = nextArchetype.AddEntity(entity);
             
-            entities.Set(entity, new EntityInfo
-            {
-                ArchetypeIndex = archetypeLookup.Get(aid),
-                ChunkIndex = nextArchetypeInfo.ChunkIndex,
-                RowIndex = nextArchetypeInfo.RowIndex
-            });
+            ref var nextInfo = ref entities.Get(entity);
+            nextInfo.ArchetypeIndex = nextArchetypeIndex;
+            nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
+            nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
 
             nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
 
@@ -154,6 +172,7 @@ public class ArchetypeStore : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool EntityExists(in Entity entity)
     {
         return entities.Has(entity);

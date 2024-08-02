@@ -152,39 +152,62 @@ public class TestBenchmarks
         }).First;
     } */
 
-    [Benchmark]
-    public void ArchetypeStore_CreateEntityWithOneComponent()
+    World spawnWorld;
+    [IterationSetup()]
+    public void ArchetypeStore_CreateEntityWithOneComponent_Setup()
     {
-        using var world = new World();
-        for (int i = 0; i < SIZE; i++)
-        {
-            Entity.With(new Component1()).Spawn(world);
-        }
+        spawnWorld = new();
     }
 
-    [Benchmark]
+    [IterationCleanup()]
+    public void ArchetypeStore_CreateEntityWithOneComponent_Cleanup()
+    {
+        spawnWorld.Dispose();
+    }
+
+    /* [Benchmark]
+    public void ArchetypeStore_CreateEntityWithOneComponent()
+    {
+        for (int i = 0; i < SIZE; i++)
+        {
+            Entity.With(new Component1()).Spawn(spawnWorld);
+        }
+    } */
+
+    /* [Benchmark]
     public void ArchetypeStore_CreateEntityWithTwoComponents()
     {
         using var world = new World();
         for (int i = 0; i < SIZE; i++)
         {
-            // (new Component1(), new Component2()).Builder().Spawn(world);
             world.Spawn(new Component1(), new Component2());
         }
-    }
+    } */
 
     [Benchmark]
     public void ArchetypeStore_CreateEntityWithThreeComponents()
     {
-        using var world = new World();
         for (int i = 0; i < SIZE; i++)
         {
-            // (new Component1(), new Component2(), new Component3()).Builder().Spawn(world);
-            world.Spawn(new Component1(), new Component2(), new Component3());
+            spawnWorld.Spawn(new Component1(), new Component2(), new Component3());
+            // spawnWorld.Archetypes.CreateEntity<EntityBuilder<Component1, Component2, Component3>>();
         }
     }
 
-    [Benchmark]
+    /* [Benchmark]
+    public void ArchetypeStore_CreateEntityWithThreeComponents_AddComponent()
+    {
+        using var world = new World();
+        for (int i = 0; i < SIZE; i++)
+        {
+            var entity = world.Spawn();
+            world.Archetypes.AddComponent(entity, new Component1());
+            world.Archetypes.AddComponent(entity, new Component2());
+            world.Archetypes.AddComponent(entity, new Component3());
+        }
+    } */
+
+    /* [Benchmark]
     public void ArchetypeStore_CreateEntityWithFourComponents()
     {
         using var world = new World();
@@ -192,5 +215,5 @@ public class TestBenchmarks
         {
             world.Spawn(new Component1(), new Component2(), new Component3(), new Component4());
         }
-    }
+    } */
 }

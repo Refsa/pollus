@@ -18,9 +18,8 @@ public static class Component
 {
     public readonly struct Info
     {
-        public ComponentID ID { get; init; }
-        public int SizeInBytes { get; init; }
-        public Type Type { get; init; }
+        public required ComponentID ID { get; init; }
+        public required int SizeInBytes { get; init; }
     }
 
     static class Lookup<C> where C : unmanaged, IComponent
@@ -46,7 +45,6 @@ public static class Component
         {
             ID = new ComponentID(componentIDs.Count),
             SizeInBytes = Unsafe.SizeOf<T>(),
-            Type = type
         };
 
         componentIDs[type] = info.ID;

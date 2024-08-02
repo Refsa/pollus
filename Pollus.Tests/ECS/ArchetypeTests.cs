@@ -180,6 +180,21 @@ public class ArchetypeTests
     }
 
     [Fact]
+    public void ArchetypeStore_AddComponent_EmptyEntity()
+    {
+        using var world = new World();
+        var entity1 = world.Spawn();
+        world.Archetypes.AddComponent(entity1, new TestComponent1 { Value = 10 });
+        world.Archetypes.AddComponent(entity1, new TestComponent2 { Value = 20 });
+
+        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity1);
+
+        Assert.Equal(10, c1.Value);
+        Assert.Equal(20, c2.Value);
+    }
+
+    [Fact]
     public void ArchetypeStore_AddComponent_SeqAdd()
     {
         using var world = new World();

@@ -19,8 +19,8 @@ public record struct ArchetypeID(int Hash)
         return new ArchetypeID(hash);
     }
 
-    public static implicit operator int(ArchetypeID id) => id.Hash;
-    public static implicit operator ArchetypeID(int hash) => new(hash);
+    public static explicit operator int(ArchetypeID id) => id.Hash;
+    public static explicit operator ArchetypeID(int hash) => new(hash);
 }
 
 public partial class Archetype : IDisposable
