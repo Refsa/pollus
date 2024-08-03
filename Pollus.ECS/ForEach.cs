@@ -1,9 +1,8 @@
-using System.Runtime.CompilerServices;
-
 namespace Pollus.ECS;
 
+using System.Runtime.CompilerServices;
+
 public delegate void ForEachDelegate<C0>(ref C0 component) where C0 : unmanaged, IComponent;
-public delegate bool FilterDelegate(Archetype archetype);
 
 public interface IForEachBase<C0>
     where C0 : unmanaged, IComponent

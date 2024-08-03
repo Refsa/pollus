@@ -18,41 +18,10 @@ public struct Query<C0> : IQuery
 
         static Filter()
         {
-            if (typeof(TFilters).IsAssignableFrom(typeof(ITuple)) is false)
-            {
-                if (typeof(TFilters).IsAssignableTo(typeof(IFilter)) is false)
-                {
-                    throw new ArgumentException("Type must implement IFilter");
-                }
-                filters = [(IFilter)Activator.CreateInstance<TFilters>()!];
-            }
-            else
-            {
-                var types = typeof(TFilters).GetGenericArguments();
-                var length = types.Length;
-                filters = new IFilter[length];
-
-                for (int i = 0; i < length; i++)
-                {
-                    if (types[i].IsAssignableTo(typeof(IFilter)) is false)
-                    {
-                        throw new ArgumentException("Type must implement IFilter");
-                    }
-
-                    filters[i] = (IFilter)Activator.CreateInstance(types[i])!;
-                }
-            }
+            filters = FilterHelpers.UnwrapFilters<TFilters>();
         }
 
-        static bool RunFilter(Archetype archetype)
-        {
-            for (int i = 0; i < filters.Length; i++)
-            {
-                if (filters[i].Filter(archetype) is false) return false;
-            }
-
-            return true;
-        }
+        static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
 
         public static implicit operator Query<C0>(in Filter<TFilters> filter)
         {
@@ -70,15 +39,16 @@ public struct Query<C0> : IQuery
         {
             query.ForEach(pred);
         }
+
+        public readonly void ForEach<TForEach>(TForEach iter)
+            where TForEach : unmanaged, IForEachBase<C0>
+        {
+            query.ForEach(iter);
+        }
     }
 
-    static readonly Component.Info[] infos = [Component.GetInfo<C0>()];
+    static readonly Component.Info[] infos = [Component.Register<C0>()];
     public static Component.Info[] Infos => infos;
-
-    static Query()
-    {
-        Component.Register<C0>();
-    }
 
     readonly World world;
     readonly FilterDelegate? filter;
@@ -92,18 +62,12 @@ public struct Query<C0> : IQuery
     public readonly void ForEach(ForEachDelegate<C0> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var archetype in world.Store.Archetypes)
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
         {
-            if (archetype.HasComponents(cids) is false) continue;
-            if (filter != null && filter(archetype) is false) continue;
-
-            foreach (var chunk in archetype.Chunks)
+            scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
+            foreach (ref var curr in comp1)
             {
-                scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
-                foreach (ref var curr in comp1)
-                {
-                    pred(ref curr);
-                }
+                pred(ref curr);
             }
         }
     }
@@ -112,69 +76,30 @@ public struct Query<C0> : IQuery
         where TForEach : unmanaged, IForEachBase<C0>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var archetype in world.Store.Archetypes)
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
         {
-            if (archetype.HasComponents(cids) is false) continue;
-            if (filter != null && filter(archetype) is false) continue;
+            scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
 
-            foreach (var chunk in archetype.Chunks)
+            if (iter is IForEach<C0>)
             {
-                scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
-
-                if (iter is IForEach<C0>)
+                scoped ref var curr = ref comp1[0];
+                for (int i = 0; i < chunk.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
-                    scoped ref var curr = ref comp1[0];
-                    for (int i = 0; i < chunk.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
-                    {
-                        iter.Execute(ref curr);
-                    }
-                }
-                else if (iter is IEntityForEach<C0>)
-                {
-                    scoped var entities = chunk.GetEntities();
-                    for (int i = 0; i < chunk.Count; i++)
-                    {
-                        iter.Execute(entities[i], ref comp1[i]);
-                    }
-                }
-                else if (iter is IChunkForEach<C0>)
-                {
-                    iter.Execute(comp1);
+                    iter.Execute(ref curr);
                 }
             }
+            else if (iter is IEntityForEach<C0>)
+            {
+                scoped var entities = chunk.GetEntities();
+                for (int i = 0; i < chunk.Count; i++)
+                {
+                    iter.Execute(entities[i], ref comp1[i]);
+                }
+            }
+            else if (iter is IChunkForEach<C0>)
+            {
+                iter.Execute(comp1);
+            }
         }
-    }
-}
-
-public interface IFilter : ITuple
-{
-    bool Filter(Archetype archetype);
-}
-
-public class With<C0> : IFilter
-    where C0 : unmanaged, IComponent
-{
-    static With() => Component.Register<C0>();
-
-    public object? this[int index] => null;
-    public int Length => 1;
-
-    public bool Filter(Archetype archetype)
-    {
-        return archetype.HasComponent<C0>() is true;
-    }
-}
-
-public class Without<C0> : IFilter
-    where C0 : unmanaged, IComponent
-{
-    static Without() => Component.Register<C0>();
-
-    public object? this[int index] => null;
-    public int Length => 1;
-
-    public bool Filter(Archetype archetype)
-    {
-        return archetype.HasComponent<C0>() is false;
     }
 }

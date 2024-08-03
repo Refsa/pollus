@@ -185,13 +185,23 @@ public partial class Archetype : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool HasComponents(scoped in Span<ComponentID> componentIDs)
+    public bool HasAll(scoped in Span<ComponentID> componentIDs)
     {
         foreach (var cid in componentIDs)
         {
             if (HasComponent(cid) is false) return false;
         }
         return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasAny(scoped in Span<ComponentID> componentIDs)
+    {
+        foreach (var cid in componentIDs)
+        {
+            if (HasComponent(cid)) return true;
+        }
+        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -234,5 +244,86 @@ public partial class Archetype : IDisposable
             lastChunkIndex = chunks.Length - 1;
         }
         return ref chunks[lastChunkIndex];
+    }
+}
+
+public ref struct ArchetypeChunkEnumerable
+{
+    readonly List<Archetype> archetypes;
+    readonly Span<ComponentID> componentIDs;
+    readonly FilterDelegate? filter;
+    int index;
+
+    public ArchetypeChunkEnumerable(List<Archetype> archetypes, in Span<ComponentID> componentIDs, FilterDelegate? filter)
+    {
+        this.archetypes = archetypes;
+        this.filter = filter;
+        this.componentIDs = componentIDs;
+        index = -1;
+    }
+
+    public ChunkEnumerator GetEnumerator() => new(this);
+
+    public ref struct Enumerator
+    {
+        readonly ArchetypeChunkEnumerable filter;
+        int index;
+
+        public Enumerator(ArchetypeChunkEnumerable filter)
+        {
+            this.filter = filter;
+            index = -1;
+        }
+
+        public Archetype Current => filter.archetypes[index];
+
+        public bool MoveNext()
+        {
+            while (++index < filter.archetypes.Count)
+            {
+                if (filter.archetypes[index].HasAll(filter.componentIDs) is false) continue;
+                if (filter.filter is null || filter.filter(filter.archetypes[index]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    public ref struct ChunkEnumerator
+    {
+        readonly ArchetypeChunkEnumerable filter;
+        Enumerator enumerator;
+        int chunkIndex;
+        ref ArchetypeChunk current;
+
+        public ChunkEnumerator(ArchetypeChunkEnumerable filter)
+        {
+            this.filter = filter;
+            enumerator = new(filter);
+            chunkIndex = -1;
+        }
+
+        public ArchetypeChunk Current => current;
+
+        public bool MoveNext()
+        {
+            if (chunkIndex == -1)
+            {
+                if (enumerator.MoveNext() is false) return false;
+            }
+
+            var archetype = enumerator.Current;
+            chunkIndex++;
+            if (chunkIndex >= archetype.Chunks.Length)
+            {
+                chunkIndex = -1;
+                return MoveNext();
+            }
+
+            current = ref archetype.Chunks[chunkIndex];
+            return true;
+        }
     }
 }

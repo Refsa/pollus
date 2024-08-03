@@ -17,11 +17,15 @@ public class QueryTests
             Entity.With(new TestComponent1 { Value = i + 1 }).Spawn(world);
         }
 
+        int count = 0;
         var q1 = new Query<TestComponent1>(world);
         q1.ForEach((ref TestComponent1 c1) =>
         {
             c1.Value++;
+            count++;
         });
+
+        Assert.Equal(1_000_000, count);
 
         int index = 2;
         q1.ForEach((ref TestComponent1 c1) =>
@@ -31,7 +35,7 @@ public class QueryTests
     }
 
     [Fact]
-    public void Query_IterFilter()
+    public void Query_IterFilter_WithWithout()
     {
         using var world = new World();
         for (int i = 0; i < 1_000_000; i++)
@@ -40,11 +44,15 @@ public class QueryTests
             Entity.With(new TestComponent1 { Value = i + 1 }, new TestComponent2 { Value = i + 1 }).Spawn(world);
         }
 
-        var q1 = new Query<TestComponent1>.Filter<Without<TestComponent2>>(world);
+        int count = 0;
+        var q1 = new Query<TestComponent1>.Filter<None<TestComponent2>>(world);
         q1.ForEach((ref TestComponent1 c1) =>
         {
             c1.Value++;
+            count++;
         });
+
+        Assert.Equal(1_000_000, count);
 
         int index = 2;
         q1.ForEach((ref TestComponent1 c1) =>
@@ -52,7 +60,7 @@ public class QueryTests
             Assert.Equal(index++, c1.Value);
         });
 
-        var q2 = new Query<TestComponent1>.Filter<With<TestComponent2>>(world);
+        var q2 = new Query<TestComponent1>.Filter<All<TestComponent2>>(world);
         index = 1;
         q2.ForEach((ref TestComponent1 c1) =>
         {
