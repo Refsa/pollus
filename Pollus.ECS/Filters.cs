@@ -19,7 +19,7 @@ public class None<C0> : IFilter
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool Filter(Archetype archetype)
     {
-        return archetype.HasAny(componentIDs) is false;
+        return archetype.HasComponent<C0>() is false;
     }
 }
 

@@ -31,7 +31,7 @@ public struct Query<$gen_args$> : IQuery
 
         static Filter()
         {
-            filters = FilterHelpers.Unwrap<TFilters>();
+            filters = FilterHelpers.UnwrapFilters<TFilters>();
         }
 
         static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
