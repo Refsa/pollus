@@ -56,6 +56,7 @@ public partial class Archetype : IDisposable
     readonly int index;
 
     NativeArray<ArchetypeChunk> chunks;
+    int lastChunkIndex = -1;
     int entityCount;
 
     public ArchetypeID ID => id;
@@ -114,18 +115,10 @@ public partial class Archetype : IDisposable
     public EntityInfo? RemoveEntity(in EntityInfo info)
     {
         entityCount = int.Max(0, entityCount - 1);
-        if (entityCount == 0) return null;
+        if (entityCount == 0 || lastChunkIndex == -1) return null;
 
         ref var chunk = ref chunks[info.ChunkIndex];
-        ref var lastChunk = ref Unsafe.NullRef<ArchetypeChunk>();
-        for (int i = chunks.Length - 1; i >= 0; i--)
-        {
-            if (chunks[i].Count > 0)
-            {
-                lastChunk = ref chunks[i];
-                break;
-            }
-        }
+        ref var lastChunk = ref chunks[lastChunkIndex];
 
         var movedEntity = chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
         if (movedEntity != Entity.NULL)
@@ -137,6 +130,11 @@ public partial class Archetype : IDisposable
                 RowIndex = info.RowIndex,
             };
             return movedInfo;
+        }
+
+        if (lastChunk.Count == 0)
+        {
+            lastChunkIndex = int.Max(0, lastChunkIndex - 1);
         }
 
         return null;
@@ -202,32 +200,39 @@ public partial class Archetype : IDisposable
         return ref chunks[chunkIndex];
     }
 
-    public void Optimize()
+    public void Preallocate(int count)
     {
-        int newLength = chunks.Length;
-        for (int i = chunks.Length - 1; i >= 0; i--)
+        int prevLength = chunks.Length;
+        int required = count / chunkInfo.RowsPerChunk + 1;
+        chunks.Resize(int.Max(required, prevLength));
+        for (int i = prevLength; i < chunks.Length; i++)
         {
-            if (chunks[i].Count == 0)
-            {
-                chunks[i].Dispose();
-                newLength--;
-            }
+            chunks[i] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
         }
 
-        if (newLength != chunks.Length)
+        lastChunkIndex = int.Max(0, lastChunkIndex);
+    }
+
+    public void Optimize()
+    {
+        if (lastChunkIndex == -1 || lastChunkIndex == chunks.Length) return;
+        for (int i = lastChunkIndex; i < chunks.Length; i++)
         {
-            chunks.Resize(newLength);
+            chunks[i].Dispose();
         }
+
+        chunks.Resize(lastChunkIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     ref ArchetypeChunk GetVacantChunk()
     {
-        if (chunks.Length == 0 || chunks[^1].Count >= chunkInfo.RowsPerChunk)
+        if (lastChunkIndex == -1 || chunks[lastChunkIndex].Count >= chunkInfo.RowsPerChunk)
         {
             chunks.Resize(chunks.Length + 1);
             chunks[^1] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
+            lastChunkIndex = chunks.Length - 1;
         }
-        return ref chunks[^1];
+        return ref chunks[lastChunkIndex];
     }
 }

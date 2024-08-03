@@ -30,7 +30,7 @@ public class QueryBenchmarks
         singleComponentWorld.Dispose();
     }
 
-    /* [Benchmark]
+    [Benchmark]
     public void Query_ForEach_IForEach()
     {
         var q = new Query<Component1>(singleComponentWorld);
@@ -42,22 +42,19 @@ public class QueryBenchmarks
     {
         var q = new Query<Component1>(singleComponentWorld);
         q.ForEach(new ChunkForEach());
-    } */
+    }
 
     [Benchmark]
     public void Query_ForEach_Delegate()
     {
         var q = new Query<Component1>(singleComponentWorld);
-        q.ForEach((ref Component1 c) =>
-        {
-            c.First++;
-        });
+        q.ForEach((ref Component1 c) => c.First++);
     }
 
     struct ForEach : IForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void Execute(scoped ref Component1 c)
+        public void Execute(ref Component1 c)
         {
             c.First++;
         }

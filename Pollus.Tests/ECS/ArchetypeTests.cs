@@ -230,7 +230,7 @@ public class ArchetypeTests
         var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
         var entity2 = Entity.With(new TestComponent1 { Value = 30 }).Spawn(world);
         var entity3 = Entity.With(new TestComponent1 { Value = 50 }).Spawn(world);
-        
+
         world.Store.AddComponent(entity1, new TestComponent2 { Value = 20 });
         world.Store.AddComponent(entity2, new TestComponent2 { Value = 40 });
         world.Store.AddComponent(entity3, new TestComponent2 { Value = 60 });
@@ -249,5 +249,20 @@ public class ArchetypeTests
         var c6 = world.Store.GetComponent<TestComponent2>(entity3);
         Assert.Equal(50, c5.Value);
         Assert.Equal(60, c6.Value);
+    }
+
+    [Fact]
+    public void Archetypestore_Preallocate()
+    {
+        using var world = new World();
+        world.Preallocate(Entity.With(new TestComponent1(), new TestComponent2()), 1_000_000);
+        for (int i = 0; i < 1_000_000; i++)
+        {
+            var entity = world.Spawn(new TestComponent1 { Value = i }, new TestComponent2 {Value = i + 1});
+            var c1 = world.Store.GetComponent<TestComponent1>(entity);
+            var c2 = world.Store.GetComponent<TestComponent2>(entity);
+            Assert.Equal(i, c1.Value);
+            Assert.Equal(i + 1, c2.Value);
+        }
     }
 }

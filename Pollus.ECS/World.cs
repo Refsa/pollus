@@ -18,9 +18,17 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public Entity Spawn<TBuilder>(TBuilder builder)
+    public Entity Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
         return builder.Spawn(this);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Preallocate<TBuilder>(in TBuilder builder, int count)
+        where TBuilder : IEntityBuilder
+    {
+        var archetype = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        archetype.archetype.Preallocate(count);
     }
 }

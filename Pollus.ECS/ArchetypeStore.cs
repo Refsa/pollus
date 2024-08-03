@@ -64,7 +64,7 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
+    public (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
     {
         if (archetypeLookup.TryGetValue((int)aid, out var index))
         {

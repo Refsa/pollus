@@ -66,7 +66,7 @@ public struct Query<C0> : IQuery
             query = new Query<C0>(world, filterDelegate);
         }
 
-        public void ForEach(IterDelegate<C0> pred)
+        public void ForEach(ForEachDelegate<C0> pred)
         {
             query.ForEach(pred);
         }
@@ -89,19 +89,17 @@ public struct Query<C0> : IQuery
         this.filter = filter;
     }
 
-    public readonly void ForEach(IterDelegate<C0> pred)
+    public readonly void ForEach(ForEachDelegate<C0> pred)
     {
-        Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-
+        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
         foreach (var archetype in world.Store.Archetypes)
         {
             if (archetype.HasComponents(cids) is false) continue;
             if (filter != null && filter(archetype) is false) continue;
 
-            var chunks = archetype.Chunks;
             foreach (var chunk in archetype.Chunks)
             {
-                var comp1 = chunk.GetComponents<C0>(cids[0]);
+                scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
                 foreach (ref var curr in comp1)
                 {
                     pred(ref curr);
@@ -113,7 +111,7 @@ public struct Query<C0> : IQuery
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : unmanaged, IForEachBase<C0>
     {
-        Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
+        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
         foreach (var archetype in world.Store.Archetypes)
         {
             if (archetype.HasComponents(cids) is false) continue;
@@ -121,11 +119,11 @@ public struct Query<C0> : IQuery
 
             foreach (var chunk in archetype.Chunks)
             {
-                var comp1 = chunk.GetComponents<C0>(cids[0]);
+                scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
 
                 if (iter is IForEach<C0>)
                 {
-                    ref var curr = ref comp1[0];
+                    scoped ref var curr = ref comp1[0];
                     for (int i = 0; i < chunk.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                     {
                         iter.Execute(ref curr);
@@ -133,7 +131,7 @@ public struct Query<C0> : IQuery
                 }
                 else if (iter is IEntityForEach<C0>)
                 {
-                    var entities = chunk.GetEntities();
+                    scoped var entities = chunk.GetEntities();
                     for (int i = 0; i < chunk.Count; i++)
                     {
                         iter.Execute(entities[i], ref comp1[i]);
