@@ -20,7 +20,7 @@ unsafe public struct EntityBuilder : IEntityBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
-        return world.Archetypes.CreateEntity<EntityBuilder>().Entity;
+        return world.Store.CreateEntity<EntityBuilder>().Entity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -41,12 +41,12 @@ public struct EntityBuilder<C0> : IEntityBuilder
 
     public C0 Component0;
 
-    public EntityBuilder(in C0 c0)
+    public EntityBuilder(scoped in C0 c0)
     {
         Component0 = c0;
     }
 
-    public static implicit operator EntityBuilder<C0>(in C0 c0)
+    public static implicit operator EntityBuilder<C0>(scoped in C0 c0)
     {
         return new EntityBuilder<C0>(c0);
     }
@@ -54,14 +54,14 @@ public struct EntityBuilder<C0> : IEntityBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
-        var entityRef = world.Archetypes.CreateEntity<EntityBuilder<C0>>();
+        var entityRef = world.Store.CreateEntity<EntityBuilder<C0>>();
         ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         chunk.SetComponent(entityRef.RowIndex, Component0);
         return entityRef.Entity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public EntityBuilder<C0, C1> With<C1>(in C1 c1)
+    public EntityBuilder<C0, C1> With<C1>(scoped in C1 c1)
         where C1 : unmanaged, IComponent
     {
         return new(Component0, c1);

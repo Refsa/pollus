@@ -25,6 +25,8 @@ public class ArchetypeStore : IDisposable
     NativeMap<Entity, EntityInfo> entities;
     volatile int entityCounter = 0;
 
+    public List<Archetype> Archetypes => archetypes;
+
     public ArchetypeStore()
     {
         entities = new(0);
@@ -62,7 +64,7 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, in Span<ComponentID> cids)
+    (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
     {
         if (archetypeLookup.TryGetValue((int)aid, out var index))
         {
@@ -139,7 +141,7 @@ public class ArchetypeStore : IDisposable
         throw new ArgumentException("Entity does not exist");
     }
 
-    public void AddComponent<C>(in Entity entity, in C component)
+    public void AddComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
         if (entities.TryGetValue(entity, out var info))

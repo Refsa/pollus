@@ -1,10 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
     <TieredPGO>true</TieredPGO>
+    <!-- <TieredCompilation>true</TieredCompilation>
+    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
+    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops> -->
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IlcDisableReflection>true</IlcDisableReflection>
+    <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
+    <IsAotCompatible>true</IsAotCompatible>
+
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 

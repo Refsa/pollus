@@ -2,31 +2,16 @@ namespace Pollus.Benchmark;
 
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
 using Pollus.ECS;
 using Pollus.Engine.Mathematics;
 
-public struct Component1 : IComponent
-{
-    public int First;
-}
-
-public struct Component2 : IComponent
-{
-    public int First;
-}
-
-public struct Component3 : IComponent
-{
-    public int First;
-}
-
-public struct Component4 : IComponent
-{
-    public int First;
-}
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]
+[SimpleJob(RuntimeMoniker.Net80)]
+[HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
 public class TestBenchmarks
 {
     const int SIZE = 100_000;
@@ -34,6 +19,7 @@ public class TestBenchmarks
     NativeArray<Component1> nativeArray;
     ArchetypeChunk chunk;
     Archetype archetype;
+    World world;
 
     public TestBenchmarks()
     {
@@ -42,6 +28,7 @@ public class TestBenchmarks
         chunk = new([Component.GetInfo<Component1>().ID], SIZE);
         chunk.SetCount(SIZE);
         archetype = new([Component.GetInfo<Component1>().ID]);
+        world = new();
 
         for (int i = 0; i < SIZE; i++)
         {
@@ -54,6 +41,8 @@ public class TestBenchmarks
             var entity = new Entity(i);
             var entityInfo = archetype.AddEntity(entity);
             archetype.SetComponent(entityInfo.ChunkIndex, entityInfo.RowIndex, comp);
+
+            world.Spawn(Entity.With(new Component1()));
         }
     }
 
@@ -62,6 +51,7 @@ public class TestBenchmarks
         nativeArray.Dispose();
         chunk.Dispose();
         archetype.Dispose();
+        world.Dispose();
     }
 
     /* [Benchmark]
@@ -150,70 +140,5 @@ public class TestBenchmarks
             ChunkIndex = 0,
             RowIndex = 0
         }).First;
-    } */
-
-    World spawnWorld;
-    [IterationSetup()]
-    public void ArchetypeStore_CreateEntityWithOneComponent_Setup()
-    {
-        spawnWorld = new();
-    }
-
-    [IterationCleanup()]
-    public void ArchetypeStore_CreateEntityWithOneComponent_Cleanup()
-    {
-        spawnWorld.Dispose();
-    }
-
-    /* [Benchmark]
-    public void ArchetypeStore_CreateEntityWithOneComponent()
-    {
-        for (int i = 0; i < SIZE; i++)
-        {
-            Entity.With(new Component1()).Spawn(spawnWorld);
-        }
-    } */
-
-    /* [Benchmark]
-    public void ArchetypeStore_CreateEntityWithTwoComponents()
-    {
-        using var world = new World();
-        for (int i = 0; i < SIZE; i++)
-        {
-            world.Spawn(new Component1(), new Component2());
-        }
-    } */
-
-    [Benchmark]
-    public void ArchetypeStore_CreateEntityWithThreeComponents()
-    {
-        for (int i = 0; i < SIZE; i++)
-        {
-            spawnWorld.Spawn(new Component1(), new Component2(), new Component3());
-            // spawnWorld.Archetypes.CreateEntity<EntityBuilder<Component1, Component2, Component3>>();
-        }
-    }
-
-    /* [Benchmark]
-    public void ArchetypeStore_CreateEntityWithThreeComponents_AddComponent()
-    {
-        using var world = new World();
-        for (int i = 0; i < SIZE; i++)
-        {
-            var entity = world.Spawn();
-            world.Archetypes.AddComponent(entity, new Component1());
-            world.Archetypes.AddComponent(entity, new Component2());
-            world.Archetypes.AddComponent(entity, new Component3());
-        }
-    } */
-
-    /* [Benchmark]
-    public void ArchetypeStore_CreateEntityWithFourComponents()
-    {
-        using var world = new World();
-        for (int i = 0; i < SIZE; i++)
-        {
-            world.Spawn(new Component1(), new Component2(), new Component3(), new Component4());
-        }
     } */
 }

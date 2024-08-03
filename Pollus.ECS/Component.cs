@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
@@ -32,25 +33,31 @@ public static class Component
         }
     }
 
-    static readonly ConcurrentDictionary<Type, ComponentID> componentIDs = new();
+    static readonly ConcurrentDictionary<Type, Info> componentIDs = new();
     static readonly ConcurrentDictionary<ComponentID, Info> componentInfos = new();
 
     public static Info Register<T>() where T : unmanaged, IComponent
     {
         var type = typeof(T);
-        if (componentIDs.TryGetValue(type, out var id))
-            return componentInfos[id];
+        if (componentIDs.TryGetValue(type, out var info))
+            return info;
 
-        var info = new Info
+        info = new Info
         {
             ID = new ComponentID(componentIDs.Count),
             SizeInBytes = Unsafe.SizeOf<T>(),
         };
 
-        componentIDs[type] = info.ID;
+        componentIDs[type] = info;
         componentInfos[info.ID] = info;
 
         return info;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static Info GetInfo(Type type)
+    {
+        return componentIDs[type];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

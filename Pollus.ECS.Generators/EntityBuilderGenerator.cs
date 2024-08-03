@@ -141,7 +141,7 @@ $fields$
 $set_fields$
     }
 
-    public static implicit operator EntityBuilder<$gen_args$>(in ($tuple_args$) tuple)
+    public static implicit operator EntityBuilder<$gen_args$>(scoped in ($tuple_args$) tuple)
     {
         return new($tuple_set$);
     }
@@ -149,7 +149,7 @@ $set_fields$
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
-        var entityRef = world.Archetypes.CreateEntity<EntityBuilder<$gen_args$>>();
+        var entityRef = world.Store.CreateEntity<EntityBuilder<$gen_args$>>();
         ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         
 $chunk_set_component$
@@ -162,7 +162,7 @@ $chunk_set_component$
 
         static readonly string WITH_METHOD_TEMPLATE = @"
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public EntityBuilder<$gen_args$, $next_gen_arg$> With<$next_gen_arg$>(in $next_gen_arg$ $next_gen_arg_name$)
+    public EntityBuilder<$gen_args$, $next_gen_arg$> With<$next_gen_arg$>(scoped in $next_gen_arg$ $next_gen_arg_name$)
         where $next_gen_arg$ : unmanaged, IComponent
     {
         return new($with_args$);
@@ -191,7 +191,7 @@ $chunk_set_component$
                 gen_constraints.AppendFormat("\twhere C{0} : unmanaged, IComponent{1}", i, isLast ? "" : "\n");
                 component_ids.AppendFormat("Component.GetInfo<C{0}>().ID{1}", i, isLast ? "" : ", ");
                 fields.AppendFormat("\tpublic C{0} Component{0};{1}", i, isLast ? "" : "\n");
-                constructor_args.AppendFormat("in C{0} c{0}{1}", i, isLast ? "" : ", ");
+                constructor_args.AppendFormat("scoped in C{0} c{0}{1}", i, isLast ? "" : ", ");
                 set_fields.AppendFormat("\t\tComponent{0} = c{0};{1}", i, isLast ? "" : "\n");
                 with_args.AppendFormat("Component{0}, ", i);
                 chunk_set_component.AppendFormat("\t\tchunk.SetComponent(entityRef.RowIndex, Component{0});{1}", i, isLast ? "" : "\n");

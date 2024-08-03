@@ -4,17 +4,17 @@ namespace Pollus.ECS;
 
 public class World : IDisposable
 {
-    public ArchetypeStore Archetypes { get; init; } = new();
+    public ArchetypeStore Store { get; init; } = new();
 
     public void Dispose()
     {
-        Archetypes.Dispose();
+        Store.Dispose();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn()
     {
-        return Archetypes.CreateEntity();
+        return Store.CreateEntity();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

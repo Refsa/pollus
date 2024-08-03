@@ -14,7 +14,7 @@ public struct ArchetypeChunk : IDisposable
     public int Count => count;
     public int Length => length;
 
-    public ArchetypeChunk(Span<ComponentID> cids, int rows = 0)
+    public ArchetypeChunk(scoped in Span<ComponentID> cids, int rows = 0)
     {
         length = rows;
         count = 0;
@@ -38,6 +38,7 @@ public struct ArchetypeChunk : IDisposable
         entities.Dispose();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public int AddEntity(in Entity entity)
     {
         if (count >= length) return -1;
@@ -46,7 +47,7 @@ public struct ArchetypeChunk : IDisposable
         return count++;
     }
 
-    unsafe public Entity SwapRemoveEntity(int row, ref ArchetypeChunk source)
+    unsafe public Entity SwapRemoveEntity(int row, scoped ref ArchetypeChunk source)
     {
         for (int i = 0; i < components.Count; i++)
         {
@@ -68,59 +69,75 @@ public struct ArchetypeChunk : IDisposable
         return entities[row];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public Span<Entity> GetEntities()
     {
         return new Span<Entity>(entities.Data, count);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public Span<C> GetComponents<C>()
-        where C : unmanaged, IComponent
+            where C : unmanaged, IComponent
     {
         var cinfo = Component.GetInfo<C>();
         var array = components.Get(cinfo.ID);
         return new Span<C>(array.Data, count);
     }
 
-    unsafe public void SetComponent<C>(int row, in C component)
-        where C : unmanaged, IComponent
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public Span<C> GetComponents<C>(in ComponentID cid)
+            where C : unmanaged, IComponent
+    {
+        return new Span<C>(components.Get(cid).Data, count);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public void SetComponent<C>(int row, scoped in C component)
+            where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
         ref var array = ref components.Get(cid);
         Unsafe.Write(Unsafe.Add<C>(array.Data, row), component);
     }
 
-    unsafe public void SetComponent(int row, ComponentID cid, in ReadOnlySpan<byte> component)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public void SetComponent(int row, in ComponentID cid, scoped in ReadOnlySpan<byte> component)
     {
         ref var array = ref components.Get(cid);
         var dst = Unsafe.Add<byte>(array.Data, row * component.Length);
         component.CopyTo(new Span<byte>(dst, component.Length));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public ref C GetComponent<C>(int row)
-        where C : unmanaged, IComponent
+            where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
         var array = components.Get(cid);
         return ref *(C*)Unsafe.Add<C>(array.Data, row);
     }
 
-    unsafe public Span<byte> GetComponent(int row, ComponentID cid)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public Span<byte> GetComponent(int row, in ComponentID cid)
     {
         var array = components.Get(cid);
         return new Span<byte>(Unsafe.Add<byte>(array.Data, row * Component.GetInfo(cid).SizeInBytes), Component.GetInfo(cid).SizeInBytes);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void SetCount(int newCount)
     {
         count = newCount;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent<C>()
-        where C : unmanaged, IComponent
+            where C : unmanaged, IComponent
     {
         return components.Has(Component.GetInfo<C>().ID);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent(ComponentID cid)
     {
         return components.Has(cid);

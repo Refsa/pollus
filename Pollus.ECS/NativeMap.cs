@@ -23,6 +23,11 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     public readonly NativeArray<TValue> Values => values;
     public readonly int Count => count;
 
+    public ref TValue this[in TKey key]
+    {
+        get => ref Get(key);
+    }
+
     public NativeMap() : this(0) { }
 
     public NativeMap(int initialCapacity)
@@ -45,7 +50,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int Hash(TKey key)
+    int Hash(scoped in TKey key)
     {
         var hash = key.GetHashCode();
         return hash * int.Sign(hash) % capacity;
@@ -133,13 +138,13 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public bool Has(in TKey key)
+    public bool Has(scoped in TKey key)
     {
         return GetIndex(key) != -1;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public ref TValue Get(in TKey key)
+    public ref TValue Get(scoped in TKey key)
     {
         int index = GetIndex(key);
         if (index != -1)
@@ -150,7 +155,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Set(in TKey key, in TValue value)
+    public void Set(scoped in TKey key, scoped in TValue value)
     {
         int index = GetIndex(key);
         if (index != -1)
@@ -160,7 +165,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public bool TryGetValue(in TKey key, out TValue value)
+    public bool TryGetValue(scoped in TKey key, out TValue value)
     {
         int index = GetIndex(key);
         if (index != -1)
@@ -173,7 +178,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Remove(in TKey key)
+    public void Remove(scoped in TKey key)
     {
         int index = GetIndex(key);
         if (index != -1)
@@ -184,7 +189,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int GetIndex(in TKey key)
+    int GetIndex(scoped in TKey key)
     {
         int index = Hash(key);
         var keySpan = keys.AsSpan();

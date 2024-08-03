@@ -140,9 +140,9 @@ public class ArchetypeTests
         var entity2 = Entity.With(new TestComponent2 { Value = 20 }).Spawn(world);
         var entity3 = Entity.With(new TestComponent3 { Value = 30 }).Spawn(world);
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
-        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity2);
-        var c3 = world.Archetypes.GetComponent<TestComponent3>(entity3);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Store.GetComponent<TestComponent2>(entity2);
+        var c3 = world.Store.GetComponent<TestComponent3>(entity3);
 
         Assert.Equal(10, c1.Value);
         Assert.Equal(20, c2.Value);
@@ -156,12 +156,12 @@ public class ArchetypeTests
         var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
         var entity2 = Entity.With(new TestComponent1 { Value = 20 }).Spawn(world);
 
-        world.Archetypes.DestroyEntity(entity1);
+        world.Store.DestroyEntity(entity1);
 
-        Assert.False(world.Archetypes.EntityExists(entity1));
-        Assert.True(world.Archetypes.EntityExists(entity2));
+        Assert.False(world.Store.EntityExists(entity1));
+        Assert.True(world.Store.EntityExists(entity2));
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity2);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity2);
         Assert.Equal(20, c1.Value);
     }
 
@@ -170,10 +170,10 @@ public class ArchetypeTests
     {
         using var world = new World();
         var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
-        world.Archetypes.AddComponent(entity1, new TestComponent2 { Value = 20 });
+        world.Store.AddComponent(entity1, new TestComponent2 { Value = 20 });
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
-        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity1);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Store.GetComponent<TestComponent2>(entity1);
 
         Assert.Equal(20, c2.Value);
         Assert.Equal(10, c1.Value);
@@ -184,11 +184,11 @@ public class ArchetypeTests
     {
         using var world = new World();
         var entity1 = world.Spawn();
-        world.Archetypes.AddComponent(entity1, new TestComponent1 { Value = 10 });
-        world.Archetypes.AddComponent(entity1, new TestComponent2 { Value = 20 });
+        world.Store.AddComponent(entity1, new TestComponent1 { Value = 10 });
+        world.Store.AddComponent(entity1, new TestComponent2 { Value = 20 });
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
-        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity1);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Store.GetComponent<TestComponent2>(entity1);
 
         Assert.Equal(10, c1.Value);
         Assert.Equal(20, c2.Value);
@@ -200,24 +200,24 @@ public class ArchetypeTests
         using var world = new World();
 
         var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
-        world.Archetypes.AddComponent(entity1, new TestComponent2 { Value = 20 });
+        world.Store.AddComponent(entity1, new TestComponent2 { Value = 20 });
         var entity2 = Entity.With(new TestComponent1 { Value = 30 }).Spawn(world);
-        world.Archetypes.AddComponent(entity2, new TestComponent2 { Value = 40 });
+        world.Store.AddComponent(entity2, new TestComponent2 { Value = 40 });
         var entity3 = Entity.With(new TestComponent1 { Value = 50 }).Spawn(world);
-        world.Archetypes.AddComponent(entity3, new TestComponent2 { Value = 60 });
+        world.Store.AddComponent(entity3, new TestComponent2 { Value = 60 });
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
-        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity1);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Store.GetComponent<TestComponent2>(entity1);
         Assert.Equal(10, c1.Value);
         Assert.Equal(20, c2.Value);
 
-        var c3 = world.Archetypes.GetComponent<TestComponent1>(entity2);
-        var c4 = world.Archetypes.GetComponent<TestComponent2>(entity2);
+        var c3 = world.Store.GetComponent<TestComponent1>(entity2);
+        var c4 = world.Store.GetComponent<TestComponent2>(entity2);
         Assert.Equal(30, c3.Value);
         Assert.Equal(40, c4.Value);
 
-        var c5 = world.Archetypes.GetComponent<TestComponent1>(entity3);
-        var c6 = world.Archetypes.GetComponent<TestComponent2>(entity3);
+        var c5 = world.Store.GetComponent<TestComponent1>(entity3);
+        var c6 = world.Store.GetComponent<TestComponent2>(entity3);
         Assert.Equal(50, c5.Value);
         Assert.Equal(60, c6.Value);
     }
@@ -231,22 +231,22 @@ public class ArchetypeTests
         var entity2 = Entity.With(new TestComponent1 { Value = 30 }).Spawn(world);
         var entity3 = Entity.With(new TestComponent1 { Value = 50 }).Spawn(world);
         
-        world.Archetypes.AddComponent(entity1, new TestComponent2 { Value = 20 });
-        world.Archetypes.AddComponent(entity2, new TestComponent2 { Value = 40 });
-        world.Archetypes.AddComponent(entity3, new TestComponent2 { Value = 60 });
+        world.Store.AddComponent(entity1, new TestComponent2 { Value = 20 });
+        world.Store.AddComponent(entity2, new TestComponent2 { Value = 40 });
+        world.Store.AddComponent(entity3, new TestComponent2 { Value = 60 });
 
-        var c1 = world.Archetypes.GetComponent<TestComponent1>(entity1);
-        var c2 = world.Archetypes.GetComponent<TestComponent2>(entity1);
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        var c2 = world.Store.GetComponent<TestComponent2>(entity1);
         Assert.Equal(10, c1.Value);
         Assert.Equal(20, c2.Value);
 
-        var c3 = world.Archetypes.GetComponent<TestComponent1>(entity2);
-        var c4 = world.Archetypes.GetComponent<TestComponent2>(entity2);
+        var c3 = world.Store.GetComponent<TestComponent1>(entity2);
+        var c4 = world.Store.GetComponent<TestComponent2>(entity2);
         Assert.Equal(30, c3.Value);
         Assert.Equal(40, c4.Value);
 
-        var c5 = world.Archetypes.GetComponent<TestComponent1>(entity3);
-        var c6 = world.Archetypes.GetComponent<TestComponent2>(entity3);
+        var c5 = world.Store.GetComponent<TestComponent1>(entity3);
+        var c6 = world.Store.GetComponent<TestComponent2>(entity3);
         Assert.Equal(50, c5.Value);
         Assert.Equal(60, c6.Value);
     }

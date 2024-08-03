@@ -9,7 +9,7 @@ public record struct ArchetypeID(int Hash)
         return new ArchetypeID(hash);
     }
 
-    public static ArchetypeID Create(Span<ComponentID> cids)
+    public static ArchetypeID Create(scoped in Span<ComponentID> cids)
     {
         var hash = 0;
         for (int i = 0; i < cids.Length; i++)
@@ -21,6 +21,17 @@ public record struct ArchetypeID(int Hash)
 
     public static explicit operator int(ArchetypeID id) => id.Hash;
     public static explicit operator ArchetypeID(int hash) => new(hash);
+
+    public ArchetypeID With<C>() where C : unmanaged, IComponent
+    {
+        var cid = Component.GetInfo<C>().ID;
+        return new ArchetypeID(HashCode.Combine(Hash, cid));
+    }
+
+    public ArchetypeID With(in ComponentID cid)
+    {
+        return new ArchetypeID(HashCode.Combine(Hash, cid));
+    }
 }
 
 public partial class Archetype : IDisposable
@@ -148,29 +159,44 @@ public partial class Archetype : IDisposable
         return RemoveEntity(srcInfo);
     }
 
-    public void SetComponent<C>(int chunkIndex, int rowIndex, in C component) where C : unmanaged, IComponent
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void SetComponent<C>(int chunkIndex, int rowIndex, scoped in C component) where C : unmanaged, IComponent
     {
         ref var chunk = ref chunks[chunkIndex];
         chunk.SetComponent(rowIndex, component);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref C GetComponent<C>(int chunkIndex, int rowIndex) where C : unmanaged, IComponent
     {
         ref var chunk = ref chunks[chunkIndex];
         return ref chunk.GetComponent<C>(rowIndex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent<C>()
-        where C : unmanaged, IComponent
+            where C : unmanaged, IComponent
     {
         return chunkInfo.ComponentIDs.Contains(Component.GetInfo<C>().ID);
     }
 
-    public bool HasComponent(ComponentID cid)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasComponent(in ComponentID cid)
     {
         return chunkInfo.ComponentIDs.Contains(cid);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasComponents(scoped in Span<ComponentID> componentIDs)
+    {
+        foreach (var cid in componentIDs)
+        {
+            if (HasComponent(cid) is false) return false;
+        }
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref ArchetypeChunk GetChunk(int chunkIndex)
     {
         return ref chunks[chunkIndex];
@@ -194,6 +220,7 @@ public partial class Archetype : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     ref ArchetypeChunk GetVacantChunk()
     {
         if (chunks.Length == 0 || chunks[^1].Count >= chunkInfo.RowsPerChunk)

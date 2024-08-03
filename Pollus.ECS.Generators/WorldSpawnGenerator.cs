@@ -29,7 +29,7 @@ public static class WorldSpawnExtensions
     public static Entity Spawn<$gen_args$>(this World world, $parameters$)
         $gen_constraints$
     {
-        var entityRef = world.Archetypes.CreateEntity<EntityBuilder<$gen_args$>>();
+        var entityRef = world.Store.CreateEntity<EntityBuilder<$gen_args$>>();
         ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         $set_components$
         return entityRef.Entity;
