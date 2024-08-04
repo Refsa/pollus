@@ -2,6 +2,8 @@ namespace Pollus.Graphics;
 
 using Silk.NET.Core.Contexts;
 using Pollus.ECS;
+using Pollus.Mathematics;
+using System.Runtime.InteropServices;
 
 public record class WindowOptions
 {
@@ -14,17 +16,22 @@ public record class WindowOptions
     public int FramesPerSecond { get; set; } = 144;
 }
 
-public class Window : IDisposable
+public class Window : IDisposable, INativeWindowSource
 {
     bool isOpen;
     INativeWindow window;
 
     public bool IsOpen => isOpen;
 
+    public INativeWindow? Native => window;
+
+    public Vector2<int> Size { get; private set; }
+
     public Window(WindowOptions options)
     {
         isOpen = true;
         window = SDL.CreateWindow(options);
+        Size = new Vector2<int>(options.Width, options.Height);
     }
 
     public void Dispose()
@@ -32,9 +39,37 @@ public class Window : IDisposable
         isOpen = false;
         SDL.DestroyWindow(window);
     }
+
+    public void PollEvents()
+    {
+        foreach (var @event in SDL.PollEvents())
+        {
+            switch (@event.Type)
+            {
+                case WindowEventType.Closed:
+                    isOpen = false;
+                    break;
+            }
+        }
+    }
 }
 
-public struct WindowEvent<T>
+public enum WindowEventType
 {
-    public T Event { get; set; }
+    Closed,
+
+}
+
+[StructLayout(LayoutKind.Explicit)]
+public struct WindowEvent
+{
+    [FieldOffset(0)]
+    public readonly WindowEventType Type;
+
+    public WindowEvent(WindowEventType type)
+    {
+        Type = type;
+    }
+
+    public static implicit operator WindowEvent(WindowEventType type) => new(type);
 }

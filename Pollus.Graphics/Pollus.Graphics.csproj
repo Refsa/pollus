@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Silk.NET.WebGPU" Version="2.20.0" />
     <PackageReference Include="Silk.NET.WebGPU.Native.WGPU" Version="2.20.0" />
     <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />

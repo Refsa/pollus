@@ -1,22 +1,26 @@
 namespace Pollus.ECS;
 
-using System.Net.Http.Headers;
-using Microsoft.VisualBasic;
 using Pollus.Graphics;
-using Silk.NET.Core.Contexts;
-using Silk.NET.SDL;
+
+using SN_Sdl = Silk.NET.SDL.Sdl;
+using SN_WindowFlags = Silk.NET.SDL.WindowFlags;
+using SN_SdlNativeWindow = Silk.NET.SDL.SdlNativeWindow;
+using SN_SdlProvider = Silk.NET.SDL.SdlProvider;
+using SN_INativeWindow = Silk.NET.Core.Contexts.INativeWindow;
+using SN_Event = Silk.NET.SDL.Event;
+using SN_EventType = Silk.NET.SDL.EventType;
 
 public static class SDL
 {
-    public static readonly Sdl Instance = SdlProvider.SDL.Value;
+    public static readonly SN_Sdl Instance = SN_SdlProvider.SDL.Value;
 
     static SDL()
     {
-        SdlProvider.InitFlags = Sdl.InitVideo | Sdl.InitEvents;
-        while (SdlProvider.SDL.IsValueCreated is false) { }
+        SN_SdlProvider.InitFlags = SN_Sdl.InitVideo | SN_Sdl.InitEvents;
+        while (SN_SdlProvider.SDL.IsValueCreated is false) { }
     }
 
-    unsafe public static INativeWindow CreateWindow(WindowOptions options)
+    unsafe public static SN_INativeWindow CreateWindow(WindowOptions options)
     {
         var window = Instance.CreateWindow(
             options.Title,
@@ -24,32 +28,33 @@ public static class SDL
             options.Y,
             options.Width,
             options.Height,
-            (uint)WindowFlags.None
+            (uint)SN_WindowFlags.None
         );
 
-        return new SdlNativeWindow(
+        return new SN_SdlNativeWindow(
             Instance, window
         );
     }
 
-    unsafe public static void DestroyWindow(INativeWindow window)
+    unsafe public static void DestroyWindow(SN_INativeWindow window)
     {
         Instance.DestroyWindow((Silk.NET.SDL.Window*)window.Sdl!);
     }
 
-    public static void PollEvents()
+    public static IEnumerable<WindowEvent> PollEvents()
     {
         Instance.PumpEvents();
 
-        var @event = new Event();
+        var @event = new SN_Event();
         while (Instance.PollEvent(ref @event) == 1)
         {
-            switch ((EventType)@event.Type)
+            switch ((SN_EventType)@event.Type)
             {
-                case EventType.Quit:
-                case EventType.AppTerminating:
+                case SN_EventType.Quit:
+                case SN_EventType.AppTerminating:
+                    yield return WindowEventType.Closed;
                     break;
-                case EventType.Windowevent:
+                case SN_EventType.Windowevent:
                     break;
             }
         }
