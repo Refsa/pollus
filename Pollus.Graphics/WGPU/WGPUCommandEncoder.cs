@@ -5,8 +5,10 @@ using System.Runtime.InteropServices;
 
 unsafe public struct WGPUCommandEncoder : IDisposable
 {
-    public WGPUContext context;
-    public Silk.NET.WebGPU.CommandEncoder* Native;
+    WGPUContext context;
+    Silk.NET.WebGPU.CommandEncoder* native;
+
+    public nint Native => (nint)native;
 
     public WGPUCommandEncoder(WGPUContext context, string label)
     {
@@ -15,13 +17,13 @@ unsafe public struct WGPUCommandEncoder : IDisposable
         fixed (byte* labelPtr = labelSpan)
         {
             var descriptor = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: labelPtr);
-            Native = context.wgpu.DeviceCreateCommandEncoder(context.device, descriptor);
+            native = context.wgpu.DeviceCreateCommandEncoder(context.device, descriptor);
         }
     }
 
     public void Dispose()
     {
-        context.wgpu.CommandEncoderRelease(Native);
+        context.wgpu.CommandEncoderRelease(native);
     }
 
     public WGPUCommandBuffer Finish(string label)
@@ -30,7 +32,7 @@ unsafe public struct WGPUCommandEncoder : IDisposable
         fixed (byte* labelPtr = labelSpan)
         {
             var descriptor = new Silk.NET.WebGPU.CommandBufferDescriptor(label: labelPtr);
-            var commandBuffer = context.wgpu.CommandEncoderFinish(Native, descriptor);
+            var commandBuffer = context.wgpu.CommandEncoderFinish(native, descriptor);
             return new WGPUCommandBuffer(context, commandBuffer);
         }
     }
@@ -46,7 +48,7 @@ unsafe public struct WGPUCommandEncoder : IDisposable
                 ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
                 ColorAttachments = (Silk.NET.WebGPU.RenderPassColorAttachment*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ColorAttachments))
             };
-            return new WGPURenderPassEncoder(context, Native, wgpuDescriptor);
+            return new WGPURenderPassEncoder(context, native, wgpuDescriptor);
         }
     }
 }

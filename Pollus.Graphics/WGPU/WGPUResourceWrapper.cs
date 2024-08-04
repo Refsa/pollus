@@ -1,18 +1,18 @@
 namespace Pollus.Graphics.WGPU;
 
-public abstract class WGPUResouceWrapper : IDisposable
+public abstract class WGPUResourceWrapper : IDisposable
 {
     protected WGPUContext context;
 
     bool isDisposed;
 
-    public WGPUResouceWrapper(WGPUContext context)
+    public WGPUResourceWrapper(WGPUContext context)
     {
         context.RegisterResource(this);
         this.context = context;
     }
 
-    ~WGPUResouceWrapper() => Dispose();
+    ~WGPUResourceWrapper() => Dispose();
 
     public void Dispose()
     {

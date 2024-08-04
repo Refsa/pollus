@@ -22,7 +22,7 @@ unsafe public class WGPUContext : IDisposable
 
     bool isDisposed;
 
-    List<WGPUResouceWrapper> resources = new();
+    List<WGPUResourceWrapper> resources = new();
 
     public Window Window => window;
 
@@ -162,12 +162,12 @@ unsafe public class WGPUContext : IDisposable
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(WGPUResouceWrapper resource)
+    public void RegisterResource(WGPUResourceWrapper resource)
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(WGPUResouceWrapper resource)
+    public void ReleaseResource(WGPUResourceWrapper resource)
     {
         resources.Remove(resource);
     }
@@ -180,6 +180,11 @@ unsafe public class WGPUContext : IDisposable
     public WGPUSurfaceTexture CreateSurfaceTexture()
     {
         return new(this);
+    }
+
+    public WGPURenderPipeline CreateRenderPipeline(WGPURenderPipelineDescriptor descriptor)
+    {
+        return new(this, descriptor);
     }
 
     public void Present()
