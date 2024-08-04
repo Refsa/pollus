@@ -13,19 +13,17 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
     {
         this.context = context;
         using var pins = new TemporaryPins();
-        pins.Pin(descriptor.Label);
 
-        var nativeDescriptor = new Silk.NET.WebGPU.RenderPipelineDescriptor
-        {
-            Label = (byte*)MemoryMarshal.AsBytes(descriptor.Label.AsSpan())[0],
-        };
+        var nativeDescriptor = new Silk.NET.WebGPU.RenderPipelineDescriptor(
+            label: (byte*)pins.PinString(descriptor.Label).AddrOfPinnedObject()
+        );
 
         if (descriptor.VertexState is WGPUVertexState vertexState)
         {
             pins.Pin(vertexState.EntryPoint);
             nativeDescriptor.Vertex = new Silk.NET.WebGPU.VertexState(
                 module: (Silk.NET.WebGPU.ShaderModule*)vertexState.ShaderModule.Native,
-                entryPoint: (byte*)MemoryMarshal.AsBytes(vertexState.EntryPoint.AsSpan())[0]
+                entryPoint: (byte*)pins.PinString(vertexState.EntryPoint).AddrOfPinnedObject()
             );
 
             if (vertexState.Constants is WGPUConstantEntry[] constantEntries)
@@ -36,7 +34,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
                 {
                     pins.Pin(constantEntries[i].Key);
                     constants[i] = new(
-                        key: (byte*)MemoryMarshal.AsBytes(constantEntries[i].Key.AsSpan())[0],
+                        key: (byte*)pins.PinString(constantEntries[i].Key).AddrOfPinnedObject(),
                         value: constantEntries[i].Value
                     );
                 }
@@ -65,7 +63,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
         {
             var fragment = new Silk.NET.WebGPU.FragmentState(
                 module: (Silk.NET.WebGPU.ShaderModule*)fragmentState.ShaderModule.Native,
-                entryPoint: (byte*)MemoryMarshal.AsBytes(fragmentState.EntryPoint.AsSpan())[0]
+                entryPoint: (byte*)pins.PinString(fragmentState.EntryPoint).AddrOfPinnedObject()
             );
 
             if (fragmentState.Constants is WGPUConstantEntry[] constantEntries)
@@ -76,7 +74,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
                 {
                     pins.Pin(constantEntries[i].Key);
                     constants[i] = new(
-                        key: (byte*)MemoryMarshal.AsBytes(constantEntries[i].Key.AsSpan())[0],
+                        key: (byte*)pins.PinString(constantEntries[i].Key).AddrOfPinnedObject(),
                         value: constantEntries[i].Value
                     );
                 }
@@ -99,7 +97,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
                     if (colorTargetState.Blend != null)
                     {
                         var temp = colorTargetState.Blend.Value;
-                        targets[i].Blend = &temp;
+                        targets[i].Blend = (Silk.NET.WebGPU.BlendState*)&temp;
                     }
                 }
                 fragment.Targets = (Silk.NET.WebGPU.ColorTargetState*)pins.Pin(targets).AddrOfPinnedObject();

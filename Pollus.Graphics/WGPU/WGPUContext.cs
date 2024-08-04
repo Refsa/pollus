@@ -187,6 +187,21 @@ unsafe public class WGPUContext : IDisposable
         return new(this, descriptor);
     }
 
+    public WGPUPipelineLayout CreatePipelineLayout(WGPUPipelineLayoutDescriptor descriptor)
+    {
+        return new(this, descriptor);
+    }
+
+    public WGPUShaderModule CreateShaderModule(WGPUShaderModuleDescriptor descriptor)
+    {
+        return new(this, descriptor);
+    }
+
+    public Silk.NET.WebGPU.TextureFormat GetSurfaceFormat()
+    {
+        return surfaceConfiguration.Format;
+    }
+
     public void Present()
     {
         wgpu.SurfacePresent(surface);
