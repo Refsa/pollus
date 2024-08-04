@@ -13,17 +13,18 @@ unsafe public class WGPUShaderModule : WGPUResourceWrapper
 
     public WGPUShaderModule(WGPUContext context, WGPUShaderModuleDescriptor descriptor) : base(context)
     {
-        using var pins = new TemporaryPins();
+        using var labelPin = TemporaryPin.PinString(descriptor.Label);
+        using var contentPin = TemporaryPin.PinString(descriptor.Content);
 
         var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(
-            label: (byte*)pins.PinString(descriptor.Label).AddrOfPinnedObject()
+            label: (byte*)labelPin.Ptr
         );
 
         var shaderModuleDescriptor = descriptor.Backend switch
         {
             ShaderBackend.WGSL => new Silk.NET.WebGPU.ShaderModuleWGSLDescriptor(
                 chain: new Silk.NET.WebGPU.ChainedStruct(sType: Silk.NET.WebGPU.SType.ShaderModuleWgslDescriptor),
-                code: (byte*)pins.PinString(descriptor.Content).AddrOfPinnedObject()
+                code: (byte*)contentPin.Ptr
             ),
             _ => throw new NotImplementedException(),
         };

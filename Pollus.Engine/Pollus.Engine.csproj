@@ -1,9 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net8.0-browser;</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Pollus.Graphics\Pollus.Graphics.csproj" />
+    <ProjectReference Include="..\Pollus.Audio\Pollus.Audio.csproj" />
+    <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
+    <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+  </ItemGroup>
 </Project>

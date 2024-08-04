@@ -1,4 +1,9 @@
 ﻿using Pollus.ECS;
+using Pollus.Game;
+
+ECSExample.Run();
+
+/* using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
@@ -96,4 +101,4 @@ while (window.IsOpen)
     }
 
     Thread.Sleep(8);
-}
+} */

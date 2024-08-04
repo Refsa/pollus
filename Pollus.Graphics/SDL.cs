@@ -9,6 +9,7 @@ using SN_SdlProvider = Silk.NET.SDL.SdlProvider;
 using SN_INativeWindow = Silk.NET.Core.Contexts.INativeWindow;
 using SN_Event = Silk.NET.SDL.Event;
 using SN_EventType = Silk.NET.SDL.EventType;
+using Pollus.Utils;
 
 public static class SDL
 {
@@ -22,13 +23,15 @@ public static class SDL
 
     unsafe public static SN_INativeWindow CreateWindow(WindowOptions options)
     {
+        using var title = TemporaryPin.PinString(options.Title);
+
         var window = Instance.CreateWindow(
-            options.Title,
+            (byte*)title.Ptr,
             options.X,
             options.Y,
             options.Width,
             options.Height,
-            (uint)SN_WindowFlags.None
+            (uint)SN_WindowFlags.Opengl
         );
 
         return new SN_SdlNativeWindow(

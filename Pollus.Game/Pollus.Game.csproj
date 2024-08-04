@@ -1,15 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net8.0-browser;</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <RunAOTCompilation>true</RunAOTCompilation>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">
+    <WasmExtraFilesToDeploy Include="www/index.html" />
+    <WasmExtraFilesToDeploy Include="www/main.js" />
+    <WasmExtraFilesToDeploy Include="www/*.js" />
+    <WasmExtraFilesToDeploy Include="www/*.css" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Engine\Pollus.Engine.csproj" />
-    <ProjectReference Include="..\Pollus.Graphics\Pollus.Graphics.csproj" />
-    <ProjectReference Include="..\Pollus.Audio\Pollus.Audio.csproj" />
-    <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
   </ItemGroup>
 </Project>

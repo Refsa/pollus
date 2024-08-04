@@ -1,16 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net8.0-browser;</TargetFrameworks>
     <LangVersion>latest</LangVersion>
 
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <TieredPGO>true</TieredPGO>
-    <!-- <TieredCompilation>true</TieredCompilation>
-    <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
-    <TieredCompilationQuickJitForLoops>true</TieredCompilationQuickJitForLoops> -->
-
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IlcDisableReflection>true</IlcDisableReflection>
     <CheckForOverflowUnderflow>false</CheckForOverflowUnderflow>
