@@ -28,7 +28,7 @@ public class World : IDisposable
     public void Preallocate<TBuilder>(in TBuilder builder, int count)
         where TBuilder : IEntityBuilder
     {
-        var archetype = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
-        archetype.archetype.Preallocate(count);
+        var archetypeInfo = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        archetypeInfo.archetype.Preallocate(count);
     }
 }

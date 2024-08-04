@@ -59,6 +59,7 @@ public class QueryBenchmarks
     public void Query_Two_ForEach_IForEach()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
+        q.ForEach(new ForEachTwo());
     }
 
     struct ForEachOne : IForEach<Component1>

@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using Pollus.Collections;
 
 public record struct ArchetypeID(int Hash)
 {

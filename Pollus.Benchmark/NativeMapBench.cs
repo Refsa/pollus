@@ -1,7 +1,7 @@
 namespace Pollus.Benchmark;
 
 using BenchmarkDotNet.Attributes;
-using Pollus.ECS;
+using Pollus.Collections;
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]

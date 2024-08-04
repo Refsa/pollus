@@ -1,7 +1,7 @@
-using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic;
-
 namespace Pollus.ECS;
+
+using System.Runtime.CompilerServices;
+using Pollus.Collections;
 
 public class ArchetypeStore : IDisposable
 {

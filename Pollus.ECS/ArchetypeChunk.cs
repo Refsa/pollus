@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using Pollus.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 

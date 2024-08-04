@@ -1,4 +1,4 @@
-namespace Pollus.Engine.Mathematics;
+namespace Pollus.Mathematics;
 
 using System.Numerics;
 

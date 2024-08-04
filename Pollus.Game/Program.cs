@@ -1,7 +1,9 @@
 ﻿using Pollus.ECS;
+using Pollus.Graphics;
 
-var entity = new Entity(0, 0);
+using var window = new Window(new());
 
-partial struct TestComponent : IComponent
+while (window.IsOpen)
 {
+    
 }

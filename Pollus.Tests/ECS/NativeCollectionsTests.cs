@@ -1,6 +1,6 @@
-namespace Pollus.Tests.ECS;
+namespace Pollus.Tests.Collections;
 
-using Pollus.ECS;
+using Pollus.Collections;
 
 public class NativeCollectionsTests
 {

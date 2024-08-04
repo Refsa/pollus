@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Benchmark", "Pollus.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.ECS.Generators", "Pollus.ECS.Generators\Pollus.ECS.Generators.csproj", "{6619B42E-7960-4824-ABCB-D5D6B0DE2419}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Core", "Pollus.Core\Pollus.Core.csproj", "{9587B12D-B500-46B7-918C-1CA6D12744C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,5 +42,9 @@ Global
 		{6619B42E-7960-4824-ABCB-D5D6B0DE2419}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6619B42E-7960-4824-ABCB-D5D6B0DE2419}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6619B42E-7960-4824-ABCB-D5D6B0DE2419}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9587B12D-B500-46B7-918C-1CA6D12744C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9587B12D-B500-46B7-918C-1CA6D12744C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9587B12D-B500-46B7-918C-1CA6D12744C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9587B12D-B500-46B7-918C-1CA6D12744C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
