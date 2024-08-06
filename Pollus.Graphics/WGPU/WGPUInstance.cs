@@ -1,18 +1,28 @@
-namespace Pollus.Graphics.WGPU;
+using System.Runtime.InteropServices;
 
-using Silk.NET.WebGPU;
+namespace Pollus.Graphics.WGPU;
 
 unsafe public class WGPUInstance : IDisposable
 {
-    internal WebGPU wgpu;
-    internal Instance* instance;
+#if NET8_0_BROWSER
+    internal WGPUBrowser wgpu;
+#else
+    internal Silk.NET.WebGPU.WebGPU wgpu;
+#endif
+    internal Silk.NET.WebGPU.Instance* instance;
 
     bool isDisposed;
 
     public WGPUInstance()
     {
-        wgpu = WebGPU.GetApi();
-        instance = wgpu.CreateInstance(null);
+#if NET8_0_BROWSER
+        wgpu = new WGPUBrowser();
+#else
+        wgpu = Silk.NET.WebGPU.WebGPU.GetApi();
+#endif
+
+        var instanceDescriptor = new Silk.NET.WebGPU.InstanceDescriptor();
+        instance = wgpu.CreateInstance(instanceDescriptor);
     }
 
     ~WGPUInstance() => Dispose();

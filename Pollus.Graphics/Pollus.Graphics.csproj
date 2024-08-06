@@ -7,6 +7,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-browser'">
+    <DefineConstants>NET8_0_BROWSER</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
   </ItemGroup>
@@ -17,4 +21,7 @@
     <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <NativeFileReference Include="native/webgpu.h" />
+  </ItemGroup>
 </Project>

@@ -8,11 +8,17 @@
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <RunAOTCompilation>true</RunAOTCompilation>
     <SelfContained>true</SelfContained>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
-    <RunAOTCompilation>true</RunAOTCompilation>
+
+    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH</EmccExtraLDFlags>
+
+    <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
+    <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+    <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">
@@ -20,7 +26,25 @@
     <WasmExtraFilesToDeploy Include="www/main.js" />
     <WasmExtraFilesToDeploy Include="www/*.js" />
     <WasmExtraFilesToDeploy Include="www/*.css" />
+
+    <DirectPInvoke Include="__Internal_emscripten" />
   </ItemGroup>
+
+  <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative"
+    DependsOnTargets="_PrepareForWasmBuildNative">
+    <ItemGroup>
+      <_WasmPInvokeModules Include="__Internal_emscripten" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="UnfreezeCache" DependsOnTargets="AddBrowserDeps"
+    BeforeTargets="_WasmCompileNativeFiles;_WasmCompileAssemblyBitCodeFilesForAOT;_WasmCalculateInitialHeapSize;_WasmLinkDotNet;_CheckEmccIsExpectedVersion">
+    <ItemGroup>
+      <EmscriptenEnvVars Remove="EM_FROZEN_CACHE=True" />
+      <EmscriptenEnvVars Include="EM_FROZEN_CACHE=0" />
+      <EmscriptenEnvVars Include="FROZEN_CACHE=0" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Engine\Pollus.Engine.csproj" />

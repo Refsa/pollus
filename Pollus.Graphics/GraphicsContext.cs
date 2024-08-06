@@ -1,8 +1,6 @@
 namespace Pollus.Graphics;
 
-using System.Diagnostics.CodeAnalysis;
 using Pollus.Graphics.WGPU;
-using Silk.NET.WebGPU;
 
 unsafe public class GraphicsContext : IDisposable
 {
