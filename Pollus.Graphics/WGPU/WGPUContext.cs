@@ -33,13 +33,18 @@ unsafe public class WGPUContext : IDisposable
     SurfaceConfiguration surfaceConfiguration;
     SurfaceCapabilities surfaceCapabilities;
 
-    bool isReady;
+    bool isPreparingAdapter;
+    bool isAdapterReady;
+    bool isPreparingDevice;
+    bool isDeviceReady;
     bool isDisposed;
 
     List<WGPUResourceWrapper> resources = new();
 
     public Window Window => window;
-    public bool IsReady => isReady;
+    public bool IsReady => isAdapterReady && isDeviceReady;
+    public bool IsAdapterReady => isAdapterReady;
+    public bool IsDeviceReady => isDeviceReady;
 
     public WGPUContext(Window window, WGPUInstance instance)
     {
@@ -70,8 +75,35 @@ unsafe public class WGPUContext : IDisposable
     }
 
     [MemberNotNull(nameof(surface), nameof(adapter), nameof(device), nameof(queue))]
-    public void Setup()
+    public bool Setup()
     {
+#if NET8_0_BROWSER
+        if (isPreparingAdapter is false && isAdapterReady is false)
+        {
+            CreateSurface();
+            Console.WriteLine("WGPU: Surface created");
+            CreateAdapter();
+            isPreparingAdapter = true;
+            return false;
+        }
+        if (isAdapterReady is false) return false;
+        if (isPreparingDevice is false && isDeviceReady is false)
+        {
+            CreateDevice();
+            isPreparingDevice = true;
+            return false;
+        }
+        if (isDeviceReady is false) return false;
+
+        isPreparingAdapter = false;
+        isPreparingDevice = false; 
+
+        CreateQueue();
+        Console.WriteLine("WGPU: Queue created");
+        ConfigureSurface();
+        Console.WriteLine("WGPU: Surface configured");
+        return true;
+#else
         CreateSurface();
         Console.WriteLine("WGPU: Surface created");
         CreateAdapter();
@@ -83,30 +115,32 @@ unsafe public class WGPUContext : IDisposable
 
         ConfigureSurface();
         Console.WriteLine("WGPU: Surface configured");
-
-        isReady = true;
+        return true;
+#endif
     }
 
     [MemberNotNull(nameof(surface))]
     void CreateSurface()
     {
-#if NET8_0_BROWSER
-        SurfaceDescriptor descriptor = default(SurfaceDescriptor);
-        SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = default(SurfaceDescriptorFromCanvasHTMLSelector);
-        surfaceDescriptorFromCanvasHTMLSelector.Chain = new ChainedStruct
+        using var selectorPtr = TemporaryPin.PinString("#canvas");
+        SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
-            Next = null,
-            SType = SType.SurfaceDescriptorFromCanvasHtmlSelector
+            Chain = new ChainedStruct
+            {
+                Next = null,
+                SType = SType.SurfaceDescriptorFromCanvasHtmlSelector
+            },
+            Selector = (byte*)selectorPtr.Ptr
         };
-        surfaceDescriptorFromCanvasHTMLSelector.Selector = (byte*)Silk.NET.Core.Native.SilkMarshal.StringToPtr("canvas");
-        SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector2 = surfaceDescriptorFromCanvasHTMLSelector;
-        descriptor.NextInChain = (ChainedStruct*)(&surfaceDescriptorFromCanvasHTMLSelector2);
-        surface = wgpu.InstanceCreateSurface(instance.instance, in descriptor);
-        if (descriptor.NextInChain->SType == SType.SurfaceDescriptorFromCanvasHtmlSelector)
+        using var surfaceDescriptorFromCanvasHTMLSelectorPtr = TemporaryPin.Pin(surfaceDescriptorFromCanvasHTMLSelector);
+
+        SurfaceDescriptor descriptor = new()
         {
-            SurfaceDescriptorFromCanvasHTMLSelector* nextInChain = (SurfaceDescriptorFromCanvasHTMLSelector*)descriptor.NextInChain;
-            Silk.NET.Core.Native.SilkMarshal.Free((IntPtr)nextInChain->Selector);
-        }
+            NextInChain = (ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr.Ptr
+        };
+        using var descriptorPtr = TemporaryPin.Pin(descriptor);
+        surface = wgpu.InstanceCreateSurface(instance.instance, (SurfaceDescriptor*)descriptorPtr.Ptr);
+#if NET8_0_BROWSER
 #else
         surface = WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.instance);
 #endif
@@ -116,21 +150,6 @@ unsafe public class WGPUContext : IDisposable
     {
         wgpu.SurfaceGetCapabilities(surface, adapter, ref surfaceCapabilities);
 
-        LogSurfaceCapabilities();
-
-        surfaceConfiguration = new(
-            device: device,
-            format: surfaceCapabilities.Formats[0],
-            alphaMode: surfaceCapabilities.AlphaModes[0],
-            usage: TextureUsage.RenderAttachment,
-            presentMode: PresentMode.Fifo,
-            width: (uint)Window.Size.X,
-            height: (uint)Window.Size.Y
-        );
-
-        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
-
-        void LogSurfaceCapabilities()
         {
             Console.WriteLine("WGPU: Surface capabilities");
             Console.WriteLine("\tFormats");
@@ -149,6 +168,18 @@ unsafe public class WGPUContext : IDisposable
                 Console.WriteLine("\t\tPresent Mode: " + surfaceCapabilities.PresentModes[i]);
             }
         }
+
+        surfaceConfiguration = new(
+            device: device,
+            format: surfaceCapabilities.Formats[0],
+            alphaMode: surfaceCapabilities.AlphaModes[0],
+            usage: TextureUsage.RenderAttachment,
+            presentMode: PresentMode.Fifo,
+            width: (uint)Window.Size.X,
+            height: (uint)Window.Size.Y
+        );
+
+        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
     }
 
     struct CreateAdapterData
@@ -164,13 +195,14 @@ unsafe public class WGPUContext : IDisposable
             CompatibleSurface = surface
         };
 
-        using var userData = TemporaryPin.Pin(new CreateAdapterData());
 
 #if NET8_0_BROWSER
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)userData);
+        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
 #else
+        using var userData = TemporaryPin.Pin(new CreateAdapterData());
         wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new PfnRequestAdapterCallback(HandleRequestAdapterCallback), (void*)userData.Ptr);
         adapter = ((CreateAdapterData*)userData.Ptr)->Adapter;
+        isAdapterReady = true;
 #endif
     }
 
@@ -182,7 +214,12 @@ unsafe public class WGPUContext : IDisposable
         if (status == RequestAdapterStatus.Success)
         {
             Console.WriteLine("WGPU: Adapter acquired");
+#if NET8_0_BROWSER
+            _instance.adapter = adapter;
+            _instance.isAdapterReady = true;
+#else
             ((CreateAdapterData*)userdata)->Adapter = adapter;
+#endif
         }
         else
         {
@@ -198,14 +235,27 @@ unsafe public class WGPUContext : IDisposable
     [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
-        var supportedLimits = new SupportedLimits();
 #if NET8_0_BROWSER
-        supportedLimits.Limits.MinStorageBufferOffsetAlignment = 256;
-        supportedLimits.Limits.MinUniformBufferOffsetAlignment = 256;
-#else
-        wgpu.AdapterGetLimits(adapter, ref supportedLimits);
-#endif
+        var limits = new WGPULimits()
+        {
+            MinStorageBufferOffsetAlignment = 256,
+            MinUniformBufferOffsetAlignment = 256,
+            MaxDynamicUniformBuffersPerPipelineLayout = 1,
+        };
+        var requiredLimits = new WGPURequiredLimits()
+        {
+            Limits = limits
+        };
+        using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
+        var deviceDescriptor = new WGPUDeviceDescriptor()
+        {
+            RequiredLimits = (WGPURequiredLimits*)requiredLimitsPtr.Ptr
+        };
 
+        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);
+#else
+        var supportedLimits = new SupportedLimits();
+        wgpu.AdapterGetLimits(adapter, ref supportedLimits);
         var requiredLimits = new RequiredLimits()
         {
             Limits = supportedLimits.Limits with
@@ -215,19 +265,16 @@ unsafe public class WGPUContext : IDisposable
         };
         using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
         var deviceDescriptor = new DeviceDescriptor(
-            requiredLimits: (RequiredLimits*)requiredLimitsPtr.Ptr
+            requiredLimits: &requiredLimits
         );
 
         using var userData = TemporaryPin.Pin(new CreateDeviceData());
-
-#if NET8_0_BROWSER
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)userData);
-#else
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
         device = ((CreateDeviceData*)userData.Ptr)->Device;
+        isDeviceReady = true;
+        GetDeviceLimits();
 #endif
 
-        GetDeviceLimits();
     }
 
     void GetDeviceLimits()
@@ -246,12 +293,17 @@ unsafe public class WGPUContext : IDisposable
         if (status == RequestDeviceStatus.Success)
         {
             Console.WriteLine("WGPU: Device acquired");
-
+#if NET8_0_BROWSER
+            _instance.device = device;
+            _instance.isDeviceReady = true;
+#else
             ((CreateDeviceData*)userdata)->Device = device;
+#endif
         }
         else
         {
-            Console.WriteLine("WGPU: Device not acquired");
+            var msg = Marshal.PtrToStringAnsi((IntPtr)message);
+            Console.WriteLine($"WGPU: Device not acquired: {status}, {msg}");
         }
     }
 
@@ -303,7 +355,9 @@ unsafe public class WGPUContext : IDisposable
 
     public void Present()
     {
+#if !NET8_0_BROWSER
         wgpu.SurfacePresent(surface);
+#endif
     }
 
     public void ResizeSurface(Vector2<int> size)

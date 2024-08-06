@@ -31,7 +31,6 @@ unsafe public class GraphicsContext : IDisposable
     public WGPUContext CreateContext(string name, Window window)
     {
         var context = new WGPUContext(window, instance);
-        context.Setup();
         contexts.Add(name, context);
         return context;
     }

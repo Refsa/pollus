@@ -3,6 +3,8 @@ import { dotnet } from './_framework/dotnet.js'
 const { getAssemblyExports, getConfig } = await dotnet.create();
 let exports = await getAssemblyExports(getConfig().mainAssemblyName);
 
-// exports.Pollus.Graphics.Window.SetCanvas(document.getElementById('pollusCanvas'));
+while (document.getElementById('canvas') === null) {
+    await new Promise(r => setTimeout(r, 100));
+}
 
 await dotnet.run();

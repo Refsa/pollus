@@ -1,34 +1,48 @@
 namespace Pollus.Game;
 
+using System.Runtime.InteropServices.JavaScript;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 
-public class GraphicsExample
+public partial class GraphicsExample
 {
     public static void Run()
     {
         Console.WriteLine("Graphics Example");
 
+
         using var window = new Window(new());
         Console.WriteLine("Window Created");
         using var graphicsContext = new GraphicsContext();
         Console.WriteLine("Graphics Context Created");
-        using var windowContext = graphicsContext.CreateContext("main", window);
-        Console.WriteLine("Window Context Created");
-        bool isReady = false;
 
+        WGPUContext? windowContext = null;
+        
+        bool isSetup = false;
         WGPUShaderModule? shaderModule = null;
         WGPURenderPipeline? renderPipeline = null;
+
+        var startupSw = System.Diagnostics.Stopwatch.StartNew();
 
         window.Run(() =>
         {
             Console.WriteLine("Main loop");
-            if (!windowContext.IsReady) return;
-            if (!isReady)
+            if (windowContext == null)
             {
-                isReady = true;
-                Setup();
+                windowContext = graphicsContext.CreateContext("main", window);
+                Console.WriteLine("Window Context Created");
+            }
+
+            if (!windowContext.IsReady)
+            {
+                windowContext.Setup();
+                return;
+            }
+            if (!isSetup)
+            {
                 Console.WriteLine("Window Context Ready");
+                isSetup = true;
+                Setup();
                 return;
             }
 
@@ -92,6 +106,8 @@ fn fs_main() -> @location(0) vec4f {
 """
             });
 
+            Console.WriteLine("Shader Module Created");
+
             renderPipeline = windowContext.CreateRenderPipeline(new()
             {
                 Label = "render-pipeline",
@@ -115,6 +131,8 @@ fn fs_main() -> @location(0) vec4f {
                 PrimitiveState = WGPUPrimitiveState.Default,
                 PipelineLayout = null,
             });
+
+            Console.WriteLine("Render Pipeline Created");
         }
     }
 

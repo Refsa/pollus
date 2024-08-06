@@ -56,11 +56,11 @@ public class WGPUBrowser : IDisposable
         return WGPUBrowserNative.AdapterHasFeature(adapter, feature);
     }
 
-    public unsafe void AdapterRequestDevice(Adapter* adapter, DeviceDescriptor* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }
-    public unsafe void AdapterRequestDevice(Adapter* adapter, in DeviceDescriptor descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }

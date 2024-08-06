@@ -31,9 +31,9 @@ public static class WGPUBrowserNative
     extern public static unsafe bool AdapterHasFeature(Adapter* adapter, FeatureName feature);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, DeviceDescriptor* descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor* descriptor, nint callback, void* userdata);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in DeviceDescriptor descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor descriptor, nint callback, void* userdata);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterReference")]
     extern public static unsafe void AdapterReference(Adapter* adapter);
@@ -623,4 +623,52 @@ public static class WGPUBrowserNative
     extern public static unsafe void TextureViewReference(TextureView* textureView);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuTextureViewRelease")]
     extern public static unsafe void TextureViewRelease(TextureView* textureView);
+}
+
+public struct WGPUDeviceDescriptor
+{
+    public unsafe ChainedStruct* NextInChain;
+    public unsafe byte* Label;
+    public nuint RequiredFeatureCount;
+    public unsafe FeatureName* RequiredFeatures;
+    public unsafe WGPURequiredLimits* RequiredLimits;
+    public QueueDescriptor DefaultQueue;
+}
+
+public struct WGPURequiredLimits
+{
+    public unsafe ChainedStruct* NextInChain;
+    public WGPULimits Limits;
+}
+
+public struct WGPULimits
+{
+    public uint MaxTextureDimension1D;
+    public uint MaxTextureDimension2D;
+    public uint MaxTextureDimension3D;
+    public uint MaxTextureArrayLayers;
+    public uint MaxBindGroups;
+    public uint MaxDynamicUniformBuffersPerPipelineLayout;
+    public uint MaxDynamicStorageBuffersPerPipelineLayout;
+    public uint MaxSampledTexturesPerShaderStage;
+    public uint MaxSamplersPerShaderStage;
+    public uint MaxStorageBuffersPerShaderStage;
+    public uint MaxStorageTexturesPerShaderStage;
+    public uint MaxUniformBuffersPerShaderStage;
+    public ulong MaxUniformBufferBindingSize;
+    public ulong MaxStorageBufferBindingSize;
+    public uint MinUniformBufferOffsetAlignment;
+    public uint MinStorageBufferOffsetAlignment;
+    public uint MaxVertexBuffers;
+    public uint MaxVertexAttributes;
+    public uint MaxVertexBufferArrayStride;
+    public uint MaxInterStageShaderComponents;
+    public uint MaxInterStageShaderVariables;
+    public uint MaxColorAttachments;
+    public uint MaxComputeWorkgroupStorageSize;
+    public uint MaxComputeInvocationsPerWorkgroup;
+    public uint MaxComputeWorkgroupSizeX;
+    public uint MaxComputeWorkgroupSizeY;
+    public uint MaxComputeWorkgroupSizeZ;
+    public uint MaxComputeWorkgroupsPerDimension;
 }

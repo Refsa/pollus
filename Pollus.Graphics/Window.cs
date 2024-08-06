@@ -4,6 +4,7 @@ using Silk.NET.Core.Contexts;
 using Pollus.Mathematics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.JavaScript;
 
 public record class WindowOptions
 {
@@ -16,7 +17,7 @@ public record class WindowOptions
     public int FramesPerSecond { get; set; } = 144;
 }
 
-public class Window : IDisposable, INativeWindowSource
+public partial class Window : IDisposable, INativeWindowSource
 {
 #if NET8_0_BROWSER
     static Window instance;
@@ -83,13 +84,13 @@ public class Window : IDisposable, INativeWindowSource
 #if NET8_0_BROWSER
         emOnFrame = loop;
         emscripten_set_main_loop((IntPtr)(delegate* unmanaged[Cdecl]<void>)&emOnFrameCallback, 0, false);
-#endif
-
+#else
         while (IsOpen)
         {
-            loop();
             PollEvents();
+            loop();
         }
+#endif
     }
 }
 
