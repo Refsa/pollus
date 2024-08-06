@@ -151,6 +151,11 @@ unsafe public class WGPUContext : IDisposable
         }
     }
 
+    struct CreateAdapterData
+    {
+        public Adapter* Adapter;
+    }
+
     [MemberNotNull(nameof(adapter))]
     void CreateAdapter()
     {
@@ -158,10 +163,14 @@ unsafe public class WGPUContext : IDisposable
         {
             CompatibleSurface = surface
         };
+
+        using var userData = TemporaryPin.Pin(new CreateAdapterData());
+
 #if NET8_0_BROWSER
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, adapter);
+        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)userData);
 #else
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new PfnRequestAdapterCallback(HandleRequestAdapterCallback), adapter);
+        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new PfnRequestAdapterCallback(HandleRequestAdapterCallback), (void*)userData.Ptr);
+        adapter = ((CreateAdapterData*)userData.Ptr)->Adapter;
 #endif
     }
 
@@ -173,13 +182,17 @@ unsafe public class WGPUContext : IDisposable
         if (status == RequestAdapterStatus.Success)
         {
             Console.WriteLine("WGPU: Adapter acquired");
-
-            userdata = adapter;
+            ((CreateAdapterData*)userdata)->Adapter = adapter;
         }
         else
         {
             Console.WriteLine("WGPU: Adapter not acquired");
         }
+    }
+
+    struct CreateDeviceData
+    {
+        public Device* Device;
     }
 
     [MemberNotNull(nameof(device))]
@@ -205,10 +218,13 @@ unsafe public class WGPUContext : IDisposable
             requiredLimits: (RequiredLimits*)requiredLimitsPtr.Ptr
         );
 
+        using var userData = TemporaryPin.Pin(new CreateDeviceData());
+
 #if NET8_0_BROWSER
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);
+        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)userData);
 #else
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new PfnRequestDeviceCallback(HandleRequestDeviceCallback), device);
+        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
+        device = ((CreateDeviceData*)userData.Ptr)->Device;
 #endif
 
         GetDeviceLimits();
@@ -231,7 +247,7 @@ unsafe public class WGPUContext : IDisposable
         {
             Console.WriteLine("WGPU: Device acquired");
 
-            userdata = device;
+            ((CreateDeviceData*)userdata)->Device = device;
         }
         else
         {

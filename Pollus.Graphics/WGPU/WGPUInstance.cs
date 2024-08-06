@@ -1,6 +1,6 @@
-using System.Runtime.InteropServices;
-
 namespace Pollus.Graphics.WGPU;
+
+using System.Runtime.InteropServices;
 
 unsafe public class WGPUInstance : IDisposable
 {

@@ -1,4 +1,3 @@
-#if !NET8_0_BROWSER
 namespace Pollus.Graphics;
 
 using SN_Sdl = Silk.NET.SDL.Sdl;
@@ -8,29 +7,21 @@ using SN_SdlProvider = Silk.NET.SDL.SdlProvider;
 using SN_INativeWindow = Silk.NET.Core.Contexts.INativeWindow;
 using SN_Event = Silk.NET.SDL.Event;
 using SN_EventType = Silk.NET.SDL.EventType;
-using Pollus.Utils;
 
 public static class SDL
 {
-    public static readonly SN_Sdl Instance;
+    public static readonly SN_Sdl Instance = SN_SdlProvider.SDL.Value;
 
     static SDL()
     {
-#if NET8_0_BROWSER
-        Instance = new SN_Sdl(SN_Sdl.CreateDefaultContext(["SDL"]));
-#else
         SN_SdlProvider.InitFlags = SN_Sdl.InitVideo | SN_Sdl.InitEvents;
         while (SN_SdlProvider.SDL.IsValueCreated is false) { }
-        Instance = SN_SdlProvider.SDL.Value;
-#endif
     }
 
     unsafe public static SN_INativeWindow CreateWindow(WindowOptions options)
     {
-        using var title = TemporaryPin.PinString(options.Title);
-
         var window = Instance.CreateWindow(
-            (byte*)title.Ptr,
+            options.Title,
             options.X,
             options.Y,
             options.Width,
@@ -67,4 +58,3 @@ public static class SDL
         }
     }
 }
-#endif
