@@ -7,7 +7,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
 {
     IWGPUContext context;
 
-#if NET8_0_BROWSER
+#if BROWSER
     WGPUTextureView? currentTextureView;
 #else
     SurfaceTexture? currentSurfaceTexture;
@@ -20,7 +20,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
 
     public void Dispose()
     {
-#if NET8_0_BROWSER
+#if BROWSER
         if (currentTextureView != null)
         {
             currentTextureView.Value.Dispose();
@@ -35,7 +35,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
 #endif
     }
 
-#if NET8_0_BROWSER
+#if BROWSER
     public WGPUTextureView? GetTextureView()
     {
         if (currentTextureView != null)

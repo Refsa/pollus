@@ -8,7 +8,7 @@ unsafe public struct WGPURenderPassEncoder : IDisposable
     Silk.NET.WebGPU.RenderPassEncoder* native;
     public nint Native => (nint)native;
 
-#if NET8_0_BROWSER
+#if BROWSER
     public WGPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Browser.WGPURenderPassDescriptor_Browser descriptor)
     {
         this.context = context;

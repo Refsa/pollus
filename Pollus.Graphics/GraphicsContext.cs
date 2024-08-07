@@ -30,7 +30,7 @@ unsafe public class GraphicsContext : IDisposable
 
     public IWGPUContext CreateContext(string name, Window window)
     {
-#if NET8_0_BROWSER
+#if BROWSER
         var context = new WGPUContextBrowser(window, instance);
 #else
         var context = new WGPUContextDesktop(window, instance);

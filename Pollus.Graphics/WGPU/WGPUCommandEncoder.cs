@@ -36,7 +36,7 @@ unsafe public struct WGPUCommandEncoder : IDisposable
     {
         using var label = TemporaryPin.PinString(descriptor.Label);
 
-#if NET8_0_BROWSER
+#if BROWSER
         var colorAttachments = new Browser.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
         {

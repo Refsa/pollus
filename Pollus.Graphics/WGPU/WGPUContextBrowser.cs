@@ -1,4 +1,4 @@
-#if NET8_0_BROWSER
+#if BROWSER
 namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;

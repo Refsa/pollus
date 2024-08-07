@@ -18,7 +18,7 @@ public record class WindowOptions
 
 public partial class Window : IDisposable, INativeWindowSource
 {
-#if NET8_0_BROWSER
+#if BROWSER
     static Window instance;
     static Action emOnFrame;
 
@@ -43,11 +43,11 @@ public partial class Window : IDisposable, INativeWindowSource
 
     public Window(WindowOptions options)
     {
-#if !NET8_0_BROWSER
+#if BROWSER
+        instance = this;
+#else
         window = SDLWrapper.CreateWindow(options);
         Size = new Vector2<int>(options.Width, options.Height);
-#else
-        instance = this;
 #endif
 
         isOpen = true;
@@ -58,14 +58,14 @@ public partial class Window : IDisposable, INativeWindowSource
         if (isOpen is false) return;
         isOpen = false;
 
-#if !NET8_0_BROWSER
+#if !BROWSER
         SDLWrapper.DestroyWindow(window);
 #endif
     }
 
     public void PollEvents()
     {
-#if !NET8_0_BROWSER
+#if !BROWSER
         foreach (var @event in SDLWrapper.PollEvents())
         {
             switch (@event.Type)
@@ -80,7 +80,7 @@ public partial class Window : IDisposable, INativeWindowSource
 
     unsafe public void Run(Action loop)
     {
-#if NET8_0_BROWSER
+#if BROWSER
         emOnFrame = loop;
         emscripten_set_main_loop((IntPtr)(delegate* unmanaged[Cdecl]<void>)&emOnFrameCallback, 0, false);
 #else
