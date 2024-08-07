@@ -1,4 +1,4 @@
-namespace Pollus.Graphics.WGPU;
+namespace Pollus.Graphics.WGPU.Browser;
 
 using System.Runtime.InteropServices;
 using Pollus.Mathematics;
@@ -32,9 +32,9 @@ public static class WGPUBrowserNative
     extern public static unsafe bool AdapterHasFeature(Adapter* adapter, FeatureName feature);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor* descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor_Browser* descriptor, nint callback, void* userdata);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor_Browser descriptor, nint callback, void* userdata);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterReference")]
     extern public static unsafe void AdapterReference(Adapter* adapter);
@@ -626,92 +626,7 @@ public static class WGPUBrowserNative
     extern public static unsafe void TextureViewRelease(TextureView* textureView);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuDeviceCreateSwapChain")]
-    extern public static unsafe WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, in WGPUSwapChainDescriptor descriptor);
+    extern public static unsafe WGPUSwapChain_Browser* DeviceCreateSwapChain(Device* device, Surface* surface, in WGPUSwapChainDescriptor_Browser descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuSwapChainGetCurrentTextureView")]
-    extern public static unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain* swapChain);
-}
-
-public struct WGPUDeviceDescriptor
-{
-    public unsafe ChainedStruct* NextInChain;
-    public unsafe byte* Label;
-    public nuint RequiredFeatureCount;
-    public unsafe FeatureName* RequiredFeatures;
-    public unsafe WGPURequiredLimits* RequiredLimits;
-    public QueueDescriptor DefaultQueue;
-}
-
-public struct WGPURequiredLimits
-{
-    public unsafe ChainedStruct* NextInChain;
-    public WGPULimits Limits;
-}
-
-public struct WGPULimits
-{
-    public uint MaxTextureDimension1D;
-    public uint MaxTextureDimension2D;
-    public uint MaxTextureDimension3D;
-    public uint MaxTextureArrayLayers;
-    public uint MaxBindGroups;
-    public uint MaxDynamicUniformBuffersPerPipelineLayout;
-    public uint MaxDynamicStorageBuffersPerPipelineLayout;
-    public uint MaxSampledTexturesPerShaderStage;
-    public uint MaxSamplersPerShaderStage;
-    public uint MaxStorageBuffersPerShaderStage;
-    public uint MaxStorageTexturesPerShaderStage;
-    public uint MaxUniformBuffersPerShaderStage;
-    public ulong MaxUniformBufferBindingSize;
-    public ulong MaxStorageBufferBindingSize;
-    public uint MinUniformBufferOffsetAlignment;
-    public uint MinStorageBufferOffsetAlignment;
-    public uint MaxVertexBuffers;
-    public uint MaxVertexAttributes;
-    public uint MaxVertexBufferArrayStride;
-    public uint MaxInterStageShaderComponents;
-    public uint MaxInterStageShaderVariables;
-    public uint MaxColorAttachments;
-    public uint MaxComputeWorkgroupStorageSize;
-    public uint MaxComputeInvocationsPerWorkgroup;
-    public uint MaxComputeWorkgroupSizeX;
-    public uint MaxComputeWorkgroupSizeY;
-    public uint MaxComputeWorkgroupSizeZ;
-    public uint MaxComputeWorkgroupsPerDimension;
-}
-
-unsafe public struct WGPUSwapChain
-{
-    public uint SwapChainId;
-}
-
-unsafe public struct WGPUSwapChainDescriptor
-{
-    public ChainedStruct* NextInChain;
-    public byte* Label; // nullable
-    public TextureUsage Usage;
-    public TextureFormat Format;
-    public uint Width;
-    public uint Height;
-    public PresentMode PresentMode;
-}
-
-unsafe public struct WGPURenderPassDescriptor_Browser
-{
-    nint NextInChain;
-    public byte* Label; // nullable
-    public uint ColorAttachmentCount;
-    public WGPURenderPassColorAttachment_Browser* ColorAttachments;
-    public RenderPassDepthStencilAttachment* DepthStencilAttachment; // nullable
-    public QuerySet OcclusionQuerySet; // nullable
-    uint TimestampWriteCount;
-    nint timestampWrites;
-}
-
-unsafe public struct WGPURenderPassColorAttachment_Browser
-{
-    public TextureView* View; // nullable
-    public TextureView* ResolveTarget; // nullable
-    public LoadOp LoadOp;
-    public StoreOp StoreOp;
-    public Vector4<double> ClearValue;
+    extern public static unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain_Browser* swapChain);
 }

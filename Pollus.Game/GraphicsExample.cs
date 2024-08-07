@@ -26,7 +26,6 @@ public partial class GraphicsExample
 
         window.Run(() =>
         {
-            Console.WriteLine("Main loop");
             if (windowContext == null)
             {
                 windowContext = graphicsContext.CreateContext("main", window);
@@ -54,20 +53,19 @@ public partial class GraphicsExample
 
             using var commandEncoder = windowContext.CreateCommandEncoder("command-encoder");
             {
-                Span<WGPURenderPassColorAttachment> colorAttachments = stackalloc WGPURenderPassColorAttachment[1]
-                {
-                    new(
-                        textureView: surfaceTextureView.Native,
-                        resolveTarget: nint.Zero,
-                        clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                        loadOp: Silk.NET.WebGPU.LoadOp.Clear,
-                        storeOp: Silk.NET.WebGPU.StoreOp.Store
-                    )
-                };
                 using var renderPass = commandEncoder.BeginRenderPass(new()
                 {
                     Label = "render-pass",
-                    ColorAttachments = colorAttachments,
+                    ColorAttachments = stackalloc WGPURenderPassColorAttachment[1]
+                    {
+                        new(
+                            textureView: surfaceTextureView.Native,
+                            resolveTarget: nint.Zero,
+                            clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
+                            loadOp: Silk.NET.WebGPU.LoadOp.Clear,
+                            storeOp: Silk.NET.WebGPU.StoreOp.Store
+                        )
+                    },
                 });
 
                 renderPass.SetPipeline(renderPipeline!);
@@ -102,12 +100,11 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) ve
 }
 
 @fragment
-fn fs_main() -> @location(0) vec4f {
-    return vec4f(0.0, 1.0, 0.0, 1.0);
+fn fs_main(@builtin(position) in_position: vec4f) -> @location(0) vec4f {
+    return vec4f(1.0, 1.0, 0.0, 1.0);
 }
 """
             });
-
             Console.WriteLine("Shader Module Created");
 
             renderPipeline = windowContext.CreateRenderPipeline(new()
@@ -133,7 +130,6 @@ fn fs_main() -> @location(0) vec4f {
                 PrimitiveState = WGPUPrimitiveState.Default,
                 PipelineLayout = null,
             });
-
             Console.WriteLine("Render Pipeline Created");
         }
     }

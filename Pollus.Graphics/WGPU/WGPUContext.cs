@@ -5,10 +5,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Mathematics;
 using Pollus.Utils;
-using Silk.NET.WebGPU;
 
 #if NET8_0_BROWSER
-using WebGPU = Pollus.Graphics.WGPU.WGPUBrowser;
+using WebGPU = Browser.WGPUBrowser;
 #else
 using WebGPU = Silk.NET.WebGPU.WebGPU;
 #endif
@@ -30,19 +29,19 @@ unsafe public class WGPUContext : IWGPUContext
     WGPUInstance instance;
     internal WebGPU wgpu;
 
-    internal Surface* surface;
-    internal Adapter* adapter;
-    internal Device* device;
-    internal Queue* queue;
-    internal WGPUSwapChain* swapChain;
+    internal Silk.NET.WebGPU.Surface* surface;
+    internal Silk.NET.WebGPU.Adapter* adapter;
+    internal Silk.NET.WebGPU.Device* device;
+    internal Silk.NET.WebGPU.Queue* queue;
+    internal Browser.WGPUSwapChain_Browser* swapChain;
 
-    Limits deviceLimits;
+    Silk.NET.WebGPU.Limits deviceLimits;
 
-#if !NET8_0_BROWSER
-    SurfaceConfiguration surfaceConfiguration;
-    SurfaceCapabilities surfaceCapabilities;
+#if NET8_0_BROWSER
+    Silk.NET.WebGPU.TextureFormat preferredFormat;
 #else
-    TextureFormat preferredFormat;
+    Silk.NET.WebGPU.SurfaceConfiguration surfaceConfiguration;
+    Silk.NET.WebGPU.SurfaceCapabilities surfaceCapabilities;
 #endif
 
     bool isPreparingAdapter;
@@ -112,7 +111,7 @@ unsafe public class WGPUContext : IWGPUContext
         if (swapChain is null)
         {
             // preferredFormat = wgpu.SurfaceGetPreferredFormat(surface, adapter);
-            preferredFormat = TextureFormat.Bgra8Unorm;
+            preferredFormat = Silk.NET.WebGPU.TextureFormat.Bgra8Unorm;
             CreateSwapChain();
             Console.WriteLine("WGPU: Swap chain created");
         }
@@ -138,25 +137,25 @@ unsafe public class WGPUContext : IWGPUContext
     {
 #if NET8_0_BROWSER
         using var selectorPtr = TemporaryPin.PinString("#canvas");
-        SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
+        Silk.NET.WebGPU.SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
-            Chain = new ChainedStruct
+            Chain = new Silk.NET.WebGPU.ChainedStruct
             {
                 Next = null,
-                SType = SType.SurfaceDescriptorFromCanvasHtmlSelector
+                SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector
             },
             Selector = (byte*)selectorPtr.Ptr
         };
         using var surfaceDescriptorFromCanvasHTMLSelectorPtr = TemporaryPin.Pin(surfaceDescriptorFromCanvasHTMLSelector);
 
-        SurfaceDescriptor descriptor = new()
+        Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
         {
-            NextInChain = (ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr.Ptr
+            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr.Ptr
         };
         using var descriptorPtr = TemporaryPin.Pin(descriptor);
-        surface = wgpu.InstanceCreateSurface(instance.instance, (SurfaceDescriptor*)descriptorPtr.Ptr);
+        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)descriptorPtr.Ptr);
 #else
-        surface = WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.instance);
+        surface = Silk.NET.WebGPU.WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.instance);
 #endif
     }
 
@@ -188,8 +187,8 @@ unsafe public class WGPUContext : IWGPUContext
             device: device,
             format: surfaceCapabilities.Formats[0],
             alphaMode: surfaceCapabilities.AlphaModes[0],
-            usage: TextureUsage.RenderAttachment,
-            presentMode: PresentMode.Fifo,
+            usage: Silk.NET.WebGPU.TextureUsage.RenderAttachment,
+            presentMode: Silk.NET.WebGPU.PresentMode.Fifo,
             width: (uint)Window.Size.X,
             height: (uint)Window.Size.Y
         );
@@ -201,11 +200,11 @@ unsafe public class WGPUContext : IWGPUContext
     void CreateSwapChain()
     {
 #if NET8_0_BROWSER
-        var descriptor = new WGPUSwapChainDescriptor()
+        var descriptor = new Browser.WGPUSwapChainDescriptor_Browser()
         {
             Format = preferredFormat,
-            PresentMode = PresentMode.Fifo,
-            Usage = TextureUsage.RenderAttachment,
+            PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
+            Usage = Silk.NET.WebGPU.TextureUsage.RenderAttachment,
         };
         swapChain = wgpu.DeviceCreateSwapChain(device, surface, descriptor);
 #endif
@@ -213,13 +212,13 @@ unsafe public class WGPUContext : IWGPUContext
 
     struct CreateAdapterData
     {
-        public Adapter* Adapter;
+        public Silk.NET.WebGPU.Adapter* Adapter;
     }
 
     [MemberNotNull(nameof(adapter))]
     void CreateAdapter()
     {
-        var requestAdapterOptions = new RequestAdapterOptions
+        var requestAdapterOptions = new Silk.NET.WebGPU.RequestAdapterOptions
         {
             CompatibleSurface = surface
         };
@@ -229,7 +228,7 @@ unsafe public class WGPUContext : IWGPUContext
         wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
 #else
         using var userData = TemporaryPin.Pin(new CreateAdapterData());
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new PfnRequestAdapterCallback(HandleRequestAdapterCallback), (void*)userData.Ptr);
+        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), (void*)userData.Ptr);
         adapter = ((CreateAdapterData*)userData.Ptr)->Adapter;
         isPreparingAdapter = false;
 #endif
@@ -238,9 +237,9 @@ unsafe public class WGPUContext : IWGPUContext
 #if NET8_0_BROWSER
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 #endif
-    static void HandleRequestAdapterCallback(RequestAdapterStatus status, Adapter* adapter, byte* message, void* userdata)
+    static void HandleRequestAdapterCallback(Silk.NET.WebGPU.RequestAdapterStatus status, Silk.NET.WebGPU.Adapter* adapter, byte* message, void* userdata)
     {
-        if (status == RequestAdapterStatus.Success)
+        if (status == Silk.NET.WebGPU.RequestAdapterStatus.Success)
         {
             Console.WriteLine("WGPU: Adapter acquired");
 #if NET8_0_BROWSER
@@ -258,34 +257,34 @@ unsafe public class WGPUContext : IWGPUContext
 
     struct CreateDeviceData
     {
-        public Device* Device;
+        public Silk.NET.WebGPU.Device* Device;
     }
 
     [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
 #if NET8_0_BROWSER
-        var limits = new WGPULimits()
+        var limits = new Browser.WGPULimits_Browser()
         {
             MinStorageBufferOffsetAlignment = 256,
             MinUniformBufferOffsetAlignment = 256,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
         };
-        var requiredLimits = new WGPURequiredLimits()
+        var requiredLimits = new Browser.WGPURequiredLimits_Browser()
         {
             Limits = limits
         };
         using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
-        var deviceDescriptor = new WGPUDeviceDescriptor()
+        var deviceDescriptor = new Browser.WGPUDeviceDescriptor_Browser()
         {
-            RequiredLimits = (WGPURequiredLimits*)requiredLimitsPtr.Ptr
+            RequiredLimits = (Browser.WGPURequiredLimits_Browser*)requiredLimitsPtr.Ptr
         };
 
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);
 #else
-        var supportedLimits = new SupportedLimits();
+        var supportedLimits = new Silk.NET.WebGPU.SupportedLimits();
         wgpu.AdapterGetLimits(adapter, ref supportedLimits);
-        var requiredLimits = new RequiredLimits()
+        var requiredLimits = new Silk.NET.WebGPU.RequiredLimits()
         {
             Limits = supportedLimits.Limits with
             {
@@ -293,12 +292,12 @@ unsafe public class WGPUContext : IWGPUContext
             }
         };
         using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
-        var deviceDescriptor = new DeviceDescriptor(
+        var deviceDescriptor = new Silk.NET.WebGPU.DeviceDescriptor(
             requiredLimits: &requiredLimits
         );
 
         using var userData = TemporaryPin.Pin(new CreateDeviceData());
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
+        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
         device = ((CreateDeviceData*)userData.Ptr)->Device;
         isPreparingDevice = false;
         GetDeviceLimits();
@@ -308,7 +307,7 @@ unsafe public class WGPUContext : IWGPUContext
 
     void GetDeviceLimits()
     {
-        var acquiredLimits = new SupportedLimits();
+        var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
         wgpu.DeviceGetLimits(device, ref acquiredLimits);
         deviceLimits = acquiredLimits.Limits;
         Console.WriteLine("WGPU: Device limits");
@@ -317,9 +316,9 @@ unsafe public class WGPUContext : IWGPUContext
 #if NET8_0_BROWSER
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
 #endif
-    static void HandleRequestDeviceCallback(RequestDeviceStatus status, Device* device, byte* message, void* userdata)
+    static void HandleRequestDeviceCallback(Silk.NET.WebGPU.RequestDeviceStatus status, Silk.NET.WebGPU.Device* device, byte* message, void* userdata)
     {
-        if (status == RequestDeviceStatus.Success)
+        if (status == Silk.NET.WebGPU.RequestDeviceStatus.Success)
         {
             Console.WriteLine("WGPU: Device acquired");
 #if NET8_0_BROWSER

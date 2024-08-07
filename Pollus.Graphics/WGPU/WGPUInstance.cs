@@ -1,11 +1,9 @@
 namespace Pollus.Graphics.WGPU;
 
-using System.Runtime.InteropServices;
-
 unsafe public class WGPUInstance : IDisposable
 {
 #if NET8_0_BROWSER
-    internal WGPUBrowser wgpu;
+    internal Browser.WGPUBrowser wgpu;
 #else
     internal Silk.NET.WebGPU.WebGPU wgpu;
 #endif
@@ -16,7 +14,7 @@ unsafe public class WGPUInstance : IDisposable
     public WGPUInstance()
     {
 #if NET8_0_BROWSER
-        wgpu = new WGPUBrowser();
+        wgpu = new Browser.WGPUBrowser();
 #else
         wgpu = Silk.NET.WebGPU.WebGPU.GetApi();
 #endif

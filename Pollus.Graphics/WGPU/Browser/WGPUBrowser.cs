@@ -1,6 +1,5 @@
-namespace Pollus.Graphics.WGPU;
+namespace Pollus.Graphics.WGPU.Browser;
 
-using System.Runtime.InteropServices;
 using Silk.NET.WebGPU;
 
 public class WGPUBrowser : IDisposable
@@ -56,11 +55,11 @@ public class WGPUBrowser : IDisposable
         return WGPUBrowserNative.AdapterHasFeature(adapter, feature);
     }
 
-    public unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor_Browser* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }
-    public unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor_Browser descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }
@@ -1240,11 +1239,11 @@ public class WGPUBrowser : IDisposable
         WGPUBrowserNative.TextureViewRelease(textureView);
     }
 
-    public unsafe WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, WGPUSwapChainDescriptor descriptor)
+    public unsafe WGPUSwapChain_Browser* DeviceCreateSwapChain(Device* device, Surface* surface, WGPUSwapChainDescriptor_Browser descriptor)
     {
         return WGPUBrowserNative.DeviceCreateSwapChain(device, surface, in descriptor);
     }
-    public unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain* swapChain)
+    public unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain_Browser* swapChain)
     {
         return WGPUBrowserNative.SwapChainGetCurrentTextureView(swapChain);
     }

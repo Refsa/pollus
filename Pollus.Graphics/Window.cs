@@ -4,7 +4,6 @@ using Silk.NET.Core.Contexts;
 using Pollus.Mathematics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.JavaScript;
 
 public record class WindowOptions
 {
@@ -45,7 +44,7 @@ public partial class Window : IDisposable, INativeWindowSource
     public Window(WindowOptions options)
     {
 #if !NET8_0_BROWSER
-        window = SDL.CreateWindow(options);
+        window = SDLWrapper.CreateWindow(options);
         Size = new Vector2<int>(options.Width, options.Height);
 #else
         instance = this;
@@ -60,14 +59,14 @@ public partial class Window : IDisposable, INativeWindowSource
         isOpen = false;
 
 #if !NET8_0_BROWSER
-        SDL.DestroyWindow(window);
+        SDLWrapper.DestroyWindow(window);
 #endif
     }
 
     public void PollEvents()
     {
 #if !NET8_0_BROWSER
-        foreach (var @event in SDL.PollEvents())
+        foreach (var @event in SDLWrapper.PollEvents())
         {
             switch (@event.Type)
             {
