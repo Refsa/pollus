@@ -1,0 +1,41 @@
+{
+  "mainAssemblyName": "Pollus.Game.dll",
+  "resources": {
+    "hash": "sha256-Q9i+8/EW2bdMWuOgObaC2rX7K8FeiB7TUqoITiwS1Fc=",
+    "jsModuleNative": {
+      "dotnet.native.js": "sha256-yysjE2RV3HaVW9UJYD7cErizJmEbyKmMhMOEUSvcdik="
+    },
+    "jsModuleRuntime": {
+      "dotnet.runtime.js": "sha256-soZyw6XWXOLKhA26AOyzSpCP5cAsw1wvhdPHSYNTMfQ="
+    },
+    "wasmNative": {
+      "dotnet.native.wasm": "sha256-oJbTSd4GQ1CJhCsq6cxS9IUM4gCG8AVTLCM+ku2YHa0="
+    },
+    "wasmSymbols": {
+      "dotnet.native.js.symbols": "sha256-aV3ZZlZF3iQg6K/FWIOs3uYwza0Wo4xx+2TIA0tUWoc="
+    },
+    "icu": {
+      "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
+      "icudt_EFIGS.dat": "sha256-8fItetYY8kQ0ww6oxwTLiT3oXlBwHKumbeP2pRF4yTc=",
+      "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
+    },
+    "assembly": {
+      "Pollus.Core.wasm": "sha256-riWg4fAUjN0/7q+Sj/zHtgAHhYcv0R6yEm9ZAKvJnM8=",
+      "Pollus.Game.wasm": "sha256-UwbAf/llhoc3LNf/0kfZpjWEwUcUKxK1Jei4L7GYvYg=",
+      "Pollus.Graphics.wasm": "sha256-TE8BK+N/nqFoctwbgnX0tIIVFbvlon1VBdUp6FX2sJU=",
+      "Silk.NET.Core.wasm": "sha256-1K/Dv7SF20WVtmIqbSsSIi3ZTe7TWu4INEdfnTjCYWA=",
+      "Silk.NET.WebGPU.wasm": "sha256-4cQMKO0mcdLKeAchVkZfVt3KkP93xCYBrCLt585cZnw=",
+      "System.Console.wasm": "sha256-pSmRmXrv7Pzt/J9Esy2mE5RXokmMtQo0SQQB2dL8qUA=",
+      "System.Private.CoreLib.wasm": "sha256-M+HlReW7Tq56SsUgahp0eC+HSAaQSV/lKRGBqPOWA7Y=",
+      "System.Runtime.InteropServices.JavaScript.wasm": "sha256-SSSscW/g7DzLmXiX5eds0/f3kfI4j4ncZvvur5Qf4x0=",
+      "aot-instances.wasm": "sha256-F5jaGmVc7vzFjqtI3doCGKg/fQ7XiaS/ql2ej46UKTw="
+    },
+    "vfs": {
+      "runtimeconfig.bin": {
+        "supportFiles/0_runtimeconfig.bin": "sha256-bZVADVE9/vuk4VK9UcMd3AREONFSoWULYacsy5DHL3I="
+      }
+    }
+  },
+  "debugLevel": 0,
+  "globalizationMode": "sharded"
+}
