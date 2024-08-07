@@ -5,7 +5,7 @@ using Silk.NET.WebGPU;
 
 unsafe public struct WGPUSurfaceTexture : IDisposable
 {
-    WGPUContext context;
+    IWGPUContext context;
 
 #if NET8_0_BROWSER
     WGPUTextureView? currentTextureView;
@@ -13,7 +13,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
     SurfaceTexture? currentSurfaceTexture;
 #endif
 
-    public WGPUSurfaceTexture(WGPUContext context)
+    public WGPUSurfaceTexture(IWGPUContext context)
     {
         this.context = context;
     }
@@ -43,7 +43,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
             return currentTextureView;
         }
 
-        var native = context.wgpu.SwapChainGetCurrentTextureView(context.swapChain);
+        var native = context.wgpu.SwapChainGetCurrentTextureView(context.SwapChain);
         if (native == null) throw new ApplicationException("Failed to get current texture view");
         
         currentTextureView = new WGPUTextureView(context, native);
@@ -75,7 +75,7 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
         }
 
         var surfaceTexture = new SurfaceTexture();
-        context.wgpu.SurfaceGetCurrentTexture(context.surface, ref surfaceTexture);
+        context.wgpu.SurfaceGetCurrentTexture(context.Surface, ref surfaceTexture);
         currentSurfaceTexture = surfaceTexture;
         return surfaceTexture;
     }

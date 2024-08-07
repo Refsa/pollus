@@ -4,12 +4,12 @@ using Silk.NET.WebGPU;
 
 unsafe public struct WGPUTextureView : IDisposable
 {
-    WGPUContext context;
+    IWGPUContext context;
     TextureView* textureView;
 
     public nint Native => (nint)textureView;
 
-    public WGPUTextureView(WGPUContext context, Texture* texture, TextureViewDescriptor? descriptor = null)
+    public WGPUTextureView(IWGPUContext context, Texture* texture, TextureViewDescriptor? descriptor = null)
     {
         this.context = context;
         if (descriptor is TextureViewDescriptor descriptorValue)
@@ -22,7 +22,7 @@ unsafe public struct WGPUTextureView : IDisposable
         }
     }
 
-    public WGPUTextureView(WGPUContext context, TextureView* textureView)
+    public WGPUTextureView(IWGPUContext context, TextureView* textureView)
     {
         this.context = context;
         this.textureView = textureView;

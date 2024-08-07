@@ -1,0 +1,1 @@
+dotnet publish --framework net8.0-browser -c Release

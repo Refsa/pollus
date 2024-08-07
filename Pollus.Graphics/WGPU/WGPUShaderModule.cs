@@ -11,7 +11,7 @@ unsafe public class WGPUShaderModule : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPUShaderModule(WGPUContext context, WGPUShaderModuleDescriptor descriptor) : base(context)
+    public WGPUShaderModule(IWGPUContext context, WGPUShaderModuleDescriptor descriptor) : base(context)
     {
         using var labelPin = TemporaryPin.PinString(descriptor.Label);
         using var contentPin = TemporaryPin.PinString(descriptor.Content);
@@ -30,7 +30,7 @@ unsafe public class WGPUShaderModule : WGPUResourceWrapper
         };
         nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&shaderModuleDescriptor;
 
-        native = context.wgpu.DeviceCreateShaderModule(context.device, &nativeDescriptor);
+        native = context.wgpu.DeviceCreateShaderModule(context.Device, &nativeDescriptor);
     }
 
     protected override void Free()

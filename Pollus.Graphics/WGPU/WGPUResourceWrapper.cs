@@ -2,11 +2,11 @@ namespace Pollus.Graphics.WGPU;
 
 public abstract class WGPUResourceWrapper : IDisposable
 {
-    protected WGPUContext context;
+    protected IWGPUContext context;
 
     bool isDisposed;
 
-    public WGPUResourceWrapper(WGPUContext context)
+    public WGPUResourceWrapper(IWGPUContext context)
     {
         context.RegisterResource(this);
         this.context = context;

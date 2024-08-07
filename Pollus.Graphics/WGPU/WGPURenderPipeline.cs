@@ -9,7 +9,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPURenderPipeline(WGPUContext context, WGPURenderPipelineDescriptor descriptor) : base(context)
+    public WGPURenderPipeline(IWGPUContext context, WGPURenderPipelineDescriptor descriptor) : base(context)
     {
         this.context = context;
         using var pins = new TemporaryPins();
@@ -155,7 +155,7 @@ unsafe public class WGPURenderPipeline : WGPUResourceWrapper
             nativeDescriptor.Layout = (Silk.NET.WebGPU.PipelineLayout*)pipelineLayout.Native;
         }
 
-        native = context.wgpu.DeviceCreateRenderPipeline(context.device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateRenderPipeline(context.Device, nativeDescriptor);
     }
 
     protected override void Free()

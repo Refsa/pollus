@@ -9,7 +9,7 @@ unsafe public class WGPUBindGroup : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPUBindGroup(WGPUContext context, WGPUBindGroupDescriptor descriptor) : base(context)
+    public WGPUBindGroup(IWGPUContext context, WGPUBindGroupDescriptor descriptor) : base(context)
     {
         using var pins = new TemporaryPins();
         pins.Pin(descriptor.Label);
@@ -50,7 +50,7 @@ unsafe public class WGPUBindGroup : WGPUResourceWrapper
             nativeDescriptor.Entries = (Silk.NET.WebGPU.BindGroupEntry*)pins.Pin(entries).AddrOfPinnedObject();
         }
 
-        native = context.wgpu.DeviceCreateBindGroup(context.device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateBindGroup(context.Device, nativeDescriptor);
     }
 
     protected override void Free()

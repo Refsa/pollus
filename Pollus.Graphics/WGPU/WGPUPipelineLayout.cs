@@ -1,7 +1,6 @@
 namespace Pollus.Graphics.WGPU;
 
 using System.Runtime.InteropServices;
-using Silk.NET.WebGPU;
 
 unsafe public class WGPUPipelineLayout : WGPUResourceWrapper
 {
@@ -9,26 +8,26 @@ unsafe public class WGPUPipelineLayout : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPUPipelineLayout(WGPUContext context, WGPUPipelineLayoutDescriptor descriptor) : base(context)
+    public WGPUPipelineLayout(IWGPUContext context, WGPUPipelineLayoutDescriptor descriptor) : base(context)
     {
         this.context = context;
 
         var label = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
-        var layouts = new BindGroupLayout*[descriptor.Layouts.Length];
+        var layouts = new Silk.NET.WebGPU.BindGroupLayout*[descriptor.Layouts.Length];
         for (int i = 0; i < descriptor.Layouts.Length; i++)
         {
-            layouts[i] = (BindGroupLayout*)descriptor.Layouts[i].Native;
+            layouts[i] = (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layouts[i].Native;
         }
 
         fixed (byte* labelPtr = label)
-        fixed (BindGroupLayout** layoutsPtr = &layouts[0])
+        fixed (Silk.NET.WebGPU.BindGroupLayout** layoutsPtr = &layouts[0])
         {
-            var nativeDescriptor = new PipelineLayoutDescriptor(
+            var nativeDescriptor = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
                 label: labelPtr,
                 bindGroupLayoutCount: (uint)layouts.Length,
                 bindGroupLayouts: layoutsPtr
             );
-            native = context.wgpu.DeviceCreatePipelineLayout(context.device, nativeDescriptor);
+            native = context.wgpu.DeviceCreatePipelineLayout(context.Device, nativeDescriptor);
         }
     }
 

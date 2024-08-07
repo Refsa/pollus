@@ -8,7 +8,7 @@ unsafe public class WGPUSampler : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPUSampler(WGPUContext context, WGPUSamplerDescriptor descriptor) : base(context)
+    public WGPUSampler(IWGPUContext context, WGPUSamplerDescriptor descriptor) : base(context)
     {
         var labelSpan = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
 
@@ -26,7 +26,7 @@ unsafe public class WGPUSampler : WGPUResourceWrapper
                 lodMaxClamp: descriptor.LodMaxClamp,
                 maxAnisotropy: descriptor.MaxAnisotropy
             );
-            native = context.wgpu.DeviceCreateSampler(context.device, nativeDescriptor);
+            native = context.wgpu.DeviceCreateSampler(context.Device, nativeDescriptor);
         }
     }
 

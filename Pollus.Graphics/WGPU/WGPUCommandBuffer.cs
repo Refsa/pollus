@@ -4,12 +4,12 @@ using Silk.NET.WebGPU;
 
 unsafe public struct WGPUCommandBuffer : IDisposable
 {
-    WGPUContext context;
+    IWGPUContext context;
     CommandBuffer* native;
 
     public nint Native => (nint)native;
 
-    public WGPUCommandBuffer(WGPUContext context, CommandBuffer* buffer)
+    public WGPUCommandBuffer(IWGPUContext context, CommandBuffer* buffer)
     {
         this.context = context;
         native = buffer;
@@ -22,6 +22,6 @@ unsafe public struct WGPUCommandBuffer : IDisposable
 
     public void Submit()
     {
-        context.wgpu.QueueSubmit(context.queue, 1, ref native);
+        context.wgpu.QueueSubmit(context.Queue, 1, ref native);
     }
 }

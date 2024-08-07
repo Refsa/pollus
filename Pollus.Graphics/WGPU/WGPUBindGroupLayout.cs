@@ -8,7 +8,7 @@ unsafe public class WGPUBindGroupLayout : WGPUResourceWrapper
 
     public nint Native => (nint)native;
 
-    public WGPUBindGroupLayout(WGPUContext context, WGPUBindGroupLayoutDescriptor descriptor) : base(context)
+    public WGPUBindGroupLayout(IWGPUContext context, WGPUBindGroupLayoutDescriptor descriptor) : base(context)
     {
         this.context = context;
 
@@ -49,7 +49,7 @@ unsafe public class WGPUBindGroupLayout : WGPUResourceWrapper
                 entries: entriesPtr
             );
 
-            native = context.wgpu.DeviceCreateBindGroupLayout(context.device, nativeDescriptor);
+            native = context.wgpu.DeviceCreateBindGroupLayout(context.Device, nativeDescriptor);
         }
     }
 

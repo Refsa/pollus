@@ -6,17 +6,17 @@ using Pollus.Utils;
 
 unsafe public struct WGPUCommandEncoder : IDisposable
 {
-    WGPUContext context;
+    IWGPUContext context;
     Silk.NET.WebGPU.CommandEncoder* native;
 
     public nint Native => (nint)native;
 
-    public WGPUCommandEncoder(WGPUContext context, string label)
+    public WGPUCommandEncoder(IWGPUContext context, string label)
     {
         this.context = context;
         var labelPin = TemporaryPin.PinString(label);
         var descriptor = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: (byte*)labelPin.Ptr);
-        native = context.wgpu.DeviceCreateCommandEncoder(context.device, descriptor);
+        native = context.wgpu.DeviceCreateCommandEncoder(context.Device, descriptor);
     }
 
     public void Dispose()

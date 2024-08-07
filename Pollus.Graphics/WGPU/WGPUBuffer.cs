@@ -10,7 +10,7 @@ unsafe public class WGPUBuffer : WGPUResourceWrapper
     public nint Native => (nint)native;
     public ulong Size => size;
 
-    public WGPUBuffer(WGPUContext context, WGPUBufferDescriptor descriptor) : base(context)
+    public WGPUBuffer(IWGPUContext context, WGPUBufferDescriptor descriptor) : base(context)
     {
         size = descriptor.Size;
 
@@ -25,7 +25,7 @@ unsafe public class WGPUBuffer : WGPUResourceWrapper
                 mappedAtCreation: descriptor.MappedAtCreation
             );
 
-            native = context.wgpu.DeviceCreateBuffer(context.device, nativeDescriptor);
+            native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
         }
     }
 

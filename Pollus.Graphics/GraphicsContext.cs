@@ -5,7 +5,7 @@ using Pollus.Graphics.WGPU;
 unsafe public class GraphicsContext : IDisposable
 {
     WGPUInstance instance;
-    Dictionary<string, WGPUContext> contexts = new();
+    Dictionary<string, IWGPUContext> contexts = new();
 
     bool isDisposed;
 
@@ -28,14 +28,18 @@ unsafe public class GraphicsContext : IDisposable
         instance.Dispose();
     }
 
-    public WGPUContext CreateContext(string name, Window window)
+    public IWGPUContext CreateContext(string name, Window window)
     {
-        var context = new WGPUContext(window, instance);
+#if NET8_0_BROWSER
+        var context = new WGPUContextBrowser(window, instance);
+#else
+        var context = new WGPUContextDesktop(window, instance);
+#endif
         contexts.Add(name, context);
         return context;
     }
 
-    public WGPUContext GetContext(string name)
+    public IWGPUContext GetContext(string name)
     {
         return contexts[name];
     }

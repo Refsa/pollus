@@ -16,7 +16,7 @@ public partial class GraphicsExample
         using var graphicsContext = new GraphicsContext();
         Console.WriteLine("Graphics Context Created");
 
-        WGPUContext? windowContext = null;
+        IWGPUContext? windowContext = null;
 
         bool isSetup = false;
         WGPUShaderModule? shaderModule = null;
