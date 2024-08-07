@@ -1,8 +1,8 @@
 namespace Pollus.Game;
 
-using System.Runtime.InteropServices.JavaScript;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Windowing;
 
 public partial class GraphicsExample
 {
@@ -11,7 +11,7 @@ public partial class GraphicsExample
         Console.WriteLine("Graphics Example");
 
 
-        using var window = new Window(new());
+        using var window = Window.Create(new());
         Console.WriteLine("Window Created");
         using var graphicsContext = new GraphicsContext();
         Console.WriteLine("Graphics Context Created");
@@ -26,12 +26,7 @@ public partial class GraphicsExample
 
         window.Run(() =>
         {
-            if (windowContext == null)
-            {
-                windowContext = graphicsContext.CreateContext("main", window);
-                Console.WriteLine("Window Context Created");
-            }
-
+            windowContext ??= graphicsContext.CreateContext("main", window);
             if (!windowContext.IsReady)
             {
                 windowContext.Setup();
@@ -85,7 +80,7 @@ public partial class GraphicsExample
                 Label = "shader-module",
                 Backend = ShaderBackend.WGSL,
                 Content =
-        """
+"""
 @vertex
 fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
     var p = vec2f(0.0, 0.0);

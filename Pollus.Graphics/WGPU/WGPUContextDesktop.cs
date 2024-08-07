@@ -3,14 +3,13 @@ namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
-using Pollus.Graphics.WGPU.Browser;
+using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.Utils;
-using Silk.NET.WebGPU;
 
 unsafe public class WGPUContextDesktop : IWGPUContext
 {
-    Window window;
+    IWindow window;
     WGPUInstance instance;
 
     internal Silk.NET.WebGPU.Surface* surface;
@@ -27,16 +26,17 @@ unsafe public class WGPUContextDesktop : IWGPUContext
 
     List<WGPUResourceWrapper> resources = new();
 
-    public Window Window => window;
+    public IWindow Window => window;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
 
     public Silk.NET.WebGPU.WebGPU wgpu => instance.wgpu;
-    public Surface* Surface => surface;
-    public Adapter* Adapter => adapter;
-    public Device* Device => device;
-    public Queue* Queue => queue;
+    public Silk.NET.WebGPU.Surface* Surface => surface;
+    public Silk.NET.WebGPU.Adapter* Adapter => adapter;
+    public Silk.NET.WebGPU.Device* Device => device;
+    public Silk.NET.WebGPU.Queue* Queue => queue;
+    public Browser.WGPUSwapChain_Browser* SwapChain => null;
 
-    public WGPUContextDesktop(Window window, WGPUInstance instance)
+    public WGPUContextDesktop(IWindow window, WGPUInstance instance)
     {
         this.window = window;
         this.instance = instance;
@@ -175,7 +175,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         using var userData = TemporaryPin.Pin(new CreateDeviceData());
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
         device = ((CreateDeviceData*)userData.Ptr)->Device;
-        
+
         var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
         wgpu.DeviceGetLimits(device, ref acquiredLimits);
         deviceLimits = acquiredLimits.Limits;

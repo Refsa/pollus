@@ -1,8 +1,4 @@
 namespace Pollus.Graphics.WGPU;
-#if BROWSER
-#else
-using WebGPU = Silk.NET.WebGPU.WebGPU;
-#endif
 
 unsafe public interface IWGPUContext : IDisposable
 {
@@ -16,9 +12,7 @@ unsafe public interface IWGPUContext : IDisposable
     Silk.NET.WebGPU.Adapter* Adapter { get; }
     Silk.NET.WebGPU.Device* Device { get; }
     Silk.NET.WebGPU.Queue* Queue { get; }
-#if BROWSER
     Browser.WGPUSwapChain_Browser* SwapChain { get; }
-#endif
 
     public bool IsReady { get; }
     void Setup();

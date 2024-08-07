@@ -1,5 +1,6 @@
 namespace Pollus.Graphics;
 
+using Pollus.Graphics.Windowing;
 using Silk.NET.Core.Contexts;
 using Silk.NET.SDL;
 
@@ -34,7 +35,7 @@ public static class SDLWrapper
         Instance.DestroyWindow((Silk.NET.SDL.Window*)window.Sdl!);
     }
 
-    public static IEnumerable<WindowEvent> PollEvents()
+    public static IEnumerable<Windowing.WindowEvent> PollEvents()
     {
         Instance.PumpEvents();
 

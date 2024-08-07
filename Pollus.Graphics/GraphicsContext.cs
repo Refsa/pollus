@@ -1,6 +1,7 @@
 namespace Pollus.Graphics;
 
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Windowing;
 
 unsafe public class GraphicsContext : IDisposable
 {
@@ -28,7 +29,7 @@ unsafe public class GraphicsContext : IDisposable
         instance.Dispose();
     }
 
-    public IWGPUContext CreateContext(string name, Window window)
+    public IWGPUContext CreateContext(string name, IWindow window)
     {
 #if BROWSER
         var context = new WGPUContextBrowser(window, instance);

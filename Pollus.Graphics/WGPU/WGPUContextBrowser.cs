@@ -6,12 +6,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Mathematics;
 using Pollus.Utils;
+using Pollus.Graphics.Windowing;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
     static WGPUContextBrowser _instance;
 
-    Window window;
+    IWindow window;
     WGPUInstance instance;
 
     Silk.NET.WebGPU.Surface* surface;
@@ -28,7 +29,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     List<WGPUResourceWrapper> resources = new();
 
-    public Window Window => window;
+    public IWindow Window => window;
     public Browser.WGPUBrowser wgpu => instance.wgpu;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
 
@@ -38,7 +39,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     public Silk.NET.WebGPU.Queue* Queue => queue;
     public Browser.WGPUSwapChain_Browser* SwapChain => swapChain;
 
-    public WGPUContextBrowser(Window window, WGPUInstance instance)
+    public WGPUContextBrowser(IWindow window, WGPUInstance instance)
     {
         this.window = window;
         this.instance = instance;
