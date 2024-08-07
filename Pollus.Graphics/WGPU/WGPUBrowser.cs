@@ -193,11 +193,11 @@ public class WGPUBrowser : IDisposable
     {
         return WGPUBrowserNative.CommandEncoderBeginComputePass(commandEncoder, descriptor);
     }
-    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, RenderPassDescriptor* descriptor)
+    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPURenderPassDescriptor_Browser* descriptor)
     {
         return WGPUBrowserNative.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
-    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in RenderPassDescriptor descriptor)
+    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPURenderPassDescriptor_Browser descriptor)
     {
         return WGPUBrowserNative.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
@@ -1238,5 +1238,14 @@ public class WGPUBrowser : IDisposable
     public unsafe void TextureViewRelease(TextureView* textureView)
     {
         WGPUBrowserNative.TextureViewRelease(textureView);
+    }
+
+    public unsafe WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, WGPUSwapChainDescriptor descriptor)
+    {
+        return WGPUBrowserNative.DeviceCreateSwapChain(device, surface, in descriptor);
+    }
+    public unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain* swapChain)
+    {
+        return WGPUBrowserNative.SwapChainGetCurrentTextureView(swapChain);
     }
 }

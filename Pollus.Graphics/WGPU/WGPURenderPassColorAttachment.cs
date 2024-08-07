@@ -6,8 +6,8 @@ using Silk.NET.WebGPU;
 public struct WGPURenderPassColorAttachment
 {
     nint padding1;
-    nint view;
-    nint resolveTarget;
+    public nint View;
+    public nint ResolveTarget;
 
     public LoadOp LoadOp;
     public StoreOp StoreOp;
@@ -15,8 +15,8 @@ public struct WGPURenderPassColorAttachment
 
     public WGPURenderPassColorAttachment(nint textureView, nint resolveTarget, Vector4<double> clearValue, LoadOp loadOp, StoreOp storeOp)
     {
-        this.view = textureView;
-        this.resolveTarget = resolveTarget;
+        this.View = textureView;
+        this.ResolveTarget = resolveTarget;
         LoadOp = loadOp;
         StoreOp = storeOp;
         ClearValue = clearValue;

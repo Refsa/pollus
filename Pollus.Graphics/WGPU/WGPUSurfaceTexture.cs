@@ -1,12 +1,17 @@
 namespace Pollus.Graphics.WGPU;
 
-using Pollus.Mathematics;
+using System.Diagnostics;
 using Silk.NET.WebGPU;
 
 unsafe public struct WGPUSurfaceTexture : IDisposable
 {
     WGPUContext context;
+
+#if NET8_0_BROWSER
+    WGPUTextureView? currentTextureView;
+#else
     SurfaceTexture? currentSurfaceTexture;
+#endif
 
     public WGPUSurfaceTexture(WGPUContext context)
     {
@@ -15,13 +20,36 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
 
     public void Dispose()
     {
+#if NET8_0_BROWSER
+        if (currentTextureView != null)
+        {
+            currentTextureView.Value.Dispose();
+            currentTextureView = null;
+        }
+#else
         if (currentSurfaceTexture is not null)
         {
             context.wgpu.TextureRelease(currentSurfaceTexture.Value.Texture);
             currentSurfaceTexture = null;
         }
+#endif
     }
 
+#if NET8_0_BROWSER
+    public WGPUTextureView? GetTextureView()
+    {
+        if (currentTextureView != null)
+        {
+            return currentTextureView;
+        }
+
+        var native = context.wgpu.SwapChainGetCurrentTextureView(context.swapChain);
+        if (native == null) throw new ApplicationException("Failed to get current texture view");
+        
+        currentTextureView = new WGPUTextureView(context, native);
+        return currentTextureView;
+    }
+#else
     SurfaceTexture? GetSurfaceTexture()
     {
         if (currentSurfaceTexture is SurfaceTexture current)
@@ -60,4 +88,5 @@ unsafe public struct WGPUSurfaceTexture : IDisposable
         }
         return null;
     }
+#endif
 }

@@ -17,7 +17,7 @@ public partial class GraphicsExample
         Console.WriteLine("Graphics Context Created");
 
         WGPUContext? windowContext = null;
-        
+
         bool isSetup = false;
         WGPUShaderModule? shaderModule = null;
         WGPURenderPipeline? renderPipeline = null;
@@ -52,16 +52,18 @@ public partial class GraphicsExample
                 return;
             }
 
-            Span<WGPURenderPassColorAttachment> colorAttachments = stackalloc WGPURenderPassColorAttachment[1];
             using var commandEncoder = windowContext.CreateCommandEncoder("command-encoder");
             {
-                colorAttachments[0] = new(
-                    textureView: surfaceTextureView.Native,
-                    resolveTarget: nint.Zero,
-                    clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                    loadOp: Silk.NET.WebGPU.LoadOp.Clear,
-                    storeOp: Silk.NET.WebGPU.StoreOp.Store
-                );
+                Span<WGPURenderPassColorAttachment> colorAttachments = stackalloc WGPURenderPassColorAttachment[1]
+                {
+                    new(
+                        textureView: surfaceTextureView.Native,
+                        resolveTarget: nint.Zero,
+                        clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
+                        loadOp: Silk.NET.WebGPU.LoadOp.Clear,
+                        storeOp: Silk.NET.WebGPU.StoreOp.Store
+                    )
+                };
                 using var renderPass = commandEncoder.BeginRenderPass(new()
                 {
                     Label = "render-pass",
@@ -122,9 +124,9 @@ fn fs_main() -> @location(0) vec4f {
                     EntryPoint = "fs_main",
                     ColorTargets = [
                         WGPUColorTargetState.Default with
-            {
-                Format = windowContext.GetSurfaceFormat(),
-            }
+                        {
+                            Format = windowContext.GetSurfaceFormat(),
+                        }
                     ]
                 },
                 MultisampleState = WGPUMultisampleState.Default,

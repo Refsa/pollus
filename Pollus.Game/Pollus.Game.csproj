@@ -28,6 +28,8 @@
     <WasmExtraFilesToDeploy Include="www/*.css" />
 
     <DirectPInvoke Include="__Internal_emscripten" />
+    <EmccExportedLibraryFunction Include="wgpuDeviceCreateSwapChain" />
+    <EmccExportedLibraryFunction Include="wgpuSwapChainGetCurrentTextureView" />
   </ItemGroup>
 
   <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative"

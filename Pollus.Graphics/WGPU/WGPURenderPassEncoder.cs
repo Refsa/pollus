@@ -1,3 +1,5 @@
+using Pollus.Utils;
+
 namespace Pollus.Graphics.WGPU;
 
 unsafe public struct WGPURenderPassEncoder : IDisposable
@@ -6,11 +8,20 @@ unsafe public struct WGPURenderPassEncoder : IDisposable
     Silk.NET.WebGPU.RenderPassEncoder* native;
     public nint Native => (nint)native;
 
+#if NET8_0_BROWSER
+    public WGPURenderPassEncoder(WGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, WGPURenderPassDescriptor_Browser descriptor)
+    {
+        this.context = context;
+        using var descriptorPtr = TemporaryPin.Pin(descriptor);
+        native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, (WGPURenderPassDescriptor_Browser*)descriptorPtr.Ptr);
+    }
+#else
     public WGPURenderPassEncoder(WGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Silk.NET.WebGPU.RenderPassDescriptor descriptor)
     {
         this.context = context;
         native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
+#endif
 
     public void Dispose()
     {

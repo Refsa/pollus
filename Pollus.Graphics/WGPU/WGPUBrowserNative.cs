@@ -1,6 +1,7 @@
 namespace Pollus.Graphics.WGPU;
 
 using System.Runtime.InteropServices;
+using Pollus.Mathematics;
 using Silk.NET.WebGPU;
 
 public static class WGPUBrowserNative
@@ -100,9 +101,9 @@ public static class WGPUBrowserNative
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginComputePass")]
     extern public static unsafe ComputePassEncoder* CommandEncoderBeginComputePass(CommandEncoder* commandEncoder, in ComputePassDescriptor descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginRenderPass")]
-    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, RenderPassDescriptor* descriptor);
+    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPURenderPassDescriptor_Browser* descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginRenderPass")]
-    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in RenderPassDescriptor descriptor);
+    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPURenderPassDescriptor_Browser descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderClearBuffer")]
     extern public static unsafe void CommandEncoderClearBuffer(CommandEncoder* commandEncoder, Buffer* buffer, ulong offset, ulong size);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderCopyBufferToBuffer")]
@@ -623,6 +624,11 @@ public static class WGPUBrowserNative
     extern public static unsafe void TextureViewReference(TextureView* textureView);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuTextureViewRelease")]
     extern public static unsafe void TextureViewRelease(TextureView* textureView);
+
+    [DllImport("__Internal_emscripten", EntryPoint = "wgpuDeviceCreateSwapChain")]
+    extern public static unsafe WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, in WGPUSwapChainDescriptor descriptor);
+    [DllImport("__Internal_emscripten", EntryPoint = "wgpuSwapChainGetCurrentTextureView")]
+    extern public static unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain* swapChain);
 }
 
 public struct WGPUDeviceDescriptor
@@ -671,4 +677,41 @@ public struct WGPULimits
     public uint MaxComputeWorkgroupSizeY;
     public uint MaxComputeWorkgroupSizeZ;
     public uint MaxComputeWorkgroupsPerDimension;
+}
+
+unsafe public struct WGPUSwapChain
+{
+    public uint SwapChainId;
+}
+
+unsafe public struct WGPUSwapChainDescriptor
+{
+    public ChainedStruct* NextInChain;
+    public byte* Label; // nullable
+    public TextureUsage Usage;
+    public TextureFormat Format;
+    public uint Width;
+    public uint Height;
+    public PresentMode PresentMode;
+}
+
+unsafe public struct WGPURenderPassDescriptor_Browser
+{
+    nint NextInChain;
+    public byte* Label; // nullable
+    public uint ColorAttachmentCount;
+    public WGPURenderPassColorAttachment_Browser* ColorAttachments;
+    public RenderPassDepthStencilAttachment* DepthStencilAttachment; // nullable
+    public QuerySet OcclusionQuerySet; // nullable
+    uint TimestampWriteCount;
+    nint timestampWrites;
+}
+
+unsafe public struct WGPURenderPassColorAttachment_Browser
+{
+    public TextureView* View; // nullable
+    public TextureView* ResolveTarget; // nullable
+    public LoadOp LoadOp;
+    public StoreOp StoreOp;
+    public Vector4<double> ClearValue;
 }

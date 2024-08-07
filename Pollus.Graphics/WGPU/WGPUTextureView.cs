@@ -22,6 +22,12 @@ unsafe public struct WGPUTextureView : IDisposable
         }
     }
 
+    public WGPUTextureView(WGPUContext context, TextureView* textureView)
+    {
+        this.context = context;
+        this.textureView = textureView;
+    }
+
     public void Dispose()
     {
         context.wgpu.TextureViewRelease(textureView);
