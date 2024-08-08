@@ -12,8 +12,7 @@ unsafe public struct WGPURenderPassEncoder : IDisposable
     public WGPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Browser.WGPURenderPassDescriptor_Browser descriptor)
     {
         this.context = context;
-        using var descriptorPtr = TemporaryPin.Pin(descriptor);
-        native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, (Browser.WGPURenderPassDescriptor_Browser*)descriptorPtr.Ptr);
+        native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
 #else
     public WGPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Silk.NET.WebGPU.RenderPassDescriptor descriptor)

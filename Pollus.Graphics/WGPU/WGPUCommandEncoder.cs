@@ -37,7 +37,7 @@ unsafe public struct WGPUCommandEncoder : IDisposable
         using var label = TemporaryPin.PinString(descriptor.Label);
 
 #if BROWSER
-        var colorAttachments = new Browser.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
+        Browser.WGPURenderPassColorAttachment_Browser* colorAttachments = stackalloc Browser.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
         {
             colorAttachments[i] = new Browser.WGPURenderPassColorAttachment_Browser
@@ -49,12 +49,11 @@ unsafe public struct WGPUCommandEncoder : IDisposable
                 ClearValue = descriptor.ColorAttachments[i].ClearValue,
             };
         }
-        using var colorAttachmentsPtr = TemporaryPin.Pin(colorAttachments);
         var wgpuDescriptor = new Browser.WGPURenderPassDescriptor_Browser
         {
             Label = (byte*)label.Ptr,
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
-            ColorAttachments = (Browser.WGPURenderPassColorAttachment_Browser*)colorAttachmentsPtr.Ptr
+            ColorAttachments = colorAttachments
         };
 #else
         var wgpuDescriptor = new Silk.NET.WebGPU.RenderPassDescriptor
