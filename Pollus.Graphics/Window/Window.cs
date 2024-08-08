@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 
 public record class WindowOptions
 {
+    public static WindowOptions Default => new();
+
     public string Title { get; set; } = "Pollus";
     public int Width { get; set; } = 1600;
     public int Height { get; set; } = 900;

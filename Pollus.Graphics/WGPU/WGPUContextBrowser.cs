@@ -129,6 +129,8 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             Format = preferredFormat,
             PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
             Usage = Silk.NET.WebGPU.TextureUsage.RenderAttachment,
+            Height = (uint)window.Size.Y,
+            Width = (uint)window.Size.X
         };
         swapChain = wgpu.DeviceCreateSwapChain(device, surface, descriptor);
     }

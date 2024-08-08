@@ -20,7 +20,7 @@ public partial class BrowserWindow : IWindow
     private static extern void emscripten_set_timeout(nint callback, double ms, nint userData);
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    async static void emOnFrameCallback()
+    static void emOnFrameCallback()
     {
         emOnFrame();
     }

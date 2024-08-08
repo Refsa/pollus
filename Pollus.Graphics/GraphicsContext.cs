@@ -10,6 +10,8 @@ unsafe public class GraphicsContext : IDisposable
 
     bool isDisposed;
 
+    public bool IsReady => instance.IsReady;
+
     public GraphicsContext()
     {
         instance = new();
