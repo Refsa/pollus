@@ -10,7 +10,6 @@ public partial class GraphicsExample
     {
         Console.WriteLine("Graphics Example");
 
-
         using var window = Window.Create(new());
         Console.WriteLine("Window Created");
         using var graphicsContext = new GraphicsContext();

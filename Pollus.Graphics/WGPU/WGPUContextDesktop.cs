@@ -64,6 +64,8 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     [MemberNotNull(nameof(surface), nameof(adapter), nameof(device), nameof(queue))]
     public void Setup()
     {
+        if (IsReady) return;
+
         CreateSurface();
         Console.WriteLine("WGPU: Surface created");
         CreateAdapter();

@@ -11,10 +11,16 @@ public partial class BrowserWindow : IWindow
     static Action emOnFrame;
 
     [DllImport("__Internal_emscripten")]
-    private static extern void emscripten_set_main_loop(IntPtr action, int fps, bool simulateInfiniteLoop);
+    private static extern void emscripten_set_main_loop(nint action, int fps, bool simulateInfiniteLoop);
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    static void emOnFrameCallback()
+    [DllImport("__Internal_emscripten")]
+    private static extern void emscripten_request_animation_frame(nint callback, nint userData);
+
+    [DllImport("__Internal_emscripten")]
+    private static extern void emscripten_set_timeout(nint callback, double ms, nint userData);
+
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    async static void emOnFrameCallback()
     {
         emOnFrame();
     }
@@ -42,5 +48,15 @@ public partial class BrowserWindow : IWindow
     {
         emOnFrame = loop;
         emscripten_set_main_loop((IntPtr)(delegate* unmanaged[Cdecl]<void>)&emOnFrameCallback, 0, false);
+    }
+
+    unsafe public static void RequestAnimationFrame(delegate* unmanaged[Cdecl]<double, void*, void> callback, void* userData)
+    {
+        emscripten_request_animation_frame((nint)callback, (nint)userData);
+    }
+
+    unsafe public static void SetTimeout(delegate* unmanaged[Cdecl]<void*, void> callback, void* userData, double ms)
+    {
+        emscripten_set_timeout((nint)callback, ms, (nint)userData);
     }
 }

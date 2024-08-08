@@ -11,6 +11,8 @@ unsafe public class WGPUInstance : IDisposable
 
     bool isDisposed;
 
+    public bool IsReady => instance != null;
+
     public WGPUInstance()
     {
 #if BROWSER
