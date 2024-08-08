@@ -1,4 +1,4 @@
-namespace Pollus.Graphics;
+namespace Pollus.Graphics.SDL;
 
 using Pollus.Graphics.Windowing;
 using Silk.NET.Core.Contexts;

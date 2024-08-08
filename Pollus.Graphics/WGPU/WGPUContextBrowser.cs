@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using Pollus.Mathematics;
 using Pollus.Utils;
 using Pollus.Graphics.Windowing;
+using Pollus.Graphics.Rendering;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
@@ -27,7 +28,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     bool isPreparingDevice;
     bool isDisposed;
 
-    List<WGPUResourceWrapper> resources = new();
+    List<GPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
     public Browser.WGPUBrowser wgpu => instance.wgpu;
@@ -204,12 +205,12 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(WGPUResourceWrapper resource)
+    public void RegisterResource(GPUResourceWrapper resource)
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(WGPUResourceWrapper resource)
+    public void ReleaseResource(GPUResourceWrapper resource)
     {
         resources.Remove(resource);
     }

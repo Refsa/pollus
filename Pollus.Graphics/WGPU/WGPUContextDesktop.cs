@@ -4,6 +4,7 @@ namespace Pollus.Graphics.WGPU;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.Windowing;
+using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
@@ -24,7 +25,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
 
     bool isDisposed;
 
-    List<WGPUResourceWrapper> resources = new();
+    List<GPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
@@ -34,7 +35,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     public Silk.NET.WebGPU.Adapter* Adapter => adapter;
     public Silk.NET.WebGPU.Device* Device => device;
     public Silk.NET.WebGPU.Queue* Queue => queue;
-    public Browser.WGPUSwapChain_Browser* SwapChain => null;
+    public WGPU.Browser.WGPUSwapChain_Browser* SwapChain => null;
 
     public WGPUContextDesktop(IWindow window, WGPUInstance instance)
     {
@@ -204,12 +205,12 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(WGPUResourceWrapper resource)
+    public void RegisterResource(GPUResourceWrapper resource)
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(WGPUResourceWrapper resource)
+    public void ReleaseResource(GPUResourceWrapper resource)
     {
         resources.Remove(resource);
     }

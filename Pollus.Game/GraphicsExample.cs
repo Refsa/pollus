@@ -1,12 +1,12 @@
 namespace Pollus.Game;
 
 using Pollus.Engine;
-using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Rendering;
 
 public class GraphicsExample
 {
-    WGPUShaderModule? shaderModule = null;
-    WGPURenderPipeline? renderPipeline = null;
+    GPUShader? shaderModule = null;
+    GPURenderPipeline? renderPipeline = null;
 
     void Setup(IApplication app)
     {
@@ -50,14 +50,14 @@ fn fs_main(@builtin(position) in_position: vec4f) -> @location(0) vec4f {
                 ShaderModule = shaderModule,
                 EntryPoint = "fs_main",
                 ColorTargets = [
-                    WGPUColorTargetState.Default with
+                    ColorTargetState.Default with
                         {
                             Format = app.WindowContext.GetSurfaceFormat(),
                         }
                 ]
             },
-            MultisampleState = WGPUMultisampleState.Default,
-            PrimitiveState = WGPUPrimitiveState.Default,
+            MultisampleState = MultisampleState.Default,
+            PrimitiveState = PrimitiveState.Default,
             PipelineLayout = null,
         });
         Console.WriteLine("Render Pipeline Created");
@@ -66,7 +66,7 @@ fn fs_main(@builtin(position) in_position: vec4f) -> @location(0) vec4f {
     void Update(IApplication app)
     {
         using var surfaceTexture = app.WindowContext.CreateSurfaceTexture();
-        if (surfaceTexture.GetTextureView() is not WGPUTextureView surfaceTextureView)
+        if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
         {
             Console.WriteLine("Surface texture view is null");
             return;
@@ -77,7 +77,7 @@ fn fs_main(@builtin(position) in_position: vec4f) -> @location(0) vec4f {
             using var renderPass = commandEncoder.BeginRenderPass(new()
             {
                 Label = "render-pass",
-                ColorAttachments = stackalloc WGPURenderPassColorAttachment[1]
+                ColorAttachments = stackalloc RenderPassColorAttachment[1]
                 {
                     new(
                         textureView: surfaceTextureView.Native,
@@ -86,7 +86,7 @@ fn fs_main(@builtin(position) in_position: vec4f) -> @location(0) vec4f {
                         loadOp: Silk.NET.WebGPU.LoadOp.Clear,
                         storeOp: Silk.NET.WebGPU.StoreOp.Store
                     )
-                        },
+                },
             });
 
             renderPass.SetPipeline(renderPipeline!);

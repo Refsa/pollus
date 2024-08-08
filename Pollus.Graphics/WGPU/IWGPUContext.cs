@@ -1,5 +1,7 @@
 namespace Pollus.Graphics.WGPU;
 
+using Pollus.Graphics.Rendering;
+
 unsafe public interface IWGPUContext : IDisposable
 {
 #if BROWSER
@@ -17,15 +19,15 @@ unsafe public interface IWGPUContext : IDisposable
     public bool IsReady { get; }
     void Setup();
 
-    void RegisterResource(WGPUResourceWrapper resource);
-    void ReleaseResource(WGPUResourceWrapper resource);
+    void RegisterResource(GPUResourceWrapper resource);
+    void ReleaseResource(GPUResourceWrapper resource);
 
     Silk.NET.WebGPU.TextureFormat GetSurfaceFormat();
     void Present();
 
-    WGPUSurfaceTexture CreateSurfaceTexture() => new(this);
-    WGPUCommandEncoder CreateCommandEncoder(string label) => new(this, label);
-    WGPURenderPipeline CreateRenderPipeline(WGPURenderPipelineDescriptor descriptor) => new(this, descriptor);
-    WGPUPipelineLayout CreatePipelineLayout(WGPUPipelineLayoutDescriptor descriptor) => new(this, descriptor);
-    WGPUShaderModule CreateShaderModule(WGPUShaderModuleDescriptor descriptor) => new(this, descriptor);
+    GPUSurfaceTexture CreateSurfaceTexture() => new(this);
+    GPUCommandEncoder CreateCommandEncoder(string label) => new(this, label);
+    GPURenderPipeline CreateRenderPipeline(RenderPipelineDescriptor descriptor) => new(this, descriptor);
+    GPUPipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor descriptor) => new(this, descriptor);
+    GPUShader CreateShaderModule(ShaderModuleDescriptor descriptor) => new(this, descriptor);
 }

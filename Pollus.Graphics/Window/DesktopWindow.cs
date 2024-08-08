@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Windowing;
 
 using Silk.NET.Core.Contexts;
 using Pollus.Mathematics;
+using Pollus.Graphics.SDL;
 
 public class DesktopWindow : IWindow, INativeWindowSource
 {
