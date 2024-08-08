@@ -15,6 +15,7 @@
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
 
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH</EmccExtraLDFlags>
+    <EmccFlags>--embed-file assets</EmccFlags>
 
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
@@ -47,6 +48,13 @@
       <EmscriptenEnvVars Include="FROZEN_CACHE=0" />
     </ItemGroup>
   </Target>
+
+  <ItemGroup>
+    <Content Include="./assets/**">
+      <Link>assets/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Engine\Pollus.Engine.csproj" />
