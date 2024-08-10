@@ -24,6 +24,8 @@ public interface IWindow : IDisposable, INativeWindowSource
     Vector2<int> Size { get; set; }
 
     public void Run(Action loop);
+
+    public void Close();
 }
 
 public static class Window
@@ -36,23 +38,4 @@ public static class Window
         return new DesktopWindow(options);
 #endif
     }
-}
-
-public enum WindowEventType
-{
-    Closed,
-}
-
-[StructLayout(LayoutKind.Explicit)]
-public struct WindowEvent
-{
-    [FieldOffset(0)]
-    public readonly WindowEventType Type;
-
-    public WindowEvent(WindowEventType type)
-    {
-        Type = type;
-    }
-
-    public static implicit operator WindowEvent(WindowEventType type) => new(type);
 }

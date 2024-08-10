@@ -6,14 +6,10 @@ using Pollus.Utils;
 
 public class BrowserInput : Input
 {
-    static BrowserInput _instance;
-
     Guid keyboardId;
 
     public BrowserInput()
     {
-        _instance = this;
-
         var sdlFlags = (uint)(SDL_InitFlag.InitEvents | SDL_InitFlag.InitGamecontroller | SDL_InitFlag.InitJoystick);
         if (EmscriptenSDL.WasInit(sdlFlags) is false)
         {
@@ -27,7 +23,7 @@ public class BrowserInput : Input
             }
         }
 
-        // Browser currently on supports a single keyboard
+        // Currently on supports a single keyboard
         {
             var keyboard = new Keyboard();
             keyboardId = keyboard.Id;
@@ -42,6 +38,8 @@ public class BrowserInput : Input
 
     unsafe protected override void UpdateInternal()
     {
+        var keyboard = GetDevice(keyboardId) as Keyboard;
+
         EmscriptenSDL.PumpEvents();
         var @event = new SDL_Event();
         while (EmscriptenSDL.PollEvent(ref @event) == 1)
@@ -56,7 +54,7 @@ public class BrowserInput : Input
                     var key = MapKey(keyEvent.Keysym.Scancode);
                     if (keyEvent.Repeat == 0)
                     {
-                        (GetDevice(keyboardId) as Keyboard)?.SetKeyState(key, keyEvent.State == 1);
+                        keyboard?.SetKeyState(key, keyEvent.State == 1);
                     }
                     break;
             }

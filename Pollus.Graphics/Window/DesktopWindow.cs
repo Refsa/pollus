@@ -29,25 +29,16 @@ public class DesktopWindow : IWindow, INativeWindowSource
         SDLWrapper.DestroyWindow(native);
     }
 
+    public void Close()
+    {
+        IsOpen = false;
+    }
+
     public void Run(Action loop)
     {
         while (IsOpen)
         {
-            PollEvents();
             loop();
-        }
-    }
-
-    public void PollEvents()
-    {
-        foreach (var @event in SDLWrapper.PollEvents())
-        {
-            switch (@event.Type)
-            {
-                case WindowEventType.Closed:
-                    IsOpen = false;
-                    break;
-            }
         }
     }
 }

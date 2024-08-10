@@ -1,7 +1,6 @@
 namespace Pollus.Engine;
 
 using System.Runtime.InteropServices;
-using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 

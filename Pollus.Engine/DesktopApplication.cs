@@ -1,6 +1,7 @@
 namespace Pollus.Engine;
 
 using Pollus.Graphics;
+using Pollus.Graphics.SDL;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
@@ -11,10 +12,11 @@ public class DesktopApplication : IApplication, IDisposable
     IWGPUContext? windowContext;
 
     bool isDisposed;
+    bool isRunning;
     Action<IApplication>? OnSetup;
     Action<IApplication>? OnUpdate;
-    
-    public bool IsRunning => window.IsOpen;
+
+    public bool IsRunning => window.IsOpen && isRunning;
     public IWGPUContext WindowContext => windowContext!;
 
     public DesktopApplication(ApplicationBuilder builder)
@@ -36,22 +38,29 @@ public class DesktopApplication : IApplication, IDisposable
 
     public void Run()
     {
+        isRunning = true;
+
         graphicsContext = new();
         windowContext = graphicsContext.CreateContext("main", window);
         windowContext.Setup();
 
         OnSetup?.Invoke(this);
-        window.Run(RunInternal);
-        Dispose();
-    }
 
-    void RunInternal()
-    {
-        if (!IsRunning)
+        while (IsRunning)
         {
-            Dispose();
-            return;
+            SDLWrapper.PollEvents();
+            foreach (var @event in SDLWrapper.LatestEvents)
+            {
+                if (@event.Type is (uint)Silk.NET.SDL.EventType.Quit or (uint)Silk.NET.SDL.EventType.AppTerminating)
+                {
+                    window.Close();
+                    break;
+                }
+            }
+
+            OnUpdate?.Invoke(this);
         }
-        OnUpdate?.Invoke(this);
+
+        Dispose();
     }
 }

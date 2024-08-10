@@ -44,6 +44,11 @@ public partial class BrowserWindow : IWindow
         IsOpen = false;
     }
 
+    public void Close()
+    {
+        IsOpen = false;
+    }
+
     unsafe public void Run(Action loop)
     {
         emOnFrame = loop;

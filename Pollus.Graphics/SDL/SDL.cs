@@ -8,6 +8,9 @@ public static class SDLWrapper
 {
     public static readonly Sdl Instance = SdlProvider.SDL.Value;
 
+    static List<Event> latestEvents { get; } = new();
+    public static IReadOnlyList<Event> LatestEvents => latestEvents;
+
     static SDLWrapper()
     {
         SdlProvider.InitFlags = Sdl.InitVideo | Sdl.InitEvents;
@@ -35,22 +38,15 @@ public static class SDLWrapper
         Instance.DestroyWindow((Silk.NET.SDL.Window*)window.Sdl!);
     }
 
-    public static IEnumerable<Windowing.WindowEvent> PollEvents()
+    public static void PollEvents()
     {
+        latestEvents.Clear();
         Instance.PumpEvents();
 
         var @event = new Event();
         while (Instance.PollEvent(ref @event) == 1)
         {
-            switch ((EventType)@event.Type)
-            {
-                case EventType.Quit:
-                case EventType.AppTerminating:
-                    yield return WindowEventType.Closed;
-                    break;
-                case EventType.Windowevent:
-                    break;
-            }
+            latestEvents.Add(@event);
         }
     }
 }
