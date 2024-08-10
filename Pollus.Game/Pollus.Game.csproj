@@ -14,7 +14,7 @@
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
 
-    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH</EmccExtraLDFlags>
+    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -sUSE_SDL</EmccExtraLDFlags>
     <EmccFlags>--embed-file assets</EmccFlags>
 
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>

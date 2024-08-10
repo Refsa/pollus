@@ -1,7 +1,5 @@
-﻿using System.Runtime.InteropServices;
-using Pollus.Engine;
-using Pollus.Game;
-using Pollus.Graphics.WGPU;
+﻿using Pollus.Game;
 
 // ECSExample.Run();
-new GraphicsExample().Run();
+// new GraphicsExample().Run();
+new InputExample().Run();
