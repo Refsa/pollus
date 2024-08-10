@@ -48,6 +48,7 @@ public class DesktopApplication : IApplication, IDisposable
 
         while (IsRunning)
         {
+#if !BROWSER
             SDLWrapper.PollEvents();
             foreach (var @event in SDLWrapper.LatestEvents)
             {
@@ -57,6 +58,7 @@ public class DesktopApplication : IApplication, IDisposable
                     break;
                 }
             }
+#endif
 
             OnUpdate?.Invoke(this);
         }

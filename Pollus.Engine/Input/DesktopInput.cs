@@ -23,6 +23,7 @@ public class DesktopInput : Input
 
     protected override void UpdateInternal()
     {
+#if !BROWSER
         var keyboard = GetDevice(keyboardId) as Keyboard;
         foreach (var @event in SDLWrapper.LatestEvents)
         {
@@ -35,6 +36,7 @@ public class DesktopInput : Input
                 }
             }
         }
+#endif
     }
 
     Key MapKey(Silk.NET.SDL.Scancode scancode)
