@@ -16,7 +16,7 @@
 
     <EmccFlags>--embed-file assets</EmccFlags>
     
-    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal</EmccExtraLDFlags>
+    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
     <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>

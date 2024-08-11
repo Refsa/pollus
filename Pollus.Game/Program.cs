@@ -7,4 +7,5 @@ using Pollus.Mathematics;
 // new DrawTriangle().Run();
 // new ECSExample().Run();
 // new InputExample().Run();
-new AudioExample().Run();
+// new AudioExample().Run();
+new SnakeGame().Run();

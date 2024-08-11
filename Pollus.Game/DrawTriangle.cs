@@ -32,9 +32,9 @@ public class DrawTriangle
                 EntryPoint = "fs_main",
                 ColorTargets = [
                     ColorTargetState.Default with
-                        {
-                            Format = app.GPUContext.GetSurfaceFormat(),
-                        }
+                    {
+                        Format = app.GPUContext.GetSurfaceFormat(),
+                    }
                 ]
             },
             MultisampleState = MultisampleState.Default,

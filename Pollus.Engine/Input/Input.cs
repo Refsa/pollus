@@ -126,6 +126,12 @@ public abstract class InputManager : IDisposable
         return devices.FirstOrDefault();
     }
 
+    public TDevice? GetDevice<TDevice>(ReadOnlySpan<char> path)
+        where TDevice : class, IInputDevice
+    {
+        return GetDevice(path) as TDevice;
+    }
+
     public static InputManager Create()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")))
