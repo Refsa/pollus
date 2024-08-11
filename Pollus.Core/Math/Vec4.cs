@@ -1,5 +1,7 @@
 namespace Pollus.Mathematics;
 
+using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 public record struct Vec4<T>
@@ -29,9 +31,9 @@ public record struct Vec4<T>
     public Vec4(Vec3<T> vec3, T w)
     {
         X = vec3.X;
-        Y = vec3.X;
-        Z = vec3.X;
-        W = vec3.X;
+        Y = vec3.Y;
+        Z = vec3.Z;
+        W = w;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,5 +45,20 @@ public record struct Vec4<T>
     public Vec3<T> Truncate()
     {
         return new Vec3<T>(X, Y, Z);
+    }
+
+    public Vec4<T> Mul(Vec4<T> other)
+    {
+        return new Vec4<T>(X * other.X, Y * other.Y, Z * other.Z, W * other.W);
+    }
+
+    public Vec4<T> Add(Vec4<T> vec4)
+    {
+        return new Vec4<T>(X - vec4.X, Y - vec4.Y, Z - vec4.Z, W - vec4.W);
+    }
+
+    public Vec4<T> Sub(Vec4<T> vec4)
+    {
+        return new Vec4<T>(X - vec4.X, Y - vec4.Y, Z - vec4.Z, W - vec4.W);
     }
 }

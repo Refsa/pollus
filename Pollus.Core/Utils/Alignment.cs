@@ -1,5 +1,6 @@
 namespace Pollus.Utils;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
@@ -8,7 +9,13 @@ public static class Alignment
     public static uint GetAlignedSize<T>(bool findNextPowerOfTwo = true)
         where T : unmanaged
     {
-        return GetAlignedSize((uint)Marshal.SizeOf<T>(), findNextPowerOfTwo);
+        return GetAlignedSize((uint)Unsafe.SizeOf<T>(), findNextPowerOfTwo);
+    }
+
+    public static uint GetAlignedSize<T>(uint count, bool findNextPowerOfTwo = true)
+        where T : unmanaged
+    {
+        return GetAlignedSize((uint)Unsafe.SizeOf<T>() * count, findNextPowerOfTwo);
     }
 
     public static uint GetAlignedSize(uint size, bool findNextPowerOfTwo = true)

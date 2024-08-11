@@ -31,6 +31,8 @@ unsafe public interface IWGPUContext : IDisposable
     GPUPipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor descriptor) => new(this, descriptor);
     GPUShader CreateShaderModule(ShaderModuleDescriptor descriptor) => new(this, descriptor);
     GPUBuffer CreateBuffer(BufferDescriptor descriptor) => new(this, descriptor);
+    GPUBindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
+    GPUBindGroup CreateBindGroup(BindGroupDescriptor descriptor) => new(this, descriptor);
 
     void QueuePoll() => wgpu.QueueSubmit(Queue, 0, null);
 }

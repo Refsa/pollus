@@ -56,4 +56,11 @@ public static class Math
     {
         return T.CreateChecked(System.Math.Sqrt(double.CreateChecked(self)));
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Rcp<T>(this T self)
+        where T : struct, IFloatingPoint<T>
+    {
+        return T.One / self;
+    }
 }

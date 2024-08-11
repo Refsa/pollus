@@ -13,10 +13,9 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
     public GPUBindGroup(IWGPUContext context, BindGroupDescriptor descriptor) : base(context)
     {
         using var pins = new TemporaryPins();
-        pins.Pin(descriptor.Label);
-
+        
         var nativeDescriptor = new Silk.NET.WebGPU.BindGroupDescriptor(
-            label: (byte*)MemoryMarshal.AsBytes(descriptor.Label.AsSpan())[0],
+            label: (byte*)pins.PinString(descriptor.Label).AddrOfPinnedObject(),
             layout: (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layout.Native
         );
 

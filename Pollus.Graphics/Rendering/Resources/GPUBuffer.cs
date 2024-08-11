@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 namespace Pollus.Graphics.Rendering;
 
@@ -31,12 +32,30 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         }
     }
 
-    public void Write<TElement>(ReadOnlySpan<TElement> data)
+    public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
         where TElement : unmanaged
     {
         fixed (TElement* ptr = data)
         {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, 0, ptr, (nuint)(data.Length * Unsafe.SizeOf<TElement>()));
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)(data.Length * Unsafe.SizeOf<TElement>()));
+        }
+    }
+
+    public void Write<TElement>(in TElement element, int offset)
+        where TElement : unmanaged
+    {
+        fixed (TElement* ptr = &element)
+        {
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)Unsafe.SizeOf<TElement>());
+        }
+    }
+
+    public void WriteAligned<TElement>(in TElement element, int offset)
+        where TElement : unmanaged
+    {
+        fixed (TElement* ptr = &element)
+        {
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, Alignment.GetAlignedSize<TElement>());
         }
     }
 
