@@ -3,6 +3,9 @@ namespace Pollus.Engine;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
+using Pollus.Audio;
+using Pollus.Engine;
+using Pollus.Engine.Input;
 
 public record class ApplicationBuilder
 {
@@ -45,7 +48,10 @@ public record class ApplicationBuilder
 public interface IApplication
 {
     bool IsRunning { get; }
-    IWGPUContext WindowContext { get; }
+
+    IWGPUContext GPUContext { get; }
+    AudioManager Audio { get; }
+    InputManager Input { get; }
 
     void Run();
 }

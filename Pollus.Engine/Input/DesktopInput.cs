@@ -2,7 +2,7 @@ using Pollus.Graphics.SDL;
 
 namespace Pollus.Engine.Input;
 
-public class DesktopInput : Input
+public class DesktopInput : InputManager
 {
     Guid keyboardId;
 

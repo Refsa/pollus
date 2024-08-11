@@ -12,7 +12,7 @@ public enum InputType
     Touch,
 }
 
-public abstract class Input : IDisposable
+public abstract class InputManager : IDisposable
 {
     Dictionary<Guid, IInputDevice> connectedDevices = new();
     List<IInputDevice> keyboards = new();
@@ -23,7 +23,7 @@ public abstract class Input : IDisposable
 
     public IEnumerable<IInputDevice> ConnectedDevices => connectedDevices.Values;
 
-    ~Input() => Dispose();
+    ~InputManager() => Dispose();
 
     public void Update()
     {
@@ -126,7 +126,7 @@ public abstract class Input : IDisposable
         return devices.FirstOrDefault();
     }
 
-    public static Input Create()
+    public static InputManager Create()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")))
         {

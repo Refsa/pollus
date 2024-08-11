@@ -6,31 +6,23 @@ using Pollus.Mathematics;
 
 public class AudioExample
 {
-    Audio? audio = null;
     AudioSource? source = null;
     AudioBuffer? buffer = null;
 
-    ~AudioExample()
+    void Setup(IApplication app)
     {
-        audio?.Dispose();
-    }
-
-    void Setup(IApplication application)
-    {
-        audio = new Audio();
-
-        source = audio.CreateSource();
+        source = app.Audio.CreateSource();
         source.Looping = true;
         source.Gain = 1f;
         source.Pitch = 1f;
         source.Position = Vector3<float>.Zero;
         source.Velocity = Vector3<float>.Zero;
 
-        using var decoder = new WavDecoder("assets/test.wav");
+        using var decoder = new WavDecoder("assets/local/meet-the-princess.wav");
         var data = new byte[decoder.Size];
         var readCount = decoder.Read(data, data.Length);
 
-        buffer = audio.CreateBuffer();
+        buffer = app.Audio.CreateBuffer();
         buffer.SetData<byte>(data, decoder.Info);
         source.QueueBuffer(buffer);
         source.Play();

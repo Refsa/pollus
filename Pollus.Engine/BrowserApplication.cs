@@ -1,5 +1,7 @@
 namespace Pollus.Engine;
 
+using Pollus.Audio;
+using Pollus.Engine.Input;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
@@ -10,13 +12,18 @@ public class BrowserApplication : IApplication, IDisposable
     GraphicsContext? graphicsContext;
     IWGPUContext? windowContext;
 
+    AudioManager? audio;
+    InputManager? input;
+
     bool isDisposed;
     bool isSetup;
     Action<IApplication>? OnSetup;
     Action<IApplication>? OnUpdate;
 
     public bool IsRunning => window.IsOpen;
-    public IWGPUContext WindowContext => windowContext!;
+    public IWGPUContext GPUContext => windowContext!;
+    public AudioManager Audio => audio!;
+    public InputManager Input => input!;
 
     public BrowserApplication(ApplicationBuilder builder)
     {
@@ -41,6 +48,8 @@ public class BrowserApplication : IApplication, IDisposable
     public void Run()
     {
         graphicsContext = new();
+        audio = new();
+        input = new BrowserInput();
         window.Run(RunInternal);
     }
 
@@ -57,6 +66,7 @@ public class BrowserApplication : IApplication, IDisposable
             return;
         }
 
+        input.Update();
         OnUpdate?.Invoke(this);
     }
 

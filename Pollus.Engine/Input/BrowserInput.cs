@@ -2,7 +2,7 @@ namespace Pollus.Engine.Input;
 
 using Pollus.Emscripten;
 
-public class BrowserInput : Input
+public class BrowserInput : InputManager
 {
     Guid keyboardId;
 

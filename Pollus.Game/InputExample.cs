@@ -5,18 +5,15 @@ using Pollus.Engine.Input;
 
 public class InputExample
 {
-    Input? input = null;
     Keyboard? keyboard = null;
 
     public void Setup(IApplication app)
     {
-        input = Input.Create();
-        keyboard = input.GetDevice("keyboard") as Keyboard;
+        keyboard = app.Input.GetDevice("keyboard") as Keyboard;
     }
 
     public void Update(IApplication app)
     {
-        input?.Update();
         if (keyboard!.JustPressed(Key.ArrowLeft))
         {
             Console.WriteLine("Arrow Left Just Pressed");

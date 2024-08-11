@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using Pollus.Mathematics;
 using Silk.NET.OpenAL;
 
-unsafe public class Audio : IDisposable
+unsafe public class AudioManager : IDisposable
 {
 #if BROWSER
     internal Emscripten.ALContext alc;
@@ -21,7 +21,7 @@ unsafe public class Audio : IDisposable
 
     bool isDisposed;
 
-    public Audio()
+    public AudioManager()
     {
 #if BROWSER
         al = new Emscripten.AL();
@@ -47,7 +47,7 @@ unsafe public class Audio : IDisposable
         device = new AudioDevice(this, nativeContext, nativeDevice);
     }
 
-    ~Audio() => Dispose();
+    ~AudioManager() => Dispose();
 
     public void Dispose()
     {

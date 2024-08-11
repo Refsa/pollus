@@ -3,14 +3,14 @@ namespace Pollus.Game;
 using Pollus.Engine;
 using Pollus.Graphics.Rendering;
 
-public class GraphicsExample
+public class DrawTriangle
 {
     GPUShader? shaderModule = null;
     GPURenderPipeline? renderPipeline = null;
 
     void Setup(IApplication app)
     {
-        shaderModule = app.WindowContext.CreateShaderModule(new()
+        shaderModule = app.GPUContext.CreateShaderModule(new()
         {
             Label = "shader-module",
             Backend = ShaderBackend.WGSL,
@@ -18,7 +18,7 @@ public class GraphicsExample
         });
         Console.WriteLine("Shader Module Created");
 
-        renderPipeline = app.WindowContext.CreateRenderPipeline(new()
+        renderPipeline = app.GPUContext.CreateRenderPipeline(new()
         {
             Label = "render-pipeline",
             VertexState = new()
@@ -33,7 +33,7 @@ public class GraphicsExample
                 ColorTargets = [
                     ColorTargetState.Default with
                         {
-                            Format = app.WindowContext.GetSurfaceFormat(),
+                            Format = app.GPUContext.GetSurfaceFormat(),
                         }
                 ]
             },
@@ -46,14 +46,14 @@ public class GraphicsExample
 
     void Update(IApplication app)
     {
-        using var surfaceTexture = app.WindowContext.CreateSurfaceTexture();
+        using var surfaceTexture = app.GPUContext.CreateSurfaceTexture();
         if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
         {
             Console.WriteLine("Surface texture view is null");
             return;
         }
 
-        using var commandEncoder = app.WindowContext.CreateCommandEncoder("command-encoder");
+        using var commandEncoder = app.GPUContext.CreateCommandEncoder("command-encoder");
         {
             using var renderPass = commandEncoder.BeginRenderPass(new()
             {
@@ -77,7 +77,7 @@ public class GraphicsExample
         }
         using var commandBuffer = commandEncoder.Finish("command-buffer");
         commandBuffer.Submit();
-        app.WindowContext.Present();
+        app.GPUContext.Present();
     }
 
     public void Run()

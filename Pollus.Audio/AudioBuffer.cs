@@ -6,14 +6,14 @@ namespace Pollus.Audio;
 
 public class AudioBuffer : IDisposable
 {
-    Audio audio;
+    AudioManager audio;
     uint bufferId;
 
     bool isDisposed;
 
     public uint Id => bufferId;
 
-    public AudioBuffer(Audio audio)
+    public AudioBuffer(AudioManager audio)
     {
         this.audio = audio;
         bufferId = audio.al.GenBuffer();

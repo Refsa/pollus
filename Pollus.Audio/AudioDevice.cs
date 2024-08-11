@@ -4,13 +4,13 @@ using Silk.NET.OpenAL;
 
 unsafe class AudioDevice : IDisposable
 {
-    Audio audio;
+    AudioManager audio;
     Context* context;
     Device* device;
 
     bool isDisposed;
 
-    public AudioDevice(Audio audio, Context* context, Device* device)
+    public AudioDevice(AudioManager audio, Context* context, Device* device)
     {
         this.audio = audio;
         this.context = context;

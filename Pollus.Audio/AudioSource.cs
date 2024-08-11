@@ -14,7 +14,7 @@ public enum AudioSourceState
 
 public class AudioSource : IDisposable
 {
-    Audio audio;
+    AudioManager audio;
     uint sourceId;
 
     bool isDisposed;
@@ -114,7 +114,7 @@ public class AudioSource : IDisposable
         set => audio.al.SetSourceProperty(sourceId, SourceVector3.Direction, value);
     }
 
-    public AudioSource(Audio audio)
+    public AudioSource(AudioManager audio)
     {
         this.audio = audio;
         sourceId = audio.al.GenSource();
