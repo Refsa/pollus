@@ -4,8 +4,7 @@ using Pollus.Engine;
 using Pollus.Game;
 using Pollus.Mathematics;
 
-// ECSExample.Run();
+// new ECSExample().Run();
 // new GraphicsExample().Run();
 // new InputExample().Run();
-
-new AudioExample().Run();
+// new AudioExample().Run();

@@ -2,34 +2,42 @@
 namespace Pollus.Game;
 
 using Pollus.ECS;
+using Pollus.Engine;
 
 public class ECSExample
 {
-    public static void Run()
+    World world = new();
+
+    ~ECSExample()
     {
-        using var world = new World();
+        world.Dispose();
+    }
+
+    void Setup(IApplication app)
+    {
         for (int i = 0; i < 100_000; i++)
         {
             world.Spawn(new Component1(), new Component2());
         }
+    }
 
-        var sw = System.Diagnostics.Stopwatch.StartNew();
-        var frameCount = 0;
-        while (true)
+    void Update(IApplication app)
+    {
+        var q = new Query<Component1, Component2>(world);
+        q.ForEach((ref Component1 c1, ref Component2 c2) =>
         {
-            var q = new Query<Component1, Component2>(world);
-            q.ForEach((ref Component1 c1, ref Component2 c2) =>
-            {
-                c1.Value++;
-                c2.Value++;
-            });
-            frameCount++;
-            if (sw.ElapsedMilliseconds >= 1000)
-            {
-                Console.WriteLine(frameCount / (sw.ElapsedMilliseconds / 1000.0));
-                frameCount = 0;
-                sw.Restart();
-            }
-        }
+            c1.Value++;
+            c2.Value++;
+        });
+
+    }
+
+    public void Run()
+    {
+        (ApplicationBuilder.Default with
+        {
+            OnSetup = Setup,
+            OnUpdate = Update,
+        }).Build().Run();
     }
 }

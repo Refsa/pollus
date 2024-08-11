@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Local game assets
+*/assets/local/
+
 # dotenv files
 .env
 
