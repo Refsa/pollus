@@ -1,4 +1,4 @@
-namespace Pollus.Graphics.WGPU.Browser;
+namespace Pollus.Emscripten;
 
 public struct WGPULimits_Browser
 {

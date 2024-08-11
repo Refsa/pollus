@@ -20,7 +20,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     Silk.NET.WebGPU.Adapter* adapter;
     Silk.NET.WebGPU.Device* device;
     Silk.NET.WebGPU.Queue* queue;
-    Browser.WGPUSwapChain_Browser* swapChain;
+    Emscripten.WGPUSwapChain_Browser* swapChain;
 
     Silk.NET.WebGPU.TextureFormat preferredFormat;
 
@@ -31,14 +31,14 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     List<GPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
-    public Browser.WGPUBrowser wgpu => instance.wgpu;
+    public Emscripten.WGPUBrowser wgpu => instance.wgpu;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
 
     public Silk.NET.WebGPU.Surface* Surface => surface;
     public Silk.NET.WebGPU.Adapter* Adapter => adapter;
     public Silk.NET.WebGPU.Device* Device => device;
     public Silk.NET.WebGPU.Queue* Queue => queue;
-    public Browser.WGPUSwapChain_Browser* SwapChain => swapChain;
+    public Emscripten.WGPUSwapChain_Browser* SwapChain => swapChain;
 
     public WGPUContextBrowser(IWindow window, WGPUInstance instance)
     {
@@ -125,7 +125,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     void CreateSwapChain()
     {
-        var descriptor = new Browser.WGPUSwapChainDescriptor_Browser()
+        var descriptor = new Emscripten.WGPUSwapChainDescriptor_Browser()
         {
             Format = preferredFormat,
             PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
@@ -164,20 +164,20 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
-        var limits = new Browser.WGPULimits_Browser()
+        var limits = new Emscripten.WGPULimits_Browser()
         {
             MinStorageBufferOffsetAlignment = 256,
             MinUniformBufferOffsetAlignment = 256,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
         };
-        var requiredLimits = new Browser.WGPURequiredLimits_Browser()
+        var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
         {
             Limits = limits
         };
         using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
-        var deviceDescriptor = new Browser.WGPUDeviceDescriptor_Browser()
+        var deviceDescriptor = new Emscripten.WGPUDeviceDescriptor_Browser()
         {
-            RequiredLimits = (Browser.WGPURequiredLimits_Browser*)requiredLimitsPtr.Ptr
+            RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr.Ptr
         };
 
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);

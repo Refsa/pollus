@@ -1,4 +1,5 @@
-namespace Pollus.Graphics.WGPU.Browser;
+namespace Pollus.Emscripten;
+
 using Silk.NET.WebGPU;
 
 unsafe public struct WGPURenderPassDescriptor_Browser

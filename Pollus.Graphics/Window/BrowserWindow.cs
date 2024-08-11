@@ -1,6 +1,7 @@
 namespace Pollus.Graphics.Windowing;
 
 using Pollus.Mathematics;
+using Pollus.Emscripten;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using Silk.NET.Core.Contexts;
@@ -9,15 +10,6 @@ public partial class BrowserWindow : IWindow
 {
     static BrowserWindow instance;
     static Action emOnFrame;
-
-    [DllImport("__Internal_emscripten")]
-    private static extern void emscripten_set_main_loop(nint action, int fps, bool simulateInfiniteLoop);
-
-    [DllImport("__Internal_emscripten")]
-    private static extern void emscripten_request_animation_frame(nint callback, nint userData);
-
-    [DllImport("__Internal_emscripten")]
-    private static extern void emscripten_set_timeout(nint callback, double ms, nint userData);
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     static void emOnFrameCallback()
@@ -30,11 +22,19 @@ public partial class BrowserWindow : IWindow
     public Vector2<int> Size { get; set; }
     public INativeWindow? Native => null;
 
+    nint nativeWindow;
+
     public BrowserWindow(WindowOptions options)
     {
         instance = this;
         Options = options;
         Size = new Vector2<int>(options.Width, options.Height);
+
+        nativeWindow = EmscriptenSDL.CreateWindow(options.Title,
+            Silk.NET.SDL.Sdl.WindowposUndefined, Silk.NET.SDL.Sdl.WindowposUndefined,
+            options.Width, options.Height,
+            Silk.NET.SDL.WindowFlags.InputFocus | Silk.NET.SDL.WindowFlags.Resizable);
+
         IsOpen = true;
     }
 
@@ -42,6 +42,8 @@ public partial class BrowserWindow : IWindow
     {
         if (IsOpen is false) return;
         IsOpen = false;
+
+        EmscriptenSDL.DestroyWindow(nativeWindow);
     }
 
     public void Close()
@@ -52,16 +54,6 @@ public partial class BrowserWindow : IWindow
     unsafe public void Run(Action loop)
     {
         emOnFrame = loop;
-        emscripten_set_main_loop((IntPtr)(delegate* unmanaged[Cdecl]<void>)&emOnFrameCallback, 0, false);
-    }
-
-    unsafe public static void RequestAnimationFrame(delegate* unmanaged[Cdecl]<double, void*, void> callback, void* userData)
-    {
-        emscripten_request_animation_frame((nint)callback, (nint)userData);
-    }
-
-    unsafe public static void SetTimeout(delegate* unmanaged[Cdecl]<void*, void> callback, void* userData, double ms)
-    {
-        emscripten_set_timeout((nint)callback, ms, (nint)userData);
+        Emscripten.SetMainLoop(&emOnFrameCallback, 0, false);
     }
 }

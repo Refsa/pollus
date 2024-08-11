@@ -38,10 +38,10 @@ unsafe public struct GPUCommandEncoder : IDisposable
         using var label = TemporaryPin.PinString(descriptor.Label);
 
 #if BROWSER
-        WGPU.Browser.WGPURenderPassColorAttachment_Browser* colorAttachments = stackalloc WGPU.Browser.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
+        Emscripten.WGPURenderPassColorAttachment_Browser* colorAttachments = stackalloc Emscripten.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
         {
-            colorAttachments[i] = new WGPU.Browser.WGPURenderPassColorAttachment_Browser
+            colorAttachments[i] = new Emscripten.WGPURenderPassColorAttachment_Browser
             {
                 View = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].View,
                 ResolveTarget = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].ResolveTarget,
@@ -50,7 +50,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
                 ClearValue = descriptor.ColorAttachments[i].ClearValue,
             };
         }
-        var wgpuDescriptor = new WGPU.Browser.WGPURenderPassDescriptor_Browser
+        var wgpuDescriptor = new Emscripten.WGPURenderPassDescriptor_Browser
         {
             Label = (byte*)label.Ptr,
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,

@@ -1,7 +1,6 @@
-namespace Pollus.Graphics.WGPU.Browser;
+namespace Pollus.Emscripten;
 
 using System.Runtime.InteropServices;
-using Pollus.Mathematics;
 using Silk.NET.WebGPU;
 
 public static class WGPUBrowserNative

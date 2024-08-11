@@ -1,4 +1,4 @@
-namespace Pollus.Graphics.WGPU.Browser;
+namespace Pollus.Emscripten;
 
 using Pollus.Mathematics;
 using Silk.NET.WebGPU;

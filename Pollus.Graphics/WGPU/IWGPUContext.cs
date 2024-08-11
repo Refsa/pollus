@@ -5,7 +5,7 @@ using Pollus.Graphics.Rendering;
 unsafe public interface IWGPUContext : IDisposable
 {
 #if BROWSER
-    Browser.WGPUBrowser wgpu { get; }
+    Emscripten.WGPUBrowser wgpu { get; }
 #else
     Silk.NET.WebGPU.WebGPU wgpu { get; }
 #endif
@@ -14,7 +14,7 @@ unsafe public interface IWGPUContext : IDisposable
     Silk.NET.WebGPU.Adapter* Adapter { get; }
     Silk.NET.WebGPU.Device* Device { get; }
     Silk.NET.WebGPU.Queue* Queue { get; }
-    Browser.WGPUSwapChain_Browser* SwapChain { get; }
+    Emscripten.WGPUSwapChain_Browser* SwapChain { get; }
 
     public bool IsReady { get; }
     void Setup();

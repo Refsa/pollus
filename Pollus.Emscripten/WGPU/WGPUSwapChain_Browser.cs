@@ -1,4 +1,4 @@
-namespace Pollus.Graphics.WGPU.Browser;
+namespace Pollus.Emscripten;
 
 unsafe public struct WGPUSwapChain_Browser
 {

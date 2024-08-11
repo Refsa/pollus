@@ -17,12 +17,17 @@ public record class ApplicationBuilder
         Application = (builder) => new DesktopApplication(builder),
         OnSetup = (app) => { },
         OnUpdate = (app) => { },
+        WindowOptions = WindowOptions.Default,
     };
     public static ApplicationBuilder Browser => new()
     {
         Application = (builder) => new BrowserApplication(builder),
         OnSetup = (app) => { },
         OnUpdate = (app) => { },
+        WindowOptions = WindowOptions.Default with
+        {
+            Title = "canvas"
+        },
     };
 
     public required Func<ApplicationBuilder, IApplication> Application { get; set; }
