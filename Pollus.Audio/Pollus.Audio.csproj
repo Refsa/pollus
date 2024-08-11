@@ -4,5 +4,18 @@
     <TargetFrameworks>net8.0;net8.0-browser;</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+    <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Silk.NET.OpenAL" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
+  </ItemGroup>
 </Project>

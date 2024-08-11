@@ -35,7 +35,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     public Silk.NET.WebGPU.Adapter* Adapter => adapter;
     public Silk.NET.WebGPU.Device* Device => device;
     public Silk.NET.WebGPU.Queue* Queue => queue;
-    public WGPU.Browser.WGPUSwapChain_Browser* SwapChain => null;
+    public Emscripten.WGPUSwapChain_Browser* SwapChain => null;
 
     public WGPUContextDesktop(IWindow window, WGPUInstance instance)
     {

@@ -14,9 +14,9 @@
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
 
-    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2</EmccExtraLDFlags>
     <EmccFlags>--embed-file assets</EmccFlags>
-
+    
+    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal</EmccExtraLDFlags>
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
     <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
@@ -29,16 +29,19 @@
     <WasmExtraFilesToDeploy Include="www/*.css" />
 
     <DirectPInvoke Include="__Internal_emscripten" />
+    <DirectPInvoke Include="OpenAL" />
     <DirectPInvoke Include="SDL" />
     <EmccExportedLibraryFunction Include="wgpuDeviceCreateSwapChain" />
     <EmccExportedLibraryFunction Include="wgpuSwapChainGetCurrentTextureView" />
+    <EmccExportedLibraryFunction Include="alcOpenDevice" />
   </ItemGroup>
 
   <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative"
     DependsOnTargets="_PrepareForWasmBuildNative">
     <ItemGroup>
-      <_WasmPInvokeModules Include="SDL" />
       <_WasmPInvokeModules Include="__Internal_emscripten" />
+      <_WasmPInvokeModules Include="OpenAL" />
+      <_WasmPInvokeModules Include="SDL" />
     </ItemGroup>
   </Target>
 

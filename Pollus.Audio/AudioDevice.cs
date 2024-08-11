@@ -1,0 +1,32 @@
+namespace Pollus.Audio;
+
+using Silk.NET.OpenAL;
+
+unsafe class AudioDevice : IDisposable
+{
+    Audio audio;
+    Context* context;
+    Device* device;
+
+    bool isDisposed;
+
+    public AudioDevice(Audio audio, Context* context, Device* device)
+    {
+        this.audio = audio;
+        this.context = context;
+        this.device = device;
+    }
+
+    ~AudioDevice() => Dispose();
+
+    public void Dispose()
+    {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
+
+        audio.alc.MakeContextCurrent(null);
+        audio.alc.DestroyContext(context);
+        audio.alc.CloseDevice(device);
+    }
+}

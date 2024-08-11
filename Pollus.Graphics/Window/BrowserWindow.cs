@@ -30,10 +30,11 @@ public partial class BrowserWindow : IWindow
         Options = options;
         Size = new Vector2<int>(options.Width, options.Height);
 
+        EmscriptenSDL.Init(SDLInitFlags.InitVideo);
         nativeWindow = EmscriptenSDL.CreateWindow(options.Title,
             Silk.NET.SDL.Sdl.WindowposUndefined, Silk.NET.SDL.Sdl.WindowposUndefined,
             options.Width, options.Height,
-            Silk.NET.SDL.WindowFlags.InputFocus | Silk.NET.SDL.WindowFlags.Resizable);
+            Silk.NET.SDL.WindowFlags.Resizable);
 
         IsOpen = true;
     }
