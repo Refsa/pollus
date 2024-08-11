@@ -9,5 +9,5 @@ unsafe public struct WGPURenderPassColorAttachment_Browser
     public TextureView* ResolveTarget; // nullable
     public LoadOp LoadOp;
     public StoreOp StoreOp;
-    public Vector4<double> ClearValue;
+    public Vec4<double> ClearValue;
 }

@@ -91,7 +91,7 @@ public struct Color
     public static readonly Color VIRIDIAN = new(64f / 255f, 130f / 255f, 109f / 255f);
     public static readonly Color YELLOW = new(255f / 255f, 255f / 255f, 0);
 
-    Vector4<float> color;
+    Vec4<float> color;
 
     public float R { get => color.X; set => color.X = value; }
     public float G { get => color.Y; set => color.Y = value; }
@@ -102,7 +102,7 @@ public struct Color
     public Color(Hex hex) : this(hex, hex.A) { }
     public Color(Hex hex, float alpha)
     {
-        this.color = new Vector4<float>(hex.R, hex.G, hex.B, alpha);
+        this.color = new Vec4<float>(hex.R, hex.G, hex.B, alpha);
     }
 
     public Color(RGB rgb) : this(rgb.R, rgb.G, rgb.B, 1f) { }
@@ -110,17 +110,17 @@ public struct Color
     public Color(float r, float g, float b) : this(r, g, b, 1f) { }
     public Color(float r, float g, float b, float a)
     {
-        this.color = new Vector4<float>(r, g, b, a);
+        this.color = new Vec4<float>(r, g, b, a);
     }
 
     public Color(HSV hsv) : this(hsv, 1f) { }
     public Color(HSV hsv, float a)
     {
         var rgb = (RGB)hsv;
-        this.color = new Vector4<float>(rgb.R, rgb.G, rgb.B, a);
+        this.color = new Vec4<float>(rgb.R, rgb.G, rgb.B, a);
     }
 
-    public static implicit operator Color(Vector4<float> vec4)
+    public static implicit operator Color(Vec4<float> vec4)
     {
         return new()
         {
@@ -132,18 +132,18 @@ public struct Color
     {
         return new()
         {
-            color = new Vector4<float>(vec4.X, vec4.Y, vec4.Z, vec4.W)
+            color = new Vec4<float>(vec4.X, vec4.Y, vec4.Z, vec4.W)
         };
     }
 
-    public static implicit operator Vector4<float>(Color col)
+    public static implicit operator Vec4<float>(Color col)
     {
         return col.color;
     }
 
-    public static implicit operator Vector4<double>(Color col)
+    public static implicit operator Vec4<double>(Color col)
     {
-        return new Vector4<double>(col.R, col.G, col.B, col.A);
+        return new Vec4<double>(col.R, col.G, col.B, col.A);
     }
 
     public static implicit operator System.Numerics.Vector4(Color col)
@@ -153,7 +153,7 @@ public struct Color
 
     public Color Darken(float by)
     {
-        return new Vector4<float>(
+        return new Vec4<float>(
             MathF.Max(0f, color.X - 1f * by),
             MathF.Max(0f, color.Y - 1f * by),
             MathF.Max(0f, color.Z - 1f * by),
@@ -163,7 +163,7 @@ public struct Color
 
     public Color Lighten(float by)
     {
-        return new Vector4<float>(
+        return new Vec4<float>(
             MathF.Max(0f, color.X + 1f * by),
             MathF.Max(0f, color.Y + 1f * by),
             MathF.Max(0f, color.Z + 1f * by),
@@ -217,14 +217,14 @@ public struct Color
             return new Color(hex);
         }
 
-        public static implicit operator Vector4<float>(Hex hex)
+        public static implicit operator Vec4<float>(Hex hex)
         {
-            return new Vector4<float>(hex.R, hex.G, hex.B, hex.A);
+            return new Vec4<float>(hex.R, hex.G, hex.B, hex.A);
         }
 
-        public static implicit operator Vector4<double>(Hex hex)
+        public static implicit operator Vec4<double>(Hex hex)
         {
-            return new Vector4<double>(hex.R, hex.G, hex.B, hex.A);
+            return new Vec4<double>(hex.R, hex.G, hex.B, hex.A);
         }
     }
 

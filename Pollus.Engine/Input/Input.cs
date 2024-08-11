@@ -164,7 +164,7 @@ public interface IAxisInputDevice<TAxis>
     where TAxis : Enum
 {
     float GetAxis(TAxis axis);
-    Vector2<float> GetAxis2D(TAxis xAxis, TAxis yAxis) => new(GetAxis(xAxis), GetAxis(yAxis));
+    Vec2<float> GetAxis2D(TAxis xAxis, TAxis yAxis) => new(GetAxis(xAxis), GetAxis(yAxis));
 }
 
 public interface IInputDeviceEvent

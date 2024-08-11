@@ -225,7 +225,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         wgpu.SurfacePresent(surface);
     }
 
-    public void ResizeSurface(Vector2<int> size)
+    public void ResizeSurface(Vec2<int> size)
     {
         surfaceConfiguration.Width = (uint)size.X;
         surfaceConfiguration.Height = (uint)size.Y;

@@ -250,7 +250,7 @@ public class AL
         }
     }
 
-    unsafe public void GetSourceProperty(uint source, SourceVector3 param, out Vector3<float> value)
+    unsafe public void GetSourceProperty(uint source, SourceVector3 param, out Vec3<float> value)
     {
         fixed (float* x = &value.X, y = &value.Y, z = &value.Z)
         {
@@ -263,7 +263,7 @@ public class AL
         EmscriptenOpenALNative.alSourcef(source, param, value);
     }
 
-    unsafe public void SetSourceProperty(uint source, SourceVector3 param, Vector3<float> value)
+    unsafe public void SetSourceProperty(uint source, SourceVector3 param, Vec3<float> value)
     {
         EmscriptenOpenALNative.alSource3f(source, param, value.X, value.Y, value.Z);
     }

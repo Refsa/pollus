@@ -15,8 +15,8 @@ public class AudioExample
         source.Looping = true;
         source.Gain = 1f;
         source.Pitch = 1f;
-        source.Position = Vector3<float>.Zero;
-        source.Velocity = Vector3<float>.Zero;
+        source.Position = Vec3<float>.Zero;
+        source.Velocity = Vec3<float>.Zero;
 
         using var decoder = new WavDecoder("assets/local/meet-the-princess.wav");
         var data = new byte[decoder.Size];

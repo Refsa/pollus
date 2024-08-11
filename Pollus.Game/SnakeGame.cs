@@ -12,7 +12,7 @@ public class SnakeGame
     GPUBuffer? quadVertexBuffer = null;
     GPUBuffer? quadIndexBuffer = null;
 
-    Vector2<float>[] quadVertices = [
+    Vec2<float>[] quadVertices = [
         (-0.5f, -0.5f),
         (+0.5f, -0.5f),
         (+0.5f, +0.5f),
@@ -73,10 +73,10 @@ public class SnakeGame
         {
             Label = "quad-vertex-buffer",
             Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-            Size = (ulong)(quadVertices.Length * Vector3<float>.SizeInBytes),
+            Size = (ulong)(quadVertices.Length * Vec3<float>.SizeInBytes),
             MappedAtCreation = false,
         });
-        quadVertexBuffer.Write<Vector2<float>>(quadVertices);
+        quadVertexBuffer.Write<Vec2<float>>(quadVertices);
 
         quadIndexBuffer = app.GPUContext.CreateBuffer(new()
         {

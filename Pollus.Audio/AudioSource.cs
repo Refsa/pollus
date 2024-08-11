@@ -84,7 +84,7 @@ public class AudioSource : IDisposable
         set => audio.al.SetSourceProperty(sourceId, SourceBoolean.Looping, value);
     }
 
-    public Vector3<float> Position
+    public Vec3<float> Position
     {
         get
         {
@@ -94,7 +94,7 @@ public class AudioSource : IDisposable
         set => audio.al.SetSourceProperty(sourceId, SourceVector3.Position, value);
     }
 
-    public Vector3<float> Velocity
+    public Vec3<float> Velocity
     {
         get
         {
@@ -104,7 +104,7 @@ public class AudioSource : IDisposable
         set => audio.al.SetSourceProperty(sourceId, SourceVector3.Velocity, value);
     }
 
-    public Vector3<float> Direction
+    public Vec3<float> Direction
     {
         get
         {

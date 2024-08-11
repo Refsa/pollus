@@ -21,7 +21,7 @@ public interface IWindow : IDisposable, INativeWindowSource
 {
     bool IsOpen { get; }
     WindowOptions Options { get; }
-    Vector2<int> Size { get; set; }
+    Vec2<int> Size { get; set; }
 
     public void Run(Action loop);
 

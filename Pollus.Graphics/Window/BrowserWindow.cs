@@ -19,7 +19,7 @@ public partial class BrowserWindow : IWindow
 
     public bool IsOpen { get; private set; }
     public WindowOptions Options { get; private set; }
-    public Vector2<int> Size { get; set; }
+    public Vec2<int> Size { get; set; }
     public INativeWindow? Native => null;
 
     nint nativeWindow;
@@ -28,7 +28,7 @@ public partial class BrowserWindow : IWindow
     {
         instance = this;
         Options = options;
-        Size = new Vector2<int>(options.Width, options.Height);
+        Size = new Vec2<int>(options.Width, options.Height);
 
         EmscriptenSDL.Init(SDLInitFlags.InitVideo);
         nativeWindow = EmscriptenSDL.CreateWindow(options.Title,
