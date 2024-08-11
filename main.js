@@ -1,4 +1,4 @@
-import { dotnet } from './framework/dotnet.js'
+import { dotnet } from './_framework/dotnet.js'
 
 const { getAssemblyExports, getConfig } = await dotnet.create();
 let exports = await getAssemblyExports(getConfig().mainAssemblyName);
