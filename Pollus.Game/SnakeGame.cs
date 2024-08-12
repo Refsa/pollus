@@ -55,7 +55,7 @@ public class SnakeGame
 
         // Quad Vertex Buffer
         {
-            using var vertexData = VertexData.From(4, stackalloc VertexFormat[] { VertexFormat.Float32x2, VertexFormat.Float32x2 });
+            var vertexData = VertexData.From(4, stackalloc VertexFormat[] { VertexFormat.Float32x2, VertexFormat.Float32x2 });
             vertexData.Write(0, [
                 ((-16f, -16f), (0f, 0f)),
                 ((+16f, -16f), (1f, 0f)),
@@ -65,7 +65,7 @@ public class SnakeGame
 
             quadVertexBuffer = app.GPUContext.CreateBuffer(new()
             {
-                Label = "quad-vertex-buffer",
+                Label = """quad-vertex-buffer""",
                 Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
                 Size = vertexData.SizeInBytes,
                 MappedAtCreation = false,
@@ -75,7 +75,7 @@ public class SnakeGame
             Span<int> quadIndices = stackalloc int[] { 0, 1, 2, 0, 2, 3 };
             quadIndexBuffer = app.GPUContext.CreateBuffer(new()
             {
-                Label = "quad-index-buffer",
+                Label = """quad-index-buffer""",
                 Usage = Silk.NET.WebGPU.BufferUsage.Index | Silk.NET.WebGPU.BufferUsage.CopyDst,
                 Size = (ulong)(quadIndices.Length * sizeof(int)),
                 MappedAtCreation = false,
@@ -87,7 +87,7 @@ public class SnakeGame
         {
             instanceBuffer = app.GPUContext.CreateBuffer(new()
             {
-                Label = "instance-buffer",
+                Label = """instance-buffer""",
                 Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
                 Size = Alignment.GetAlignedSize<Mat4f>(1),
                 MappedAtCreation = false,
@@ -99,7 +99,7 @@ public class SnakeGame
         {
             sceneUniformBuffer = app.GPUContext.CreateBuffer(new()
             {
-                Label = "scene-uniform-buffer",
+                Label = """scene-uniform-buffer""",
                 Usage = Silk.NET.WebGPU.BufferUsage.Uniform | Silk.NET.WebGPU.BufferUsage.CopyDst,
                 Size = Alignment.GetAlignedSize<SceneUniform>(),
                 MappedAtCreation = false,
@@ -115,7 +115,7 @@ public class SnakeGame
         // Texture
         {
             texture = app.GPUContext.CreateTexture(TextureDescriptor.D2(
-                "texture",
+                """texture""",
                 Silk.NET.WebGPU.TextureUsage.TextureBinding | Silk.NET.WebGPU.TextureUsage.CopyDst,
                 Silk.NET.WebGPU.TextureFormat.Rgba8Unorm,
                 (16, 16)
@@ -137,7 +137,7 @@ public class SnakeGame
 
         bindGroupLayout0 = app.GPUContext.CreateBindGroupLayout(new()
         {
-            Label = "bind-group-layout-0",
+            Label = """bind-group-layout-0""",
             Entries = [
                 BindGroupLayoutEntry.Uniform<SceneUniform>(0, Silk.NET.WebGPU.ShaderStage.Vertex, false),
                 BindGroupLayoutEntry.TextureEntry(1, Silk.NET.WebGPU.ShaderStage.Fragment, Silk.NET.WebGPU.TextureSampleType.Float, Silk.NET.WebGPU.TextureViewDimension.Dimension2D),
@@ -149,9 +149,9 @@ public class SnakeGame
         {
             using var quadShaderModule = app.GPUContext.CreateShaderModule(new()
             {
-                Label = "quad-shader-module",
+                Label = """quad-shader-module""",
                 Backend = ShaderBackend.WGSL,
-                Content = Encoding.UTF8.GetBytes(File.ReadAllText("./assets/snake/quad.wgsl")),
+                Content = File.ReadAllText("./assets/snake/quad.wgsl"),
             });
 
             quadRenderPipeline = app.GPUContext.CreateRenderPipeline(new()
@@ -186,7 +186,7 @@ public class SnakeGame
                 PrimitiveState = PrimitiveState.Default,
                 PipelineLayout = app.GPUContext.CreatePipelineLayout(new()
                 {
-                    Label = "quad-pipeline-layout",
+                    Label = """quad-pipeline-layout""",
                     Layouts = [
                         bindGroupLayout0
                     ]
@@ -242,11 +242,11 @@ public class SnakeGame
             return;
         }
 
-        using var commandEncoder = app.GPUContext.CreateCommandEncoder("command-encoder");
+        using var commandEncoder = app.GPUContext.CreateCommandEncoder("""command-encoder""");
         {
             using var renderPass = commandEncoder.BeginRenderPass(new()
             {
-                Label = "render-pass",
+                Label = """render-pass""",
                 ColorAttachments = stackalloc RenderPassColorAttachment[1]
                 {
                     new(
@@ -270,7 +270,7 @@ public class SnakeGame
 
             renderPass.End();
         }
-        using var commandBuffer = commandEncoder.Finish("command-buffer");
+        using var commandBuffer = commandEncoder.Finish("""command-buffer""");
         commandBuffer.Submit();
         app.GPUContext.Present();
     }

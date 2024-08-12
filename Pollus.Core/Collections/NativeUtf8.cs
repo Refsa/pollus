@@ -1,0 +1,27 @@
+using System.Text;
+
+namespace Pollus.Collections;
+
+unsafe public ref struct NativeUtf8
+{
+    NativeArray<byte> data;
+
+    public byte* Pointer => (byte*)data.Data;
+
+    public NativeUtf8(string str)
+    {
+        data = new NativeArray<byte>(Encoding.UTF8.GetByteCount(str));
+        Encoding.UTF8.GetBytes(str, data.AsSpan());
+    }
+
+    public NativeUtf8(ReadOnlySpan<char> str)
+    {
+        data = new NativeArray<byte>(Encoding.UTF8.GetByteCount(str));
+        Encoding.UTF8.GetBytes(str, data.AsSpan());
+    }
+
+    public void Dispose()
+    {
+        data.Dispose();
+    }
+}

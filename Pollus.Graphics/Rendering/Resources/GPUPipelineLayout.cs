@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
 unsafe public class GPUPipelineLayout : GPUResourceWrapper
@@ -20,8 +21,10 @@ unsafe public class GPUPipelineLayout : GPUResourceWrapper
             layouts[i] = (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layouts[i].Native;
         }
 
+        using var labelData = new NativeUtf8(descriptor.Label);
+
         var nativeDescriptor = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            label: labelData.Pointer,
             bindGroupLayoutCount: (uint)descriptor.Layouts.Length,
             bindGroupLayouts: layouts
         );

@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
@@ -13,8 +14,10 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
 
     public GPUBindGroup(IWGPUContext context, BindGroupDescriptor descriptor) : base(context)
     {
+        using var labelData = new NativeUtf8(descriptor.Label);
+
         var nativeDescriptor = new Silk.NET.WebGPU.BindGroupDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            label: labelData.Pointer,
             layout: (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layout.Native
         );
 
@@ -26,8 +29,11 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
             for (int i = 0; i < bindGroupEntries.Length; i++)
             {
                 var entry = bindGroupEntries[i];
-                var silkEntry = new Silk.NET.WebGPU.BindGroupEntry();
-                silkEntry.Binding = entry.Binding;
+                var silkEntry = new Silk.NET.WebGPU.BindGroupEntry
+                {
+                    Binding = entry.Binding
+                };
+                
                 if (entry.Buffer is GPUBuffer buffer)
                 {
                     silkEntry.Buffer = (Silk.NET.WebGPU.Buffer*)buffer.Native;

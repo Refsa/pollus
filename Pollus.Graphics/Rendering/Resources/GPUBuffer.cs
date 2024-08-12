@@ -1,9 +1,10 @@
+namespace Pollus.Graphics.Rendering;
+
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
-
-namespace Pollus.Graphics.Rendering;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
@@ -15,10 +16,11 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
     public GPUBuffer(IWGPUContext context, BufferDescriptor descriptor) : base(context)
     {
+        using var labelData = new NativeUtf8(descriptor.Label);
         size = descriptor.Size;
 
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            label: labelData.Pointer,
             usage: descriptor.Usage,
             size: descriptor.Size,
             mappedAtCreation: descriptor.MappedAtCreation

@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
 unsafe public struct GPUTextureView : IGPUResourceWrapper
@@ -19,9 +20,11 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
 
     public GPUTextureView(IWGPUContext context, GPUTexture texture, TextureViewDescriptor descriptor)
     {
+        using var labelData = new NativeUtf8(descriptor.Label);
+
         this.context = context;
         var nativeDescriptor = new Silk.NET.WebGPU.TextureViewDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            label: labelData.Pointer,
             format: descriptor.Format,
             dimension: descriptor.Dimension,
             baseMipLevel: descriptor.BaseMipLevel,

@@ -2,9 +2,8 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Pollus.Collections;
 
-public struct VertexData : IDisposable
+public struct VertexData
 {
     public const int MAX_ATTRIBUTES = 8;
 
@@ -16,7 +15,7 @@ public struct VertexData : IDisposable
 
     public record struct Attribute(int Offset, VertexFormat VertexFormat);
 
-    NativeArray<byte> data;
+    byte[] data;
     int attributeCount;
     AttributeArray attributes;
     uint stride;
@@ -29,7 +28,7 @@ public struct VertexData : IDisposable
     // create array accessor
     public Span<byte> this[int index]
     {
-        get => data.Slice((int)(index * stride), (int)stride);
+        get => data.AsSpan().Slice((int)(index * stride), (int)stride);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -38,12 +37,7 @@ public struct VertexData : IDisposable
         this.stride = stride;
         attributeCount = attributes.Length;
         attributes.CopyTo(this.attributes);
-        data = new NativeArray<byte>((int)(capacity * stride));
-    }
-
-    public void Dispose()
-    {
-        data.Dispose();
+        data = new byte[(int)(capacity * stride)];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -63,7 +57,7 @@ public struct VertexData : IDisposable
     public void Write<T0>(int offset, ReadOnlySpan<T0> values)
         where T0 : unmanaged
     {
-        var dst = MemoryMarshal.Cast<byte, T0>(data.Slice(offset));
+        var dst = MemoryMarshal.Cast<byte, T0>(data.AsSpan().Slice(offset));
         values.CopyTo(dst);
     }
 

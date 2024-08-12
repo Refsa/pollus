@@ -9,5 +9,5 @@ public ref struct ShaderModuleDescriptor
 {
     public ShaderBackend Backend { get; init; }
     public ReadOnlySpan<char> Label { get; init; }
-    public ReadOnlySpan<byte> Content { get; init; }
+    public ReadOnlySpan<char> Content { get; init; }
 }

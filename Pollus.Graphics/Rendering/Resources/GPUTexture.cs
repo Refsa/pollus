@@ -3,6 +3,8 @@ namespace Pollus.Graphics.Rendering;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 
@@ -20,8 +22,10 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
     public GPUTexture(IWGPUContext context, TextureDescriptor descriptor) : base(context)
     {
+        using var labelData = new NativeUtf8(descriptor.Label);
+
         var nativeDescriptor = new Silk.NET.WebGPU.TextureDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            label: labelData.Pointer,
             usage: descriptor.Usage,
             dimension: descriptor.Dimension,
             size: descriptor.Size,
@@ -32,8 +36,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
         if (descriptor.ViewFormats.Length > 0)
         {
-            nativeDescriptor.ViewFormatCount = (uint)descriptor.ViewFormats.Length;
-            nativeDescriptor.ViewFormats = (Silk.NET.WebGPU.TextureFormat*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ViewFormats));
+            throw new NotImplementedException("ViewFormats for GPUTexture is not implemented yet.");
         }
 
         size = descriptor.Size;

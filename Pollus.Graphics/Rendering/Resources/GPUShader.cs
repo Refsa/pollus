@@ -1,8 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
 unsafe public class GPUShader : GPUResourceWrapper
@@ -13,15 +12,18 @@ unsafe public class GPUShader : GPUResourceWrapper
 
     public GPUShader(IWGPUContext context, ShaderModuleDescriptor descriptor) : base(context)
     {
+        using var labelData = new NativeUtf8(descriptor.Label);
+        using var contentData = new NativeUtf8(descriptor.Content);
+        
         var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(
-            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label))
+            label: labelData.Pointer
         );
 
         var shaderModuleDescriptor = descriptor.Backend switch
         {
             ShaderBackend.WGSL => new Silk.NET.WebGPU.ShaderModuleWGSLDescriptor(
                 chain: new Silk.NET.WebGPU.ChainedStruct(sType: Silk.NET.WebGPU.SType.ShaderModuleWgslDescriptor),
-                code: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Content))
+                code: contentData.Pointer
             ),
             _ => throw new NotImplementedException(),
         };

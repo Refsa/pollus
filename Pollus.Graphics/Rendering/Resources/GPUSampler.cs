@@ -1,6 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
 unsafe public class GPUSampler : GPUResourceWrapper
@@ -11,24 +11,21 @@ unsafe public class GPUSampler : GPUResourceWrapper
 
     public GPUSampler(IWGPUContext context, SamplerDescriptor descriptor) : base(context)
     {
-        var labelSpan = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
+        using var labelData = new NativeUtf8(descriptor.Label);
 
-        fixed (byte* labelPtr = labelSpan)
-        {
-            var nativeDescriptor = new Silk.NET.WebGPU.SamplerDescriptor(
-                label: labelPtr,
-                addressModeU: descriptor.AddressModeU,
-                addressModeV: descriptor.AddressModeV,
-                addressModeW: descriptor.AddressModeW,
-                magFilter: descriptor.MagFilter,
-                minFilter: descriptor.MinFilter,
-                mipmapFilter: descriptor.MipmapFilter,
-                lodMinClamp: descriptor.LodMinClamp,
-                lodMaxClamp: descriptor.LodMaxClamp,
-                maxAnisotropy: descriptor.MaxAnisotropy
-            );
-            native = context.wgpu.DeviceCreateSampler(context.Device, nativeDescriptor);
-        }
+        var nativeDescriptor = new Silk.NET.WebGPU.SamplerDescriptor(
+            label: labelData.Pointer,
+            addressModeU: descriptor.AddressModeU,
+            addressModeV: descriptor.AddressModeV,
+            addressModeW: descriptor.AddressModeW,
+            magFilter: descriptor.MagFilter,
+            minFilter: descriptor.MinFilter,
+            mipmapFilter: descriptor.MipmapFilter,
+            lodMinClamp: descriptor.LodMinClamp,
+            lodMaxClamp: descriptor.LodMaxClamp,
+            maxAnisotropy: descriptor.MaxAnisotropy
+        );
+        native = context.wgpu.DeviceCreateSampler(context.Device, nativeDescriptor);
     }
 
     protected override void Free()

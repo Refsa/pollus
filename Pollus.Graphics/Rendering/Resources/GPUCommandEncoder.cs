@@ -2,8 +2,9 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
 unsafe public struct GPUCommandEncoder : IDisposable
 {
@@ -14,8 +15,10 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
     public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label)
     {
+        using var labelData = new NativeUtf8(label);
+
         this.context = context;
-        var descriptor = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(label)));
+        var descriptor = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: labelData.Pointer);
         native = context.wgpu.DeviceCreateCommandEncoder(context.Device, descriptor);
     }
 
@@ -26,7 +29,9 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
     public GPUCommandBuffer Finish(ReadOnlySpan<char> label)
     {
-        var descriptor = new Silk.NET.WebGPU.CommandBufferDescriptor(label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(label)));
+        using var labelData = new NativeUtf8(label);
+
+        var descriptor = new Silk.NET.WebGPU.CommandBufferDescriptor(label: labelData.Pointer);
         var commandBuffer = context.wgpu.CommandEncoderFinish(native, descriptor);
         return new GPUCommandBuffer(context, commandBuffer);
     }
