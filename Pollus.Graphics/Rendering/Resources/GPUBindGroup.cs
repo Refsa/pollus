@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
@@ -12,10 +13,8 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
 
     public GPUBindGroup(IWGPUContext context, BindGroupDescriptor descriptor) : base(context)
     {
-        using var pins = new TemporaryPins();
-        
         var nativeDescriptor = new Silk.NET.WebGPU.BindGroupDescriptor(
-            label: (byte*)pins.PinString(descriptor.Label).AddrOfPinnedObject(),
+            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
             layout: (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layout.Native
         );
 
@@ -47,7 +46,13 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
                 entries[i] = silkEntry;
             }
 
-            nativeDescriptor.Entries = (Silk.NET.WebGPU.BindGroupEntry*)pins.Pin(entries).AddrOfPinnedObject();
+            var entriesSpan = entries.AsSpan();
+            fixed (Silk.NET.WebGPU.BindGroupEntry* entriesPtr = entriesSpan)
+            {
+                nativeDescriptor.Entries = entriesPtr;
+                native = context.wgpu.DeviceCreateBindGroup(context.Device, nativeDescriptor);
+                return;
+            }
         }
 
         native = context.wgpu.DeviceCreateBindGroup(context.Device, nativeDescriptor);

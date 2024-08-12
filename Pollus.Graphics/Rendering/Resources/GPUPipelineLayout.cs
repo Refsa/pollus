@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
 
@@ -13,23 +14,18 @@ unsafe public class GPUPipelineLayout : GPUResourceWrapper
     {
         this.context = context;
 
-        var label = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
-        var layouts = new Silk.NET.WebGPU.BindGroupLayout*[descriptor.Layouts.Length];
+        var layouts = stackalloc Silk.NET.WebGPU.BindGroupLayout*[descriptor.Layouts.Length];
         for (int i = 0; i < descriptor.Layouts.Length; i++)
         {
             layouts[i] = (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layouts[i].Native;
         }
 
-        fixed (byte* labelPtr = label)
-        fixed (Silk.NET.WebGPU.BindGroupLayout** layoutsPtr = &layouts[0])
-        {
-            var nativeDescriptor = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
-                label: labelPtr,
-                bindGroupLayoutCount: (uint)layouts.Length,
-                bindGroupLayouts: layoutsPtr
-            );
-            native = context.wgpu.DeviceCreatePipelineLayout(context.Device, nativeDescriptor);
-        }
+        var nativeDescriptor = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
+            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            bindGroupLayoutCount: (uint)descriptor.Layouts.Length,
+            bindGroupLayouts: layouts
+        );
+        native = context.wgpu.DeviceCreatePipelineLayout(context.Device, nativeDescriptor);
     }
 
     protected override void Free()

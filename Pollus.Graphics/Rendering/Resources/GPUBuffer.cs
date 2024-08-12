@@ -17,19 +17,14 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     {
         size = descriptor.Size;
 
-        var labelSpan = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
+        var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
+            label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            usage: descriptor.Usage,
+            size: descriptor.Size,
+            mappedAtCreation: descriptor.MappedAtCreation
+        );
 
-        fixed (byte* labelPtr = labelSpan)
-        {
-            var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
-                label: labelPtr,
-                usage: descriptor.Usage,
-                size: descriptor.Size,
-                mappedAtCreation: descriptor.MappedAtCreation
-            );
-
-            native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
-        }
+        native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
     }
 
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)

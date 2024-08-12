@@ -100,7 +100,7 @@ public class SnakeGame
         {
             Label = "quad-shader-module",
             Backend = ShaderBackend.WGSL,
-            Content = File.ReadAllText("./assets/snake/quad.wgsl"),
+            Content = File.ReadAllBytes("./assets/snake/quad.wgsl"),
         });
 
         sceneUniformBindGroupLayout = app.GPUContext.CreateBindGroupLayout(new()
@@ -158,7 +158,7 @@ public class SnakeGame
             }),
         });
     }
- 
+
     public void Update(IApplication app)
     {
         if (keyboard!.Pressed(Key.ArrowLeft))
@@ -203,12 +203,14 @@ public class SnakeGame
                 },
             });
 
-            renderPass.SetPipeline(quadRenderPipeline!);
-            renderPass.SetVertexBuffer(0, quadVertexBuffer!);
-            renderPass.SetVertexBuffer(1, instanceBuffer!);
-            renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
-            renderPass.SetBindGroup(sceneUniformBindGroup!, 0);
-            renderPass.DrawIndexed((uint)quadIndices.Length, 1, 0, 0, 0);
+            {
+                renderPass.SetPipeline(quadRenderPipeline!);
+                renderPass.SetVertexBuffer(0, quadVertexBuffer!);
+                renderPass.SetVertexBuffer(1, instanceBuffer!);
+                renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
+                renderPass.SetBindGroup(sceneUniformBindGroup!, 0);
+                renderPass.DrawIndexed((uint)quadIndices.Length, 1, 0, 0, 0);
+            }
 
             renderPass.End();
         }

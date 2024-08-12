@@ -1,7 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
-public class PipelineLayoutDescriptor
+public ref struct PipelineLayoutDescriptor
 {
-    public string Label { get; init; }
+    public ReadOnlySpan<char> Label { get; init; }
     public GPUBindGroupLayout[] Layouts { get; init; }
 }

@@ -1,7 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
-public class BindGroupLayoutDescriptor
+public ref struct BindGroupLayoutDescriptor
 {
-    public string Label { get; init; }
+    public ReadOnlySpan<char> Label { get; init; }
     public BindGroupLayoutEntry[] Entries { get; init; }
 }

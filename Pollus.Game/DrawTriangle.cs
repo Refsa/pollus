@@ -14,7 +14,7 @@ public class DrawTriangle
         {
             Label = "shader-module",
             Backend = ShaderBackend.WGSL,
-            Content = File.ReadAllText("./assets/triangle.wgsl"),
+            Content = File.ReadAllBytes("./assets/triangle.wgsl"),
         });
         Console.WriteLine("Shader Module Created");
 

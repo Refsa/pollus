@@ -26,7 +26,7 @@ unsafe public interface IWGPUContext : IDisposable
     void Present();
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);
-    GPUCommandEncoder CreateCommandEncoder(string label) => new(this, label);
+    GPUCommandEncoder CreateCommandEncoder(ReadOnlySpan<char> label) => new(this, label);
     GPURenderPipeline CreateRenderPipeline(RenderPipelineDescriptor descriptor) => new(this, descriptor);
     GPUPipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor descriptor) => new(this, descriptor);
     GPUShader CreateShaderModule(ShaderModuleDescriptor descriptor) => new(this, descriptor);

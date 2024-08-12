@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
 
@@ -38,14 +39,11 @@ unsafe public class GPUBindGroupLayout : GPUResourceWrapper
             );
         }
 
-        var labelSpan = MemoryMarshal.AsBytes(descriptor.Label.AsSpan());
         var entriesSpan = entries.AsSpan();
-
-        fixed (byte* labelPtr = labelSpan)
         fixed (Silk.NET.WebGPU.BindGroupLayoutEntry* entriesPtr = entriesSpan)
         {
             var nativeDescriptor = new Silk.NET.WebGPU.BindGroupLayoutDescriptor(
-                label: labelPtr,
+                label: (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
                 entryCount: (uint)entries.Length,
                 entries: entriesPtr
             );
