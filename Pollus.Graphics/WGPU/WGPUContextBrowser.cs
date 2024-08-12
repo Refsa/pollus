@@ -28,7 +28,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     bool isPreparingDevice;
     bool isDisposed;
 
-    List<GPUResourceWrapper> resources = new();
+    List<IGPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
     public Emscripten.WGPUBrowser wgpu => instance.wgpu;
@@ -205,12 +205,12 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(GPUResourceWrapper resource)
+    public void RegisterResource(IGPUResourceWrapper resource)
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(GPUResourceWrapper resource)
+    public void ReleaseResource(IGPUResourceWrapper resource)
     {
         resources.Remove(resource);
     }

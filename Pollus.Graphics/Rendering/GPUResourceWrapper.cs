@@ -2,7 +2,12 @@ namespace Pollus.Graphics.Rendering;
 
 using Pollus.Graphics.WGPU;
 
-public abstract class GPUResourceWrapper : IDisposable
+public interface IGPUResourceWrapper : IDisposable
+{
+    
+}
+
+public abstract class GPUResourceWrapper : IGPUResourceWrapper
 {
     protected IWGPUContext context;
 
@@ -21,7 +26,7 @@ public abstract class GPUResourceWrapper : IDisposable
         if (isDisposed) return;
         isDisposed = true;
         GC.SuppressFinalize(this);
-        
+
         context.ReleaseResource(this);
         Free();
     }

@@ -38,6 +38,12 @@ public struct BindGroupLayoutEntry
         };
     }
 
+    public static BindGroupLayoutEntry Uniform<T>(uint binding, Silk.NET.WebGPU.ShaderStage visibility, bool hasDynamicOffset = false)
+        where T : unmanaged
+    {
+        return BufferEntry<T>(binding, visibility, Silk.NET.WebGPU.BufferBindingType.Uniform, hasDynamicOffset);
+    }
+
     public static BindGroupLayoutEntry SamplerEntry(uint binding, Silk.NET.WebGPU.ShaderStage visibility, Silk.NET.WebGPU.SamplerBindingType type)
     {
         return Undefined with

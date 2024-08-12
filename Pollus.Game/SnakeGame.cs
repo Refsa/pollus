@@ -1,8 +1,14 @@
+using System.Runtime.InteropServices;
+using System.Text;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Pollus.Game;
 
@@ -16,19 +22,23 @@ public class SnakeGame
 {
     Keyboard? keyboard;
     GPURenderPipeline? quadRenderPipeline = null;
-    GPUBindGroupLayout? sceneUniformBindGroupLayout = null;
-    GPUBindGroup? sceneUniformBindGroup = null;
+    GPUBindGroupLayout? bindGroupLayout0 = null;
+    GPUBindGroup? bindGroup0 = null;
     GPUBuffer? quadVertexBuffer = null;
     GPUBuffer? quadIndexBuffer = null;
     GPUBuffer? sceneUniformBuffer = null;
     GPUBuffer? instanceBuffer = null;
+    GPUTexture? texture = null;
+    GPUTextureView? textureView = null;
+    GPUSampler? textureSampler = null;
     Mat4<float> player = Mat4<float>.Identity();
 
+    // pos, uv
     Vec2<float>[] quadVertices = [
-        (-50f, -50f),
-        (+50f, -50f),
-        (+50f, +50f),
-        (-50f, +50f),
+        (-50f, -50f), (0f, 0f),
+        (+50f, -50f), (1f, 0f),
+        (+50f, +50f), (1f, 1f),
+        (-50f, +50f), (0f, 1f),
     ];
     int[] quadIndices = [0, 1, 2, 0, 2, 3];
 
@@ -51,7 +61,7 @@ public class SnakeGame
             {
                 Label = "quad-vertex-buffer",
                 Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                Size = (ulong)(quadVertices.Length * Vec3<float>.SizeInBytes),
+                Size = (ulong)(quadVertices.Length * sizeof(float) * 4),
                 MappedAtCreation = false,
             });
             quadVertexBuffer.Write<Vec2<float>>(quadVertices);
@@ -96,27 +106,43 @@ public class SnakeGame
             sceneUniformBuffer.Write(SceneUniform, 0);
         }
 
+        // Texture
+        {
+            texture = app.GPUContext.CreateTexture(TextureDescriptor.D2(
+                "texture",
+                Silk.NET.WebGPU.TextureUsage.TextureBinding | Silk.NET.WebGPU.TextureUsage.CopyDst,
+                Silk.NET.WebGPU.TextureFormat.Rgba8Unorm,
+                (16, 16)
+            ));
+
+            using var imgFile = File.OpenRead("./assets/snake/snake_head.png");
+            using var img = Image.Load<Rgba32>(imgFile);
+            img.ProcessPixelRows((accessor) =>
+            {
+                for (int y = 0; y < accessor.Height; y++)
+                {
+                    var row = accessor.GetRowSpan(y);
+                    texture.Write<Rgba32>(row, 0, new Vec3<uint>(0, (uint)y, 0), new Vec3<uint>((uint)row.Length, 1, 1));
+                }
+            });
+
+            textureSampler = app.GPUContext.CreateSampler(SamplerDescriptor.Nearest);
+        }
+
         using var quadShaderModule = app.GPUContext.CreateShaderModule(new()
         {
             Label = "quad-shader-module",
             Backend = ShaderBackend.WGSL,
-            Content = File.ReadAllBytes("./assets/snake/quad.wgsl"),
+            Content = Encoding.UTF8.GetBytes(File.ReadAllText("./assets/snake/quad.wgsl")),
         });
 
-        sceneUniformBindGroupLayout = app.GPUContext.CreateBindGroupLayout(new()
+        bindGroupLayout0 = app.GPUContext.CreateBindGroupLayout(new()
         {
-            Label = "scene-uniform-bind-group-layout",
+            Label = "bind-group-layout-0",
             Entries = [
-                BindGroupLayoutEntry.BufferEntry<SceneUniform>(0, Silk.NET.WebGPU.ShaderStage.Vertex, Silk.NET.WebGPU.BufferBindingType.Uniform, false)
-            ]
-        });
-
-        sceneUniformBindGroup = app.GPUContext.CreateBindGroup(new()
-        {
-            Label = "scene-uniform-bind-group",
-            Layout = sceneUniformBindGroupLayout,
-            Entries = [
-                BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer!, 0)
+                BindGroupLayoutEntry.Uniform<SceneUniform>(0, Silk.NET.WebGPU.ShaderStage.Vertex, false),
+                BindGroupLayoutEntry.TextureEntry(1, Silk.NET.WebGPU.ShaderStage.Fragment, Silk.NET.WebGPU.TextureSampleType.Float, Silk.NET.WebGPU.TextureViewDimension.Dimension2D),
+                BindGroupLayoutEntry.SamplerEntry(2, Silk.NET.WebGPU.ShaderStage.Fragment, Silk.NET.WebGPU.SamplerBindingType.Filtering),
             ]
         });
 
@@ -129,10 +155,11 @@ public class SnakeGame
                 EntryPoint = "vs_main",
                 Layouts = [
                     VertexBufferLayout.Vertex(0, [
-                        VertexFormat.Float32x2
+                        VertexFormat.Float32x2,
+                        VertexFormat.Float32x2,
                     ]),
                     VertexBufferLayout.Instance(5, [
-                        VertexFormat.Mat4x4
+                        VertexFormat.Mat4x4,
                     ])
                 ]
             },
@@ -153,10 +180,26 @@ public class SnakeGame
             {
                 Label = "quad-pipeline-layout",
                 Layouts = [
-                    sceneUniformBindGroupLayout
+                    bindGroupLayout0
                 ]
             }),
         });
+
+        // Bind Group
+        {
+            textureView = texture.GetTextureView();
+            textureView.Value.RegisterResource();
+            bindGroup0 = app.GPUContext.CreateBindGroup(new()
+            {
+                Label = "bind-group-0",
+                Layout = bindGroupLayout0,
+                Entries = [
+                    BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer!, 0),
+                    BindGroupEntry.TextureEntry(1, textureView.Value),
+                    BindGroupEntry.SamplerEntry(2, textureSampler),
+                ]
+            });
+        }
     }
 
     public void Update(IApplication app)
@@ -208,7 +251,7 @@ public class SnakeGame
                 renderPass.SetVertexBuffer(0, quadVertexBuffer!);
                 renderPass.SetVertexBuffer(1, instanceBuffer!);
                 renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
-                renderPass.SetBindGroup(sceneUniformBindGroup!, 0);
+                renderPass.SetBindGroup(bindGroup0!, 0);
                 renderPass.DrawIndexed((uint)quadIndices.Length, 1, 0, 0, 0);
             }
 

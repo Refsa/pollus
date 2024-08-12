@@ -25,7 +25,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
 
     bool isDisposed;
 
-    List<GPUResourceWrapper> resources = new();
+    List<IGPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
@@ -205,12 +205,12 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(GPUResourceWrapper resource)
+    public void RegisterResource(IGPUResourceWrapper resource)
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(GPUResourceWrapper resource)
+    public void ReleaseResource(IGPUResourceWrapper resource)
     {
         resources.Remove(resource);
     }

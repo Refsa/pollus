@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Pollus.Graphics.WGPU;
 
 unsafe public class GPUShader : GPUResourceWrapper
