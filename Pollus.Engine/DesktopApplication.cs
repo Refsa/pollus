@@ -25,10 +25,11 @@ public class DesktopApplication : IApplication, IDisposable
     public IWGPUContext GPUContext => windowContext!;
     public AudioManager Audio => audio!;
     public InputManager Input => input!;
+    public IWindow Window => window;
 
     public DesktopApplication(ApplicationBuilder builder)
     {
-        window = Window.Create(builder.WindowOptions);
+        window = Graphics.Windowing.Window.Create(builder.WindowOptions);
         OnSetup = builder.OnSetup;
         OnUpdate = builder.OnUpdate;
     }

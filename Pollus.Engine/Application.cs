@@ -49,6 +49,7 @@ public interface IApplication
 {
     bool IsRunning { get; }
 
+    IWindow Window { get; }
     IWGPUContext GPUContext { get; }
     AudioManager Audio { get; }
     InputManager Input { get; }

@@ -59,6 +59,8 @@ unsafe public struct NativeArray<T> : IDisposable
     }
 
     public Span<T> AsSpan() => new(data, length);
+    public Span<T> Slice(int start) => new(data + start, length - start);
+    public Span<T> Slice(int start, int length) => new(data + start, length);
     public Enumerator GetEnumerator() => new(data, length);
 
     public struct Enumerator

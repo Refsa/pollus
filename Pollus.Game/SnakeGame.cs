@@ -33,15 +33,6 @@ public class SnakeGame
     GPUSampler? textureSampler = null;
     Mat4<float> player = Mat4<float>.Identity();
 
-    // pos, uv
-    Vec2<float>[] quadVertices = [
-        (-50f, -50f), (0f, 0f),
-        (+50f, -50f), (1f, 0f),
-        (+50f, +50f), (1f, 1f),
-        (-50f, +50f), (0f, 1f),
-    ];
-    int[] quadIndices = [0, 1, 2, 0, 2, 3];
-
     public void Run()
     {
         (ApplicationBuilder.Default with
@@ -57,15 +48,24 @@ public class SnakeGame
 
         // Quad Vertex Buffer
         {
+            using var vertexData = VertexData.From(4, stackalloc VertexFormat[] { VertexFormat.Float32x2, VertexFormat.Float32x2 });
+            vertexData.Write(0, [
+                ((-16f, -16f), (0f, 0f)),
+                ((+16f, -16f), (1f, 0f)),
+                ((+16f, +16f), (1f, 1f)),
+                ((-16f, +16f), (0f, 1f)),
+            ]);
+
             quadVertexBuffer = app.GPUContext.CreateBuffer(new()
             {
                 Label = "quad-vertex-buffer",
                 Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                Size = (ulong)(quadVertices.Length * sizeof(float) * 4),
+                Size = vertexData.SizeInBytes,
                 MappedAtCreation = false,
             });
-            quadVertexBuffer.Write<Vec2<float>>(quadVertices);
+            quadVertexBuffer.Write<byte>(vertexData.AsSpan());
 
+            Span<int> quadIndices = stackalloc int[] { 0, 1, 2, 0, 2, 3 };
             quadIndexBuffer = app.GPUContext.CreateBuffer(new()
             {
                 Label = "quad-index-buffer",
@@ -101,7 +101,7 @@ public class SnakeGame
             var SceneUniform = new SceneUniform
             {
                 View = Mat4<float>.Identity(),
-                Projection = Mat4<float>.OrthographicRightHanded(0, 1600, 0, 900, 0, 1),
+                Projection = Mat4<float>.OrthographicRightHanded(0, app.Window.Size.X, 0, app.Window.Size.Y, 0, 1),
             };
             sceneUniformBuffer.Write(SceneUniform, 0);
         }
@@ -252,7 +252,7 @@ public class SnakeGame
                 renderPass.SetVertexBuffer(1, instanceBuffer!);
                 renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
                 renderPass.SetBindGroup(bindGroup0!, 0);
-                renderPass.DrawIndexed((uint)quadIndices.Length, 1, 0, 0, 0);
+                renderPass.DrawIndexed(6, 1, 0, 0, 0);
             }
 
             renderPass.End();
