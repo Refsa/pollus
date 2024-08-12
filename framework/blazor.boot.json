@@ -1,18 +1,18 @@
 {
   "mainAssemblyName": "Pollus.Game.dll",
   "resources": {
-    "hash": "sha256-cFSRzXbeQhIwhp8aYh6YRIS4iSsIG1rewa8ax8a963s=",
+    "hash": "sha256-9csgIzwaEaH3FvCAYlDBaOttNHM9sphCnwZrHFhvMZo=",
     "jsModuleNative": {
-      "dotnet.native.js": "sha256-uAXpIOcJvgCooKoUaMZcu5dzK0mj4GYI+OyAyf3ATQw="
+      "dotnet.native.js": "sha256-TvbG1pA7mXvyBjkz2dWdpzzysXTrzlVQaq79gwKRgZk="
     },
     "jsModuleRuntime": {
       "dotnet.runtime.js": "sha256-soZyw6XWXOLKhA26AOyzSpCP5cAsw1wvhdPHSYNTMfQ="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-+TBKJ31H1wksrXM1WoHIIovdfdXFtY/vOvS43B+dzDE="
+      "dotnet.native.wasm": "sha256-eTAmf5oP9wZDknDB+AsKWtKVwyozWXzX/yTOPizpByE="
     },
     "wasmSymbols": {
-      "dotnet.native.js.symbols": "sha256-5PLgFCGi4q9nd0k3qEHljllX/BBjHre47IXY+essZNs="
+      "dotnet.native.js.symbols": "sha256-5Z4pE9FaF9QjVr7vulDMxa4aqqXpXx3NmP8FpL97nlM="
     },
     "icu": {
       "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -20,20 +20,26 @@
       "icudt_no_CJK.dat": "sha256-L7sV7NEYP37/Qr2FPCePo5cJqRgTXRwGHuwF5Q+0Nfs="
     },
     "assembly": {
-      "Pollus.Audio.wasm": "sha256-ZUiDWLl6GFmTcWwoYmDJJTYDh8RbCNmY39f48FxBz68=",
-      "Pollus.Core.wasm": "sha256-VHQtnxhTmnRemvBUk1sISta8roV+iFLWupmFlTsP+yE=",
-      "Pollus.Emscripten.wasm": "sha256-hsJYsoM3ePX7RkF3qKWfVaBt/zemxsaL0bZpsZXz3+s=",
-      "Pollus.Engine.wasm": "sha256-lBMFOoobFCOf2lLdMpOMJWHfwicoN6YvNPX7CnqsIeY=",
-      "Pollus.Game.wasm": "sha256-PD0XEk6nzCFJvsb2GWlQddxWPOI9ff17V5bYLD6XMe4=",
-      "Pollus.Graphics.wasm": "sha256-WFQ3/kFQOUUh6LnMfISWUA/aANiLs4BelNe0jzlZFH0=",
+      "Pollus.Audio.wasm": "sha256-HBDseurcaHf8mNIsVsSsFH438VP/RVVviGVUpuE+8GY=",
+      "Pollus.Core.wasm": "sha256-Jq8ZynBZ4L2q05JPHOImzTAXvdsIe4S0v1jATT9FUos=",
+      "Pollus.Emscripten.wasm": "sha256-bdYjZgCnqz1QBCErKYhFmbCtX7n5HnwNIPf/td8SxUU=",
+      "Pollus.Engine.wasm": "sha256-4HSM/UG2e098ZemesxMQ5jxUPZ9CiXgmKE4mY0z2Qls=",
+      "Pollus.Game.wasm": "sha256-GAfnFvc/BaUaWmZ0difTrpjvDK2+iJL6aAlUIIqgRoU=",
+      "Pollus.Graphics.wasm": "sha256-+9Ez5Dpe+jawWTZSWZcyitAEoQOAKGzNOq1KK+4t93w=",
       "Silk.NET.Core.wasm": "sha256-1K/Dv7SF20WVtmIqbSsSIi3ZTe7TWu4INEdfnTjCYWA=",
       "Silk.NET.OpenAL.wasm": "sha256-39/ik5F5oINO/C53mBVZ/yZnYFEJqxcA+xHxbR3KXKQ=",
       "Silk.NET.SDL.wasm": "sha256-7Zop9D1/oiAr3/PI3AvUJbpUYEVTjSG0VeLKTMKlxac=",
-      "Silk.NET.WebGPU.wasm": "sha256-EtFnGFDGx0eK13C7pMsk5mnkE//oyYYzZLsCmM2p2+8=",
-      "System.Console.wasm": "sha256-pSmRmXrv7Pzt/J9Esy2mE5RXokmMtQo0SQQB2dL8qUA=",
-      "System.Linq.wasm": "sha256-yAnh/r0b7i8m33z0aHMk4P46vBldNPnWwP86K9m2vmc=",
-      "System.Private.CoreLib.wasm": "sha256-5qPj5Vcyj86bfAXh/MsGuwAapGAfCyrhQMR3EUaZbWk=",
+      "Silk.NET.WebGPU.wasm": "sha256-cE5QYEZFcIULzC/kKhEEDuGV9VYAD60Tt67RC71SSes=",
+      "SixLabors.ImageSharp.wasm": "sha256-GYdJYuZmLTnTzq4wx1ZxofkeHfJSz2E0a8UL+ie3Bp4=",
+      "System.Collections.Concurrent.wasm": "sha256-lr6wJawimG/11h6Q+8a/mVp0zJ/Ddrp31tfvkLpmR9w=",
+      "System.Console.wasm": "sha256-CY3ImSSih/wilDo7pXH+Dy0z+ahsFRfi3qQfEkWWjRI=",
+      "System.IO.Compression.wasm": "sha256-qIXEvN+MDbeVyhWs6+nU2934TyOWE3CdEfRDvK0c4kM=",
+      "System.Linq.wasm": "sha256-pOMbfHMyaHDXiBqwlCe89rwPa3caNXtNqoM/+n3zj48=",
+      "System.Private.CoreLib.wasm": "sha256-wij9ZRMQRoJH15O2ANkLg/0XIwRiUhGGDCWDjGaQPog=",
       "System.Runtime.InteropServices.JavaScript.wasm": "sha256-SSSscW/g7DzLmXiX5eds0/f3kfI4j4ncZvvur5Qf4x0=",
+      "System.Security.Cryptography.wasm": "sha256-srJI3yCz4p0qAOe/OBpvAVj7NPS4ZJIJ404C0pUjAcI=",
+      "System.Text.Encoding.CodePages.wasm": "sha256-Czj0AA+Tz2kyL74bWcQ6bs2F2k8/RHDWKCC4JsJn74o=",
+      "System.Threading.Tasks.Parallel.wasm": "sha256-5rfQQKk0T5YVtY+DhNavRAQ7qZJoz2DeUyARS6WaNmw=",
       "aot-instances.wasm": "sha256-F5jaGmVc7vzFjqtI3doCGKg/fQ7XiaS/ql2ej46UKTw="
     },
     "vfs": {
