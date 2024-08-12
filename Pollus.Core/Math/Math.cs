@@ -12,8 +12,8 @@ public static class FloatingConstants<T>
 
 public static class Math
 {
-    public const float DEG2RAD = 0.0174532925f;
-    public const float RAD2DEG = 57.2957795f;
+    public const double DEG2RAD = 0.0174532925;
+    public const double RAD2DEG = 57.2957795;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Deg2Rad<T>(this T deg)
@@ -31,30 +31,30 @@ public static class Math
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static (T Sin, T Cos) SinCos<T>(this T radians)
-        where T : struct, IFloatingPoint<T>
+        where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
         return (radians.Sin(), radians.Cos());
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Sin<T>(this T radians)
-        where T : struct, IFloatingPoint<T>
+        where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
-        return T.CreateChecked(System.Math.Sin(double.CreateChecked(radians)));
+        return T.Sin(radians);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Cos<T>(this T radians)
-        where T : struct, IFloatingPoint<T>
+        where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
-        return T.CreateChecked(System.Math.Cos(double.CreateChecked(radians)));
+        return T.Cos(radians);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Sqrt<T>(this T self)
-        where T : struct, IFloatingPoint<T>
+        where T : struct, INumber<T>, IRootFunctions<T>
     {
-        return T.CreateChecked(System.Math.Sqrt(double.CreateChecked(self)));
+        return T.Sqrt(self);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

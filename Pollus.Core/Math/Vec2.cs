@@ -7,6 +7,14 @@ public record struct Vec2<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 2;
 
+    public static Vec2<T> Zero => new(default, default);
+    public static Vec2<T> One => new(T.One, T.One);
+    public static Vec2<T> Up => new(T.Zero, T.One);
+    public static Vec2<T> Down => new(T.Zero, T.CreateChecked(-1));
+    public static Vec2<T> Left => new(T.CreateChecked(-1), T.Zero);
+    public static Vec2<T> Right => new(T.One, T.Zero);
+
+
     public T X;
     public T Y;
 
@@ -29,5 +37,20 @@ public record struct Vec2<T>
     public static implicit operator Vec2<T>((T, T) tuple)
     {
         return new Vec2<T>(tuple.Item1, tuple.Item2);
+    }
+
+    public static Vec2<T> operator +(Vec2<T> left, Vec2<T> right)
+    {
+        return new Vec2<T>(left.X + right.X, left.Y + right.Y);
+    }
+
+    public static Vec2<T> operator -(Vec2<T> left, Vec2<T> right)
+    {
+        return new Vec2<T>(left.X - right.X, left.Y - right.Y);
+    }
+
+    public static Vec2<T> operator *(Vec2<T> left, T right)
+    {
+        return new Vec2<T>(left.X * right, left.Y * right);
     }
 }

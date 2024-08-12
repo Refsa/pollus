@@ -19,6 +19,13 @@ public record struct Vec3<T>
         Z = z;
     }
 
+    public Vec3(Vec2<T> other, T z)
+    {
+        X = other.X;
+        Y = other.Y;
+        Z = z;
+    }
+
     public static implicit operator Vec3<T>(System.Numerics.Vector3 vector3)
     {
         return new Vec3<T>((T)Convert.ChangeType(vector3.X, typeof(T)), (T)Convert.ChangeType(vector3.Y, typeof(T)), (T)Convert.ChangeType(vector3.Z, typeof(T)));

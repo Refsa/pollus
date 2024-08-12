@@ -14,8 +14,8 @@ namespace Pollus.Game;
 
 struct SceneUniform
 {
-    public Mat4<float> View;
-    public Mat4<float> Projection;
+    public Mat4f View;
+    public Mat4f Projection;
 }
 
 public class SnakeGame
@@ -31,7 +31,14 @@ public class SnakeGame
     GPUTexture? texture = null;
     GPUTextureView? textureView = null;
     GPUSampler? textureSampler = null;
-    Mat4<float> player = Mat4<float>.Identity();
+    Mat4f player = Mat4f.Identity();
+
+    VertexData instanceData = VertexData.From(1, [VertexFormat.Mat4x4]);
+
+    ~SnakeGame()
+    {
+
+    }
 
     public void Run()
     {
@@ -82,11 +89,10 @@ public class SnakeGame
             {
                 Label = "instance-buffer",
                 Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                Size = Alignment.GetAlignedSize<Mat4<float>>(1),
+                Size = Alignment.GetAlignedSize<Mat4f>(1),
                 MappedAtCreation = false,
             });
-            player = Mat4<float>.Translation(new Vec3<float>(200f, 200f, 0f));
-            instanceBuffer.Write(player, 0);
+            player = Mat4f.Translation(new Vec3f(200f, 200f, 0f));
         }
 
         // Scene Uniform Buffer
@@ -100,8 +106,8 @@ public class SnakeGame
             });
             var SceneUniform = new SceneUniform
             {
-                View = Mat4<float>.Identity(),
-                Projection = Mat4<float>.OrthographicRightHanded(0, app.Window.Size.X, 0, app.Window.Size.Y, 0, 1),
+                View = Mat4f.Identity(),
+                Projection = Mat4f.OrthographicRightHanded(0, app.Window.Size.X, 0, app.Window.Size.Y, 0, 1),
             };
             sceneUniformBuffer.Write(SceneUniform, 0);
         }
@@ -129,13 +135,6 @@ public class SnakeGame
             textureSampler = app.GPUContext.CreateSampler(SamplerDescriptor.Nearest);
         }
 
-        using var quadShaderModule = app.GPUContext.CreateShaderModule(new()
-        {
-            Label = "quad-shader-module",
-            Backend = ShaderBackend.WGSL,
-            Content = Encoding.UTF8.GetBytes(File.ReadAllText("./assets/snake/quad.wgsl")),
-        });
-
         bindGroupLayout0 = app.GPUContext.CreateBindGroupLayout(new()
         {
             Label = "bind-group-layout-0",
@@ -146,44 +145,54 @@ public class SnakeGame
             ]
         });
 
-        quadRenderPipeline = app.GPUContext.CreateRenderPipeline(new()
+        // Pipeline
         {
-            Label = "quad-render-pipeline",
-            VertexState = new()
+            using var quadShaderModule = app.GPUContext.CreateShaderModule(new()
             {
-                ShaderModule = quadShaderModule,
-                EntryPoint = "vs_main",
-                Layouts = [
-                    VertexBufferLayout.Vertex(0, [
-                        VertexFormat.Float32x2,
-                        VertexFormat.Float32x2,
-                    ]),
-                    VertexBufferLayout.Instance(5, [
-                        VertexFormat.Mat4x4,
-                    ])
-                ]
-            },
-            FragmentState = new()
+                Label = "quad-shader-module",
+                Backend = ShaderBackend.WGSL,
+                Content = Encoding.UTF8.GetBytes(File.ReadAllText("./assets/snake/quad.wgsl")),
+            });
+
+            quadRenderPipeline = app.GPUContext.CreateRenderPipeline(new()
             {
-                ShaderModule = quadShaderModule,
-                EntryPoint = "fs_main",
-                ColorTargets = [
-                    ColorTargetState.Default with
-                    {
-                        Format = app.GPUContext.GetSurfaceFormat(),
-                    }
-                ]
-            },
-            MultisampleState = MultisampleState.Default,
-            PrimitiveState = PrimitiveState.Default,
-            PipelineLayout = app.GPUContext.CreatePipelineLayout(new()
-            {
-                Label = "quad-pipeline-layout",
-                Layouts = [
-                    bindGroupLayout0
-                ]
-            }),
-        });
+                Label = "quad-render-pipeline",
+                VertexState = new()
+                {
+                    ShaderModule = quadShaderModule,
+                    EntryPoint = "vs_main",
+                    Layouts = [
+                        VertexBufferLayout.Vertex(0, [
+                            VertexFormat.Float32x2,
+                            VertexFormat.Float32x2,
+                        ]),
+                        VertexBufferLayout.Instance(5, [
+                            VertexFormat.Mat4x4,
+                        ])
+                    ]
+                },
+                FragmentState = new()
+                {
+                    ShaderModule = quadShaderModule,
+                    EntryPoint = "fs_main",
+                    ColorTargets = [
+                        ColorTargetState.Default with
+                        {
+                            Format = app.GPUContext.GetSurfaceFormat(),
+                        }
+                    ]
+                },
+                MultisampleState = MultisampleState.Default,
+                PrimitiveState = PrimitiveState.Default,
+                PipelineLayout = app.GPUContext.CreatePipelineLayout(new()
+                {
+                    Label = "quad-pipeline-layout",
+                    Layouts = [
+                        bindGroupLayout0
+                    ]
+                }),
+            });
+        }
 
         // Bind Group
         {
@@ -204,23 +213,27 @@ public class SnakeGame
 
     public void Update(IApplication app)
     {
+        var input = Vec2f.Zero;
         if (keyboard!.Pressed(Key.ArrowLeft))
         {
-            player.Translate(new Vec3<float>(+1f, 0f, 0f));
+            input += Vec2f.Left;
         }
         if (keyboard!.Pressed(Key.ArrowRight))
         {
-            player.Translate(new Vec3<float>(-1f, 0f, 0f));
+            input += Vec2f.Right;
         }
         if (keyboard!.Pressed(Key.ArrowUp))
         {
-            player.Translate(new Vec3<float>(0f, +1f, 0f));
+            input += Vec2f.Down;
         }
         if (keyboard!.Pressed(Key.ArrowDown))
         {
-            player.Translate(new Vec3<float>(0f, -1f, 0f));
+            input += Vec2f.Up;
         }
-        instanceBuffer!.Write(player, 0);
+        player.Translate(new Vec3f(input.Normalized(), 0));
+
+        instanceData.Write(0, player);
+        instanceBuffer!.Write<byte>(instanceData.AsSpan());
 
         using var surfaceTexture = app.GPUContext.CreateSurfaceTexture();
         if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)

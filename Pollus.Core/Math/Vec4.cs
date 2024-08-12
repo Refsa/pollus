@@ -1,7 +1,5 @@
 namespace Pollus.Mathematics;
 
-using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 public record struct Vec4<T>
@@ -47,18 +45,18 @@ public record struct Vec4<T>
         return new Vec3<T>(X, Y, Z);
     }
 
-    public Vec4<T> Mul(Vec4<T> other)
+    public static Vec4<T> operator +(Vec4<T> left, Vec4<T> right)
     {
-        return new Vec4<T>(X * other.X, Y * other.Y, Z * other.Z, W * other.W);
+        return new Vec4<T>(left.X + right.X, left.Y + right.Y, left.Z + right.Z, left.W + right.W);
     }
 
-    public Vec4<T> Add(Vec4<T> vec4)
+    public static Vec4<T> operator -(Vec4<T> left, Vec4<T> right)
     {
-        return new Vec4<T>(X - vec4.X, Y - vec4.Y, Z - vec4.Z, W - vec4.W);
+        return new Vec4<T>(left.X - right.X, left.Y - right.Y, left.Z - right.Z, left.W - right.W);
     }
 
-    public Vec4<T> Sub(Vec4<T> vec4)
+    public static Vec4<T> operator *(Vec4<T> left, T right)
     {
-        return new Vec4<T>(X - vec4.X, Y - vec4.Y, Z - vec4.Z, W - vec4.W);
+        return new Vec4<T>(left.X * right, left.Y * right, left.Z * right, left.W * right);
     }
 }
