@@ -4,13 +4,22 @@ namespace Pollus.ECS;
 
 public class World : IDisposable
 {
+    static World()
+    {
+        FetchInit.Init();
+    }
+
     public ArchetypeStore Store { get; init; }
     public Schedule Schedule { get; init; }
+    public Resources Resources { get; init; }
 
     public World()
     {
         Store = new();
         Schedule = Schedule.CreateDefault();
+        Resources = new();
+
+        Resources.Add<Time>();
     }
 
     public void Dispose()

@@ -1,4 +1,6 @@
-namespace Pollus.ECS.Systems;
+namespace Pollus.ECS.Core;
+
+using System.Runtime.CompilerServices;
 
 public class ExclusiveSystemMarker { }
 
@@ -48,7 +50,7 @@ public interface ISystem
     SystemDescriptor Descriptor { get; }
 
     bool ShouldRun(World world) => RunCriteria.ShouldRun(world);
-    void Tick(World world);
+    void Tick(World world) { }
 }
 
 public abstract class Sys(SystemDescriptor descriptor) : ISystem
@@ -65,20 +67,29 @@ public abstract class Sys(SystemDescriptor descriptor) : ISystem
     protected abstract void OnTick();
 }
 
-public abstract class Sys<T1> : Sys
+public abstract class Sys<T0> : Sys
 {
+    static readonly Fetch.Info t0Fetch;
+    static Sys()
+    {
+        // RuntimeHelpers.RunClassConstructor(typeof(T0).TypeHandle);
+        t0Fetch = Fetch.Get<T0>();
+    }
+
     public Sys(SystemDescriptor descriptor) : base(descriptor)
     {
-        descriptor.DependsOn<T1>();
+        descriptor.DependsOn<T0>();
     }
 
     public override void Tick(World world)
-    {
-        OnTick(default);
+    {   
+        var t0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, this);
+        
+        OnTick(t0);
     }
 
     protected override void OnTick() { }
-    protected abstract void OnTick(T1 arg1);
+    protected abstract void OnTick(T0 arg1);
 }
 
 public class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick) : Sys(descriptor)
@@ -89,18 +100,13 @@ public class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick) : Sys(
     {
         onTick();
     }
-
-    public static implicit operator FnSystem((SystemDescriptor descriptor, SystemDelegate onTick) tuple)
-    {
-        return new FnSystem(tuple.descriptor, tuple.onTick);
-    }
 }
 
-public class FnSystem<T1>(SystemDescriptor descriptor, SystemDelegate<T1> onTick) : Sys<T1>(descriptor)
+public class FnSystem<T0>(SystemDescriptor descriptor, SystemDelegate<T0> onTick) : Sys<T0>(descriptor)
 {
-    readonly SystemDelegate<T1> onTick = onTick;
+    readonly SystemDelegate<T0> onTick = onTick;
 
-    protected override void OnTick(T1 arg1)
+    protected override void OnTick(T0 arg1)
     {
         onTick(arg1);
     }

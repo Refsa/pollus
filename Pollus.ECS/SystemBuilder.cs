@@ -1,6 +1,6 @@
 namespace Pollus.ECS;
 
-using Pollus.ECS.Systems;
+using Pollus.ECS.Core;
 
 public class SystemBuilder
 {
