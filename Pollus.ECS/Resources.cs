@@ -2,9 +2,21 @@ namespace Pollus.ECS;
 
 using Pollus.ECS.Core;
 
-public class Resources
+public class Resources : IDisposable
 {
     Dictionary<int, object> resources = new();
+
+    public void Dispose()
+    {
+        foreach (var resource in resources.Values)
+        {
+            if (resource is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        resources.Clear();
+    }
 
     public void Add<TResource>()
         where TResource : notnull, new()

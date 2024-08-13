@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 public delegate bool FilterDelegate(Archetype archetype);
@@ -56,7 +57,7 @@ public class Any<C0, C1> : IFilter
 
 public static class FilterHelpers
 {
-    public static IFilter[] UnwrapFilters<TFilters>()
+    public static IFilter[] UnwrapFilters<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] TFilters>()
         where TFilters : ITuple
     {
         if (typeof(TFilters).IsAssignableFrom(typeof(ITuple)) is false)
@@ -82,7 +83,9 @@ public static class FilterHelpers
                 throw new ArgumentException("Type must be a value type");
             }
 
+#pragma warning disable IL2062
             filters[i] = (IFilter)Activator.CreateInstance(types[i])!;
+#pragma warning restore IL2062
         }
         return filters;
     }

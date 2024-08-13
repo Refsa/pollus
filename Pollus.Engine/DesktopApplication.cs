@@ -1,6 +1,7 @@
 namespace Pollus.Engine;
 
 using Pollus.Audio;
+using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Graphics;
 using Pollus.Graphics.SDL;
@@ -13,6 +14,7 @@ public class DesktopApplication : IApplication, IDisposable
     GraphicsContext? graphicsContext;
     IWGPUContext? windowContext;
 
+    World world;
     AudioManager? audio;
     InputManager? input;
 
@@ -25,11 +27,13 @@ public class DesktopApplication : IApplication, IDisposable
     public IWGPUContext GPUContext => windowContext!;
     public AudioManager Audio => audio!;
     public InputManager Input => input!;
+    public World World => world;
     public IWindow Window => window;
 
     public DesktopApplication(ApplicationBuilder builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
+        world = builder.World;
         OnSetup = builder.OnSetup;
         OnUpdate = builder.OnUpdate;
     }
@@ -42,6 +46,7 @@ public class DesktopApplication : IApplication, IDisposable
 
         window.Dispose();
         graphicsContext?.Dispose();
+        world.Dispose();
     }
 
     public void Run()

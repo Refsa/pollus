@@ -6,6 +6,7 @@ using Pollus.Graphics.Windowing;
 using Pollus.Audio;
 using Pollus.Engine;
 using Pollus.Engine.Input;
+using Pollus.ECS;
 
 public record class ApplicationBuilder
 {
@@ -35,6 +36,7 @@ public record class ApplicationBuilder
 
     public required Func<ApplicationBuilder, IApplication> Application { get; set; }
     public WindowOptions WindowOptions { get; set; } = WindowOptions.Default;
+    public World World { get; set; } = new();
 
     public required Action<IApplication> OnSetup { get; set; }
     public required Action<IApplication> OnUpdate { get; set; }
@@ -53,6 +55,7 @@ public interface IApplication
     IWGPUContext GPUContext { get; }
     AudioManager Audio { get; }
     InputManager Input { get; }
+    World World { get; }
 
     void Run();
 }

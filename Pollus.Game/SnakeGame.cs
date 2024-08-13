@@ -1,13 +1,9 @@
-using System.Runtime.InteropServices;
-using System.Text;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Pollus.Game;
@@ -52,9 +48,11 @@ public class SnakeGame
     public void Setup(IApplication app)
     {
         keyboard = app.Input.GetDevice<Keyboard>("keyboard");
+        player = Mat4f.Translation(new Vec3f(200f, 200f, 0f));
 
-        // Quad Vertex Buffer
+        // Quad Mesh
         {
+            // Vertex Buffer
             var vertexData = VertexData.From(4, stackalloc VertexFormat[] { VertexFormat.Float32x2, VertexFormat.Float32x2 });
             vertexData.Write(0, [
                 ((-16f, -16f), (0f, 0f)),
@@ -81,10 +79,8 @@ public class SnakeGame
                 MappedAtCreation = false,
             });
             quadIndexBuffer.Write<int>(quadIndices);
-        }
 
-        // Instance Buffer
-        {
+            // Index Buffer
             instanceBuffer = app.GPUContext.CreateBuffer(new()
             {
                 Label = """instance-buffer""",
@@ -92,7 +88,6 @@ public class SnakeGame
                 Size = Alignment.GetAlignedSize<Mat4f>(1),
                 MappedAtCreation = false,
             });
-            player = Mat4f.Translation(new Vec3f(200f, 200f, 0f));
         }
 
         // Scene Uniform Buffer

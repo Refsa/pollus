@@ -23,6 +23,7 @@ public class World : IDisposable
     public void Dispose()
     {
         Store.Dispose();
+        Resources.Dispose();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

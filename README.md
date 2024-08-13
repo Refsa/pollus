@@ -12,6 +12,7 @@ The aim is to have as few dependencies as possible. This will allow the project 
 - Silk.NET.SDL (for SDL bindings)
 - Silk.NET.WebGPU (for native WebGPU bindings)
 - Silk.NET.OpenAL (for native OpenAL bindings)
+- SixLabors.ImageSharp (image assets)
 
 ## License
 This project is licensed under 'MIT License' except where noted. Parts of the project with a different license is either notified in the file itself or in the directory of the file.
