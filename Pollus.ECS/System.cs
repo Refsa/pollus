@@ -15,9 +15,10 @@ public record struct SystemLabel(string Label)
 public class SystemDescriptor
 {
     public SystemLabel Label { get; }
-    public HashSet<SystemLabel> RunsBefore { get; } = new();
-    public HashSet<SystemLabel> RunsAfter { get; } = new();
-    public HashSet<Type> Dependencies { get; } = new();
+    public HashSet<SystemLabel> RunsBefore { get; } = [];
+    public HashSet<SystemLabel> RunsAfter { get; } = [];
+    public HashSet<Type> Parameters { get; } = [];
+    public HashSet<Type> Dependencies { get; } = [];
 
     public SystemDescriptor(SystemLabel label)
     {
@@ -87,7 +88,8 @@ public abstract class Sys<T0> : Sys
 
     public Sys(SystemDescriptor descriptor) : base(descriptor)
     {
-        descriptor.DependsOn<T0>();
+        descriptor.Parameters.Add(typeof(T0));
+        descriptor.Dependencies.UnionWith(dependencies);
     }
 
     public override void Tick(World world)

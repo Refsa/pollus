@@ -70,7 +70,8 @@ public abstract class Sys<$gen_args$> : Sys
 
     public Sys(SystemDescriptor descriptor) : base(descriptor)
     {
-        $depends_on$
+        $set_parameter$
+        descriptor.Dependencies.UnionWith(dependencies);
     }
 
     public override void Tick(World world)
@@ -95,7 +96,6 @@ public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$g
 ";
 
             const string DO_FETCH_TEMPLATE = "var t$gen_idx$ = ((IFetch<$gen_arg$>)t$gen_idx$Fetch.Fetch).DoFetch(world, this);";
-            const string DEPENDS_ON_TEMPLATE = "descriptor.DependsOn<$gen_arg$>();";
             const string FETCH_FIELDS_TEMPLATE = "static readonly Fetch.Info t$gen_idx$Fetch;";
             const string FETCH_SETUPS_TEMPLATE = "t$gen_idx$Fetch = Fetch.Get<$gen_arg$>();";
             const string FETCH_DEPENDENCIES_TEMPLATE = ".. t$gen_idx$Fetch.Dependencies";
@@ -107,11 +107,11 @@ public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$g
             var gen_params = "T0 t0, ";
             var on_tick_params = "t0, ";
             var do_fetch = DO_FETCH_TEMPLATE.Replace("$gen_idx$", "0").Replace("$gen_arg$", "T0");
-            var depends_on = DEPENDS_ON_TEMPLATE.Replace("$gen_arg$", "T0");
             var fetch_fields = FETCH_FIELDS_TEMPLATE.Replace("$gen_idx$", "0");
             var fetch_setups = FETCH_SETUPS_TEMPLATE.Replace("$gen_idx$", "0").Replace("$gen_arg$", "T0");
             var fetch_dependencies = FETCH_DEPENDENCIES_TEMPLATE.Replace("$gen_idx$", "0");
             var run_class_ctor = RUN_CLASS_CTOR_TEMPLATE.Replace("$gen_arg$", "T0");
+            var set_parameters = "descriptor.Parameters.Add(typeof(T0));";
 
             for (int i = 1; i < 16; i++)
             {
@@ -119,7 +119,7 @@ public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$g
                 gen_params += $"T{i} t{i}, ";
                 on_tick_params += $"t{i}, ";
                 do_fetch += DO_FETCH_TEMPLATE.Replace("$gen_idx$", i.ToString()).Replace("$gen_arg$", $"T{i}");
-                depends_on += DEPENDS_ON_TEMPLATE.Replace("$gen_arg$", $"T{i}");
+                set_parameters += $"\n        descriptor.Parameters.Add(typeof(T{i}));";
                 fetch_fields += $"\n    static readonly Fetch.Info t{i}Fetch;";
                 fetch_setups += $"\n        t{i}Fetch = Fetch.Get<T{i}>();";
                 fetch_dependencies += $", ..t{i}Fetch.Dependencies";
@@ -132,7 +132,7 @@ public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$g
                     .Replace("$gen_params$", gen_params.TrimEnd(' ', ','))
                     .Replace("$on_tick_params$", on_tick_params.TrimEnd(' ', ','))
                     .Replace("$do_fetch$", do_fetch)
-                    .Replace("$depends_on$", depends_on)
+                    .Replace("$set_parameter$", set_parameters)
                     .Replace("$fetch_fields$", fetch_fields)
                     .Replace("$fetch_setups$", fetch_setups)
                     .Replace("$fetch_dependencies$", fetch_dependencies)

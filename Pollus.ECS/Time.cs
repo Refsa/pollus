@@ -19,6 +19,7 @@ public class TimeSystem : Sys<Time>
 
     public TimeSystem() : base(new SystemDescriptor("TimeSystem"))
     {
+        Descriptor.DependsOn<Time>();
     }
 
     protected override void OnTick(Time time)

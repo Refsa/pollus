@@ -68,6 +68,7 @@ public class Stage
         foreach (var system in Systems)
         {
             sb.AppendLine($"\t\t{system.Descriptor.Label.Label}");
+            sb.AppendLine($"\t\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
         }
         return sb.ToString();
     }
