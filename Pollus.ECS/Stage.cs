@@ -35,7 +35,7 @@ public class Stage
         Systems.Remove(system);
     }
 
-    public void Schedule()
+    public void Schedule(World world)
     {
         Systems.Sort((a, b) =>
         {
@@ -68,6 +68,7 @@ public class Stage
         foreach (var system in Systems)
         {
             sb.AppendLine($"\t\t{system.Descriptor.Label.Label}");
+            sb.AppendLine($"\t\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
             sb.AppendLine($"\t\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
         }
         return sb.ToString();

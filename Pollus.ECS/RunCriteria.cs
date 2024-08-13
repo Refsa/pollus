@@ -23,28 +23,24 @@ public class RunOnce : IRunCriteria
 
 public class RunFixed : IRunCriteria
 {
-    System.Diagnostics.Stopwatch stopwatch = new();
     long previousTicks = 0;
     public float TargetFrameTime { get; }
 
-    public RunFixed(int targetFramerate)
+    public RunFixed(float targetFramerate)
     {
         TargetFrameTime = 1f / targetFramerate;
     }
 
     public bool ShouldRun(World world)
     {
-        if (!stopwatch.IsRunning)
-        {
-            stopwatch.Start();
-            return true;
-        }
+        if (TargetFrameTime == 0) return true;
 
-        long ticks = stopwatch.ElapsedTicks;
-        float deltaTime = DeltaTime(ticks);
+        var time = world.Resources.Get<Time>();
+
+        float deltaTime = DeltaTime(time.Ticks);
         if (deltaTime < TargetFrameTime) return false;
 
-        previousTicks = ticks;
+        previousTicks = time.Ticks;
         return true;
     }
 

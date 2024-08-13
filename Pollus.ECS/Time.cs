@@ -17,7 +17,7 @@ public class TimeSystem : Sys<Time>
     Stopwatch stopwatch = new();
     long previousTicks = 0;
 
-    public TimeSystem() : base(new SystemDescriptor("TimeSystem"))
+    public TimeSystem() : base(new SystemDescriptor(nameof(TimeSystem)))
     {
         Descriptor.DependsOn<Time>();
     }
@@ -38,5 +38,14 @@ public class TimeSystem : Sys<Time>
         time.SecondsSinceStartup = stopwatch.Elapsed.TotalMilliseconds / 1000.0;
 
         previousTicks = frameTicks;
+    }
+}
+
+public class TimePlugin : IPlugin
+{
+    public void Apply(World world)
+    {
+        world.Resources.Add<Time>();
+        world.Schedule.AddSystem(CoreStage.First, new TimeSystem());
     }
 }

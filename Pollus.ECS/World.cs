@@ -18,8 +18,6 @@ public class World : IDisposable
         Store = new();
         Schedule = Schedule.CreateDefault();
         Resources = new();
-
-        Resources.Add<Time>();
     }
 
     public void Dispose()
@@ -48,11 +46,37 @@ public class World : IDisposable
         archetypeInfo.archetype.Preallocate(count);
     }
 
+    public World AddPlugin<TPlugin>(TPlugin plugin)
+        where TPlugin : IPlugin
+    {
+        plugin.Apply(this);
+        return this;
+    }
+
+    public World AddPlugin<TPlugin>()
+        where TPlugin : IPlugin, new()
+    {
+        var plugin = new TPlugin();
+        plugin.Apply(this);
+        return this;
+    }
+
+    public World AddPlugins(params IPlugin[] plugins)
+    {
+        foreach (var plugin in plugins)
+        {
+            plugin.Apply(this);
+        }
+        return this;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Prepare()
     {
         Schedule.Prepare(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Tick()
     {
         Schedule.Tick(this);

@@ -8,22 +8,19 @@ using static Pollus.ECS.SystemBuilder;
 // new AudioExample().Run();
 // new SnakeGame().Run();
 
-using var world = new World();
+using var world = new World()
+    .AddPlugin<TimePlugin>();
+
 for (int i = 0; i < 1_000_000; i++)
 {
     Entity.With(new Component1()).Spawn(world);
 }
 
 world.Schedule.AddSystem(CoreStage.First, [
-    new TimeSystem(),
     FnSystem("DebugFPS", (Time time) =>
     {
-        var fps = (int)(time.FrameCount / time.SecondsSinceStartup);
-        if (time.FrameCount % fps == 0)
-        {
-            Console.WriteLine($"FPS: {time.FrameCount / time.SecondsSinceStartup}");
-        }
-    }).After("TimeSystem").Build(),
+        Console.WriteLine($"FPS: {time.FrameCount / time.SecondsSinceStartup}");
+    }).After("TimeSystem").RunCriteria(new RunFixed(1f)).Build(),
 ]);
 world.Schedule.AddSystem(CoreStage.Update, [
     FnSystem("QueryTest", (Query<Component1> query) =>

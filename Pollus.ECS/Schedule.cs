@@ -27,7 +27,7 @@ public class Schedule
     {
         foreach (var stage in Stages)
         {
-            stage.Schedule();
+            stage.Schedule(world);
         }
     }
 
