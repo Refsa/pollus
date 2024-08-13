@@ -55,6 +55,7 @@ public static class Fetch
     {
         if (!Lookup<T>.IsSet)
         {
+            Console.WriteLine($"Fetch for {typeof(T).Name} is not registered");
             throw new Exception($"Fetch for {typeof(T).Name} is not registered");
         }
 
@@ -65,6 +66,7 @@ public static class Fetch
     {
         if (!Lookup<T>.IsSet)
         {
+            Console.WriteLine($"Fetch for {typeof(T).Name} is not registered");
             throw new Exception($"Fetch for {typeof(T).Name} is not registered");
         }
 

@@ -19,10 +19,10 @@ namespace Pollus.ECS.Generators
 @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
-public struct Query<$gen_args$> : IQuery
+public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     $gen_constraints$
 {
-    public struct Filter<TFilters> : IQuery
+    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
         where TFilters : ITuple
     {
         public static Component.Info[] Infos => infos;
@@ -32,7 +32,10 @@ public struct Query<$gen_args$> : IQuery
         static Filter()
         {
             filters = FilterHelpers.UnwrapFilters<TFilters>();
+            QueryFetch<Filter<TFilters>>.Register();
         }
+
+        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
         static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
 
@@ -62,6 +65,12 @@ public struct Query<$gen_args$> : IQuery
 
     static readonly Component.Info[] infos = [$infos$];
     public static Component.Info[] Infos => infos;
+
+    static Query<$gen_args$> IQueryCreate<Query<$gen_args$>>.Create(World world) => new Query<$gen_args$>(world);
+    static Query()
+    {
+        QueryFetch<Query<$gen_args$>>.Register();
+    }
 
     readonly World world;
     readonly FilterDelegate? filter;

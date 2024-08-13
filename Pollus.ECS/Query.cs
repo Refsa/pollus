@@ -1,15 +1,22 @@
 namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Pollus.ECS.Core;
 
 public interface IQuery
 {
     static abstract Component.Info[] Infos { get; }
 }
 
-public struct Query<C0> : IQuery
+public interface IQueryCreate<TQuery>
+    where TQuery : struct, IQuery
+{
+    static abstract TQuery Create(World world);
+}
+
+public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     where C0 : unmanaged, IComponent
 {
-    public struct Filter<TFilters> : IQuery
+    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
         where TFilters : ITuple
     {
         public static Component.Info[] Infos => infos;
@@ -19,7 +26,10 @@ public struct Query<C0> : IQuery
         static Filter()
         {
             filters = FilterHelpers.UnwrapFilters<TFilters>();
+            QueryFetch<Filter<TFilters>>.Register();
         }
+
+        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
         static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
 
@@ -49,6 +59,12 @@ public struct Query<C0> : IQuery
 
     static readonly Component.Info[] infos = [Component.Register<C0>()];
     public static Component.Info[] Infos => infos;
+
+    static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new Query<C0>(world);
+    static Query()
+    {
+        QueryFetch<Query<C0>>.Register();
+    }
 
     readonly World world;
     readonly FilterDelegate? filter;
@@ -101,5 +117,19 @@ public struct Query<C0> : IQuery
                 iter.Execute(comp1);
             }
         }
+    }
+}
+
+public class QueryFetch<TQuery> : IFetch<TQuery>
+    where TQuery : struct, IQuery, IQueryCreate<TQuery>
+{
+    public static void Register()
+    {
+        Fetch.Register(new QueryFetch<TQuery>(), [.. TQuery.Infos.Select(e => e.Type)]);
+    }
+
+    public TQuery DoFetch(World world, ISystem system)
+    {
+        return TQuery.Create(world);
     }
 }

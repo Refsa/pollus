@@ -5,8 +5,7 @@ using System.Runtime.CompilerServices;
 public class ExclusiveSystemMarker { }
 
 public delegate void SystemDelegate();
-public delegate void SystemDelegate<T1>(T1 arg1);
-public delegate void SystemDelegate<T1, T2>(T1 arg1, T2 arg2);
+public delegate void SystemDelegate<T0>(T0 arg1);
 
 public record struct SystemLabel(string Label)
 {
@@ -46,6 +45,8 @@ public class SystemDescriptor
 
 public interface ISystem
 {
+    static HashSet<Type> Dependencies => [];
+
     IRunCriteria RunCriteria { get; set; }
     SystemDescriptor Descriptor { get; }
 
@@ -55,6 +56,8 @@ public interface ISystem
 
 public abstract class Sys(SystemDescriptor descriptor) : ISystem
 {
+    public static HashSet<Type> Dependencies => [];
+
     public IRunCriteria RunCriteria { get; set; } = RunAlways.Instance;
     public SystemDescriptor Descriptor { get; } = descriptor;
 
@@ -69,11 +72,17 @@ public abstract class Sys(SystemDescriptor descriptor) : ISystem
 
 public abstract class Sys<T0> : Sys
 {
+    static readonly HashSet<Type> dependencies;
+    public static new HashSet<Type> Dependencies => dependencies;
+
     static readonly Fetch.Info t0Fetch;
     static Sys()
     {
-        // RuntimeHelpers.RunClassConstructor(typeof(T0).TypeHandle);
+#pragma warning disable IL2059
+        RuntimeHelpers.RunClassConstructor(typeof(T0).TypeHandle);
+#pragma warning restore IL2059
         t0Fetch = Fetch.Get<T0>();
+        dependencies = [.. t0Fetch.Dependencies];
     }
 
     public Sys(SystemDescriptor descriptor) : base(descriptor)
@@ -84,7 +93,7 @@ public abstract class Sys<T0> : Sys
     public override void Tick(World world)
     {   
         var t0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, this);
-        
+
         OnTick(t0);
     }
 

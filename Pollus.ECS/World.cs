@@ -9,8 +9,8 @@ public class World : IDisposable
         FetchInit.Init();
     }
 
-    public ArchetypeStore Store { get; init; }
     public Schedule Schedule { get; init; }
+    public ArchetypeStore Store { get; init; }
     public Resources Resources { get; init; }
 
     public World()

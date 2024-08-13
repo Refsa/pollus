@@ -2,7 +2,7 @@ namespace Pollus.ECS;
 
 using Pollus.ECS.Core;
 
-public class SystemBuilder
+public partial class SystemBuilder
 {
     public ISystem System { get; }
 
