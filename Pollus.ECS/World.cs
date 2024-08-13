@@ -4,7 +4,14 @@ namespace Pollus.ECS;
 
 public class World : IDisposable
 {
-    public ArchetypeStore Store { get; init; } = new();
+    public ArchetypeStore Store { get; init; }
+    public Schedule Schedule { get; init; }
+
+    public World()
+    {
+        Store = new();
+        Schedule = Schedule.CreateDefault();
+    }
 
     public void Dispose()
     {
@@ -30,5 +37,15 @@ public class World : IDisposable
     {
         var archetypeInfo = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         archetypeInfo.archetype.Preallocate(count);
+    }
+
+    public void Prepare()
+    {
+        Schedule.Prepare(this);
+    }
+
+    public void Tick()
+    {
+        Schedule.Tick(this);
     }
 }

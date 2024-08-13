@@ -156,11 +156,11 @@ public class SnakeGame
 
             quadRenderPipeline = app.GPUContext.CreateRenderPipeline(new()
             {
-                Label = "quad-render-pipeline",
+                Label = """quad-render-pipeline""",
                 VertexState = new()
                 {
                     ShaderModule = quadShaderModule,
-                    EntryPoint = "vs_main",
+                    EntryPoint = """vs_main""",
                     Layouts = [
                         VertexBufferLayout.Vertex(0, [
                             VertexFormat.Float32x2,
@@ -174,7 +174,7 @@ public class SnakeGame
                 FragmentState = new()
                 {
                     ShaderModule = quadShaderModule,
-                    EntryPoint = "fs_main",
+                    EntryPoint = """fs_main""",
                     ColorTargets = [
                         ColorTargetState.Default with
                         {
@@ -200,7 +200,7 @@ public class SnakeGame
             textureView.Value.RegisterResource();
             bindGroup0 = app.GPUContext.CreateBindGroup(new()
             {
-                Label = "bind-group-0",
+                Label = """bind-group-0""",
                 Layout = bindGroupLayout0,
                 Entries = [
                     BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer!, 0),
@@ -232,9 +232,18 @@ public class SnakeGame
         }
         player.Translate(new Vec3f(input.Normalized(), 0));
 
+        RenderExtract(app);
+        Render(app);
+    }
+
+    void RenderExtract(IApplication app)
+    {
         instanceData.Write(0, player);
         instanceBuffer!.Write<byte>(instanceData.Slice(0, 1));
+    }
 
+    void Render(IApplication app)
+    {
         using var surfaceTexture = app.GPUContext.CreateSurfaceTexture();
         if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
         {
