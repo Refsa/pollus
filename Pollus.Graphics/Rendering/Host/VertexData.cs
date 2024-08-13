@@ -47,6 +47,18 @@ public struct VertexData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Span<byte> Slice(int start)
+    {
+        return data.AsSpan().Slice(start * (int)stride);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Span<byte> Slice(int start, int length)
+    {
+        return data.AsSpan().Slice(start * (int)stride, length * (int)stride);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Write<T0>(int index, in T0 value, int elementIndex = 0)
         where T0 : unmanaged
     {

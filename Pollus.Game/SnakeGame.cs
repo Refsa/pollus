@@ -33,7 +33,7 @@ public class SnakeGame
     GPUSampler? textureSampler = null;
     Mat4f player = Mat4f.Identity();
 
-    VertexData instanceData = VertexData.From(1, [VertexFormat.Mat4x4]);
+    VertexData instanceData = VertexData.From(1024, [VertexFormat.Mat4x4]);
 
     ~SnakeGame()
     {
@@ -233,7 +233,7 @@ public class SnakeGame
         player.Translate(new Vec3f(input.Normalized(), 0));
 
         instanceData.Write(0, player);
-        instanceBuffer!.Write<byte>(instanceData.AsSpan());
+        instanceBuffer!.Write<byte>(instanceData.Slice(0, 1));
 
         using var surfaceTexture = app.GPUContext.CreateSurfaceTexture();
         if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
