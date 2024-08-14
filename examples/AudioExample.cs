@@ -1,42 +1,47 @@
 namespace Pollus.Game;
 
 using Pollus.Engine;
-using Pollus.Audio;
 using Pollus.Mathematics;
+using Pollus.ECS;
+using Pollus.Engine.Audio;
+using Pollus.Engine.Assets;
 
 public class AudioExample
 {
-    AudioSource? source = null;
-    AudioBuffer? buffer = null;
-
     void Setup(IApplication app)
     {
-        source = app.Audio.CreateSource();
-        source.Looping = true;
-        source.Gain = 1f;
-        source.Pitch = 1f;
-        source.Position = Vec3<float>.Zero;
-        source.Velocity = Vec3<float>.Zero;
+        var assetServer = app.World.Resources.Get<AssetServer>();
+        Entity.With(
+            new AudioSource
+            {
+                Playing = true,
+                Gain = 1.0f,
+                Pitch = 1.0f,
+                Mode = PlaybackMode.Loop,
+            },
+            new AudioPlayback
+            {
+                Asset = assetServer.Load<AudioAsset>("test.wav"),
+            }
+        ).Spawn(app.World);
 
-        using var decoder = new WavDecoder("assets/test.wav");
-        var data = new byte[decoder.Size];
-        var readCount = decoder.Read(data, data.Length);
-
-        buffer = app.Audio.CreateBuffer();
-        buffer.SetData<byte>(data, decoder.Info);
-        source.QueueBuffer(buffer);
-        source.Play();
+        app.World.Prepare();
+        Console.WriteLine($"{app.World.Schedule}");
     }
 
-    void Update(IApplication application)
+    void Update(IApplication app)
     {
-
+        app.World.Tick();
     }
 
     public void Run()
     {
         (ApplicationBuilder.Default with
         {
+            World = new World()
+                .AddPlugin<TimePlugin>()
+                .AddPlugin(new AssetPlugin { RootPath = "assets" })
+                .AddPlugin<AudioPlugin>(),
             OnSetup = Setup,
             OnUpdate = Update,
         }).Build().Run();

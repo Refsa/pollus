@@ -53,7 +53,6 @@ public interface IApplication
 
     IWindow Window { get; }
     IWGPUContext GPUContext { get; }
-    AudioManager Audio { get; }
     InputManager Input { get; }
     World World { get; }
 

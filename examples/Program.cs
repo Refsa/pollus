@@ -6,10 +6,10 @@ using static Pollus.ECS.SystemBuilder;
 // new DrawTriangle().Run();
 // new ECSExample().Run();
 // new InputExample().Run();
-// new AudioExample().Run();
 // new SnakeGame().Run();
+new AudioExample().Run();
 
-(ApplicationBuilder.Default with
+/* (ApplicationBuilder.Default with
 {
     World = new World().AddPlugin<TimePlugin>(),
     OnSetup = (app) =>
@@ -47,4 +47,4 @@ struct Iter : IForEach<Component1>
     {
         c0.Value++;
     }
-}
+} */

@@ -13,7 +13,6 @@ public class BrowserApplication : IApplication, IDisposable
     GraphicsContext? graphicsContext;
     IWGPUContext? windowContext;
 
-    AudioManager? audio;
     InputManager? input;
     World world;
 
@@ -24,7 +23,6 @@ public class BrowserApplication : IApplication, IDisposable
 
     public bool IsRunning => window.IsOpen;
     public IWGPUContext GPUContext => windowContext!;
-    public AudioManager Audio => audio!;
     public InputManager Input => input!;
     public World World => world;
     public IWindow Window => window;
@@ -53,7 +51,6 @@ public class BrowserApplication : IApplication, IDisposable
     public void Run()
     {
         graphicsContext = new();
-        audio = new();
         input = new BrowserInput();
         window.Run(RunInternal);
     }

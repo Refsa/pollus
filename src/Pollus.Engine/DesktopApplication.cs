@@ -15,7 +15,6 @@ public class DesktopApplication : IApplication, IDisposable
     IWGPUContext? windowContext;
 
     World world;
-    AudioManager? audio;
     InputManager? input;
 
     bool isDisposed;
@@ -25,7 +24,6 @@ public class DesktopApplication : IApplication, IDisposable
 
     public bool IsRunning => window.IsOpen && isRunning;
     public IWGPUContext GPUContext => windowContext!;
-    public AudioManager Audio => audio!;
     public InputManager Input => input!;
     public World World => world;
     public IWindow Window => window;
@@ -57,7 +55,6 @@ public class DesktopApplication : IApplication, IDisposable
         windowContext = graphicsContext.CreateContext("main", window);
         windowContext.Setup();
 
-        audio = new();
         input = new DesktopInput();
 
         OnSetup?.Invoke(this);

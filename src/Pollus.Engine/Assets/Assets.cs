@@ -35,7 +35,7 @@ public class AssetInfo<T>
     public T? Asset { get; set; }
 }
 
-public class Assets<T>
+public class Assets<T> : IDisposable
     where T : notnull
 {
     static int _assetTypeId = AssetLookup.ID<T>();
@@ -43,6 +43,18 @@ public class Assets<T>
     static int NextID => counter++;
 
     Dictionary<Handle, AssetInfo<T>> assets = new();
+
+    public void Dispose()
+    {
+        foreach (var asset in assets.Values)
+        {
+            if (asset.Asset is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        assets.Clear();
+    }
 
     public Handle Initialize(AssetPath? path)
     {
@@ -56,9 +68,9 @@ public class Assets<T>
         return handle;
     }
 
-    public Handle Add(T asset, AssetPath? path)
+    public Handle<T> Add(T asset, AssetPath? path)
     {
-        var handle = new Handle(_assetTypeId, NextID);
+        var handle = new Handle<T>(NextID);
         assets.Add(handle, new AssetInfo<T>
         {
             Handle = handle,
@@ -103,9 +115,21 @@ public class Assets<T>
     }
 }
 
-public class Assets
+public class Assets : IDisposable
 {
     Dictionary<int, object> assets = new();
+
+    public void Dispose()
+    {
+        foreach (var asset in assets.Values)
+        {
+            if (asset is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+        assets.Clear();
+    }
 
     public bool TryGetAssets<T>(out Assets<T> container)
         where T : notnull
@@ -131,13 +155,13 @@ public class Assets
         return container;
     }
 
-    public Handle Add<T>(T asset, AssetPath? path = null)
+    public Handle<T> Add<T>(T asset, AssetPath? path = null)
         where T : notnull
     {
         return GetAssets<T>().Add(asset, path);
     }
 
-    public T? Get<T>(Handle handle)
+    public T? Get<T>(Handle<T> handle)
         where T : notnull
     {
         if (TryGetAssets<T>(out var container))

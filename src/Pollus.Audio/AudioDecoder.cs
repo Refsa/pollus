@@ -18,7 +18,7 @@ public struct SampleInfo
 
 public abstract class Decoder : IDisposable
 {
-    protected Stream stream;
+    protected Stream? stream;
 
     public SampleInfo Info { get; private set; }
     public long Size { get; protected set; }

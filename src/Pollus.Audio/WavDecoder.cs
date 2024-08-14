@@ -4,28 +4,62 @@ namespace Pollus.Audio;
 
 public class WavDecoder : Decoder
 {
-    int dataEnd;
-    int bytesPerSample;
-    int format;
-    int size;
+    public struct DecoderData
+    {
+        public int DataEnd;
+        public int BytesPerSample;
+        public int Format;
+        public int Size;
+        public SampleInfo Info;
+    }
+
+    DecoderData decoderData;
 
     public override AudioFormat Format => AudioFormat.Wav;
 
     public WavDecoder(string path) : base(path) { }
     public WavDecoder(Stream stream) : base(stream) { }
 
-    protected bool CompareString(Span<byte> span, ReadOnlySpan<char> value)
+    protected override SampleInfo ReadInfo()
+    {
+        if (stream is null) throw new NullReferenceException("Stream is null");
+
+        Span<byte> header = stackalloc byte[44];
+        int result = stream.Read(header);
+
+        decoderData = ReadHeader(header);
+        return decoderData.Info;
+    }
+
+    public override long Read(Span<byte> buffer, long count)
+    {
+        if (stream is null) throw new NullReferenceException("Stream is null");
+
+        if (stream.Position >= decoderData.DataEnd) return 0;
+
+        Span<byte> block = stackalloc byte[decoderData.BytesPerSample];
+        var bytesRead = 0;
+        for (int i = 0; i < buffer.Length; i += decoderData.BytesPerSample)
+        {
+            bytesRead += stream.Read(block);
+
+            block.CopyTo(buffer[i..]);
+
+            if (stream.Position >= decoderData.DataEnd || bytesRead >= count) break;
+        }
+
+        return bytesRead;
+    }
+
+    static bool CompareString(ReadOnlySpan<byte> span, ReadOnlySpan<char> value)
     {
         Span<char> temp = stackalloc char[4];
         Encoding.UTF8.GetChars(span, temp);
         return temp.SequenceEqual(value);
     }
 
-    protected override SampleInfo ReadInfo()
+    public static DecoderData ReadHeader(ReadOnlySpan<byte> header)
     {
-        Span<byte> header = stackalloc byte[44];
-        int result = stream.Read(header);
-
         if (CompareString(header[0..4], "RIFF") is false ||
             CompareString(header[8..12], "WAVE") is false ||
             CompareString(header[12..16], "fmt ") is false ||
@@ -34,8 +68,10 @@ public class WavDecoder : Decoder
             throw new InvalidDataException("Invalid WAV header");
         }
 
+        var decoderData = new DecoderData();
+
         var fileSize = BitConverter.ToInt32(header[4..8]);
-        format = BitConverter.ToInt16(header[20..22]);
+        decoderData.Format = BitConverter.ToInt16(header[20..22]);
         var channels = BitConverter.ToInt16(header[22..24]);
         var sampleRate = BitConverter.ToInt32(header[24..28]);
         var byteRate = BitConverter.ToInt32(header[28..32]);
@@ -43,34 +79,29 @@ public class WavDecoder : Decoder
         var bitsPerSample = BitConverter.ToInt16(header[34..36]);
         var chunkSize = BitConverter.ToInt32(header[40..44]);
 
-        bytesPerSample = bitsPerSample / 8;
-        Size = chunkSize;
-
-        dataEnd = 44 + chunkSize;
-
-        return new SampleInfo
+        decoderData.BytesPerSample = bitsPerSample / 8;
+        decoderData.Size = chunkSize;
+        decoderData.DataEnd = 44 + chunkSize;
+        decoderData.Info = new SampleInfo
         {
             SampleRate = sampleRate,
             Channels = channels,
             BitsPerSample = bitsPerSample,
         };
+
+        return decoderData;
     }
 
-    public override long Read(Span<byte> buffer, long count)
+    public static long Read(DecoderData header, ReadOnlySpan<byte> data, Span<byte> dst)
     {
-        if (stream.Position >= dataEnd) return 0;
-
-        Span<byte> block = stackalloc byte[bytesPerSample];
-        var bytesRead = 0;
-        for (int i = 0; i < buffer.Length; i += bytesPerSample)
+        long readBytes = 0;
+        data = data[44..];
+        for (int i = 0; i < dst.Length; i += header.BytesPerSample)
         {
-            bytesRead += stream.Read(block);
-
-            block.CopyTo(buffer[i..]);
-
-            if (stream.Position >= dataEnd || bytesRead >= count) break;
+            data.Slice(i, header.BytesPerSample).CopyTo(dst[i..]);
+            readBytes += header.BytesPerSample;
+            if (i + header.BytesPerSample >= dst.Length) break;
         }
-
-        return bytesRead;
+        return readBytes;
     }
 }

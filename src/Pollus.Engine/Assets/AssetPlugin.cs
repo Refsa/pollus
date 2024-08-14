@@ -8,7 +8,7 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
 {
     public static void Register()
     {
-        Fetch.Register(new AssetsFetch<T>(), []);
+        Fetch.Register(new AssetsFetch<T>(), [typeof(Assets<T>)]);
     }
 
     public Assets<T> DoFetch(World world, ISystem system)
@@ -33,6 +33,9 @@ public class AssetPlugin : IPlugin
 
     public void Apply(World world)
     {
+        ResourceFetch<AssetServer>.Register();
+        ResourceFetch<Assets>.Register();
+
         var assetServer = new AssetServer(new FileAssetIO(RootPath));
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);

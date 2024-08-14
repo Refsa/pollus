@@ -1,16 +1,22 @@
 namespace Pollus.Engine.Assets;
 
-public class AssetServer
+public class AssetServer : IDisposable
 {
     public AssetIO AssetIO { get; }
     public Assets Assets { get; } = new();
 
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
+    Dictionary<AssetPath, Handle> assetLookup = new();
 
     public AssetServer(AssetIO assetIO)
     {
         AssetIO = assetIO;
+    }
+
+    public void Dispose()
+    {
+        Assets.Dispose();
     }
 
     public AssetServer AddLoader<TLoader>() where TLoader : IAssetLoader, new()
@@ -36,9 +42,14 @@ public class AssetServer
         return this;
     }
 
-    public Handle Load<TAsset>(AssetPath path) 
+    public Handle<TAsset> Load<TAsset>(AssetPath path) 
         where TAsset : notnull
     {
+        if (assetLookup.TryGetValue(path, out var handle))
+        {
+            return handle;
+        }
+
         if (!AssetIO.Exists(path))
         {
             return new Handle(-1, -1);
@@ -56,7 +67,9 @@ public class AssetServer
         if (loadContext.Status == AssetStatus.Loaded)
         {
             var asset = (TAsset)loadContext.Asset!;
-            return Assets.Add(asset);
+            handle = Assets.Add(asset);
+            assetLookup.Add(path, handle);
+            return handle;
         }
 
         return new Handle(-1, -1);

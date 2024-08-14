@@ -55,14 +55,14 @@ unsafe public class AudioManager : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
 
-        foreach (var source in sources)
+        for (int i = sources.Count - 1; i >= 0; i--)
         {
-            source.Dispose();
+            sources[i].Dispose();
         }
-
-        foreach (var buffer in buffers)
+        
+        for (int i = buffers.Count - 1; i >= 0; i--)
         {
-            buffer.Dispose();
+            buffers[i].Dispose();
         }
 
         device.Dispose();
