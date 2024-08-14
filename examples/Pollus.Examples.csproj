@@ -62,6 +62,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Pollus.Engine\Pollus.Engine.csproj" />
+    <ProjectReference Include="..\src\Pollus.Engine\Pollus.Engine.csproj" />
   </ItemGroup>
 </Project>
