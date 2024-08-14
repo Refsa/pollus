@@ -11,8 +11,8 @@ public class Schedule
         {
             Stages =
             {
-                new Stage(CoreStage.Init),
-                new Stage(CoreStage.PostInit),
+                new Stage(CoreStage.Init) with { RunCriteria = new RunOnce() },
+                new Stage(CoreStage.PostInit) with { RunCriteria = new RunOnce() },
 
                 new Stage(CoreStage.First),
                 new Stage(CoreStage.Update),

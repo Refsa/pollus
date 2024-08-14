@@ -18,7 +18,7 @@ public class AudioExample
         source.Position = Vec3<float>.Zero;
         source.Velocity = Vec3<float>.Zero;
 
-        using var decoder = new WavDecoder("assets/local/meet-the-princess.wav");
+        using var decoder = new WavDecoder("assets/test.wav");
         var data = new byte[decoder.Size];
         var readCount = decoder.Read(data, data.Length);
 

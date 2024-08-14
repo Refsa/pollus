@@ -15,10 +15,11 @@ public static class CoreStage
     public static readonly StageLabel Last = new(nameof(Last));
 }
 
-public class Stage
+public record class Stage
 {
     public StageLabel Label { get; }
     public List<ISystem> Systems { get; } = new();
+    public IRunCriteria RunCriteria { get; set; } = RunAlways.Instance;
 
     public Stage(StageLabel label)
     {
@@ -53,6 +54,8 @@ public class Stage
 
     public void Tick(World world)
     {
+        if (!RunCriteria.ShouldRun(world)) return;
+
         foreach (var system in Systems)
         {
             if (system.ShouldRun(world))

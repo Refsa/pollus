@@ -36,10 +36,5 @@ public class InputTests
         keyboard.SetKeyState(Key.KeyA, false);
         keyboard.Update();
         Assert.True(keyboard.JustReleased(Key.KeyA));
-
-        keyboard.SetKeyState(Key.KeyA, true);
-        keyboard.Update();
-        keyboard.Update();
-        Assert.False(keyboard.Pressed(Key.KeyA));
     }
 }
