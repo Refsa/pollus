@@ -15,7 +15,6 @@ public class DesktopApplication : IApplication, IDisposable
     IWGPUContext? windowContext;
 
     World world;
-    InputManager? input;
 
     bool isDisposed;
     bool isRunning;
@@ -24,7 +23,6 @@ public class DesktopApplication : IApplication, IDisposable
 
     public bool IsRunning => window.IsOpen && isRunning;
     public IWGPUContext GPUContext => windowContext!;
-    public InputManager Input => input!;
     public World World => world;
     public IWindow Window => window;
 
@@ -55,8 +53,6 @@ public class DesktopApplication : IApplication, IDisposable
         windowContext = graphicsContext.CreateContext("main", window);
         windowContext.Setup();
 
-        input = new DesktopInput();
-
         OnSetup?.Invoke(this);
 
         while (IsRunning)
@@ -73,7 +69,6 @@ public class DesktopApplication : IApplication, IDisposable
             }
 #endif
 
-            input.Update();
             OnUpdate?.Invoke(this);
         }
 

@@ -13,7 +13,6 @@ public class BrowserApplication : IApplication, IDisposable
     GraphicsContext? graphicsContext;
     IWGPUContext? windowContext;
 
-    InputManager? input;
     World world;
 
     bool isDisposed;
@@ -23,7 +22,6 @@ public class BrowserApplication : IApplication, IDisposable
 
     public bool IsRunning => window.IsOpen;
     public IWGPUContext GPUContext => windowContext!;
-    public InputManager Input => input!;
     public World World => world;
     public IWindow Window => window;
 
@@ -51,7 +49,6 @@ public class BrowserApplication : IApplication, IDisposable
     public void Run()
     {
         graphicsContext = new();
-        input = new BrowserInput();
         window.Run(RunInternal);
     }
 
@@ -68,7 +65,6 @@ public class BrowserApplication : IApplication, IDisposable
             return;
         }
 
-        input!.Update();
         OnUpdate?.Invoke(this);
     }
 

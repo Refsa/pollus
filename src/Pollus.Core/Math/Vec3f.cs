@@ -6,6 +6,13 @@ public record struct Vec3f
 {
     public static int SizeInBytes => Unsafe.SizeOf<float>() * 3;
     public static Vec3f Zero => new Vec3f(0f, 0f, 0f);
+    public static Vec3f One => new Vec3f(1f, 1f, 1f);
+    public static Vec3f Forward => new Vec3f(0f, 0f, 1f);
+    public static Vec3f Backward => new Vec3f(0f, 0f, -1f);
+    public static Vec3f Up => new Vec3f(0f, 1f, 0f);
+    public static Vec3f Down => new Vec3f(0f, -1f, 0f);
+    public static Vec3f Right => new Vec3f(1f, 0f, 0f);
+    public static Vec3f Left => new Vec3f(-1f, 0f, 0f);
 
     public float X;
     public float Y;

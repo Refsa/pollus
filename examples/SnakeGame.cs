@@ -1,3 +1,4 @@
+using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 using Pollus.Graphics.Rendering;
@@ -5,6 +6,7 @@ using Pollus.Mathematics;
 using Pollus.Utils;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using static Pollus.ECS.SystemBuilder;
 
 namespace Pollus.Game;
 
@@ -14,9 +16,24 @@ struct SceneUniform
     public Mat4f Projection;
 }
 
+struct Transform2 : IComponent
+{
+    public Vec2f Position;
+    public Vec2f Scale;
+    public float Rotation;
+
+    public Mat4f ToMatrix()
+    {
+        return Mat4f.FromTRS(
+            new Vec3f(Position.X, Position.Y, 0),
+            Quat.AxisAngle(Vec3f.Forward, Rotation),
+            new Vec3f(Scale.X, Scale.Y, 1)
+        );
+    }
+}
+
 public class SnakeGame
 {
-    Keyboard? keyboard;
     GPURenderPipeline? quadRenderPipeline = null;
     GPUBindGroupLayout? bindGroupLayout0 = null;
     GPUBindGroup? bindGroup0 = null;
@@ -40,6 +57,7 @@ public class SnakeGame
     {
         (ApplicationBuilder.Default with
         {
+            World = new World().AddPlugin<InputPlugin>(),
             OnSetup = Setup,
             OnUpdate = Update,
         }).Build().Run();
@@ -47,8 +65,43 @@ public class SnakeGame
 
     public void Setup(IApplication app)
     {
-        keyboard = app.Input.GetDevice<Keyboard>("keyboard");
-        player = Mat4f.Translation(new Vec3f(200f, 200f, 0f));
+        Entity.With(new Transform2
+        {
+            Position = new Vec2f(app.Window.Size.X / 2, app.Window.Size.Y / 2),
+            Scale = Vec2f.One,
+            Rotation = 0,
+        }).Spawn(app.World);
+
+        app.World.Schedule.AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
+        static (InputManager input, Query<Transform2> qTransform) =>
+        {
+            var inputVec = Vec2f.Zero;
+            var keyboard = input.GetDevice("keyboard") as Keyboard;
+            if (keyboard!.Pressed(Key.ArrowLeft))
+            {
+                inputVec += Vec2f.Left;
+            }
+            if (keyboard!.Pressed(Key.ArrowRight))
+            {
+                inputVec += Vec2f.Right;
+            }
+            if (keyboard!.Pressed(Key.ArrowUp))
+            {
+                inputVec += Vec2f.Down;
+            }
+            if (keyboard!.Pressed(Key.ArrowDown))
+            {
+                inputVec += Vec2f.Up;
+            }
+
+            qTransform.ForEach((ref Transform2 transform) =>
+            {
+                transform.Position += inputVec;
+            });
+        }));
+
+        app.World.Prepare();
+        Console.WriteLine($"{app.World.Schedule}");
 
         // Quad Mesh
         {
@@ -208,32 +261,18 @@ public class SnakeGame
 
     public void Update(IApplication app)
     {
-        var input = Vec2f.Zero;
-        if (keyboard!.Pressed(Key.ArrowLeft))
-        {
-            input += Vec2f.Left;
-        }
-        if (keyboard!.Pressed(Key.ArrowRight))
-        {
-            input += Vec2f.Right;
-        }
-        if (keyboard!.Pressed(Key.ArrowUp))
-        {
-            input += Vec2f.Down;
-        }
-        if (keyboard!.Pressed(Key.ArrowDown))
-        {
-            input += Vec2f.Up;
-        }
-        player.Translate(new Vec3f(input.Normalized(), 0));
-
+        app.World.Tick();
         RenderExtract(app);
         Render(app);
     }
 
     void RenderExtract(IApplication app)
     {
-        instanceData.Write(0, player);
+        new Query<Transform2>(app.World).ForEach((ref Transform2 transform) =>
+        {
+            instanceData.Write(0, transform.ToMatrix());
+        });
+
         instanceBuffer!.Write<byte>(instanceData.Slice(0, 1));
     }
 

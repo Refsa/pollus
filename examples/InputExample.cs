@@ -1,5 +1,6 @@
 namespace Pollus.Game;
 
+using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 
@@ -9,7 +10,8 @@ public class InputExample
 
     public void Setup(IApplication app)
     {
-        keyboard = app.Input.GetDevice("keyboard") as Keyboard;
+        var inputManager = app.World.Resources.Get<InputManager>();
+        keyboard = inputManager.GetDevice("keyboard") as Keyboard;
     }
 
     public void Update(IApplication app)
@@ -32,6 +34,7 @@ public class InputExample
     {
         (ApplicationBuilder.Default with
         {
+            World = new World().AddPlugin<InputPlugin>(),
             OnSetup = Setup,
             OnUpdate = Update
         }).Build().Run();
