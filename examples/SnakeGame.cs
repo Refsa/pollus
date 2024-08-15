@@ -1,5 +1,6 @@
 using Pollus.ECS;
 using Pollus.Engine;
+using Pollus.Engine.Assets;
 using Pollus.Engine.Input;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
@@ -55,12 +56,11 @@ public class SnakeGame
 
     public void Run()
     {
-        (ApplicationBuilder.Default with
-        {
-            World = new World().AddPlugin<InputPlugin>(),
-            OnSetup = Setup,
-            OnUpdate = Update,
-        }).Build().Run();
+        Application.Builder
+            .AddPlugin(new AssetPlugin { RootPath = "assets" })
+            .AddPlugin(new InputPlugin())
+            .AddPlugin(new TimePlugin())
+            .Run();
     }
 
     public void Setup(IApplication app)
@@ -72,7 +72,7 @@ public class SnakeGame
             Rotation = 0,
         }).Spawn(app.World);
 
-        app.World.Schedule.AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
+        app.World.Schedule.AddSystems(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Query<Transform2> qTransform) =>
         {
             var inputVec = Vec2f.Zero;
@@ -99,9 +99,7 @@ public class SnakeGame
                 transform.Position += inputVec;
             });
         }));
-
         app.World.Prepare();
-        Console.WriteLine($"{app.World.Schedule}");
 
         // Quad Mesh
         {

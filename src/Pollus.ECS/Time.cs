@@ -46,6 +46,6 @@ public class TimePlugin : IPlugin
     public void Apply(World world)
     {
         world.Resources.Add<Time>();
-        world.Schedule.AddSystem(CoreStage.First, new TimeSystem());
+        world.Schedule.AddSystems(CoreStage.First, new TimeSystem());
     }
 }

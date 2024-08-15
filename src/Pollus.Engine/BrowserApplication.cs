@@ -17,20 +17,16 @@ public class BrowserApplication : IApplication, IDisposable
 
     bool isDisposed;
     bool isSetup;
-    Action<IApplication>? OnSetup;
-    Action<IApplication>? OnUpdate;
 
     public bool IsRunning => window.IsOpen;
     public IWGPUContext GPUContext => windowContext!;
     public World World => world;
     public IWindow Window => window;
 
-    public BrowserApplication(ApplicationBuilder builder)
+    public BrowserApplication(Application builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
         world = builder.World;
-        OnSetup = builder.OnSetup;
-        OnUpdate = builder.OnUpdate;
     }
 
     ~BrowserApplication() => Dispose();
@@ -48,7 +44,10 @@ public class BrowserApplication : IApplication, IDisposable
 
     public void Run()
     {
+        world.Prepare();
+
         graphicsContext = new();
+        world.Resources.Add(graphicsContext);
         window.Run(RunInternal);
     }
 
@@ -60,12 +59,12 @@ public class BrowserApplication : IApplication, IDisposable
         {
             if (!GraphicsSetup()) return;
 
-            OnSetup?.Invoke(this);
+            world.Resources.Add(windowContext!);
             isSetup = true;
             return;
         }
 
-        OnUpdate?.Invoke(this);
+        World.Tick();
     }
 
     bool GraphicsSetup()

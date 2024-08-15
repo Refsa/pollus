@@ -44,7 +44,7 @@ public class Schedule
         return Stages.Find(s => s.Label == label);
     }
 
-    public Schedule AddSystem(StageLabel stageLabel, params ISystem[] systems)
+    public Schedule AddSystems(StageLabel stageLabel, params ISystem[] systems)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Label} not found");
         foreach (var system in systems)
@@ -54,7 +54,7 @@ public class Schedule
         return this;
     }
 
-    public Schedule AddSystem(StageLabel stageLabel, params SystemBuilder[] builders)
+    public Schedule AddSystems(StageLabel stageLabel, params SystemBuilder[] builders)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Label} not found");
         foreach (var builder in builders)

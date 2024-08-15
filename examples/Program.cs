@@ -6,8 +6,8 @@ using static Pollus.ECS.SystemBuilder;
 // new DrawTriangle().Run();
 // new ECSExample().Run();
 // new InputExample().Run();
-new SnakeGame().Run();
 // new AudioExample().Run();
+new SnakeGame().Run();
 
 /* (ApplicationBuilder.Default with
 {

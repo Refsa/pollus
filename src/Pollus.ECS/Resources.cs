@@ -18,6 +18,12 @@ public class Resources : IDisposable
         resources.Clear();
     }
 
+    public int Init<TResource>()
+        where TResource : notnull
+    {
+        return Resource.ID<TResource>();
+    }
+
     public void Add<TResource>()
         where TResource : notnull, new()
     {

@@ -1,94 +1,94 @@
 namespace Pollus.Game;
 
+using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Graphics.Rendering;
+using Pollus.Graphics.WGPU;
+using static Pollus.ECS.SystemBuilder;
+
+[Resource<RenderData>]
+class RenderData
+{
+    public required GPURenderPipeline RenderPipeline { get; set; }
+}
 
 public class DrawTriangle
 {
-    GPUShader? shaderModule = null;
-    GPURenderPipeline? renderPipeline = null;
-
-    void Setup(IApplication app)
-    {
-        shaderModule = app.GPUContext.CreateShaderModule(new()
+    public void Run() => Application.Builder
+        .InitResource<RenderData>()
+        .AddSystem(CoreStage.PostInit, FnSystem("Setup",
+        static (IWGPUContext gpuContext, Resources resources) =>
         {
-            Label = "shader-module",
-            Backend = ShaderBackend.WGSL,
-            Content = File.ReadAllText("./assets/triangle.wgsl"),
-        });
-        Console.WriteLine("Shader Module Created");
-
-        renderPipeline = app.GPUContext.CreateRenderPipeline(new()
-        {
-            Label = "render-pipeline",
-            VertexState = new()
+            using var shaderModule = gpuContext.CreateShaderModule(new()
             {
-                ShaderModule = shaderModule,
-                EntryPoint = "vs_main"
-            },
-            FragmentState = new()
-            {
-                ShaderModule = shaderModule,
-                EntryPoint = "fs_main",
-                ColorTargets = [
-                    ColorTargetState.Default with
-                    {
-                        Format = app.GPUContext.GetSurfaceFormat(),
-                    }
-                ]
-            },
-            MultisampleState = MultisampleState.Default,
-            PrimitiveState = PrimitiveState.Default,
-            PipelineLayout = null,
-        });
-        Console.WriteLine("Render Pipeline Created");
-    }
-
-    void Update(IApplication app)
-    {
-        using var surfaceTexture = app.GPUContext.CreateSurfaceTexture();
-        if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
-        {
-            Console.WriteLine("Surface texture view is null");
-            return;
-        }
-
-        using var commandEncoder = app.GPUContext.CreateCommandEncoder("command-encoder");
-        {
-            using var renderPass = commandEncoder.BeginRenderPass(new()
-            {
-                Label = "render-pass",
-                ColorAttachments = stackalloc RenderPassColorAttachment[1]
-                {
-                    new(
-                        textureView: surfaceTextureView.Native,
-                        resolveTarget: nint.Zero,
-                        clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                        loadOp: Silk.NET.WebGPU.LoadOp.Clear,
-                        storeOp: Silk.NET.WebGPU.StoreOp.Store
-                    )
-                },
+                Label = "shader-module",
+                Backend = ShaderBackend.WGSL,
+                Content = File.ReadAllText("./assets/triangle.wgsl"),
             });
 
-            renderPass.SetPipeline(renderPipeline!);
-            renderPass.Draw(3, 1, 0, 0);
+            var renderPipeline = gpuContext.CreateRenderPipeline(new()
+            {
+                Label = "render-pipeline",
+                VertexState = new()
+                {
+                    ShaderModule = shaderModule,
+                    EntryPoint = "vs_main"
+                },
+                FragmentState = new()
+                {
+                    ShaderModule = shaderModule,
+                    EntryPoint = "fs_main",
+                    ColorTargets = [
+                        ColorTargetState.Default with
+                        {
+                            Format = gpuContext.GetSurfaceFormat(),
+                        }
+                    ]
+                },
+                MultisampleState = MultisampleState.Default,
+                PrimitiveState = PrimitiveState.Default,
+                PipelineLayout = null,
+            });
 
-            renderPass.End();
-        }
-        using var commandBuffer = commandEncoder.Finish("command-buffer");
-        commandBuffer.Submit();
-        app.GPUContext.Present();
-    }
+            resources.Add(new RenderData { RenderPipeline = renderPipeline });
 
-    public void Run()
-    {
-        Console.WriteLine("Graphics Example");
-
-        (ApplicationBuilder.Default with
+            Console.WriteLine("Render Pipeline Created");
+        }))
+        .AddSystem(CoreStage.Last, FnSystem("Draw",
+        static (IWGPUContext gpuContext, RenderData renderData) =>
         {
-            OnSetup = Setup,
-            OnUpdate = Update,
-        })
-        .Build().Run();
-    }
+            using var surfaceTexture = gpuContext.CreateSurfaceTexture();
+            if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
+            {
+                Console.WriteLine("Surface texture view is null");
+                return;
+            }
+
+            using var commandEncoder = gpuContext.CreateCommandEncoder("command-encoder");
+            {
+                using var renderPass = commandEncoder.BeginRenderPass(new()
+                {
+                    Label = "render-pass",
+                    ColorAttachments = stackalloc RenderPassColorAttachment[1]
+                    {
+                        new(
+                            textureView: surfaceTextureView.Native,
+                            resolveTarget: nint.Zero,
+                            clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
+                            loadOp: Silk.NET.WebGPU.LoadOp.Clear,
+                            storeOp: Silk.NET.WebGPU.StoreOp.Store
+                        )
+                    },
+                });
+
+                renderPass.SetPipeline(renderData.RenderPipeline);
+                renderPass.Draw(3, 1, 0, 0);
+
+                renderPass.End();
+            }
+            using var commandBuffer = commandEncoder.Finish("command-buffer");
+            commandBuffer.Submit();
+            gpuContext.Present();
+        }))
+        .Run();
 }

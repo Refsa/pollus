@@ -7,6 +7,8 @@ public class World : IDisposable
     static World()
     {
         FetchInit.Init();
+        ResourceFetch<World>.Register();
+        ResourceFetch<Resources>.Register();
     }
 
     public Schedule Schedule { get; init; }
@@ -74,6 +76,8 @@ public class World : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Prepare()
     {
+        Resources.Add(this);
+        Resources.Add(Resources);
         Schedule.Prepare(this);
     }
 

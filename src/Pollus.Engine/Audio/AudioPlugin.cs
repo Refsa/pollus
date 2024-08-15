@@ -42,7 +42,7 @@ public class AudioPlugin : IPlugin
         world.Resources.Add(new AudioManager());
         world.Resources.Get<AssetServer>().AddLoader<WavAssetLoader>();
 
-        world.Schedule.AddSystem(CoreStage.Last, [
+        world.Schedule.AddSystems(CoreStage.Last, [
             FnSystem("AudioUpdate", static (
                 AudioManager audioManager, Assets<AudioAsset> audioAssets,
                 Assets<Pollus.Audio.AudioSource> deviceSources,

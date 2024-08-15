@@ -8,7 +8,7 @@ public class InputPlugin : IPlugin
     public void Apply(World world)
     {
         world.Resources.Add(InputManager.Create());
-        world.Schedule.AddSystem(CoreStage.First, FnSystem("InputUpdate",
+        world.Schedule.AddSystems(CoreStage.First, FnSystem("InputUpdate",
         (InputManager input) =>
         {
             input.Update();

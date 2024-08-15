@@ -18,20 +18,16 @@ public class DesktopApplication : IApplication, IDisposable
 
     bool isDisposed;
     bool isRunning;
-    Action<IApplication>? OnSetup;
-    Action<IApplication>? OnUpdate;
 
     public bool IsRunning => window.IsOpen && isRunning;
     public IWGPUContext GPUContext => windowContext!;
     public World World => world;
     public IWindow Window => window;
 
-    public DesktopApplication(ApplicationBuilder builder)
+    public DesktopApplication(Application builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
         world = builder.World;
-        OnSetup = builder.OnSetup;
-        OnUpdate = builder.OnUpdate;
     }
 
     public void Dispose()
@@ -49,11 +45,14 @@ public class DesktopApplication : IApplication, IDisposable
     {
         isRunning = true;
 
+        world.Prepare();
+
         graphicsContext = new();
         windowContext = graphicsContext.CreateContext("main", window);
         windowContext.Setup();
 
-        OnSetup?.Invoke(this);
+        world.Resources.Add(graphicsContext);
+        world.Resources.Add(windowContext);
 
         while (IsRunning)
         {
@@ -69,7 +68,7 @@ public class DesktopApplication : IApplication, IDisposable
             }
 #endif
 
-            OnUpdate?.Invoke(this);
+            world.Tick();
         }
 
         Dispose();
