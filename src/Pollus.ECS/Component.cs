@@ -43,10 +43,17 @@ public static class Component
         if (componentIDs.TryGetValue(type, out var info))
             return info;
 
+        info = new Info
+        {
+            ID = new ComponentID(componentIDs.Count),
+            SizeInBytes = Unsafe.SizeOf<T>(),
+            Type = type
+        };
+
         if (new T() is IComponentWrapper)
         {
             var wrappedInfo = ComponentWrapper<T>.Info;
-            componentIDs[wrappedInfo.Type] = componentInfos[wrappedInfo.ID] = new Info
+            componentIDs[type] = componentInfos[info.ID] = new Info
             {
                 ID = wrappedInfo.ID,
                 Type = wrappedInfo.Type,
@@ -54,12 +61,6 @@ public static class Component
             };
         }
 
-        info = new Info
-        {
-            ID = new ComponentID(componentIDs.Count),
-            SizeInBytes = Unsafe.SizeOf<T>(),
-            Type = type
-        };
 
         componentIDs[type] = info;
         componentInfos[info.ID] = info;
