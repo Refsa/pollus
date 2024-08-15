@@ -17,6 +17,8 @@ public class Schedule
                 new Stage(CoreStage.First),
                 new Stage(CoreStage.Update),
                 new Stage(CoreStage.Last),
+
+                new Stage(CoreStage.Render),
             }
         };
     }

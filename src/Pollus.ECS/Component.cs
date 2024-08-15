@@ -61,7 +61,6 @@ public static class Component
             };
         }
 
-
         componentIDs[type] = info;
         componentInfos[info.ID] = info;
 

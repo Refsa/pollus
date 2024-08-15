@@ -73,7 +73,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
     {
         NearClip = 0,
         FarClip = 1000,
-        ScalingMode = ScalingMode.AutoMin(800, 600),
+        ScalingMode = ScalingMode.WindowSize(1),
         Scale = 1
     };
 
@@ -106,9 +106,9 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
 
         area = new Rect(
             Scale * -centerX,
-            Scale * (projWidth - 0.5f),
+            Scale * centerX,
             Scale * -centerY,
-            Scale * (projHeight - 0.5f)
+            Scale * centerY
         );
     }
 
