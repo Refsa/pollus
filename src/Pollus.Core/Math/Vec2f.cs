@@ -53,6 +53,17 @@ public record struct Vec2f
         return new Vec2f(left.X * right, left.Y * right);
     }
 
+    public static Vec2f operator *(Vec2f left, Vec2f right)
+    {
+        return new Vec2f(left.X * right.X, left.Y * right.Y);
+    }
+
+
+    public static Vec2f operator /(Vec2f left, float right)
+    {
+        return new Vec2f(left.X / right, left.Y / right);
+    }
+
     public float Length()
     {
         return Math.Sqrt(X * X + Y * Y);

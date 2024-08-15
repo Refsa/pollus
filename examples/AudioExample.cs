@@ -28,7 +28,7 @@ public class AudioExample
                     },
                     new AudioPlayback
                     {
-                        Asset = assetServer.Load<AudioAsset>("test.wav"),
+                        Asset = assetServer.Load<AudioAsset>("sounds/test.wav"),
                     }
                 ).Spawn(world);
             }))

@@ -1,7 +1,11 @@
+namespace Pollus.Game;
+
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
+using Pollus.Engine.Camera;
 using Pollus.Engine.Input;
+using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
@@ -9,7 +13,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using static Pollus.ECS.SystemBuilder;
 
-namespace Pollus.Game;
 
 struct SceneUniform
 {
@@ -17,90 +20,66 @@ struct SceneUniform
     public Mat4f Projection;
 }
 
-struct Transform2 : IComponent
-{
-    public Vec2f Position;
-    public Vec2f Scale;
-    public float Rotation;
-
-    public Mat4f ToMatrix()
-    {
-        return Mat4f.FromTRS(
-            new Vec3f(Position.X, Position.Y, 0),
-            Quat.AxisAngle(Vec3f.Forward, Rotation),
-            new Vec3f(Scale.X, Scale.Y, 1)
-        );
-    }
-}
+struct Player : IComponent { }
 
 public class SnakeGame
 {
-    GPURenderPipeline? quadRenderPipeline = null;
     GPUBindGroupLayout? bindGroupLayout0 = null;
     GPUBindGroup? bindGroup0 = null;
+    GPURenderPipeline? quadRenderPipeline = null;
+
+    GPUBuffer? sceneUniformBuffer = null;
+
     GPUBuffer? quadVertexBuffer = null;
     GPUBuffer? quadIndexBuffer = null;
-    GPUBuffer? sceneUniformBuffer = null;
+
     GPUBuffer? instanceBuffer = null;
+    VertexData instanceData = VertexData.From(1024, [VertexFormat.Mat4x4]);
+
     GPUTexture? texture = null;
     GPUTextureView? textureView = null;
     GPUSampler? textureSampler = null;
-    Mat4f player = Mat4f.Identity();
-
-    VertexData instanceData = VertexData.From(1024, [VertexFormat.Mat4x4]);
 
     ~SnakeGame()
     {
 
     }
 
-    public void Run()
-    {
-        Application.Builder
-            .AddPlugin(new AssetPlugin { RootPath = "assets" })
-            .AddPlugin(new InputPlugin())
-            .AddPlugin(new TimePlugin())
-            .Run();
-    }
-
-    public void Setup(IApplication app)
-    {
-        Entity.With(new Transform2
+    public void Run() => Application.Builder
+        .AddPlugin(new AssetPlugin { RootPath = "assets" })
+        .AddPlugin<InputPlugin>()
+        .AddPlugin<TimePlugin>()
+        .AddPlugin<CameraPlugin>()
+        .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
+        static (World world) =>
         {
-            Position = new Vec2f(app.Window.Size.X / 2, app.Window.Size.Y / 2),
-            Scale = Vec2f.One,
-            Rotation = 0,
-        }).Spawn(app.World);
+            world.Spawn(
+                new Player(),
+                new Transform2
+                {
+                    Position = Vec2f.Zero,
+                    Scale = Vec2f.One,
+                    Rotation = 0,
+                }
+            );
 
-        app.World.Schedule.AddSystems(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (InputManager input, Query<Transform2> qTransform) =>
+            world.Spawn(Camera2D.Bundle);
+        }))
+        .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
+        static (InputManager input, Query<Transform2>.Filter<All<Player>> qPlayer) =>
         {
-            var inputVec = Vec2f.Zero;
             var keyboard = input.GetDevice("keyboard") as Keyboard;
-            if (keyboard!.Pressed(Key.ArrowLeft))
-            {
-                inputVec += Vec2f.Left;
-            }
-            if (keyboard!.Pressed(Key.ArrowRight))
-            {
-                inputVec += Vec2f.Right;
-            }
-            if (keyboard!.Pressed(Key.ArrowUp))
-            {
-                inputVec += Vec2f.Down;
-            }
-            if (keyboard!.Pressed(Key.ArrowDown))
-            {
-                inputVec += Vec2f.Up;
-            }
+            var inputVec = keyboard!.GetAxis2D(Key.ArrowRight, Key.ArrowLeft, Key.ArrowUp, Key.ArrowDown);
 
-            qTransform.ForEach((ref Transform2 transform) =>
+            qPlayer.ForEach((ref Transform2 transform) =>
             {
                 transform.Position += inputVec;
             });
-        }));
-        app.World.Prepare();
+        }))
+        .Run();
 
+    public void Setup(IApplication app)
+    {
         // Quad Mesh
         {
             // Vertex Buffer
@@ -197,7 +176,7 @@ public class SnakeGame
             {
                 Label = """quad-shader-module""",
                 Backend = ShaderBackend.WGSL,
-                Content = File.ReadAllText("./assets/snake/quad.wgsl"),
+                Content = File.ReadAllText("./assets/shaders/quad.wgsl"),
             });
 
             quadRenderPipeline = app.GPUContext.CreateRenderPipeline(new()
@@ -302,10 +281,10 @@ public class SnakeGame
 
             {
                 renderPass.SetPipeline(quadRenderPipeline!);
+                renderPass.SetBindGroup(bindGroup0!, 0);
+                renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
                 renderPass.SetVertexBuffer(0, quadVertexBuffer!);
                 renderPass.SetVertexBuffer(1, instanceBuffer!);
-                renderPass.SetIndexBuffer(quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint32);
-                renderPass.SetBindGroup(bindGroup0!, 0);
                 renderPass.DrawIndexed(6, 1, 0, 0, 0);
             }
 

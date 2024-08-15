@@ -13,6 +13,8 @@ public static class CoreStage
     public static readonly StageLabel First = new(nameof(First));
     public static readonly StageLabel Update = new(nameof(Update));
     public static readonly StageLabel Last = new(nameof(Last));
+
+    public static readonly StageLabel Render = new(nameof(Render));
 }
 
 public record class Stage

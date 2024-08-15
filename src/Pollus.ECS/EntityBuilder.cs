@@ -66,4 +66,11 @@ public struct EntityBuilder<C0> : IEntityBuilder
     {
         return new(Component0, c1);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityBuilder<C0> Set(in C0 c0)
+    {
+        Component0 = c0;
+        return this;
+    }
 }

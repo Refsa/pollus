@@ -6,7 +6,6 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using static Pollus.ECS.SystemBuilder;
 
-[Resource<RenderData>]
 class RenderData
 {
     public required GPURenderPipeline RenderPipeline { get; set; }
@@ -23,7 +22,7 @@ public class DrawTriangle
             {
                 Label = "shader-module",
                 Backend = ShaderBackend.WGSL,
-                Content = File.ReadAllText("./assets/triangle.wgsl"),
+                Content = File.ReadAllText("./assets/shaders/triangle.wgsl"),
             });
 
             var renderPipeline = gpuContext.CreateRenderPipeline(new()

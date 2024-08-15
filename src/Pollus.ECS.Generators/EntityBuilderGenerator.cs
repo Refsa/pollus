@@ -157,7 +157,9 @@ $chunk_set_component$
         return entityRef.Entity;
     }
 
-    $with_method$
+$with_method$
+
+$set_method$
 }";
 
         static readonly string WITH_METHOD_TEMPLATE = @"
@@ -166,6 +168,14 @@ $chunk_set_component$
         where $next_gen_arg$ : unmanaged, IComponent
     {
         return new($with_args$);
+    }";
+
+        const string SET_METHOD_TEMPLATE = @"
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityBuilder<$gen_args$> Set(in $gen_arg$ comp)
+    {
+        Component$gen_idx$ = comp;
+        return this;
     }";
 
         void Generate(StringBuilder sb, int genArgCount, bool genWith)
@@ -182,6 +192,7 @@ $chunk_set_component$
             var chunk_set_component = new StringBuilder();
             var tuple_args = new StringBuilder();
             var tuple_set = new StringBuilder();
+            var set_methods = new StringBuilder();
 
             for (int i = 0; i < genArgCount; i++)
             {
@@ -197,6 +208,15 @@ $chunk_set_component$
                 chunk_set_component.AppendFormat("\t\tchunk.SetComponent(entityRef.RowIndex, Component{0});{1}", i, isLast ? "" : "\n");
                 tuple_args.AppendFormat("C{0} c{0}{1}", i, isLast ? "" : ", ");
                 tuple_set.AppendFormat("tuple.c{0}{1}", i, isLast ? "" : ", ");
+            }
+
+            for (int i = 0; i < genArgCount; i++)
+            {
+                set_methods.AppendLine(SET_METHOD_TEMPLATE
+                    .Replace("$gen_args$", gen_args.ToString())
+                    .Replace("$gen_arg$", $"C{i}")
+                    .Replace("$gen_idx$", i.ToString())
+                );
             }
 
             with_args.Append(next_gen_arg_name);
@@ -217,6 +237,7 @@ $chunk_set_component$
                 .Replace("$with_args$", with_args.ToString())
                 .Replace("$tuple_args$", tuple_args.ToString())
                 .Replace("$tuple_set$", tuple_set.ToString())
+                .Replace("$set_method$", set_methods.ToString());
             ;
         }
     }

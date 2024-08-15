@@ -48,6 +48,7 @@ public class BrowserApplication : IApplication, IDisposable
 
         graphicsContext = new();
         world.Resources.Add(graphicsContext);
+        world.Resources.Add(window);
         window.Run(RunInternal);
     }
 

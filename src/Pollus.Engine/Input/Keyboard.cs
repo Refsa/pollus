@@ -1,4 +1,5 @@
 using System.ComponentModel.Design;
+using Pollus.Mathematics;
 
 namespace Pollus.Engine.Input;
 
@@ -178,6 +179,18 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
     public bool JustReleased(Key key)
     {
         return GetKeyState(key) is ButtonState.JustReleased;
+    }
+
+    public Vec2f GetAxis2D(Key xPos, Key xNeg, Key yPos, Key yNeg)
+    {
+        float x = 0;
+        float y = 0;
+        if (Pressed(xPos)) x += 1;
+        if (Pressed(xNeg)) x -= 1;
+        if (Pressed(yPos)) y += 1;
+        if (Pressed(yNeg)) y -= 1;
+        
+        return new Vec2f(x, y);
     }
 
     public void Dispose()

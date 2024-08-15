@@ -53,6 +53,7 @@ public class DesktopApplication : IApplication, IDisposable
 
         world.Resources.Add(graphicsContext);
         world.Resources.Add(windowContext);
+        world.Resources.Add(window);
 
         while (IsRunning)
         {
