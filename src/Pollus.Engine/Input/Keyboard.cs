@@ -181,7 +181,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
         return GetKeyState(key) is ButtonState.JustReleased;
     }
 
-    public Vec2f GetAxis2D(Key right, Key left, Key up, Key down)
+    public Vec2f GetAxis2D(Key left, Key right, Key up, Key down)
     {
         float x = 0;
         float y = 0;

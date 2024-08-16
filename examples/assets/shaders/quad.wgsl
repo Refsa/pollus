@@ -27,6 +27,7 @@ struct SceneUniform {
 var<private> model: mat4x4f;
 fn vs_setup(input: ModelInput) {
     model = mat4x4f(input.model_0, input.model_1, input.model_2, input.model_3);
+    model[1][1] = -model[1][1];
 }
 
 @vertex

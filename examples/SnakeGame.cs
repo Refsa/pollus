@@ -235,14 +235,14 @@ public class SnakeGame
         static (InputManager input, Query<Transform2>.Filter<All<Player>> qPlayer) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
-            var inputVec = keyboard!.GetAxis2D(Key.ArrowRight, Key.ArrowLeft, Key.ArrowDown, Key.ArrowUp);
+            var inputVec = keyboard!.GetAxis2D(Key.ArrowLeft, Key.ArrowRight, Key.ArrowUp, Key.ArrowDown);
 
             qPlayer.ForEach((ref Transform2 transform) =>
             {
                 transform.Position += inputVec;
             });
         }))
-        .AddSystem(CoreStage.Last, FnSystem("RenderExtract",
+        .AddSystem(CoreStage.PreRender, FnSystem("RenderExtract",
         static (SnakeRenderData renderData, Query<Transform2>.Filter<All<Renderable>> qTransforms, Query<Projection, Transform2>.Filter<All<Camera2D>> qCamera) =>
         {
             int index = 0;
@@ -259,7 +259,7 @@ public class SnakeGame
                 SceneUniform.Projection = projection.GetProjection();
             });
             renderData.sceneUniformBuffer!.Write(SceneUniform, 0);
-        }))
+        }).RunCriteria(new RunFixed(120)))
         .AddSystem(CoreStage.Render, FnSystem("Render",
         static (IWGPUContext gpuContext, SnakeRenderData renderData) =>
         {

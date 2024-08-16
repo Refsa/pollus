@@ -96,26 +96,18 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         {
             { Mode: ScalingMode.Type.Fixed, A: var width, B: var height } => (width, height),
             { Mode: ScalingMode.Type.WindowSize, A: var scale } => (size.X / scale, size.Y / scale),
-            { Mode: ScalingMode.Type.AutoMin, A: var width, B: var height } => (int.Min(size.X, width), int.Min(size.Y, height)),
-            { Mode: ScalingMode.Type.AutoMax, A: var width, B: var height } => (int.Max(size.X, width), int.Max(size.Y, height)),
+            { Mode: ScalingMode.Type.AutoMin, A: var width, B: var height } => (int.Max(size.X, width), int.Max(size.Y, height)),
+            { Mode: ScalingMode.Type.AutoMax, A: var width, B: var height } => (int.Min(size.X, width), int.Min(size.Y, height)),
             _ => throw new IndexOutOfRangeException("Unknown ScalingMode: " + nameof(ScalingMode.Mode)),
         };
 
-        var centerX = projWidth * 0.5f;
-        var centerY = projHeight * 0.5f;
-
-        area = new Rect(
-            Scale * -centerX,
-            Scale * centerX,
-            Scale * -centerY,
-            Scale * centerY
-        );
+        area = new Rect(0, projWidth, 0, projHeight);
     }
 
     public Mat4f GetProjection()
     {
         return Mat4f.OrthographicRightHanded(
-            Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y, NearClip, FarClip
+            Area.Min.X, Area.Max.X, Area.Max.Y, Area.Min.Y, NearClip, FarClip
         );
     }
 }

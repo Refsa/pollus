@@ -5,8 +5,8 @@ public struct PrimitiveState
     public static readonly PrimitiveState Default = new PrimitiveState
     {
         Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList,
-        FrontFace = Silk.NET.WebGPU.FrontFace.Ccw,
-        CullMode = Silk.NET.WebGPU.CullMode.None,
+        FrontFace = Silk.NET.WebGPU.FrontFace.CW,
+        CullMode = Silk.NET.WebGPU.CullMode.Back,
         IndexFormat = Silk.NET.WebGPU.IndexFormat.Undefined,
     };
 
