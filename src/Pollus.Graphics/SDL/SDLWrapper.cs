@@ -8,9 +8,6 @@ public static class SDLWrapper
 {
     public static readonly Sdl Instance = SdlProvider.SDL.Value;
 
-    static List<Event> latestEvents { get; } = new();
-    public static IReadOnlyList<Event> LatestEvents => latestEvents;
-
     static SDLWrapper()
     {
         SdlProvider.InitFlags = Sdl.InitVideo | Sdl.InitEvents;
@@ -19,13 +16,19 @@ public static class SDLWrapper
 
     unsafe public static INativeWindow CreateWindow(WindowOptions options)
     {
+        var flags = WindowFlags.None;
+        if (options.Resizeable) flags |= WindowFlags.Resizable;
+        if (options.Fullscreen) flags |= WindowFlags.Fullscreen;
+        if (options.Borderless) flags |= WindowFlags.Borderless;
+        if (options.MouseCapture) flags |= WindowFlags.InputGrabbed;
+
         var window = Instance.CreateWindow(
             options.Title,
             options.X,
             options.Y,
             options.Width,
             options.Height,
-            (uint)WindowFlags.None
+            (uint)flags
         );
 
         return new SdlNativeWindow(
@@ -36,17 +39,5 @@ public static class SDLWrapper
     unsafe public static void DestroyWindow(INativeWindow window)
     {
         Instance.DestroyWindow((Silk.NET.SDL.Window*)window.Sdl!);
-    }
-
-    public static void PollEvents()
-    {
-        latestEvents.Clear();
-        Instance.PumpEvents();
-
-        var @event = new Event();
-        while (Instance.PollEvent(ref @event) == 1)
-        {
-            latestEvents.Add(@event);
-        }
     }
 }

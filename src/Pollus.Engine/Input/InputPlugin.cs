@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Input;
 
 using Pollus.ECS;
+using Pollus.Engine.Platform;
 using static Pollus.ECS.SystemBuilder;
 
 public class InputPlugin : IPlugin
@@ -9,9 +10,9 @@ public class InputPlugin : IPlugin
     {
         world.Resources.Add(InputManager.Create());
         world.Schedule.AddSystems(CoreStage.First, FnSystem("InputUpdate",
-        (InputManager input) =>
+        (InputManager input, PlatformEvents platform) =>
         {
-            input.Update();
+            input.Update(platform);
         }));
     }
 }

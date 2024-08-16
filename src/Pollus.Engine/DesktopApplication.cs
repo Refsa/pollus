@@ -3,6 +3,7 @@ namespace Pollus.Engine;
 using Pollus.Audio;
 using Pollus.ECS;
 using Pollus.Engine.Input;
+using Pollus.Engine.Platform;
 using Pollus.Graphics;
 using Pollus.Graphics.SDL;
 using Pollus.Graphics.WGPU;
@@ -15,6 +16,7 @@ public class DesktopApplication : IApplication, IDisposable
     IWGPUContext? windowContext;
 
     World world;
+    PlatformEvents platformEvents;
 
     bool isDisposed;
     bool isRunning;
@@ -27,6 +29,7 @@ public class DesktopApplication : IApplication, IDisposable
     public DesktopApplication(Application builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
+        platformEvents = new();
         world = builder.World;
     }
 
@@ -54,17 +57,31 @@ public class DesktopApplication : IApplication, IDisposable
         world.Resources.Add(graphicsContext);
         world.Resources.Add(windowContext);
         world.Resources.Add(window);
+        world.Resources.Add(platformEvents);
 
         while (IsRunning)
         {
 #if !BROWSER
-            SDLWrapper.PollEvents();
-            foreach (var @event in SDLWrapper.LatestEvents)
+            platformEvents.ClearEvents();
+            platformEvents.PollEvents();
+            
+            foreach (var @event in platformEvents.Events)
             {
                 if (@event.Type is (uint)Silk.NET.SDL.EventType.Quit or (uint)Silk.NET.SDL.EventType.AppTerminating)
                 {
                     window.Close();
                     break;
+                }
+
+                switch ((Silk.NET.SDL.EventType)@event.Type)
+                {
+                    case Silk.NET.SDL.EventType.Windowevent:
+                        var windowEvent = @event.Window;
+                        if (windowEvent.Event is (int)Silk.NET.SDL.WindowEventID.Resized)
+                        {
+                            window.Size = new(windowEvent.Data1, windowEvent.Data2);
+                        }
+                        break;
                 }
             }
 #endif

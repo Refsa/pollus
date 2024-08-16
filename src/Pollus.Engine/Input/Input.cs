@@ -1,5 +1,6 @@
 using System.Data;
 using System.Runtime.InteropServices;
+using Pollus.Engine.Platform;
 using Pollus.Mathematics;
 
 namespace Pollus.Engine.Input;
@@ -25,16 +26,16 @@ public abstract class InputManager : IDisposable
 
     ~InputManager() => Dispose();
 
-    public void Update()
+    public void Update(PlatformEvents platform)
     {
-        UpdateInternal();
+        UpdateInternal(platform);
         foreach (var device in connectedDevices.Values)
         {
             device.Update();
         }
     }
 
-    protected abstract void UpdateInternal();
+    protected abstract void UpdateInternal(PlatformEvents platform);
 
     public void Dispose()
     {

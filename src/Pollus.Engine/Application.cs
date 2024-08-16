@@ -6,6 +6,7 @@ using Pollus.Graphics.Windowing;
 using Pollus.ECS;
 using Pollus.ECS.Core;
 using Pollus.Graphics;
+using Pollus.Engine.Platform;
 
 public interface IApplication
 {
@@ -26,6 +27,7 @@ public record class Application
         ResourceFetch<IWGPUContext>.Register();
         ResourceFetch<IWindow>.Register();
         ResourceFetch<GraphicsContext>.Register();
+        ResourceFetch<PlatformEvents>.Register();
     }
 
     Func<Application, IApplication> application = RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")) switch

@@ -1,3 +1,4 @@
+using Pollus.Engine.Platform;
 using Pollus.Graphics.SDL;
 
 namespace Pollus.Engine.Input;
@@ -21,11 +22,11 @@ public class DesktopInput : InputManager
 
     }
 
-    protected override void UpdateInternal()
+    protected override void UpdateInternal(PlatformEvents platform)
     {
 #if !BROWSER
         var keyboard = GetDevice(keyboardId) as Keyboard;
-        foreach (var @event in SDLWrapper.LatestEvents)
+        foreach (var @event in platform.Events)
         {
             if (@event.Type is (uint)Silk.NET.SDL.EventType.Keydown or (uint)Silk.NET.SDL.EventType.Keyup)
             {

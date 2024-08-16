@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Input;
 
 using Pollus.Emscripten;
+using Pollus.Engine.Platform;
 
 public class BrowserInput : InputManager
 {
@@ -34,13 +35,11 @@ public class BrowserInput : InputManager
         EmscriptenSDL.Quit();
     }
 
-    unsafe protected override void UpdateInternal()
+    unsafe protected override void UpdateInternal(PlatformEvents platform)
     {
         var keyboard = GetDevice(keyboardId) as Keyboard;
-        EmscriptenSDL.PumpEvents();
 
-        var @event = new Silk.NET.SDL.Event();
-        while (EmscriptenSDL.PollEvent(ref @event) == 1)
+        foreach (var @event in platform.Events)
         {
             if (@event.Type is (uint)Silk.NET.SDL.EventType.Keydown or (uint)Silk.NET.SDL.EventType.Keyup)
             {
