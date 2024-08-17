@@ -5,8 +5,8 @@ using Pollus.Mathematics;
 public ref struct TextureViewDescriptor
 {
     public ReadOnlySpan<char> Label;
-    public Silk.NET.WebGPU.TextureFormat Format;
-    public Silk.NET.WebGPU.TextureViewDimension Dimension;
+    public TextureFormat Format;
+    public TextureViewDimension Dimension;
     public uint BaseMipLevel;
     public uint MipLevelCount;
     public uint BaseArrayLayer;

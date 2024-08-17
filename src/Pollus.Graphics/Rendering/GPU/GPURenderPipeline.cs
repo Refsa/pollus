@@ -89,7 +89,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
                 {
                     var colorTargetState = colorTargetStates[i];
                     targets[i] = new(
-                        format: colorTargetState.Format,
+                        format: (Silk.NET.WebGPU.TextureFormat)colorTargetState.Format,
                         blend: (Silk.NET.WebGPU.BlendState*)nint.Zero,
                         writeMask: colorTargetState.WriteMask
                     );
@@ -109,7 +109,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
         if (descriptor.DepthStencilState is DepthStencilState depthStencilState)
         {
             var temp = new Silk.NET.WebGPU.DepthStencilState(
-                format: depthStencilState.Format,
+                format: (Silk.NET.WebGPU.TextureFormat)depthStencilState.Format,
                 depthWriteEnabled: depthStencilState.DepthWriteEnabled,
                 depthCompare: depthStencilState.DepthCompare,
                 depthBias: depthStencilState.DepthBias,
@@ -144,7 +144,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
         {
             nativeDescriptor.Primitive = new Silk.NET.WebGPU.PrimitiveState(
                 topology: primitiveState.Topology,
-                stripIndexFormat: primitiveState.IndexFormat,
+                stripIndexFormat: (Silk.NET.WebGPU.IndexFormat)primitiveState.IndexFormat,
                 frontFace: primitiveState.FrontFace,
                 cullMode: primitiveState.CullMode
             );

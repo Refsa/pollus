@@ -8,11 +8,11 @@ public struct RenderPassColorAttachment
     public nint View;
     public nint ResolveTarget;
 
-    public Silk.NET.WebGPU.LoadOp LoadOp;
-    public Silk.NET.WebGPU.StoreOp StoreOp;
+    public LoadOp LoadOp;
+    public StoreOp StoreOp;
     public Vec4<double> ClearValue;
 
-    public RenderPassColorAttachment(nint textureView, nint resolveTarget, Vec4<double> clearValue, Silk.NET.WebGPU.LoadOp loadOp, Silk.NET.WebGPU.StoreOp storeOp)
+    public RenderPassColorAttachment(nint textureView, nint resolveTarget, Vec4<double> clearValue, LoadOp loadOp, StoreOp storeOp)
     {
         this.View = textureView;
         this.ResolveTarget = resolveTarget;

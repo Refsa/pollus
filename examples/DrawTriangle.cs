@@ -74,8 +74,8 @@ public class DrawTriangle
                             textureView: surfaceTextureView.Native,
                             resolveTarget: nint.Zero,
                             clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                            loadOp: Silk.NET.WebGPU.LoadOp.Clear,
-                            storeOp: Silk.NET.WebGPU.StoreOp.Store
+                            loadOp: LoadOp.Clear,
+                            storeOp: StoreOp.Store
                         )
                     },
                 });

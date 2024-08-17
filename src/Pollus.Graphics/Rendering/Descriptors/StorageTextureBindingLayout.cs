@@ -4,12 +4,12 @@ public struct StorageTextureBindingLayout
 {
     public static readonly StorageTextureBindingLayout Undefined = new()
     {
-        Access = Silk.NET.WebGPU.StorageTextureAccess.Undefined,
-        Format = Silk.NET.WebGPU.TextureFormat.Undefined,
-        ViewDimension = Silk.NET.WebGPU.TextureViewDimension.DimensionUndefined,
+        Access = StorageTextureAccess.Undefined,
+        Format = TextureFormat.Undefined,
+        ViewDimension = TextureViewDimension.DimensionUndefined,
     };
 
-    public Silk.NET.WebGPU.StorageTextureAccess Access;
-    public Silk.NET.WebGPU.TextureFormat Format;
-    public Silk.NET.WebGPU.TextureViewDimension ViewDimension;
+    public StorageTextureAccess Access;
+    public TextureFormat Format;
+    public TextureViewDimension ViewDimension;
 }

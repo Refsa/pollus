@@ -22,7 +22,7 @@ unsafe public interface IWGPUContext : IDisposable
     void RegisterResource(IGPUResourceWrapper resource);
     void ReleaseResource(IGPUResourceWrapper resource);
 
-    Silk.NET.WebGPU.TextureFormat GetSurfaceFormat();
+    TextureFormat GetSurfaceFormat();
     void Present();
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);

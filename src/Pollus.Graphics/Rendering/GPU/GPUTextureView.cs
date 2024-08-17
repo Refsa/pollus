@@ -25,8 +25,8 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
         this.context = context;
         var nativeDescriptor = new Silk.NET.WebGPU.TextureViewDescriptor(
             label: labelData.Pointer,
-            format: descriptor.Format,
-            dimension: descriptor.Dimension,
+            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
+            dimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Dimension,
             baseMipLevel: descriptor.BaseMipLevel,
             mipLevelCount: descriptor.MipLevelCount,
             baseArrayLayer: descriptor.BaseArrayLayer,

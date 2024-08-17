@@ -9,13 +9,13 @@ public struct RenderPassDepthStencilAttachment
 
     public GPUTextureView View;
 
-    public Silk.NET.WebGPU.LoadOp DepthLoadOp;
-    public Silk.NET.WebGPU.StoreOp DepthStoreOp;
+    public LoadOp DepthLoadOp;
+    public StoreOp DepthStoreOp;
     public float DepthClearValue;
     public bool DepthReadOnly;
 
-    public Silk.NET.WebGPU.LoadOp StencilLoadOp;
-    public Silk.NET.WebGPU.StoreOp StencilStoreOp;
+    public LoadOp StencilLoadOp;
+    public StoreOp StencilStoreOp;
     public uint StencilClearValue;
     public bool StencilReadOnly;
 }

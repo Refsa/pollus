@@ -4,7 +4,7 @@ public struct DepthStencilState
 {
     public static readonly DepthStencilState Default = new()
     {
-        Format = Silk.NET.WebGPU.TextureFormat.Undefined,
+        Format = TextureFormat.Undefined,
         DepthWriteEnabled = false,
         DepthCompare = Silk.NET.WebGPU.CompareFunction.Always,
         StencilFront = StencilFaceState.Default,
@@ -16,7 +16,7 @@ public struct DepthStencilState
         DepthBiasClamp = 0,
     };
 
-    public Silk.NET.WebGPU.TextureFormat Format;
+    public TextureFormat Format;
 
     public bool DepthWriteEnabled;
     public Silk.NET.WebGPU.CompareFunction DepthCompare;

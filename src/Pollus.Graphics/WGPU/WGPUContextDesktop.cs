@@ -215,9 +215,9 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         resources.Remove(resource);
     }
 
-    public Silk.NET.WebGPU.TextureFormat GetSurfaceFormat()
+    public TextureFormat GetSurfaceFormat()
     {
-        return surfaceConfiguration.Format;
+        return (TextureFormat)surfaceConfiguration.Format;
     }
 
     public void Present()

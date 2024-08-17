@@ -1,8 +1,8 @@
+namespace Pollus.Engine.Platform;
+
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
-
-namespace Pollus.Engine.Platform;
 
 public class PlatformEvents
 {

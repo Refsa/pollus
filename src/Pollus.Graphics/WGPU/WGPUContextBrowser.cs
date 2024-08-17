@@ -22,7 +22,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     Silk.NET.WebGPU.Queue* queue;
     Emscripten.WGPUSwapChain_Browser* swapChain;
 
-    Silk.NET.WebGPU.TextureFormat preferredFormat;
+    TextureFormat preferredFormat;
 
     bool isPreparingAdapter;
     bool isPreparingDevice;
@@ -94,7 +94,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         if (swapChain is null)
         {
             // preferredFormat = wgpu.SurfaceGetPreferredFormat(surface, adapter);
-            preferredFormat = Silk.NET.WebGPU.TextureFormat.Bgra8Unorm;
+            preferredFormat = TextureFormat.Bgra8Unorm;
             CreateSwapChain();
             Console.WriteLine("WGPU: Swap chain created");
         }
@@ -129,7 +129,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             Format = preferredFormat,
             PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
-            Usage = Silk.NET.WebGPU.TextureUsage.RenderAttachment,
+            Usage = TextureUsage.RenderAttachment,
             Height = (uint)window.Size.Y,
             Width = (uint)window.Size.X
         };
@@ -215,7 +215,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         resources.Remove(resource);
     }
 
-    public Silk.NET.WebGPU.TextureFormat GetSurfaceFormat()
+    public TextureFormat GetSurfaceFormat()
     {
         return preferredFormat;
     }

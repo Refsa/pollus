@@ -21,22 +21,22 @@ unsafe public class GPUBindGroupLayout : GPUResourceWrapper
         {
             entries[i] = new Silk.NET.WebGPU.BindGroupLayoutEntry(
                 binding: descriptor.Entries[i].Binding,
-                visibility: descriptor.Entries[i].Visibility,
+                visibility: (Silk.NET.WebGPU.ShaderStage)descriptor.Entries[i].Visibility,
                 buffer: new Silk.NET.WebGPU.BufferBindingLayout(
-                    type: descriptor.Entries[i].Buffer.Type,
+                    type: (Silk.NET.WebGPU.BufferBindingType)descriptor.Entries[i].Buffer.Type,
                     minBindingSize: descriptor.Entries[i].Buffer.MinBindingSize,
                     hasDynamicOffset: descriptor.Entries[i].Buffer.HasDynamicOffset),
                 sampler: new Silk.NET.WebGPU.SamplerBindingLayout(
-                    type: descriptor.Entries[i].Sampler.Type
+                    type: (Silk.NET.WebGPU.SamplerBindingType)descriptor.Entries[i].Sampler.Type
                 ),
                 texture: new Silk.NET.WebGPU.TextureBindingLayout(
-                    sampleType: descriptor.Entries[i].Texture.SampleType,
-                    viewDimension: descriptor.Entries[i].Texture.ViewDimension,
+                    sampleType: (Silk.NET.WebGPU.TextureSampleType)descriptor.Entries[i].Texture.SampleType,
+                    viewDimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Entries[i].Texture.ViewDimension,
                     multisampled: descriptor.Entries[i].Texture.Multisampled),
                 storageTexture: new Silk.NET.WebGPU.StorageTextureBindingLayout(
-                    access: descriptor.Entries[i].StorageTexture.Access,
-                    format: descriptor.Entries[i].StorageTexture.Format,
-                    viewDimension: descriptor.Entries[i].StorageTexture.ViewDimension
+                    access: (Silk.NET.WebGPU.StorageTextureAccess)descriptor.Entries[i].StorageTexture.Access,
+                    format: (Silk.NET.WebGPU.TextureFormat)descriptor.Entries[i].StorageTexture.Format,
+                    viewDimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Entries[i].StorageTexture.ViewDimension
                 )
             );
         }

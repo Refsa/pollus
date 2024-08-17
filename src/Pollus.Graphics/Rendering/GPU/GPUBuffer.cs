@@ -21,7 +21,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
             label: labelData.Pointer,
-            usage: descriptor.Usage,
+            usage: (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
             size: descriptor.Size,
             mappedAtCreation: descriptor.MappedAtCreation
         );

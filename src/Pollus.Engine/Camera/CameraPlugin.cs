@@ -1,7 +1,6 @@
 namespace Pollus.Engine.Camera;
 
 using Pollus.ECS;
-using Pollus.Engine.Transform;
 using Pollus.Graphics.Windowing;
 using static Pollus.ECS.SystemBuilder;
 
@@ -11,9 +10,9 @@ public class CameraPlugin : IPlugin
     {
         world.Schedule.AddSystems(CoreStage.Last, new[]
         {
-            FnSystem("Camera2D", (IWindow window, Query<OrthographicProjection>.Filter<All<Camera2D>> query) =>
+            FnSystem("Camera::Update", (IWindow window, Query<Projection> query) =>
             {
-                query.ForEach((ref OrthographicProjection projection) =>
+                query.ForEach((ref Projection projection) =>
                 {
                     projection.Update(window.Size);
                 });

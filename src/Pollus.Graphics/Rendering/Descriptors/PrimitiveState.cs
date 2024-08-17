@@ -7,11 +7,11 @@ public struct PrimitiveState
         Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList,
         FrontFace = Silk.NET.WebGPU.FrontFace.CW,
         CullMode = Silk.NET.WebGPU.CullMode.Back,
-        IndexFormat = Silk.NET.WebGPU.IndexFormat.Undefined,
+        IndexFormat = IndexFormat.Undefined,
     };
 
     public Silk.NET.WebGPU.PrimitiveTopology Topology;
-    public Silk.NET.WebGPU.IndexFormat IndexFormat;
+    public IndexFormat IndexFormat;
     public Silk.NET.WebGPU.FrontFace FrontFace;
     public Silk.NET.WebGPU.CullMode CullMode;
 }

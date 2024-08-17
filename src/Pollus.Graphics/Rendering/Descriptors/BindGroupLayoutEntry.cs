@@ -7,7 +7,7 @@ public struct BindGroupLayoutEntry
     public static readonly BindGroupLayoutEntry Undefined = new()
     {
         Binding = 0,
-        Visibility = Silk.NET.WebGPU.ShaderStage.None,
+        Visibility = ShaderStage.None,
         Buffer = BufferBindingLayout.Undefined,
         Sampler = SamplerBindingLayout.Undefined,
         Texture = TextureBindingLayout.Undefined,
@@ -15,14 +15,14 @@ public struct BindGroupLayoutEntry
     };
 
     public uint Binding;
-    public Silk.NET.WebGPU.ShaderStage Visibility;
+    public ShaderStage Visibility;
 
     public BufferBindingLayout Buffer;
     public SamplerBindingLayout Sampler;
     public TextureBindingLayout Texture;
     public StorageTextureBindingLayout StorageTexture;
 
-    public static BindGroupLayoutEntry BufferEntry<T>(uint binding, Silk.NET.WebGPU.ShaderStage visibility, Silk.NET.WebGPU.BufferBindingType bindingType, bool hasDynamicOffset = false)
+    public static BindGroupLayoutEntry BufferEntry<T>(uint binding, ShaderStage visibility, BufferBindingType bindingType, bool hasDynamicOffset = false)
         where T : unmanaged
     {
         return Undefined with
@@ -38,13 +38,13 @@ public struct BindGroupLayoutEntry
         };
     }
 
-    public static BindGroupLayoutEntry Uniform<T>(uint binding, Silk.NET.WebGPU.ShaderStage visibility, bool hasDynamicOffset = false)
+    public static BindGroupLayoutEntry Uniform<T>(uint binding, ShaderStage visibility, bool hasDynamicOffset = false)
         where T : unmanaged
     {
-        return BufferEntry<T>(binding, visibility, Silk.NET.WebGPU.BufferBindingType.Uniform, hasDynamicOffset);
+        return BufferEntry<T>(binding, visibility, BufferBindingType.Uniform, hasDynamicOffset);
     }
 
-    public static BindGroupLayoutEntry SamplerEntry(uint binding, Silk.NET.WebGPU.ShaderStage visibility, Silk.NET.WebGPU.SamplerBindingType type)
+    public static BindGroupLayoutEntry SamplerEntry(uint binding, ShaderStage visibility, SamplerBindingType type)
     {
         return Undefined with
         {
@@ -57,8 +57,8 @@ public struct BindGroupLayoutEntry
         };
     }
 
-    public static BindGroupLayoutEntry TextureEntry(uint binding, Silk.NET.WebGPU.ShaderStage visibility,
-        Silk.NET.WebGPU.TextureSampleType sampleType, Silk.NET.WebGPU.TextureViewDimension viewDimension, bool multisampled = false)
+    public static BindGroupLayoutEntry TextureEntry(uint binding, ShaderStage visibility,
+        TextureSampleType sampleType, TextureViewDimension viewDimension, bool multisampled = false)
     {
         return Undefined with
         {
@@ -73,8 +73,8 @@ public struct BindGroupLayoutEntry
         };
     }
 
-    public static BindGroupLayoutEntry StorageTextureEntry(uint binding, Silk.NET.WebGPU.ShaderStage visibility,
-        Silk.NET.WebGPU.StorageTextureAccess access, Silk.NET.WebGPU.TextureFormat format, Silk.NET.WebGPU.TextureViewDimension viewDimension)
+    public static BindGroupLayoutEntry StorageTextureEntry(uint binding, ShaderStage visibility,
+        StorageTextureAccess access, TextureFormat format, TextureViewDimension viewDimension)
     {
         return Undefined with
         {

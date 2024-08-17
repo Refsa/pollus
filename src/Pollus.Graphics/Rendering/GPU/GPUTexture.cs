@@ -12,9 +12,9 @@ unsafe public class GPUTexture : GPUResourceWrapper
 {
     Silk.NET.WebGPU.Texture* texture;
 
-    Silk.NET.WebGPU.TextureDimension dimension;
-    Silk.NET.WebGPU.Extent3D size;
-    Silk.NET.WebGPU.TextureFormat format;
+    TextureDimension dimension;
+    Extent3D size;
+    TextureFormat format;
     uint mipLevelCount;
     uint sampleCount;
 
@@ -26,10 +26,10 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
         var nativeDescriptor = new Silk.NET.WebGPU.TextureDescriptor(
             label: labelData.Pointer,
-            usage: descriptor.Usage,
-            dimension: descriptor.Dimension,
+            usage: (Silk.NET.WebGPU.TextureUsage)descriptor.Usage,
+            dimension: (Silk.NET.WebGPU.TextureDimension)descriptor.Dimension,
             size: descriptor.Size,
-            format: descriptor.Format,
+            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
             mipLevelCount: descriptor.MipLevelCount,
             sampleCount: descriptor.SampleCount
         );
@@ -85,7 +85,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
         var writeSize = size switch
         {
-            { X: var x, Y: var y, Z: var z } => new Silk.NET.WebGPU.Extent3D(
+            { X: var x, Y: var y, Z: var z } => new Extent3D(
                 width: x,
                 height: y,
                 depthOrArrayLayers: z
@@ -105,58 +105,58 @@ unsafe public class GPUTexture : GPUResourceWrapper
         return format switch
         {
             // 1 byte
-            Silk.NET.WebGPU.TextureFormat.R8Unorm => 1,
-            Silk.NET.WebGPU.TextureFormat.R8Snorm => 1,
-            Silk.NET.WebGPU.TextureFormat.R8Uint => 1,
-            Silk.NET.WebGPU.TextureFormat.R8Sint => 1,
+            TextureFormat.R8Unorm => 1,
+            TextureFormat.R8Snorm => 1,
+            TextureFormat.R8Uint => 1,
+            TextureFormat.R8Sint => 1,
             // 2 bytes
-            Silk.NET.WebGPU.TextureFormat.R16Uint => 2,
-            Silk.NET.WebGPU.TextureFormat.R16Sint => 2,
-            Silk.NET.WebGPU.TextureFormat.R16float => 2,
-            Silk.NET.WebGPU.TextureFormat.RG8Unorm => 2,
-            Silk.NET.WebGPU.TextureFormat.RG8Snorm => 2,
-            Silk.NET.WebGPU.TextureFormat.RG8Uint => 2,
-            Silk.NET.WebGPU.TextureFormat.RG8Sint => 2,
+            TextureFormat.R16Uint => 2,
+            TextureFormat.R16Sint => 2,
+            TextureFormat.R16float => 2,
+            TextureFormat.RG8Unorm => 2,
+            TextureFormat.RG8Snorm => 2,
+            TextureFormat.RG8Uint => 2,
+            TextureFormat.RG8Sint => 2,
 
             // 4 bytes
-            Silk.NET.WebGPU.TextureFormat.R32Uint => 4,
-            Silk.NET.WebGPU.TextureFormat.R32Sint => 4,
-            Silk.NET.WebGPU.TextureFormat.R32float => 4,
-            Silk.NET.WebGPU.TextureFormat.RG16Uint => 3,
-            Silk.NET.WebGPU.TextureFormat.RG16Sint => 3,
-            Silk.NET.WebGPU.TextureFormat.RG16float => 3,
-            Silk.NET.WebGPU.TextureFormat.Rgba8Unorm => 4,
-            Silk.NET.WebGPU.TextureFormat.Rgba8UnormSrgb => 4,
-            Silk.NET.WebGPU.TextureFormat.Rgba8Snorm => 4,
-            Silk.NET.WebGPU.TextureFormat.Rgba8Uint => 4,
-            Silk.NET.WebGPU.TextureFormat.Rgba8Sint => 4,
-            Silk.NET.WebGPU.TextureFormat.Bgra8Unorm => 4,
-            Silk.NET.WebGPU.TextureFormat.Bgra8UnormSrgb => 4,
+            TextureFormat.R32Uint => 4,
+            TextureFormat.R32Sint => 4,
+            TextureFormat.R32float => 4,
+            TextureFormat.RG16Uint => 3,
+            TextureFormat.RG16Sint => 3,
+            TextureFormat.RG16float => 3,
+            TextureFormat.Rgba8Unorm => 4,
+            TextureFormat.Rgba8UnormSrgb => 4,
+            TextureFormat.Rgba8Snorm => 4,
+            TextureFormat.Rgba8Uint => 4,
+            TextureFormat.Rgba8Sint => 4,
+            TextureFormat.Bgra8Unorm => 4,
+            TextureFormat.Bgra8UnormSrgb => 4,
             
             // Packed 4 bytes
-            Silk.NET.WebGPU.TextureFormat.Rgb9E5Ufloat => 4,
-            Silk.NET.WebGPU.TextureFormat.RG11B10Ufloat => 4,
-            Silk.NET.WebGPU.TextureFormat.Rgb10A2Unorm => 4,
+            TextureFormat.Rgb9E5Ufloat => 4,
+            TextureFormat.RG11B10Ufloat => 4,
+            TextureFormat.Rgb10A2Unorm => 4,
 
             // 8 bytes
-            Silk.NET.WebGPU.TextureFormat.RG32Uint => 8,
-            Silk.NET.WebGPU.TextureFormat.RG32Sint => 8,
-            Silk.NET.WebGPU.TextureFormat.RG32float => 8,
-            Silk.NET.WebGPU.TextureFormat.Rgba16Uint => 8,
-            Silk.NET.WebGPU.TextureFormat.Rgba16Sint => 8,
-            Silk.NET.WebGPU.TextureFormat.Rgba16float => 8,
+            TextureFormat.RG32Uint => 8,
+            TextureFormat.RG32Sint => 8,
+            TextureFormat.RG32float => 8,
+            TextureFormat.Rgba16Uint => 8,
+            TextureFormat.Rgba16Sint => 8,
+            TextureFormat.Rgba16float => 8,
 
             // 16 bytes
-            Silk.NET.WebGPU.TextureFormat.Rgba32Uint => 16,
-            Silk.NET.WebGPU.TextureFormat.Rgba32Sint => 16,
-            Silk.NET.WebGPU.TextureFormat.Rgba32float => 16,
+            TextureFormat.Rgba32Uint => 16,
+            TextureFormat.Rgba32Sint => 16,
+            TextureFormat.Rgba32float => 16,
 
             // Depth/Stencil
-            Silk.NET.WebGPU.TextureFormat.Stencil8 => 1,
-            Silk.NET.WebGPU.TextureFormat.Depth16Unorm => 2,
-            Silk.NET.WebGPU.TextureFormat.Depth32float => 4,
-            Silk.NET.WebGPU.TextureFormat.Depth24Plus => 4,
-            Silk.NET.WebGPU.TextureFormat.Depth24PlusStencil8 => 4,
+            TextureFormat.Stencil8 => 1,
+            TextureFormat.Depth16Unorm => 2,
+            TextureFormat.Depth32float => 4,
+            TextureFormat.Depth24Plus => 4,
+            TextureFormat.Depth24PlusStencil8 => 4,
             _ => throw new IndexOutOfRangeException($"Unknown texture format: {format}")
         };
     }

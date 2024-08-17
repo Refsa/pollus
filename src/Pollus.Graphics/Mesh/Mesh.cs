@@ -84,12 +84,6 @@ public class Mesh
     }
 }
 
-public enum IndexFormat
-{
-    Uint16,
-    Uint32,
-}
-
 public interface IMeshIndices
 {
     IndexFormat Format { get; }

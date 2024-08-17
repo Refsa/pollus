@@ -92,52 +92,32 @@ public class SnakeGame
                 // Vertex Buffer
                 var vertexData = quadMesh.Mesh.GetVertexData([MeshAttributeType.Position, MeshAttributeType.UV0]);
 
-                renderData.quadVertexBuffer = gpuContext.CreateBuffer(new()
-                {
-                    Label = """quad-vertex-buffer""",
-                    Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                    Size = vertexData.SizeInBytes,
-                    MappedAtCreation = false,
-                });
+                renderData.quadVertexBuffer = gpuContext.CreateBuffer(
+                    BufferDescriptor.Vertex("""quad-vertex-buffer""", vertexData.SizeInBytes));
                 renderData.quadVertexBuffer.Write<byte>(vertexData.AsSpan());
 
                 var indices = quadMesh.Mesh.GetIndexData();
-                renderData.quadIndexBuffer = gpuContext.CreateBuffer(new()
-                {
-                    Label = """quad-index-buffer""",
-                    Usage = Silk.NET.WebGPU.BufferUsage.Index | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                    Size = (ulong)indices.Length,
-                    MappedAtCreation = false,
-                });
+                renderData.quadIndexBuffer = gpuContext.CreateBuffer(
+                    BufferDescriptor.Index("""quad-index-buffer""", (ulong)indices.Length));
                 renderData.quadIndexBuffer.Write<byte>(indices);
 
-                // Index Buffer
-                renderData.instanceBuffer = gpuContext.CreateBuffer(new()
-                {
-                    Label = """instance-buffer""",
-                    Usage = Silk.NET.WebGPU.BufferUsage.Vertex | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                    Size = Alignment.GetAlignedSize<Mat4f>(1),
-                    MappedAtCreation = false,
-                });
+                // Instance Buffer
+                renderData.instanceBuffer = gpuContext.CreateBuffer(
+                    BufferDescriptor.Vertex("""instance-buffer""", (ulong)Mat4f.SizeInBytes));
             }
 
             // Scene Uniform Buffer
             {
-                renderData.sceneUniformBuffer = gpuContext.CreateBuffer(new()
-                {
-                    Label = """scene-uniform-buffer""",
-                    Usage = Silk.NET.WebGPU.BufferUsage.Uniform | Silk.NET.WebGPU.BufferUsage.CopyDst,
-                    Size = Alignment.GetAlignedSize<SceneUniform>(),
-                    MappedAtCreation = false,
-                });
+                renderData.sceneUniformBuffer = gpuContext.CreateBuffer(
+                    BufferDescriptor.Uniform<SceneUniform>("""scene-uniform-buffer"""));
             }
 
             // Texture
             {
                 renderData.texture = gpuContext.CreateTexture(TextureDescriptor.D2(
                     """texture""",
-                    Silk.NET.WebGPU.TextureUsage.TextureBinding | Silk.NET.WebGPU.TextureUsage.CopyDst,
-                    Silk.NET.WebGPU.TextureFormat.Rgba8Unorm,
+                    TextureUsage.TextureBinding | TextureUsage.CopyDst,
+                    TextureFormat.Rgba8Unorm,
                     (16, 16)
                 ));
 
@@ -159,9 +139,9 @@ public class SnakeGame
             {
                 Label = """bind-group-layout-0""",
                 Entries = [
-                    BindGroupLayoutEntry.Uniform<SceneUniform>(0, Silk.NET.WebGPU.ShaderStage.Vertex, false),
-                    BindGroupLayoutEntry.TextureEntry(1, Silk.NET.WebGPU.ShaderStage.Fragment, Silk.NET.WebGPU.TextureSampleType.Float, Silk.NET.WebGPU.TextureViewDimension.Dimension2D),
-                    BindGroupLayoutEntry.SamplerEntry(2, Silk.NET.WebGPU.ShaderStage.Fragment, Silk.NET.WebGPU.SamplerBindingType.Filtering),
+                    BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex, false),
+                    BindGroupLayoutEntry.TextureEntry(1, ShaderStage.Fragment, TextureSampleType.Float, TextureViewDimension.Dimension2D),
+                    BindGroupLayoutEntry.SamplerEntry(2, ShaderStage.Fragment, SamplerBindingType.Filtering),
                 ]
             });
 
@@ -280,8 +260,8 @@ public class SnakeGame
                             textureView: surfaceTextureView.Native,
                             resolveTarget: nint.Zero,
                             clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                            loadOp: Silk.NET.WebGPU.LoadOp.Clear,
-                            storeOp: Silk.NET.WebGPU.StoreOp.Store
+                            loadOp: LoadOp.Clear,
+                            storeOp: StoreOp.Store
                         )
                     },
                 });
@@ -289,7 +269,7 @@ public class SnakeGame
                 {
                     renderPass.SetPipeline(renderData.quadRenderPipeline!);
                     renderPass.SetBindGroup(renderData.bindGroup0!, 0);
-                    renderPass.SetIndexBuffer(renderData.quadIndexBuffer!, Silk.NET.WebGPU.IndexFormat.Uint16);
+                    renderPass.SetIndexBuffer(renderData.quadIndexBuffer!, IndexFormat.Uint16);
                     renderPass.SetVertexBuffer(0, renderData.quadVertexBuffer!);
                     renderPass.SetVertexBuffer(1, renderData.instanceBuffer!);
                     renderPass.DrawIndexed(6, 1, 0, 0, 0);

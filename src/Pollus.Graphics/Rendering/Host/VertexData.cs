@@ -3,7 +3,7 @@ namespace Pollus.Graphics.Rendering;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-public struct VertexData
+public struct VertexData : IBufferData
 {
     public const int MAX_ATTRIBUTES = 8;
 
@@ -24,6 +24,7 @@ public struct VertexData
     public uint Stride => stride;
     public uint Count => (uint)SizeInBytes / stride;
     public int AttributeCount => attributeCount;
+    public BufferType Usage => BufferType.Vertex;
 
     // create array accessor
     public Span<byte> this[int index]

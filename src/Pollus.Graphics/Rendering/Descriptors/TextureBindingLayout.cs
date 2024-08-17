@@ -4,12 +4,12 @@ public struct TextureBindingLayout
 {
     public static readonly TextureBindingLayout Undefined = new()
     {
-        SampleType = Silk.NET.WebGPU.TextureSampleType.Undefined,
-        ViewDimension = Silk.NET.WebGPU.TextureViewDimension.DimensionUndefined,
+        SampleType = TextureSampleType.Undefined,
+        ViewDimension = TextureViewDimension.DimensionUndefined,
         Multisampled = false,
     };
 
-    public Silk.NET.WebGPU.TextureSampleType SampleType;
-    public Silk.NET.WebGPU.TextureViewDimension ViewDimension;
+    public TextureSampleType SampleType;
+    public TextureViewDimension ViewDimension;
     public bool Multisampled;
 }

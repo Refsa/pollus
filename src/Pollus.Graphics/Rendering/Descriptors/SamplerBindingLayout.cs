@@ -4,8 +4,8 @@ public struct SamplerBindingLayout
 {
     public static readonly SamplerBindingLayout Undefined = new()
     {
-        Type = Silk.NET.WebGPU.SamplerBindingType.Undefined,
+        Type = SamplerBindingType.Undefined,
     };
 
-    public Silk.NET.WebGPU.SamplerBindingType Type;
+    public SamplerBindingType Type;
 }
