@@ -2,17 +2,6 @@ namespace Pollus.Engine.Mesh;
 
 using Pollus.ECS;
 using Pollus.Engine.Assets;
-using Pollus.Graphics;
-
-public struct MeshRenderer : IComponent
-{
-    public Handle<MeshAsset> Mesh;
-}
-
-public class MeshAsset
-{
-    public required Mesh Mesh { get; init; }
-}
 
 public class MeshPlugin : IPlugin
 {

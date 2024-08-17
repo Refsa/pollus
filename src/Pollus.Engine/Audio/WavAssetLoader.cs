@@ -7,7 +7,7 @@ public class WavAssetLoader : AssetLoader<AudioAsset>
 {
     public override string[] Extensions => [".wav"];
 
-    public override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<AudioAsset> context)
     {
         var decoderData = WavDecoder.ReadHeader(data);
         var dst = new byte[decoderData.Size];

@@ -16,7 +16,7 @@ public class TextAssetLoader : AssetLoader<TextAsset>
 {
     public override string[] Extensions => [".txt"];
 
-    public override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<TextAsset> context)
     {
         var asset = new TextAsset(Encoding.UTF8.GetString(data));
         context.SetAsset(asset);

@@ -48,7 +48,7 @@ public class AssetServer : IDisposable
         return Assets.GetAssets<TAsset>();
     }
 
-    public Handle<TAsset> Load<TAsset>(AssetPath path) 
+    public Handle<TAsset> Load<TAsset>(AssetPath path)
         where TAsset : notnull
     {
         if (assetLookup.TryGetValue(path, out var handle))
@@ -67,7 +67,12 @@ public class AssetServer : IDisposable
         }
 
         var loader = loaders[loaderIdx];
-        var loadContext = new LoadContext();
+        var loadContext = new LoadContext()
+        {
+            Path = path,
+            FileName = Path.GetFileName(path.Path)
+        };
+        
         AssetIO.LoadPath(path, out var data);
         loader.Load(data, ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)

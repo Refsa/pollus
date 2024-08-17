@@ -2,6 +2,9 @@ namespace Pollus.Engine.Assets;
 
 public struct LoadContext
 {
+    public required AssetPath Path { get; init; }
+    public required string FileName { get; init; }
+
     public AssetStatus Status { get; set; }
     public object? Asset { get; private set; }
 
@@ -19,17 +22,37 @@ public interface IAssetLoader
     void Load(ReadOnlySpan<byte> data, ref LoadContext context);
 }
 
-public abstract class AssetLoader<T> : IAssetLoader
-    where T : notnull
+public abstract class AssetLoader<TAsset> : IAssetLoader
+    where TAsset : notnull
 {
-    static AssetLoader()
+    protected ref struct LoadContext<T>
     {
-        AssetsFetch<T>.Register();
+        ref LoadContext context;
+        public readonly AssetPath Path => context.Path;
+        public readonly string FileName => context.FileName;
+
+        public LoadContext(ref LoadContext context)
+        {
+            this.context = ref context;
+        }
+        public void SetAsset(T asset) => context.SetAsset(asset);
     }
 
-    static readonly int _assetType = AssetLookup.ID<T>();
+    static AssetLoader()
+    {
+        AssetsFetch<TAsset>.Register();
+    }
+
+    static readonly int _assetType = AssetLookup.ID<TAsset>();
     public int AssetType => _assetType;
 
     public abstract string[] Extensions { get; }
-    public abstract void Load(ReadOnlySpan<byte> data, ref LoadContext context);
+
+    public void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    {
+        var wrappedContext = new LoadContext<TAsset>(ref context);
+        Load(data, ref wrappedContext);
+    }
+
+    protected abstract void Load(ReadOnlySpan<byte> data, ref LoadContext<TAsset> context);
 }
