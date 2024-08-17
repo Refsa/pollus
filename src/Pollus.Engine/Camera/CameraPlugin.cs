@@ -11,7 +11,7 @@ public class CameraPlugin : IPlugin
     {
         world.Schedule.AddSystems(CoreStage.Last, new[]
         {
-            FnSystem("Camera2D", (IWindow window, Query<OrthographicProjection>.Filter<All<Camera2D, Transform2>> query) =>
+            FnSystem("Camera2D", (IWindow window, Query<OrthographicProjection>.Filter<All<Camera2D>> query) =>
             {
                 query.ForEach((ref OrthographicProjection projection) =>
                 {

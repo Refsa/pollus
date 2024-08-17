@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Pollus.Logging;
 
 namespace Pollus.ECS;
 
@@ -14,6 +15,8 @@ public class World : IDisposable
     public Schedule Schedule { get; init; }
     public ArchetypeStore Store { get; init; }
     public Resources Resources { get; init; }
+
+    HashSet<Type> registeredPlugins = new();
 
     public World()
     {
@@ -52,6 +55,9 @@ public class World : IDisposable
     public World AddPlugin<TPlugin>(TPlugin plugin)
         where TPlugin : IPlugin
     {
+        if (registeredPlugins.Contains(typeof(TPlugin))) return this;
+        registeredPlugins.Add(typeof(TPlugin));
+
         plugin.Apply(this);
         return this;
     }
@@ -59,6 +65,9 @@ public class World : IDisposable
     public World AddPlugin<TPlugin>()
         where TPlugin : IPlugin, new()
     {
+        if (registeredPlugins.Contains(typeof(TPlugin))) return this;
+        registeredPlugins.Add(typeof(TPlugin));
+
         var plugin = new TPlugin();
         plugin.Apply(this);
         return this;
@@ -68,6 +77,9 @@ public class World : IDisposable
     {
         foreach (var plugin in plugins)
         {
+            if (registeredPlugins.Contains(plugin.GetType())) continue;
+            registeredPlugins.Add(plugin.GetType());
+
             plugin.Apply(this);
         }
         return this;
@@ -84,6 +96,13 @@ public class World : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Tick()
     {
-        Schedule.Tick(this);
+        try
+        {
+            Schedule.Tick(this);
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "An error occurred while running the world schedule.");
+        }
     }
 }

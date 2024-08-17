@@ -5,6 +5,7 @@ using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Input;
+using Pollus.Engine.Platform;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -57,7 +58,6 @@ public class SnakeGame
     public void Run() => Application.Builder
         .AddPlugin(new AssetPlugin { RootPath = "assets" })
         .AddPlugin<InputPlugin>()
-        .AddPlugin<TimePlugin>()
         .AddPlugin<CameraPlugin>()
         .InitResource<SnakeRenderData>()
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",

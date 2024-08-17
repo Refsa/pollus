@@ -16,7 +16,6 @@ public class DesktopApplication : IApplication, IDisposable
     IWGPUContext? windowContext;
 
     World world;
-    PlatformEvents platformEvents;
 
     bool isDisposed;
     bool isRunning;
@@ -29,7 +28,6 @@ public class DesktopApplication : IApplication, IDisposable
     public DesktopApplication(Application builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
-        platformEvents = new();
         world = builder.World;
     }
 
@@ -57,14 +55,10 @@ public class DesktopApplication : IApplication, IDisposable
         world.Resources.Add(graphicsContext);
         world.Resources.Add(windowContext);
         world.Resources.Add(window);
-        world.Resources.Add(platformEvents);
 
         while (IsRunning)
         {
-#if !BROWSER
-            platformEvents.ClearEvents();
-            platformEvents.PollEvents();
-            
+            var platformEvents = world.Resources.Get<PlatformEvents>();
             foreach (var @event in platformEvents.Events)
             {
                 if (@event.Type is (uint)Silk.NET.SDL.EventType.Quit or (uint)Silk.NET.SDL.EventType.AppTerminating)
@@ -84,7 +78,6 @@ public class DesktopApplication : IApplication, IDisposable
                         break;
                 }
             }
-#endif
 
             world.Tick();
         }

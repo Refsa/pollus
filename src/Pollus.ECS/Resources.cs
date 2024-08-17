@@ -39,7 +39,12 @@ public class Resources : IDisposable
     public TResource Get<TResource>()
         where TResource : notnull
     {
-        return (TResource)resources[Resource.ID<TResource>()];
+        if (!resources.TryGetValue(Resource.ID<TResource>(), out var resource))
+        {
+            throw new KeyNotFoundException($"Resource of type {typeof(TResource).Name} not found.");
+        }
+
+        return (TResource)resource;
     }
 
     public bool TryGet<TResource>(out TResource resource)
@@ -85,10 +90,11 @@ public static class Resource
     static class Type<T>
         where T : notnull
     {
-        public static int ID = counter++;
+        public static int ID;
 
         static Type()
         {
+            ID = Interlocked.Increment(ref counter);
             Fetch.Register(new ResourceFetch<T>(), []);
         }
     }

@@ -23,7 +23,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     $gen_constraints$
 {
     public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
-        where TFilters : ITuple
+        where TFilters : ITuple, new()
     {
         public static Component.Info[] Infos => infos;
         static readonly IFilter[] filters;

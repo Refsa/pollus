@@ -27,7 +27,6 @@ public record class Application
         ResourceFetch<IWGPUContext>.Register();
         ResourceFetch<IWindow>.Register();
         ResourceFetch<GraphicsContext>.Register();
-        ResourceFetch<PlatformEvents>.Register();
     }
 
     Func<Application, IApplication> application = RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")) switch
@@ -37,7 +36,9 @@ public record class Application
     };
 
     WindowOptions windowOptions = WindowOptions.Default;
-    World world = new();
+    World world = new World()
+        .AddPlugin<TimePlugin>()
+        .AddPlugin<PlatformEventsPlugin>();
 
     public World World => world;
     public WindowOptions WindowOptions => windowOptions;
