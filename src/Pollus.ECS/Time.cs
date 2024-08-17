@@ -3,7 +3,6 @@ namespace Pollus.ECS;
 using System.Diagnostics;
 using Pollus.ECS.Core;
 
-[Resource<Time>]
 public class Time
 {
     public double DeltaTime { get; set; }
@@ -43,6 +42,11 @@ public class TimeSystem : Sys<Time>
 
 public class TimePlugin : IPlugin
 {
+    static TimePlugin()
+    {
+        ResourceFetch<Time>.Register();
+    }
+
     public void Apply(World world)
     {
         world.Resources.Add<Time>();

@@ -62,7 +62,7 @@ public struct VertexData
     public void Write<T0>(int index, in T0 value, int elementIndex = 0)
         where T0 : unmanaged
     {
-        MemoryMarshal.Write(this[index][(int)attributes[elementIndex].Offset..], value);
+        MemoryMarshal.Write(this[index][attributes[elementIndex].Offset..], value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -133,7 +133,7 @@ public struct VertexData
         Write<(T0, T1, T2, T3)>(offset, values);
     }
 
-    public static VertexData From(uint capacity, Span<VertexFormat> formats)
+    public static VertexData From(uint capacity, ReadOnlySpan<VertexFormat> formats)
     {
         if (formats.Length > MAX_ATTRIBUTES)
         {

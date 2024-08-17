@@ -61,16 +61,6 @@ public class Resources : IDisposable
     }
 }
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
-public sealed class ResourceAttribute<TResource> : Attribute
-    where TResource : notnull
-{
-    public ResourceAttribute()
-    {
-        Fetch.Register(new ResourceFetch<TResource>(), []);
-    }
-}
-
 public class ResourceFetch<TResource> : IFetch<TResource>
     where TResource : notnull
 {

@@ -57,6 +57,11 @@ public record struct Vec3f
         return new Vec3f(left.X * right, left.Y * right, left.Z * right);
     }
 
+    public static Vec3f operator *(float right, Vec3f left)
+    {
+        return new Vec3f(left.X * right, left.Y * right, left.Z * right);
+    }
+
     public float Length()
     {
         return Math.Sqrt(X * X + Y * Y + Z * Z);

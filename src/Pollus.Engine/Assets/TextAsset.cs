@@ -2,7 +2,6 @@ namespace Pollus.Engine.Assets;
 
 using System.Text;
 
-[Asset<TextAsset>]
 public class TextAsset
 {
     public string Content { get; }

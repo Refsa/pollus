@@ -17,16 +17,6 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
     }
 }
 
-[AttributeUsage(AttributeTargets.Class)]
-public sealed class AssetAttribute<T> : Attribute
-    where T : notnull
-{
-    public AssetAttribute()
-    {
-        AssetsFetch<T>.Register();
-    }
-}
-
 public class AssetPlugin : IPlugin
 {
     public required string RootPath { get; init; }

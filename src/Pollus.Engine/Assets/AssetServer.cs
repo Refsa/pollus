@@ -42,6 +42,12 @@ public class AssetServer : IDisposable
         return this;
     }
 
+    public Assets<TAsset> GetAssets<TAsset>()
+        where TAsset : notnull
+    {
+        return Assets.GetAssets<TAsset>();
+    }
+
     public Handle<TAsset> Load<TAsset>(AssetPath path) 
         where TAsset : notnull
     {
