@@ -1,11 +1,17 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
+using Pollus.Engine.Camera;
+using Pollus.Engine.Mesh;
 
 public class RenderingPlugin : IPlugin
 {
     public void Apply(World world)
     {
-        throw new NotImplementedException();
+        world.AddPlugins([
+            new MeshPlugin(),
+            new ImagePlugin(),
+            new CameraPlugin(),
+        ]);
     }
 }

@@ -13,7 +13,7 @@ public class ImageAsset
     public required string Name { get; set; }
     public required byte[] Data { get; init; }
     public required ImageAssetFormat Format { get; init; }
-    public required int Width { get; init; }
-    public int Height { get; init; }
-    public int Depth { get; init; }
+    public required uint Width { get; init; }
+    public uint Height { get; init; }
+    public uint Depth { get; init; }
 }

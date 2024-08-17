@@ -7,6 +7,7 @@ using Pollus.Engine.Camera;
 using Pollus.Engine.Input;
 using Pollus.Engine.Mesh;
 using Pollus.Engine.Platform;
+using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -17,13 +18,6 @@ using Pollus.Utils;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using static Pollus.ECS.SystemBuilder;
-
-
-struct SceneUniform
-{
-    public Mat4f View;
-    public Mat4f Projection;
-}
 
 struct Player : IComponent { }
 
@@ -58,10 +52,11 @@ public class SnakeGame
     }
 
     public void Run() => Application.Builder
-        .AddPlugin(new AssetPlugin { RootPath = "assets" })
-        .AddPlugin(new MeshPlugin { SharedPrimitives = PrimitiveType.Quad })
-        .AddPlugin<InputPlugin>()
-        .AddPlugin<CameraPlugin>()
+        .AddPlugins([
+            new AssetPlugin { RootPath = "assets" },
+            new RenderingPlugin(),
+            new InputPlugin(),
+        ])
         .InitResource<SnakeRenderData>()
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
         static (World world) =>
@@ -94,23 +89,21 @@ public class SnakeGame
 
                 renderData.quadVertexBuffer = gpuContext.CreateBuffer(
                     BufferDescriptor.Vertex("""quad-vertex-buffer""", vertexData.SizeInBytes));
-                renderData.quadVertexBuffer.Write<byte>(vertexData.AsSpan());
+                vertexData.WriteTo(renderData.quadVertexBuffer, 0);
 
                 var indices = quadMesh.Mesh.GetIndexData();
                 renderData.quadIndexBuffer = gpuContext.CreateBuffer(
                     BufferDescriptor.Index("""quad-index-buffer""", (ulong)indices.Length));
                 renderData.quadIndexBuffer.Write<byte>(indices);
-
-                // Instance Buffer
-                renderData.instanceBuffer = gpuContext.CreateBuffer(
-                    BufferDescriptor.Vertex("""instance-buffer""", (ulong)Mat4f.SizeInBytes));
             }
+
+            // Instance Buffer
+            renderData.instanceBuffer = gpuContext.CreateBuffer(
+                BufferDescriptor.Vertex("""instance-buffer""", (ulong)Mat4f.SizeInBytes));
 
             // Scene Uniform Buffer
-            {
-                renderData.sceneUniformBuffer = gpuContext.CreateBuffer(
-                    BufferDescriptor.Uniform<SceneUniform>("""scene-uniform-buffer"""));
-            }
+            renderData.sceneUniformBuffer = gpuContext.CreateBuffer(
+                BufferDescriptor.Uniform<SceneUniform>("""scene-uniform-buffer"""));
 
             // Texture
             {

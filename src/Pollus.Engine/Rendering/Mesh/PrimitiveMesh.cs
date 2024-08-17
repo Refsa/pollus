@@ -1,4 +1,4 @@
-namespace Pollus.Engine.Mesh;
+namespace Pollus.Engine.Rendering;
 
 using Pollus.Engine.Assets;
 using Pollus.Graphics;
@@ -19,7 +19,7 @@ public class PrimitiveMeshes
     {
         return type switch
         {
-            PrimitiveType.Quad => assets.Add(new MeshAsset { Mesh = unique ? Primitives.CreateQuad() : Primitives.SharedQuad }, null),
+            PrimitiveType.Quad => assets.Add(new MeshAsset { Name = "Quad", Mesh = unique ? Primitives.CreateQuad() : Primitives.SharedQuad }, null),
             _ => throw new NotImplementedException("CreatePrimitive requires a single primitive type"),
         };
     }

@@ -1,4 +1,4 @@
-namespace Pollus.Engine.Mesh;
+namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
 using Pollus.Engine.Assets;

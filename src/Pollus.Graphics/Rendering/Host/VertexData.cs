@@ -134,6 +134,11 @@ public struct VertexData : IBufferData
         Write<(T0, T1, T2, T3)>(offset, values);
     }
 
+    public void WriteTo(GPUBuffer target, int offset)
+    {
+        target.Write<byte>(data, offset);
+    }
+
     public static VertexData From(uint capacity, ReadOnlySpan<VertexFormat> formats)
     {
         if (formats.Length > MAX_ATTRIBUTES)

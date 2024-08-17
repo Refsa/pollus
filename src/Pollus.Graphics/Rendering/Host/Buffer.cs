@@ -13,4 +13,6 @@ public interface IBufferData
 {
     BufferType Usage { get; }
     ulong SizeInBytes { get; }
+
+    void WriteTo(GPUBuffer target, int offset);
 }

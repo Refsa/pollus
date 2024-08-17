@@ -64,6 +64,11 @@ public class Mesh
         return vertexData;
     }
 
+    public IMeshIndices? GetIndices()
+    {
+        return indices;
+    }
+
     public Span<byte> GetIndexData()
     {
         if (indices != null)
