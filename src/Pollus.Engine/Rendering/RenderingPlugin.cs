@@ -17,7 +17,7 @@ public class RenderingPlugin : IPlugin
         AssetsFetch<ShaderAsset>.Register();
         AssetsFetch<UniformAsset<SceneUniform>>.Register();
         ResourceFetch<RenderAssets>.Register();
-        ResourceFetch<RenderableBatches>.Register();
+        ResourceFetch<RenderBatches>.Register();
         ResourceFetch<RenderContext>.Register();
     }
 
@@ -36,7 +36,7 @@ public class RenderingPlugin : IPlugin
         assetServer.AddLoader<WgslShaderSourceLoader>();
         assetServer.GetAssets<UniformAsset<SceneUniform>>().Add(new UniformAsset<SceneUniform>(new()));
 
-        world.Resources.Add(new RenderableBatches());
+        world.Resources.Add(new RenderBatches());
         world.Resources.Add(new RenderContext());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new MeshRenderDataLoader())
@@ -78,6 +78,17 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
+            "PrepareMeshAssets",
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets) =>
+            {
+                foreach (var handle in assetServer.GetAssets<MeshAsset>().Handles)
+                {
+                    renderAssets.Prepare(gpuContext, assetServer, handle);
+                }
+            }
+        ));
+
+        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
             "BeginFrame",
             static (IWGPUContext gpuContext, RenderContext context) =>
             {
@@ -95,12 +106,12 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             "RenderRenderable",
-            static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderableBatches batches, RenderContext context) =>
+            static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderBatches batches, RenderContext context) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
                 var commandEncoder = context.CommandEncoder.Value;
                 var surfaceTextureView = context.SurfaceTextureView.Value;
-                
+
                 using var renderPass = commandEncoder.BeginRenderPass(new()
                 {
                     Label = """RenderPass""",

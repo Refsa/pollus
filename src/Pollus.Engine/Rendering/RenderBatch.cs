@@ -5,24 +5,24 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 
-public class RenderableBatches
+public class RenderBatches
 {
-    Dictionary<int, RenderableBatch> batches = new();
+    Dictionary<int, RenderBatch> batches = new();
 
-    public IEnumerable<RenderableBatch> Batches => batches.Values.Where(e => e.Count > 0);
+    public IEnumerable<RenderBatch> Batches => batches.Values.Where(e => e.Count > 0);
 
-    public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out RenderableBatch batch)
+    public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out RenderBatch batch)
     {
         var key = HashCode.Combine(meshHandle, materialHandle);
         return batches.TryGetValue(key, out batch!);
     }
 
-    public RenderableBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
+    public RenderBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
     {
         var key = HashCode.Combine(meshHandle.GetHashCode(), materialHandle.GetHashCode());
         if (batches.TryGetValue(key, out var batch)) return batch;
 
-        batch = new RenderableBatch()
+        batch = new RenderBatch()
         {
             Key = key,
             Mesh = meshHandle,
@@ -41,7 +41,7 @@ public class RenderableBatches
     }
 }
 
-public class RenderableBatch : IDisposable
+public class RenderBatch : IDisposable
 {
     public required int Key { get; init; }
     public required Handle<MeshAsset> Mesh { get; init; }

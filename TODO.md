@@ -1,0 +1,35 @@
+- Input
+	- [x] Desktop
+	- [x] Web
+	- [x] Keyboard
+	- [ ] Mouse
+	- [ ] Gamepad
+	- [ ] Touch
+- Audio
+	- [x] Desktop
+	- [x] Web
+	- [ ] Proper plugin
+	- [ ] Filters
+	- [ ] Mixers
+- Assets
+	- [ ] Async loading
+- ECS
+	- [x] Systems
+	- [ ] Change Detection
+		- [ ] added/removed
+		- [ ] changed
+	- [ ] Schedule systems
+		- [ ] ordering
+		- [ ] parallel planner
+	- [ ] Parallel queries
+	- [ ] Relationships
+	- [ ] Hierarchies
+	- [ ] Events
+	- [ ] Commands
+- Rendering
+	- [ ] 2D Pipeline
+		- [ ] Sprites
+		- [ ] Custom Materials
+		- [ ] Post Processing
+	- [x] Extract rendering data
+	- [ ] Rendering Stage
