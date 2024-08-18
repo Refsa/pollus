@@ -1,6 +1,12 @@
 namespace Pollus.Engine.Assets;
 
-public record struct Handle(int AssetType, int ID);
+public record struct Handle(int AssetType, int ID)
+{
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(AssetType, ID);
+    }
+}
 
 public record struct Handle<T> where T : notnull
 {
@@ -48,6 +54,8 @@ public class Assets<T> : IDisposable
     static int NextID => counter++;
 
     Dictionary<Handle, AssetInfo<T>> assets = new();
+
+    public IEnumerable<Handle> Handles => assets.Keys;
 
     public void Dispose()
     {

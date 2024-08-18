@@ -100,18 +100,11 @@ public class RenderingPlugin : IPlugin
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
                 var commandEncoder = context.CommandEncoder.Value;
                 var surfaceTextureView = context.SurfaceTextureView.Value;
-
-                foreach (var batch in batches.Batches)
+                
+                using var renderPass = commandEncoder.BeginRenderPass(new()
                 {
-                    batch.WriteBuffer();
-
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-                    var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
-
-                    using var renderPass = commandEncoder.BeginRenderPass(new()
-                    {
-                        Label = """RenderPass""",
-                        ColorAttachments = new[]
+                    Label = """RenderPass""",
+                    ColorAttachments = new[]
                         {
                             new RenderPassColorAttachment()
                             {
@@ -121,7 +114,14 @@ public class RenderingPlugin : IPlugin
                                 ClearValue = new(0.15f, 0.125f, 0.1f, 1.0f),
                             },
                         },
-                    });
+                });
+
+                foreach (var batch in batches.Batches)
+                {
+                    batch.WriteBuffer();
+
+                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+                    var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
 
                     renderPass.SetPipeline(material.Pipeline);
                     for (int i = 0; i < material.BindGroups.Length; i++)
@@ -138,10 +138,10 @@ public class RenderingPlugin : IPlugin
                     renderPass.SetVertexBuffer(1, batch.InstanceBuffer);
                     renderPass.DrawIndexed((uint)mesh.IndexCount, (uint)batch.Count, 0, 0, 0);
 
-                    renderPass.End();
-
                     batch.Reset();
                 }
+
+                renderPass.End();
             }
         ));
     }

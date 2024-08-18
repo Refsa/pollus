@@ -19,7 +19,7 @@ public class RenderableBatches
 
     public RenderableBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
     {
-        var key = HashCode.Combine(meshHandle, materialHandle);
+        var key = HashCode.Combine(meshHandle.GetHashCode(), materialHandle.GetHashCode());
         if (batches.TryGetValue(key, out var batch)) return batch;
 
         batch = new RenderableBatch()

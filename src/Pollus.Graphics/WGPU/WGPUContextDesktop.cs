@@ -114,7 +114,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             format: surfaceCapabilities.Formats[0],
             alphaMode: surfaceCapabilities.AlphaModes[0],
             usage: Silk.NET.WebGPU.TextureUsage.RenderAttachment,
-            presentMode: Silk.NET.WebGPU.PresentMode.Fifo,
+            presentMode: Silk.NET.WebGPU.PresentMode.Immediate,
             width: (uint)Window.Size.X,
             height: (uint)Window.Size.Y
         );

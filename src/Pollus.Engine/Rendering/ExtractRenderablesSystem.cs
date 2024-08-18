@@ -6,19 +6,25 @@ using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 
-struct ExtractRenderablesJob<TMaterial> : IChunkForEach<Transform2, Renderable<TMaterial>>
+struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMaterial>>
     where TMaterial : IMaterial
 {
-    public required RenderableBatch Batch { get; init; }
+    public required RenderableBatches Batches { get; init; }
+    public required IWGPUContext GpuContext { get; init; }
 
-    public void Execute(in Span<Transform2> transforms, in Span<Renderable<TMaterial>> renderables)
+    public void Execute(ref Transform2 transform, ref Renderable<TMaterial> renderable)
     {
-        var count = transforms.Length;
-        Span<Mat4f> chunk = Batch.GetBlock(count);
-        for (int i = 0; i < count; i++)
+        if (!Batches.TryGetBatch(renderable.Mesh, renderable.Material, out var batch))
         {
-            chunk[i] = transforms[i].ToMatrix();
+            batch = Batches.CreateBatch(GpuContext, 16, renderable.Mesh, renderable.Material);
         }
+
+        if (batch.IsFull)
+        {
+            batch.Resize(GpuContext, batch.Capacity * 2);
+        }
+
+        batch.Write(transform.ToMatrix());
     }
 }
 
@@ -34,25 +40,19 @@ class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServ
         IWGPUContext gpuContext, RenderableBatches batches,
         Query<Transform2, Renderable<TMaterial>> query)
     {
-        var first = query.Single();
-        var count = query.EntityCount();
-
-        if (!batches.TryGetBatch(first.Component1.Mesh, first.Component1.Material, out var batch))
+        foreach (var meshHandle in assetServer.GetAssets<MeshAsset>().Handles)
         {
-            batch = batches.CreateBatch(gpuContext, count, first.Component1.Mesh, first.Component1.Material);
+            renderAssets.Prepare(gpuContext, assetServer, meshHandle);
         }
-
-        renderAssets.Prepare(gpuContext, assetServer, first.Component1.Mesh);
-        renderAssets.Prepare(gpuContext, assetServer, first.Component1.Material);
-
-        if (batch.Capacity < count)
+        foreach (var materialHandle in assetServer.GetAssets<TMaterial>().Handles)
         {
-            batch.Resize(gpuContext, count);
+            renderAssets.Prepare(gpuContext, assetServer, materialHandle);
         }
 
         query.ForEach(new ExtractRenderablesJob<TMaterial>
         {
-            Batch = batch
+            Batches = batches,
+            GpuContext = gpuContext,
         });
     }
 }

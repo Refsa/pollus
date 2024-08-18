@@ -42,6 +42,33 @@ public class SnakeGame
                 Sampler = samplers.Add(SamplerDescriptor.Nearest),
             });
 
+            Handle[] materialHandles = [
+                materials.Add(new Material()
+                {
+                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.Load<ImageAsset>("breakout/ball_1.png"),
+                    Sampler = samplers.Add(SamplerDescriptor.Nearest),
+                }),
+                materials.Add(new Material()
+                {
+                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.Load<ImageAsset>("breakout/ball_2.png"),
+                    Sampler = samplers.Add(SamplerDescriptor.Nearest),
+                }),
+                materials.Add(new Material()
+                {
+                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.Load<ImageAsset>("breakout/ball_3.png"),
+                    Sampler = samplers.Add(SamplerDescriptor.Nearest),
+                }),
+                materials.Add(new Material()
+                {
+                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.Load<ImageAsset>("breakout/ball_4.png"),
+                    Sampler = samplers.Add(SamplerDescriptor.Nearest),
+                }),
+            ];
+
             world.Spawn(
                 new Player(),
                 new Transform2
@@ -57,8 +84,8 @@ public class SnakeGame
                 }
             );
 
-            for (int x = 0; x < 10; x++)
-                for (int y = 0; y < 10; y++)
+            for (int x = 0; x < 32; x++)
+                for (int y = 0; y < 32; y++)
                 {
                     world.Spawn(
                         new Transform2
@@ -70,9 +97,9 @@ public class SnakeGame
                         new Renderable<Material>
                         {
                             Mesh = primitives.Quad,
-                            Material = materialHandle,
+                            Material = materialHandles[(x + y) % materialHandles.Length],
                         },
-                        new RotateMe { Speed = (x * y).Wrap(45, 720) }
+                        new RotateMe { Speed = (x * y * 5).Wrap(45, 720) }
                     );
                 }
 
