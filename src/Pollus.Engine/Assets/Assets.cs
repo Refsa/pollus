@@ -15,6 +15,11 @@ public record struct Handle<T> where T : notnull
 
     public static implicit operator Handle(Handle<T> handle) => new(handle.AssetType, handle.ID);
     public static implicit operator Handle<T>(Handle handle) => new(handle.ID);
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(AssetType, ID);
+    }
 }
 
 public enum AssetStatus
@@ -68,7 +73,7 @@ public class Assets<T> : IDisposable
         return handle;
     }
 
-    public Handle<T> Add(T asset, AssetPath? path)
+    public Handle<T> Add(T asset, AssetPath? path = null)
     {
         var handle = new Handle<T>(NextID);
         assets.Add(handle, new AssetInfo<T>

@@ -2,17 +2,17 @@ namespace Pollus.Graphics.Rendering;
 
 public struct RenderPipelineDescriptor
 {
-    public string Label { get; init; }
+    public string Label { get; set; }
 
-    public VertexState? VertexState { get; init; }
+    public VertexState? VertexState { get; set; }
 
-    public FragmentState? FragmentState { get; init; }
+    public FragmentState? FragmentState { get; set; }
 
-    public MultisampleState? MultisampleState { get; init; }
+    public MultisampleState? MultisampleState { get; set; }
 
-    public PrimitiveState? PrimitiveState { get; init; }
+    public PrimitiveState? PrimitiveState { get; set; }
 
-    public DepthStencilState? DepthStencilState { get; init; }
+    public DepthStencilState? DepthStencilState { get; set; }
 
-    public GPUPipelineLayout? PipelineLayout { get; init; }
+    public GPUPipelineLayout? PipelineLayout { get; set; }
 }

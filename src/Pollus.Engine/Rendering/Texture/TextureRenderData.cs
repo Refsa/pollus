@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
@@ -7,16 +8,23 @@ using Pollus.Mathematics;
 public class TextureRenderData : IRenderData
 {
     public required GPUTexture Texture { get; init; }
-    public required GPUSampler Sampler { get; init; }
+    public required GPUTextureView View { get; init; }
 
     public void Dispose()
     {
         Texture.Dispose();
-        Sampler.Dispose();
     }
+}
 
-    public static TextureRenderData Create(IWGPUContext gpuContext, ImageAsset imageAsset)
+public class TextureRenderDataLoader : IRenderDataLoader
+{
+    public int TargetType => AssetLookup.ID<ImageAsset>();
+
+    public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
+        var imageAsset = assetServer.GetAssets<ImageAsset>().Get(handle)
+            ?? throw new InvalidOperationException("Image asset not found");
+
         var texture = gpuContext.CreateTexture(TextureDescriptor.D2(
             imageAsset.Name,
             TextureUsage.TextureBinding | TextureUsage.CopyDst,
@@ -25,12 +33,10 @@ public class TextureRenderData : IRenderData
         ));
         texture.Write(imageAsset.Data);
 
-        var sampler = gpuContext.CreateSampler(SamplerDescriptor.Nearest);
-
-        return new TextureRenderData
+        renderAssets.Add(handle, new TextureRenderData
         {
             Texture = texture,
-            Sampler = sampler,
-        };
+            View = texture.GetTextureView(),
+        });
     }
 }

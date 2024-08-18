@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Pollus.Utils;
 
 namespace Pollus.Graphics.Rendering;
 
@@ -38,7 +39,7 @@ public ref struct BufferDescriptor
         {
             Label = label,
             Usage = BufferUsage.Uniform | BufferUsage.CopyDst,
-            Size = (ulong)Unsafe.SizeOf<TUniform>() * (dynamicLength.HasValue ? dynamicLength.Value : 1),
+            Size = Alignment.GetAlignedSize<TUniform>() * (dynamicLength.HasValue ? dynamicLength.Value : 1),
             MappedAtCreation = false,
         };
     }

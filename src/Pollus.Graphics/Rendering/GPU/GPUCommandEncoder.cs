@@ -47,8 +47,8 @@ unsafe public struct GPUCommandEncoder : IDisposable
             {
                 View = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].View,
                 ResolveTarget = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].ResolveTarget,
-                LoadOp = descriptor.ColorAttachments[i].LoadOp,
-                StoreOp = descriptor.ColorAttachments[i].StoreOp,
+                LoadOp = (Silk.NET.WebGPU.LoadOp)descriptor.ColorAttachments[i].LoadOp,
+                StoreOp = (Silk.NET.WebGPU.StoreOp)descriptor.ColorAttachments[i].StoreOp,
                 ClearValue = descriptor.ColorAttachments[i].ClearValue,
             };
         }

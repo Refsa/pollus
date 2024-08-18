@@ -127,9 +127,9 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
         var descriptor = new Emscripten.WGPUSwapChainDescriptor_Browser()
         {
-            Format = preferredFormat,
+            Format = (Silk.NET.WebGPU.TextureFormat)preferredFormat,
             PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
-            Usage = TextureUsage.RenderAttachment,
+            Usage = (Silk.NET.WebGPU.TextureUsage)TextureUsage.RenderAttachment,
             Height = (uint)window.Size.Y,
             Width = (uint)window.Size.X
         };

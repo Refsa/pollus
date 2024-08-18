@@ -15,8 +15,8 @@ public class ImageSharpAssetLoader : AssetLoader<ImageAsset>
         var asset = new ImageAsset
         {
             Name = context.FileName,
-            Width = image.Width,
-            Height = image.Height,
+            Width = (uint)image.Width,
+            Height = (uint)image.Height,
             Depth = 1,
             Format = ImageAssetFormat.RGBA8,
             Data = new byte[image.Width * image.Height * bpp]
