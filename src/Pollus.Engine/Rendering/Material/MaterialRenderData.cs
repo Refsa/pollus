@@ -3,7 +3,6 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
-using Silk.NET.WebGPU;
 
 public class MaterialRenderData : IRenderData
 {
@@ -76,6 +75,12 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         if (pipelineDescriptor.FragmentState != null) pipelineDescriptor.FragmentState = pipelineDescriptor.FragmentState.Value with
         {
             ShaderModule = shader,
+            ColorTargets = [
+                ColorTargetState.Default with
+                {
+                    Format = gpuContext.GetSurfaceFormat(),
+                }
+            ]
         };
         pipelineDescriptor.PipelineLayout = pipelineLayout;
         var pipeline = gpuContext.CreateRenderPipeline(pipelineDescriptor);

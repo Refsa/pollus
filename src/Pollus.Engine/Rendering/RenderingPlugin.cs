@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using System.Runtime.InteropServices;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
@@ -58,7 +59,11 @@ public class RenderingPlugin : IPlugin
                 {
                     if (!batches.TryGetBatch(renderable.Mesh, renderable.Material, out var batch))
                     {
-                        batch = batches.CreateBatch(gpuContext, 1024, renderable.Mesh, renderable.Material);
+                        batch = batches.CreateBatch(gpuContext, 32, renderable.Mesh, renderable.Material);
+                    }
+                    if (batch.IsFull)
+                    {
+                        batch.Resize(gpuContext, batch.Capacity * 2);
                     }
                     batch.Write(transform.ToMatrix());
 
@@ -249,6 +254,9 @@ public class RenderableBatch : IDisposable
     public required GPUBuffer InstanceBuffer;
 
     public int Count;
+    public bool IsEmpty => Count == 0;
+    public bool IsFull => Count == Transforms.Length;
+    public int Capacity => Transforms.Length;
 
     public void Dispose()
     {
@@ -268,6 +276,21 @@ public class RenderableBatch : IDisposable
     public void WriteBuffer()
     {
         InstanceBuffer.Write<Mat4f>(Transforms.AsSpan()[..Count], 0);
+    }
+
+    public void Resize(IWGPUContext gpuContext, int capacity)
+    {
+        InstanceBuffer.Dispose();
+        InstanceBuffer = gpuContext.CreateBuffer(new()
+        {
+            Label = $"InstanceBuffer_{Key}",
+            Size = (ulong)capacity * (ulong)Mat4f.SizeInBytes,
+            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
+        });
+
+        var transforms = new Mat4f[capacity];
+        Transforms.AsSpan().CopyTo(transforms);
+        Transforms = transforms;
     }
 }
 

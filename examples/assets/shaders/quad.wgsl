@@ -18,6 +18,7 @@ struct ModelInput {
 struct SceneUniform {
     view: mat4x4f,
     projection: mat4x4f,
+    time: f32,
 };
 
 @group(0) @binding(0) var<uniform> scene_uniform: SceneUniform;
@@ -57,6 +58,8 @@ fn fs_main(
     if (out.color.a == 0.0) {
         discard;
     }
+
+    out.color = vec4f(vec3f(sin(scene_uniform.time * 10.0) * 0.5 + 0.5), 1.0) * out.color;
 
     return out;
 }

@@ -28,12 +28,6 @@ public class Material : IMaterial
         FragmentState = new()
         {
             EntryPoint = """fs_main""",
-            ColorTargets = [
-                ColorTargetState.Default with
-                {
-                    Format = TextureFormat.Rgba8UnormSrgb,
-                }
-            ],
         },
         MultisampleState = MultisampleState.Default,
         PrimitiveState = PrimitiveState.Default,

@@ -56,25 +56,45 @@ public class SnakeGame
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
         static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<ShaderAsset> shaders, Assets<SamplerAsset> samplers) =>
         {
+            var materialHandle = materials.Add(new Material()
+            {
+                ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
+                Texture = assetServer.Load<ImageAsset>("snake/snake_head.png"),
+                Sampler = samplers.Add(SamplerDescriptor.Nearest),
+            });
+
             world.Spawn(
                 new Player(),
                 new Transform2
                 {
                     Position = Vec2f.Zero,
-                    Scale = Vec2f.One * 32f,
+                    Scale = Vec2f.One * 16f,
                     Rotation = 0,
                 },
                 new Renderable
                 {
                     Mesh = primitives.Quad,
-                    Material = materials.Add(new Material()
-                    {
-                        ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                        Texture = assetServer.Load<ImageAsset>("snake/snake_head.png"),
-                        Sampler = samplers.Add(SamplerDescriptor.Nearest),
-                    })
+                    Material = materialHandle,
                 }
             );
+
+            for (int x = 0; x < 1600 / 16; x++)
+                for (int y = 0; y < 900 / 16; y++)
+                {
+                    world.Spawn(
+                        new Transform2
+                        {
+                            Position = new Vec2f(x, y) * 16f + Vec2f.One * 16f,
+                            Scale = Vec2f.One * 16f,
+                            Rotation = 0,
+                        },
+                        new Renderable
+                        {
+                            Mesh = primitives.Quad,
+                            Material = materialHandle,
+                        }
+                    );
+                }
 
             world.Spawn(Camera2D.Bundle);
         }))
