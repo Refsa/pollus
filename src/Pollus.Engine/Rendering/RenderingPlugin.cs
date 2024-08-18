@@ -11,7 +11,6 @@ public class RenderingPlugin : IPlugin
 {
     static RenderingPlugin()
     {
-        AssetsFetch<Material>.Register();
         AssetsFetch<MeshAsset>.Register();
         AssetsFetch<ImageAsset>.Register();
         AssetsFetch<SamplerAsset>.Register();
@@ -44,10 +43,9 @@ public class RenderingPlugin : IPlugin
             .AddLoader(new TextureRenderDataLoader())
             .AddLoader(new SamplerRenderDataLoader())
             .AddLoader(new UniformRenderDataLoader<SceneUniform>())
-            .AddLoader(new MaterialRenderDataLoader<Material>())
         );
 
-        world.Schedule.AddSystems(CoreStage.PreRender, new ExtractRenderablesSystem<Material>());
+        world.AddPlugin<MaterialPlugin<Material>>();
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             "UpdateSceneUniform",

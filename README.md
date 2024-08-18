@@ -35,7 +35,7 @@ Application.Builder
         world.Spawn(Transform2.Default, new Player());
     }))
     .AddSystems(CoreStage.Update, SystemBuilder.FnSystem("UpdateEntities",
-    static (Query<Transform2>.Filter<All<Player>>> query) => 
+    static (Query<Transform2>.Filter<All<Player>> query) => 
     {
         query.ForEach((ref Transform2 transform) =>
         {
