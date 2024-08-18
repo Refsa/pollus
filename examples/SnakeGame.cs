@@ -4,39 +4,18 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
+using Pollus.Engine.Debug;
 using Pollus.Engine.Input;
-using Pollus.Engine.Platform;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
-using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
-using Pollus.Graphics.WGPU;
-using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
-using Pollus.Utils;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using static Pollus.ECS.SystemBuilder;
 
 struct Player : IComponent { }
-
-class SnakeRenderData
+struct RotateMe : IComponent
 {
-    public GPUBindGroupLayout? bindGroupLayout0 = null;
-    public GPUBindGroup? bindGroup0 = null;
-    public GPURenderPipeline? quadRenderPipeline = null;
-
-    public GPUBuffer? sceneUniformBuffer = null;
-
-    public GPUBuffer? quadVertexBuffer = null;
-    public GPUBuffer? quadIndexBuffer = null;
-
-    public GPUBuffer? instanceBuffer = null;
-    public VertexData instanceData = VertexData.From(1024, [VertexFormat.Mat4x4]);
-
-    public GPUTexture? texture = null;
-    public GPUTextureView? textureView = null;
-    public GPUSampler? textureSampler = null;
+    public float Speed;
 }
 
 public class SnakeGame
@@ -51,8 +30,8 @@ public class SnakeGame
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
             new InputPlugin(),
+            new PerformanceTrackerPlugin(),
         ])
-        .InitResource<SnakeRenderData>()
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
         static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<ShaderAsset> shaders, Assets<SamplerAsset> samplers) =>
         {
@@ -71,30 +50,63 @@ public class SnakeGame
                     Scale = (16f, 16f),
                     Rotation = 0f,
                 },
-                new Renderable
+                new Renderable<Material>
                 {
                     Mesh = primitives.Quad,
                     Material = materialHandle,
                 }
             );
 
+            for (int x = 0; x < 100; x++)
+                for (int y = 0; y < 100; y++)
+                {
+                    world.Spawn(
+                        new Transform2
+                        {
+                            Position = (x * 16f, y * 16f),
+                            Scale = (16f, 16f),
+                            Rotation = 0f,
+                        },
+                        new Renderable<Material>
+                        {
+                            Mesh = primitives.Quad,
+                            Material = materialHandle,
+                        },
+                        new RotateMe { Speed = (x * y).Wrap(45, 720) }
+                    );
+                }
+
             world.Spawn(Camera2D.Bundle);
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (InputManager input, Time time, Query<Transform2>.Filter<All<Camera2D>> qCamera, Query<Transform2>.Filter<All<Player>> qPlayer) =>
+        static (InputManager input, Time time,
+            Query<Transform2>.Filter<All<Camera2D>> qCamera, Query<Transform2>.Filter<All<Player>> qPlayer,
+            Query<Transform2, RotateMe> qRotateMe) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
             var inputVec = keyboard!.GetAxis2D(Key.ArrowLeft, Key.ArrowRight, Key.ArrowUp, Key.ArrowDown);
 
             qCamera.ForEach((ref Transform2 transform) =>
             {
-                transform.Position += inputVec;
+                transform.Position += inputVec * 400f * (float)time.DeltaTime;
             });
 
             qPlayer.ForEach((ref Transform2 transform) =>
             {
-                transform.Rotation = (float)time.SecondsSinceStartup.Cos().Degrees();
+                transform.Rotation = (float)(time.SecondsSinceStartup * 360f).Wrap(0f, 360f);
             });
+
+            qRotateMe.ForEach(new RotateMeForEach { SecondsSinceStartup = (float)time.SecondsSinceStartup });
         }))
         .Run();
+}
+
+struct RotateMeForEach : IForEach<Transform2, RotateMe>
+{
+    public required float SecondsSinceStartup;
+
+    public void Execute(ref Transform2 transform, ref RotateMe rotateMe)
+    {
+        transform.Rotation = (SecondsSinceStartup * rotateMe.Speed).Wrap(0f, 360f);
+    }
 }

@@ -51,7 +51,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
 
         public readonly void ForEach<TForEach>(TForEach iter)
-            where TForEach : unmanaged, IForEachBase<C0>
+            where TForEach : struct, IForEachBase<C0>
         {
             query.ForEach(iter);
         }
@@ -89,7 +89,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     }
 
     public readonly void ForEach<TForEach>(TForEach iter)
-        where TForEach : unmanaged, IForEachBase<C0>
+        where TForEach : struct, IForEachBase<C0>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
         foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
@@ -117,6 +117,37 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
                 iter.Execute(comp1);
             }
         }
+    }
+
+    public int EntityCount()
+    {
+        int count = 0;
+        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            count += chunk.Count;
+        }
+        return count;
+    }
+
+    public EntityRow Single()
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            return new EntityRow
+            {
+                Entity = chunk.GetEntities()[0],
+                Component = ref chunk.GetComponents<C0>(cids[0])[0],
+            };
+        }
+        throw new InvalidOperationException("No entities found");
+    }
+
+    public ref struct EntityRow
+    {
+        public Entity Entity;
+        public ref C0 Component;
     }
 }
 

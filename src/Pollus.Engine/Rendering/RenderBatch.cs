@@ -69,6 +69,19 @@ public class RenderableBatch : IDisposable
         Transforms[Count++] = transform;
     }
 
+    public void Write(ReadOnlySpan<Mat4f> transforms)
+    {
+        transforms.CopyTo(Transforms.AsSpan()[Count..]);
+        Count += transforms.Length;
+    }
+
+    public Span<Mat4f> GetBlock(int count)
+    {
+        var block = Transforms.AsSpan()[Count..(Count + count)];
+        Count += count;
+        return block;
+    }
+
     public void WriteBuffer()
     {
         InstanceBuffer.Write<Mat4f>(Transforms.AsSpan()[..Count], 0);

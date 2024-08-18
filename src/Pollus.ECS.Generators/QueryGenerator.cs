@@ -57,7 +57,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         public readonly void ForEach<TForEach>(TForEach iter)
-            where TForEach : unmanaged, IForEachBase<$gen_args$>
+            where TForEach : struct, IForEachBase<$gen_args$>
         {
             query.ForEach(iter);
         }
@@ -96,7 +96,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     public readonly void ForEach<TForEach>(TForEach iter)
-        where TForEach : unmanaged, IForEachBase<$gen_args$>
+        where TForEach : struct, IForEachBase<$gen_args$>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
@@ -124,6 +124,38 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             }
         }
     }
+
+    public int EntityCount()
+    {
+        int count = 0;
+        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            count += chunk.Count;
+        }
+        return count;
+    }
+
+    public EntityRow Single()
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            return new EntityRow
+            {
+                Entity = chunk.GetEntities()[0],
+                $set_entity_row$
+            };
+        }
+
+        throw new InvalidOperationException(""No entities found"");
+    }
+
+    public ref struct EntityRow
+    {
+        public Entity Entity;
+        $entity_row_fields$
+    }
 }";
 
             var sb = new StringBuilder();
@@ -134,6 +166,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             var comp_args = "ref comp0[i]";
             var comp_spans = "scoped var comp0 = chunk.GetComponents<C0>(cids[0]);";
             var chunk_args = "comp0";
+            var set_entity_row = "Component0 = ref chunk.GetComponents<C0>(cids[0])[0],";
+            var entity_row_fields = "public ref C0 Component0;";
 
             for (int i = 1; i < 16; i++)
             {
@@ -144,6 +178,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 comp_args += $", ref comp{i}[i]";
                 comp_spans += $"\nscoped var comp{i} = chunk.GetComponents<C{i}>(cids[{i}]);";
                 chunk_args += $", comp{i}";
+                set_entity_row += $"\n                    Component{i} = ref chunk.GetComponents<C{i}>(cids[{i}])[0],";
+                entity_row_fields += $"\n        public ref C{i} Component{i};";
 
                 sb.Clear().Append(TEMPLATE)
                     .Replace("$gen_args$", gen_args)
@@ -154,6 +190,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                     .Replace("$comp_spans$", comp_spans)
                     .Replace("$comp_args$", comp_args)
                     .Replace("$chunk_args$", chunk_args)
+                    .Replace("$set_entity_row$", set_entity_row)
+                    .Replace("$entity_row_fields$", entity_row_fields)
                     ;
 
                 context.AddSource($"Query{i + 1}.gen.cs", sb.ToString());

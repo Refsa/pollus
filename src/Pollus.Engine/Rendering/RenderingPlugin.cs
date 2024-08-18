@@ -1,15 +1,18 @@
 namespace Pollus.Engine.Rendering;
 
-using System.Runtime.InteropServices;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Debug;
-using Pollus.Mathematics;
-using Silk.NET.SDL;
+
+public struct Renderable<TMaterial> : IComponent
+    where TMaterial : IMaterial
+{
+    public required Handle<MeshAsset> Mesh;
+    public required Handle<TMaterial> Material;
+}
 
 public class RenderingPlugin : IPlugin
 {
@@ -51,27 +54,7 @@ public class RenderingPlugin : IPlugin
             .AddLoader(new MaterialRenderDataLoader<Material>())
         );
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "PrepareRenderable",
-            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, RenderableBatches batches, Query<Transform2, Renderable> query) =>
-            {
-                query.ForEach((ref Transform2 transform, ref Renderable renderable) =>
-                {
-                    if (!batches.TryGetBatch(renderable.Mesh, renderable.Material, out var batch))
-                    {
-                        batch = batches.CreateBatch(gpuContext, 32, renderable.Mesh, renderable.Material);
-                    }
-                    if (batch.IsFull)
-                    {
-                        batch.Resize(gpuContext, batch.Capacity * 2);
-                    }
-                    batch.Write(transform.ToMatrix());
-
-                    renderAssets.Prepare(gpuContext, assetServer, renderable.Mesh);
-                    renderAssets.Prepare(gpuContext, assetServer, renderable.Material);
-                });
-            }
-        ));
+        world.Schedule.AddSystems(CoreStage.PreRender, new ExtractRenderablesSystem<Material>());
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             "UpdateSceneUniform",
@@ -171,10 +154,4 @@ public class RenderingPlugin : IPlugin
             }
         ));
     }
-}
-
-public struct Renderable : IComponent
-{
-    public required Handle<MeshAsset> Mesh;
-    public required Handle Material;
 }

@@ -66,7 +66,7 @@ fn fs_main(
         discard;
     }
 
-    out.color = vec4f(vec3f(sin(scene_uniform.time * 10.0) * 0.5 + 0.5), 1.0) * out.color;
+    out.color = vec4f(vec3f(sin(scene_uniform.time) * 0.5 + 0.5), 1.0) * out.color;
 
     return out;
 }

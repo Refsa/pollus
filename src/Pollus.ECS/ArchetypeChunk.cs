@@ -86,7 +86,7 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    unsafe public Span<C> GetComponents<C>(in ComponentID cid)
+    unsafe public Span<C> GetComponents<C>(ComponentID cid)
             where C : unmanaged, IComponent
     {
         return new Span<C>(components.Get(cid).Data, count);

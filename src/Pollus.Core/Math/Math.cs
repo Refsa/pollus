@@ -16,6 +16,20 @@ public static class Math
     public const double RAD2DEG = 57.2957795;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Min<T>(T a, T b)
+        where T : struct, INumber<T>
+    {
+        return a.CompareTo(b) < 0 ? a : b;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Max<T>(T a, T b)
+        where T : struct, INumber<T>
+    {
+        return a.CompareTo(b) > 0 ? a : b;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Abs<T>(T self)
         where T : struct, INumber<T>
     {
@@ -69,5 +83,19 @@ public static class Math
         where T : struct, IFloatingPoint<T>
     {
         return T.One / self;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Wrap<T>(this T value, T min, T max)
+        where T : struct, INumber<T>
+    {
+        if (value.CompareTo(min) < 0)
+        {
+            return max - (min - value) % (max - min);
+        }
+        else
+        {
+            return min + (value - min) % (max - min);
+        }
     }
 }
