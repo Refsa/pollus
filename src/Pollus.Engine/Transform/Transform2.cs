@@ -20,7 +20,7 @@ public struct Transform2 : IComponent
     {
         return Mat4f.FromTRS(
             new Vec3f(Position.X, Position.Y, 0),
-            Quat.AxisAngle(Vec3f.Forward, Rotation),
+            Quat.AxisAngle(Vec3f.Forward, Rotation.Radians()),
             new Vec3f(Scale.X, Scale.Y, 1)
         );
     }

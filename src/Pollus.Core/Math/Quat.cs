@@ -18,7 +18,27 @@ public record struct Quat
         this.W = w;
     }
 
+    public Quat(Vec3f v, float w) : this(v.X, v.Y, v.Z, w) { }
+
     public Quat(Vec4f f) : this(f.X, f.Y, f.Z, f.W) { }
+
+    public float LengthSquared()
+    {
+        return X * X + Y * Y + Z * Z + W * W;
+    }
+
+    public bool IsNormalized()
+    {
+        return Math.Abs(LengthSquared() - 1f) < 0.0001f;
+    }
+
+    public Quat Normalized()
+    {
+        var length = LengthSquared();
+        if (length == 0f) return this;
+        var invLength = 1f / length;
+        return new Quat(X * invLength, Y * invLength, Z * invLength, W * invLength);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (Vec4f, Vec4f, Vec4f) ToAxes()
@@ -43,12 +63,32 @@ public record struct Quat
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Quat AxisAngle(Vec3f axis, float angle)
+    public static Quat AxisAngle(Vec3f axis, float radians)
     {
-        (float sin, float cos) = (Math.Deg2Rad(angle) * float.CreateSaturating(0.5f)).SinCos();
+        var halfRads = radians * 0.5f;
+        var sin = Math.Sin(halfRads);
+        return new(
+            axis * sin,
+            Math.Cos(halfRads)
+        );
+    }
 
-        var v = axis * sin;
-        return new(v.X, v.Y, v.Z, cos);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Quat FromEuler(Vec3f eulerAngles)
+    {
+        var (c1, s1) = Math.Radians(eulerAngles.X * 0.5f).SinCos();
+        var (c2, s2) = Math.Radians(eulerAngles.Y * 0.5f).SinCos();
+        var (c3, s3) = Math.Radians(eulerAngles.Z * 0.5f).SinCos();
+
+        var c1c2 = c1 * c2;
+        var s1s2 = s1 * s2;
+
+        return new(
+            c1c2 * s3 + s1s2 * c3,
+            s1 * c2 * c3 + c1 * s2 * s3,
+            c1 * s2 * c3 - s1 * c2 * s3,
+            c1c2 * c3 - s1s2 * s3
+        );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

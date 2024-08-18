@@ -1,6 +1,7 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 
 public record struct Vec3f
 {
@@ -32,32 +33,42 @@ public record struct Vec3f
         Z = z;
     }
 
-    public static implicit operator Vec3f(System.Numerics.Vector3 vector3)
+    public static implicit operator Vec3f(in (float x, float y, float z) tuple)
+    {
+        return new Vec3f(tuple.x, tuple.y, tuple.z);
+    }
+
+    public static implicit operator Vec3f(in System.Numerics.Vector3 vector3)
     {
         return new Vec3f(vector3.X, vector3.Y, vector3.Z);
     }
 
-    public static implicit operator System.Numerics.Vector3(Vec3f vector3)
+    public static implicit operator System.Numerics.Vector3(in Vec3f vector3)
     {
         return new System.Numerics.Vector3(vector3.X, vector3.Y, vector3.Z);
     }
 
-    public static Vec3f operator +(Vec3f left, Vec3f right)
+    public static Vec3f operator +(in Vec3f left, in Vec3f right)
     {
         return new Vec3f(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
     }
 
-    public static Vec3f operator -(Vec3f left, Vec3f right)
+    public static Vec3f operator -(in Vec3f left, in Vec3f right)
     {
         return new Vec3f(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
     }
 
-    public static Vec3f operator *(Vec3f left, float right)
+    public static Vec3f operator -(in Vec3f vec)
+    {
+        return new Vec3f(-vec.X, -vec.Y, -vec.Z);
+    }
+
+    public static Vec3f operator *(in Vec3f left, float right)
     {
         return new Vec3f(left.X * right, left.Y * right, left.Z * right);
     }
 
-    public static Vec3f operator *(float right, Vec3f left)
+    public static Vec3f operator *(float right, in Vec3f left)
     {
         return new Vec3f(left.X * right, left.Y * right, left.Z * right);
     }

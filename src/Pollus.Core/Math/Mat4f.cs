@@ -1,6 +1,7 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
+using Pollus.Debug;
 
 public record struct Mat4f
 {
@@ -28,6 +29,46 @@ public record struct Mat4f
         Col1 = new(m10, m11, m12, m13);
         Col2 = new(m20, m21, m22, m23);
         Col3 = new(m30, m31, m32, m33);
+    }
+
+    public static Mat4f operator *(in Mat4f left, in Mat4f right)
+    {
+        return new(
+            left.Col0 * right.Col0.X + left.Col1 * right.Col0.Y + left.Col2 * right.Col0.Z + left.Col3 * right.Col0.W,
+            left.Col0 * right.Col1.X + left.Col1 * right.Col1.Y + left.Col2 * right.Col1.Z + left.Col3 * right.Col1.W,
+            left.Col0 * right.Col2.X + left.Col1 * right.Col2.Y + left.Col2 * right.Col2.Z + left.Col3 * right.Col2.W,
+            left.Col0 * right.Col3.X + left.Col1 * right.Col3.Y + left.Col2 * right.Col3.Z + left.Col3 * right.Col3.W
+        );
+    }
+
+    public static Mat4f operator *(in Mat4f left, in Vec4f right)
+    {
+        return new(
+            left.Col0 * right.X,
+            left.Col1 * right.Y,
+            left.Col2 * right.Z,
+            left.Col3 * right.W
+        );
+    }
+
+    public static Mat4f operator *(in Vec4f left, in Mat4f right)
+    {
+        return new(
+            left.X * right.Col0,
+            left.Y * right.Col1,
+            left.Z * right.Col2,
+            left.W * right.Col3
+        );
+    }
+
+    public static Mat4f operator *(in Mat4f left, float right)
+    {
+        return new(
+            left.Col0 * right,
+            left.Col1 * right,
+            left.Col2 * right,
+            left.Col3 * right
+        );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -58,6 +99,8 @@ public record struct Mat4f
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f FromTRS(Vec3f translation, Quat rotation, Vec3f scale)
     {
+        Guard.IsTrue(rotation.IsNormalized(), "Rotation must be normalized.");
+
         var (xAxis, yAxis, zAxis) = rotation.ToAxes();
         return new(
             xAxis * scale.X,
@@ -79,7 +122,17 @@ public record struct Mat4f
         );
     }
 
-    public static Mat4f Translation(Vec3f translation)
+    public static Mat4f FromScale(Vec3f scale)
+    {
+        return new(
+            new Vec4f(scale.X, 0f, 0f, 0f),
+            new Vec4f(0f, scale.Y, 0f, 0f),
+            new Vec4f(0f, 0f, scale.Z, 0f),
+            Vec4f.UnitW
+        );
+    }
+
+    public static Mat4f FromTranslation(Vec3f translation)
     {
         return new(
             Vec4f.UnitX,
@@ -89,11 +142,44 @@ public record struct Mat4f
         );
     }
 
-    public static Mat4f Rotation(Quat quat)
+    public static Mat4f FromRotation(Quat quat)
     {
         var (xAxis, yAxis, zAxis) = quat.ToAxes();
         return new(
             xAxis, yAxis, zAxis, Vec4f.UnitW
+        );
+    }
+
+    public static Mat4f FromRotationX(float radians)
+    {
+        var (sin, cos) = Math.SinCos(radians);
+        return new(
+            1f, 0f, 0f, 0f,
+            0f, cos, -sin, 0f,
+            0f, sin, cos, 0f,
+            0f, 0f, 0f, 1f
+        );
+    }
+
+    public static Mat4f FromRotationY(float radians)
+    {
+        var (sin, cos) = Math.SinCos(radians);
+        return new(
+            cos, 0f, sin, 0f,
+            0f, 1f, 0f, 0f,
+            -sin, 0f, cos, 0f,
+            0f, 0f, 0f, 1f
+        );
+    }
+
+    public static Mat4f FromRotationZ(float radians)
+    {
+        var (sin, cos) = Math.SinCos(radians);
+        return new(
+            cos, -sin, 0f, 0f,
+            sin, cos, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            0f, 0f, 0f, 1f
         );
     }
 
@@ -181,16 +267,6 @@ public record struct Mat4f
         var dot1 = dot0.X + dot0.Y + dot0.Z + dot0.W;
 
         var rcp_det = dot1.Rcp();
-        return inverse.Mul(rcp_det);
-    }
-
-    public Mat4f Mul(float other)
-    {
-        return new(
-            Col0 * other,
-            Col1 * other,
-            Col2 * other,
-            Col3 * other
-        );
+        return inverse * rcp_det;
     }
 }

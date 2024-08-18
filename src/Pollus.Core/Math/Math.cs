@@ -15,49 +15,56 @@ public static class Math
     public const double DEG2RAD = 0.0174532925;
     public const double RAD2DEG = 57.2957795;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Deg2Rad<T>(this T deg)
-        where T : struct, IFloatingPoint<T>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Abs<T>(T self)
+        where T : struct, INumber<T>
     {
-        return deg * FloatingConstants<T>.DEG2RAD;
+        return T.Abs(self);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Rad2Deg<T>(this T rad)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Radians<T>(this T degrees)
         where T : struct, IFloatingPoint<T>
     {
-        return rad * FloatingConstants<T>.RAD2DEG;
+        return degrees * FloatingConstants<T>.DEG2RAD;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Degrees<T>(this T radians)
+        where T : struct, IFloatingPoint<T>
+    {
+        return radians * FloatingConstants<T>.RAD2DEG;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static (T Sin, T Cos) SinCos<T>(this T radians)
         where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
         return (radians.Sin(), radians.Cos());
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Sin<T>(this T radians)
         where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
         return T.Sin(radians);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Cos<T>(this T radians)
         where T : struct, IFloatingPoint<T>, ITrigonometricFunctions<T>
     {
         return T.Cos(radians);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Sqrt<T>(this T self)
         where T : struct, INumber<T>, IRootFunctions<T>
     {
         return T.Sqrt(self);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Rcp<T>(this T self)
         where T : struct, IFloatingPoint<T>
     {

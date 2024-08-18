@@ -71,8 +71,8 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
 
     public static readonly OrthographicProjection Default = new()
     {
-        NearClip = 0,
-        FarClip = 1000,
+        NearClip = 0f,
+        FarClip = 100f,
         ScalingMode = ScalingMode.WindowSize(1),
         Scale = 1
     };
@@ -101,13 +101,13 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
             _ => throw new IndexOutOfRangeException("Unknown ScalingMode: " + nameof(ScalingMode.Mode)),
         };
 
-        area = new Rect(0, projWidth, 0, projHeight);
+        area = new Rect(0, projWidth, projHeight, 0);
     }
 
     public Mat4f GetProjection()
     {
         return Mat4f.OrthographicRightHanded(
-            Area.Min.X, Area.Max.X, Area.Max.Y, Area.Min.Y, NearClip, FarClip
+            Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y, NearClip, FarClip
         );
     }
 }

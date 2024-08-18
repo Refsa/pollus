@@ -67,9 +67,9 @@ public class SnakeGame
                 new Player(),
                 new Transform2
                 {
-                    Position = Vec2f.Zero,
-                    Scale = Vec2f.One * 16f,
-                    Rotation = 0,
+                    Position = (128f, 128f),
+                    Scale = (16f, 16f),
+                    Rotation = 0f,
                 },
                 new Renderable
                 {
@@ -78,35 +78,22 @@ public class SnakeGame
                 }
             );
 
-            for (int x = 0; x < 1600 / 16; x++)
-                for (int y = 0; y < 900 / 16; y++)
-                {
-                    world.Spawn(
-                        new Transform2
-                        {
-                            Position = new Vec2f(x, y) * 16f + Vec2f.One * 16f,
-                            Scale = Vec2f.One * 16f,
-                            Rotation = 0,
-                        },
-                        new Renderable
-                        {
-                            Mesh = primitives.Quad,
-                            Material = materialHandle,
-                        }
-                    );
-                }
-
             world.Spawn(Camera2D.Bundle);
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (InputManager input, Query<Transform2>.Filter<All<Player>> qPlayer) =>
+        static (InputManager input, Time time, Query<Transform2>.Filter<All<Camera2D>> qCamera, Query<Transform2>.Filter<All<Player>> qPlayer) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
             var inputVec = keyboard!.GetAxis2D(Key.ArrowLeft, Key.ArrowRight, Key.ArrowUp, Key.ArrowDown);
 
-            qPlayer.ForEach((ref Transform2 transform) =>
+            qCamera.ForEach((ref Transform2 transform) =>
             {
                 transform.Position += inputVec;
+            });
+
+            qPlayer.ForEach((ref Transform2 transform) =>
+            {
+                transform.Rotation = (float)time.SecondsSinceStartup.Cos().Degrees();
             });
         }))
         .Run();

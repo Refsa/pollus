@@ -25,10 +25,17 @@ struct SceneUniform {
 @group(0) @binding(1) var texture: texture_2d<f32>;
 @group(0) @binding(2) var texture_sampler: sampler;
 
+const FLIP_Y: mat4x4f = mat4x4f(
+    1.0, 0.0, 0.0, 0.0,
+    0.0, -1.0, 0.0, 0.0,
+    0.0, 0.0, 1.0, 0.0,
+    0.0, 0.0, 0.0, 1.0
+);
+
 var<private> model: mat4x4f;
 fn vs_setup(input: ModelInput) {
     model = mat4x4f(input.model_0, input.model_1, input.model_2, input.model_3);
-    model[1][1] = -model[1][1];
+    model *= FLIP_Y;
 }
 
 @vertex

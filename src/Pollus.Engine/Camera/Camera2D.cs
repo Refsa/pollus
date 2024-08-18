@@ -2,6 +2,7 @@ namespace Pollus.Engine.Camera;
 
 using Pollus.ECS;
 using Pollus.Engine.Transform;
+using Pollus.Mathematics;
 
 public struct Camera2D : IComponent
 {
