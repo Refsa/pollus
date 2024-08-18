@@ -7,13 +7,6 @@ using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 
-public struct Renderable<TMaterial> : IComponent
-    where TMaterial : IMaterial
-{
-    public required Handle<MeshAsset> Mesh;
-    public required Handle<TMaterial> Material;
-}
-
 public class RenderingPlugin : IPlugin
 {
     static RenderingPlugin()
