@@ -85,6 +85,14 @@ static class SDLMapping
             Silk.NET.SDL.Scancode.ScancodeLeft => Key.ArrowLeft,
             Silk.NET.SDL.Scancode.ScancodeDown => Key.ArrowDown,
             Silk.NET.SDL.Scancode.ScancodeUp => Key.ArrowUp,
+            Silk.NET.SDL.Scancode.ScancodeLctrl => Key.LeftControl,
+            Silk.NET.SDL.Scancode.ScancodeLshift => Key.LeftShift,
+            Silk.NET.SDL.Scancode.ScancodeLalt => Key.LeftAlt,
+            Silk.NET.SDL.Scancode.ScancodeLgui => Key.LeftMeta,
+            Silk.NET.SDL.Scancode.ScancodeRctrl => Key.RightControl,
+            Silk.NET.SDL.Scancode.ScancodeRshift => Key.RightShift,
+            Silk.NET.SDL.Scancode.ScancodeRalt => Key.RightAlt,
+            Silk.NET.SDL.Scancode.ScancodeRgui => Key.RightMeta,
             _ => Key.Unknown,
         };
     }

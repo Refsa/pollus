@@ -23,19 +23,6 @@ public class RenderingPlugin : IPlugin
 
     public void Apply(World world)
     {
-        world.AddPlugins([
-            new MeshPlugin()
-            {
-                SharedPrimitives = PrimitiveType.All,
-            },
-            new ImagePlugin(),
-            new CameraPlugin(),
-        ]);
-
-        var assetServer = world.Resources.Get<AssetServer>();
-        assetServer.AddLoader<WgslShaderSourceLoader>();
-        assetServer.GetAssets<UniformAsset<SceneUniform>>().Add(new UniformAsset<SceneUniform>(new()));
-
         world.Resources.Add(new RenderBatches());
         world.Resources.Add(new RenderContext());
         world.Resources.Add(new RenderAssets()
@@ -45,7 +32,19 @@ public class RenderingPlugin : IPlugin
             .AddLoader(new UniformRenderDataLoader<SceneUniform>())
         );
 
-        world.AddPlugin<MaterialPlugin<Material>>();
+        var assetServer = world.Resources.Get<AssetServer>();
+        assetServer.AddLoader<WgslShaderSourceLoader>();
+        assetServer.GetAssets<UniformAsset<SceneUniform>>().Add(new UniformAsset<SceneUniform>(new()));
+
+        world.AddPlugins([
+            new MeshPlugin()
+            {
+                SharedPrimitives = PrimitiveType.All,
+            },
+            new ImagePlugin(),
+            new CameraPlugin(),
+            new MaterialPlugin<Material>(),
+        ]);
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             "UpdateSceneUniform",

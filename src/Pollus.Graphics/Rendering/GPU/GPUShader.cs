@@ -27,8 +27,8 @@ unsafe public class GPUShader : GPUResourceWrapper
             ),
             _ => throw new NotImplementedException(),
         };
-        nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&shaderModuleDescriptor;
 
+        nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&shaderModuleDescriptor;
         native = context.wgpu.DeviceCreateShaderModule(context.Device, &nativeDescriptor);
     }
 

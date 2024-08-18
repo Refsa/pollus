@@ -98,4 +98,11 @@ public static class Math
             return min + (value - min) % (max - min);
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Clamp<T>(this T value, T min, T max)
+        where T : struct, INumber<T>
+    {
+        return Min(Max(value, min), max);
+    }
 }

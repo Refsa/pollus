@@ -84,8 +84,8 @@ public class SnakeGame
                 }
             );
 
-            for (int x = 0; x < 32; x++)
-                for (int y = 0; y < 32; y++)
+            for (int x = 0; x < 10; x++)
+                for (int y = 0; y < 10; y++)
                 {
                     world.Spawn(
                         new Transform2
@@ -107,15 +107,29 @@ public class SnakeGame
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Time time,
-            Query<Transform2>.Filter<All<Camera2D>> qCamera, Query<Transform2>.Filter<All<Player>> qPlayer,
+            Query<Transform2, OrthographicProjection>.Filter<All<Camera2D>> qCamera, Query<Transform2>.Filter<All<Player>> qPlayer,
             Query<Transform2, RotateMe> qRotateMe) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
             var inputVec = keyboard!.GetAxis2D(Key.ArrowLeft, Key.ArrowRight, Key.ArrowUp, Key.ArrowDown);
+            var controlHeld = keyboard.Pressed(Key.LeftControl);
+            var zoomIn = keyboard.JustPressed(Key.ArrowUp);
+            var zoomOut = keyboard.JustPressed(Key.ArrowDown);
 
-            qCamera.ForEach((ref Transform2 transform) =>
+            qCamera.ForEach((ref Transform2 transform, ref OrthographicProjection projection) =>
             {
-                transform.Position += inputVec * 400f * (float)time.DeltaTime;
+                if (controlHeld)
+                {
+                    if (zoomIn || zoomOut)
+                    {
+                        projection.Scale += inputVec.Y * 0.25f;
+                        projection.Scale = projection.Scale.Clamp(0.25f, 10f);
+                    }
+                }
+                else
+                {
+                    transform.Position += inputVec * 400f * (float)time.DeltaTime;
+                }
             });
 
             qPlayer.ForEach((ref Transform2 transform) =>

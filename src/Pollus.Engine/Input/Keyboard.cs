@@ -20,6 +20,8 @@ public enum Key
     RightControl,
     LeftAlt,
     RightAlt,
+    LeftMeta,
+    RightMeta,
     CapsLock,
     Escape,
     Space,

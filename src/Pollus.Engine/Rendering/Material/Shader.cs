@@ -5,6 +5,7 @@ using Pollus.Engine.Assets;
 
 public class ShaderAsset
 {
+    public required string Name { get; set; }
     public required string Source { get; set; }
 }
 
@@ -16,6 +17,7 @@ public class WgslShaderSourceLoader : AssetLoader<ShaderAsset>
     {
         context.SetAsset(new ShaderAsset
         {
+            Name = context.FileName,
             Source = Encoding.UTF8.GetString(data)
         });
     }

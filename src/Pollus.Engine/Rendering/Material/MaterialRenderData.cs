@@ -43,7 +43,7 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         var shader = gpuContext.CreateShaderModule(new()
         {
             Backend = ShaderBackend.WGSL,
-            Label = TMaterial.Name,
+            Label = shaderAsset.Name,
             Content = shaderAsset.Source,
         });
 

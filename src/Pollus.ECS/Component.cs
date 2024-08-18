@@ -53,7 +53,7 @@ public static class Component
         if (new T() is IComponentWrapper)
         {
             var wrappedInfo = ComponentWrapper<T>.Info;
-            componentIDs[type] = componentInfos[info.ID] = new Info
+            info = new Info
             {
                 ID = wrappedInfo.ID,
                 Type = wrappedInfo.Type,

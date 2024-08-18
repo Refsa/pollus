@@ -25,6 +25,8 @@ public struct Projection : IComponent, IProjection
     ProjectionType type;
     [FieldOffset(0)]
     OrthographicProjection orthographic;
+    [FieldOffset(4)]
+    public Vec2<int> Size;
 
     public ProjectionType Type => throw new NotImplementedException();
 
@@ -39,6 +41,7 @@ public struct Projection : IComponent, IProjection
 
     public void Update(Vec2<int> size)
     {
+        Size = size;
         if (type == ProjectionType.Orthographic) orthographic.Update(size);
     }
 
@@ -78,6 +81,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
     };
 
     readonly ProjectionType type = ProjectionType.Orthographic;
+    public readonly Vec2<int> Size;
 
     public float NearClip;
     public float FarClip;
@@ -101,7 +105,8 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
             _ => throw new IndexOutOfRangeException("Unknown ScalingMode: " + nameof(ScalingMode.Mode)),
         };
 
-        area = new Rect(0, projWidth, projHeight, 0);
+        area = new Rect(-projWidth / 2, projWidth / 2, projHeight / 2, -projHeight / 2);
+        area.Scale(new Vec2f(Scale, Scale));
     }
 
     public Mat4f GetProjection()

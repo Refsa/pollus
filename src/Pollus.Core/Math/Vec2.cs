@@ -53,4 +53,9 @@ public record struct Vec2<T>
     {
         return new Vec2<T>(left.X * right, left.Y * right);
     }
+
+    public static Vec2<T> operator /(Vec2<T> left, T right)
+    {
+        return new Vec2<T>(left.X / right, left.Y / right);
+    }
 }
