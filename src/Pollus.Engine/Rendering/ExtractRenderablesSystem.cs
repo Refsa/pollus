@@ -4,7 +4,6 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
-using Pollus.Mathematics;
 
 struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMaterial>>
     where TMaterial : IMaterial

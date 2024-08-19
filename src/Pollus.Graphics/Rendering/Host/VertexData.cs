@@ -22,7 +22,8 @@ public struct VertexData : IBufferData
 
     public ulong SizeInBytes => (ulong)data.Length;
     public uint Stride => stride;
-    public uint Count => (uint)SizeInBytes / stride;
+    public uint Capacity => (uint)SizeInBytes / stride;
+    public uint Count => (uint)data.Length;
     public int AttributeCount => attributeCount;
     public BufferType Usage => BufferType.Vertex;
 
@@ -139,6 +140,13 @@ public struct VertexData : IBufferData
         target.Write<byte>(data, offset);
     }
 
+    public void Resize(uint capacity)
+    {
+        var newData = new byte[capacity * stride];
+        data.AsSpan().CopyTo(newData.AsSpan());
+        data = newData;
+    }
+
     public static VertexData From(uint capacity, ReadOnlySpan<VertexFormat> formats)
     {
         if (formats.Length > MAX_ATTRIBUTES)
@@ -146,13 +154,18 @@ public struct VertexData : IBufferData
             throw new ArgumentOutOfRangeException(nameof(formats), "Too many attributes");
         }
 
-        Span<Attribute> attributes = stackalloc Attribute[formats.Length];
-        uint stride = 0;
+        Span<Attribute> attributes = stackalloc Attribute[formats.GetFormatCount()];
+        ulong offset = 0;
+        int attrIdx = 0;
         for (int i = 0; i < formats.Length; i++)
         {
-            attributes[i] = new Attribute((int)stride, formats[i]);
-            stride += formats[i].Stride();
+            for (int k = 0; k < formats[i].GetFormatCount(); k++)
+            {
+                var nativeFormat = formats[i].GetNativeFormat();
+                attributes[attrIdx++] = new Attribute((int)offset, nativeFormat);
+                offset += nativeFormat.Stride();
+            }
         }
-        return new VertexData(capacity, stride, attributes);
+        return new VertexData(capacity, (uint)formats.Stride(), attributes);
     }
 }

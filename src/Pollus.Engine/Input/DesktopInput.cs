@@ -1,7 +1,7 @@
+namespace Pollus.Engine.Input;
+
 using Pollus.Engine.Platform;
 using Pollus.Graphics.SDL;
-
-namespace Pollus.Engine.Input;
 
 public class DesktopInput : InputManager
 {

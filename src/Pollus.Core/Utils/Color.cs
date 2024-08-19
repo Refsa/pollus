@@ -146,6 +146,11 @@ public struct Color
         return new Vec4<double>(col.R, col.G, col.B, col.A);
     }
 
+    public static implicit operator Vec4f(in Color col)
+    {
+        return new Vec4f(col.R, col.G, col.B, col.A);
+    }
+
     public static implicit operator System.Numerics.Vector4(Color col)
     {
         return new System.Numerics.Vector4(col.R, col.G, col.B, col.A);

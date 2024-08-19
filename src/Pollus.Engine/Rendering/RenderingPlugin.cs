@@ -4,7 +4,6 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
-using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 
 public class RenderingPlugin : IPlugin
@@ -44,6 +43,7 @@ public class RenderingPlugin : IPlugin
             new ImagePlugin(),
             new CameraPlugin(),
             new MaterialPlugin<Material>(),
+            new SpritePlugin(),
         ]);
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
@@ -105,26 +105,11 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             "RenderRenderable",
-            static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderBatches batches, RenderContext context) =>
+            static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderBatches batches, SpriteBatches spriteBatches, RenderContext context) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
-                var commandEncoder = context.CommandEncoder.Value;
-                var surfaceTextureView = context.SurfaceTextureView.Value;
-
-                using var renderPass = commandEncoder.BeginRenderPass(new()
-                {
-                    Label = """RenderPass""",
-                    ColorAttachments = new[]
-                        {
-                            new RenderPassColorAttachment()
-                            {
-                                View = surfaceTextureView.Native,
-                                LoadOp = LoadOp.Clear,
-                                StoreOp = StoreOp.Store,
-                                ClearValue = new(0.15f, 0.125f, 0.1f, 1.0f),
-                            },
-                        },
-                });
+                
+                var renderPass = context.BeginRenderPass();
 
                 foreach (var batch in batches.Batches)
                 {
@@ -151,7 +136,25 @@ public class RenderingPlugin : IPlugin
                     batch.Reset();
                 }
 
-                renderPass.End();
+                foreach (var batch in spriteBatches.Batches)
+                {
+                    batch.WriteBuffer();
+
+                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+
+                    renderPass.SetPipeline(material.Pipeline);
+                    for (int i = 0; i < material.BindGroups.Length; i++)
+                    {
+                        renderPass.SetBindGroup(material.BindGroups[i], (uint)i);
+                    }
+
+                    renderPass.SetVertexBuffer(0, batch.InstanceBuffer);
+                    renderPass.Draw(6, (uint)batch.Count, 0, 0);
+
+                    batch.Reset();
+                }
+
+                context.EndRenderPass();
             }
         ));
     }

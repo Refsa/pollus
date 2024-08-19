@@ -8,6 +8,7 @@ public class RenderContext
     public GPUSurfaceTexture? SurfaceTexture;
     public GPUTextureView? SurfaceTextureView;
     public GPUCommandEncoder? CommandEncoder;
+    public GPURenderPassEncoder? CurrentRenderPass;
 
     public void Begin(IWGPUContext gpuContext)
     {
@@ -36,5 +37,37 @@ public class RenderContext
 
         CommandEncoder = null;
         SurfaceTexture = null;
+    }
+
+    public GPURenderPassEncoder BeginRenderPass()
+    {
+        Guard.IsNull(CurrentRenderPass, "CurrentRenderPass is not null");
+        Guard.IsNotNull(SurfaceTextureView, "SurfaceTextureView is null");
+        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
+
+        CurrentRenderPass = CommandEncoder.Value.BeginRenderPass(new()
+        {
+            Label = """RenderPass""",
+            ColorAttachments = new[]
+            {
+                new RenderPassColorAttachment()
+                {
+                    View = SurfaceTextureView.Value.Native,
+                    LoadOp = LoadOp.Clear,
+                    StoreOp = StoreOp.Store,
+                    ClearValue = new(0.15f, 0.125f, 0.1f, 1.0f),
+                },
+            },
+        });
+        
+        return CurrentRenderPass.Value;
+    }
+
+    public void EndRenderPass()
+    {
+        Guard.IsNotNull(CurrentRenderPass, "CurrentRenderPass is null");
+        CurrentRenderPass.Value.End();
+        CurrentRenderPass.Value.Dispose();
+        CurrentRenderPass = null;
     }
 }

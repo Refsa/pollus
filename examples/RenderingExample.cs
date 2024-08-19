@@ -37,7 +37,7 @@ public class RenderingExample
             new PerformanceTrackerPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<ShaderAsset> shaders, Assets<SamplerAsset> samplers) =>
+        static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<SamplerAsset> samplers) =>
         {
             Handle[] materialHandles = [
                 materials.Add(new Material()

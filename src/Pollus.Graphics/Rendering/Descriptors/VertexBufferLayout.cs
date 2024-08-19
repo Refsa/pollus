@@ -19,12 +19,13 @@ public struct VertexBufferLayout
         Attributes = new VertexAttribute[expandedFormatCounts];
 
         ulong offset = 0;
+        int attrIdx = 0;
         for (int i = 0; i < formats.Length; i++)
         {
             for (int k = 0; k < formats[i].GetFormatCount(); k++)
             {
                 var nativeFormat = formats[i].GetNativeFormat();
-                Attributes[i + k] = new VertexAttribute(nativeFormat, offset, startShaderLocation++);
+                Attributes[attrIdx++] = new VertexAttribute(nativeFormat, offset, startShaderLocation++);
                 offset += nativeFormat.Stride();
             }
         }

@@ -17,7 +17,7 @@ public interface IBinding
     ShaderStage Visibility { get; }
 
     BindGroupLayoutEntry Layout(uint binding);
-    BindGroupEntry Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding);
+    BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding);
 }
 
 public class UniformBinding<T> : IBinding
@@ -28,7 +28,7 @@ public class UniformBinding<T> : IBinding
     public ShaderStage Visibility { get; init; } = ShaderStage.Vertex | ShaderStage.Fragment;
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.Uniform<T>(binding, Visibility, false);
-    public BindGroupEntry Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
+    public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
         var handle = new Handle<UniformAsset<T>>(0);
         renderAssets.Prepare(gpuContext, assetServer, handle);
@@ -48,7 +48,7 @@ public class TextureBinding : IBinding
     public static implicit operator TextureBinding(Handle<ImageAsset> image) => new() { Image = image };
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.TextureEntry(binding, Visibility, TextureSampleType.Float, TextureViewDimension.Dimension2D);
-    public BindGroupEntry Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
+    public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
         renderAssets.Prepare(gpuContext, assetServer, Image);
         var texture = renderAssets.Get<TextureRenderData>(Image);
@@ -66,7 +66,7 @@ public class SamplerBinding : IBinding
     public static implicit operator SamplerBinding(Handle<SamplerAsset> sampler) => new() { Sampler = sampler };
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.SamplerEntry(binding, Visibility, SamplerBindingType.Filtering);
-    public BindGroupEntry Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
+    public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
         renderAssets.Prepare(gpuContext, assetServer, Sampler);
         var sampler = renderAssets.Get<SamplerRenderData>(Sampler);

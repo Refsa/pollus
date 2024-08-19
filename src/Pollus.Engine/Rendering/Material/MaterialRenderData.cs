@@ -59,7 +59,7 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
             {
                 Label = $"{TMaterial.Name}_BindGroup_{groupIndex}",
                 Layout = bindGroupLayouts[groupIndex],
-                Entries = group.Select((binding, bindingIndex) => binding.Prepare(renderAssets, gpuContext, assetServer, (uint)bindingIndex)).ToArray(),
+                Entries = group.Select((binding, bindingIndex) => binding.Binding(renderAssets, gpuContext, assetServer, (uint)bindingIndex)).ToArray(),
             })).ToArray();
 
         var pipelineLayout = gpuContext.CreatePipelineLayout(new()

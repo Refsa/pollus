@@ -10,6 +10,7 @@ using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
+using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
 public class SnakeGame
@@ -24,12 +25,12 @@ public class SnakeGame
             new PerformanceTrackerPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<ShaderAsset> shaders, Assets<SamplerAsset> samplers) =>
+        static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
         {
-            var materialHandle = materials.Add(new Material()
+            var spriteMaterial = materials.Add(new SpriteMaterial
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                Texture = assetServer.Load<ImageAsset>("snake/snake_head.png"),
+                ShaderSource = assetServer.Load<ShaderAsset>("shaders/sprite.wgsl"),
+                Texture = assetServer.Load<ImageAsset>("breakout/breakout_sheet.png"),
                 Sampler = samplers.Add(SamplerDescriptor.Nearest),
             });
 
@@ -41,10 +42,11 @@ public class SnakeGame
                     Scale = (16f, 16f),
                     Rotation = 0f,
                 },
-                new Renderable<Material>
+                new Sprite
                 {
-                    Mesh = primitives.Quad,
-                    Material = materialHandle,
+                    Material = spriteMaterial,
+                    Slice = new Rect(0, 0, 16, 16),
+                    Color = Color.WHITE,
                 }
             );
 
@@ -77,10 +79,10 @@ public class SnakeGame
                 }
             });
 
-            qPlayer.ForEach((ref Transform2 transform) =>
+            /* qPlayer.ForEach((ref Transform2 transform) =>
             {
                 transform.Rotation = (float)(time.SecondsSinceStartup * 360f).Wrap(0f, 360f);
-            });
+            }); */
         }))
         .Run();
 }

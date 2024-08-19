@@ -35,6 +35,11 @@ public enum VertexFormat
     Sint32x4 = 30,
 
     /// <summary>
+    /// Not supported by rendering backend, is transformed to 3 x Float32x4
+    /// </summary>
+    Mat3x4 = int.MaxValue - 3,
+
+    /// <summary>
     /// Not supported by rendering backend, is transformed to 3 x Float32x3
     /// </summary>
     Mat3x3 = int.MaxValue - 2,
@@ -83,8 +88,29 @@ public static class VertexFormatExtensions
             VertexFormat.Sint32x4 => 16,
             VertexFormat.Mat3x3 => 36,
             VertexFormat.Mat4x4 => 64,
+            VertexFormat.Mat3x4 => 48,
             _ => throw new InvalidOperationException("Unsupported format"),
         };
+    }
+
+    public static int Stride(this VertexFormat[] formats)
+    {
+        int stride = 0;
+        foreach (var format in formats)
+        {
+            stride += format.Stride();
+        }
+        return stride;
+    }
+
+    public static int Stride(this ReadOnlySpan<VertexFormat> formats)
+    {
+        int stride = 0;
+        foreach (var format in formats)
+        {
+            stride += format.Stride();
+        }
+        return stride;
     }
 
     public static int GetFormatCount(this VertexFormat format)
@@ -93,8 +119,19 @@ public static class VertexFormatExtensions
         {
             VertexFormat.Mat3x3 => 3,
             VertexFormat.Mat4x4 => 4,
+            VertexFormat.Mat3x4 => 3,
             _ => 1,
         };
+    }
+
+    public static int GetFormatCount(this ReadOnlySpan<VertexFormat> formats)
+    {
+        int count = 0;
+        foreach (var format in formats)
+        {
+            count += format.GetFormatCount();
+        }
+        return count;
     }
 
     public static VertexFormat GetNativeFormat(this VertexFormat format)
@@ -103,6 +140,7 @@ public static class VertexFormatExtensions
         {
             VertexFormat.Mat3x3 => VertexFormat.Float32x3,
             VertexFormat.Mat4x4 => VertexFormat.Float32x4,
+            VertexFormat.Mat3x4 => VertexFormat.Float32x4,
             _ => format,
         };
     }

@@ -11,7 +11,7 @@ public struct Rect
         Max = max;
     }
 
-    public Rect(float minX, float maxX, float minY, float maxY)
+    public Rect(float minX, float minY, float maxX, float maxY)
     {
         Min = new Vec2f(minX, minY);
         Max = new Vec2f(maxX, maxY);
@@ -20,6 +20,11 @@ public struct Rect
     public static Rect FromCenterScale(Vec2f center, Vec2f scale)
     {
         return new Rect(center - scale / 2, center + scale / 2);
+    }
+
+    public static implicit operator Vec4f(in Rect rect)
+    {
+        return new Vec4f(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y);
     }
 
     public void Scale(Vec2f scale)

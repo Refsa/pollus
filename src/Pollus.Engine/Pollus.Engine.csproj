@@ -14,4 +14,11 @@
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
     <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="**\*.wgsl">
+      <Link>assets/shaders/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
