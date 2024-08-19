@@ -8,6 +8,6 @@ public enum ShaderBackend
 public ref struct ShaderModuleDescriptor
 {
     public ShaderBackend Backend { get; init; }
-    public ReadOnlySpan<char> Label { get; init; }
-    public ReadOnlySpan<char> Content { get; init; }
+    public string Label { get; init; }
+    public string Content { get; init; }
 }

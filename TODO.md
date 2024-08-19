@@ -13,6 +13,7 @@
 	- [ ] Mixers
 - Assets
 	- [ ] Async loading
+	- [ ] Streaming / partial loading
 - ECS
 	- [x] Systems
 	- [ ] Change Detection

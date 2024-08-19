@@ -15,7 +15,8 @@
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
 
-    <EmccFlags>--embed-file assets</EmccFlags>
+    <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
+    <EmccFlags>--embed-file '.\bin\Release\net8.0-browser\browser-wasm\assets@assets'</EmccFlags>
     
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
