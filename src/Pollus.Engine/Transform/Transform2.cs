@@ -16,7 +16,7 @@ public struct Transform2 : IComponent
     public Vec2f Scale;
     public float Rotation;
 
-    public Mat4f ToMatrix()
+    public Mat4f ToMat4f()
     {
         return Mat4f.FromTRS(
             new Vec3f(Position.X, Position.Y, 0),

@@ -4,6 +4,7 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
+using Pollus.Mathematics;
 
 struct ExtractSpritesJob : IForEach<Transform2, Sprite>
 {
@@ -22,7 +23,7 @@ struct ExtractSpritesJob : IForEach<Transform2, Sprite>
             batch.Resize(GpuContext, batch.Capacity * 2);
         }
 
-        var matrix = transform.ToMatrix();
+        var matrix = transform.ToMat4f().Transpose();
         batch.Write(matrix.Col0, matrix.Col1, matrix.Col2, sprite.Slice, sprite.Color);
     }
 }

@@ -58,7 +58,7 @@ public class RenderingPlugin : IPlugin
                 qCamera.ForEach((ref Projection projection, ref Transform2 transform) =>
                 {
                     sceneUniform.Projection = projection.GetProjection();
-                    sceneUniform.View = transform.ToMatrix().Inverse();
+                    sceneUniform.View = transform.ToMat4f();
                 });
 
                 uniformAsset.Value = sceneUniform;

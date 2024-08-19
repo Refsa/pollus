@@ -38,12 +38,12 @@ var<private> vertex: vec4f;
 var<private> slice_origin: vec2f;
 var<private> slice_extent: vec2f;
 fn vs_setup(input: VertexInput) {
-    model = mat4x4f(
+    model = transpose(mat4x4f(
         input.i_model_0, 
         input.i_model_1, 
         input.i_model_2, 
         vec4f(0.0, 0.0, 0.0, 1.0)
-    );
+    ));
     model *= FLIP_Y;
 
     vertex = vec4f(f32(input.index & 0x1u), f32((input.index & 0x2u) >> 1u), 0.0, 1.0);
@@ -56,7 +56,7 @@ fn vs_main(
     vs_setup(input);
 
     var out: VertexOutput;
-    out.pos = scene_uniform.projection * scene_uniform.view * model * vertex;
+    out.pos = scene_uniform.projection * scene_uniform.view * model * (vertex + vec4f(-0.5, -0.5, 0.0, 0.0));
     out.uv = vertex.xy * input.i_slice.zw + input.i_slice.xy;
     out.color = input.i_color;
     return out;

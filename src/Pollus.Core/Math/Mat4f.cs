@@ -198,6 +198,16 @@ public record struct Mat4f
         return Quat.FromMat4(this);
     }
 
+    public Mat4f Transpose()
+    {
+        return new(
+            new Vec4f(Col0.X, Col1.X, Col2.X, Col3.X),
+            new Vec4f(Col0.Y, Col1.Y, Col2.Y, Col3.Y),
+            new Vec4f(Col0.Z, Col1.Z, Col2.Z, Col3.Z),
+            new Vec4f(Col0.W, Col1.W, Col2.W, Col3.W)
+        );
+    }
+
     public Mat4f Inverse()
     {
         var (m00, m01, m02, m03) = (Col0.X, Col0.Y, Col0.Z, Col0.W);

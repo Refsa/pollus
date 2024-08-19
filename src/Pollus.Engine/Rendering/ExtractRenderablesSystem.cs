@@ -23,7 +23,7 @@ struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMater
             batch.Resize(GpuContext, batch.Capacity * 2);
         }
 
-        batch.Write(transform.ToMatrix());
+        batch.Write(transform.ToMat4f());
     }
 }
 

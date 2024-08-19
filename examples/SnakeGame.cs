@@ -63,7 +63,7 @@ public class SnakeGame
             var zoomIn = keyboard.JustPressed(Key.ArrowUp);
             var zoomOut = keyboard.JustPressed(Key.ArrowDown);
 
-            qCamera.ForEach((ref Transform2 transform, ref OrthographicProjection projection) =>
+            /* qCamera.ForEach((ref Transform2 transform, ref OrthographicProjection projection) =>
             {
                 if (controlHeld)
                 {
@@ -77,12 +77,13 @@ public class SnakeGame
                 {
                     transform.Position += inputVec * 400f * (float)time.DeltaTime;
                 }
-            });
-
-            /* qPlayer.ForEach((ref Transform2 transform) =>
-            {
-                transform.Rotation = (float)(time.SecondsSinceStartup * 360f).Wrap(0f, 360f);
             }); */
+
+            qPlayer.ForEach((ref Transform2 transform) =>
+            {
+                transform.Position += inputVec * 400f * (float)time.DeltaTime;
+                transform.Rotation = (float)(time.SecondsSinceStartup * 360f).Wrap(0f, 360f);
+            });
         }))
         .Run();
 }

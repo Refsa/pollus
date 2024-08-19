@@ -33,6 +33,10 @@ public record struct Vec3f
         Z = z;
     }
 
+    public Vec2f XY => new Vec2f(X, Y);
+    public Vec2f XZ => new Vec2f(X, Z);
+    public Vec2f YZ => new Vec2f(Y, Z);
+
     public static implicit operator Vec3f(in (float x, float y, float z) tuple)
     {
         return new Vec3f(tuple.x, tuple.y, tuple.z);
