@@ -126,6 +126,18 @@ public class Assets<T> : IDisposable
             assetHandle.Asset = default;
         }
     }
+
+    public void Remove(Handle handle)
+    {
+        if (assets.TryGetValue(handle, out var assetHandle))
+        {
+            if (assetHandle.Asset is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+            assets.Remove(handle);
+        }
+    }
 }
 
 public class Assets : IDisposable

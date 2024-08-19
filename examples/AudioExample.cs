@@ -21,7 +21,6 @@ public class AudioExample
                 Entity.With(
                     new AudioSource
                     {
-                        Playing = true,
                         Gain = 1.0f,
                         Pitch = 1.0f,
                         Mode = PlaybackMode.Loop,

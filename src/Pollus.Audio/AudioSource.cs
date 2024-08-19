@@ -34,6 +34,15 @@ public class AudioSource : IDisposable
         }
     }
 
+    public bool IsPlaying
+    {
+        get
+        {
+            audio.al.GetSourceProperty(sourceId, GetSourceInteger.BuffersQueued, out var value);
+            return value > 0;
+        }
+    }
+
     public float Pitch
     {
         get

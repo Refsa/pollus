@@ -10,7 +10,6 @@ public struct AudioSource : IComponent
 {
     internal Handle<Pollus.Audio.AudioSource> DeviceSource;
 
-    public bool Playing;
     public float Gain;
     public float Pitch;
     public PlaybackMode Mode;
@@ -35,6 +34,7 @@ public class AudioPlugin : IPlugin
         ResourceFetch<AudioManager>.Register();
         AssetsFetch<Pollus.Audio.AudioSource>.Register();
         AssetsFetch<Pollus.Audio.AudioBuffer>.Register();
+        AssetsFetch<AudioAsset>.Register();
     }
 
     public void Apply(World world)
@@ -44,12 +44,15 @@ public class AudioPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Last, [
             FnSystem("AudioUpdate", static (
+                World world,
                 AudioManager audioManager, Assets<AudioAsset> audioAssets,
                 Assets<Pollus.Audio.AudioSource> deviceSources,
                 Assets<Pollus.Audio.AudioBuffer> deviceBuffers,
                 Query<AudioSource, AudioPlayback> qSources) =>
             {
-                qSources.ForEach((ref AudioSource source, ref AudioPlayback playback) =>
+                var completedSources = new List<Entity>();
+
+                qSources.ForEach((in Entity entity, ref AudioSource source, ref AudioPlayback playback) =>
                 {
                     var deviceSource = deviceSources.Get(source.DeviceSource);
                     if (deviceSource is null)
@@ -58,35 +61,35 @@ public class AudioPlugin : IPlugin
                         source.DeviceSource = deviceSources.Add(deviceSource, null);
                         deviceSource.Position = Vec3<float>.Zero;
                         deviceSource.Velocity = Vec3<float>.Zero;
-                    }
+                        deviceSource.Gain = source.Gain;
+                        deviceSource.Pitch = source.Pitch;
+                        deviceSource.Looping = source.Mode == PlaybackMode.Loop;
 
-                    var deviceBuffer = deviceBuffers.Get(playback.DeviceBuffer);
-                    if (deviceBuffer is null)
-                    {
-                        deviceBuffer = audioManager.CreateBuffer();
+                        var deviceBuffer = audioManager.CreateBuffer();
                         playback.DeviceBuffer = deviceBuffers.Add(deviceBuffer, null);
 
                         var audioAsset = audioAssets.Get(playback.Asset);
                         deviceBuffer.SetData<byte>(audioAsset!.Data, audioAsset.SampleInfo);
+
                         deviceSource.QueueBuffer(deviceBuffer);
-                    }
-
-                    deviceSource.Gain = source.Gain;
-                    deviceSource.Pitch = source.Pitch;
-                    deviceSource.Looping = source.Mode == PlaybackMode.Loop;
-
-                    if (source.Playing && deviceSource.State != AudioSourceState.Playing)
-                    {
                         deviceSource.Play();
+                        return;
                     }
-                    else if (!source.Playing && deviceSource.State == AudioSourceState.Playing)
-                    {
-                        deviceSource.Stop();
 
+                    if (!deviceSource.IsPlaying)
+                    {
+                        deviceBuffers.Remove(playback.DeviceBuffer);
+                        deviceSources.Remove(source.DeviceSource);
+                        completedSources.Add(entity);
                     }
                 });
 
-            }).RunCriteria(new RunFixed(60)),
+                foreach (var entity in completedSources)
+                {
+                    world.Despawn(entity);
+                }
+
+            }).RunCriteria(new RunFixed(120)),
         ]);
     }
 }

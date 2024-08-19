@@ -3,6 +3,7 @@ namespace Pollus.Examples;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
+using Pollus.Engine.Audio;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Input;
@@ -33,6 +34,11 @@ public class BreakoutGame
         public required Rect Bounds;
     }
 
+    struct MainMixer : IComponent
+    {
+
+    }
+
     enum State
     {
         SpawnBall,
@@ -58,6 +64,7 @@ public class BreakoutGame
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
             new InputPlugin(),
+            new AudioPlugin(),
             new PerformanceTrackerPlugin(),
         ])
         .AddResource(new GameState { State = State.SpawnBall, Lives = 3, Score = 0 })
@@ -131,7 +138,11 @@ public class BreakoutGame
             });
         }))
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
-        static (World world, Time time, IWindow window, Query<Transform2, Ball, Collider> qBall, Query<Transform2, Collider>.Filter<None<Ball>> qColliders) =>
+        static (World world, Time time, IWindow window, AssetServer assetServer,
+            Query<Transform2, Ball, Collider> qBall,
+            Query<Transform2, Collider>.Filter<None<Ball>> qColliders,
+            Query<AudioSource>.Filter<All<MainMixer>> qAudioSources
+        ) =>
         {
             var collisions = new List<Entity>();
 
@@ -165,6 +176,20 @@ public class BreakoutGame
                     var normal = collisionNormal.Value.Normalized();
                     ballTransform.Position -= normal * 2;
                     ball.Velocity = ball.Velocity.Reflect(normal);
+
+                    world.Spawn(
+                        new MainMixer(),
+                        new AudioSource
+                        {
+                            Gain = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
+                            Pitch = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
+                            Mode = PlaybackMode.Once
+                        },
+                        new AudioPlayback
+                        {
+                            Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
+                        }
+                    );
                 }
 
                 ball.Velocity = ball.Velocity.Clamp(-Vec2f.One, Vec2f.One);
