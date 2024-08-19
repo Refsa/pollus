@@ -1,7 +1,7 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
-using Pollus.Debug;
+using Pollus.Debugging;
 
 public record struct Mat4f
 {

@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Debug;
+using Pollus.Debugging;
 
 public class RenderContext
 {

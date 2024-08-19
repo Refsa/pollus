@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Assets;
 
+using Pollus.Debugging;
+
 public class AssetServer : IDisposable
 {
     public AssetIO AssetIO { get; }
@@ -70,9 +72,9 @@ public class AssetServer : IDisposable
         var loadContext = new LoadContext()
         {
             Path = path,
-            FileName = Path.GetFileName(path.Path)
+            FileName = Path.GetFileNameWithoutExtension(path.Path)
         };
-        
+
         AssetIO.LoadPath(path, out var data);
         loader.Load(data, ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)

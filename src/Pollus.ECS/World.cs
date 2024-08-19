@@ -1,5 +1,5 @@
 using System.Runtime.CompilerServices;
-using Pollus.Debug;
+using Pollus.Debugging;
 
 namespace Pollus.ECS;
 
