@@ -105,7 +105,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
             _ => throw new IndexOutOfRangeException("Unknown ScalingMode: " + nameof(ScalingMode.Mode)),
         };
 
-        area = new Rect(-projWidth / 2, projHeight / 2, projWidth / 2, -projHeight / 2);
+        area = new Rect(0f, projHeight, projWidth, 0f);
         area.Scale(new Vec2f(Scale, Scale));
     }
 

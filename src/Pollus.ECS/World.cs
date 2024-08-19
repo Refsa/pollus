@@ -44,6 +44,11 @@ public class World : IDisposable
         return builder.Spawn(this);
     }
 
+    public void Despawn(Entity entity)
+    {
+        Store.DestroyEntity(entity);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Preallocate<TBuilder>(in TBuilder builder, int count)
         where TBuilder : IEntityBuilder

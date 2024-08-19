@@ -1,4 +1,4 @@
-namespace Pollus.Game;
+namespace Pollus.Examples;
 
 using Pollus.ECS;
 using Pollus.Engine;

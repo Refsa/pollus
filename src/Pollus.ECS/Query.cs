@@ -50,6 +50,11 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             query.ForEach(pred);
         }
 
+        public void ForEach(ForEachEntityDelegate<C0> pred)
+        {
+            query.ForEach(pred);
+        }
+
         public readonly void ForEach<TForEach>(TForEach iter)
             where TForEach : struct, IForEachBase<C0>
         {
@@ -84,6 +89,20 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             foreach (ref var curr in comp1)
             {
                 pred(ref curr);
+            }
+        }
+    }
+
+    public readonly void ForEach(ForEachEntityDelegate<C0> pred)
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
+            scoped var entities = chunk.GetEntities();
+            for (int i = 0; i < chunk.Count; i++)
+            {
+                pred(entities[i], ref comp1[i]);
             }
         }
     }

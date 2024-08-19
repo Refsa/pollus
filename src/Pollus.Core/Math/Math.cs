@@ -16,6 +16,13 @@ public static class Math
     public const double RAD2DEG = 57.2957795;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static int Sign<T>(T self)
+        where T : struct, INumber<T>
+    {
+        return T.Sign(self);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Min<T>(T a, T b)
         where T : struct, INumber<T>
     {

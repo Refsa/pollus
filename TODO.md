@@ -26,10 +26,20 @@
 	- [ ] Hierarchies
 	- [ ] Events
 	- [ ] Commands
+	- [ ] State Flags
+- UI
+	- [ ] IMGUI
+	- [ ] dunno some custom UI stuff
 - Rendering
+	- [ ] Text/Font
 	- [ ] 2D Pipeline
 		- [ ] Sprites
 		- [ ] Custom Materials
 		- [ ] Post Processing
 	- [x] Extract rendering data
 	- [ ] Rendering Stage
+	- [ ] Gizmos
+- 2D Physics
+	- [ ] Spatial Queries
+- General
+	- [ ] Seeded random

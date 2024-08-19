@@ -79,7 +79,7 @@ fn fs_main(
     if (out.color.a == 0.0) {
         discard;
     }
-    out.color = vec4f(vec3f(sin(scene_uniform.time) * 0.5 + 0.5), 1.0) * out.color * input.color;
+    out.color = out.color * input.color;
 
     return out;
 }

@@ -48,9 +48,19 @@ public record struct Vec2f
         return new Vec2f(left.X - right.X, left.Y - right.Y);
     }
 
+    public static Vec2f operator -(Vec2f left)
+    {
+        return new Vec2f(-left.X, -left.Y);
+    }
+
     public static Vec2f operator *(Vec2f left, float right)
     {
         return new Vec2f(left.X * right, left.Y * right);
+    }
+
+    public static Vec2f operator *(float left, Vec2f right)
+    {
+        return new Vec2f(left * right.X, left * right.Y);
     }
 
     public static Vec2f operator *(Vec2f left, Vec2f right)
@@ -74,5 +84,20 @@ public record struct Vec2f
         float length = Length();
         if (length == 0) return Zero;
         return new Vec2f(X / length, Y / length);
+    }
+
+    public Vec2f Clamp(Vec2f min, Vec2f max)
+    {
+        return new Vec2f(Math.Clamp(X, min.X, max.X), Math.Clamp(Y, min.Y, max.Y));
+    }
+
+    public float Dot(Vec2f other)
+    {
+        return X * other.X + Y * other.Y;
+    }
+
+    public Vec2f Reflect(Vec2f normal)
+    {
+        return this - 2f * Dot(normal) * normal;
     }
 }

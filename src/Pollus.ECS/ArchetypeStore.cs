@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
+using Pollus.Debugging;
 
 public class ArchetypeStore : IDisposable
 {
@@ -123,6 +124,7 @@ public class ArchetypeStore : IDisposable
             if (movedEntityInfo is not null)
             {
                 ref var movedEntity = ref entities.Get(movedEntityInfo.Value.Entity);
+                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntity), "Moved entity is null");
                 movedEntity.ChunkIndex = movedEntityInfo.Value.ChunkIndex;
                 movedEntity.RowIndex = movedEntityInfo.Value.RowIndex;
             }

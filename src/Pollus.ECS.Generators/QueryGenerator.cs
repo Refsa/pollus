@@ -56,6 +56,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             query.ForEach(pred);
         }
 
+        public void ForEach(ForEachEntityDelegate<$gen_args$> pred)
+        {
+            query.ForEach(pred);
+        }
+
         public readonly void ForEach<TForEach>(TForEach iter)
             where TForEach : struct, IForEachBase<$gen_args$>
         {
@@ -91,6 +96,21 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             for (int i = 0; i < chunk.Count; i++)
             {
                 pred($comp_args$);
+            }
+        }
+    }
+
+    public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            $comp_spans$
+            scoped var entities = chunk.GetEntities();
+
+            for (int i = 0; i < chunk.Count; i++)
+            {
+                pred(entities[i], $comp_args$);
             }
         }
     }
@@ -205,6 +225,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 using System.Runtime.CompilerServices;
 
 public delegate void ForEachDelegate<$gen_args$>($args$) 
+    $gen_constraints$;
+
+public delegate void ForEachEntityDelegate<$gen_args$>(in Entity entity, $args$)
     $gen_constraints$;
 
 public interface IForEachBase<$gen_args$>
