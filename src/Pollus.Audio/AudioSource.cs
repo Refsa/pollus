@@ -38,7 +38,7 @@ public class AudioSource : IDisposable
     {
         get
         {
-            audio.al.GetSourceProperty(sourceId, GetSourceInteger.BuffersQueued, out var value);
+            audio.al.GetSourceProperty(sourceId, GetSourceInteger.BuffersProcessed, out var value);
             return value > 0;
         }
     }

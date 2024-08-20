@@ -65,6 +65,11 @@ unsafe public class GPUTexture : GPUResourceWrapper
         Write(MemoryMarshal.AsBytes(data), mipLevel, origin, size);
     }
 
+    public void Write(nint bytes, int byteCount, uint mipLevel = 0, Vec3<uint> origin = default, Vec3<uint>? size = null)
+    {
+        Write(new ReadOnlySpan<byte>((void*)bytes, byteCount), mipLevel, origin, size);
+    }
+
     public void Write(ReadOnlySpan<byte> data, uint mipLevel = 0, Vec3<uint> origin = default, Vec3<uint>? size = null)
     {
         var destination = new Silk.NET.WebGPU.ImageCopyTexture(
@@ -132,7 +137,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
             TextureFormat.Rgba8Sint => 4,
             TextureFormat.Bgra8Unorm => 4,
             TextureFormat.Bgra8UnormSrgb => 4,
-            
+
             // Packed 4 bytes
             TextureFormat.Rgb9E5Ufloat => 4,
             TextureFormat.RG11B10Ufloat => 4,

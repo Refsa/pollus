@@ -1,4 +1,5 @@
 namespace Pollus.Engine.Rendering;
+
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
@@ -39,7 +40,7 @@ public class RenderContext
         SurfaceTexture = null;
     }
 
-    public GPURenderPassEncoder BeginRenderPass()
+    public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store)
     {
         Guard.IsNull(CurrentRenderPass, "CurrentRenderPass is not null");
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTextureView is null");
@@ -53,9 +54,9 @@ public class RenderContext
                 new RenderPassColorAttachment()
                 {
                     View = SurfaceTextureView.Value.Native,
-                    LoadOp = LoadOp.Clear,
-                    StoreOp = StoreOp.Store,
-                    ClearValue = new(0.15f, 0.125f, 0.1f, 1.0f),
+                    LoadOp = loadOp,
+                    StoreOp = storeOp,
+                    ClearValue = new(0.15f, 0.125f, 0.1f, 0.0f),
                 },
             },
         });

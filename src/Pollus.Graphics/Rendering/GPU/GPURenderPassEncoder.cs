@@ -1,6 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
 using Pollus.Graphics.WGPU;
+using Pollus.Mathematics;
 
 unsafe public struct GPURenderPassEncoder : IDisposable
 {
@@ -36,6 +37,23 @@ unsafe public struct GPURenderPassEncoder : IDisposable
     public void SetPipeline(GPURenderPipeline pipeline)
     {
         context.wgpu.RenderPassEncoderSetPipeline(native, (Silk.NET.WebGPU.RenderPipeline*)pipeline.Native);
+    }
+
+    public void SetViewport(Vec2f pos, Vec2f size, float minDepth, float maxDepth)
+    {
+        context.wgpu.RenderPassEncoderSetViewport(native, pos.X, pos.Y, size.X, size.Y, minDepth, maxDepth);
+    }
+
+    public void SetBlendConstant(Vec4<double> color)
+    {
+        var c = new Silk.NET.WebGPU.Color
+        {
+            R = color.X,
+            G = color.Y,
+            B = color.Z,
+            A = color.W
+        };
+        context.wgpu.RenderPassEncoderSetBlendConstant(native, c);
     }
 
     public void SetBindGroup(GPUBindGroup bindGroup, uint groupIndex, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)

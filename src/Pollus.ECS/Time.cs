@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System.Diagnostics;
 using Pollus.ECS.Core;
+using Pollus.Mathematics;
 
 public class Time
 {
@@ -30,13 +31,13 @@ public class TimeSystem : Sys<Time>
 
         long frameTicks = stopwatch.ElapsedTicks;
         double deltaTime = (frameTicks - previousTicks) / (double)Stopwatch.Frequency;
+        deltaTime = deltaTime.Clamp(0, 0.1);
+        previousTicks = frameTicks;
 
         time.FrameCount++;
         time.DeltaTime = deltaTime;
         time.Ticks = frameTicks;
         time.SecondsSinceStartup = stopwatch.Elapsed.TotalMilliseconds / 1000.0;
-
-        previousTicks = frameTicks;
     }
 }
 

@@ -16,6 +16,7 @@ This project is still very early in development and any api surface and underlyi
 - Build to Windows and Browser (WASM)
     - Nothing should stop it from running on Linux and OSX
     - Mobile support in the future, but also runs in mobile browsers through WASM
+- Dear ImGui renderer
 
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
@@ -60,6 +61,7 @@ The aim is to have as few dependencies as possible. This will allow the project 
 - Silk.NET.WebGPU (for native WebGPU bindings)
 - Silk.NET.OpenAL (for native OpenAL bindings)
 - SixLabors.ImageSharp (image assets)
+- ImGui.NET (Dear ImGui)
 
 ## License
 This project is licensed under 'MIT License' except where noted. Parts of the project with a different license is either notified in the file itself or in the directory of the file.

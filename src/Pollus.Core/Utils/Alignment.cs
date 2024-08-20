@@ -42,12 +42,7 @@ public static class Alignment
 
     public static uint PaddingNeededFor(uint size, uint n)
     {
-        var r = n % size;
-        return r switch
-        {
-            > 0 => size - r,
-            _ => 0
-        };
+        return (n - (size % n)) % n;
     }
 
     public static uint RoundUp(uint size, uint n)

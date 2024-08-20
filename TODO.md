@@ -40,6 +40,7 @@
 	- [x] Extract rendering data
 	- [ ] Rendering Stage
 	- [ ] Gizmos
+	- [ ] HDR surface formats
 - 2D Physics
 	- [ ] Spatial Queries
 - General

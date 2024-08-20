@@ -6,6 +6,7 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Audio;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
+using Pollus.Engine.Imgui;
 using Pollus.Engine.Input;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
@@ -63,6 +64,7 @@ public class BreakoutGame
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
+            new ImguiPlugin(),
             new InputPlugin(),
             new AudioPlugin(),
             new PerformanceTrackerPlugin(),
@@ -122,6 +124,13 @@ public class BreakoutGame
                     );
                 }
             }
+        }))
+        .AddSystem(CoreStage.Update, FnSystem("TestImgui",
+        static () =>
+        {
+            ImGuiNET.ImGui.Begin("Test Window");
+            ImGuiNET.ImGui.Text("Hello, world!");
+            ImGuiNET.ImGui.End();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Time time, IWindow window, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>

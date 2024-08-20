@@ -32,9 +32,12 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
         where TElement : unmanaged
     {
+        var size = (uint)(data.Length * Unsafe.SizeOf<TElement>());
+        size += Alignment.PaddingNeededFor(size, 4);
+
         fixed (TElement* ptr = data)
         {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)(data.Length * Unsafe.SizeOf<TElement>()));
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, size);
         }
     }
 

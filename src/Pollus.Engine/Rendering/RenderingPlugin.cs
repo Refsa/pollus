@@ -108,7 +108,7 @@ public class RenderingPlugin : IPlugin
             static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderBatches batches, SpriteBatches spriteBatches, RenderContext context) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
-                
+
                 var renderPass = context.BeginRenderPass();
 
                 foreach (var batch in batches.Batches)
@@ -158,4 +158,18 @@ public class RenderingPlugin : IPlugin
             }
         ));
     }
+}
+
+public enum RenderPassStage2D
+{
+    Background,
+    Main,
+    Foreground,
+    PostProcess,
+    UI,
+}
+
+public class RenderPass2D
+{
+    public RenderPassStage2D Stage { get; }
 }
