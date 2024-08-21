@@ -19,10 +19,14 @@ namespace Pollus.ECS.Generators
 @"namespace Pollus.ECS;
 using Pollus.ECS.Core;
 
+#pragma warning disable IL2059
+
 public partial class SystemBuilder
 {
 $methods$
 }
+
+#pragma warning restore IL2059
 ";
 
             var sb = new StringBuilder();
@@ -49,6 +53,8 @@ $methods$
             const string TEMPLATE =
 @"namespace Pollus.ECS.Core;
 using System.Runtime.CompilerServices;
+
+#pragma warning disable IL2059
 
 public delegate void SystemDelegate<$gen_args$>($gen_params$);
 
@@ -93,6 +99,8 @@ public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$g
         onTick($on_tick_params$);
     }
 }
+
+#pragma warning restore IL2059
 ";
 
             const string DO_FETCH_TEMPLATE = "var t$gen_idx$ = ((IFetch<$gen_arg$>)t$gen_idx$Fetch.Fetch).DoFetch(world, this);";

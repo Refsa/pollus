@@ -129,7 +129,7 @@ public class BreakoutGame
         static () =>
         {
             ImGuiNET.ImGui.Begin("Test Window");
-            ImGuiNET.ImGui.Text("Hello, world!");
+            // ImGuiNET.ImGui.Text("Hello, world!");
             ImGuiNET.ImGui.End();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",

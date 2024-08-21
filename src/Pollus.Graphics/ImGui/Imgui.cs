@@ -95,8 +95,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         ImGui.CreateContext();
         var io = ImGui.GetIO();
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
-        io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard |
-            ImGuiConfigFlags.DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
         io.Fonts.Flags |= ImFontAtlasFlags.NoBakedLines;
 
         SetupRenderResources();

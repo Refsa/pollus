@@ -15,6 +15,8 @@
 	- [ ] Async loading
 	- [ ] Streaming / partial loading
 - ECS
+	- [ ] Proper Testing
+		- removing entities/components is a little broken atm.
 	- [x] Systems
 	- [ ] Change Detection
 		- [ ] added/removed
@@ -29,7 +31,7 @@
 	- [ ] Commands
 	- [ ] State Flags
 - UI
-	- [ ] IMGUI
+	- [x] IMGUI
 	- [ ] dunno some custom UI stuff
 - Rendering
 	- [ ] Text/Font

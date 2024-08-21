@@ -33,9 +33,6 @@ public class EmscriptenSDL
     [DllImport("SDL")]
     unsafe extern static int SDL_PollEvent(Event* @event);
 
-    [DllImport("SDL")]
-    unsafe extern static void SDL_GetMouseState(int* x, int* y);
-
     public static void Init(SDLInitFlags flags)
     {
         var status = SDL_Init((uint)flags);
@@ -96,14 +93,6 @@ public class EmscriptenSDL
         fixed (Event* ptr = &@event)
         {
             return SDL_PollEvent(ptr);
-        }
-    }
-
-    unsafe public static void GetMouseState(ref int x, ref int y)
-    {
-        fixed (int* xPtr = &x, yPtr = &y)
-        {
-            SDL_GetMouseState(xPtr, yPtr);
         }
     }
 }

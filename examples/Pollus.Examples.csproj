@@ -17,8 +17,8 @@
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
     <EmccFlags>--embed-file '.\bin\Release\net8.0-browser\browser-wasm\assets@assets'</EmccFlags>
-    
-    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
+    <EmccExtraLDFlags>'./native/imgui/cimgui.a' -sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
+
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
     <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
@@ -29,13 +29,6 @@
     <WasmExtraFilesToDeploy Include="www/main.js" />
     <WasmExtraFilesToDeploy Include="www/*.js" />
     <WasmExtraFilesToDeploy Include="www/*.css" />
-
-    <DirectPInvoke Include="__Internal_emscripten" />
-    <DirectPInvoke Include="OpenAL" />
-    <DirectPInvoke Include="SDL" />
-    <EmccExportedLibraryFunction Include="wgpuDeviceCreateSwapChain" />
-    <EmccExportedLibraryFunction Include="wgpuSwapChainGetCurrentTextureView" />
-    <EmccExportedLibraryFunction Include="alcOpenDevice" />
   </ItemGroup>
 
   <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative"
@@ -44,6 +37,7 @@
       <_WasmPInvokeModules Include="__Internal_emscripten" />
       <_WasmPInvokeModules Include="OpenAL" />
       <_WasmPInvokeModules Include="SDL" />
+      <_WasmPInvokeModules Include="cimgui" />
     </ItemGroup>
   </Target>
 
