@@ -4,6 +4,7 @@ using Pollus.Audio;
 using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
+using Pollus.Engine.Window;
 using Pollus.Graphics;
 using Pollus.Graphics.SDL;
 using Pollus.Graphics.WGPU;
@@ -58,27 +59,6 @@ public class DesktopApplication : IApplication, IDisposable
 
         while (IsRunning)
         {
-            var platformEvents = world.Resources.Get<PlatformEvents>();
-            foreach (var @event in platformEvents.Events)
-            {
-                if (@event.Type is (uint)Silk.NET.SDL.EventType.Quit or (uint)Silk.NET.SDL.EventType.AppTerminating)
-                {
-                    window.Close();
-                    break;
-                }
-
-                switch ((Silk.NET.SDL.EventType)@event.Type)
-                {
-                    case Silk.NET.SDL.EventType.Windowevent:
-                        var windowEvent = @event.Window;
-                        if (windowEvent.Event is (int)Silk.NET.SDL.WindowEventID.Resized)
-                        {
-                            window.Size = new(windowEvent.Data1, windowEvent.Data2);
-                        }
-                        break;
-                }
-            }
-
             world.Tick();
         }
 

@@ -3,6 +3,7 @@
 	- [x] Web
 	- [x] Keyboard
 	- [ ] Mouse
+		- handle right click and aux mouse buttons in browser
 	- [ ] Gamepad
 	- [ ] Touch
 - Audio

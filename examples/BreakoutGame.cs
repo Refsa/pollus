@@ -228,7 +228,7 @@ public class BreakoutGame
         {
             if (gameState.State == State.SpawnBall)
             {
-                for (int i = 0; i < 30; i++)
+                for (int i = 0; i < 1; i++)
                     world.Spawn(
                         new Ball { Speed = 800f, Velocity = new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.5f, 0.5f), (float)Random.Shared.NextDouble()).Normalized() },
                         new Transform2

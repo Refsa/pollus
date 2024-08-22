@@ -1,6 +1,7 @@
 namespace Pollus.Graphics.WGPU;
 
 using Pollus.Graphics.Rendering;
+using Pollus.Mathematics;
 
 unsafe public interface IWGPUContext : IDisposable
 {
@@ -24,6 +25,7 @@ unsafe public interface IWGPUContext : IDisposable
 
     TextureFormat GetSurfaceFormat();
     void Present();
+    void ResizeSurface(Vec2<int> size);
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);
     GPUCommandEncoder CreateCommandEncoder(ReadOnlySpan<char> label) => new(this, label);

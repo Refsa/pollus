@@ -11,12 +11,16 @@ public class RenderContext
     public GPUCommandEncoder? CommandEncoder;
     public GPURenderPassEncoder? CurrentRenderPass;
 
+    public bool SkipFrame { get; private set; }
+
     public void Begin(IWGPUContext gpuContext)
     {
         if (SurfaceTexture is not null)
         {
             Log.Error("Surface texture is not null");
             SurfaceTexture.Value.Dispose();
+            SurfaceTexture = null;
+            SkipFrame = true;
             return;
         }
 
@@ -25,6 +29,7 @@ public class RenderContext
         {
             Log.Error("Surface texture view is null");
             SurfaceTexture = null;
+            SkipFrame = true;
             return;
         }
 
@@ -67,7 +72,7 @@ public class RenderContext
                 },
             },
         });
-        
+
         return CurrentRenderPass.Value;
     }
 

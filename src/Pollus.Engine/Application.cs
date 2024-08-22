@@ -7,6 +7,7 @@ using Pollus.ECS;
 using Pollus.ECS.Core;
 using Pollus.Graphics;
 using Pollus.Engine.Platform;
+using Pollus.Engine.Window;
 
 public interface IApplication
 {
@@ -37,8 +38,11 @@ public record class Application
 
     WindowOptions windowOptions = WindowOptions.Default;
     World world = new World()
-        .AddPlugin<TimePlugin>()
-        .AddPlugin<PlatformEventsPlugin>();
+        .AddPlugins([
+            new TimePlugin(),
+            new PlatformEventsPlugin(),
+            new WindowPlugin(),
+        ]);
 
     public World World => world;
     public WindowOptions WindowOptions => windowOptions;

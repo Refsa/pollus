@@ -50,11 +50,11 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Preallocate<TBuilder>(in TBuilder builder, int count)
+    public void Preallocate<TBuilder>(in TBuilder _, int count)
         where TBuilder : IEntityBuilder
     {
-        var archetypeInfo = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
-        archetypeInfo.archetype.Preallocate(count);
+        var (archetype, _) = Store.GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        archetype.Preallocate(count);
     }
 
     public World AddPlugin<TPlugin>(TPlugin plugin)
