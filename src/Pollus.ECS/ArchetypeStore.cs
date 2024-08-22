@@ -24,12 +24,15 @@ public class ArchetypeStore : IDisposable
     readonly List<Archetype> archetypes = [];
     NativeMap<int, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
-    volatile int entityCounter = 0;
+    volatile int entityCounter = 1;
 
     public List<Archetype> Archetypes => archetypes;
+    public int EntityCount => entities.Count;
 
     public ArchetypeStore()
     {
+        NativeMap<Entity, EntityInfo>.Sentinel = Entity.NULL;
+
         entities = new(0);
         archetypeLookup = new(0);
 
@@ -115,18 +118,20 @@ public class ArchetypeStore : IDisposable
         {
             entities.Remove(entity);
             var archetype = archetypes[info.ArchetypeIndex];
-            var movedEntityInfo = archetype.RemoveEntity(new()
+            var movedEntity = archetype.RemoveEntity(new()
             {
+                Entity = entity,
                 ChunkIndex = info.ChunkIndex,
                 RowIndex = info.RowIndex
             });
 
-            if (movedEntityInfo is not null)
+            if (movedEntity != Entity.NULL)
             {
-                ref var movedEntity = ref entities.Get(movedEntityInfo.Value.Entity);
-                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntity), "Moved entity is null");
-                movedEntity.ChunkIndex = movedEntityInfo.Value.ChunkIndex;
-                movedEntity.RowIndex = movedEntityInfo.Value.RowIndex;
+                ref var movedEntityInfo = ref entities.Get(movedEntity);
+                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), $"Moved entity is null, source: {entity}, failedMove: {movedEntityInfo}");
+
+                movedEntityInfo.ChunkIndex = info.ChunkIndex;
+                movedEntityInfo.RowIndex = info.RowIndex;
             }
         }
     }
@@ -166,12 +171,12 @@ public class ArchetypeStore : IDisposable
 
             nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
 
-            var movedInfo = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
-            if (movedInfo is not null)
+            var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
+            if (movedEntity != Entity.NULL)
             {
-                ref var movedEntity = ref entities.Get(movedInfo.Value.Entity);
-                movedEntity.ChunkIndex = movedInfo.Value.ChunkIndex;
-                movedEntity.RowIndex = movedInfo.Value.RowIndex;
+                ref var movedEntityInfo = ref entities.Get(movedEntity);
+                movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
+                movedEntityInfo.RowIndex = nextInfo.RowIndex;
             }
         }
     }

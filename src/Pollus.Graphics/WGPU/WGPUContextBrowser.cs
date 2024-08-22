@@ -8,6 +8,7 @@ using Pollus.Mathematics;
 using Pollus.Utils;
 using Pollus.Graphics.Windowing;
 using Pollus.Graphics.Rendering;
+using Pollus.Debugging;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
@@ -72,7 +73,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             isPreparingAdapter = true;
             CreateSurface();
-            Console.WriteLine("WGPU: Surface created");
+            Log.Info("WGPU: Surface created");
             CreateAdapter();
             return;
         }
@@ -88,7 +89,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         if (queue is null)
         {
             CreateQueue();
-            Console.WriteLine("WGPU: Queue created");
+            Log.Info("WGPU: Queue created");
         }
 
         if (swapChain is null)
@@ -96,7 +97,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             // preferredFormat = wgpu.SurfaceGetPreferredFormat(surface, adapter);
             preferredFormat = TextureFormat.Bgra8Unorm;
             CreateSwapChain();
-            Console.WriteLine("WGPU: Swap chain created");
+            Log.Info("WGPU: Swap chain created");
         }
     }
 
@@ -151,13 +152,13 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
         if (status == Silk.NET.WebGPU.RequestAdapterStatus.Success)
         {
-            Console.WriteLine("WGPU: Adapter acquired");
+            Log.Info("WGPU: Adapter acquired");
             _instance.adapter = adapter;
             _instance.isPreparingAdapter = false;
         }
         else
         {
-            Console.WriteLine("WGPU: Adapter not acquired");
+            Log.Info("WGPU: Adapter not acquired");
         }
     }
 
@@ -188,14 +189,14 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
         if (status == Silk.NET.WebGPU.RequestDeviceStatus.Success)
         {
-            Console.WriteLine("WGPU: Device acquired");
+            Log.Info("WGPU: Device acquired");
             _instance.device = device;
             _instance.isPreparingDevice = false;
         }
         else
         {
             var msg = Marshal.PtrToStringAnsi((IntPtr)message);
-            Console.WriteLine($"WGPU: Device not acquired: {status}, {msg}");
+            Log.Info($"WGPU: Device not acquired: {status}, {msg}");
         }
     }
 

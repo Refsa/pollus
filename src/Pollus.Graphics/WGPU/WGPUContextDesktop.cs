@@ -7,6 +7,7 @@ using Pollus.Graphics.Windowing;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
+using Pollus.Debugging;
 
 unsafe public class WGPUContextDesktop : IWGPUContext
 {
@@ -68,16 +69,16 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         if (IsReady) return;
 
         CreateSurface();
-        Console.WriteLine("WGPU: Surface created");
+        Log.Info("WGPU: Surface created");
         CreateAdapter();
-        Console.WriteLine("WGPU: Adapter created");
+        Log.Info("WGPU: Adapter created");
         CreateDevice();
-        Console.WriteLine("WGPU: Device created");
+        Log.Info("WGPU: Device created");
         CreateQueue();
-        Console.WriteLine("WGPU: Queue created");
+        Log.Info("WGPU: Queue created");
 
         ConfigureSurface();
-        Console.WriteLine("WGPU: Surface configured");
+        Log.Info("WGPU: Surface configured");
     }
 
     [MemberNotNull(nameof(surface))]
@@ -91,21 +92,21 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         wgpu.SurfaceGetCapabilities(surface, adapter, ref surfaceCapabilities);
 
         {
-            Console.WriteLine("WGPU: Surface capabilities");
-            Console.WriteLine("\tFormats");
+            Log.Info("WGPU: Surface capabilities");
+            Log.Info("\tFormats");
             for (uint i = 0; i < surfaceCapabilities.FormatCount; i++)
             {
-                Console.WriteLine("\t\tFormat: " + surfaceCapabilities.Formats[i]);
+                Log.Info("\t\tFormat: " + surfaceCapabilities.Formats[i]);
             }
-            Console.WriteLine("\tAlpha Modes");
+            Log.Info("\tAlpha Modes");
             for (uint i = 0; i < surfaceCapabilities.AlphaModeCount; i++)
             {
-                Console.WriteLine("\t\tAlpha Mode: " + surfaceCapabilities.AlphaModes[i]);
+                Log.Info("\t\tAlpha Mode: " + surfaceCapabilities.AlphaModes[i]);
             }
-            Console.WriteLine("\tPresent Modes");
+            Log.Info("\tPresent Modes");
             for (uint i = 0; i < surfaceCapabilities.PresentModeCount; i++)
             {
-                Console.WriteLine("\t\tPresent Mode: " + surfaceCapabilities.PresentModes[i]);
+                Log.Info("\t\tPresent Mode: " + surfaceCapabilities.PresentModes[i]);
             }
         }
 
@@ -144,12 +145,12 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     {
         if (status == Silk.NET.WebGPU.RequestAdapterStatus.Success)
         {
-            Console.WriteLine("WGPU: Adapter acquired");
+            Log.Info("WGPU: Adapter acquired");
             ((CreateAdapterData*)userdata)->Adapter = adapter;
         }
         else
         {
-            Console.WriteLine("WGPU: Adapter not acquired");
+            Log.Info("WGPU: Adapter not acquired");
         }
     }
 
@@ -182,20 +183,20 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
         wgpu.DeviceGetLimits(device, ref acquiredLimits);
         deviceLimits = acquiredLimits.Limits;
-        Console.WriteLine("WGPU: Device limits");
+        Log.Info("WGPU: Device limits");
     }
 
     static void HandleRequestDeviceCallback(Silk.NET.WebGPU.RequestDeviceStatus status, Silk.NET.WebGPU.Device* device, byte* message, void* userdata)
     {
         if (status == Silk.NET.WebGPU.RequestDeviceStatus.Success)
         {
-            Console.WriteLine("WGPU: Device acquired");
+            Log.Info("WGPU: Device acquired");
             ((CreateDeviceData*)userdata)->Device = device;
         }
         else
         {
             var msg = Marshal.PtrToStringAnsi((IntPtr)message);
-            Console.WriteLine($"WGPU: Device not acquired: {status}, {msg}");
+            Log.Info($"WGPU: Device not acquired: {status}, {msg}");
         }
     }
 

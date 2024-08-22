@@ -49,9 +49,9 @@ public class RenderContext
 
     public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store)
     {
-        Guard.IsNull(CurrentRenderPass, "CurrentRenderPass is not null");
-        Guard.IsNotNull(SurfaceTextureView, "SurfaceTextureView is null");
-        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
+        Guard.IsNull(CurrentRenderPass, $"CurrentRenderPass is not null");
+        Guard.IsNotNull(SurfaceTextureView, $"SurfaceTextureView is null");
+        Guard.IsNotNull(CommandEncoder, $"CommandEncoder is null");
 
         CurrentRenderPass = CommandEncoder.Value.BeginRenderPass(new()
         {
@@ -73,7 +73,7 @@ public class RenderContext
 
     public void EndRenderPass()
     {
-        Guard.IsNotNull(CurrentRenderPass, "CurrentRenderPass is null");
+        Guard.IsNotNull(CurrentRenderPass, $"CurrentRenderPass is null");
         CurrentRenderPass.Value.End();
         CurrentRenderPass.Value.Dispose();
         CurrentRenderPass = null;

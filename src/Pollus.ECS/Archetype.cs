@@ -113,24 +113,22 @@ public partial class Archetype : IDisposable
         };
     }
 
-    public EntityInfo? RemoveEntity(in EntityInfo info)
+    public Entity RemoveEntity(in EntityInfo info)
     {
+        if (entityCount == 0 || lastChunkIndex == -1) return Entity.NULL;
         entityCount = int.Max(0, entityCount - 1);
-        if (entityCount == 0 || lastChunkIndex == -1) return null;
 
         ref var chunk = ref chunks[info.ChunkIndex];
         ref var lastChunk = ref chunks[lastChunkIndex];
 
-        var movedEntity = chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
-        if (movedEntity != Entity.NULL)
+        var movedEntity = Entity.NULL;
+        if (info.ChunkIndex == lastChunkIndex && info.RowIndex == chunk.Count - 1)
         {
-            var movedInfo = new EntityInfo
-            {
-                Entity = movedEntity,
-                ChunkIndex = info.ChunkIndex,
-                RowIndex = info.RowIndex,
-            };
-            return movedInfo;
+            lastChunk.RemoveEntity(info.RowIndex);
+        }
+        else
+        {
+            movedEntity = chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
         }
 
         if (lastChunk.Count == 0)
@@ -138,10 +136,10 @@ public partial class Archetype : IDisposable
             lastChunkIndex = int.Max(0, lastChunkIndex - 1);
         }
 
-        return null;
+        return movedEntity;
     }
 
-    public EntityInfo? MoveEntity(in EntityInfo srcInfo, Archetype destination, in EntityInfo dstInfo)
+    public Entity MoveEntity(in EntityInfo srcInfo, Archetype destination, in EntityInfo dstInfo)
     {
         ref var srcChunk = ref chunks[srcInfo.ChunkIndex];
         ref var dstChunk = ref destination.chunks[dstInfo.ChunkIndex];
@@ -226,13 +224,13 @@ public partial class Archetype : IDisposable
 
     public void Optimize()
     {
-        if (lastChunkIndex == -1 || lastChunkIndex == chunks.Length) return;
-        for (int i = lastChunkIndex; i < chunks.Length; i++)
+        if (lastChunkIndex == chunks.Length) return;
+        for (int i = lastChunkIndex + 1; i < chunks.Length; i++)
         {
             chunks[i].Dispose();
         }
 
-        chunks.Resize(lastChunkIndex);
+        chunks.Resize(lastChunkIndex + 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

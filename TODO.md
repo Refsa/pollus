@@ -36,7 +36,7 @@
 - Rendering
 	- [ ] Text/Font
 	- [ ] 2D Pipeline
-		- [ ] Sprites
+		- [x] Sprites
 		- [ ] Custom Materials
 		- [ ] Post Processing
 	- [x] Extract rendering data

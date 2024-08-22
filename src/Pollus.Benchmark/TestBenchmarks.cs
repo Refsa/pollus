@@ -39,7 +39,7 @@ public class TestBenchmarks
             nativeArray[i] = comp;
             chunk.SetComponent(i, comp);
 
-            var entity = new Entity(i);
+            var entity = new Entity(i + 1);
             var entityInfo = archetype.AddEntity(entity);
             archetype.SetComponent(entityInfo.ChunkIndex, entityInfo.RowIndex, comp);
 

@@ -51,13 +51,6 @@ unsafe public struct NativeArray<T> : IDisposable
         return ref data[index];
     }
 
-    public void SwapRemove(int index)
-    {
-        data[index] = data[length - 1];
-        data[length - 1] = default;
-        length--;
-    }
-
     public Span<T> AsSpan() => new(data, length);
     public Span<T> Slice(int start) => new(data + start, length - start);
     public Span<T> Slice(int start, int length) => new(data + start, length);

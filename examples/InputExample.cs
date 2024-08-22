@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.ECS.Core;
 using Pollus.Engine;
@@ -19,15 +20,15 @@ public class InputExample
 
                 if (keyboard!.JustPressed(Key.ArrowLeft))
                 {
-                    Console.WriteLine("Arrow Left Just Pressed");
+                    Log.Info("Arrow Left Just Pressed");
                 }
                 else if (keyboard!.Pressed(Key.ArrowLeft))
                 {
-                    Console.WriteLine("Arrow Left Pressed");
+                    Log.Info("Arrow Left Pressed");
                 }
                 else if (keyboard!.JustReleased(Key.ArrowLeft))
                 {
-                    Console.WriteLine("Arrow Left Just Released");
+                    Log.Info("Arrow Left Just Released");
                 }
             }))
             .Run();

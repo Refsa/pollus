@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Graphics.Rendering;
@@ -51,7 +52,7 @@ public class DrawTriangle
 
             resources.Add(new RenderData { RenderPipeline = renderPipeline });
 
-            Console.WriteLine("Render Pipeline Created");
+            Log.Info("Render Pipeline Created");
         }))
         .AddSystem(CoreStage.Last, FnSystem("Draw",
         static (IWGPUContext gpuContext, RenderData renderData) =>
@@ -59,7 +60,7 @@ public class DrawTriangle
             using var surfaceTexture = gpuContext.CreateSurfaceTexture();
             if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
             {
-                Console.WriteLine("Surface texture view is null");
+                Log.Info("Surface texture view is null");
                 return;
             }
 

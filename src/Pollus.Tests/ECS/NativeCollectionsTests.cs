@@ -27,6 +27,28 @@ public class NativeCollectionsTests
     }
 
     [Fact]
+    public void NativeMap_SparseRemove()
+    {
+        using var map = new NativeMap<int, int>(32);
+
+        for (int i = 0; i < 32; i++)
+        {
+            map.Add(i, i);
+        }
+
+        for (int i = 8; i < 24; i++)
+        {
+            map.Remove(i);
+        }
+        
+        map.Add(84, 84);
+        map.Add(52, 52);
+        map.Remove(84);
+
+        Assert.True(map.Has(52));
+    }
+
+    [Fact]
     public void NativeMap_NegativeKey()
     {
         /* using var map = new NativeMap<int, int>(0);

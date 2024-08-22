@@ -129,9 +129,6 @@ public class BreakoutGame
         static () =>
         {
             ImGuiNET.ImGui.ShowDemoWindow();
-            /* ImGuiNET.ImGui.Begin("Test Window");
-            ImGuiNET.ImGui.Text("Hello, world!".AsSpan());
-            ImGuiNET.ImGui.End(); */
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Time time, IWindow window, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
@@ -150,11 +147,13 @@ public class BreakoutGame
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
         static (World world, Time time, IWindow window, AssetServer assetServer,
             Query<Transform2, Ball, Collider> qBall,
-            Query<Transform2, Collider>.Filter<None<Ball>> qColliders,
+            Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
+            Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles,
             Query<AudioSource>.Filter<All<MainMixer>> qAudioSources
         ) =>
         {
             var collisions = new List<Entity>();
+            bool spawnSound = false;
 
             qBall.ForEach((ref Transform2 ballTransform, ref Ball ball, ref Collider ballCollider) =>
             {
@@ -162,13 +161,21 @@ public class BreakoutGame
 
                 var ballBounds = ballCollider.Bounds.Move(nextPos);
                 Vec2f? collisionNormal = null;
-                qColliders.ForEach((in Entity entity, ref Transform2 colliderTransform, ref Collider collider) =>
+                qBricks.ForEach((in Entity entity, ref Transform2 colliderTransform, ref Collider collider) =>
                 {
                     var colliderBounds = collider.Bounds.Move(colliderTransform.Position);
                     if (ballBounds.Intersects(colliderBounds))
                     {
                         collisionNormal = ballBounds.IntersectionNormal(colliderBounds);
                         collisions.Add(entity);
+                    }
+                });
+                qPaddles.ForEach((ref Transform2 colliderTransform, ref Collider collider) =>
+                {
+                    var colliderBounds = collider.Bounds.Move(colliderTransform.Position);
+                    if (ballBounds.Intersects(colliderBounds))
+                    {
+                        collisionNormal = ballBounds.IntersectionNormal(colliderBounds);
                     }
                 });
 
@@ -187,19 +194,7 @@ public class BreakoutGame
                     ballTransform.Position -= normal * 2;
                     ball.Velocity = ball.Velocity.Reflect(normal);
 
-                    world.Spawn(
-                        new MainMixer(),
-                        new AudioSource
-                        {
-                            Gain = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
-                            Pitch = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
-                            Mode = PlaybackMode.Once
-                        },
-                        new AudioPlayback
-                        {
-                            Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
-                        }
-                    );
+                    spawnSound = true;
                 }
 
                 ball.Velocity = ball.Velocity.Clamp(-Vec2f.One, Vec2f.One);
@@ -210,29 +205,46 @@ public class BreakoutGame
             {
                 world.Despawn(entity);
             }
+
+            if (spawnSound)
+            {
+                world.Spawn(
+                    new MainMixer(),
+                    new AudioSource
+                    {
+                        Gain = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
+                        Pitch = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
+                        Mode = PlaybackMode.Once
+                    },
+                    new AudioPlayback
+                    {
+                        Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
+                    }
+                );
+            }
         }))
         .AddSystem(CoreStage.First, FnSystem("GameState",
         static (World world, GameState gameState) =>
         {
             if (gameState.State == State.SpawnBall)
             {
-                world.Spawn(
-                    new Ball { Speed = 800f, Velocity = new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.5f, 0.5f), (float)Random.Shared.NextDouble()).Normalized() },
-                    // new Ball { Speed = 800f, Velocity = new Vec2f(1f, 0f).Normalized() },
-                    new Transform2
-                    {
-                        Position = (world.Resources.Get<IWindow>().Size.X / 2f, 128f),
-                        Scale = (16f, 16f),
-                        Rotation = 0f,
-                    },
-                    new Sprite
-                    {
-                        Material = gameState.spritesheet,
-                        Slice = new Rect(0, 0, 16, 16),
-                        Color = Color.WHITE,
-                    },
-                    new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
-                );
+                for (int i = 0; i < 30; i++)
+                    world.Spawn(
+                        new Ball { Speed = 800f, Velocity = new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.5f, 0.5f), (float)Random.Shared.NextDouble()).Normalized() },
+                        new Transform2
+                        {
+                            Position = (world.Resources.Get<IWindow>().Size.X / 2f, 128f),
+                            Scale = (16f, 16f),
+                            Rotation = 0f,
+                        },
+                        new Sprite
+                        {
+                            Material = gameState.spritesheet,
+                            Slice = new Rect(0, 0, 16, 16),
+                            Color = Color.WHITE,
+                        },
+                        new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
+                    );
 
                 gameState.State = State.Play;
             }

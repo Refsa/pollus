@@ -6,8 +6,8 @@ using System.Runtime.InteropServices;
 
 public struct ArchetypeChunk : IDisposable
 {
-    NativeMap<int, NativeArray<byte>> components;
-    NativeArray<Entity> entities;
+    internal NativeMap<int, NativeArray<byte>> components;
+    internal NativeArray<Entity> entities;
 
     int count;
     int length;
@@ -48,24 +48,39 @@ public struct ArchetypeChunk : IDisposable
         return count++;
     }
 
-    unsafe public Entity SwapRemoveEntity(int row, scoped ref ArchetypeChunk source)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void RemoveEntity(int row)
     {
-        for (int i = 0; i < components.Count; i++)
+        if (row < 0 || row >= count) return;
+
+        entities[row] = Entity.NULL;
+        count--;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public Entity SwapRemoveEntity(int row, scoped ref ArchetypeChunk src)
+    {
+        /*
+        remove entity in row from this chunk
+        move entity in last row from src chunk to this chunk
+        return the moved entity
+        */
+        
+        var entity = entities[row];
+        entities[row] = src.entities[src.count - 1];
+        src.entities[src.count - 1] = Entity.NULL;
+        src.count--;
+
+        foreach (var cid in components.Keys)
         {
-            var cid = components.Keys[i];
-            if (source.HasComponent(cid) is false) continue;
+            var size = Component.GetInfo(cid).SizeInBytes;
 
-            var cinfo = Component.GetInfo(cid);
-            var srcArray = source.components.Get(cid);
+            var srcArray = src.components.Get(cid);
             var dstArray = components.Get(cid);
-
-            Unsafe.CopyBlock(Unsafe.Add<byte>(dstArray.Data, row * cinfo.SizeInBytes),
-                             Unsafe.Add<byte>(srcArray.Data, (source.count - 1) * cinfo.SizeInBytes),
-                             (uint)cinfo.SizeInBytes);
+            var srcRow = Unsafe.Add<byte>(srcArray.Data, src.count * size);
+            var dstRow = Unsafe.Add<byte>(dstArray.Data, row * size);
+            Unsafe.CopyBlock(dstRow, srcRow, (uint)size);
         }
-
-        entities[row] = source.entities[source.count - 1];
-        source.count--;
 
         return entities[row];
     }

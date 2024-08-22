@@ -99,7 +99,7 @@ public record struct Mat4f
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f FromTRS(Vec3f translation, Quat rotation, Vec3f scale)
     {
-        Guard.IsTrue(rotation.IsNormalized(), "Rotation must be normalized.");
+        Guard.IsTrue(rotation.IsNormalized(), $"Rotation must be normalized.");
 
         var (xAxis, yAxis, zAxis) = rotation.ToAxes();
         return new(

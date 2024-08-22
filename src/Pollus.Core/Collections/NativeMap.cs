@@ -6,12 +6,12 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     where TKey : unmanaged, IEquatable<TKey>
     where TValue : unmanaged
 {
-    static readonly TKey sentinel;
+    public static TKey Sentinel;
     static NativeMap()
     {
         var temp = stackalloc byte[Unsafe.SizeOf<TKey>()];
         Unsafe.InitBlock(temp, byte.MaxValue - 1, (uint)Unsafe.SizeOf<TKey>());
-        sentinel = *(TKey*)temp;
+        Sentinel = *(TKey*)temp;
     }
 
     NativeArray<TKey> keys;
@@ -39,7 +39,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
         for (int i = 0; i < capacity; i++)
         {
-            keys.Set(i, sentinel);
+            keys.Set(i, Sentinel);
         }
     }
 
@@ -64,12 +64,12 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
         for (int i = 0; i < newCapacity; i++)
         {
-            newKeys[i] = sentinel;
+            newKeys[i] = Sentinel;
         }
 
         for (int i = 0; i < capacity; i++)
         {
-            if (keys[i].Equals(sentinel)) continue;
+            if (keys[i].Equals(Sentinel)) continue;
 
             TKey key = keys[i];
             TValue value = values[i];
@@ -78,7 +78,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
             for (int j = 0; j < newCapacity; j++)
             {
-                if (newKeys[index].Equals(sentinel))
+                if (newKeys[index].Equals(Sentinel))
                 {
                     break;
                 }
@@ -112,7 +112,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
         for (int i = 0; i < capacity; i++, index = (index + 1) % capacity, probeCount++)
         {
-            if (keys[index].Equals(sentinel))
+            if (keys[index].Equals(Sentinel))
             {
                 keys.Set(index, key);
                 values.Set(index, value);
@@ -183,7 +183,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         int index = GetIndex(key);
         if (index != -1)
         {
-            keys.Set(index, sentinel);
+            keys.Set(index, Sentinel);
             count--;
         }
     }
@@ -198,11 +198,6 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
             if (keySpan[index].Equals(key))
             {
                 return index;
-            }
-
-            if (keySpan[index].Equals(sentinel))
-            {
-                break;
             }
         }
         return -1;
