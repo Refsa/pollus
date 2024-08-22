@@ -6,13 +6,13 @@ public class Uniform<T> : IBufferData
     where T : unmanaged
 {
     public BufferType Usage => BufferType.Uniform;
-    public ulong SizeInBytes => Alignment.GetAlignedSize<T>();
+    public ulong SizeInBytes => Alignment.GPUAlignedSize<T>(1);
 
     public T Data { get; set; }
 
     public void WriteTo(GPUBuffer target, int offset)
     {
-        target.WriteAligned(Data, offset);
+        target.Write(Data, offset);
     }
 }
 
@@ -20,7 +20,7 @@ public class DynamicUniform<T> : IBufferData
     where T : unmanaged
 {
     public BufferType Usage => BufferType.Uniform;
-    public ulong SizeInBytes => Alignment.GetAlignedSize<T>();
+    public ulong SizeInBytes => Alignment.GPUAlignedSize<T>((uint)Data.Length);
 
     public T[] Data { get; init; }
 

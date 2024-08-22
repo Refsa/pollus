@@ -46,7 +46,7 @@ public class SpriteBatch
 
     public void WriteBuffer()
     {
-        InstanceBuffer.Write<byte>(instanceData.Slice(0, Count));
+        InstanceBuffer.Write(instanceData.Slice(0, Count), 0);
     }
 
     public void Resize(IWGPUContext gpuContext, int capacity)

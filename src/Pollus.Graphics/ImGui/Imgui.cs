@@ -61,7 +61,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     IWGPUContext gpuContext;
 
     GPUBuffer vertexBuffer;
+    ImDrawVert[] hostVertexBuffer = new ImDrawVert[1000];
     GPUBuffer indexBuffer;
+    ushort[] hostIndexBuffer = new ushort[1000];
     GPUBuffer uniformBuffer;
 
     GPUTexture fontTexture;
@@ -69,6 +71,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     GPUSampler fontSampler;
 
     GPUBindGroup baseBindGroup;
+    GPUBindGroupLayout baseBindGroupLayout;
     GPUBindGroupLayout textureBindGroupLayout;
     GPUBindGroup fontTextureBindGroup;
 
@@ -119,11 +122,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     {
         vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
             """ImGui Vertex Buffer""",
-            1000ul * (ulong)Unsafe.SizeOf<ImDrawVert>()
+            Alignment.GPUAlignedSize<ImDrawVert>((uint)hostVertexBuffer.Length, 4)
         ));
         indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
             """ImGui Index Buffer""",
-            1000ul * (ulong)Unsafe.SizeOf<ushort>()
+            Alignment.GPUAlignedSize<ushort>((uint)hostIndexBuffer.Length, 4)
         ));
 
         fontSampler = gpuContext.CreateSampler(SamplerDescriptor.Default);
@@ -131,7 +134,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         uniformBuffer = gpuContext.CreateBuffer(BufferDescriptor.Uniform<Uniforms>(
             """ImGui Uniform Buffer""",
-            Alignment.GetAlignedSize<Uniforms>()
+            Alignment.GPUAlignedSize<Uniforms>(1)
         ));
 
         using var shader = gpuContext.CreateShaderModule(new()
@@ -141,7 +144,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             Content = SHADER,
         });
 
-        using var baseBindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        baseBindGroupLayout = gpuContext.CreateBindGroupLayout(new()
         {
             Label = "ImGui Base Bind Group Layout",
             Entries = [
@@ -315,46 +318,48 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     unsafe void RenderImDrawData(ImDrawDataPtr drawData, GPURenderPassEncoder encoder)
     {
-        uint vtxOffset = 0;
-        uint idxOffset = 0;
-
         if (drawData.CmdListsCount == 0)
         {
             return;
         }
 
-        uint totalVtxSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
-        if (totalVtxSize > vertexBuffer.Size)
+        if (drawData.TotalVtxCount >= hostVertexBuffer.Length)
         {
+            uint totalVtxSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
             vertexBuffer.Dispose();
             vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
                 """ImGui Vertex Buffer""",
-                (ulong)(totalVtxSize * 1.5f)
+                Alignment.GPUAlignedSize<ImDrawVert>(totalVtxSize, 4)
             ));
+            hostVertexBuffer = new ImDrawVert[drawData.TotalVtxCount];
         }
 
-        uint totalIdxSize = (uint)(drawData.TotalIdxCount * Unsafe.SizeOf<ushort>());
-        if (totalIdxSize > indexBuffer.Size)
+        if (drawData.TotalIdxCount >= hostIndexBuffer.Length)
         {
+            uint totalIdxSize = (uint)(drawData.TotalIdxCount * Unsafe.SizeOf<ushort>());
             indexBuffer.Dispose();
             indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
                 """ImGui Index Buffer""",
-                (ulong)(totalIdxSize * 1.5f)
+                Alignment.GPUAlignedSize<ushort>(totalIdxSize, 4)
             ));
+            hostIndexBuffer = new ushort[drawData.TotalIdxCount];
         }
 
+        uint vtxOffset = 0, idxOffset = 0;
         for (int i = 0; i < drawData.CmdListsCount; i++)
         {
             var cmdList = drawData.CmdLists[i];
             var vtxSpan = new Span<ImDrawVert>((void*)cmdList.VtxBuffer.Data, cmdList.VtxBuffer.Size);
             var idxSpan = new Span<ushort>((void*)cmdList.IdxBuffer.Data, cmdList.IdxBuffer.Size);
 
-            vertexBuffer.Write<ImDrawVert>(vtxSpan, (int)vtxOffset * Unsafe.SizeOf<ImDrawVert>());
-            indexBuffer.Write<ushort>(idxSpan, (int)idxOffset * Unsafe.SizeOf<ushort>());
+            vtxSpan.CopyTo(hostVertexBuffer.AsSpan((int)vtxOffset));
+            idxSpan.CopyTo(hostIndexBuffer.AsSpan((int)idxOffset));
 
             vtxOffset += (uint)vtxSpan.Length;
             idxOffset += (uint)idxSpan.Length;
         }
+        vertexBuffer.Write<ImDrawVert>(hostVertexBuffer.AsSpan()[..drawData.TotalVtxCount]);
+        indexBuffer.Write<ushort>(hostIndexBuffer.AsSpan()[..drawData.TotalIdxCount]);
 
         var io = ImGui.GetIO();
         var uniform = new Uniforms
@@ -371,6 +376,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         };
         uniformBuffer.Write(uniform, 0);
 
+        encoder.SetViewport(
+            Vec2f.Zero,
+            new Vec2f(drawData.FramebufferScale.X * drawData.DisplaySize.X, drawData.FramebufferScale.Y * drawData.DisplaySize.Y),
+            0f, 1f
+        );
+        encoder.SetBlendConstant(Vec4<double>.Zero);
         encoder.SetPipeline(renderPipeline);
         encoder.SetVertexBuffer(0, vertexBuffer);
         encoder.SetIndexBuffer(indexBuffer, IndexFormat.Uint16);
@@ -378,8 +389,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         drawData.ScaleClipRects(io.DisplayFramebufferScale);
 
-        vtxOffset = 0;
-        idxOffset = 0;
+        vtxOffset = 0; idxOffset = 0;
         for (int i = 0; i < drawData.CmdListsCount; i++)
         {
             var cmdList = drawData.CmdLists[i];
@@ -402,7 +412,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                         }, 1
                     );
                 }
-
+                
+                encoder.SetScissorRect(
+                    (uint)pcmd.ClipRect.X, (uint)pcmd.ClipRect.Y,
+                    (uint)(pcmd.ClipRect.Z - pcmd.ClipRect.X), (uint)(pcmd.ClipRect.W - pcmd.ClipRect.Y)
+                );
                 encoder.DrawIndexed(
                     pcmd.ElemCount, 1, pcmd.IdxOffset + idxOffset, (int)(pcmd.VtxOffset + vtxOffset), 0
                 );

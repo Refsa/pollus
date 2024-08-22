@@ -44,6 +44,11 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         context.wgpu.RenderPassEncoderSetViewport(native, pos.X, pos.Y, size.X, size.Y, minDepth, maxDepth);
     }
 
+    public void SetScissorRect(uint x, uint y, uint width, uint height)
+    {
+        context.wgpu.RenderPassEncoderSetScissorRect(native, x, y, width, height);
+    }
+
     public void SetBlendConstant(Vec4<double> color)
     {
         var c = new Silk.NET.WebGPU.Color

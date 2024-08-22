@@ -39,7 +39,7 @@ public ref struct BufferDescriptor
         {
             Label = label,
             Usage = BufferUsage.Uniform | BufferUsage.CopyDst,
-            Size = Alignment.GetAlignedSize<TUniform>() * (dynamicLength.HasValue ? dynamicLength.Value : 1),
+            Size = Alignment.GPUAlignedSize<TUniform>(1) * (dynamicLength.HasValue ? dynamicLength.Value : 1),
             MappedAtCreation = false,
         };
     }

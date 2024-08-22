@@ -27,7 +27,7 @@ public class UniformRenderData : IRenderData
     public void WriteBuffer<T>(T value)
         where T : unmanaged
     {
-        UniformBuffer.WriteAligned(value, 0);
+        UniformBuffer.Write(value, 0);
     }
 }
 

@@ -44,7 +44,7 @@ public class MeshRenderDataLoader : IRenderDataLoader
                 meshAsset.Name,
                 (ulong)indexData.Length
             ));
-            indexBuffer.Write<byte>(indexData, 0);
+            indexBuffer.Write(indexData, 0);
         }
 
         renderAssets.Add(handle, new MeshRenderData

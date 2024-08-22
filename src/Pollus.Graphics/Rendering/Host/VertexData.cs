@@ -137,7 +137,7 @@ public struct VertexData : IBufferData
 
     public void WriteTo(GPUBuffer target, int offset)
     {
-        target.Write<byte>(data, offset);
+        target.Write(data, offset);
     }
 
     public void Resize(uint capacity)

@@ -13,6 +13,13 @@ public class RenderContext
 
     public void Begin(IWGPUContext gpuContext)
     {
+        if (SurfaceTexture is not null)
+        {
+            Log.Error("Surface texture is not null");
+            SurfaceTexture.Value.Dispose();
+            return;
+        }
+
         SurfaceTexture = gpuContext.CreateSurfaceTexture();
         if (SurfaceTexture?.GetTextureView() is not GPUTextureView surfaceTextureView)
         {

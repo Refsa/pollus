@@ -29,11 +29,18 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
     }
 
+    public void Write(ReadOnlySpan<byte> data, int offset)
+    {
+        fixed (byte* ptr = data)
+        {
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)data.Length);
+        }
+    }
+
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
         where TElement : unmanaged
     {
-        var size = (uint)(data.Length * Unsafe.SizeOf<TElement>());
-        size += Alignment.PaddingNeededFor(size, 4);
+        var size = Alignment.GPUAlignedSize<TElement>((uint)data.Length, 4);
 
         fixed (TElement* ptr = data)
         {
@@ -46,16 +53,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     {
         fixed (TElement* ptr = &element)
         {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)Unsafe.SizeOf<TElement>());
-        }
-    }
-
-    public void WriteAligned<TElement>(in TElement element, int offset)
-        where TElement : unmanaged
-    {
-        fixed (TElement* ptr = &element)
-        {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, Alignment.GetAlignedSize<TElement>());
+            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, Alignment.GPUAlignedSize<TElement>(1, 4));
         }
     }
 

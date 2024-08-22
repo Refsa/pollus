@@ -1,53 +1,27 @@
 namespace Pollus.Utils;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
 
 public static class Alignment
 {
-    public static uint GetAlignedSize<T>(bool findNextPowerOfTwo = true)
+    const uint GPU_MAX_ALIGNMENT = 16;
+
+    public static uint GPUAlignedSize<T>(uint count, uint alignment = GPU_MAX_ALIGNMENT)
         where T : unmanaged
     {
-        return GetAlignedSize((uint)Unsafe.SizeOf<T>(), findNextPowerOfTwo);
+        var size = (uint)Unsafe.SizeOf<T>() * count;
+        return RoundUp(size, alignment);
     }
 
-    public static uint GetAlignedSize<T>(uint count, bool findNextPowerOfTwo = true)
-        where T : unmanaged
+    public static bool IsAligned(uint size, uint alignment)
     {
-        return GetAlignedSize((uint)Unsafe.SizeOf<T>() * count, findNextPowerOfTwo);
+        return (size % alignment) == 0;
     }
 
-    public static uint GetAlignedSize(uint size, bool findNextPowerOfTwo = true)
+    public static uint RoundUp(uint size, uint alignment)
     {
-        if (size.IsPowerOfTwo() is false)
-        {
-            if (findNextPowerOfTwo)
-            {
-                return size.NextPowerOfTwo();
-            }
-            else
-            {
-                throw new ArgumentException("value needs to be a power of two", nameof(size));
-            }
-        }
-
-        return size;
-    }
-
-    public static bool IsAligned(uint size, uint n)
-    {
-        return (size % n) == 0;
-    }
-
-    public static uint PaddingNeededFor(uint size, uint n)
-    {
-        return (n - (size % n)) % n;
-    }
-
-    public static uint RoundUp(uint size, uint n)
-    {
-        return n + PaddingNeededFor(size, n);
+        return (size + alignment - 1u) & ~(alignment - 1u);
     }
 
     public static uint Max(Span<uint> alignments)

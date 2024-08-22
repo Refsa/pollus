@@ -32,7 +32,7 @@ public struct BindGroupLayoutEntry
             Buffer = BufferBindingLayout.Undefined with
             {
                 Type = bindingType,
-                MinBindingSize = Alignment.GetAlignedSize<T>(true),
+                MinBindingSize = Alignment.GPUAlignedSize<T>(1),
                 HasDynamicOffset = hasDynamicOffset
             },
         };

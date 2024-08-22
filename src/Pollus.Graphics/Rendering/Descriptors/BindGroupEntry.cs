@@ -38,7 +38,7 @@ public struct BindGroupEntry
     public static BindGroupEntry BufferEntry<T>(uint binding, GPUBuffer buffer, ulong offset)
         where T : unmanaged
     {
-        return new BindGroupEntry(binding, buffer, offset, Alignment.GetAlignedSize<T>(true));
+        return new BindGroupEntry(binding, buffer, offset, Alignment.GPUAlignedSize<T>(1));
     }
 
     public static BindGroupEntry SamplerEntry(uint binding, GPUSampler sampler)

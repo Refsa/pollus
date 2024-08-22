@@ -128,9 +128,10 @@ public class BreakoutGame
         .AddSystem(CoreStage.Update, FnSystem("TestImgui",
         static () =>
         {
-            ImGuiNET.ImGui.Begin("Test Window");
-            // ImGuiNET.ImGui.Text("Hello, world!");
-            ImGuiNET.ImGui.End();
+            ImGuiNET.ImGui.ShowDemoWindow();
+            /* ImGuiNET.ImGui.Begin("Test Window");
+            ImGuiNET.ImGui.Text("Hello, world!".AsSpan());
+            ImGuiNET.ImGui.End(); */
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Time time, IWindow window, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
