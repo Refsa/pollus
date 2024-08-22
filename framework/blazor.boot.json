@@ -1,18 +1,18 @@
 {
   "mainAssemblyName": "Pollus.Examples.dll",
   "resources": {
-    "hash": "sha256-Wx7yLCHt20NNLZP8Vxiw9wSgCiQTlydQNIHy9m6/9Qw=",
+    "hash": "sha256-hQDYd3FgDkAFEnp+HAT+6jA9TCwH0vSnOJW9EBs//iI=",
     "jsModuleNative": {
-      "dotnet.native.js": "sha256-eAJoWT9m7gAEtpYfIxX29LrMf056sBDvNPETcZjR4kU="
+      "dotnet.native.js": "sha256-vMOvaG5sf+tnmAU9knwBJCfalp/7ZuHfcdYu04JZfdY="
     },
     "jsModuleRuntime": {
       "dotnet.runtime.js": "sha256-0Dpj/NkVD5WqSC16ZvJLmlc38iv9+Je+umYBVOycPVU="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-RwuIaoyLfLO7hYfS1GclRxmIkuSoTuL3hJg15l/6n5Q="
+      "dotnet.native.wasm": "sha256-l4pv69+Y95HvKmo+UP6jKCz1fxHOjvBFTjnQATTt504="
     },
     "wasmSymbols": {
-      "dotnet.native.js.symbols": "sha256-GvpoB2BHZHaOlMGEmAf6bcHQqdk8cMksy9Ah1GJyeGs="
+      "dotnet.native.js.symbols": "sha256-jqMn4TALBsdxLNib6XP5lFmtFmbDC9LoQ15qJPM3lDI="
     },
     "icu": {
       "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -21,20 +21,28 @@
     },
     "assembly": {
       "ImGui.NET.wasm": "sha256-u1yzoYVonkNkMKt8x6F0P865vXjrM8taepLI1656Rx0=",
-      "Pollus.Core.wasm": "sha256-wjMq1jD9L2Fn/vG2pItbqXWPWa849ewJ+5vtuEM3ruY=",
-      "Pollus.ECS.wasm": "sha256-DvZH/9D9YRmDE8ktn95ElhBUzIluAFbVg057E+hVCsM=",
-      "Pollus.Emscripten.wasm": "sha256-Gg/TyFGS4K3LwnEE/azhWJ8xOd7fmnAKXbyrIu/4HJo=",
-      "Pollus.Engine.wasm": "sha256-nRsA7nCTnGZaHfEtH1XuDRZ4drayfoVpP+2q/v4Md5Y=",
-      "Pollus.Examples.wasm": "sha256-SEoZtkbIimopZMxFhlSvyzB+AhQvDfZVHPLx2J5Fw2U=",
-      "Pollus.Graphics.wasm": "sha256-cpP3Z1KcMFcpgSCg5fCUugWdR8+QR+ihM1VU5eLf+yk=",
+      "Pollus.Audio.wasm": "sha256-0fbIgiC9dGeZdFTe6CELwc61/jz6Ec2aTMztlOxo8dM=",
+      "Pollus.Core.wasm": "sha256-/ec/REByO2Vcu6h/i1VgvCKjZqjOw61qGhHl1GpWeC0=",
+      "Pollus.ECS.wasm": "sha256-Gq4drUrZEkvLMRHEgqyxea1IfCKO1puMTx47P7OyM0g=",
+      "Pollus.Emscripten.wasm": "sha256-wgM65oBmydzNFUcgd2ydzXy8Np2voh2aZrZDvxN5sss=",
+      "Pollus.Engine.wasm": "sha256-XVN9/Y2LmvrbXugRxlKGG70ww4J9LF2dgXhzCl2Dc2I=",
+      "Pollus.Examples.wasm": "sha256-pFHri8hvJzPTmWW/ZX37bMDHT89j03QaZEUhg1zYc9c=",
+      "Pollus.Graphics.wasm": "sha256-GxXAGBzkII3/tfyBKr4JpgjHw4X3A70sgDIHC/lq0gc=",
       "Silk.NET.Core.wasm": "sha256-1K/Dv7SF20WVtmIqbSsSIi3ZTe7TWu4INEdfnTjCYWA=",
+      "Silk.NET.OpenAL.wasm": "sha256-rtyLDTX98Qv1AfdMys9VD17wfkRF6E7o/tCzVLcmD9Y=",
       "Silk.NET.SDL.wasm": "sha256-ZFYzHjUyK6+9UqEXUwXP7dcFz2m21rkhq6fweonUH1k=",
       "Silk.NET.WebGPU.wasm": "sha256-a27X8nygtJfonsOQFzcX3TreoFcONinQGLZNP4NBZPY=",
-      "System.Collections.Concurrent.wasm": "sha256-FW96JJXGdQhFuCRhMA5E+z8JV4Z4DZzlVF3pSgzSQac=",
-      "System.Console.wasm": "sha256-NMUtaPk796KMrKVLJVBv+1JX6cpfmz43Ej+dNr767Ww=",
-      "System.Linq.wasm": "sha256-15Ls8ls+s171HMbb6SXnxMg4n6K9HcDLBsQvi3C3mAg=",
-      "System.Private.CoreLib.wasm": "sha256-xsFNQCp4sWP47+5axbPHfwF80d9H7cFsKLec4yVb4iE=",
+      "SixLabors.ImageSharp.wasm": "sha256-6E76KimTRFJqHWVVZx3fXB9zFsA998dYN46Kg5DMFgA=",
+      "System.Collections.Concurrent.wasm": "sha256-4+CcVoKA0tPD3WJzgOSApSEfH7WvfonQ25z5nbAIDwA=",
+      "System.Collections.wasm": "sha256-SDu1OAwwmxP/uVtlWUafggeNmw07OOPpheV7xx3bssk=",
+      "System.Console.wasm": "sha256-TyuK4RCkX2RJG7Zs9X/KPIPXR9MW8plJpWNqzLmqItA=",
+      "System.IO.Compression.wasm": "sha256-B+pC+rHJbM2Ft3NMvRIaf0AcTQqCZ/ZnHzx7oeV+Xgc=",
+      "System.Linq.wasm": "sha256-bsh3AhPgxu4Yd6VaL2h7fVi9Dy6MGUgPy+snn8rZHJ4=",
+      "System.Private.CoreLib.wasm": "sha256-Nw1TDNsHSTIxlCCt6/cOGRbvtqkc/i1D1cpVuDRgzVQ=",
       "System.Runtime.InteropServices.JavaScript.wasm": "sha256-bdmSBtEBTlLYmlAm10brcwNvsZF/KxZNWQmei78hz9s=",
+      "System.Security.Cryptography.wasm": "sha256-pmM5PVIrKUGyb/r4n0BQIob2+DTo8bcZPgixOOxw3/8=",
+      "System.Text.Encoding.CodePages.wasm": "sha256-UXNYtlJpAQasa1auMQoCLYCJBe3Sp9ogiv5KYYnY7hs=",
+      "System.Threading.Tasks.Parallel.wasm": "sha256-0Y9iHOOj8Jvj0bDaX5d8Sj9PbWenPFsJr7o6J/k5zeo=",
       "aot-instances.wasm": "sha256-F5jaGmVc7vzFjqtI3doCGKg/fQ7XiaS/ql2ej46UKTw="
     },
     "vfs": {
