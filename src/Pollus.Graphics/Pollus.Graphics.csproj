@@ -7,6 +7,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">
+    <Content Include="./native/imgui/cimgui.a" CopyToOutputDirectory="Always" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
     <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
