@@ -10,6 +10,17 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
+class ImguiDraw : IRenderPassStageDraw
+{
+    public RenderPassStage2D Stage => RenderPassStage2D.UI;
+
+    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
+    {
+        var imguiRenderer = resources.Get<ImguiRenderer>();
+        imguiRenderer.Render(encoder);
+    }
+}
+
 public class ImguiPlugin : IPlugin
 {
     static ImguiPlugin()
@@ -23,10 +34,11 @@ public class ImguiPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
             "SetupImgui",
-            static (Resources resources, IWGPUContext gpuContext, IWindow window) =>
+            static (Resources resources, IWGPUContext gpuContext, IWindow window, RenderGraph renderGraph) =>
             {
                 var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
                 resources.Add(imguiRenderer);
+                renderGraph.Add(new ImguiDraw());
             }
         ));
 
@@ -71,18 +83,6 @@ public class ImguiPlugin : IPlugin
                 imguiRenderer.Update((float)time.DeltaTime);
             }
         ));
-
-        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
-            "RenderImgui",
-            static (ImguiRenderer imguiRenderer, Time time, RenderContext renderContext, IWindow window) =>
-            {
-                var renderPass = renderContext.BeginRenderPass(LoadOp.Load, StoreOp.Store);
-
-                imguiRenderer.Render(renderPass);
-
-                renderContext.EndRenderPass();
-            }
-        ).After("RenderRenderable"));
     }
 
     static ImGuiKey MapKey(Silk.NET.SDL.Scancode sdlKey)

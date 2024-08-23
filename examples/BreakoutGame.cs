@@ -60,6 +60,8 @@ public class BreakoutGame
         .WithWindowOptions(WindowOptions.Default with
         {
             Title = "Breakout Game",
+            Width = 1600,
+            Height = 900,
         })
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },

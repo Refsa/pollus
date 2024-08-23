@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -100,5 +101,40 @@ public class RenderBatch : IDisposable
         var transforms = new Mat4f[capacity];
         Transforms.AsSpan().CopyTo(transforms);
         Transforms = transforms;
+    }
+}
+
+public class RenderBatchDraw : IRenderPassStageDraw
+{
+    public RenderPassStage2D Stage => RenderPassStage2D.Main;
+
+    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
+    {
+        var batches = resources.Get<RenderBatches>();
+
+        foreach (var batch in batches.Batches)
+        {
+            batch.WriteBuffer();
+
+            var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+            var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
+
+            encoder.SetPipeline(material.Pipeline);
+            for (int i = 0; i < material.BindGroups.Length; i++)
+            {
+                encoder.SetBindGroup(material.BindGroups[i], (uint)i);
+            }
+
+            if (mesh.IndexBuffer != null)
+            {
+                encoder.SetIndexBuffer(mesh.IndexBuffer, mesh.IndexFormat);
+            }
+
+            encoder.SetVertexBuffer(0, mesh.VertexBuffer);
+            encoder.SetVertexBuffer(1, batch.InstanceBuffer);
+            encoder.DrawIndexed((uint)mesh.IndexCount, (uint)batch.Count, 0, 0, 0);
+
+            batch.Reset();
+        }
     }
 }

@@ -158,22 +158,12 @@ public struct Color
 
     public Color Darken(float by)
     {
-        return new Vec4<float>(
-            MathF.Max(0f, color.X - 1f * by),
-            MathF.Max(0f, color.Y - 1f * by),
-            MathF.Max(0f, color.Z - 1f * by),
-            color.W
-        );
+        return (Vec4<float>)this * (1f - by);
     }
 
     public Color Lighten(float by)
     {
-        return new Vec4<float>(
-            MathF.Max(0f, color.X + 1f * by),
-            MathF.Max(0f, color.Y + 1f * by),
-            MathF.Max(0f, color.Z + 1f * by),
-            color.W
-        );
+        return (Vec4<float>)this * (1f + by);
     }
 
     public Color WithAlpha(float a)

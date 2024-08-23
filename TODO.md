@@ -17,7 +17,6 @@
 	- [ ] Streaming / partial loading
 - ECS
 	- [ ] Proper Testing
-		- removing entities/components is a little broken atm.
 	- [x] Systems
 	- [ ] Change Detection
 		- [ ] added/removed
@@ -44,6 +43,7 @@
 	- [ ] Rendering Stage
 	- [ ] Gizmos
 	- [ ] HDR surface formats
+	- [ ] Compute Shaders
 - 2D Physics
 	- [ ] Spatial Queries
 - General

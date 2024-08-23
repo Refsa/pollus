@@ -1,10 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
+using ImGuiNET;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
+using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {
@@ -18,12 +21,14 @@ public class RenderingPlugin : IPlugin
         ResourceFetch<RenderAssets>.Register();
         ResourceFetch<RenderBatches>.Register();
         ResourceFetch<RenderContext>.Register();
+        ResourceFetch<RenderGraph>.Register();
     }
 
     public void Apply(World world)
     {
         world.Resources.Add(new RenderBatches());
         world.Resources.Add(new RenderContext());
+        world.Resources.Add(new RenderGraph());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new MeshRenderDataLoader())
             .AddLoader(new TextureRenderDataLoader())
@@ -45,6 +50,15 @@ public class RenderingPlugin : IPlugin
             new MaterialPlugin<Material>(),
             new SpritePlugin(),
         ]);
+
+        world.Schedule.AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem(
+            "SetupRendering",
+            static (RenderGraph renderGraph) => 
+            {
+                renderGraph.Add(new RenderBatchDraw());
+                renderGraph.Add(new SpriteBatchDraw());
+            }
+        ));
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             "UpdateSceneUniform",
@@ -104,72 +118,28 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
-            "RenderRenderable",
-            static (RenderAssets renderAssets, IWGPUContext gpuContext, RenderBatches batches, SpriteBatches spriteBatches, RenderContext context) =>
+            "Rendering",
+            static (RenderAssets renderAssets, Resources resources, RenderContext context, RenderGraph renderGraph) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
 
-                var renderPass = context.BeginRenderPass();
-
-                foreach (var batch in batches.Batches)
-                {
-                    batch.WriteBuffer();
-
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-                    var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
-
-                    renderPass.SetPipeline(material.Pipeline);
-                    for (int i = 0; i < material.BindGroups.Length; i++)
-                    {
-                        renderPass.SetBindGroup(material.BindGroups[i], (uint)i);
-                    }
-
-                    if (mesh.IndexBuffer != null)
-                    {
-                        renderPass.SetIndexBuffer(mesh.IndexBuffer, mesh.IndexFormat);
-                    }
-
-                    renderPass.SetVertexBuffer(0, mesh.VertexBuffer);
-                    renderPass.SetVertexBuffer(1, batch.InstanceBuffer);
-                    renderPass.DrawIndexed((uint)mesh.IndexCount, (uint)batch.Count, 0, 0, 0);
-
-                    batch.Reset();
+                { // Clear
+                    var renderPass = context.BeginRenderPass();
+                    context.EndRenderPass();
                 }
 
-                foreach (var batch in spriteBatches.Batches)
+                foreach (var stage in renderGraph.Stages.OrderBy(e => e.Key))
                 {
-                    batch.WriteBuffer();
+                    var renderPass = context.BeginRenderPass(LoadOp.Load);
 
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-
-                    renderPass.SetPipeline(material.Pipeline);
-                    for (int i = 0; i < material.BindGroups.Length; i++)
+                    foreach (var draw in stage.Value)
                     {
-                        renderPass.SetBindGroup(material.BindGroups[i], (uint)i);
+                        draw.Render(renderPass, resources, renderAssets);
                     }
 
-                    renderPass.SetVertexBuffer(0, batch.InstanceBuffer);
-                    renderPass.Draw(6, (uint)batch.Count, 0, 0);
-
-                    batch.Reset();
+                    context.EndRenderPass();
                 }
-
-                context.EndRenderPass();
             }
         ));
     }
-}
-
-public enum RenderPassStage2D
-{
-    Background,
-    Main,
-    Foreground,
-    PostProcess,
-    UI,
-}
-
-public class RenderPass2D
-{
-    public RenderPassStage2D Stage { get; }
 }

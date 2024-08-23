@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -92,5 +93,33 @@ public class SpriteBatches
 
         batches.Add(key, batch);
         return batch;
+    }
+}
+
+public class SpriteBatchDraw : IRenderPassStageDraw
+{
+    public RenderPassStage2D Stage => RenderPassStage2D.Main;
+
+    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
+    {
+        var batches = resources.Get<SpriteBatches>();
+
+        foreach (var batch in batches.Batches)
+        {
+            batch.WriteBuffer();
+
+            var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+
+            encoder.SetPipeline(material.Pipeline);
+            for (int i = 0; i < material.BindGroups.Length; i++)
+            {
+                encoder.SetBindGroup(material.BindGroups[i], (uint)i);
+            }
+
+            encoder.SetVertexBuffer(0, batch.InstanceBuffer);
+            encoder.Draw(6, (uint)batch.Count, 0, 0);
+
+            batch.Reset();
+        }
     }
 }

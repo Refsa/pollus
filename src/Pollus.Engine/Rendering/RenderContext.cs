@@ -3,6 +3,8 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
+using Pollus.Mathematics;
+using Pollus.Utils;
 
 public class RenderContext
 {
@@ -52,7 +54,7 @@ public class RenderContext
         SurfaceTexture = null;
     }
 
-    public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store)
+    public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store, Color? clearColor = null)
     {
         Guard.IsNull(CurrentRenderPass, $"CurrentRenderPass is not null");
         Guard.IsNotNull(SurfaceTextureView, $"SurfaceTextureView is null");
@@ -68,7 +70,7 @@ public class RenderContext
                     View = SurfaceTextureView.Value.Native,
                     LoadOp = loadOp,
                     StoreOp = storeOp,
-                    ClearValue = new(0.15f, 0.125f, 0.1f, 0.0f),
+                    ClearValue = clearColor.HasValue ? clearColor.Value : new Color.HSV(0.1f, 1f, 0.1f),
                 },
             },
         });
