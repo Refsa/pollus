@@ -96,4 +96,57 @@ static class SDLMapping
             _ => Key.Unknown,
         };
     }
+
+    public static MouseButton MapMouseButton(byte button)
+    {
+        return button switch
+        {
+            1 => MouseButton.Left,
+            2 => MouseButton.Middle,
+            3 => MouseButton.Right,
+            4 => MouseButton.Button4,
+            5 => MouseButton.Button5,
+            6 => MouseButton.Button6,
+            7 => MouseButton.Button7,
+            8 => MouseButton.Button8,
+            _ => MouseButton.Unknown,
+        };
+    }
+
+    public static GamepadAxis MapGamepadAxis(Silk.NET.SDL.GameControllerAxis axis)
+    {
+        return axis switch
+        {
+            Silk.NET.SDL.GameControllerAxis.Leftx => GamepadAxis.LeftX,
+            Silk.NET.SDL.GameControllerAxis.Lefty => GamepadAxis.LeftY,
+            Silk.NET.SDL.GameControllerAxis.Rightx => GamepadAxis.RightX,
+            Silk.NET.SDL.GameControllerAxis.Righty => GamepadAxis.RightY,
+            Silk.NET.SDL.GameControllerAxis.Triggerleft => GamepadAxis.LeftZ,
+            Silk.NET.SDL.GameControllerAxis.Triggerright => GamepadAxis.RightZ,
+            _ => GamepadAxis.Unknown,
+        };
+    }
+
+    public static GamepadButton MapGamepadButton(Silk.NET.SDL.GameControllerButton button)
+    {
+        return button switch
+        {
+            Silk.NET.SDL.GameControllerButton.A => GamepadButton.South,
+            Silk.NET.SDL.GameControllerButton.B => GamepadButton.East,
+            Silk.NET.SDL.GameControllerButton.X => GamepadButton.West,
+            Silk.NET.SDL.GameControllerButton.Y => GamepadButton.North,
+            Silk.NET.SDL.GameControllerButton.Back => GamepadButton.Back,
+            Silk.NET.SDL.GameControllerButton.Guide => GamepadButton.Guide,
+            Silk.NET.SDL.GameControllerButton.Start => GamepadButton.Start,
+            Silk.NET.SDL.GameControllerButton.Leftstick => GamepadButton.LeftStick,
+            Silk.NET.SDL.GameControllerButton.Rightstick => GamepadButton.RightStick,
+            Silk.NET.SDL.GameControllerButton.Leftshoulder => GamepadButton.LeftShoulder,
+            Silk.NET.SDL.GameControllerButton.Rightshoulder => GamepadButton.RightShoulder,
+            Silk.NET.SDL.GameControllerButton.DpadUp => GamepadButton.DPadUp,
+            Silk.NET.SDL.GameControllerButton.DpadDown => GamepadButton.DPadDown,
+            Silk.NET.SDL.GameControllerButton.DpadLeft => GamepadButton.DPadLeft,
+            Silk.NET.SDL.GameControllerButton.DpadRight => GamepadButton.DPadRight,
+            _ => GamepadButton.Unknown,
+        };
+    }
 }

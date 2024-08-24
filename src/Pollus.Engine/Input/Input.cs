@@ -1,9 +1,11 @@
-using System.Data;
-using System.Runtime.InteropServices;
-using Pollus.Engine.Platform;
-using Pollus.Mathematics;
-
 namespace Pollus.Engine.Input;
+
+using System.Runtime.InteropServices;
+using Pollus.Debugging;
+using Pollus.ECS;
+using Pollus.Emscripten;
+using Pollus.Engine.Platform;
+using Pollus.Graphics.SDL;
 
 public enum InputType
 {
@@ -13,12 +15,12 @@ public enum InputType
     Touch,
 }
 
-public abstract class InputManager : IDisposable
+public class InputManager : IDisposable
 {
-    Dictionary<Guid, IInputDevice> connectedDevices = new();
-    List<IInputDevice> keyboards = new();
-    List<IInputDevice> mice = new();
-    List<IInputDevice> gamepads = new();
+    readonly Dictionary<Guid, IInputDevice> connectedDevices = [];
+    readonly List<Mouse> mice = [];
+    readonly List<Gamepad> gamepads = [];
+    readonly Keyboard keyboard = new();
 
     bool isDisposed;
 
@@ -26,16 +28,151 @@ public abstract class InputManager : IDisposable
 
     ~InputManager() => Dispose();
 
-    public void Update(PlatformEvents platform)
+    public InputManager()
     {
-        UpdateInternal(platform);
-        foreach (var device in connectedDevices.Values)
-        {
-            device.Update();
-        }
+        connectedDevices.Add(keyboard.Id, keyboard);
     }
 
-    protected abstract void UpdateInternal(PlatformEvents platform);
+    public void Update(PlatformEvents platform, Events events)
+    {
+        foreach (var @event in platform.Events)
+        {
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Keydown or (uint)Silk.NET.SDL.EventType.Keyup)
+            {
+                var key = SDLMapping.MapKey(@event.Key.Keysym.Scancode);
+                if (@event.Key.Repeat == 0)
+                {
+                    keyboard?.SetKeyState(key, @event.Key.State == 1);
+                }
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Mousemotion)
+            {
+                var mouse = mice.Find(e => e.ExternalId == @event.Motion.Which);
+                if (mouse is null)
+                {
+                    mouse = new Mouse((nint)@event.Motion.Which);
+                    AddDevice(mouse);
+                }
+
+                mouse.SetAxisState(MouseAxis.X, @event.Motion.Xrel);
+                mouse.SetAxisState(MouseAxis.Y, @event.Motion.Yrel);
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Mousebuttondown or (uint)Silk.NET.SDL.EventType.Mousebuttonup)
+            {
+                var mouse = mice.Find(e => e.ExternalId == @event.Button.Which);
+                if (mouse is null)
+                {
+                    mouse = new Mouse((nint)@event.Button.Which);
+                    AddDevice(mouse);
+                }
+
+                var button = SDLMapping.MapMouseButton(@event.Button.Button);
+                mouse.SetButtonState(button, @event.Button.State == 1);
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Controllerdeviceadded)
+            {
+                Gamepad? gamepad = gamepads.FirstOrDefault(e => e.ExternalId == @event.Cdevice.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Cdevice.Which);
+                    AddDevice(gamepad);
+                }
+                Log.Info($"Gamepad connected: {gamepad.Id}");
+                gamepad.Connect();
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Controllerdeviceremoved)
+            {
+                Gamepad? gamepad = gamepads.FirstOrDefault(e => e.ExternalId == @event.Cdevice.Which);
+                gamepad?.Disconnect();
+                Log.Info($"Gamepad disconnected: {gamepad?.Id}");
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Controlleraxismotion)
+            {
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Caxis.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Caxis.Which);
+                    AddDevice(gamepad);
+                }
+
+                var axis = SDLMapping.MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)@event.Caxis.Axis);
+                (gamepad as Gamepad)?.SetAxisState(axis, @event.Caxis.Value);
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Controllerbuttondown or (uint)Silk.NET.SDL.EventType.Controllerbuttonup)
+            {
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Cbutton.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Cbutton.Which);
+                    AddDevice(gamepad);
+                }
+
+                var button = SDLMapping.MapGamepadButton((Silk.NET.SDL.GameControllerButton)@event.Cbutton.Button);
+                (gamepad as Gamepad)?.SetButtonState(button, @event.Cbutton.State == 1);
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Joydeviceadded)
+            {
+                if (Gamepad.IsGamepad(@event.Jdevice.Which)) continue;
+
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Jdevice.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Jdevice.Which);
+                    AddDevice(gamepad);
+                }
+                Log.Info($"Gamepad connected: {gamepad.Id}");
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Joydeviceremoved)
+            {
+                if (Gamepad.IsGamepad(@event.Jdevice.Which)) continue;
+
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Jdevice.Which);
+                gamepad?.Disconnect();
+                Log.Info($"Gamepad disconnected: {gamepad?.Id}");
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Joyaxismotion)
+            {
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Jaxis.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Jaxis.Which);
+                    AddDevice(gamepad);
+                }
+
+                var axis = SDLMapping.MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)@event.Jaxis.Axis);
+                gamepad?.SetAxisState(axis, @event.Jaxis.Value);
+            }
+
+            if (@event.Type is (uint)Silk.NET.SDL.EventType.Joybuttondown or (uint)Silk.NET.SDL.EventType.Joybuttonup)
+            {
+                if (Gamepad.IsGamepad(@event.Jdevice.Which)) continue;
+
+                var gamepad = gamepads.Find(e => e.ExternalId == @event.Jbutton.Which);
+                if (gamepad is null)
+                {
+                    gamepad = new Gamepad((nint)@event.Jbutton.Which);
+                    AddDevice(gamepad);
+                }
+
+                var button = SDLMapping.MapGamepadButton((Silk.NET.SDL.GameControllerButton)@event.Jbutton.Button);
+                gamepad?.SetButtonState(button, @event.Jbutton.State == 1);
+            }
+        }
+
+        foreach (var device in connectedDevices.Values)
+        {
+            device.Update(events);
+        }
+    }
 
     public void Dispose()
     {
@@ -48,10 +185,11 @@ public abstract class InputManager : IDisposable
             device.Dispose();
         }
 
-        Dispose(true);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")))
+        {
+            EmscriptenSDL.Quit();
+        }
     }
-
-    protected abstract void Dispose(bool disposing);
 
     public IInputDevice? GetDevice(Guid id)
     {
@@ -62,20 +200,17 @@ public abstract class InputManager : IDisposable
         return null;
     }
 
-    protected void AddDevice(IInputDevice device)
+    protected void AddDevice<TDevice>(TDevice device)
+        where TDevice : IInputDevice
     {
         connectedDevices.Add(device.Id, device);
-        device.Index = connectedDevices.Count - 1;
-        switch (device.Type)
+        switch (device)
         {
-            case InputType.Keyboard:
-                keyboards.Add(device);
+            case Mouse mouse:
+                mice.Add(mouse);
                 break;
-            case InputType.Mouse:
-                mice.Add(device);
-                break;
-            case InputType.Gamepad:
-                gamepads.Add(device);
+            case Gamepad gamepad:
+                gamepads.Add(gamepad);
                 break;
         }
     }
@@ -85,14 +220,11 @@ public abstract class InputManager : IDisposable
         connectedDevices.Remove(device.Id);
         switch (device.Type)
         {
-            case InputType.Keyboard:
-                keyboards.Remove(device);
-                break;
             case InputType.Mouse:
-                mice.Remove(device);
+                mice.Remove((Mouse)device);
                 break;
             case InputType.Gamepad:
-                gamepads.Remove(device);
+                gamepads.Remove((Gamepad)device);
                 break;
         }
     }
@@ -111,20 +243,18 @@ public abstract class InputManager : IDisposable
         int count = path.Split(ranges, '/', StringSplitOptions.RemoveEmptyEntries);
         if (count == 0) return null;
 
-        var devices = path[ranges[0]] switch
+        if (!int.TryParse(path[ranges[1]], out var index))
         {
-            "keyboard" => keyboards,
-            "mouse" => mice,
-            "gamepad" => gamepads,
-            _ => throw new NotImplementedException(),
-        };
-
-        if (int.TryParse(path[ranges[1]], out var index))
-        {
-            return devices.FirstOrDefault(d => d.Index == index);
+            index = 0;
         }
 
-        return devices.FirstOrDefault();
+        return path[ranges[0]] switch
+        {
+            "keyboard" => keyboard,
+            "mouse" => mice[index],
+            "gamepad" => gamepads[index],
+            _ => throw new NotImplementedException(),
+        };
     }
 
     public TDevice? GetDevice<TDevice>(ReadOnlySpan<char> path)
@@ -132,71 +262,4 @@ public abstract class InputManager : IDisposable
     {
         return GetDevice(path) as TDevice;
     }
-
-    public static InputManager Create()
-    {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")))
-        {
-            return new BrowserInput();
-        }
-        return new DesktopInput();
-    }
-}
-
-public interface IInputDevice : IDisposable
-{
-    nint ExternalId { get; }
-    Guid Id { get; }
-    int Index { get; internal set; }
-    InputType Type { get; }
-
-    void Update();
-}
-
-public interface IButtonInputDevice<TButton>
-    where TButton : Enum
-{
-    bool JustPressed(TButton button);
-    bool Pressed(TButton button);
-    bool JustReleased(TButton button);
-}
-
-public interface IAxisInputDevice<TAxis>
-    where TAxis : Enum
-{
-    float GetAxis(TAxis axis);
-    Vec2f GetAxis2D(TAxis xAxis, TAxis yAxis) => new(GetAxis(xAxis), GetAxis(yAxis));
-}
-
-public interface IInputDeviceEvent
-{
-    InputType InputType { get; }
-}
-
-public enum ButtonState
-{
-    None = 0,
-    JustPressed = 1,
-    Pressed = 2,
-    JustReleased = 3,
-}
-
-public interface IButtonEvent : IInputDeviceEvent
-{
-    ButtonState State { get; }
-}
-
-public interface IAxisEvent : IInputDeviceEvent
-{
-    float Value { get; }
-}
-
-public struct DeviceConnected : IInputDeviceEvent
-{
-    public InputType InputType => throw new NotImplementedException();
-}
-
-public struct DeviceDisconnected : IInputDeviceEvent
-{
-    public InputType InputType => throw new NotImplementedException();
 }

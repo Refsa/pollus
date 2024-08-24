@@ -10,7 +10,7 @@ public static class SDLWrapper
 
     static SDLWrapper()
     {
-        SdlProvider.InitFlags = Sdl.InitVideo | Sdl.InitEvents;
+        SdlProvider.InitFlags = Sdl.InitVideo | Sdl.InitEvents | Sdl.InitJoystick | Sdl.InitGamecontroller | Sdl.InitHaptic | Sdl.InitSensor;
         while (SdlProvider.SDL.IsValueCreated is false) { }
     }
 

@@ -10,6 +10,7 @@ public class World : IDisposable
         FetchInit.Init();
         ResourceFetch<World>.Register();
         ResourceFetch<Resources>.Register();
+        ResourceFetch<Events>.Register();
         CommandsFetch.Register();
     }
 
@@ -117,6 +118,8 @@ public class World : IDisposable
     {
         Resources.Add(this);
         Resources.Add(Resources);
+        Resources.Add(Events);
+
         Schedule.Prepare(this);
     }
 
@@ -144,6 +147,7 @@ public class World : IDisposable
         finally
         {
             ticks++;
+            Events.ClearEvents();
         }
     }
 }

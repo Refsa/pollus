@@ -14,6 +14,14 @@ public class Events
         events.Add(typeof(TEvent), new EventQueue<TEvent>());
     }
 
+    public void ClearEvents()
+    {
+        foreach (var queue in events.Values)
+        {
+            queue?.Clear();
+        }
+    }
+
     public EventWriter<TEvent> GetWriter<TEvent>()
         where TEvent : struct
     {
@@ -35,7 +43,10 @@ public class Events
     }
 }
 
-public interface IEventQueue { }
+public interface IEventQueue
+{
+    void Clear(bool zero = false);
+}
 
 public class EventQueue<TEvent> : IEventQueue
     where TEvent : struct
@@ -43,7 +54,7 @@ public class EventQueue<TEvent> : IEventQueue
     int cursor = 0;
     TEvent[] events = new TEvent[16];
 
-    public ReadOnlySpan<TEvent> Events => events;
+    public ReadOnlySpan<TEvent> Events => events[..cursor];
 
     public void AddEvent(TEvent e)
     {
@@ -84,7 +95,7 @@ public struct EventReader<TEvent>
         this.queue = queue;
     }
 
-    public ReadOnlySpan<TEvent> ReadEvents() => queue.Events;
+    public ReadOnlySpan<TEvent> Read() => queue.Events;
 }
 
 public class EventWriterFetch<TEvent> : IFetch<EventWriter<TEvent>>

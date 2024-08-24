@@ -33,6 +33,15 @@ public class EmscriptenSDL
     [DllImport("SDL")]
     unsafe extern static int SDL_PollEvent(Event* @event);
 
+    [DllImport("SDL")]
+    unsafe extern static GameController* SDL_GameControllerOpen(int index);
+
+    [DllImport("SDL")]
+    unsafe extern static void SDL_GameControllerClose(GameController* gameController);
+
+    [DllImport("SDL")]
+    extern static byte SDL_IsGameController(int index);
+
     public static void Init(SDLInitFlags flags)
     {
         var status = SDL_Init((uint)flags);
@@ -94,6 +103,21 @@ public class EmscriptenSDL
         {
             return SDL_PollEvent(ptr);
         }
+    }
+
+    unsafe public static nint GameControllerOpen(int index)
+    {
+        return (nint)SDL_GameControllerOpen(index);
+    }
+
+    unsafe public static void GameControllerClose(nint gameController)
+    {
+        SDL_GameControllerClose((GameController*)gameController);
+    }
+
+    public static bool IsGameController(int index)
+    {
+        return SDL_IsGameController(index) != 0;
     }
 }
 

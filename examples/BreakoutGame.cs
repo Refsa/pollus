@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
@@ -75,7 +76,7 @@ public class BreakoutGame
         ])
         .AddResource(new GameState { State = State.SpawnBall, Lives = 3, Score = 0 })
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (Commands commands, GameState gameState, IWindow window, 
+        static (Commands commands, GameState gameState, IWindow window,
             AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
         {
             commands.Spawn(Camera2D.Bundle);
@@ -131,8 +132,26 @@ public class BreakoutGame
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem("TestImgui",
-        static () =>
+        static (EventReader<ButtonEvent<Key>> keyEvents, 
+                EventReader<ButtonEvent<GamepadButton>> gamepadButtons, 
+                EventReader<AxisEvent<GamepadAxis>> gamepadAxes
+        ) =>
         {
+            foreach (var keyEvent in keyEvents.Read())
+            {
+                Log.Info($"Key: {keyEvent.Button} State: {keyEvent.State}");
+            }
+
+            foreach (var buttonEvent in gamepadButtons.Read())
+            {
+                Log.Info($"Button: {buttonEvent.Button} State: {buttonEvent.State}");
+            }
+
+            foreach (var axisEvent in gamepadAxes.Read())
+            {
+                Log.Info($"Axis: {axisEvent.Axis} Value: {axisEvent.Value}");
+            }
+
             ImGuiNET.ImGui.ShowDemoWindow();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",

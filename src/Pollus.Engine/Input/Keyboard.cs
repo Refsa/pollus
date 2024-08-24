@@ -1,4 +1,5 @@
 using System.ComponentModel.Design;
+using Pollus.ECS;
 using Pollus.Mathematics;
 
 namespace Pollus.Engine.Input;
@@ -46,6 +47,42 @@ public enum Key
     Period,
     Slash,
     Minus,
+    Digit0 = 48,
+    Digit1 = 49,
+    Digit2 = 50,
+    Digit3 = 51,
+    Digit4 = 52,
+    Digit5 = 53,
+    Digit6 = 54,
+    Digit7 = 55,
+    Digit8 = 56,
+    Digit9 = 57,
+    KeyA = 65,
+    KeyB = 66,
+    KeyC = 67,
+    KeyD = 68,
+    KeyE = 69,
+    KeyF = 70,
+    KeyG = 71,
+    KeyH = 72,
+    KeyI = 73,
+    KeyJ = 74,
+    KeyK = 75,
+    KeyL = 76,
+    KeyM = 77,
+    KeyN = 78,
+    KeyO = 79,
+    KeyP = 80,
+    KeyQ = 81,
+    KeyR = 82,
+    KeyS = 83,
+    KeyT = 84,
+    KeyU = 85,
+    KeyV = 86,
+    KeyW = 87,
+    KeyX = 88,
+    KeyY = 89,
+    KeyZ = 90,
     F1,
     F2,
     F3,
@@ -58,42 +95,6 @@ public enum Key
     F10,
     F11,
     F12,
-    Digit0,
-    Digit1,
-    Digit2,
-    Digit3,
-    Digit4,
-    Digit5,
-    Digit6,
-    Digit7,
-    Digit8,
-    Digit9,
-    KeyA,
-    KeyB,
-    KeyC,
-    KeyD,
-    KeyE,
-    KeyF,
-    KeyG,
-    KeyH,
-    KeyI,
-    KeyJ,
-    KeyK,
-    KeyL,
-    KeyM,
-    KeyN,
-    KeyO,
-    KeyP,
-    KeyQ,
-    KeyR,
-    KeyS,
-    KeyT,
-    KeyU,
-    KeyV,
-    KeyW,
-    KeyX,
-    KeyY,
-    KeyZ,
 }
 
 [Flags]
@@ -117,10 +118,9 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
 {
     public nint ExternalId { get; }
     public Guid Id { get; } = new();
-    public int Index { get; set; }
     public InputType Type => InputType.Keyboard;
 
-    Dictionary<Key, ButtonState> buttonStates = new();
+    Dictionary<Key, ButtonState> buttons = new();
     HashSet<Key> changed = new();
 
     public void SetKeyState(Key key, bool isPressed)
@@ -142,30 +142,51 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
             state = ButtonState.JustReleased;
         }
 
-        buttonStates[key] = state;
+        buttons[key] = state;
         changed.Add(key);
     }
 
-    public void Update()
+    public void Update(Events events)
     {
-        foreach (var key in buttonStates.Keys)
+        foreach (var key in buttons.Keys)
         {
             if (!changed.Contains(key))
             {
-                buttonStates[key] = buttonStates[key] switch
+                var prev = buttons[key];
+                buttons[key] = buttons[key] switch
                 {
                     ButtonState.JustPressed => ButtonState.Pressed,
                     ButtonState.JustReleased => ButtonState.None,
-                    _ => buttonStates[key]
+                    _ => buttons[key]
                 };
+
+                if (prev != buttons[key] && buttons[key] != ButtonState.None)
+                {
+                    changed.Add(key);
+                }
             }
         }
+
+        var keyEvents = events.GetWriter<ButtonEvent<Key>>();
+        foreach (var key in changed)
+        {
+            var state = buttons[key];
+            if (state is not ButtonState.JustPressed or ButtonState.JustReleased) continue;
+
+            keyEvents.Write(new ButtonEvent<Key>
+            {
+                DeviceId = Id,
+                Button = key,
+                State = state,
+            });
+        }
+
         changed.Clear();
     }
 
     public ButtonState GetKeyState(Key key)
     {
-        return buttonStates.TryGetValue(key, out var state) ? state : ButtonState.None;
+        return buttons.TryGetValue(key, out var state) ? state : ButtonState.None;
     }
 
     public bool JustPressed(Key key)
@@ -199,7 +220,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
         if (Pressed(left)) x -= 1;
         if (Pressed(up)) y += 1;
         if (Pressed(down)) y -= 1;
-        
+
         return new Vec2f(x, y);
     }
 
