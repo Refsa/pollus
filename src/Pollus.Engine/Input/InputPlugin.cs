@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Input;
 
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Pollus.ECS;
 using Pollus.Emscripten;
@@ -26,22 +27,23 @@ public class InputPlugin : IPlugin
         }));
     }
 
+    [Conditional("BROWSER")]
     void SetupBrowser()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")))
+        var sdlFlags = SDLInitFlags.InitJoystick;
+        if (EmscriptenSDL.WasInit(sdlFlags) is false)
         {
-            var sdlFlags = SDLInitFlags.InitEvents | SDLInitFlags.InitGamecontroller | SDLInitFlags.InitJoystick;
-            if (EmscriptenSDL.WasInit(sdlFlags) is false)
+            if (EmscriptenSDL.AnyInitialized())
             {
-                if (EmscriptenSDL.AnyInitialized())
-                {
-                    EmscriptenSDL.InitSubSystem(sdlFlags);
-                }
-                else
-                {
-                    EmscriptenSDL.Init(sdlFlags);
-                }
+                EmscriptenSDL.InitSubSystem(sdlFlags);
+            }
+            else
+            {
+                EmscriptenSDL.Init(sdlFlags);
             }
         }
+
+        EmscriptenSDL.JoystickEventState(1);
+        EmscriptenSDL.GameControllerEventState(1);
     }
 }

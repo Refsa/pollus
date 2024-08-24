@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using ImGuiNET;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -132,8 +133,8 @@ public class BreakoutGame
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem("TestImgui",
-        static (EventReader<ButtonEvent<Key>> keyEvents, 
-                EventReader<ButtonEvent<GamepadButton>> gamepadButtons, 
+        static (EventReader<ButtonEvent<Key>> keyEvents,
+                EventReader<ButtonEvent<GamepadButton>> gamepadButtons,
                 EventReader<AxisEvent<GamepadAxis>> gamepadAxes
         ) =>
         {
@@ -158,7 +159,17 @@ public class BreakoutGame
         static (Commands commands, InputManager input, Time time, IWindow window, Query query, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
-            var movePaddle = Vec2f.Right * keyboard!.GetAxis(Key.ArrowLeft, Key.ArrowRight);
+            var gamepad = input.GetDevice("gamepad/0") as Gamepad;
+
+            var gamepadInput = gamepad?.GetAxis(GamepadAxis.LeftX) ?? 0;
+            var keyboardInput = keyboard?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
+            var paddleInput = (Math.Abs(gamepadInput) > Math.Abs(keyboardInput)) switch
+            {
+                true => gamepadInput,
+                false => keyboardInput,
+            };
+
+            var movePaddle = Vec2f.Right * paddleInput;
 
             var windowRect = new Rect(Vec2f.Zero, (window.Size.X, window.Size.Y));
 

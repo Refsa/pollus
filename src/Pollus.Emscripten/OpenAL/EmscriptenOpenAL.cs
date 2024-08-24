@@ -5,117 +5,117 @@ using Pollus.Mathematics;
 using Pollus.Utils;
 using Silk.NET.OpenAL;
 
-static class EmscriptenOpenALNative
+static partial class EmscriptenOpenALNative
 {
     #region Context
-    [DllImport("OpenAL")]
-    public unsafe extern static Device* alcOpenDevice(byte* name);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial Device* alcOpenDevice(byte* name);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alcCloseDevice(Device* device);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alcCloseDevice(Device* device);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static Context* alcCreateContext(Device* device, int* attrlist);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial Context* alcCreateContext(Device* device, int* attrlist);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static Context* alcDestroyContext(Context* device);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial Context* alcDestroyContext(Context* device);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alcMakeContextCurrent(Context* context);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alcMakeContextCurrent(Context* context);
     #endregion
 
     #region Buffers
-    [DllImport("OpenAL")]
-    public unsafe extern static void alBufferData(uint buffer, BufferFormat format, void* data, int size, int freq);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alBufferData(uint buffer, BufferFormat format, void* data, int size, int freq);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alDeleteBuffers(int n, uint* buffers);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alDeleteBuffers(int n, uint* buffers);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGenBuffers(int n, uint* buffers);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGenBuffers(int n, uint* buffers);
     #endregion
 
     #region Source
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGenSources(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGenSources(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alDeleteSources(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alDeleteSources(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcePlay(uint source);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcePlay(uint source);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcePause(uint source);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcePause(uint source);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceStop(uint source);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceStop(uint source);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceRewind(uint source);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceRewind(uint source);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSourcei(uint source, GetSourceInteger param, int* value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSourcei(uint source, GetSourceInteger param, int* value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSourcei(uint source, SourceBoolean param, [MarshalAs(UnmanagedType.I4)] bool* value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSourcei(uint source, SourceBoolean param, [MarshalAs(UnmanagedType.I4)] ref bool value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSource3i(uint source, GetSourceInteger param, int* value1, int* value2, int* value3);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSource3i(uint source, GetSourceInteger param, int* value1, int* value2, int* value3);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSourceiv(uint source, GetSourceInteger param, int* values);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSourceiv(uint source, GetSourceInteger param, int* values);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSourcef(uint source, SourceFloat param, float* value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSourcef(uint source, SourceFloat param, float* value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSource3f(uint source, SourceVector3 param, float* value1, float* value2, float* value3);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSource3f(uint source, SourceVector3 param, float* value1, float* value2, float* value3);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alGetSourcefv(uint source, SourceVector3 param, float* values);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alGetSourcefv(uint source, SourceVector3 param, float* values);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcei(uint source, SourceInteger param, int value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcei(uint source, SourceInteger param, int value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcei(uint source, SourceInteger param, uint value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcei(uint source, SourceInteger param, uint value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcei(uint source, SourceBoolean param, [MarshalAs(UnmanagedType.I4)] bool value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcei(uint source, SourceBoolean param, [MarshalAs(UnmanagedType.I4)] bool value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSource3i(uint source, SourceInteger param, int value1, int value2, int value3);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSource3i(uint source, SourceInteger param, int value1, int value2, int value3);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceiv(uint source, SourceInteger param, int* value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceiv(uint source, SourceInteger param, int* value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcef(uint source, SourceFloat param, float value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcef(uint source, SourceFloat param, float value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSource3f(uint source, SourceVector3 param, float value1, float value2, float value3);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSource3f(uint source, SourceVector3 param, float value1, float value2, float value3);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcefv(uint source, SourceVector3 param, float* value);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcefv(uint source, SourceVector3 param, float* value);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcePlayv(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcePlayv(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceStopv(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceStopv(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourcePausev(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourcePausev(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceRewind(int n, uint* sources);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceRewind(int n, uint* sources);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceQueueBuffers(uint source, int nb, uint* buffers);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceQueueBuffers(uint source, int nb, uint* buffers);
 
-    [DllImport("OpenAL")]
-    public unsafe extern static void alSourceUnqueueBuffers(uint source, int nb, uint* buffers);
+    [LibraryImport("OpenAL")]
+    public unsafe static partial void alSourceUnqueueBuffers(uint source, int nb, uint* buffers);
     #endregion
 }
 
@@ -236,10 +236,8 @@ public class AL
 
     unsafe public void GetSourceProperty(uint source, SourceBoolean param, out bool value)
     {
-        fixed (bool* ptr = &value)
-        {
-            EmscriptenOpenALNative.alGetSourcei(source, param, ptr);
-        }
+        value = false;
+        EmscriptenOpenALNative.alGetSourcei(source, param, ref value);
     }
 
     unsafe public void GetSourceProperty(uint source, SourceFloat param, out float value)

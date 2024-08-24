@@ -150,20 +150,19 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
     {
         foreach (var key in buttons.Keys)
         {
-            if (!changed.Contains(key))
+            if (changed.Contains(key)) continue;
+            
+            var prev = buttons[key];
+            buttons[key] = buttons[key] switch
             {
-                var prev = buttons[key];
-                buttons[key] = buttons[key] switch
-                {
-                    ButtonState.JustPressed => ButtonState.Pressed,
-                    ButtonState.JustReleased => ButtonState.None,
-                    _ => buttons[key]
-                };
+                ButtonState.JustPressed => ButtonState.Pressed,
+                ButtonState.JustReleased => ButtonState.None,
+                _ => buttons[key]
+            };
 
-                if (prev != buttons[key] && buttons[key] != ButtonState.None)
-                {
-                    changed.Add(key);
-                }
+            if (prev != buttons[key] && buttons[key] != ButtonState.None)
+            {
+                changed.Add(key);
             }
         }
 
@@ -171,7 +170,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
         foreach (var key in changed)
         {
             var state = buttons[key];
-            if (state is not ButtonState.JustPressed or ButtonState.JustReleased) continue;
+            if (state is not (ButtonState.JustPressed or ButtonState.JustReleased)) continue;
 
             keyEvents.Write(new ButtonEvent<Key>
             {

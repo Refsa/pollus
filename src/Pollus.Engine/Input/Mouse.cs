@@ -55,30 +55,28 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
     {
         foreach (var key in buttons.Keys)
         {
-            if (!changedButtons.Contains(key))
+            if (changedButtons.Contains(key)) continue;
+
+            buttons[key] = buttons[key] switch
             {
-                buttons[key] = buttons[key] switch
-                {
-                    ButtonState.JustPressed => ButtonState.Pressed,
-                    ButtonState.JustReleased => ButtonState.None,
-                    _ => buttons[key]
-                };
-            }
+                ButtonState.JustPressed => ButtonState.Pressed,
+                ButtonState.JustReleased => ButtonState.None,
+                _ => buttons[key]
+            };
         }
 
         var buttonEvents = events.GetWriter<ButtonEvent<MouseButton>>();
         foreach (var button in changedButtons)
         {
             var state = buttons[button];
-            if (state is ButtonState.JustPressed or ButtonState.JustReleased)
+            if (state is not (ButtonState.JustPressed or ButtonState.JustReleased)) continue;
+
+            buttonEvents.Write(new ButtonEvent<MouseButton>()
             {
-                buttonEvents.Write(new ButtonEvent<MouseButton>()
-                {
-                    Button = button,
-                    State = state,
-                    DeviceId = id,
-                });
-            }
+                Button = button,
+                State = state,
+                DeviceId = id,
+            });
         }
 
         var axesEvents = events.GetWriter<AxisEvent<MouseAxis>>();

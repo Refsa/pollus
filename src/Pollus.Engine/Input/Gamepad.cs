@@ -1,8 +1,10 @@
+namespace Pollus.Engine.Input;
+
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
 
-namespace Pollus.Engine.Input;
 
 public enum GamepadButton
 {
@@ -73,11 +75,13 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         unsafe
         {
 #if BROWSER
-            externalDevice = EmscriptenSDL.GameControllerOpen((int)externalId);
+            externalDevice = EmscriptenSDL.JoystickOpen((int)externalId);
 #else
             externalDevice = (nint)SDLWrapper.Instance.GameControllerOpen((int)externalId);
 #endif
         }
+
+        Guard.IsNotNull(externalDevice, $"Failed to open gamepad device");
     }
 
     public void Disconnect()
@@ -87,7 +91,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         unsafe
         {
 #if BROWSER
-            EmscriptenSDL.GameControllerClose(externalId);
+            EmscriptenSDL.JoystickClose((int)externalId);
 #else
             SDLWrapper.Instance.GameControllerClose((Silk.NET.SDL.GameController*)externalDevice);
 #endif
@@ -100,20 +104,19 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
     {
         foreach (var key in buttons.Keys)
         {
-            if (!changedButtons.Contains(key))
-            {
-                var prev = buttons[key];
-                buttons[key] = buttons[key] switch
-                {
-                    ButtonState.JustPressed => ButtonState.Pressed,
-                    ButtonState.JustReleased => ButtonState.None,
-                    _ => buttons[key]
-                };
+            if (changedButtons.Contains(key)) continue;
 
-                if (prev != buttons[key] && buttons[key] != ButtonState.None)
-                {
-                    changedButtons.Add(key);
-                }
+            var prev = buttons[key];
+            buttons[key] = buttons[key] switch
+            {
+                ButtonState.JustPressed => ButtonState.Pressed,
+                ButtonState.JustReleased => ButtonState.None,
+                _ => buttons[key]
+            };
+
+            if (prev != buttons[key] && buttons[key] != ButtonState.None)
+            {
+                changedButtons.Add(key);
             }
         }
 
@@ -121,7 +124,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         foreach (var key in changedButtons)
         {
             var state = buttons[key];
-            if (state is not ButtonState.JustPressed or ButtonState.JustReleased) continue;
+            if (state is not (ButtonState.JustPressed or ButtonState.JustReleased)) continue;
 
             buttonEvents.Write(new ButtonEvent<GamepadButton>
             {
@@ -194,9 +197,26 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         buttons[button] = state;
     }
 
+    public void SetAxisState(GamepadAxis axis, short value)
+    {
+        var nvalue = Math.Abs((float)value / short.MaxValue);
+        nvalue = Math.Clamp(nvalue, 0f, 1f);
+        if (nvalue < 0.02) nvalue = 0;
+        nvalue /= Math.Sign(value);
+
+        if (axes.TryGetValue(axis, out var prev) && prev != nvalue)
+        {
+            changedAxes.Add(axis);
+        }
+        axes[axis] = nvalue;
+    }
+
     public void SetAxisState(GamepadAxis axis, float value)
     {
-        changedAxes.Add(axis);
+        if (axes.TryGetValue(axis, out var prev) && prev != value)
+        {
+            changedAxes.Add(axis);
+        }
         axes[axis] = value;
     }
 

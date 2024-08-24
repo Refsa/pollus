@@ -4,43 +4,70 @@ using System.Runtime.InteropServices;
 using Pollus.Utils;
 using Silk.NET.SDL;
 
-public class EmscriptenSDL
+public partial class EmscriptenSDL
 {
-    [DllImport("SDL")]
-    extern static int SDL_Init(uint flags);
+    [LibraryImport("SDL")]
+    private static partial int SDL_Init(uint flags);
 
-    [DllImport("SDL")]
-    extern static int SDL_InitSubSystem(uint flags);
+    [LibraryImport("SDL")]
+    private static partial int SDL_InitSubSystem(uint flags);
 
-    [DllImport("SDL")]
-    extern static uint SDL_WasInit(uint flags);
+    [LibraryImport("SDL")]
+    private static partial uint SDL_WasInit(uint flags);
 
-    [DllImport("SDL")]
-    extern static void SDL_Quit();
+    [LibraryImport("SDL")]
+    private static partial void SDL_Quit();
 
-    [DllImport("SDL")]
-    extern static void SDL_QuitSubSystem(uint flags);
+    [LibraryImport("SDL")]
+    private static partial void SDL_QuitSubSystem(uint flags);
 
-    [DllImport("SDL")]
-    unsafe extern static nint SDL_CreateWindow(byte* title, int x, int y, int w, int h, WindowFlags flags);
+    [LibraryImport("SDL")]
+    private unsafe static partial nint SDL_CreateWindow(byte* title, int x, int y, int w, int h, WindowFlags flags);
 
-    [DllImport("SDL")]
-    extern static void SDL_DestroyWindow(nint window);
+    [LibraryImport("SDL")]
+    private static partial void SDL_DestroyWindow(nint window);
 
-    [DllImport("SDL")]
-    extern static void SDL_PumpEvents();
+    [LibraryImport("SDL")]
+    private static partial void SDL_PumpEvents();
 
-    [DllImport("SDL")]
-    unsafe extern static int SDL_PollEvent(Event* @event);
+    [LibraryImport("SDL")]
+    private unsafe static partial int SDL_PollEvent(Event* @event);
 
-    [DllImport("SDL")]
-    unsafe extern static GameController* SDL_GameControllerOpen(int index);
+    [LibraryImport("SDL")]
+    private unsafe static partial GameController* SDL_GameControllerOpen(int index);
 
-    [DllImport("SDL")]
-    unsafe extern static void SDL_GameControllerClose(GameController* gameController);
+    [LibraryImport("SDL")]
+    private unsafe static partial void SDL_GameControllerClose(GameController* gameController);
 
-    [DllImport("SDL")]
-    extern static byte SDL_IsGameController(int index);
+    [LibraryImport("SDL")]
+    private static partial void SDL_GameControllerUpdate();
+
+    [LibraryImport("SDL")]
+    private static partial int SDL_GameControllerEventState(int state);
+
+    [LibraryImport("SDL")]
+    private static partial byte SDL_IsGameController(int index);
+
+    [LibraryImport("SDL")]
+    private static partial int SDL_JoystickOpen(int index);
+
+    [LibraryImport("SDL")]
+    private static partial void SDL_JoystickClose(nint joystick);
+
+    [LibraryImport("SDL")]
+    private static partial void SDL_JoystickUpdate();
+
+    [LibraryImport("SDL")]
+    private static partial int SDL_JoystickEventState(int state);
+
+    [LibraryImport("SDL")]
+    private static partial int SDL_NumJoysticks();
+
+    [LibraryImport("SDL")]
+    private static partial byte SDL_JoystickGetButton(nint joystick, int button);
+
+    [LibraryImport("SDL")]
+    private static partial short SDL_JoystickGetAxis(nint joystick, int axis);
 
     public static void Init(SDLInitFlags flags)
     {
@@ -115,6 +142,51 @@ public class EmscriptenSDL
         SDL_GameControllerClose((GameController*)gameController);
     }
 
+    public static void GameControllerUpdate()
+    {
+        SDL_GameControllerUpdate();
+    }
+
+    public static int GameControllerEventState(int state)
+    {
+        return SDL_GameControllerEventState(state);
+    }
+
+    unsafe public static nint JoystickOpen(int index)
+    {
+        return SDL_JoystickOpen(index);
+    }
+
+    unsafe public static void JoystickClose(nint joystick)
+    {
+        SDL_JoystickClose(joystick);
+    }
+
+    public static void JoystickUpdate()
+    {
+        SDL_JoystickUpdate();
+    }
+
+    public static void JoystickEventState(int state)
+    {
+        SDL_JoystickEventState(state);
+    }
+
+    public static byte JoystickGetButton(nint joystick, int button)
+    {
+        return SDL_JoystickGetButton(joystick, button);
+    }
+
+    public static short JoystickGetAxis(nint joystick, int axis)
+    {
+        return SDL_JoystickGetAxis(joystick, axis);
+    }
+
+    public static int NumJoysticks()
+    {
+        return SDL_NumJoysticks();
+    }
+
     public static bool IsGameController(int index)
     {
         return SDL_IsGameController(index) != 0;
@@ -122,16 +194,14 @@ public class EmscriptenSDL
 }
 
 [Flags]
-public enum SDLInitFlags : uint
+public enum SDLInitFlags
 {
-    None = 0u,
-    InitTimer = 1u,
-    InitAudio = 16u,
-    InitVideo = 32u,
-    InitJoystick = 512u,
-    InitHaptic = 4096u,
-    InitGamecontroller = 8192u,
-    InitEvents = 16384u,
-    InitSensor = 32768u,
-    InitNoparachute = 1048576u,
+    None = 0,
+    InitTimer = 0x00000001,
+    InitAudio = 0x00000010,
+    InitVideo = 0x00000020,
+    InitJoystick = 0x00000200,
+    InitHaptic = 0x00001000,
+    InitNoparachute = 0x00100000,
+    Everthing = 0x0000FFFF,
 }

@@ -30,7 +30,7 @@ public partial class BrowserWindow : IWindow
         Options = options;
         Size = new Vec2<int>(options.Width, options.Height);
 
-        EmscriptenSDL.Init(SDLInitFlags.InitVideo);
+        EmscriptenSDL.Init(SDLInitFlags.InitVideo | SDLInitFlags.InitJoystick);
         nativeWindow = EmscriptenSDL.CreateWindow(options.Title,
             Silk.NET.SDL.Sdl.WindowposUndefined, Silk.NET.SDL.Sdl.WindowposUndefined,
             options.Width, options.Height,
@@ -45,6 +45,7 @@ public partial class BrowserWindow : IWindow
         IsOpen = false;
 
         EmscriptenSDL.DestroyWindow(nativeWindow);
+        EmscriptenSDL.Quit();
     }
 
     public void Close()

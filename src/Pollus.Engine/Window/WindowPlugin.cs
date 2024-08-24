@@ -18,7 +18,7 @@ public class WindowPlugin : IPlugin
         {
             foreach (var @event in platformEvents.Events)
             {
-                if (@event.Type is (uint)Silk.NET.SDL.EventType.Quit or (uint)Silk.NET.SDL.EventType.AppTerminating)
+                if (@event.Type is (int)Silk.NET.SDL.EventType.Quit or (int)Silk.NET.SDL.EventType.AppTerminating)
                 {
                     window.Close();
                     break;
