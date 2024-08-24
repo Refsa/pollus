@@ -30,6 +30,7 @@
 	- [ ] Events
 	- [ ] Commands
 	- [ ] State Flags
+	- [ ] Auto setup Fetches
 - UI
 	- [x] IMGUI
 	- [ ] dunno some custom UI stuff

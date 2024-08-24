@@ -378,6 +378,39 @@ public class ArchetypeTests
     }
 
     [Fact]
+    public void ArchetypeStore_RemoveComponent()
+    {
+        using var world = new World();
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }, new TestComponent2 { Value = 20 }).Spawn(world);
+        world.Store.RemoveComponent<TestComponent2>(entity1);
+
+        var c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        Assert.Equal(10, c1.Value);
+
+        Assert.Throws<ArgumentException>(() => world.Store.GetComponent<TestComponent2>(entity1));
+    }
+
+    [Fact]
+    public void ArchetypeStore_RemoveComponent_WithMove()
+    {
+        using var world = new World();
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }, new TestComponent2 { Value = 20 }).Spawn(world);
+        var entity2 = Entity.With(new TestComponent1 { Value = 30 }, new TestComponent2 { Value = 40 }).Spawn(world);
+
+        world.Store.RemoveComponent<TestComponent2>(entity1);
+
+        var e1c1 = world.Store.GetComponent<TestComponent1>(entity1);
+        Assert.Equal(10, e1c1.Value);
+
+        var e2c1 = world.Store.GetComponent<TestComponent1>(entity2);
+        Assert.Equal(30, e2c1.Value);
+        var e2c2 = world.Store.GetComponent<TestComponent2>(entity2);
+        Assert.Equal(40, e2c2.Value);
+
+        Assert.Throws<ArgumentException>(() => world.Store.GetComponent<TestComponent2>(entity1));
+    }
+
+    [Fact]
     public void Archetypestore_Preallocate()
     {
         using var world = new World();

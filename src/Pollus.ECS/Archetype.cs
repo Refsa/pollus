@@ -280,6 +280,7 @@ public ref struct ArchetypeChunkEnumerable
         {
             while (++index < filter.archetypes.Count)
             {
+                if (filter.archetypes[index].EntityCount == 0) continue;
                 if (filter.archetypes[index].HasAll(filter.componentIDs) is false) continue;
                 if (filter.filter is null || filter.filter(filter.archetypes[index]))
                 {

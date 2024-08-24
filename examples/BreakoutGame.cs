@@ -20,6 +20,8 @@ public class BreakoutGame
 {
     struct Player : IComponent { }
 
+    struct Disabled : IComponent { }
+
     struct Paddle : IComponent { }
 
     struct Brick : IComponent { }
@@ -73,9 +75,9 @@ public class BreakoutGame
         ])
         .AddResource(new GameState { State = State.SpawnBall, Lives = 3, Score = 0 })
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (World world, GameState gameState, IWindow window, AssetServer assetServer, PrimitiveMeshes primitives, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
+        static (Commands commands, GameState gameState, IWindow window, AssetServer assetServer, PrimitiveMeshes primitives, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
         {
-            world.Spawn(Camera2D.Bundle);
+            commands.Spawn(Camera2D.Bundle);
 
             var spriteMaterial = materials.Add(new SpriteMaterial
             {
@@ -85,7 +87,7 @@ public class BreakoutGame
             });
             gameState.spritesheet = spriteMaterial;
 
-            world.Spawn(
+            commands.Spawn(Entity.With(
                 new Player(),
                 new Transform2
                 {
@@ -101,14 +103,14 @@ public class BreakoutGame
                     Slice = new Rect(16, 0, 48, 16),
                     Color = Color.WHITE,
                 }
-            );
+            ));
 
             var spacing = 8f;
             for (int x = 0; x < window.Size.X / (48f + spacing + 2f); x++)
             {
                 for (int y = 0; y < 8; y++)
                 {
-                    world.Spawn(
+                    commands.Spawn(Entity.With(
                         new Brick(),
                         new Transform2
                         {
@@ -123,7 +125,7 @@ public class BreakoutGame
                             Slice = new Rect(16, (x + y) % 3 * 16, 48, 16),
                             Color = Color.WHITE,
                         }
-                    );
+                    ));
                 }
             }
         }))
@@ -133,21 +135,38 @@ public class BreakoutGame
             ImGuiNET.ImGui.ShowDemoWindow();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (InputManager input, Time time, IWindow window, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
+        static (Commands commands, InputManager input, Time time, IWindow window, Query query, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
             var movePaddle = Vec2f.Right * keyboard!.GetAxis(Key.ArrowLeft, Key.ArrowRight);
 
             var windowRect = new Rect(Vec2f.Zero, (window.Size.X, window.Size.Y));
 
-            qPlayer.ForEach((ref Transform2 transform, ref Collider collider) =>
+            if (qPlayer.EntityCount() == 0)
+                return;
+
+            var player = qPlayer.Single();
+            ref var pTransform = ref player.Component0;
+            ref var pCollider = ref player.Component1;
+
+            if (keyboard.JustPressed(Key.KeyZ))
             {
-                transform.Position += movePaddle * 1000f * (float)time.DeltaTime;
-                transform.Position = transform.Position.Clamp(windowRect.Min - collider.Bounds.Min, windowRect.Max - collider.Bounds.Max);
-            });
+                commands.AddComponent<Disabled>(player.Entity, default);
+            }
+            else if (keyboard.JustPressed(Key.KeyX))
+            {
+                commands.RemoveComponent<Disabled>(player.Entity);
+            }
+            else if (!query.Has<Disabled>(player.Entity))
+            {
+                pTransform.Position += movePaddle * 1000f * (float)time.DeltaTime;
+                pTransform.Position = pTransform.Position.Clamp(
+                    windowRect.Min - pCollider.Bounds.Min,
+                    windowRect.Max - pCollider.Bounds.Max);
+            }
         }))
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
-        static (World world, Time time, IWindow window, AssetServer assetServer,
+        static (Commands commands, Time time, IWindow window, AssetServer assetServer,
             Query<Transform2, Ball, Collider> qBall,
             Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
             Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles,
@@ -205,12 +224,12 @@ public class BreakoutGame
 
             foreach (var entity in collisions)
             {
-                world.Despawn(entity);
+                commands.Despawn(entity);
             }
 
             if (spawnSound)
             {
-                world.Spawn(
+                commands.Spawn(Entity.With(
                     new MainMixer(),
                     new AudioSource
                     {
@@ -222,7 +241,7 @@ public class BreakoutGame
                     {
                         Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
                     }
-                );
+                ));
             }
         }))
         .AddSystem(CoreStage.First, FnSystem("GameState",

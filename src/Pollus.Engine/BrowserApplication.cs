@@ -66,7 +66,7 @@ public class BrowserApplication : IApplication, IDisposable
             return;
         }
 
-        World.Tick();
+        World.Update();
     }
 
     bool GraphicsSetup()

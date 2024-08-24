@@ -1,10 +1,17 @@
 namespace Pollus.ECS;
 
 using Pollus.ECS.Core;
+using System.Collections.Generic;
 using System.Text;
 
 public class Schedule
 {
+    public enum Step
+    {
+        Before,
+        After,
+    }
+
     public static Schedule CreateDefault()
     {
         return new()
@@ -35,11 +42,13 @@ public class Schedule
         }
     }
 
-    public void Tick(World world)
+    public IEnumerable<Step> Tick(World world)
     {
         foreach (var stage in Stages)
         {
+            yield return Step.Before;
             stage.Tick(world);
+            yield return Step.After;
         }
     }
 

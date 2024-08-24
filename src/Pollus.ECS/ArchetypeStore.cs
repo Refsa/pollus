@@ -143,41 +143,81 @@ public class ArchetypeStore : IDisposable
         if (entities.TryGetValue(entity, out var info))
         {
             var archetype = archetypes[info.ArchetypeIndex];
+            if (!archetype.HasComponent<C>()) throw new ArgumentException("Entity does not have component");
             return ref archetype.GetComponent<C>(info.ChunkIndex, info.RowIndex);
         }
+
         throw new ArgumentException("Entity does not exist");
     }
 
     public void AddComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
-        if (entities.TryGetValue(entity, out var info))
+        if (!entities.TryGetValue(entity, out var info))
         {
-            var archetype = archetypes[info.ArchetypeIndex];
-            if (archetype.HasComponent<C>()) return;
+            throw new ArgumentException("Entity does not exist");
+        }
 
-            Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length + 1];
-            archetype.GetChunkInfo().ComponentIDs.CopyTo(cids);
-            cids[^1] = Component.GetInfo<C>().ID;
+        var archetype = archetypes[info.ArchetypeIndex];
+        if (archetype.HasComponent<C>()) return;
 
-            var nextAid = ArchetypeID.Create(cids);
-            var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
-            var nextArchetypeInfo = nextArchetype.AddEntity(entity);
-            
-            ref var nextInfo = ref entities.Get(entity);
-            nextInfo.ArchetypeIndex = nextArchetypeIndex;
-            nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
-            nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
+        Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length + 1];
+        archetype.GetChunkInfo().ComponentIDs.CopyTo(cids);
+        cids[^1] = Component.GetInfo<C>().ID;
 
-            nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
+        var nextAid = ArchetypeID.Create(cids);
+        var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
+        var nextArchetypeInfo = nextArchetype.AddEntity(entity);
 
-            var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
-            if (movedEntity != Entity.NULL)
-            {
-                ref var movedEntityInfo = ref entities.Get(movedEntity);
-                movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
-                movedEntityInfo.RowIndex = nextInfo.RowIndex;
-            }
+        ref var nextInfo = ref entities.Get(entity);
+        nextInfo.ArchetypeIndex = nextArchetypeIndex;
+        nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
+        nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
+
+        nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
+
+        var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
+        if (movedEntity != Entity.NULL)
+        {
+            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
+            movedEntityInfo.RowIndex = nextInfo.RowIndex;
+        }
+    }
+
+    public void RemoveComponent<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        if (!entities.TryGetValue(entity, out var info))
+        {
+            throw new ArgumentException("Entity does not exist");
+        }
+
+        var archetype = archetypes[info.ArchetypeIndex];
+        if (!archetype.HasComponent<C>()) return;
+
+        Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length - 1];
+        var index = 0;
+        foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
+        {
+            if (cid != Component.GetInfo<C>().ID) cids[index++] = cid;
+        }
+
+        var nextAid = ArchetypeID.Create(cids);
+        var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
+        var nextArchetypeInfo = nextArchetype.AddEntity(entity);
+
+        ref var nextInfo = ref entities.Get(entity);
+        nextInfo.ArchetypeIndex = nextArchetypeIndex;
+        nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
+        nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
+
+        var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
+        if (movedEntity != Entity.NULL)
+        {
+            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
+            movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
     }
 
@@ -185,5 +225,11 @@ public class ArchetypeStore : IDisposable
     public bool EntityExists(in Entity entity)
     {
         return entities.Has(entity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityInfo GetEntityInfo(in Entity entity)
+    {
+        return entities.Get(entity);
     }
 }

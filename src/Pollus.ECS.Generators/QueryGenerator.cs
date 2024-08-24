@@ -66,6 +66,16 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         {
             query.ForEach(iter);
         }
+
+        public EntityRow Single()
+        {
+            return query.Single();
+        }
+
+        public int EntityCount()
+        {
+            return query.EntityCount();
+        }
     }
 
     static readonly Component.Info[] infos = [$infos$];

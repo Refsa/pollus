@@ -13,6 +13,112 @@ public interface IQueryCreate<TQuery>
     static abstract TQuery Create(World world);
 }
 
+public struct Query : IQuery, IQueryCreate<Query>
+{
+    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
+        where TFilters : ITuple, new()
+    {
+        public static Component.Info[] Infos => infos;
+        static readonly IFilter[] filters;
+        static FilterDelegate filterDelegate = RunFilter;
+
+        public static implicit operator Query(in Filter<TFilters> filter) => filter.query;
+        static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
+        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
+
+        static Filter()
+        {
+            filters = FilterHelpers.UnwrapFilters<TFilters>();
+            QueryFetch<Filter<TFilters>>.Register();
+        }
+
+        Query query;
+
+        public Filter(World world)
+        {
+            query = new Query(world, filterDelegate);
+        }
+
+        public void ForEach(ForEachEntityDelegate pred)
+        {
+            query.ForEach(pred);
+        }
+
+        public Entity Single()
+        {
+            return query.Single();
+        }
+
+        public int EntityCount()
+        {
+            return query.EntityCount();
+        }
+    }
+
+    static readonly Component.Info[] infos = [];
+    public static Component.Info[] Infos => infos;
+
+    static Query()
+    {
+        QueryFetch<Query>.Register();
+    }
+
+    public static Query Create(World world)
+    {
+        return new Query(world);
+    }
+
+    World world;
+    readonly FilterDelegate? filter;
+
+    public Query(World world, FilterDelegate? filter = null)
+    {
+        this.world = world;
+        this.filter = filter;
+    }
+
+    public void ForEach(ForEachEntityDelegate pred)
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            var entities = chunk.GetEntities();
+            for (int i = 0; i < chunk.Count; i++)
+            {
+                pred(entities[i]);
+            }
+        }
+    }
+
+    public Entity Single()
+    {
+        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            return chunk.GetEntities()[0];
+        }
+        throw new InvalidOperationException("No entities found");
+    }
+
+    public int EntityCount()
+    {
+        int count = 0;
+        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        {
+            count += chunk.Count;
+        }
+        return count;
+    }
+
+    public readonly bool Has<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+}
+
 public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     where C0 : unmanaged, IComponent
 {
@@ -59,6 +165,16 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             where TForEach : struct, IForEachBase<C0>
         {
             query.ForEach(iter);
+        }
+
+        public EntityRow Single()
+        {
+            return query.Single();
+        }
+
+        public int EntityCount()
+        {
+            return query.EntityCount();
         }
     }
 

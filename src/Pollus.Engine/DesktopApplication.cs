@@ -59,7 +59,7 @@ public class DesktopApplication : IApplication, IDisposable
 
         while (IsRunning)
         {
-            world.Tick();
+            world.Update();
         }
 
         Dispose();

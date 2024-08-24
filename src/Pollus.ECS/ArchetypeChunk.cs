@@ -40,6 +40,16 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasEntity(in Entity entity)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (entities[i] == entity) return true;
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public int AddEntity(in Entity entity)
     {
         if (count >= length) return -1;

@@ -10,13 +10,19 @@ public class World : IDisposable
         FetchInit.Init();
         ResourceFetch<World>.Register();
         ResourceFetch<Resources>.Register();
+        CommandsFetch.Register();
     }
 
     public Schedule Schedule { get; init; }
     public ArchetypeStore Store { get; init; }
     public Resources Resources { get; init; }
 
+    int ticks = 0;
+
     HashSet<Type> registeredPlugins = new();
+
+    Stack<Commands> commandBuffers = new();
+    Queue<Commands> commandBuffersQueue = new();
 
     public World()
     {
@@ -90,6 +96,22 @@ public class World : IDisposable
         return this;
     }
 
+    public Commands GetCommands()
+    {
+        if (commandBuffers.Count == 0)
+        {
+            var commands = new Commands();
+            commandBuffersQueue.Enqueue(commands);
+            return commands;
+        }
+        else
+        {
+            var commands = commandBuffers.Pop();
+            commandBuffersQueue.Enqueue(commands);
+            return commands;
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Prepare()
     {
@@ -99,15 +121,29 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Tick()
+    public void Update()
     {
         try
         {
-            Schedule.Tick(this);
+            foreach (var step in Schedule.Tick(this))
+            {
+                if (step == Schedule.Step.Before) continue;
+
+                while (commandBuffersQueue.Count > 0)
+                {
+                    var commands = commandBuffersQueue.Dequeue();
+                    commands.Flush(this);
+                    commandBuffers.Push(commands);
+                }
+            }
         }
         catch (Exception e)
         {
             Log.Error(e, "An error occurred while running the world schedule.");
+        }
+        finally
+        {
+            ticks++;
         }
     }
 }
