@@ -75,7 +75,8 @@ public class BreakoutGame
         ])
         .AddResource(new GameState { State = State.SpawnBall, Lives = 3, Score = 0 })
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (Commands commands, GameState gameState, IWindow window, AssetServer assetServer, PrimitiveMeshes primitives, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
+        static (Commands commands, GameState gameState, IWindow window, 
+            AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
         {
             commands.Spawn(Camera2D.Bundle);
 
@@ -169,8 +170,7 @@ public class BreakoutGame
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,
             Query<Transform2, Ball, Collider> qBall,
             Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
-            Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles,
-            Query<AudioSource>.Filter<All<MainMixer>> qAudioSources
+            Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles
         ) =>
         {
             var collisions = new List<Entity>();

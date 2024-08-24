@@ -6,6 +6,7 @@
 		- handle right click and aux mouse buttons in browser
 	- [ ] Gamepad
 	- [ ] Touch
+	- [ ] Action Map
 - Audio
 	- [x] Desktop
 	- [x] Web
@@ -28,7 +29,7 @@
 	- [ ] Relationships
 	- [ ] Hierarchies
 	- [ ] Events
-	- [ ] Commands
+	- [x] Commands
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
 - UI

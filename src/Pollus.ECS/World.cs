@@ -13,22 +13,22 @@ public class World : IDisposable
         CommandsFetch.Register();
     }
 
+    int ticks = 0;
+    HashSet<Type> registeredPlugins = new();
+    Stack<Commands> commandBuffers = new();
+    Queue<Commands> commandBuffersQueue = new();
+
     public Schedule Schedule { get; init; }
     public ArchetypeStore Store { get; init; }
     public Resources Resources { get; init; }
-
-    int ticks = 0;
-
-    HashSet<Type> registeredPlugins = new();
-
-    Stack<Commands> commandBuffers = new();
-    Queue<Commands> commandBuffersQueue = new();
+    public Events Events { get; init; }
 
     public World()
     {
         Store = new();
         Schedule = Schedule.CreateDefault();
         Resources = new();
+        Events = new();
     }
 
     public void Dispose()

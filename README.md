@@ -40,9 +40,9 @@ Application.Builder
         new InputPlugin(),
     ])
     .AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem("SetupEntities",
-    static (World world) => 
+    static (Commands commands) => 
     {
-        world.Spawn(Transform2.Default, new Player());
+        commands.Spawn(Entity.With(Transform2.Default, new Player()));
     }))
     .AddSystems(CoreStage.Update, SystemBuilder.FnSystem("UpdateEntities",
     static (Query<Transform2>.Filter<All<Player>> query) => 

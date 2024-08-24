@@ -37,11 +37,6 @@ public class CommandBuffer<TCommand> : ICommandBuffer
     }
 }
 
-public interface ICommands
-{
-    
-}
-
 public class Commands
 {
     Dictionary<Type, ICommandBuffer> commandBuffers = [];
