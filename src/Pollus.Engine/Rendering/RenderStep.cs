@@ -3,20 +3,20 @@ namespace Pollus.Engine.Rendering;
 using Pollus.ECS;
 using Pollus.Graphics.Rendering;
 
-public enum RenderPassStage2D
+public enum RenderStep2D
 {
     Main,
     PostProcess,
     UI,
 }
 
-public class RenderGraph
+public class RenderSteps
 {
-    Dictionary<RenderPassStage2D, List<IRenderPassStageDraw>> stages = new();
+    Dictionary<RenderStep2D, List<IRenderStepDraw>> stages = new();
 
-    public Dictionary<RenderPassStage2D, List<IRenderPassStageDraw>> Stages => stages;
+    public Dictionary<RenderStep2D, List<IRenderStepDraw>> Stages => stages;
 
-    public void Add(IRenderPassStageDraw stage)
+    public void Add(IRenderStepDraw stage)
     {
         if (!stages.TryGetValue(stage.Stage, out var list))
         {
@@ -27,8 +27,8 @@ public class RenderGraph
     }
 }
 
-public interface IRenderPassStageDraw
+public interface IRenderStepDraw
 {
-    public RenderPassStage2D Stage { get; }
+    public RenderStep2D Stage { get; }
     void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets);
 }

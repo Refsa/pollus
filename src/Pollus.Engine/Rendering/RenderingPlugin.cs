@@ -21,14 +21,14 @@ public class RenderingPlugin : IPlugin
         ResourceFetch<RenderAssets>.Register();
         ResourceFetch<RenderBatches>.Register();
         ResourceFetch<RenderContext>.Register();
-        ResourceFetch<RenderGraph>.Register();
+        ResourceFetch<RenderSteps>.Register();
     }
 
     public void Apply(World world)
     {
         world.Resources.Add(new RenderBatches());
         world.Resources.Add(new RenderContext());
-        world.Resources.Add(new RenderGraph());
+        world.Resources.Add(new RenderSteps());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new MeshRenderDataLoader())
             .AddLoader(new TextureRenderDataLoader())
@@ -53,7 +53,7 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem(
             "SetupRendering",
-            static (RenderGraph renderGraph) => 
+            static (RenderSteps renderGraph) => 
             {
                 renderGraph.Add(new RenderBatchDraw());
                 renderGraph.Add(new SpriteBatchDraw());
@@ -119,7 +119,7 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             "Rendering",
-            static (RenderAssets renderAssets, Resources resources, RenderContext context, RenderGraph renderGraph) =>
+            static (RenderAssets renderAssets, Resources resources, RenderContext context, RenderSteps renderGraph) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
 

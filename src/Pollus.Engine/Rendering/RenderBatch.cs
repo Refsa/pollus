@@ -104,9 +104,9 @@ public class RenderBatch : IDisposable
     }
 }
 
-public class RenderBatchDraw : IRenderPassStageDraw
+public class RenderBatchDraw : IRenderStepDraw
 {
-    public RenderPassStage2D Stage => RenderPassStage2D.Main;
+    public RenderStep2D Stage => RenderStep2D.Main;
 
     public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
     {
