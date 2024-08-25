@@ -1,5 +1,6 @@
 namespace Pollus.Collections;
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 unsafe public struct NativeMap<TKey, TValue> : IDisposable

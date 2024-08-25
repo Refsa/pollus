@@ -14,7 +14,8 @@ public class World : IDisposable
         CommandsFetch.Register();
     }
 
-    int ticks = 0;
+    int version = 0;
+
     HashSet<Type> registeredPlugins = new();
     Stack<Commands> commandBuffers = new();
     Queue<Commands> commandBuffersQueue = new();
@@ -128,6 +129,8 @@ public class World : IDisposable
     {
         try
         {
+            Store.Update();
+
             foreach (var step in Schedule.Tick(this))
             {
                 if (step == Schedule.Step.Before) continue;
@@ -146,7 +149,7 @@ public class World : IDisposable
         }
         finally
         {
-            ticks++;
+            version++;
             Events.ClearEvents();
         }
     }

@@ -25,6 +25,7 @@
 	- [ ] Schedule systems
 		- [ ] ordering
 		- [ ] parallel planner
+		- [ ] per stage/system command dispatchs
 	- [ ] Parallel queries
 	- [ ] Relationships
 	- [ ] Hierarchies
@@ -32,6 +33,9 @@
 	- [x] Commands
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
+	- [ ] versioning
+		- [ ] event lifetimes
+		- [ ] change filter lifetimes
 - UI
 	- [x] IMGUI
 	- [ ] dunno some custom UI stuff

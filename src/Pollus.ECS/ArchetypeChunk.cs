@@ -1,19 +1,32 @@
 namespace Pollus.ECS;
 
 using Pollus.Collections;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+
+[Flags]
+public enum ComponentFlags : byte
+{
+    None = 0,
+    Added = 1 << 0,
+    Changed = 1 << 1,
+}
 
 public struct ArchetypeChunk : IDisposable
 {
     internal NativeMap<int, NativeArray<byte>> components;
     internal NativeArray<Entity> entities;
 
+    NativeMap<int, ComponentFlags> flags;
+    int firstFlagIndex;
+    int lastFlagIndex;
+
     int count;
     int length;
 
     public int Count => count;
     public int Length => length;
+    public Range FlagRange => firstFlagIndex..lastFlagIndex;
 
     public ArchetypeChunk(scoped in Span<ComponentID> cids, int rows = 0)
     {
@@ -21,11 +34,13 @@ public struct ArchetypeChunk : IDisposable
         count = 0;
         entities = new(rows);
         components = new(cids.Length);
+        flags = new(cids.Length);
 
         foreach (var cid in cids)
         {
             var cinfo = Component.GetInfo(cid);
             components.Add(cid, new(rows * cinfo.SizeInBytes));
+            flags.Add(cid, ComponentFlags.None);
         }
     }
 
@@ -37,6 +52,45 @@ public struct ArchetypeChunk : IDisposable
         }
         components.Dispose();
         entities.Dispose();
+    }
+
+    public bool HasFlag<C>(ComponentFlags flag)
+        where C : unmanaged, IComponent
+    {
+        return flags.Get(Component.GetInfo<C>().ID).HasFlag(flag);
+    }
+
+    public void ClearFlags()
+    {
+        foreach (ref var value in flags.Values)
+        {
+            value = ComponentFlags.None;
+        }
+        firstFlagIndex = 0;
+        lastFlagIndex = 0;
+    }
+
+    void SetFlag<C>(ComponentFlags flag, int row)
+        where C : unmanaged, IComponent
+    {
+        SetFlag(Component.GetInfo<C>().ID, flag, row);
+    }
+
+    void SetFlag(ComponentID cid, ComponentFlags flag, int row)
+    {
+        firstFlagIndex = int.Min(firstFlagIndex, row);
+        lastFlagIndex = int.Max(lastFlagIndex, row);
+        flags.Get(cid) |= flag;
+    }
+
+    void SetAllFlags(ComponentFlags flag, int row)
+    {
+        firstFlagIndex = int.Min(firstFlagIndex, row);
+        lastFlagIndex = int.Max(lastFlagIndex, row);
+        foreach (ref var value in flags.Values)
+        {
+            value |= flag;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -55,6 +109,7 @@ public struct ArchetypeChunk : IDisposable
         if (count >= length) return -1;
 
         entities[count] = entity;
+        SetAllFlags(ComponentFlags.Added, count);
         return count++;
     }
 
@@ -75,8 +130,7 @@ public struct ArchetypeChunk : IDisposable
         move entity in last row from src chunk to this chunk
         return the moved entity
         */
-        
-        var entity = entities[row];
+
         entities[row] = src.entities[src.count - 1];
         src.entities[src.count - 1] = Entity.NULL;
         src.count--;

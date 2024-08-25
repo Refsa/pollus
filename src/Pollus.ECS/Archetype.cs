@@ -54,7 +54,8 @@ public partial class Archetype : IDisposable
 
     readonly ArchetypeID id;
     readonly ChunkInfo chunkInfo;
-    readonly int index;
+
+    int version = 0;
 
     NativeArray<ArchetypeChunk> chunks;
     int lastChunkIndex = -1;
@@ -244,21 +245,32 @@ public partial class Archetype : IDisposable
         }
         return ref chunks[lastChunkIndex];
     }
+
+    public void Update()
+    {
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            chunks[i].ClearFlags();
+        }
+        version++;
+    }
 }
 
 public ref struct ArchetypeChunkEnumerable
 {
     readonly List<Archetype> archetypes;
     readonly Span<ComponentID> componentIDs;
-    readonly FilterDelegate? filter;
-    int index;
-
-    public ArchetypeChunkEnumerable(List<Archetype> archetypes, in Span<ComponentID> componentIDs, FilterDelegate? filter)
+    readonly FilterArchetypeDelegate? filterArchetype;
+    readonly FilterChunkDelegate? filterChunk;
+    
+    public ArchetypeChunkEnumerable(
+        List<Archetype> archetypes, in Span<ComponentID> componentIDs, 
+        FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.archetypes = archetypes;
-        this.filter = filter;
+        this.filterArchetype = filterArchetype;
+        this.filterChunk = filterChunk;
         this.componentIDs = componentIDs;
-        index = -1;
     }
 
     public ChunkEnumerator GetEnumerator() => new(this);
@@ -282,7 +294,7 @@ public ref struct ArchetypeChunkEnumerable
             {
                 if (filter.archetypes[index].EntityCount == 0) continue;
                 if (filter.archetypes[index].HasAll(filter.componentIDs) is false) continue;
-                if (filter.filter is null || filter.filter(filter.archetypes[index]))
+                if (filter.filterArchetype is null || filter.filterArchetype(filter.archetypes[index]))
                 {
                     return true;
                 }
@@ -319,6 +331,10 @@ public ref struct ArchetypeChunkEnumerable
             if (chunkIndex >= archetype.Chunks.Length)
             {
                 chunkIndex = -1;
+                return MoveNext();
+            }
+            if (filter.filterChunk is not null && filter.filterChunk(archetype.Chunks[chunkIndex]) is false)
+            {
                 return MoveNext();
             }
 

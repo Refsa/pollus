@@ -27,7 +27,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     {
         public static Component.Info[] Infos => infos;
         static readonly IFilter[] filters;
-        static FilterDelegate filterDelegate = RunFilter;
+        static FilterArchetypeDelegate filterArchetype = RunArchetypeFilter;
+        static FilterChunkDelegate filterChunk = RunChunkFilter;
 
         static Filter()
         {
@@ -37,7 +38,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
-        static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
+        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
+        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
 
         public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter)
         {
@@ -48,7 +50,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
         public Filter(World world)
         {
-            query = new Query<$gen_args$>(world, filterDelegate);
+            query = new Query<$gen_args$>(world, filterArchetype, filterChunk);
         }
 
         public void ForEach(ForEachDelegate<$gen_args$> pred)
@@ -88,18 +90,20 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     readonly World world;
-    readonly FilterDelegate? filter;
+    readonly FilterArchetypeDelegate? filterArchetype;
+    readonly FilterChunkDelegate? filterChunk;
 
-    public Query(World world, FilterDelegate? filter = null)
+    public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
-        this.filter = filter;
+        this.filterArchetype = filterArchetype;
+        this.filterChunk = filterChunk;
     }
 
     public readonly void ForEach(ForEachDelegate<$gen_args$> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             $comp_spans$
             
@@ -113,7 +117,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             $comp_spans$
             scoped var entities = chunk.GetEntities();
@@ -129,7 +133,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         where TForEach : struct, IForEachBase<$gen_args$>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             $comp_spans$
 
@@ -159,7 +163,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     {
         int count = 0;
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -169,7 +173,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public EntityRow Single()
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return new EntityRow
             {

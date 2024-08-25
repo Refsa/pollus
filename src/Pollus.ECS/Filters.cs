@@ -1,13 +1,19 @@
 namespace Pollus.ECS;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-public delegate bool FilterDelegate(Archetype archetype);
+public delegate bool FilterArchetypeDelegate(Archetype archetype);
+public delegate bool FilterChunkDelegate(ArchetypeChunk chunk);
 
 public interface IFilter : ITuple
 {
     bool Filter(Archetype archetype);
+    bool FilterChunk(ArchetypeChunk chunk) => true;
+}
+
+public interface IFilterChunk : IFilter
+{
+    new bool FilterChunk(ArchetypeChunk chunk);
 }
 
 public class None<C0> : IFilter
@@ -54,6 +60,39 @@ public class Any<C0, C1> : IFilter
     }
 }
 
+public class Added<C0> : IFilterChunk
+    where C0 : unmanaged, IComponent
+{
+    public object? this[int index] => null;
+    public int Length => 1;
+
+    public bool Filter(Archetype archetype)
+    {
+        return archetype.HasComponent<C0>() is true;
+    }
+
+    public bool FilterChunk(ArchetypeChunk chunk)
+    {
+        return chunk.HasFlag<C0>(ComponentFlags.Added);
+    }
+}
+
+public class Changed<C0> : IFilterChunk
+    where C0 : unmanaged, IComponent
+{
+    public object? this[int index] => null;
+    public int Length => 1;
+
+    public bool Filter(Archetype archetype)
+    {
+        return archetype.HasComponent<C0>() is true;
+    }
+
+    public bool FilterChunk(ArchetypeChunk chunk)
+    {
+        return chunk.HasFlag<C0>(ComponentFlags.Changed);
+    }
+}
 
 public static class FilterHelpers
 {
@@ -93,11 +132,22 @@ public static class FilterHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static bool RunFilters(Archetype archetype, IFilter[] filters)
+    public static bool RunArchetypeFilters(Archetype archetype, IFilter[] filters)
     {
         for (int i = 0; i < filters.Length; i++)
         {
             if (filters[i].Filter(archetype) is false) return false;
+        }
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static bool RunChunkFilters(ArchetypeChunk chunk, IFilter[] filters)
+    {
+        for (int i = 0; i < filters.Length; i++)
+        {
+            if (filters[i] is not IFilterChunk) continue;
+            if (filters[i].FilterChunk(chunk) is false) return false;
         }
         return true;
     }

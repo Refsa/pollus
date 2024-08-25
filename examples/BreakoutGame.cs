@@ -108,7 +108,7 @@ public class BreakoutGame
                 }
             ));
 
-            var spacing = 8f;
+            var spacing = 16f;
             for (int x = 0; x < window.Size.X / (48f + spacing + 2f); x++)
             {
                 for (int y = 0; y < 8; y++)
@@ -138,7 +138,10 @@ public class BreakoutGame
             ImGui.ShowDemoWindow();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis, Time time, IWindow window, Query query, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
+        static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
+                Time time, IWindow window, Query query,
+                Query<Transform2, Collider>.Filter<All<Player>> qPlayer
+        ) =>
         {
             var keyboardInput = keys?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
             var gamepadInput = gAxis?.GetAxis(GamepadAxis.LeftX) ?? 0;
@@ -174,6 +177,14 @@ public class BreakoutGame
                     windowRect.Min - pCollider.Bounds.Min,
                     windowRect.Max - pCollider.Bounds.Max);
             }
+        }))
+        .AddSystem(CoreStage.Last, FnSystem("TestAdded",
+        static (Query<Player>.Filter<Added<Disabled>> qPlayer) =>
+        {
+            qPlayer.ForEach((in Entity entity, ref Player player) =>
+            {
+                Log.Info($"Player {entity} has been disabled");
+            });
         }))
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,

@@ -119,7 +119,7 @@ public record struct BitSet256
 /// </summary>
 public record struct BitSet : IDisposable
 {
-    NativeArray<long> data;
+    NativeArray<ulong> data;
 
     public BitSet(int bitcount)
     {
@@ -131,6 +131,16 @@ public record struct BitSet : IDisposable
         data.Dispose();
     }
 
+    public int GetCount()
+    {
+        int count = 0;
+        for (int i = 0; i < data.Length; i++)
+        {
+            count += BitOperations.PopCount(data[i]);
+        }
+        return count;
+    }
+
     public void Set(int idx)
     {
         int bucket = idx / 64;
@@ -138,21 +148,21 @@ public record struct BitSet : IDisposable
         {
             Resize();
         }
-        data[bucket] |= 1L << idx % 64;
+        data[bucket] |= 1UL << idx % 64;
     }
 
     public void Unset(int idx)
     {
         int bucket = idx / 64;
         if (bucket >= data.Length) return;
-        data[bucket] &= ~(1L << idx % 64);
+        data[bucket] &= ~(1UL << idx % 64);
     }
 
     public bool Has(int idx)
     {
         int bucket = idx / 64;
         if (bucket >= data.Length) return false;
-        return (data[bucket] & 1L << idx % 64) != 0;
+        return (data[bucket] & 1UL << idx % 64) != 0;
     }
 
     public bool HasAll(BitSet other)
@@ -217,8 +227,8 @@ public record struct BitSet : IDisposable
 
     unsafe void Resize()
     {
-        var newData = new NativeArray<long>(data.Length * 2);
-        Unsafe.CopyBlock(data.Data, newData.Data, (uint)data.Length * sizeof(long));
+        var newData = new NativeArray<ulong>(data.Length * 2);
+        Unsafe.CopyBlock(data.Data, newData.Data, (uint)data.Length * sizeof(ulong));
         data.Dispose();
         data = newData;
     }

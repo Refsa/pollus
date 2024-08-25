@@ -20,10 +20,12 @@ public struct Query : IQuery, IQueryCreate<Query>
     {
         public static Component.Info[] Infos => infos;
         static readonly IFilter[] filters;
-        static FilterDelegate filterDelegate = RunFilter;
+        static FilterArchetypeDelegate filterArchetype = RunArchetypeFilter;
+        static FilterChunkDelegate filterChunk = RunChunkFilter;
 
         public static implicit operator Query(in Filter<TFilters> filter) => filter.query;
-        static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
+        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
+        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
         static Filter()
@@ -36,7 +38,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
         public Filter(World world)
         {
-            query = new Query(world, filterDelegate);
+            query = new Query(world, filterArchetype, filterChunk);
         }
 
         public void ForEach(ForEachEntityDelegate pred)
@@ -69,18 +71,20 @@ public struct Query : IQuery, IQueryCreate<Query>
     }
 
     World world;
-    readonly FilterDelegate? filter;
+    readonly FilterArchetypeDelegate? filterArchetype;
+    readonly FilterChunkDelegate? filterChunk;
 
-    public Query(World world, FilterDelegate? filter = null)
+    public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
-        this.filter = filter;
+        this.filterArchetype = filterArchetype;
+        this.filterChunk = filterChunk;
     }
 
     public void ForEach(ForEachEntityDelegate pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var entities = chunk.GetEntities();
             for (int i = 0; i < chunk.Count; i++)
@@ -93,7 +97,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public Entity Single()
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return chunk.GetEntities()[0];
         }
@@ -104,7 +108,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     {
         int count = 0;
         scoped Span<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -127,7 +131,8 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     {
         public static Component.Info[] Infos => infos;
         static readonly IFilter[] filters;
-        static FilterDelegate filterDelegate = RunFilter;
+        static FilterArchetypeDelegate filterDelegate = RunArchetypeFilter;
+        static FilterChunkDelegate filterChunkDelegate = RunChunkFilter;
 
         static Filter()
         {
@@ -137,7 +142,8 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
-        static bool RunFilter(Archetype archetype) => FilterHelpers.RunFilters(archetype, filters);
+        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
+        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
 
         public static implicit operator Query<C0>(in Filter<TFilters> filter)
         {
@@ -148,7 +154,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         public Filter(World world)
         {
-            query = new Query<C0>(world, filterDelegate);
+            query = new Query<C0>(world, filterDelegate, filterChunkDelegate);
         }
 
         public void ForEach(ForEachDelegate<C0> pred)
@@ -188,18 +194,20 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     }
 
     readonly World world;
-    readonly FilterDelegate? filter;
+    readonly FilterArchetypeDelegate? filterArchetype;
+    readonly FilterChunkDelegate? filterChunk;
 
-    public Query(World world, FilterDelegate? filter = null)
+    public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
-        this.filter = filter;
+        this.filterArchetype = filterArchetype;
+        this.filterChunk = filterChunk;
     }
 
     public readonly void ForEach(ForEachDelegate<C0> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
             foreach (ref var curr in comp1)
@@ -212,7 +220,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public readonly void ForEach(ForEachEntityDelegate<C0> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
             scoped var entities = chunk.GetEntities();
@@ -227,7 +235,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         where TForEach : struct, IForEachBase<C0>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
 
@@ -258,7 +266,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     {
         int count = 0;
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -268,7 +276,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public EntityRow Single()
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filter))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return new EntityRow
             {

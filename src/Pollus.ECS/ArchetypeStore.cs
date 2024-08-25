@@ -21,6 +21,8 @@ public class ArchetypeStore : IDisposable
         public int RowIndex { get; set; }
     }
 
+    int version = 0;
+
     readonly List<Archetype> archetypes = [];
     NativeMap<int, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
@@ -231,5 +233,15 @@ public class ArchetypeStore : IDisposable
     public EntityInfo GetEntityInfo(in Entity entity)
     {
         return entities.Get(entity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Update()
+    {
+        foreach (var archetype in archetypes)
+        {
+            archetype.Update();
+        }
+        version++;
     }
 }
