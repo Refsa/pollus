@@ -25,9 +25,10 @@ unsafe public struct GPUSurfaceTexture : IDisposable
             currentTextureView.Value.Dispose();
             currentTextureView = null;
         }
-#else
+#else   
         if (currentSurfaceTexture is not null)
         {
+            context.wgpu.TextureDestroy(currentSurfaceTexture.Value.Texture);
             context.wgpu.TextureRelease(currentSurfaceTexture.Value.Texture);
             currentSurfaceTexture = null;
         }
@@ -44,7 +45,7 @@ unsafe public struct GPUSurfaceTexture : IDisposable
 
         var native = context.wgpu.SwapChainGetCurrentTextureView(context.SwapChain);
         if (native == null) throw new ApplicationException("Failed to get current texture view");
-        
+
         currentTextureView = new GPUTextureView(context, native);
         return currentTextureView;
     }
@@ -61,7 +62,10 @@ unsafe public struct GPUSurfaceTexture : IDisposable
                      Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Outdated or
                      Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Lost:
                     {
-                        if (current.Texture != null) Dispose();
+                        if (current.Texture != null) 
+                        {
+                            Dispose();
+                        }
                         return null;
                     }
                 case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.OutOfMemory or

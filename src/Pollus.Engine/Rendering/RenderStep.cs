@@ -12,9 +12,11 @@ public enum RenderStep2D
 
 public class RenderSteps
 {
+    List<RenderStep2D> order = [RenderStep2D.Main, RenderStep2D.PostProcess, RenderStep2D.UI];
     Dictionary<RenderStep2D, List<IRenderStepDraw>> stages = new();
 
-    public Dictionary<RenderStep2D, List<IRenderStepDraw>> Stages => stages;
+    public IReadOnlyDictionary<RenderStep2D, List<IRenderStepDraw>> Stages => stages;
+    public IReadOnlyList<RenderStep2D> Order => order;
 
     public void Add(IRenderStepDraw stage)
     {

@@ -56,7 +56,6 @@ public class RenderingPlugin : IPlugin
             static (RenderSteps renderGraph) => 
             {
                 renderGraph.Add(new RenderBatchDraw());
-                renderGraph.Add(new SpriteBatchDraw());
             }
         ));
 
@@ -69,11 +68,10 @@ public class RenderingPlugin : IPlugin
 
                 var sceneUniform = uniformAsset.Value;
                 sceneUniform.Time = (float)time.SecondsSinceStartup;
-                qCamera.ForEach((ref Projection projection, ref Transform2 transform) =>
-                {
-                    sceneUniform.Projection = projection.GetProjection();
-                    sceneUniform.View = transform.ToMat4f();
-                });
+
+                var camera = qCamera.Single();
+                sceneUniform.Projection = camera.Component0.GetProjection();
+                sceneUniform.View = camera.Component1.ToMat4f();
 
                 uniformAsset.Value = sceneUniform;
             }
@@ -94,9 +92,9 @@ public class RenderingPlugin : IPlugin
             "PrepareMeshAssets",
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets) =>
             {
-                foreach (var handle in assetServer.GetAssets<MeshAsset>().Handles)
+                foreach (var meshAsset in assetServer.GetAssets<MeshAsset>().AssetInfos)
                 {
-                    renderAssets.Prepare(gpuContext, assetServer, handle);
+                    renderAssets.Prepare(gpuContext, assetServer, meshAsset.Handle);
                 }
             }
         ));
@@ -128,11 +126,14 @@ public class RenderingPlugin : IPlugin
                     context.EndRenderPass();
                 }
 
-                foreach (var stage in renderGraph.Stages.OrderBy(e => e.Key))
+                for (int i = 0; i < renderGraph.Order.Count; i++)
                 {
+                    if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
+                    if (stage.Count == 0) continue;
+
                     var renderPass = context.BeginRenderPass(LoadOp.Load);
 
-                    foreach (var draw in stage.Value)
+                    foreach (var draw in stage)
                     {
                         draw.Render(renderPass, resources, renderAssets);
                     }

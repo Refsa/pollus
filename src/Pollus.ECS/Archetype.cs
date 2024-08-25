@@ -185,7 +185,7 @@ public partial class Archetype : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool HasAll(scoped in Span<ComponentID> componentIDs)
+    public bool HasAll(scoped in ReadOnlySpan<ComponentID> componentIDs)
     {
         foreach (var cid in componentIDs)
         {
@@ -195,7 +195,7 @@ public partial class Archetype : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool HasAny(scoped in Span<ComponentID> componentIDs)
+    public bool HasAny(scoped in ReadOnlySpan<ComponentID> componentIDs)
     {
         foreach (var cid in componentIDs)
         {
@@ -259,12 +259,12 @@ public partial class Archetype : IDisposable
 public ref struct ArchetypeChunkEnumerable
 {
     readonly List<Archetype> archetypes;
-    readonly Span<ComponentID> componentIDs;
+    readonly ReadOnlySpan<ComponentID> componentIDs;
     readonly FilterArchetypeDelegate? filterArchetype;
     readonly FilterChunkDelegate? filterChunk;
     
     public ArchetypeChunkEnumerable(
-        List<Archetype> archetypes, in Span<ComponentID> componentIDs, 
+        List<Archetype> archetypes, in ReadOnlySpan<ComponentID> componentIDs, 
         FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.archetypes = archetypes;

@@ -25,7 +25,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
         public static implicit operator Query(in Filter<TFilters> filter) => filter.query;
         static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
+        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
         static Filter()
@@ -115,11 +115,67 @@ public struct Query : IQuery, IQueryCreate<Query>
         return count;
     }
 
+    /// <summary>
+    /// Check if entity has component
+    /// </summary>
+    /// <param name="entity">entity to check</param>
+    /// <typeparam name="C">component to check</typeparam>
+    /// <returns>true if it has component</returns>
     public readonly bool Has<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
         return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+
+    /// <summary>
+    /// Check if a component has been added to an entity
+    /// </summary>
+    /// <param name="entity">entity to check</param>
+    /// <typeparam name="C">component to check</typeparam>
+    /// <returns>true if it was added</returns>
+    public readonly bool Added<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        return world.Store.Changes.HasChange<C>(entity, ComponentFlags.Added);
+    }
+
+    /// <summary>
+    /// Check if a component has been changed on an entity
+    /// </summary>
+    /// <param name="entity">entity to check</param>
+    /// <typeparam name="C">component to check</typeparam>
+    /// <returns>true if was changes</returns>
+    public readonly bool Changed<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        return world.Store.Changes.HasChange<C>(entity, ComponentFlags.Changed);
+    }
+
+    /// <summary>
+    /// Set a component as changed. 
+    /// This is a relatively expensive operation and should be used sparingly.
+    /// </summary>
+    /// <param name="entity">entity to mark</param>
+    /// <typeparam name="C">component to mark</typeparam>
+    public void SetChanged<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Changed, entityInfo.RowIndex);
+        world.Store.Changes.AddChange<C>(entity, ComponentFlags.Changed);
+    }
+
+    /// <summary>
+    /// Check if a component has been removed from an entity
+    /// </summary>
+    /// <param name="entity">entity to check</param>
+    /// <typeparam name="C">component to check</typeparam>
+    /// <returns>true if component was removed</returns>
+    public readonly bool Removed<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        return world.Store.Changes.HasChange<C>(entity, ComponentFlags.Removed);
     }
 }
 
@@ -140,10 +196,10 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             QueryFetch<Filter<TFilters>>.Register();
         }
 
-        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
+        public static Filter<TFilters> Create(World world) => new(world);
 
         static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
+        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
 
         public static implicit operator Query<C0>(in Filter<TFilters> filter)
         {
@@ -187,7 +243,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     static readonly Component.Info[] infos = [Component.Register<C0>()];
     public static Component.Info[] Infos => infos;
 
-    static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new Query<C0>(world);
+    static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new(world);
     static Query()
     {
         QueryFetch<Query<C0>>.Register();

@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Platform;
 
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
@@ -9,7 +10,7 @@ public class PlatformEvents
 {
     List<Silk.NET.SDL.Event> events { get; } = new();
 
-    public IReadOnlyList<Silk.NET.SDL.Event> Events => events;
+    public ListEnumerable<Silk.NET.SDL.Event> Events => new ListEnumerable<Silk.NET.SDL.Event>(events);
 
     public void ClearEvents()
     {

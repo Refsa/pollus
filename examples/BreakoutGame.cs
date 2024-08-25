@@ -176,14 +176,30 @@ public class BreakoutGame
                 pTransform.Position = pTransform.Position.Clamp(
                     windowRect.Min - pCollider.Bounds.Min,
                     windowRect.Max - pCollider.Bounds.Max);
+
+                if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
             }
         }))
         .AddSystem(CoreStage.Last, FnSystem("TestAdded",
-        static (Query<Player>.Filter<Added<Disabled>> qPlayer) =>
+        static (Query query, 
+                Query<Player>.Filter<Added<Disabled>> qDisabled,
+                Query<Player>.Filter<Removed<Disabled>> qEnabled
+        ) =>
         {
-            qPlayer.ForEach((in Entity entity, ref Player player) =>
+            qDisabled.ForEach((in Entity entity, ref Player player) =>
             {
-                Log.Info($"Player {entity} has been disabled");
+                if (query.Added<Disabled>(entity))
+                {
+                    Log.Info($"Player {entity} has been disabled");
+                }
+            });
+
+            qEnabled.ForEach((in Entity entity, ref Player player) =>
+            {
+                if (query.Removed<Disabled>(entity))
+                {
+                    Log.Info($"Player {entity} has been enabled");
+                }
             });
         }))
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
@@ -193,7 +209,6 @@ public class BreakoutGame
             Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles
         ) =>
         {
-            var collisions = new List<Entity>();
             bool spawnSound = false;
 
             qBall.ForEach((ref Transform2 ballTransform, ref Ball ball, ref Collider ballCollider) =>
@@ -208,7 +223,7 @@ public class BreakoutGame
                     if (ballBounds.Intersects(colliderBounds))
                     {
                         collisionNormal = ballBounds.IntersectionNormal(colliderBounds);
-                        collisions.Add(entity);
+                        commands.Despawn(entity);
                     }
                 });
                 qPaddles.ForEach((ref Transform2 colliderTransform, ref Collider collider) =>
@@ -242,11 +257,6 @@ public class BreakoutGame
                 ballTransform.Position += ball.Velocity * ball.Speed * (float)time.DeltaTime;
             });
 
-            foreach (var entity in collisions)
-            {
-                commands.Despawn(entity);
-            }
-
             if (spawnSound)
             {
                 commands.Spawn(Entity.With(
@@ -261,7 +271,7 @@ public class BreakoutGame
                     {
                         Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
                     }
-                ));
+                )); 
             }
         }))
         .AddSystem(CoreStage.First, FnSystem("GameState",
@@ -269,7 +279,7 @@ public class BreakoutGame
         {
             if (gameState.State == State.SpawnBall)
             {
-                for (int i = 0; i < 1; i++)
+                for (int i = 0; i < 10; i++)
                     world.Spawn(
                         new Ball { Speed = 800f, Velocity = new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.5f, 0.5f), (float)Random.Shared.NextDouble()).Normalized() },
                         new Transform2

@@ -20,8 +20,10 @@
 	- [ ] Proper Testing
 	- [x] Systems
 	- [ ] Change Detection
-		- [ ] added/removed
+		- [x] added/removed
+			- slightly unoptimal recording structure
 		- [ ] changed
+			- has manual flagging
 	- [ ] Schedule systems
 		- [ ] ordering
 		- [ ] parallel planner

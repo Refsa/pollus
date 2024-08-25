@@ -23,13 +23,15 @@ public class ArchetypeStore : IDisposable
 
     int version = 0;
 
-    readonly List<Archetype> archetypes = [];
+    readonly List<Archetype> archetypes;
+    readonly ComponentChanges changes;
     NativeMap<int, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
     volatile int entityCounter = 1;
 
     public List<Archetype> Archetypes => archetypes;
     public int EntityCount => entities.Count;
+    public ComponentChanges Changes => changes;
 
     public ArchetypeStore()
     {
@@ -37,6 +39,8 @@ public class ArchetypeStore : IDisposable
 
         entities = new(0);
         archetypeLookup = new(0);
+        archetypes = [];
+        changes = new();
 
         var aid = ArchetypeID.Create([]);
         archetypes.Add(new Archetype(aid, []));
@@ -99,12 +103,15 @@ public class ArchetypeStore : IDisposable
         var entity = new Entity(entityCounter++);
         var (archetype, archetypeIndex) = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeInfo = archetype.AddEntity(entity);
+        archetype.Chunks[archetypeInfo.ChunkIndex].SetAllFlags(ComponentFlags.Added, archetypeInfo.RowIndex);
+
         entities.Add(entity, new()
         {
             ArchetypeIndex = archetypeIndex,
             ChunkIndex = archetypeInfo.ChunkIndex,
             RowIndex = archetypeInfo.RowIndex
         });
+
         return new()
         {
             Entity = entity,
@@ -130,7 +137,7 @@ public class ArchetypeStore : IDisposable
             if (movedEntity != Entity.NULL)
             {
                 ref var movedEntityInfo = ref entities.Get(movedEntity);
-                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), $"Moved entity is null, source: {entity}, failedMove: {movedEntityInfo}");
+                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), "Moved entity is null");
 
                 movedEntityInfo.ChunkIndex = info.ChunkIndex;
                 movedEntityInfo.RowIndex = info.RowIndex;
@@ -185,6 +192,9 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
+
+        changes.AddChange<C>(entity, ComponentFlags.Added);
+        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Added, info.RowIndex);
     }
 
     public void RemoveComponent<C>(in Entity entity)
@@ -221,6 +231,9 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
+
+        changes.AddChange<C>(entity, ComponentFlags.Removed);
+        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Removed, info.RowIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -242,6 +255,7 @@ public class ArchetypeStore : IDisposable
         {
             archetype.Update();
         }
+        changes.Clear();
         version++;
     }
 }

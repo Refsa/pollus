@@ -113,9 +113,14 @@ public class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick) : Sys(
     }
 }
 
-public class FnSystem<T0>(SystemDescriptor descriptor, SystemDelegate<T0> onTick) : Sys<T0>(descriptor)
+public class FnSystem<T0> : Sys<T0>
 {
-    readonly SystemDelegate<T0> onTick = onTick;
+    readonly SystemDelegate<T0> onTick;
+
+    public FnSystem(SystemDescriptor descriptor, SystemDelegate<T0> onTick) : base(descriptor)
+    {
+        this.onTick = onTick;
+    }
 
     protected override void OnTick(T0 arg1)
     {

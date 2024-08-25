@@ -85,7 +85,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 #endif
         }
 
-        Guard.IsNotNull(externalDevice, $"Failed to open gamepad device");
+        Guard.IsNotNull(externalDevice, "Failed to open gamepad device");
     }
 
     public void Disconnect()

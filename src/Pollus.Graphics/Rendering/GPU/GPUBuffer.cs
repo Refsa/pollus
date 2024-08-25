@@ -59,6 +59,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
     protected override void Free()
     {
+        context.wgpu.BufferDestroy(native);
         context.wgpu.BufferRelease(native);
     }
 }

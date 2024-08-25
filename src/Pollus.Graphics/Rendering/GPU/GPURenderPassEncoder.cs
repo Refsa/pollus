@@ -28,7 +28,6 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         context.wgpu.RenderPassEncoderRelease(native);
     }
 
-
     public void End()
     {
         context.wgpu.RenderPassEncoderEnd(native);

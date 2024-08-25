@@ -60,8 +60,8 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     void Resize(int newCapacity)
     {
-        NativeArray<TKey> newKeys = new NativeArray<TKey>(newCapacity);
-        NativeArray<TValue> newValues = new NativeArray<TValue>(newCapacity);
+        NativeArray<TKey> newKeys = new(newCapacity);
+        NativeArray<TValue> newValues = new(newCapacity);
 
         for (int i = 0; i < newCapacity; i++)
         {

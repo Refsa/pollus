@@ -4,7 +4,6 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
-using Pollus.Mathematics;
 
 struct ExtractSpritesJob : IForEach<Transform2, Sprite>
 {
@@ -39,11 +38,12 @@ class ExtractSpritesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContex
         IWGPUContext gpuContext, SpriteBatches batches,
         Query<Transform2, Sprite> query)
     {
-        foreach (var materialHandle in assetServer.GetAssets<SpriteMaterial>().Handles)
+        foreach (var spriteMaterial in assetServer.GetAssets<SpriteMaterial>().AssetInfos)
         {
-            renderAssets.Prepare(gpuContext, assetServer, materialHandle);
+            renderAssets.Prepare(gpuContext, assetServer, spriteMaterial.Handle);
         }
 
+        batches.Reset();
         query.ForEach(new ExtractSpritesJob
         {
             Batches = batches,

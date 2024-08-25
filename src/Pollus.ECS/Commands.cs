@@ -16,21 +16,29 @@ public interface ICommandBuffer
 public class CommandBuffer<TCommand> : ICommandBuffer
     where TCommand : ICommand
 {
-    List<TCommand> commands = new();
+    TCommand[] commands = new TCommand[1];
+    int count = 0;
 
     public void Clear()
     {
-        commands.Clear();
+        count = 0;
     }
 
     public void AddCommand(TCommand command)
     {
-        commands.Add(command);
+        if (count == commands.Length)
+        {
+            var newCommands = new TCommand[commands.Length * 2];
+            commands.CopyTo(newCommands, 0);
+            commands = newCommands;
+        }
+
+        commands[count++] = command;
     }
 
     public void Execute(World world)
     {
-        foreach (var command in commands)
+        foreach (var command in commands.AsSpan(0, count))
         {
             command.Execute(world);
         }

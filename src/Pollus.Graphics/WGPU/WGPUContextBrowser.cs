@@ -206,12 +206,14 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         queue = wgpu.DeviceGetQueue(device);
     }
 
-    public void RegisterResource(IGPUResourceWrapper resource)
+    public void RegisterResource<TResource>(TResource resource)
+        where TResource : IGPUResourceWrapper
     {
         resources.Add(resource);
     }
 
-    public void ReleaseResource(IGPUResourceWrapper resource)
+    public void ReleaseResource<TResource>(TResource resource)
+        where TResource : IGPUResourceWrapper
     {
         resources.Remove(resource);
     }

@@ -17,16 +17,9 @@ public class RenderContext
 
     public void Begin(IWGPUContext gpuContext)
     {
-        if (SurfaceTexture is not null)
-        {
-            Log.Error("Surface texture is not null");
-            SurfaceTexture.Value.Dispose();
-            SurfaceTexture = null;
-            SkipFrame = true;
-            return;
-        }
+        SurfaceTextureView?.Dispose();
+        SurfaceTexture ??= gpuContext.CreateSurfaceTexture();
 
-        SurfaceTexture = gpuContext.CreateSurfaceTexture();
         if (SurfaceTexture?.GetTextureView() is not GPUTextureView surfaceTextureView)
         {
             Log.Error("Surface texture view is null");
@@ -41,29 +34,31 @@ public class RenderContext
 
     public void End(IWGPUContext gpuContext)
     {
+        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
+        Guard.IsNotNull(SurfaceTexture, "SurfaceTexture is null");
+        Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
+
         {
             using var commandBuffer = CommandEncoder!.Value.Finish("""command-buffer""");
             commandBuffer.Submit();
             gpuContext.Present();
         }
 
-        CommandEncoder?.Dispose();
-        SurfaceTexture?.Dispose();
-
+        CommandEncoder.Value.Dispose();
+        SurfaceTextureView.Value.Dispose();
         CommandEncoder = null;
-        SurfaceTexture = null;
     }
 
     public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store, Color? clearColor = null)
     {
-        Guard.IsNull(CurrentRenderPass, $"CurrentRenderPass is not null");
-        Guard.IsNotNull(SurfaceTextureView, $"SurfaceTextureView is null");
-        Guard.IsNotNull(CommandEncoder, $"CommandEncoder is null");
+        Guard.IsNull(CurrentRenderPass, "CurrentRenderPass is not null");
+        Guard.IsNotNull(SurfaceTextureView, "SurfaceTextureView is null");
+        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
 
         CurrentRenderPass = CommandEncoder.Value.BeginRenderPass(new()
         {
             Label = """RenderPass""",
-            ColorAttachments = new[]
+            ColorAttachments = stackalloc RenderPassColorAttachment[1]
             {
                 new RenderPassColorAttachment()
                 {
@@ -80,7 +75,7 @@ public class RenderContext
 
     public void EndRenderPass()
     {
-        Guard.IsNotNull(CurrentRenderPass, $"CurrentRenderPass is null");
+        Guard.IsNotNull(CurrentRenderPass, "CurrentRenderPass is null");
         CurrentRenderPass.Value.End();
         CurrentRenderPass.Value.Dispose();
         CurrentRenderPass = null;

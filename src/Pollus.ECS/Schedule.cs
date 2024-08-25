@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using Pollus.Collections;
 using Pollus.ECS.Core;
 using System.Collections.Generic;
 using System.Text;
@@ -16,7 +17,7 @@ public class Schedule
     {
         return new()
         {
-            Stages =
+            stages =
             {
                 new Stage(CoreStage.Init) with { RunCriteria = new RunOnce() },
                 new Stage(CoreStage.PostInit) with { RunCriteria = new RunOnce() },
@@ -32,29 +33,29 @@ public class Schedule
         };
     }
 
-    public List<Stage> Stages { get; } = new();
+    List<Stage> stages { get; } = new();
+    
+    public ListEnumerable<Stage> Stages => new(stages);
 
     public void Prepare(World world)
     {
-        foreach (var stage in Stages)
+        foreach (var stage in stages)
         {
             stage.Schedule(world);
         }
     }
 
-    public IEnumerable<Step> Tick(World world)
+    public void Tick(World world)
     {
-        foreach (var stage in Stages)
+        foreach (var stage in stages)
         {
-            yield return Step.Before;
             stage.Tick(world);
-            yield return Step.After;
         }
     }
 
     public Stage? GetStage(StageLabel label)
     {
-        return Stages.Find(s => s.Label == label);
+        return stages.Find(s => s.Label == label);
     }
 
     public Schedule AddSystems(StageLabel stageLabel, params ISystem[] systems)
@@ -82,24 +83,24 @@ public class Schedule
     {
         if (before is not null)
         {
-            var index = Stages.FindIndex(s => s.Label == before);
-            Stages.Insert(index, stage);
+            var index = stages.FindIndex(s => s.Label == before);
+            stages.Insert(index, stage);
         }
         else if (after is not null)
         {
-            var index = Stages.FindIndex(s => s.Label == after);
-            Stages.Insert(index + 1, stage);
+            var index = stages.FindIndex(s => s.Label == after);
+            stages.Insert(index + 1, stage);
         }
         else
         {
-            Stages.Add(stage);
+            stages.Add(stage);
         }
     }
 
     public override string ToString()
     {
         var sb = new StringBuilder($"Schedule:\n");
-        foreach (var stage in Stages)
+        foreach (var stage in stages)
         {
             sb.AppendLine(stage.ToString());
         }

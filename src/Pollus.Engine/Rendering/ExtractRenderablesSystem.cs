@@ -39,11 +39,12 @@ class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServ
         IWGPUContext gpuContext, RenderBatches batches,
         Query<Transform2, Renderable<TMaterial>> query)
     {
-        foreach (var materialHandle in assetServer.GetAssets<TMaterial>().Handles)
+        foreach (var material in assetServer.GetAssets<TMaterial>().AssetInfos)
         {
-            renderAssets.Prepare(gpuContext, assetServer, materialHandle);
+            renderAssets.Prepare(gpuContext, assetServer, material.Handle);
         }
 
+        batches.Reset();
         query.ForEach(new ExtractRenderablesJob<TMaterial>
         {
             Batches = batches,

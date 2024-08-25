@@ -131,9 +131,9 @@ public class World : IDisposable
         {
             Store.Update();
 
-            foreach (var step in Schedule.Tick(this))
+            foreach (var stage in Schedule.Stages)
             {
-                if (step == Schedule.Step.Before) continue;
+                stage.Tick(this);
 
                 while (commandBuffersQueue.Count > 0)
                 {

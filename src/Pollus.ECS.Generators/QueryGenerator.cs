@@ -39,7 +39,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
 
         static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
+        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
 
         public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter)
         {

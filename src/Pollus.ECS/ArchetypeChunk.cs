@@ -1,16 +1,7 @@
 namespace Pollus.ECS;
 
 using Pollus.Collections;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-
-[Flags]
-public enum ComponentFlags : byte
-{
-    None = 0,
-    Added = 1 << 0,
-    Changed = 1 << 1,
-}
 
 public struct ArchetypeChunk : IDisposable
 {
@@ -52,38 +43,42 @@ public struct ArchetypeChunk : IDisposable
         }
         components.Dispose();
         entities.Dispose();
+        flags.Dispose();
     }
 
     public bool HasFlag<C>(ComponentFlags flag)
         where C : unmanaged, IComponent
     {
-        return flags.Get(Component.GetInfo<C>().ID).HasFlag(flag);
+        var cid = Component.GetInfo<C>().ID;
+        if (!flags.Has(cid)) return false;
+        return flags.Get(cid).HasFlag(flag);
     }
 
-    public void ClearFlags()
+    internal void ClearFlags()
     {
         foreach (ref var value in flags.Values)
         {
             value = ComponentFlags.None;
         }
-        firstFlagIndex = 0;
-        lastFlagIndex = 0;
+        firstFlagIndex = -1;
+        lastFlagIndex = -1;
     }
 
-    void SetFlag<C>(ComponentFlags flag, int row)
+    internal void SetFlag<C>(ComponentFlags flag, int row)
         where C : unmanaged, IComponent
     {
         SetFlag(Component.GetInfo<C>().ID, flag, row);
     }
 
-    void SetFlag(ComponentID cid, ComponentFlags flag, int row)
+    internal void SetFlag(ComponentID cid, ComponentFlags flag, int row)
     {
         firstFlagIndex = int.Min(firstFlagIndex, row);
         lastFlagIndex = int.Max(lastFlagIndex, row);
+        if (!flags.Has(cid)) flags.Add(cid, ComponentFlags.None);
         flags.Get(cid) |= flag;
     }
 
-    void SetAllFlags(ComponentFlags flag, int row)
+    internal void SetAllFlags(ComponentFlags flag, int row)
     {
         firstFlagIndex = int.Min(firstFlagIndex, row);
         lastFlagIndex = int.Max(lastFlagIndex, row);
@@ -109,7 +104,6 @@ public struct ArchetypeChunk : IDisposable
         if (count >= length) return -1;
 
         entities[count] = entity;
-        SetAllFlags(ComponentFlags.Added, count);
         return count++;
     }
 
@@ -159,9 +153,12 @@ public struct ArchetypeChunk : IDisposable
     unsafe public Span<C> GetComponents<C>()
             where C : unmanaged, IComponent
     {
+        var start = firstFlagIndex != -1 ? firstFlagIndex : 0;
+        var end = lastFlagIndex != -1 ? lastFlagIndex : count;
+
         var cinfo = Component.GetInfo<C>();
         var array = components.Get(cinfo.ID);
-        return new Span<C>(array.Data, count);
+        return new Span<C>(array.Data, count)[start..end];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

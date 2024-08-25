@@ -90,54 +90,65 @@ public class AudioPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Last, [
             FnSystem("AudioUpdate", static (
-                World world,
+                Commands commands,
                 AudioPools audioPools, Assets<AudioAsset> audioAssets,
                 Assets<Pollus.Audio.AudioSource> deviceSources,
                 Assets<Pollus.Audio.AudioBuffer> deviceBuffers,
                 Query<AudioSource, AudioPlayback> qSources) =>
             {
-                var completedSources = new List<Entity>();
-
-                qSources.ForEach((in Entity entity, ref AudioSource source, ref AudioPlayback playback) =>
+                qSources.ForEach(new AudioUpdateForEach()
                 {
-                    var deviceSource = deviceSources.Get(source.DeviceSource);
-
-                    if (deviceSource is null)
-                    {
-                        deviceSource = audioPools.CreateSource();
-                        source.DeviceSource = deviceSources.Add(deviceSource, null);
-                        deviceSource.Position = Vec3<float>.Zero;
-                        deviceSource.Velocity = Vec3<float>.Zero;
-                        deviceSource.Gain = source.Gain;
-                        deviceSource.Pitch = source.Pitch;
-                        deviceSource.Looping = source.Mode == PlaybackMode.Loop;
-                    }
-
-                    var deviceBuffer = deviceBuffers.Get(playback.DeviceBuffer);
-                    if (deviceBuffer is null)
-                    {
-                        deviceBuffer = audioPools.CreateBuffer();
-                        playback.DeviceBuffer = deviceBuffers.Add(deviceBuffer, null);
-                        var audioAsset = audioAssets.Get(playback.Asset);
-                        deviceBuffer.SetData<byte>(audioAsset!.Data, audioAsset.SampleInfo);
-                        deviceSource.QueueBuffer(deviceBuffer);
-                        deviceSource.Play();
-                        return;
-                    }
-
-                    if (!deviceSource.IsPlaying)
-                    {   
-                        audioPools.ReturnSource(deviceSource);
-                        audioPools.ReturnBuffer(deviceBuffer);
-                        completedSources.Add(entity);
-                    }
+                    Commands = commands,
+                    AudioPools = audioPools,
+                    AudioAssets = audioAssets,
+                    DeviceSources = deviceSources,
+                    DeviceBuffers = deviceBuffers,
                 });
-
-                foreach (var entity in completedSources)
-                {
-                    world.Despawn(entity);
-                }
             }),
         ]);
+    }
+}
+
+struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
+{
+    public required Commands Commands;
+    public required AudioPools AudioPools;
+    public required Assets<AudioAsset> AudioAssets;
+    public required Assets<Pollus.Audio.AudioSource> DeviceSources;
+    public required Assets<Pollus.Audio.AudioBuffer> DeviceBuffers;
+
+    public void Execute(in Entity entity, ref AudioSource source, ref AudioPlayback playback)
+    {
+        var deviceSource = DeviceSources.Get(source.DeviceSource);
+
+        if (deviceSource is null)
+        {
+            deviceSource = AudioPools.CreateSource();
+            source.DeviceSource = DeviceSources.Add(deviceSource, null);
+            deviceSource.Position = Vec3<float>.Zero;
+            deviceSource.Velocity = Vec3<float>.Zero;
+            deviceSource.Gain = source.Gain;
+            deviceSource.Pitch = source.Pitch;
+            deviceSource.Looping = source.Mode == PlaybackMode.Loop;
+        }
+
+        var deviceBuffer = DeviceBuffers.Get(playback.DeviceBuffer);
+        if (deviceBuffer is null)
+        {
+            deviceBuffer = AudioPools.CreateBuffer();
+            playback.DeviceBuffer = DeviceBuffers.Add(deviceBuffer, null);
+            var audioAsset = AudioAssets.Get(playback.Asset);
+            deviceBuffer.SetData<byte>(audioAsset!.Data, audioAsset.SampleInfo);
+            deviceSource.QueueBuffer(deviceBuffer);
+            deviceSource.Play();
+            return;
+        }
+
+        if (!deviceSource.IsPlaying)
+        {
+            AudioPools.ReturnSource(deviceSource);
+            AudioPools.ReturnBuffer(deviceBuffer);
+            Commands.Despawn(entity);
+        }
     }
 }

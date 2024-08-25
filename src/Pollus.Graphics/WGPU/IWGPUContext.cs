@@ -20,8 +20,8 @@ unsafe public interface IWGPUContext : IDisposable
     public bool IsReady { get; }
     void Setup();
 
-    void RegisterResource(IGPUResourceWrapper resource);
-    void ReleaseResource(IGPUResourceWrapper resource);
+    void RegisterResource<TResource>(TResource resource) where TResource : IGPUResourceWrapper;
+    void ReleaseResource<TResource>(TResource resource) where TResource : IGPUResourceWrapper;
 
     TextureFormat GetSurfaceFormat();
     void Present();

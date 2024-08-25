@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
@@ -8,22 +9,29 @@ using Pollus.Mathematics;
 
 public class RenderBatches
 {
-    Dictionary<int, RenderBatch> batches = new();
+    List<RenderBatch> batches = new();
+    Dictionary<int, int> batchLookup = new();
 
-    public IEnumerable<RenderBatch> Batches => batches.Values.Where(e => e.Count > 0);
+    public ListEnumerable<RenderBatch> Batches => new(batches);
 
     public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out RenderBatch batch)
     {
         var key = HashCode.Combine(meshHandle, materialHandle);
-        return batches.TryGetValue(key, out batch!);
+        if (batchLookup.TryGetValue(key, out var batchIdx))
+        {
+            batch = batches[batchIdx];
+            return true;
+        }
+        batch = null!;
+        return false;
     }
 
     public RenderBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
     {
         var key = HashCode.Combine(meshHandle.GetHashCode(), materialHandle.GetHashCode());
-        if (batches.TryGetValue(key, out var batch)) return batch;
+        if (batchLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
 
-        batch = new RenderBatch()
+        var batch = new RenderBatch()
         {
             Key = key,
             Mesh = meshHandle,
@@ -37,8 +45,17 @@ public class RenderBatches
             }),
         };
 
-        batches.Add(key, batch);
+        batchLookup.Add(key, batches.Count);
+        batches.Add(batch);
         return batch;
+    }
+
+    public void Reset()
+    {
+        foreach (var batch in batches)
+        {
+            batch.Reset();
+        }
     }
 }
 
@@ -133,8 +150,6 @@ public class RenderBatchDraw : IRenderStepDraw
             encoder.SetVertexBuffer(0, mesh.VertexBuffer);
             encoder.SetVertexBuffer(1, batch.InstanceBuffer);
             encoder.DrawIndexed((uint)mesh.IndexCount, (uint)batch.Count, 0, 0, 0);
-
-            batch.Reset();
         }
     }
 }

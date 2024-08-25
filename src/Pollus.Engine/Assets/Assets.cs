@@ -1,3 +1,5 @@
+using Pollus.Collections;
+
 namespace Pollus.Engine.Assets;
 
 public record struct Handle(int AssetType, int ID)
@@ -53,13 +55,14 @@ public class Assets<T> : IDisposable
     static volatile int counter;
     static int NextID => counter++;
 
-    Dictionary<Handle, AssetInfo<T>> assets = new();
+    List<AssetInfo<T>> assets = new();
+    Dictionary<Handle, int> assetLookup = new();
 
-    public IEnumerable<Handle> Handles => assets.Keys;
+    public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
 
     public void Dispose()
     {
-        foreach (var asset in assets.Values)
+        foreach (var asset in assets)
         {
             if (asset.Asset is IDisposable disposable)
             {
@@ -72,7 +75,8 @@ public class Assets<T> : IDisposable
     public Handle Initialize(AssetPath? path)
     {
         var handle = new Handle(_assetTypeId, NextID);
-        assets.Add(handle, new AssetInfo<T>
+        assetLookup.Add(handle, assets.Count);
+        assets.Add(new AssetInfo<T>
         {
             Handle = handle,
             Status = AssetStatus.Initialized,
@@ -84,7 +88,8 @@ public class Assets<T> : IDisposable
     public Handle<T> Add(T asset, AssetPath? path = null)
     {
         var handle = new Handle<T>(NextID);
-        assets.Add(handle, new AssetInfo<T>
+        assetLookup.Add(handle, assets.Count);
+        assets.Add(new AssetInfo<T>
         {
             Handle = handle,
             Status = AssetStatus.Loaded,
@@ -96,9 +101,9 @@ public class Assets<T> : IDisposable
 
     public T? Get(Handle handle)
     {
-        if (assets.TryGetValue(handle, out var assetHandle))
+        if (assetLookup.TryGetValue(handle, out var index))
         {
-            return assetHandle.Asset;
+            return assets[index].Asset;
         }
 
         return default;
@@ -106,9 +111,9 @@ public class Assets<T> : IDisposable
 
     public AssetStatus GetStatus(Handle handle)
     {
-        if (assets.TryGetValue(handle, out var assetHandle))
+        if (assetLookup.TryGetValue(handle, out var index))
         {
-            return assetHandle.Status;
+            return assets[index].Status;
         }
 
         return AssetStatus.Unknown;
@@ -116,26 +121,29 @@ public class Assets<T> : IDisposable
 
     public void Unload(Handle handle)
     {
-        if (assets.TryGetValue(handle, out var assetHandle))
+        if (assetLookup.TryGetValue(handle, out var index))
         {
-            assetHandle.Status = AssetStatus.Unloaded;
-            if (assetHandle.Asset is IDisposable disposable)
+            var assetInfo = assets[index];
+            assetInfo.Status = AssetStatus.Unloaded;
+            if (assetInfo.Asset is IDisposable disposable)
             {
                 disposable.Dispose();
             }
-            assetHandle.Asset = default;
+            assetInfo.Asset = default;
         }
     }
 
     public void Remove(Handle handle)
     {
-        if (assets.TryGetValue(handle, out var assetHandle))
+        if (assetLookup.TryGetValue(handle, out var index))
         {
-            if (assetHandle.Asset is IDisposable disposable)
+            var assetInfo = assets[index];
+            if (assetInfo.Asset is IDisposable disposable)
             {
                 disposable.Dispose();
             }
-            assets.Remove(handle);
+            assets.RemoveAt(index);
+            assetLookup.Remove(handle);
         }
     }
 }

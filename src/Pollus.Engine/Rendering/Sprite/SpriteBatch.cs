@@ -1,12 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 
-public class SpriteBatch
+public class SpriteBatch : IDisposable
 {
     public int Key => Material.GetHashCode();
     public required Handle Material { get; init; }
@@ -64,23 +65,39 @@ public class SpriteBatch
     }
 }
 
-public class SpriteBatches
+public class SpriteBatches : IDisposable
 {
-    Dictionary<int, SpriteBatch> batches = new();
+    List<SpriteBatch> batches = new();
+    Dictionary<int, int> batcheLookup = new();
 
-    public IEnumerable<SpriteBatch> Batches => batches.Values.Where(e => e.Count > 0);
+    public ListEnumerable<SpriteBatch> Batches => new(batches);
+
+    public void Dispose()
+    {
+        foreach (var batch in batches)
+        {
+            batch.Dispose();
+        }
+        batches.Clear();
+    }
 
     public bool TryGetBatch(Handle materialHandle, out SpriteBatch batch)
     {
-        return batches.TryGetValue(materialHandle.GetHashCode(), out batch!);
+        if (batcheLookup.TryGetValue(materialHandle.GetHashCode(), out var batchIdx))
+        {
+            batch = batches[batchIdx];
+            return true;
+        }
+        batch = null!;
+        return false;
     }
 
     public SpriteBatch CreateBatch(IWGPUContext context, int capacity, Handle materialHandle)
     {
         var key = materialHandle.GetHashCode();
-        if (batches.TryGetValue(key, out var batch)) return batch;
+        if (batcheLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
 
-        batch = new SpriteBatch()
+        var batch = new SpriteBatch()
         {
             Material = materialHandle,
             InstanceBuffer = context.CreateBuffer(new()
@@ -91,8 +108,17 @@ public class SpriteBatches
             }),
         };
 
-        batches.Add(key, batch);
+        batcheLookup.Add(key, batches.Count);
+        batches.Add(batch);
         return batch;
+    }
+
+    public void Reset()
+    {
+        foreach (var batch in batches)
+        {
+            batch.Reset();
+        }
     }
 }
 
@@ -106,6 +132,8 @@ public class SpriteBatchDraw : IRenderStepDraw
 
         foreach (var batch in batches.Batches)
         {
+            if (batch.IsEmpty) continue;
+
             batch.WriteBuffer();
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
@@ -118,8 +146,6 @@ public class SpriteBatchDraw : IRenderStepDraw
 
             encoder.SetVertexBuffer(0, batch.InstanceBuffer);
             encoder.Draw(6, (uint)batch.Count, 0, 0);
-
-            batch.Reset();
         }
     }
 }

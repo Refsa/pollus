@@ -3,7 +3,7 @@ namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
 public delegate bool FilterArchetypeDelegate(Archetype archetype);
-public delegate bool FilterChunkDelegate(ArchetypeChunk chunk);
+public delegate bool FilterChunkDelegate(in ArchetypeChunk chunk);
 
 public interface IFilter : ITuple
 {
@@ -74,6 +74,23 @@ public class Added<C0> : IFilterChunk
     public bool FilterChunk(ArchetypeChunk chunk)
     {
         return chunk.HasFlag<C0>(ComponentFlags.Added);
+    }
+}
+
+public class Removed<C0> : IFilterChunk
+    where C0 : unmanaged, IComponent
+{
+    public object? this[int index] => null;
+    public int Length => 1;
+
+    public bool Filter(Archetype archetype)
+    {
+        return archetype.HasComponent<C0>() is false;
+    }
+
+    public bool FilterChunk(ArchetypeChunk chunk)
+    {
+        return chunk.HasFlag<C0>(ComponentFlags.Removed);
     }
 }
 

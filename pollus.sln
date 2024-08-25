@@ -3,35 +3,52 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.ECS", "src\Pollus.ECS\Pollus.ECS.csproj", "{7E166281-E46A-40D2-92F4-51176FEB8E62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.ECS", "src\Pollus.ECS\Pollus.ECS.csproj", "{7E166281-E46A-40D2-92F4-51176FEB8E62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Engine", "src\Pollus.Engine\Pollus.Engine.csproj", "{A5E500AF-6775-46FA-9F92-40F664EC811D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Engine", "src\Pollus.Engine\Pollus.Engine.csproj", "{A5E500AF-6775-46FA-9F92-40F664EC811D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Graphics", "src\Pollus.Graphics\Pollus.Graphics.csproj", "{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Graphics", "src\Pollus.Graphics\Pollus.Graphics.csproj", "{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Audio", "src\Pollus.Audio\Pollus.Audio.csproj", "{55AB6FC2-775B-439F-8F16-54B09599093A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Audio", "src\Pollus.Audio\Pollus.Audio.csproj", "{55AB6FC2-775B-439F-8F16-54B09599093A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Tests", "src\Pollus.Tests\Pollus.Tests.csproj", "{AAD422FA-9A14-409C-BAE1-6F22218CA498}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Tests", "src\Pollus.Tests\Pollus.Tests.csproj", "{AAD422FA-9A14-409C-BAE1-6F22218CA498}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Benchmark", "src\Pollus.Benchmark\Pollus.Benchmark.csproj", "{82E12CD7-63CB-43CA-8543-FF811F9102CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Benchmark", "src\Pollus.Benchmark\Pollus.Benchmark.csproj", "{82E12CD7-63CB-43CA-8543-FF811F9102CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.ECS.Generators", "src\Pollus.ECS.Generators\Pollus.ECS.Generators.csproj", "{6619B42E-7960-4824-ABCB-D5D6B0DE2419}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.ECS.Generators", "src\Pollus.ECS.Generators\Pollus.ECS.Generators.csproj", "{6619B42E-7960-4824-ABCB-D5D6B0DE2419}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Core", "src\Pollus.Core\Pollus.Core.csproj", "{9587B12D-B500-46B7-918C-1CA6D12744C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Core", "src\Pollus.Core\Pollus.Core.csproj", "{9587B12D-B500-46B7-918C-1CA6D12744C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Emscripten", "src\Pollus.Emscripten\Pollus.Emscripten.csproj", "{CDD05177-C67A-4731-A952-2A3301A8FB59}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Emscripten", "src\Pollus.Emscripten\Pollus.Emscripten.csproj", "{CDD05177-C67A-4731-A952-2A3301A8FB59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Examples", "examples\Pollus.Examples.csproj", "{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Examples", "examples\Pollus.Examples.csproj", "{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7E166281-E46A-40D2-92F4-51176FEB8E62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E166281-E46A-40D2-92F4-51176FEB8E62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E166281-E46A-40D2-92F4-51176FEB8E62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E166281-E46A-40D2-92F4-51176FEB8E62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A5E500AF-6775-46FA-9F92-40F664EC811D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5E500AF-6775-46FA-9F92-40F664EC811D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5E500AF-6775-46FA-9F92-40F664EC811D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5E500AF-6775-46FA-9F92-40F664EC811D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FFEFC11-8A47-47AA-9ADE-801ADE5C0C71}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55AB6FC2-775B-439F-8F16-54B09599093A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55AB6FC2-775B-439F-8F16-54B09599093A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55AB6FC2-775B-439F-8F16-54B09599093A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55AB6FC2-775B-439F-8F16-54B09599093A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAD422FA-9A14-409C-BAE1-6F22218CA498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAD422FA-9A14-409C-BAE1-6F22218CA498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAD422FA-9A14-409C-BAE1-6F22218CA498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAD422FA-9A14-409C-BAE1-6F22218CA498}.Release|Any CPU.Build.0 = Release|Any CPU
 		{82E12CD7-63CB-43CA-8543-FF811F9102CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{82E12CD7-63CB-43CA-8543-FF811F9102CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82E12CD7-63CB-43CA-8543-FF811F9102CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -52,5 +69,8 @@ Global
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal
