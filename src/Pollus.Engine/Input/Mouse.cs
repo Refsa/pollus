@@ -1,4 +1,5 @@
 using Pollus.ECS;
+using Pollus.Mathematics;
 
 namespace Pollus.Engine.Input;
 
@@ -26,19 +27,30 @@ public enum MouseAxis
     ScrollY,
 }
 
+public struct MouseMovedEvent
+{
+    public Vec2<int> Position;
+    public Vec2<int> Delta;
+}
+
 public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevice<MouseButton>
 {
     Guid id;
     nint externalId;
 
+    Vec2<int> position;
+    Vec2<int> delta;
     Dictionary<MouseButton, ButtonState> buttons = new();
     Dictionary<MouseAxis, float> axes = new();
+
     HashSet<MouseButton> changedButtons = new();
     HashSet<MouseAxis> changedAxes = new();
+    bool positionChanged;
 
     public nint ExternalId => externalId;
     public Guid Id => id;
     public InputType Type => InputType.Mouse;
+    public Vec2<int> Position => position;
 
     public Mouse(nint externalId)
     {
@@ -90,8 +102,28 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
             });
         }
 
+        if (positionChanged)
+        {
+            var movedEvent = new MouseMovedEvent()
+            {
+                Position = position,
+                Delta = delta,
+            };
+
+            events.GetWriter<MouseMovedEvent>().Write(movedEvent);
+        }
+
+        positionChanged = false;
         changedButtons.Clear();
         changedAxes.Clear();
+    }
+
+    public void SetPosition(int x, int y)
+    {
+        positionChanged = position.X != x || position.Y != y;
+        var next = new Vec2<int>(x, y);
+        delta = positionChanged ? next - position : Vec2<int>.Zero;
+        position = next;
     }
 
     public void SetButtonState(MouseButton button, bool isPressed)

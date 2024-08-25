@@ -27,13 +27,13 @@ public class Resources : IDisposable
     public void Add<TResource>()
         where TResource : notnull, new()
     {
-        resources.Add(Resource.ID<TResource>(), new TResource());
+        resources[Resource.ID<TResource>()] = new TResource();
     }
 
     public void Add<TResource>(TResource resource)
         where TResource : notnull
     {
-        resources.Add(Resource.ID<TResource>(), resource);
+        resources[Resource.ID<TResource>()] = resource;
     }
 
     public TResource Get<TResource>()
@@ -58,6 +58,12 @@ public class Resources : IDisposable
 
         resource = default!;
         return false;
+    }
+
+    public bool Has<TResource>()
+        where TResource : notnull
+    {
+        return resources.ContainsKey(Resource.ID<TResource>());
     }
 }
 

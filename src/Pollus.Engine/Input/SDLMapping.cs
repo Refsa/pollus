@@ -157,7 +157,7 @@ static class SDLMapping
 #if BROWSER
         return MapEmscriptenJoystickButton(button, deviceName);
 #else
-        return MapGamepadButton((Silk.NET.Sdl.GamepadButton)button);
+        return MapGamepadButton((Silk.NET.SDL.GameControllerButton)button);
 #endif
     }
 
@@ -190,7 +190,7 @@ static class SDLMapping
 #if BROWSER
         return MapEmscriptenJoystickAxis(axis, deviceName);
 #else
-        return MapGamepadAxis((Silk.NET.Sdl.GameControllerAxis)axis);
+        return MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)axis);
 #endif
     }
 

@@ -81,7 +81,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
             deviceName = EmscriptenSDL.JoystickName((int)externalId);
 #else
             externalDevice = (nint)SDLWrapper.Instance.GameControllerOpen((int)externalId);
-            deviceName = SDLWrapper.Instance.GameControllerName((Silk.NET.SDL.GameController*)externalDevice);
+            deviceName = SDLWrapper.Instance.GameControllerNameS((Silk.NET.SDL.GameController*)externalDevice);
 #endif
         }
 

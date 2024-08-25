@@ -133,36 +133,15 @@ public class BreakoutGame
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem("TestImgui",
-        static (EventReader<ButtonEvent<Key>> keyEvents,
-                EventReader<ButtonEvent<GamepadButton>> gamepadButtons,
-                EventReader<AxisEvent<GamepadAxis>> gamepadAxes
-        ) =>
+        static () =>
         {
-            foreach (var keyEvent in keyEvents.Read())
-            {
-                Log.Info($"Key: {keyEvent.Button} State: {keyEvent.State}");
-            }
-
-            foreach (var buttonEvent in gamepadButtons.Read())
-            {
-                Log.Info($"Button: {buttonEvent.Button} State: {buttonEvent.State}");
-            }
-
-            foreach (var axisEvent in gamepadAxes.Read())
-            {
-                Log.Info($"Axis: {axisEvent.Axis} Value: {axisEvent.Value}");
-            }
-
-            ImGuiNET.ImGui.ShowDemoWindow();
+            ImGui.ShowDemoWindow();
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
-        static (Commands commands, InputManager input, Time time, IWindow window, Query query, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
+        static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis, Time time, IWindow window, Query query, Query<Transform2, Collider>.Filter<All<Player>> qPlayer) =>
         {
-            var keyboard = input.GetDevice("keyboard") as Keyboard;
-            var gamepad = input.GetDevice("gamepad/0") as Gamepad;
-
-            var gamepadInput = gamepad?.GetAxis(GamepadAxis.LeftX) ?? 0;
-            var keyboardInput = keyboard?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
+            var keyboardInput = keys?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
+            var gamepadInput = gAxis?.GetAxis(GamepadAxis.LeftX) ?? 0;
             var paddleInput = (Math.Abs(gamepadInput) > Math.Abs(keyboardInput)) switch
             {
                 true => gamepadInput,
@@ -180,11 +159,11 @@ public class BreakoutGame
             ref var pTransform = ref player.Component0;
             ref var pCollider = ref player.Component1;
 
-            if (keyboard.JustPressed(Key.KeyZ))
+            if (keys?.JustPressed(Key.KeyZ) is true)
             {
                 commands.AddComponent<Disabled>(player.Entity, default);
             }
-            else if (keyboard.JustPressed(Key.KeyX))
+            else if (keys?.JustPressed(Key.KeyX) is true)
             {
                 commands.RemoveComponent<Disabled>(player.Entity);
             }
