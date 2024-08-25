@@ -69,6 +69,10 @@ public partial class EmscriptenSDL
     [LibraryImport("SDL")]
     private static partial short SDL_JoystickGetAxis(nint joystick, int axis);
 
+    [LibraryImport("SDL")]
+    [return: MarshalAs(UnmanagedType.LPUTF8Str)]
+    private static partial string SDL_JoystickName(int deviceIndex);
+
     public static void Init(SDLInitFlags flags)
     {
         var status = SDL_Init((uint)flags);
@@ -185,6 +189,11 @@ public partial class EmscriptenSDL
     public static int NumJoysticks()
     {
         return SDL_NumJoysticks();
+    }
+
+    public static string JoystickName(int deviceIndex)
+    {
+        return SDL_JoystickName(deviceIndex);
     }
 
     public static bool IsGameController(int index)

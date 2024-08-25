@@ -190,7 +190,7 @@ public class InputManager : IDisposable
                 gamepad.Connect();
             }
 
-            var axis = SDLMapping.MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)@event.Jaxis.Axis);
+            var axis = SDLMapping.MapJoystickAxis(@event.Jaxis.Axis, gamepad.DeviceName);
             gamepad?.SetAxisState(axis, @event.Jaxis.Value);
         }
 
@@ -205,8 +205,8 @@ public class InputManager : IDisposable
                 AddDevice(gamepad);
                 gamepad.Connect();
             }
-
-            var button = SDLMapping.MapGamepadButton((Silk.NET.SDL.GameControllerButton)@event.Jbutton.Button);
+            
+            var button = SDLMapping.MapJoystickButton(@event.Jbutton.Button, gamepad.DeviceName);
             gamepad?.SetButtonState(button, @event.Jbutton.State == 1);
         }
     }

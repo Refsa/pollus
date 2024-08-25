@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Pollus.Engine.Input;
 
 static class SDLMapping
@@ -147,6 +149,59 @@ static class SDLMapping
             Silk.NET.SDL.GameControllerButton.DpadLeft => GamepadButton.DPadLeft,
             Silk.NET.SDL.GameControllerButton.DpadRight => GamepadButton.DPadRight,
             _ => GamepadButton.Unknown,
+        };
+    }
+
+    public static GamepadButton MapJoystickButton(byte button, string deviceName)
+    {
+#if BROWSER
+        return MapEmscriptenJoystickButton(button, deviceName);
+#else
+        return MapGamepadButton((Silk.NET.Sdl.GamepadButton)button);
+#endif
+    }
+
+    public static GamepadButton MapEmscriptenJoystickButton(byte button, string deviceName)
+    {
+        return button switch {
+            0 => GamepadButton.South,
+            1 => GamepadButton.East,
+            2 => GamepadButton.West,
+            3 => GamepadButton.North,
+            4 => GamepadButton.LeftShoulder,
+            5 => GamepadButton.RightShoulder,
+            6 => GamepadButton.LeftTrigger,
+            7 => GamepadButton.RightTrigger,
+            8 => GamepadButton.Back,
+            9 => GamepadButton.Start,
+            10 => GamepadButton.LeftStick,
+            11 => GamepadButton.RightStick,
+            12 => GamepadButton.DPadUp,
+            13 => GamepadButton.DPadDown,
+            14 => GamepadButton.DPadLeft,
+            15 => GamepadButton.DPadRight,
+            16 => GamepadButton.Guide,
+            _ => GamepadButton.Unknown,
+        };
+    }
+
+    public static GamepadAxis MapJoystickAxis(byte axis, string deviceName)
+    {
+#if BROWSER
+        return MapEmscriptenJoystickAxis(axis, deviceName);
+#else
+        return MapGamepadAxis((Silk.NET.Sdl.GameControllerAxis)axis);
+#endif
+    }
+
+    public static GamepadAxis MapEmscriptenJoystickAxis(byte axis, string deviceName)
+    {
+        return axis switch {
+            0 => GamepadAxis.LeftX,
+            1 => GamepadAxis.LeftY,
+            2 => GamepadAxis.RightX,
+            3 => GamepadAxis.RightY,
+            _ => GamepadAxis.Unknown,
         };
     }
 }

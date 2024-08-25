@@ -46,13 +46,15 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 {
     nint externalId;
     nint externalDevice;
+    string deviceName;
     Guid id;
 
     Dictionary<GamepadButton, ButtonState> buttons = [];
     Dictionary<GamepadAxis, float> axes = [];
     HashSet<GamepadButton> changedButtons = [];
     HashSet<GamepadAxis> changedAxes = [];
-
+    
+    public string DeviceName => deviceName;
     public nint ExternalId => externalId;
     public Guid Id => id;
     public InputType Type => InputType.Gamepad;
@@ -76,8 +78,10 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         {
 #if BROWSER
             externalDevice = EmscriptenSDL.JoystickOpen((int)externalId);
+            deviceName = EmscriptenSDL.JoystickName((int)externalId);
 #else
             externalDevice = (nint)SDLWrapper.Instance.GameControllerOpen((int)externalId);
+            deviceName = SDLWrapper.Instance.GameControllerName((Silk.NET.SDL.GameController*)externalDevice);
 #endif
         }
 
