@@ -112,6 +112,10 @@ public enum ModifierKey
     NumLock = 0x1000,
     CapsLock = 0x2000,
     Mode = 0x4000,
+    Control = LeftControl | RightControl,
+    Shift = LeftShift | RightShift,
+    Alt = LeftAlt | RightAlt,
+    Meta = LeftMeta | RightMeta,
 }
 
 public class Keyboard : IInputDevice, IButtonInputDevice<Key>

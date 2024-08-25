@@ -104,14 +104,14 @@ static class SDLMapping
         return button switch
         {
             1 => MouseButton.Left,
-            2 => MouseButton.Middle,
             3 => MouseButton.Right,
+            2 => MouseButton.Middle,
             4 => MouseButton.Button4,
             5 => MouseButton.Button5,
             6 => MouseButton.Button6,
             7 => MouseButton.Button7,
             8 => MouseButton.Button8,
-            _ => MouseButton.Unknown,
+            _ => (MouseButton)button,
         };
     }
 

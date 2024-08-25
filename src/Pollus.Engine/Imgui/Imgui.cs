@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Imgui;
 
+using System.Runtime.InteropServices;
+using System.Text;
 using ImGuiNET;
 using Pollus.ECS;
 using Pollus.Engine.Input;
@@ -30,6 +32,11 @@ public class ImguiPlugin : IPlugin
 
     public void Apply(World world)
     {
+        world.AddPlugins([
+            new RenderingPlugin(),
+            new InputPlugin(),
+        ]);
+
         world.Resources.Init<ImguiRenderer>();
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
@@ -43,132 +50,162 @@ public class ImguiPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
+            "ImGui Update IO",
+            static (
+                PlatformEvents platformEvents,
+                EventReader<ButtonEvent<Key>> eKeys,
+                EventReader<ButtonEvent<MouseButton>> eMouseButtons,
+                EventReader<AxisEvent<MouseAxis>> eMouseAxes,
+                EventReader<MouseMovedEvent> eMouseMoved
+            ) =>
+            {
+                var io = ImGui.GetIO();
+
+                foreach (var ev in platformEvents.Events)
+                {
+                    if (ev.Type is (int)Silk.NET.SDL.EventType.Textinput)
+                    {
+                        unsafe 
+                        {
+                            var textChars = (char*)ev.Text.Text;
+                            while (*textChars != '\0')
+                            {
+                                io.AddInputCharacter(*textChars);
+                                textChars++;
+                            }
+                        }
+                    }
+                }
+
+                foreach (var key in eKeys.Read())
+                {
+                    var state = key.State == ButtonState.JustPressed;
+                    io.AddKeyEvent(MapKey(key.Button), state);
+                }
+
+                foreach (var button in eMouseButtons.Read())
+                {
+                    var state = button.State == ButtonState.JustPressed;
+                    io.AddMouseButtonEvent((int)button.Button - 1, state);
+                }
+
+                foreach (var axis in eMouseAxes.Read())
+                {
+                    if (axis.Axis == MouseAxis.ScrollY)
+                    {
+                        io.AddMouseWheelEvent(0f, axis.Value);
+                    }
+                    else if (axis.Axis == MouseAxis.ScrollX)
+                    {
+                        io.AddMouseWheelEvent(axis.Value, 0f);
+                    }
+                }
+
+                foreach (var moved in eMouseMoved.Read())
+                {
+                    io.AddMousePosEvent(moved.Position.X, moved.Position.Y);
+                }
+            }
+        ).After("InputUpdate"));
+
+        world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
             "BeginImguiFrame",
             static (ImguiRenderer imguiRenderer, Time time, IWindow window, PlatformEvents platformEvents) =>
             {
                 imguiRenderer.Resized(window.Size);
-                var io = ImGui.GetIO();
-                foreach (var @event in platformEvents.Events)
-                {
-                    var evType = (Silk.NET.SDL.EventType)@event.Type;
-                    if (evType is Silk.NET.SDL.EventType.Keydown)
-                    {
-                        io.AddKeyEvent(MapKey(@event.Key.Keysym.Scancode), true);
-                    }
-                    else if (evType is Silk.NET.SDL.EventType.Keyup)
-                    {
-                        io.AddKeyEvent(MapKey(@event.Key.Keysym.Scancode), false);
-                    }
-
-                    if (evType is Silk.NET.SDL.EventType.Mousebuttondown)
-                    {
-                        io.AddMouseButtonEvent(@event.Button.Button - 1, true);
-                    }
-                    else if (evType is Silk.NET.SDL.EventType.Mousebuttonup)
-                    {
-                        io.AddMouseButtonEvent(@event.Button.Button - 1, false);
-                    }
-
-                    if (evType is Silk.NET.SDL.EventType.Mousewheel)
-                    {
-                        io.AddMouseWheelEvent(@event.Wheel.X, @event.Wheel.Y);
-                    }
-
-                    if (evType is Silk.NET.SDL.EventType.Mousemotion)
-                    {
-                        io.AddMousePosEvent(@event.Motion.X, @event.Motion.Y);
-                    }
-                }
-
                 imguiRenderer.Update((float)time.DeltaTime);
             }
         ));
     }
 
-    static ImGuiKey MapKey(Silk.NET.SDL.Scancode sdlKey)
+    static ImGuiKey MapKey(Key key)
     {
-        return sdlKey switch
+        return key switch
         {
-            Silk.NET.SDL.Scancode.ScancodeA => ImGuiKey.A,
-            Silk.NET.SDL.Scancode.ScancodeB => ImGuiKey.B,
-            Silk.NET.SDL.Scancode.ScancodeC => ImGuiKey.C,
-            Silk.NET.SDL.Scancode.ScancodeD => ImGuiKey.D,
-            Silk.NET.SDL.Scancode.ScancodeE => ImGuiKey.E,
-            Silk.NET.SDL.Scancode.ScancodeF => ImGuiKey.F,
-            Silk.NET.SDL.Scancode.ScancodeG => ImGuiKey.G,
-            Silk.NET.SDL.Scancode.ScancodeH => ImGuiKey.H,
-            Silk.NET.SDL.Scancode.ScancodeI => ImGuiKey.I,
-            Silk.NET.SDL.Scancode.ScancodeJ => ImGuiKey.J,
-            Silk.NET.SDL.Scancode.ScancodeK => ImGuiKey.K,
-            Silk.NET.SDL.Scancode.ScancodeL => ImGuiKey.L,
-            Silk.NET.SDL.Scancode.ScancodeM => ImGuiKey.M,
-            Silk.NET.SDL.Scancode.ScancodeN => ImGuiKey.N,
-            Silk.NET.SDL.Scancode.ScancodeO => ImGuiKey.O,
-            Silk.NET.SDL.Scancode.ScancodeP => ImGuiKey.P,
-            Silk.NET.SDL.Scancode.ScancodeQ => ImGuiKey.Q,
-            Silk.NET.SDL.Scancode.ScancodeR => ImGuiKey.R,
-            Silk.NET.SDL.Scancode.ScancodeS => ImGuiKey.S,
-            Silk.NET.SDL.Scancode.ScancodeT => ImGuiKey.T,
-            Silk.NET.SDL.Scancode.ScancodeU => ImGuiKey.U,
-            Silk.NET.SDL.Scancode.ScancodeV => ImGuiKey.V,
-            Silk.NET.SDL.Scancode.ScancodeW => ImGuiKey.W,
-            Silk.NET.SDL.Scancode.ScancodeX => ImGuiKey.X,
-            Silk.NET.SDL.Scancode.ScancodeY => ImGuiKey.Y,
-            Silk.NET.SDL.Scancode.ScancodeZ => ImGuiKey.Z,
-            Silk.NET.SDL.Scancode.Scancode1 => ImGuiKey._1,
-            Silk.NET.SDL.Scancode.Scancode2 => ImGuiKey._2,
-            Silk.NET.SDL.Scancode.Scancode3 => ImGuiKey._3,
-            Silk.NET.SDL.Scancode.Scancode4 => ImGuiKey._4,
-            Silk.NET.SDL.Scancode.Scancode5 => ImGuiKey._5,
-            Silk.NET.SDL.Scancode.Scancode6 => ImGuiKey._6,
-            Silk.NET.SDL.Scancode.Scancode7 => ImGuiKey._7,
-            Silk.NET.SDL.Scancode.Scancode8 => ImGuiKey._8,
-            Silk.NET.SDL.Scancode.Scancode9 => ImGuiKey._9,
-            Silk.NET.SDL.Scancode.Scancode0 => ImGuiKey._0,
-            Silk.NET.SDL.Scancode.ScancodeReturn => ImGuiKey.Enter,
-            Silk.NET.SDL.Scancode.ScancodeEscape => ImGuiKey.Escape,
-            Silk.NET.SDL.Scancode.ScancodeBackspace => ImGuiKey.Backspace,
-            Silk.NET.SDL.Scancode.ScancodeTab => ImGuiKey.Tab,
-            Silk.NET.SDL.Scancode.ScancodeSpace => ImGuiKey.Space,
-            Silk.NET.SDL.Scancode.ScancodeMinus => ImGuiKey.Minus,
-            Silk.NET.SDL.Scancode.ScancodeEquals => ImGuiKey.Equal,
-            Silk.NET.SDL.Scancode.ScancodeBackslash => ImGuiKey.Backslash,
-            Silk.NET.SDL.Scancode.ScancodeSemicolon => ImGuiKey.Semicolon,
-            Silk.NET.SDL.Scancode.ScancodeApostrophe => ImGuiKey.Apostrophe,
-            Silk.NET.SDL.Scancode.ScancodeGrave => ImGuiKey.GraveAccent,
-            Silk.NET.SDL.Scancode.ScancodeComma => ImGuiKey.Comma,
-            Silk.NET.SDL.Scancode.ScancodePeriod => ImGuiKey.Period,
-            Silk.NET.SDL.Scancode.ScancodeSlash => ImGuiKey.Slash,
-            Silk.NET.SDL.Scancode.ScancodeCapslock => ImGuiKey.CapsLock,
-            Silk.NET.SDL.Scancode.ScancodeF1 => ImGuiKey.F1,
-            Silk.NET.SDL.Scancode.ScancodeF2 => ImGuiKey.F2,
-            Silk.NET.SDL.Scancode.ScancodeF3 => ImGuiKey.F3,
-            Silk.NET.SDL.Scancode.ScancodeF4 => ImGuiKey.F4,
-            Silk.NET.SDL.Scancode.ScancodeF5 => ImGuiKey.F5,
-            Silk.NET.SDL.Scancode.ScancodeF6 => ImGuiKey.F6,
-            Silk.NET.SDL.Scancode.ScancodeF7 => ImGuiKey.F7,
-            Silk.NET.SDL.Scancode.ScancodeF8 => ImGuiKey.F8,
-            Silk.NET.SDL.Scancode.ScancodeF9 => ImGuiKey.F9,
-            Silk.NET.SDL.Scancode.ScancodeF10 => ImGuiKey.F10,
-            Silk.NET.SDL.Scancode.ScancodeF11 => ImGuiKey.F11,
-            Silk.NET.SDL.Scancode.ScancodeF12 => ImGuiKey.F12,
-            Silk.NET.SDL.Scancode.ScancodePrintscreen => ImGuiKey.PrintScreen,
-            Silk.NET.SDL.Scancode.ScancodeScrolllock => ImGuiKey.ScrollLock,
-            Silk.NET.SDL.Scancode.ScancodePause => ImGuiKey.Pause,
-            Silk.NET.SDL.Scancode.ScancodeInsert => ImGuiKey.Insert,
-            Silk.NET.SDL.Scancode.ScancodeHome => ImGuiKey.Home,
-            Silk.NET.SDL.Scancode.ScancodePageup => ImGuiKey.PageUp,
-            Silk.NET.SDL.Scancode.ScancodeDelete => ImGuiKey.Delete,
-            Silk.NET.SDL.Scancode.ScancodeEnd => ImGuiKey.End,
-            Silk.NET.SDL.Scancode.ScancodePagedown => ImGuiKey.PageDown,
-            Silk.NET.SDL.Scancode.ScancodeRight => ImGuiKey.RightArrow,
-            Silk.NET.SDL.Scancode.ScancodeLeft => ImGuiKey.LeftArrow,
-            Silk.NET.SDL.Scancode.ScancodeDown => ImGuiKey.DownArrow,
-            Silk.NET.SDL.Scancode.ScancodeUp => ImGuiKey.UpArrow,
-            Silk.NET.SDL.Scancode.ScancodeNumlockclear => ImGuiKey.NumLock,
-            Silk.NET.SDL.Scancode.ScancodeApplication => ImGuiKey.Menu,
-            Silk.NET.SDL.Scancode.ScancodePower => ImGuiKey.None,
-            _ => throw new ArgumentOutOfRangeException(nameof(sdlKey), sdlKey, null),
+            Key.KeyA => ImGuiKey.A,
+            Key.KeyB => ImGuiKey.B,
+            Key.KeyC => ImGuiKey.C,
+            Key.KeyD => ImGuiKey.D,
+            Key.KeyE => ImGuiKey.E,
+            Key.KeyF => ImGuiKey.F,
+            Key.KeyG => ImGuiKey.G,
+            Key.KeyH => ImGuiKey.H,
+            Key.KeyI => ImGuiKey.I,
+            Key.KeyJ => ImGuiKey.J,
+            Key.KeyK => ImGuiKey.K,
+            Key.KeyL => ImGuiKey.L,
+            Key.KeyM => ImGuiKey.M,
+            Key.KeyN => ImGuiKey.N,
+            Key.KeyO => ImGuiKey.O,
+            Key.KeyP => ImGuiKey.P,
+            Key.KeyQ => ImGuiKey.Q,
+            Key.KeyR => ImGuiKey.R,
+            Key.KeyS => ImGuiKey.S,
+            Key.KeyT => ImGuiKey.T,
+            Key.KeyU => ImGuiKey.U,
+            Key.KeyV => ImGuiKey.V,
+            Key.KeyW => ImGuiKey.W,
+            Key.KeyX => ImGuiKey.X,
+            Key.KeyY => ImGuiKey.Y,
+            Key.KeyZ => ImGuiKey.Z,
+            Key.Digit1 => ImGuiKey._1,
+            Key.Digit2 => ImGuiKey._2,
+            Key.Digit3 => ImGuiKey._3,
+            Key.Digit4 => ImGuiKey._4,
+            Key.Digit5 => ImGuiKey._5,
+            Key.Digit6 => ImGuiKey._6,
+            Key.Digit7 => ImGuiKey._7,
+            Key.Digit8 => ImGuiKey._8,
+            Key.Digit9 => ImGuiKey._9,
+            Key.Digit0 => ImGuiKey._0,
+            Key.Enter => ImGuiKey.Enter,
+            Key.Escape => ImGuiKey.Escape,
+            Key.Backspace => ImGuiKey.Backspace,
+            Key.Tab => ImGuiKey.Tab,
+            Key.Space => ImGuiKey.Space,
+            Key.Minus => ImGuiKey.Minus,
+            Key.Equal => ImGuiKey.Equal,
+            Key.Backslash => ImGuiKey.Backslash,
+            Key.Semicolon => ImGuiKey.Semicolon,
+            Key.Apostrophe => ImGuiKey.Apostrophe,
+            Key.Comma => ImGuiKey.Comma,
+            Key.Period => ImGuiKey.Period,
+            Key.Slash => ImGuiKey.Slash,
+            Key.CapsLock => ImGuiKey.CapsLock,
+            Key.F1 => ImGuiKey.F1,
+            Key.F2 => ImGuiKey.F2,
+            Key.F3 => ImGuiKey.F3,
+            Key.F4 => ImGuiKey.F4,
+            Key.F5 => ImGuiKey.F5,
+            Key.F6 => ImGuiKey.F6,
+            Key.F7 => ImGuiKey.F7,
+            Key.F8 => ImGuiKey.F8,
+            Key.F9 => ImGuiKey.F9,
+            Key.F10 => ImGuiKey.F10,
+            Key.F11 => ImGuiKey.F11,
+            Key.F12 => ImGuiKey.F12,
+            Key.PrintScreen => ImGuiKey.PrintScreen,
+            Key.ScrollLock => ImGuiKey.ScrollLock,
+            Key.Pause => ImGuiKey.Pause,
+            Key.Insert => ImGuiKey.Insert,
+            Key.Home => ImGuiKey.Home,
+            Key.PageUp => ImGuiKey.PageUp,
+            Key.Delete => ImGuiKey.Delete,
+            Key.End => ImGuiKey.End,
+            Key.PageDown => ImGuiKey.PageDown,
+            Key.ArrowRight => ImGuiKey.RightArrow,
+            Key.ArrowLeft => ImGuiKey.LeftArrow,
+            Key.ArrowDown => ImGuiKey.DownArrow,
+            Key.ArrowUp => ImGuiKey.UpArrow,
+            Key.LeftControl => ImGuiKey.LeftCtrl,
+            Key.LeftShift => ImGuiKey.LeftShift,
+            Key.LeftAlt => ImGuiKey.LeftAlt,
+            Key.LeftMeta => ImGuiKey.LeftSuper,
+            Key.RightControl => ImGuiKey.RightCtrl,
+            Key.RightShift => ImGuiKey.RightShift,
+            Key.RightAlt => ImGuiKey.RightAlt,
+            Key.RightMeta => ImGuiKey.RightSuper,
+            _ => ImGuiKey.None
         };
     }
 }

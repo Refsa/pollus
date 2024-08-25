@@ -5,8 +5,8 @@ namespace Pollus.Engine.Input;
 
 public enum MouseButton
 {
-    Unknown = 0,
-    None = 1,
+    Unknown = -1,
+    None = 0,
     Left,
     Right,
     Middle,

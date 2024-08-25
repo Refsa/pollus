@@ -70,8 +70,8 @@ public class BreakoutGame
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
-            new ImguiPlugin(),
             new InputPlugin(),
+            new ImguiPlugin(),
             new AudioPlugin(),
             new PerformanceTrackerPlugin(),
         ])

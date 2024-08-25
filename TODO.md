@@ -2,10 +2,10 @@
 	- [x] Desktop
 	- [x] Web
 	- [x] Keyboard
-	- [ ] Mouse
+	- [x] Mouse
 		- handle right click and aux mouse buttons in browser
-	- [ ] Gamepad
-	- [ ] Touch
+	- [x] Gamepad
+	- [x] Touch
 	- [ ] Action Map
 - Audio
 	- [x] Desktop
