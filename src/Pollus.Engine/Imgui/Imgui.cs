@@ -60,6 +60,7 @@ public class ImguiPlugin : IPlugin
             ) =>
             {
                 var io = ImGui.GetIO();
+                Span<char> textInput = stackalloc char[32];
 
                 foreach (var ev in platformEvents.Events)
                 {
@@ -67,11 +68,12 @@ public class ImguiPlugin : IPlugin
                     {
                         unsafe 
                         {
-                            var textChars = (char*)ev.Text.Text;
-                            while (*textChars != '\0')
+                            var textSpan = new Span<byte>(ev.Text.Text, 32);
+                            int count = Encoding.UTF8.GetChars(textSpan, textInput);
+                            foreach (var c in textInput)
                             {
-                                io.AddInputCharacter(*textChars);
-                                textChars++;
+                                if (c == '\0') break;
+                                io.AddInputCharacter(c);
                             }
                         }
                     }

@@ -28,7 +28,7 @@
 	- [ ] Parallel queries
 	- [ ] Relationships
 	- [ ] Hierarchies
-	- [ ] Events
+	- [x] Events
 	- [x] Commands
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
