@@ -1,6 +1,7 @@
 namespace Pollus.Audio;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Pollus.Mathematics;
 using Silk.NET.OpenAL;
 
@@ -100,7 +101,7 @@ public class AudioSource : IDisposable
             audio.al.GetSourceProperty(sourceId, SourceVector3.Position, out var value);
             return value;
         }
-        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Position, value);
+        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Position, Unsafe.As<Vec3<float>, System.Numerics.Vector3>(ref value));
     }
 
     public Vec3<float> Velocity
@@ -110,7 +111,7 @@ public class AudioSource : IDisposable
             audio.al.GetSourceProperty(sourceId, SourceVector3.Velocity, out var value);
             return value;
         }
-        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Velocity, value);
+        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Velocity, Unsafe.As<Vec3<float>, System.Numerics.Vector3>(ref value));
     }
 
     public Vec3<float> Direction
@@ -120,7 +121,7 @@ public class AudioSource : IDisposable
             audio.al.GetSourceProperty(sourceId, SourceVector3.Direction, out var value);
             return value;
         }
-        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Direction, value);
+        set => audio.al.SetSourceProperty(sourceId, SourceVector3.Direction, Unsafe.As<Vec3<float>, System.Numerics.Vector3>(ref value));
     }
 
     public AudioSource(AudioManager audio)

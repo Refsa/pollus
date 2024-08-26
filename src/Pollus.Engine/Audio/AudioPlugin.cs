@@ -148,6 +148,8 @@ struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
         {
             AudioPools.ReturnSource(deviceSource);
             AudioPools.ReturnBuffer(deviceBuffer);
+            /* DeviceSources.Remove(source.DeviceSource);
+            DeviceBuffers.Remove(playback.DeviceBuffer); */
             Commands.Despawn(entity);
         }
     }

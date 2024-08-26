@@ -5,8 +5,8 @@ using Pollus.Mathematics;
 
 public interface IInputDevice : IDisposable
 {
-    nint ExternalId { get; }
     Guid Id { get; }
+    nint ExternalId { get; }
     InputType Type { get; }
 
     void Update(Events events);

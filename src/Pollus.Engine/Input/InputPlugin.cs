@@ -44,7 +44,7 @@ public class InputPlugin : IPlugin
         {
             input.Update(platform, events);
 
-            foreach (var device in input.ConnectedDevices)
+            foreach (var device in input.Devices)
             {
                 if (device is Mouse mouse)
                 {

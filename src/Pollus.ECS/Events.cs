@@ -54,7 +54,7 @@ public class EventQueue<TEvent> : IEventQueue
     int cursor = 0;
     TEvent[] events = new TEvent[16];
 
-    public ReadOnlySpan<TEvent> Events => events[..cursor];
+    public ReadOnlySpan<TEvent> Events => events.AsSpan()[..cursor];
 
     public void AddEvent(TEvent e)
     {
