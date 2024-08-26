@@ -181,9 +181,9 @@ public class BreakoutGame
             }
         }))
         .AddSystem(CoreStage.Last, FnSystem("TestAdded",
-            (Query query,
-             Query<Player>.Filter<Added<Disabled>> qDisabled,
-             Query<Player>.Filter<Removed<Disabled>> qEnabled
+        static (Query query,
+                Query<Player>.Filter<Added<Disabled>> qDisabled,
+                Query<Player>.Filter<Removed<Disabled>> qEnabled
         ) =>
         {
             qDisabled.ForEach(delegate (in Entity entity, ref Player player)
@@ -203,10 +203,10 @@ public class BreakoutGame
             });
         }))
         .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
-        (Commands commands, Time time, IWindow window, AssetServer assetServer,
-            Query<Transform2, Ball, Collider> qBall,
-            Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
-            Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles
+        static (Commands commands, Time time, IWindow window, AssetServer assetServer,
+                Query<Transform2, Ball, Collider> qBall,
+                Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
+                Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles
         ) =>
         {
             bool spawnSound = false;

@@ -4,6 +4,8 @@ namespace Pollus.Engine.Assets;
 
 public record struct Handle(int AssetType, int ID)
 {
+    public static Handle Null => new(-1, -1);
+
     public override int GetHashCode()
     {
         return HashCode.Combine(AssetType, ID);
@@ -12,6 +14,8 @@ public record struct Handle(int AssetType, int ID)
 
 public record struct Handle<T> where T : notnull
 {
+    public static Handle<T> Null => new(-1);
+
     public int AssetType { get; }
     public int ID { get; }
 

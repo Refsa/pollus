@@ -13,7 +13,7 @@ public enum AudioSourceState
     Stopped,
 }
 
-public class AudioSource : IDisposable
+unsafe public class AudioSource : IDisposable
 {
     AudioManager audio;
     uint sourceId;
@@ -35,12 +35,25 @@ public class AudioSource : IDisposable
         }
     }
 
+    public SourceType Type
+    {
+        get
+        {
+            audio.al.GetSourceProperty(sourceId, GetSourceInteger.SourceType, out var value);
+            return (SourceType)value;
+        }
+        set
+        {
+            audio.al.SetSourceProperty(sourceId, SourceInteger.SourceType, (int)value);
+        }
+    }
+
     public bool IsPlaying
     {
         get
         {
-            audio.al.GetSourceProperty(sourceId, GetSourceInteger.BuffersProcessed, out var value);
-            return value > 0;
+            audio.al.GetSourceProperty(sourceId, GetSourceInteger.BuffersQueued, out var value);
+            return value == 0;
         }
     }
 
@@ -169,7 +182,7 @@ public class AudioSource : IDisposable
 
     public void UnqueueBuffer(AudioBuffer buffer)
     {
-        audio.al.SetSourceProperty(sourceId, SourceInteger.Buffer, 0);
+        audio.al.SetSourceProperty(sourceId, SourceInteger.Buffer, buffer.Id);
     }
 
     unsafe public void QueueBuffers(ReadOnlySpan<uint> bufferIds)
@@ -180,11 +193,55 @@ public class AudioSource : IDisposable
         }
     }
 
-    unsafe public void UnqueueBuffers(Span<uint> bufferIds)
+    unsafe public void UnqueueBuffers(ReadOnlySpan<uint> bufferIds)
     {
         fixed (uint* ptr = bufferIds)
         {
             audio.al.SourceUnqueueBuffers(sourceId, bufferIds.Length, ptr);
         }
+    }
+
+    public float GetProperty(SourceFloat property)
+    {
+        audio.al.GetSourceProperty(sourceId, property, out var value);
+        return value;
+    }
+
+    public void SetProperty(SourceFloat property, float value)
+    {
+        audio.al.SetSourceProperty(sourceId, property, value);
+    }
+
+    public int GetProperty(GetSourceInteger property)
+    {
+        audio.al.GetSourceProperty(sourceId, property, out var value);
+        return value;
+    }
+
+    public void SetProperty(SourceInteger property, int value)
+    {
+        audio.al.SetSourceProperty(sourceId, property, value);
+    }
+
+    public bool GetProperty(SourceBoolean property)
+    {
+        audio.al.GetSourceProperty(sourceId, property, out var value);
+        return value;
+    }
+
+    public void SetProperty(SourceBoolean property, bool value)
+    {
+        audio.al.SetSourceProperty(sourceId, property, value);
+    }
+
+    public Vec3<float> GetProperty(SourceVector3 property)
+    {
+        audio.al.GetSourceProperty(sourceId, property, out var value);
+        return value;
+    }
+
+    public void SetProperty(SourceVector3 property, Vec3<float> value)
+    {
+        audio.al.SetSourceProperty(sourceId, property, Unsafe.As<Vec3<float>, System.Numerics.Vector3>(ref value));
     }
 }
