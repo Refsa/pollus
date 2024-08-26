@@ -323,7 +323,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             return;
         }
 
-        if (drawData.TotalVtxCount >= hostVertexBuffer.Length)
+        if (drawData.TotalVtxCount > hostVertexBuffer.Length)
         {
             uint totalVtxSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
             vertexBuffer.Dispose();
@@ -334,7 +334,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             hostVertexBuffer = new ImDrawVert[drawData.TotalVtxCount];
         }
 
-        if (drawData.TotalIdxCount >= hostIndexBuffer.Length)
+        if (drawData.TotalIdxCount > hostIndexBuffer.Length)
         {
             uint totalIdxSize = (uint)(drawData.TotalIdxCount * Unsafe.SizeOf<ushort>());
             indexBuffer.Dispose();

@@ -9,6 +9,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
 {
     IWGPUContext context;
     Silk.NET.WebGPU.TextureView* textureView;
+    bool isRegistered;
 
     public nint Native => (nint)textureView;
 
@@ -46,11 +47,12 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
     public void RegisterResource()
     {
         context.RegisterResource(this);
+        isRegistered = true;
     }
 
     public void Dispose()
     {
-        context.ReleaseResource(this);
+        if (isRegistered) context.ReleaseResource(this);
         context.wgpu.TextureViewRelease(textureView);
     }
 }

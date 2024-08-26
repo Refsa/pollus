@@ -7,9 +7,14 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using static Pollus.ECS.SystemBuilder;
 
-class RenderData
+class RenderData : IDisposable
 {
-    public required GPURenderPipeline RenderPipeline { get; set; }
+    public required GPURenderPipeline RenderPipeline;
+
+    public void Dispose()
+    {
+        RenderPipeline.Dispose();
+    }
 }
 
 public class DrawTriangle
@@ -46,7 +51,12 @@ public class DrawTriangle
                     ]
                 },
                 MultisampleState = MultisampleState.Default,
-                PrimitiveState = PrimitiveState.Default,
+                PrimitiveState = PrimitiveState.Default with
+                {
+                    CullMode = Silk.NET.WebGPU.CullMode.None,
+                    FrontFace = Silk.NET.WebGPU.FrontFace.Ccw,
+                    Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList,
+                },
                 PipelineLayout = null,
             });
 
@@ -57,22 +67,18 @@ public class DrawTriangle
         .AddSystem(CoreStage.Last, FnSystem("Draw",
         static (IWGPUContext gpuContext, RenderData renderData) =>
         {
-            using var surfaceTexture = gpuContext.CreateSurfaceTexture();
-            if (surfaceTexture.GetTextureView() is not GPUTextureView surfaceTextureView)
-            {
-                Log.Info("Surface texture view is null");
-                return;
-            }
+            var surfaceTexture = gpuContext.SurfaceGetCurrentTexture();
+            using var textureView = gpuContext.CreateTextureView(surfaceTexture, new());
 
-            using var commandEncoder = gpuContext.CreateCommandEncoder("command-encoder");
+            using var commandEncoder = gpuContext.CreateCommandEncoder("""command-encoder""");
             {
                 using var renderPass = commandEncoder.BeginRenderPass(new()
                 {
-                    Label = "render-pass",
+                    Label = """render-pass""",
                     ColorAttachments = stackalloc RenderPassColorAttachment[1]
                     {
                         new(
-                            textureView: surfaceTextureView.Native,
+                            textureView: textureView.Native,
                             resolveTarget: nint.Zero,
                             clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
                             loadOp: LoadOp.Clear,
@@ -86,9 +92,13 @@ public class DrawTriangle
 
                 renderPass.End();
             }
-            using var commandBuffer = commandEncoder.Finish("command-buffer");
+
+            using var commandBuffer = commandEncoder.Finish("""command-buffer""");
             commandBuffer.Submit();
+            commandBuffer.Dispose();
+
             gpuContext.Present();
+            gpuContext.ReleaseSurfaceTexture(surfaceTexture);
         }))
         .Run();
 }

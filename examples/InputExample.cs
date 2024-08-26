@@ -14,21 +14,11 @@ public class InputExample
         Application.Builder
             .AddPlugin<InputPlugin>()
             .AddSystem(CoreStage.Update, FnSystem("Update",
-            static (InputManager inputManager) =>
+            static (EventReader<ButtonEvent<Key>> eKeys) =>
             {
-                var keyboard = inputManager.GetDevice("keyboard") as Keyboard;
-
-                if (keyboard!.JustPressed(Key.ArrowLeft))
+                foreach (var key in eKeys.Read())
                 {
-                    Log.Info("Arrow Left Just Pressed");
-                }
-                else if (keyboard!.Pressed(Key.ArrowLeft))
-                {
-                    Log.Info("Arrow Left Pressed");
-                }
-                else if (keyboard!.JustReleased(Key.ArrowLeft))
-                {
-                    Log.Info("Arrow Left Just Released");
+                    Log.Info($"Key {key.Button} {(key.State == ButtonState.JustReleased ? "released" : "pressed")}");
                 }
             }))
             .Run();

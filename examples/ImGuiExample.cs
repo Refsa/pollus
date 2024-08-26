@@ -6,6 +6,7 @@ using Pollus.Engine.Imgui;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Assets;
 using Pollus.ECS;
+using Pollus.Engine.Camera;
 
 public class ImGuiExample
 {
@@ -16,6 +17,10 @@ public class ImGuiExample
             new InputPlugin(),
             new ImguiPlugin(),
         ])
+        .AddSystem(CoreStage.PostInit, SystemBuilder.FnSystem("Spawn", (Commands commands) =>
+        {
+            commands.Spawn(Camera2D.Bundle);
+        }))
         .AddSystem(CoreStage.Update, SystemBuilder.FnSystem("ImGui", () =>
         {
             ImGuiNET.ImGui.ShowDemoWindow();

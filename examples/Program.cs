@@ -13,10 +13,10 @@ using Pollus.Utils;
 // new ECSExample().Run();
 // new InputExample().Run();
 // new AudioExample().Run();
-// new ImGuiExample().Run();
+new ImGuiExample().Run();
 // new BreakoutGame().Run();
 
-Application.Builder
+/* Application.Builder
     .AddPlugins([
         new AssetPlugin { RootPath = "assets" },
         new RenderingPlugin(),
@@ -59,7 +59,7 @@ Application.Builder
             counter.Value++;
         });
     }))
-    .Run();
+    .Run(); */
 
 
 struct Counter1 : IComponent

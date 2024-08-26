@@ -6,11 +6,12 @@ unsafe public struct GPUSurfaceTexture : IDisposable
 {
     IWGPUContext context;
 
-#if BROWSER
-    GPUTextureView? currentTextureView;
-#else
-    Silk.NET.WebGPU.SurfaceTexture? currentSurfaceTexture;
+    GPUTextureView? textureView;
+#if !BROWSER
+    Silk.NET.WebGPU.SurfaceTexture? surfaceTexture;
 #endif
+
+    public GPUTextureView TextureView => textureView ?? throw new ApplicationException("TextureView is null");
 
     public GPUSurfaceTexture(IWGPUContext context)
     {
@@ -19,77 +20,48 @@ unsafe public struct GPUSurfaceTexture : IDisposable
 
     public void Dispose()
     {
-#if BROWSER
-        if (currentTextureView != null)
+#if !BROWSER
+        if (surfaceTexture.HasValue)
         {
-            currentTextureView.Value.Dispose();
-            currentTextureView = null;
-        }
-#else   
-        if (currentSurfaceTexture is not null)
-        {
-            context.wgpu.TextureDestroy(currentSurfaceTexture.Value.Texture);
-            context.wgpu.TextureRelease(currentSurfaceTexture.Value.Texture);
-            currentSurfaceTexture = null;
+            context.ReleaseSurfaceTexture(surfaceTexture.Value);
         }
 #endif
+
+        textureView?.Dispose();
     }
 
-#if BROWSER
-    public GPUTextureView? GetTextureView()
+    public bool Prepare()
     {
-        if (currentTextureView != null)
-        {
-            return currentTextureView;
-        }
-
+#if BROWSER
         var native = context.wgpu.SwapChainGetCurrentTextureView(context.SwapChain);
         if (native == null) throw new ApplicationException("Failed to get current texture view");
-
-        currentTextureView = new GPUTextureView(context, native);
-        return currentTextureView;
-    }
+        textureView = new GPUTextureView(context, native);
+        return true;
 #else
-    Silk.NET.WebGPU.SurfaceTexture? GetSurfaceTexture()
-    {
-        if (currentSurfaceTexture is Silk.NET.WebGPU.SurfaceTexture current)
-        {
-            switch (current.Status)
-            {
-                case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Success:
-                    return current;
-                case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Timeout or
-                     Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Outdated or
-                     Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Lost:
-                    {
-                        if (current.Texture != null) 
-                        {
-                            Dispose();
-                        }
-                        return null;
-                    }
-                case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.OutOfMemory or
-                     Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.DeviceLost or
-                     Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Force32:
-                    {
-                        throw new ApplicationException("SurfaceTexture Panic Status: " + current.Status);
-                    }
-            }
-        }
-
-        var surfaceTexture = new Silk.NET.WebGPU.SurfaceTexture();
-        context.wgpu.SurfaceGetCurrentTexture(context.Surface, ref surfaceTexture);
-        currentSurfaceTexture = surfaceTexture;
-        return surfaceTexture;
-    }
-
-    public GPUTextureView? GetTextureView()
-    {
-        if (GetSurfaceTexture() is Silk.NET.WebGPU.SurfaceTexture surfaceTexture)
-        {
-            return new GPUTextureView(context, surfaceTexture.Texture);
-        }
-        return null;
-    }
+        surfaceTexture = context.SurfaceGetCurrentTexture();
+        textureView = context.CreateTextureView(surfaceTexture.Value, new());
+        return CheckSurface(surfaceTexture.Value.Status);
 #endif
+    }
+
+    bool CheckSurface(Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus status)
+    {
+        switch (status)
+        {
+            case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Success:
+                return true;
+            case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Timeout or
+                 Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Outdated or
+                 Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Lost:
+                return false;
+            case Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.OutOfMemory or
+                 Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.DeviceLost or
+                 Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Force32:
+                {
+                    throw new ApplicationException("SurfaceTexture Panic Status: " + status);
+                }
+        }
+
+        return true;
+    }
 }

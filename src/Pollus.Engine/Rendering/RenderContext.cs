@@ -17,18 +17,17 @@ public class RenderContext
 
     public void Begin(IWGPUContext gpuContext)
     {
-        SurfaceTextureView?.Dispose();
-        SurfaceTexture ??= gpuContext.CreateSurfaceTexture();
-
-        if (SurfaceTexture?.GetTextureView() is not GPUTextureView surfaceTextureView)
+        var surfaceTexture = new GPUSurfaceTexture(gpuContext);
+        if (!surfaceTexture.Prepare())
         {
-            Log.Error("Surface texture view is null");
-            SurfaceTexture = null;
+            Log.Error("Failed to prepare surface texture");
+            surfaceTexture.Dispose();
             SkipFrame = true;
             return;
         }
-
-        SurfaceTextureView = surfaceTextureView;
+        
+        SurfaceTexture = surfaceTexture;
+        SurfaceTextureView = surfaceTexture.TextureView;
         CommandEncoder = gpuContext.CreateCommandEncoder("""command-encoder""");
     }
 
@@ -45,7 +44,11 @@ public class RenderContext
         }
 
         CommandEncoder.Value.Dispose();
-        SurfaceTextureView.Value.Dispose();
+        
+        SurfaceTexture?.Dispose();
+        SurfaceTexture = null;
+        SurfaceTextureView = null;
+
         CommandEncoder = null;
     }
 
