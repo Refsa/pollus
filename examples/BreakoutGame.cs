@@ -354,19 +354,25 @@ public class BreakoutGame
                 Query query, Query<Velocity> qVelocities
         ) =>
         {
-            foreach (var coll in eCollision.Read())
+            qVelocities.ForEach((in Entity entity, ref Velocity velocity) =>
             {
-                if (coll.EntityA != Entity.NULL && query.Has<Velocity>(coll.EntityA))
+                var reflect = Vec2f.Zero;
+                foreach (var coll in eCollision.Read())
                 {
-                    ref var velocity = ref query.Get<Velocity>(coll.EntityA);
-                    velocity.Value = velocity.Value.Reflect(coll.Normal);
-                }
-                if (coll.EntityB != Entity.NULL && query.Has<Velocity>(coll.EntityB))
-                {
-                    ref var velocity = ref query.Get<Velocity>(coll.EntityB);
-                    velocity.Value = velocity.Value.Reflect(coll.Normal);
+                    if (coll.EntityA == entity || coll.EntityB == entity)
+                    {
+                        reflect += coll.Normal;
+                    }
                 }
 
+                if (reflect.Length() > 0)
+                {
+                    velocity.Value = velocity.Value.Reflect(reflect.Normalized());
+                }
+            });
+
+            foreach (var coll in eCollision.Read())
+            {
                 if (coll.EntityA != Entity.NULL && query.Has<Brick>(coll.EntityA))
                 {
                     commands.Despawn(coll.EntityA);

@@ -3,7 +3,7 @@
 ## What is Pollus?
 A small endevour into the possibilities of a "pure" C# game engine that can compile to both native and web platforms. It aims to create a smaller 2D engine as a complete package, but still supporting selecting the underlying core modules to create other types of engines.
 
-Currently requires `net8.0` and `net8.0-browser` targets.
+You can find the Breakout clone example running [here](https://refsa.github.io/pollus/)
 
 ## WARNING
 This project is still very early in development and any api surface and underlying features might change at any point.  
@@ -22,6 +22,7 @@ There are still a lot of important features missing and most of the WASM and bro
     - Some function mismatches with ImGui.NET bindings for web
     - f.ex. need to use `ImGui.TextUnformatted` instead of `ImGui.Text`
 
+Currently requires `net8.0` and `net8.0-browser` targets.  
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
 ## Getting Started

@@ -36,6 +36,8 @@
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
 	- [ ] System Locals
+	- [ ] Improve system creation/setup
+	- [ ] Improve delegate foreach in queries
 	- [ ] versioning
 		- [ ] event lifetimes
 		- [ ] change filter lifetimes
