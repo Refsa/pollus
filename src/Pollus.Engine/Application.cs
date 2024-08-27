@@ -65,7 +65,6 @@ public record class Application
         return this;
     }
 
-
     public Application AddPlugins(IPlugin[] plugin)
     {
         world.AddPlugins(plugin);
@@ -83,6 +82,13 @@ public record class Application
         where T : notnull
     {
         world.Resources.Init<T>();
+        return this;
+    }
+
+    public Application InitEvent<T>()
+        where T : struct
+    {
+        world.Events.InitEvent<T>();
         return this;
     }
 

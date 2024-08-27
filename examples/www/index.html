@@ -1,12 +1,17 @@
 <html>
-    <head>
-        <script type='module' src="./main.js"></script>
-	    <script type='module' src="./_framework/dotnet.js"></script>
-        <link rel="prefetch" href="./_framework/dotnet.native.wasm" as="fetch" crossorigin="anonymous">
-    </head>
 
-    <body>
-        <h1>Pollus Browser Example</h1>
+<head>
+    <script type='module' src="./main.js"></script>
+    <script type='module' src="./_framework/dotnet.js"></script>
+    <link rel="prefetch" href="./_framework/dotnet.native.wasm" as="fetch" crossorigin="anonymous">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <h1>Pollus Browser Example</h1>
+    <div class="canvas-container">
         <canvas id="canvas" width="800" height="450" style="background-color: cornsilk;"></canvas>
-    </body>
+    </div>
+</body>
+
 </html>

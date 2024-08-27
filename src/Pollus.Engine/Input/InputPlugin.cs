@@ -8,6 +8,8 @@ using static Pollus.ECS.SystemBuilder;
 
 public class InputPlugin : IPlugin
 {
+    public const string UpdateSystem = "Input::Update";
+
     static InputPlugin()
     {
         ResourceFetch<ButtonInput<MouseButton>>.Register();
@@ -35,7 +37,7 @@ public class InputPlugin : IPlugin
         world.Resources.Add(new AxisInput<GamepadAxis>());
         world.Resources.Add(new ButtonInput<Key>());
 
-        world.Schedule.AddSystems(CoreStage.First, FnSystem("InputUpdate",
+        world.Schedule.AddSystems(CoreStage.First, FnSystem(UpdateSystem,
         (InputManager input, PlatformEvents platform, Events events,
          ButtonInput<MouseButton> mButtons, AxisInput<MouseAxis> mAxes,
          ButtonInput<GamepadButton> gButtons, AxisInput<GamepadAxis> gAxes,

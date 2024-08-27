@@ -35,6 +35,7 @@
 	- [x] Commands
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
+	- [ ] System Locals
 	- [ ] versioning
 		- [ ] event lifetimes
 		- [ ] change filter lifetimes

@@ -177,6 +177,13 @@ public struct Query : IQuery, IQueryCreate<Query>
     {
         return world.Store.Changes.HasChange<C>(entity, ComponentFlags.Removed);
     }
+
+    public ref C Get<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
+    }
 }
 
 public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>

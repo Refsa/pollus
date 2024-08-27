@@ -25,6 +25,10 @@ class ImguiDraw : IRenderStepDraw
 
 public class ImguiPlugin : IPlugin
 {
+    public const string SetupSystem = "ImGui::Setup";
+    public const string UpdateSystem = "ImGui::UpdateIO";
+    public const string BeginFrameSystem = "ImGui::BeginFrame";
+
     static ImguiPlugin()
     {
         ResourceFetch<ImguiRenderer>.Register();
@@ -40,7 +44,7 @@ public class ImguiPlugin : IPlugin
         world.Resources.Init<ImguiRenderer>();
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
-            "SetupImgui",
+            SetupSystem,
             static (Resources resources, IWGPUContext gpuContext, IWindow window, RenderSteps renderGraph) =>
             {
                 var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
@@ -50,7 +54,7 @@ public class ImguiPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
-            "ImGui Update IO",
+            UpdateSystem,
             static (
                 PlatformEvents platformEvents,
                 EventReader<ButtonEvent<Key>> eKeys,
@@ -66,7 +70,7 @@ public class ImguiPlugin : IPlugin
                 {
                     if (ev.Type is (int)Silk.NET.SDL.EventType.Textinput)
                     {
-                        unsafe 
+                        unsafe
                         {
                             var textSpan = new Span<byte>(ev.Text.Text, 32);
                             int count = Encoding.UTF8.GetChars(textSpan, textInput);
@@ -108,16 +112,16 @@ public class ImguiPlugin : IPlugin
                     io.AddMousePosEvent(moved.Position.X, moved.Position.Y);
                 }
             }
-        ).After("InputUpdate"));
+        ).After(InputPlugin.UpdateSystem));
 
         world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
-            "BeginImguiFrame",
+            BeginFrameSystem,
             static (ImguiRenderer imguiRenderer, Time time, IWindow window, PlatformEvents platformEvents) =>
             {
                 imguiRenderer.Resized(window.Size);
                 imguiRenderer.Update((float)time.DeltaTime);
             }
-        ));
+        ).After(UpdateSystem));
     }
 
     static ImGuiKey MapKey(Key key)

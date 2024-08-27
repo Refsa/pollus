@@ -28,10 +28,11 @@ public class BreakoutGame
 
     struct Brick : IComponent { }
 
-    struct Ball : IComponent
+    struct Ball : IComponent { }
+
+    struct Velocity : IComponent
     {
-        public required float Speed;
-        public required Vec2f Velocity;
+        public required Vec2f Value;
     }
 
     struct Collider : IComponent
@@ -44,11 +45,30 @@ public class BreakoutGame
 
     }
 
+    struct Event
+    {
+        public struct BrickDestroyed { }
+        public struct Collision
+        {
+            public Entity EntityA;
+            public Entity EntityB;
+            public Vec2f Normal;
+        }
+        public struct RestartGame { }
+        public struct SpawnBall
+        {
+            public required int Count;
+        }
+    }
+
+
     enum State
     {
+        NewGame,
         SpawnBall,
         Play,
         GameOver,
+        Won,
     }
 
     class GameState
@@ -64,9 +84,13 @@ public class BreakoutGame
         .WithWindowOptions(WindowOptions.Default with
         {
             Title = "Breakout Game",
-            Width = 1600,
-            Height = 900,
+            Width = 900,
+            Height = 600,
         })
+        .InitEvent<Event.BrickDestroyed>()
+        .InitEvent<Event.Collision>()
+        .InitEvent<Event.RestartGame>()
+        .InitEvent<Event.SpawnBall>()
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
@@ -75,7 +99,7 @@ public class BreakoutGame
             new AudioPlugin(),
             new PerformanceTrackerPlugin(),
         ])
-        .AddResource(new GameState { State = State.SpawnBall, Lives = 3, Score = 0 })
+        .AddResource(new GameState { State = State.NewGame, Lives = 3, Score = 0 })
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
         static (Commands commands, GameState gameState, IWindow window,
             AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
@@ -107,9 +131,81 @@ public class BreakoutGame
                     Color = Color.WHITE,
                 }
             ));
+        }))
+        .AddSystem(CoreStage.First, FnSystem("GameState",
+        static (World world, GameState gameState, EventWriter<Event.RestartGame> eRestartGame,
+                EventWriter<Event.SpawnBall> eSpawnBall, ButtonInput<Key> keys,
+                Query<Brick> qBricks
+        ) =>
+        {
+            if (gameState.State == State.NewGame)
+            {
+                gameState.Score = 0;
+                gameState.Lives = 3;
+                gameState.State = State.SpawnBall;
+                eRestartGame.Write(new Event.RestartGame());
+            }
+            else if (gameState.State == State.SpawnBall)
+            {
+                eSpawnBall.Write(new Event.SpawnBall { Count = 1 });
+                gameState.State = State.Play;
+            }
+            else if (gameState.State == State.Play)
+            {
+                if (qBricks.EntityCount() == 0) gameState.State = State.Won;
+            }
+            else if (gameState.State == State.GameOver)
+            {
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.FirstUseEver);
+                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
+                if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
+                {
+                    ImGui.Text("Game Over");
+                    ImGui.Text($"Final Score: {gameState.Score}");
+                    if (ImGui.Button("Restart"))
+                    {
+                        gameState.State = State.NewGame;
+                    }
 
-            var spacing = 16f;
-            for (int x = 0; x < window.Size.X / (48f + spacing + 2f); x++)
+                    ImGui.End();
+                }
+            }
+            else if (gameState.State == State.Won)
+            {
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.FirstUseEver);
+                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
+                if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
+                {
+                    ImGui.Text("You Won!");
+                    ImGui.Text($"Final Score: {gameState.Score}");
+                    if (ImGui.Button("Restart"))
+                    {
+                        gameState.State = State.NewGame;
+                    }
+
+                    ImGui.End();
+                }
+            }
+        }))
+        .AddSystem(CoreStage.First, FnSystem("BrickSpawner",
+        static (Commands commands, IWindow window, GameState gameState,
+                EventReader<Event.RestartGame> eRestartGame,
+                Query<Transform2, Brick, Collider> qBricks
+        ) =>
+        {
+            if (!eRestartGame.HasAny) return;
+
+            qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick, ref Collider brickCollider)
+            {
+                commands.Despawn(brickEntity);
+            });
+
+            // spawn bricks that fits the window size
+            var spacing = 8f;
+            var bricksPerRow = 10;
+            var width = (window.Size.X - spacing * (bricksPerRow + 1)) / bricksPerRow;
+            var height = width * 0.33f;
+            for (int x = 0; x < bricksPerRow; x++)
             {
                 for (int y = 0; y < 8; y++)
                 {
@@ -117,14 +213,15 @@ public class BreakoutGame
                         new Brick(),
                         new Transform2
                         {
-                            Position = (x * (48f + spacing) + 32f, window.Size.Y - 32f - y * (16f + spacing)),
-                            Scale = (48f, 16f),
+                            Position = new Vec2f(x * (width + spacing) + width * 0.5f + spacing,
+                                        window.Size.Y - 32f - y * (height + spacing) - height * 0.5f),
+                            Scale = new Vec2f(width, height),
                             Rotation = 0f,
                         },
-                        new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(48f, 16f)) },
+                        new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(width, height)) },
                         new Sprite
                         {
-                            Material = spriteMaterial,
+                            Material = gameState.spritesheet,
                             Slice = new Rect(16, (x + y) % 3 * 16, 48, 16),
                             Color = Color.WHITE,
                         }
@@ -132,10 +229,42 @@ public class BreakoutGame
                 }
             }
         }))
-        .AddSystem(CoreStage.Update, FnSystem("TestImgui",
-        static () =>
+        .AddSystem(CoreStage.First, FnSystem("BallSpawner",
+        static (Commands commands, GameState gameState, IWindow window, EventReader<Event.SpawnBall> eSpawnBall) =>
         {
-            ImGui.ShowDemoWindow();
+            if (!eSpawnBall.HasAny) return;
+
+            for (int i = 0; i < eSpawnBall.Read()[0].Count; i++)
+                commands.Spawn(Entity.With(
+                    new Ball(),
+                    new Velocity { Value = 400f * new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.7f, 0.7f), (float)Random.Shared.NextDouble()).Normalized() },
+                    new Transform2
+                    {
+                        Position = (window.Size.X / 2f, 128f),
+                        Scale = (16f, 16f),
+                        Rotation = 0f,
+                    },
+                    new Sprite
+                    {
+                        Material = gameState.spritesheet,
+                        Slice = new Rect(0, 0, 16, 16),
+                        Color = Color.WHITE,
+                    },
+                    new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
+                ));
+        }))
+        .AddSystem(CoreStage.Update, FnSystem("TestImgui",
+        static (GameState gameState) =>
+        {
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(100, 50), ImGuiCond.FirstUseEver);
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(5, 5), ImGuiCond.FirstUseEver);
+            if (ImGui.Begin("Breakout Game", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
+            {
+                ImGui.Text($"Score: {gameState.Score}");
+                ImGui.Text($"Lives: {gameState.Lives}");
+
+                ImGui.End();
+            }
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
@@ -162,102 +291,130 @@ public class BreakoutGame
             ref var pTransform = ref player.Component0;
             ref var pCollider = ref player.Component1;
 
-            if (keys?.JustPressed(Key.KeyZ) is true)
-            {
-                commands.AddComponent<Disabled>(player.Entity, default);
-            }
-            else if (keys?.JustPressed(Key.KeyX) is true)
-            {
-                commands.RemoveComponent<Disabled>(player.Entity);
-            }
-            else if (!query.Has<Disabled>(player.Entity))
-            {
-                pTransform.Position += movePaddle * 1000f * (float)time.DeltaTime;
-                pTransform.Position = pTransform.Position.Clamp(
-                    windowRect.Min - pCollider.Bounds.Min,
-                    windowRect.Max - pCollider.Bounds.Max);
+            pTransform.Position += movePaddle * 600f * (float)time.DeltaTime;
+            pTransform.Position = pTransform.Position.Clamp(
+                windowRect.Min - pCollider.Bounds.Min,
+                windowRect.Max - pCollider.Bounds.Max);
 
-                if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
-            }
+            if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
         }))
-        .AddSystem(CoreStage.Last, FnSystem("TestAdded",
-        static (Query query,
-                Query<Player>.Filter<Added<Disabled>> qDisabled,
-                Query<Player>.Filter<Removed<Disabled>> qEnabled
-        ) =>
-        {
-            qDisabled.ForEach(delegate (in Entity entity, ref Player player)
-            {
-                if (query.Added<Disabled>(entity))
-                {
-                    Log.Info($"Player {entity} has been disabled");
-                }
-            });
-
-            qEnabled.ForEach(delegate (in Entity entity, ref Player player)
-            {
-                if (query.Removed<Disabled>(entity))
-                {
-                    Log.Info($"Player {entity} has been disabled");
-                }
-            });
-        }))
-        .AddSystem(CoreStage.Update, FnSystem("BallUpdate",
+        .AddSystem(CoreStage.Update, FnSystem("CollisionSystem",
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,
-                Query<Transform2, Ball, Collider> qBall,
-                Query<Transform2, Collider>.Filter<All<Brick>> qBricks,
-                Query<Transform2, Collider>.Filter<All<Paddle>> qPaddles
+                EventWriter<Event.Collision> eCollision,
+                Query<Transform2, Ball, Velocity, Collider> qBalls,
+                Query<Transform2, Collider> qColliders
         ) =>
         {
-            bool spawnSound = false;
-
-            qBall.ForEach(delegate (ref Transform2 ballTransform, ref Ball ball, ref Collider ballCollider)
+            qBalls.ForEach(delegate (in Entity _ballEntity, ref Transform2 ballTransform, ref Ball ball, ref Velocity velocity, ref Collider ballCollider)
             {
-                var nextPos = ballTransform.Position + ball.Velocity * ball.Speed * (float)time.DeltaTime;
+                var nextPos = ballTransform.Position + velocity.Value * (float)time.DeltaTime;
 
                 var ballBounds = ballCollider.Bounds.Move(nextPos);
-                Vec2f? collisionNormal = null;
-                qBricks.ForEach(delegate (in Entity entity, ref Transform2 colliderTransform, ref Collider collider)
+                var ballEntity = _ballEntity;
+
+                qColliders.ForEach(delegate (in Entity colliderEntity, ref Transform2 colliderTransform, ref Collider collider)
                 {
+                    if (colliderEntity == ballEntity) return;
+
                     var colliderBounds = collider.Bounds.Move(colliderTransform.Position);
                     if (ballBounds.Intersects(colliderBounds))
                     {
-                        collisionNormal = ballBounds.IntersectionNormal(colliderBounds);
-                        commands.Despawn(entity);
-                    }
-                });
-                qPaddles.ForEach(delegate (ref Transform2 colliderTransform, ref Collider collider)
-                {
-                    var colliderBounds = collider.Bounds.Move(colliderTransform.Position);
-                    if (ballBounds.Intersects(colliderBounds))
-                    {
-                        collisionNormal = ballBounds.IntersectionNormal(colliderBounds);
+                        eCollision.Write(new()
+                        {
+                            EntityA = colliderEntity,
+                            EntityB = ballEntity,
+                            Normal = ballBounds.IntersectionNormal(colliderBounds),
+                        });
                     }
                 });
 
                 if (nextPos.X < 8f || nextPos.X > window.Size.X - 8f)
                 {
-                    collisionNormal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right;
+                    eCollision.Write(new()
+                    {
+                        EntityA = Entity.NULL,
+                        EntityB = ballEntity,
+                        Normal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right,
+                    });
                 }
                 if (nextPos.Y < 8f || nextPos.Y > window.Size.Y - 8f)
                 {
-                    collisionNormal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up;
+                    eCollision.Write(new()
+                    {
+                        EntityA = Entity.NULL,
+                        EntityB = ballEntity,
+                        Normal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up,
+                    });
                 }
-
-                if (collisionNormal.HasValue)
-                {
-                    var normal = collisionNormal.Value.Normalized();
-                    ballTransform.Position -= normal * 2;
-                    ball.Velocity = ball.Velocity.Reflect(normal);
-
-                    spawnSound = true;
-                }
-
-                ball.Velocity = ball.Velocity.Clamp(-Vec2f.One, Vec2f.One);
-                ballTransform.Position += ball.Velocity * ball.Speed * (float)time.DeltaTime;
             });
+        }))
+        .AddSystem(CoreStage.Update, FnSystem("CollisionResponseSystem",
+        static (Commands commands, EventReader<Event.Collision> eCollision,
+                EventWriter<Event.BrickDestroyed> eBrickDestroyed,
+                Query query, Query<Velocity> qVelocities
+        ) =>
+        {
+            foreach (var coll in eCollision.Read())
+            {
+                if (query.Has<Velocity>(coll.EntityA))
+                {
+                    ref var velocity = ref query.Get<Velocity>(coll.EntityA);
+                    velocity.Value = velocity.Value.Reflect(coll.Normal);
+                }
+                if (query.Has<Velocity>(coll.EntityB))
+                {
+                    ref var velocity = ref query.Get<Velocity>(coll.EntityB);
+                    velocity.Value = velocity.Value.Reflect(coll.Normal);
+                }
 
-            if (spawnSound)
+                if (query.Has<Brick>(coll.EntityA))
+                {
+                    commands.Despawn(coll.EntityA);
+                    eBrickDestroyed.Write(new Event.BrickDestroyed());
+                }
+                if (query.Has<Brick>(coll.EntityB))
+                {
+                    commands.Despawn(coll.EntityB);
+                    eBrickDestroyed.Write(new Event.BrickDestroyed());
+                }
+            }
+        }).After("CollisionSystem"))
+        .AddSystem(CoreStage.Update, FnSystem("VelocitySystem",
+        static (Query<Transform2, Velocity> qTransforms, Time time) =>
+        {
+            qTransforms.ForEach(delegate (ref Transform2 transform, ref Velocity velocity)
+            {
+                transform.Position += velocity.Value * (float)time.DeltaTime;
+            });
+        }).After("CollisionResponseSystem"))
+        .AddSystem(CoreStage.Update, FnSystem("BallOutOfBoundsSystem",
+        static (Commands commands, GameState gameState, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
+                Query<Transform2, Ball, Collider> qBalls, IWindow window
+        ) =>
+        {
+            qBalls.ForEach(delegate (in Entity ballEntity, ref Transform2 ballTransform, ref Ball ball, ref Collider ballCollider)
+            {
+                if (ballTransform.Position.Y > 16f) return;
+                commands.Despawn(ballEntity);
+                gameState.State = --gameState.Lives switch
+                {
+                    0 => State.GameOver,
+                    _ => State.SpawnBall,
+                };
+            });
+        }).After("VelocitySystem"))
+        .AddSystem(CoreStage.Last, FnSystem("BrickEventsSystem",
+        static (Commands commands, GameState gameState, AssetServer assetServer,
+                EventReader<Event.BrickDestroyed> eBrickDestroyed,
+                EventReader<Event.Collision> eCollision
+        ) =>
+        {
+            if (eBrickDestroyed.HasAny)
+            {
+                gameState.Score += eBrickDestroyed.Count * 100;
+            }
+
+            if (eCollision.HasAny)
             {
                 commands.Spawn(Entity.With(
                     new MainMixer(),
@@ -272,36 +429,6 @@ public class BreakoutGame
                         Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
                     }
                 ));
-            }
-        }))
-        .AddSystem(CoreStage.First, FnSystem("GameState",
-        static (World world, GameState gameState) =>
-        {
-            if (gameState.State == State.SpawnBall)
-            {
-                for (int i = 0; i < 1; i++)
-                    world.Spawn(
-                        new Ball { Speed = 800f, Velocity = new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.5f, 0.5f), (float)Random.Shared.NextDouble()).Normalized() },
-                        new Transform2
-                        {
-                            Position = (world.Resources.Get<IWindow>().Size.X / 2f, 128f),
-                            Scale = (16f, 16f),
-                            Rotation = 0f,
-                        },
-                        new Sprite
-                        {
-                            Material = gameState.spritesheet,
-                            Slice = new Rect(0, 0, 16, 16),
-                            Color = Color.WHITE,
-                        },
-                        new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
-                    );
-
-                gameState.State = State.Play;
-            }
-            else if (gameState.State == State.Play)
-            {
-
             }
         }))
         .Run();

@@ -18,7 +18,7 @@ public class Events
     {
         foreach (var queue in events.Values)
         {
-            queue?.Clear();
+            queue?.Clear(true);
         }
     }
 
@@ -64,7 +64,7 @@ public class EventQueue<TEvent> : IEventQueue
 
     public void Clear(bool zero = false)
     {
-        if (zero) Array.Clear(events, 0, cursor);
+        if (zero) Array.Clear(events);
         cursor = 0;
     }
 
@@ -89,6 +89,9 @@ public struct EventReader<TEvent>
     where TEvent : struct
 {
     EventQueue<TEvent> queue;
+
+    public bool HasAny => queue.Events.Length > 0;
+    public int Count => queue.Events.Length;
 
     public EventReader(EventQueue<TEvent> queue)
     {
