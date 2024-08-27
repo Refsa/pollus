@@ -160,8 +160,8 @@ public class BreakoutGame
                 ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
                 if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
                 {
-                    ImGui.Text("Game Over");
-                    ImGui.Text($"Final Score: {gameState.Score}");
+                    ImGui.TextUnformatted("Game Over");
+                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
                     if (ImGui.Button("Restart"))
                     {
                         gameState.State = State.NewGame;
@@ -176,8 +176,8 @@ public class BreakoutGame
                 ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
                 if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
                 {
-                    ImGui.Text("You Won!");
-                    ImGui.Text($"Final Score: {gameState.Score}");
+                    ImGui.TextUnformatted("You Won!");
+                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
                     if (ImGui.Button("Restart"))
                     {
                         gameState.State = State.NewGame;
@@ -237,7 +237,7 @@ public class BreakoutGame
             for (int i = 0; i < eSpawnBall.Read()[0].Count; i++)
                 commands.Spawn(Entity.With(
                     new Ball(),
-                    new Velocity { Value = 400f * new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.7f, 0.7f), (float)Random.Shared.NextDouble()).Normalized() },
+                    new Velocity { Value = 400f * new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.25f, 0.25f), (float)Random.Shared.NextDouble()).Normalized() },
                     new Transform2
                     {
                         Position = (window.Size.X / 2f, 128f),
@@ -260,8 +260,8 @@ public class BreakoutGame
             ImGui.SetNextWindowPos(new System.Numerics.Vector2(5, 5), ImGuiCond.FirstUseEver);
             if (ImGui.Begin("Breakout Game", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
             {
-                ImGui.Text($"Score: {gameState.Score}");
-                ImGui.Text($"Lives: {gameState.Lives}");
+                ImGui.TextUnformatted($"Score: {gameState.Score}".AsSpan());
+                ImGui.TextUnformatted($"Lives: {gameState.Lives}".AsSpan());
 
                 ImGui.End();
             }
@@ -356,23 +356,23 @@ public class BreakoutGame
         {
             foreach (var coll in eCollision.Read())
             {
-                if (query.Has<Velocity>(coll.EntityA))
+                if (coll.EntityA != Entity.NULL && query.Has<Velocity>(coll.EntityA))
                 {
                     ref var velocity = ref query.Get<Velocity>(coll.EntityA);
                     velocity.Value = velocity.Value.Reflect(coll.Normal);
                 }
-                if (query.Has<Velocity>(coll.EntityB))
+                if (coll.EntityB != Entity.NULL && query.Has<Velocity>(coll.EntityB))
                 {
                     ref var velocity = ref query.Get<Velocity>(coll.EntityB);
                     velocity.Value = velocity.Value.Reflect(coll.Normal);
                 }
 
-                if (query.Has<Brick>(coll.EntityA))
+                if (coll.EntityA != Entity.NULL && query.Has<Brick>(coll.EntityA))
                 {
                     commands.Despawn(coll.EntityA);
                     eBrickDestroyed.Write(new Event.BrickDestroyed());
                 }
-                if (query.Has<Brick>(coll.EntityB))
+                if (coll.EntityB != Entity.NULL && query.Has<Brick>(coll.EntityB))
                 {
                     commands.Despawn(coll.EntityB);
                     eBrickDestroyed.Write(new Event.BrickDestroyed());

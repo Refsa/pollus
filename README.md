@@ -19,6 +19,8 @@ There are still a lot of important features missing and most of the WASM and bro
     - Nothing should stop it from running on Linux and OSX
     - Mobile support in the future, but also runs in mobile browsers through WASM
 - Dear ImGui renderer, which is the only form of UI right now
+    - Some function mismatches with ImGui.NET bindings for web
+    - f.ex. need to use `ImGui.TextUnformatted` instead of `ImGui.Text`
 
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 

@@ -142,6 +142,8 @@ public class World : IDisposable
                     commandBuffers.Push(commands);
                 }
             }
+            
+            Events.ClearEvents();
         }
         catch (Exception e)
         {
@@ -150,7 +152,6 @@ public class World : IDisposable
         finally
         {
             version++;
-            Events.ClearEvents();
         }
     }
 }

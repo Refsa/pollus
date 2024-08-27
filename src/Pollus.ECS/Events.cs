@@ -1,10 +1,12 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Pollus.ECS.Core;
 
 namespace Pollus.ECS;
 
 public class Events
 {
-    Dictionary<Type, IEventQueue> events = [];
+    readonly Dictionary<Type, IEventQueue> events = [];
 
     public void InitEvent<TEvent>()
         where TEvent : struct
@@ -18,7 +20,7 @@ public class Events
     {
         foreach (var queue in events.Values)
         {
-            queue?.Clear(true);
+            queue.Clear();
         }
     }
 
@@ -45,7 +47,7 @@ public class Events
 
 public interface IEventQueue
 {
-    void Clear(bool zero = false);
+    void Clear();
 }
 
 public class EventQueue<TEvent> : IEventQueue
@@ -55,16 +57,22 @@ public class EventQueue<TEvent> : IEventQueue
     TEvent[] events = new TEvent[16];
 
     public ReadOnlySpan<TEvent> Events => events.AsSpan()[..cursor];
+    public int Count => cursor;
 
-    public void AddEvent(TEvent e)
+    public void AddEvent(in TEvent e)
     {
         if (cursor >= events.Length) Array.Resize(ref events, events.Length * 2);
         events[cursor++] = e;
     }
 
-    public void Clear(bool zero = false)
+    public void Clear()
     {
-        if (zero) Array.Clear(events);
+        if (cursor == 0) return;
+
+        // var bytes = MemoryMarshal.AsBytes(events.AsSpan());
+        // Unsafe.InitBlock(ref bytes[0], 0, (uint)(bytes.Length * Unsafe.SizeOf<TEvent>()));
+        Array.Fill(events, default);
+
         cursor = 0;
     }
 
@@ -75,30 +83,30 @@ public class EventQueue<TEvent> : IEventQueue
 public struct EventWriter<TEvent>
     where TEvent : struct
 {
-    EventQueue<TEvent> queue;
+    readonly EventQueue<TEvent> queue;
 
     public EventWriter(EventQueue<TEvent> queue)
     {
         this.queue = queue;
     }
 
-    public void Write(TEvent e) => queue.AddEvent(e);
+    public void Write(in TEvent e) => queue.AddEvent(e);
 }
 
-public struct EventReader<TEvent>
+public readonly struct EventReader<TEvent>
     where TEvent : struct
 {
-    EventQueue<TEvent> queue;
+    readonly EventQueue<TEvent> queue;
 
-    public bool HasAny => queue.Events.Length > 0;
-    public int Count => queue.Events.Length;
+    public readonly bool HasAny => Count > 0;
+    public readonly int Count => queue.Count;
 
     public EventReader(EventQueue<TEvent> queue)
     {
         this.queue = queue;
     }
 
-    public ReadOnlySpan<TEvent> Read() => queue.Events;
+    public readonly ReadOnlySpan<TEvent> Read() => queue.Events;
 }
 
 public class EventWriterFetch<TEvent> : IFetch<EventWriter<TEvent>>
