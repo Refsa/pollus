@@ -253,7 +253,7 @@ public class BreakoutGame
                     new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
                 ));
         }))
-        .AddSystem(CoreStage.Update, FnSystem("TestImgui",
+        .AddSystem(CoreStage.Update, FnSystem("UI",
         static (GameState gameState) =>
         {
             ImGui.SetNextWindowSize(new System.Numerics.Vector2(100, 50), ImGuiCond.FirstUseEver);

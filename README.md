@@ -6,18 +6,19 @@ A small endevour into the possibilities of a "pure" C# game engine that can comp
 Currently requires `net8.0` and `net8.0-browser` targets.
 
 ## WARNING
-This project is still very early in development and any api surface and underlying features might change at any point. There are still a lot of important features missing and most of the WASM and browser support is still a prototype. There are bugs and marshalling problems between C# and JS might crop up when they might not make sense.
+This project is still very early in development and any api surface and underlying features might change at any point.  
+There are still a lot of important features missing and most of the WASM and browser support is still a prototype.  
 
 ## Features
-- ECS with extensibility through plugins, inspired by Bevy
+- ECS with some inspiration from bevy
+- Plugin based features
 - WGPU rendering backend
 - Simple audio plugin
 - Simple input plugin
 - Build to Windows and Browser (WASM)
     - Nothing should stop it from running on Linux and OSX
     - Mobile support in the future, but also runs in mobile browsers through WASM
-- Dear ImGui renderer
-    - browser support is kinda iffy, some function calls are wrong
+- Dear ImGui renderer, which is the only form of UI right now
 
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
@@ -36,7 +37,6 @@ A lot of the contents in `Pollus.Examples.csproj` file is required to build for 
 Application.Builder
     .AddPlugins([
         new AssetPlugin { RootPath = "assets" },
-        new RenderingPlugin(),
         new InputPlugin(),
     ])
     .AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem("SetupEntities",
@@ -45,11 +45,18 @@ Application.Builder
         commands.Spawn(Entity.With(Transform2.Default, new Player()));
     }))
     .AddSystems(CoreStage.Update, SystemBuilder.FnSystem("UpdateEntities",
-    static (Query<Transform2>.Filter<All<Player>> query) => 
+    static (Query<Transform2>.Filter<All<Player>> query, ButtonInput<Key> keys) => 
     {
         query.ForEach((ref Transform2 transform) =>
         {
-            transform.Position += Vec2f.Up;
+            if (keys.Pressed(Key.ArrowLeft))
+            {
+                transform.Position += Vec2f.Left;
+            }
+            if (keys.Pressed(Key.ArrowRight))
+            {
+                transform.Position += Vec2f.Right;
+            }
         });
     }))
     .Run()
@@ -58,12 +65,12 @@ Application.Builder
 ## Libraries
 The aim is to have as few dependencies as possible. This will allow the project to more easily adjust to any differing requirements between web and native. Most pure dotnet projects will work with WASM out of the box, but anything that is built on top of native libraries will not.
 
-- Silk.NET.SDL (for SDL bindings)
-- Silk.NET.WebGPU (for native WebGPU bindings)
-- Silk.NET.OpenAL (for native OpenAL bindings)
-- SixLabors.ImageSharp (image assets)
-- ImGui.NET (Dear ImGui bindings)
-- cimgui/imgui (for wasm builds)
+- [Silk.NET.SDL](https://github.com/dotnet/Silk.NET) (for SDL bindings)
+- [Silk.NET.WebGPU](https://github.com/dotnet/Silk.NET) (for native WebGPU bindings)
+- [Silk.NET.OpenAL](https://github.com/dotnet/Silk.NET) (for native OpenAL bindings)
+- [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp/) (image assets)
+- [ImGui.NET](https://github.com/ImGuiNET/ImGui.NET) (Dear ImGui bindings)
+- [cimgui/imgui](https://github.com/cimgui/cimgui) (for wasm builds)
 
 ## License
 This project is licensed under 'MIT License' except where noted. Parts of the project with a different license is either notified in the file itself or in the directory of the file.
