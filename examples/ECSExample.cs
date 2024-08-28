@@ -6,15 +6,22 @@ using Pollus.ECS;
 using Pollus.ECS.Core;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
+using Pollus.Graphics.Windowing;
 using static Pollus.ECS.SystemBuilder;
 
 public class ECSExample
 {
+    struct TestEvent
+    {
+        public int Value;
+    }
+
     public void Run() => Application.Builder
         .AddPlugins([
             new TimePlugin(),
-            new PerformanceTrackerPlugin(),
+            // new PerformanceTrackerPlugin(),
         ])
+        .InitEvent<TestEvent>()
         .AddSystem(CoreStage.PostInit, FnSystem("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
         .AddSystem(CoreStage.PostInit, FnSystem("Setup",
         static (Commands commands) =>
@@ -32,5 +39,18 @@ public class ECSExample
                 c1.Value += c2.Value;
             });
         }))
+        .AddSystem(CoreStage.First, FnSystem("ReadEventFirst",
+        static (EventReader<TestEvent> eTestEvent) =>
+        {
+            foreach (var e in eTestEvent.Read())
+            {
+                Log.Info($"Event: {e.Value}");
+            }
+        }))
+        .AddSystem(CoreStage.Last, FnSystem("WriteEventLast",
+        static (Local<int> counter, EventWriter<TestEvent> eTestEvent) =>
+        {
+            eTestEvent.Write(new TestEvent { Value = counter.Value++ });
+        }).RunCriteria(new RunFixed(1f)))
         .Run();
 }

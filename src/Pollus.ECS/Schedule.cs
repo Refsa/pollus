@@ -5,7 +5,7 @@ using Pollus.ECS.Core;
 using System.Collections.Generic;
 using System.Text;
 
-public class Schedule
+public class Schedule : IDisposable
 {
     public enum Step
     {
@@ -36,6 +36,15 @@ public class Schedule
     List<Stage> stages { get; } = new();
     
     public ListEnumerable<Stage> Stages => new(stages);
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        foreach (var stage in stages)
+        {
+            stage.Dispose();
+        }
+    }
 
     public void Prepare(World world)
     {

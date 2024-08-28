@@ -64,7 +64,7 @@ public interface ISystem
     void Tick(World world) { }
 }
 
-public abstract class Sys(SystemDescriptor descriptor) : ISystem
+public abstract class Sys(SystemDescriptor descriptor) : ISystem, IDisposable
 {
     public static HashSet<Type> Dependencies => [];
 
@@ -79,6 +79,12 @@ public abstract class Sys(SystemDescriptor descriptor) : ISystem
     }
 
     protected abstract void OnTick();
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Resources.Dispose();
+    }
 }
 
 public abstract class Sys<T0> : Sys

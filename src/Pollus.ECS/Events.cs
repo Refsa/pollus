@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.ECS.Core;
 
 namespace Pollus.ECS;
@@ -54,7 +55,10 @@ public class EventQueue<TEvent> : IEventQueue
     where TEvent : struct
 {
     int cursor = 0;
+    int prevEnd = 0;
     TEvent[] events = new TEvent[16];
+
+    readonly List<EventReader<TEvent>> readers = [];
 
     public ReadOnlySpan<TEvent> Events => events.AsSpan()[..cursor];
     public int Count => cursor;
@@ -68,15 +72,29 @@ public class EventQueue<TEvent> : IEventQueue
     public void Clear()
     {
         if (cursor == 0) return;
+        Array.Clear(events, 0, prevEnd);
+        Array.Copy(events, prevEnd, events, 0, cursor - prevEnd);
 
-        // var bytes = MemoryMarshal.AsBytes(events.AsSpan());
-        // Unsafe.InitBlock(ref bytes[0], 0, (uint)(bytes.Length * Unsafe.SizeOf<TEvent>()));
-        Array.Fill(events, default);
-
-        cursor = 0;
+        foreach (var reader in readers)
+        {
+            reader.Cursor = int.Max(0, reader.Cursor - prevEnd);
+        }
+        cursor -= prevEnd;
+        prevEnd = cursor;
     }
 
-    public EventReader<TEvent> GetReader() => new(this);
+    public EventReader<TEvent> GetReader()
+    {
+        var reader = new EventReader<TEvent>(this);
+        readers.Add(reader);
+        return reader;
+    }
+
+    public void RemoveReader(EventReader<TEvent> reader)
+    {
+        readers.Remove(reader);
+    }
+    
     public EventWriter<TEvent> GetWriter() => new(this);
 }
 
@@ -93,20 +111,32 @@ public struct EventWriter<TEvent>
     public void Write(in TEvent e) => queue.AddEvent(e);
 }
 
-public readonly struct EventReader<TEvent>
+public class EventReader<TEvent> : IDisposable
     where TEvent : struct
 {
     readonly EventQueue<TEvent> queue;
+    internal int Cursor { get; set; }
 
-    public readonly bool HasAny => Count > 0;
-    public readonly int Count => queue.Count;
+    public bool HasAny => Count > 0;
+    public int Count => 0;
 
     public EventReader(EventQueue<TEvent> queue)
     {
         this.queue = queue;
     }
 
-    public readonly ReadOnlySpan<TEvent> Read() => queue.Events;
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        queue.RemoveReader(this);
+    }
+
+    public ReadOnlySpan<TEvent> Read()
+    {
+        var data = queue.Events[Cursor..];
+        Cursor += queue.Events.Length;
+        return data;
+    }
 }
 
 public class EventWriterFetch<TEvent> : IFetch<EventWriter<TEvent>>
@@ -133,6 +163,13 @@ public class EventReaderFetch<TEvent> : IFetch<EventReader<TEvent>>
 
     public EventReader<TEvent> DoFetch(World world, ISystem system)
     {
-        return world.Events.GetReader<TEvent>();
+        if (system.Resources.TryGet<EventReader<TEvent>>(out var reader))
+        {
+            return reader;
+        }
+
+        reader = world.Events.GetReader<TEvent>();
+        system.Resources.Add(reader);
+        return reader;
     }
 }

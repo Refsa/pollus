@@ -19,7 +19,7 @@ public static class CoreStage
     public static readonly StageLabel PostRender = new(nameof(PostRender));
 }
 
-public record class Stage
+public record class Stage : IDisposable
 {
     public StageLabel Label { get; }
     public List<ISystem> Systems { get; } = new();
@@ -28,6 +28,18 @@ public record class Stage
     public Stage(StageLabel label)
     {
         Label = label;
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        foreach (var system in Systems)
+        {
+            if (system is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
     }
 
     public void AddSystem(ISystem system)

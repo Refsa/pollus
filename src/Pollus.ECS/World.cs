@@ -37,6 +37,7 @@ public class World : IDisposable
     {
         Store.Dispose();
         Resources.Dispose();
+        Schedule.Dispose();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
