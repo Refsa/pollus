@@ -14,15 +14,23 @@ public record struct SystemLabel(string Label)
 
 public class SystemDescriptor
 {
-    public SystemLabel Label { get; }
+    public SystemLabel Label { get; private set; }
     public HashSet<SystemLabel> RunsBefore { get; } = [];
     public HashSet<SystemLabel> RunsAfter { get; } = [];
     public HashSet<Type> Parameters { get; } = [];
     public HashSet<Type> Dependencies { get; } = [];
 
+    public SystemDescriptor() { }
+
     public SystemDescriptor(SystemLabel label)
     {
         Label = label;
+    }
+
+    public SystemDescriptor WithLabel(SystemLabel label)
+    {
+        Label = label;
+        return this;
     }
 
     public SystemDescriptor Before(SystemLabel label)
@@ -50,6 +58,7 @@ public interface ISystem
 
     IRunCriteria RunCriteria { get; set; }
     SystemDescriptor Descriptor { get; }
+    Resources Resources { get; }
 
     bool ShouldRun(World world) => RunCriteria.ShouldRun(world);
     void Tick(World world) { }
@@ -60,7 +69,8 @@ public abstract class Sys(SystemDescriptor descriptor) : ISystem
     public static HashSet<Type> Dependencies => [];
 
     public IRunCriteria RunCriteria { get; set; } = RunAlways.Instance;
-    public SystemDescriptor Descriptor { get; } = descriptor;
+    public SystemDescriptor Descriptor { get; init; } = descriptor;
+    public Resources Resources { get; init; } = new();
 
     public virtual bool ShouldRun(World world) => RunCriteria.ShouldRun(world);
     public virtual void Tick(World world)
@@ -93,7 +103,7 @@ public abstract class Sys<T0> : Sys
     }
 
     public override void Tick(World world)
-    {   
+    {
         var t0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, this);
 
         OnTick(t0);

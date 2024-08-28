@@ -46,6 +46,12 @@ public partial class SystemBuilder
         return this;
     }
 
+    public SystemBuilder InitLocal<T>(T value)
+    {
+        System.Resources.Add(new Local<T>(value));
+        return this;
+    }
+
     public static SystemBuilder FnSystem(SystemLabel label, SystemDelegate onTick)
     {
         return new SystemBuilder(new FnSystem(new SystemDescriptor(label), onTick));

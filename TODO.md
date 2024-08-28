@@ -35,7 +35,7 @@
 	- [x] Commands
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
-	- [ ] System Locals
+	- [x] System Locals
 	- [ ] Improve system creation/setup
 	- [ ] Improve delegate foreach in queries
 	- [ ] versioning
