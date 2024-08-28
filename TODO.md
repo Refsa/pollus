@@ -49,6 +49,7 @@
 	- [ ] Text/Font
 	- [ ] 2D Pipeline
 		- [x] Sprites
+		- [ ] Animated Sprites
 		- [ ] Custom Materials
 		- [ ] Post Processing
 	- [x] Extract rendering data
