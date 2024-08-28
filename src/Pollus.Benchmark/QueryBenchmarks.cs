@@ -65,7 +65,7 @@ public class QueryBenchmarks
     struct ForEachOne : IForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void Execute(ref Component1 c)
+        public readonly void Execute(ref Component1 c)
         {
             c.First++;
         }
@@ -74,7 +74,7 @@ public class QueryBenchmarks
     struct ForEachTwo : IForEach<Component1, Component2>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void Execute(ref Component1 c1, ref Component2 c2)
+        public readonly void Execute(ref Component1 c1, ref Component2 c2)
         {
             c1.First += c2.First;
         }
@@ -83,7 +83,7 @@ public class QueryBenchmarks
     struct ChunkForEachOne : IChunkForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void Execute(in Span<Component1> chunk0)
+        public readonly void Execute(in Span<Component1> chunk0)
         {
             for (int i = 0; i < chunk0.Length; i++)
             {

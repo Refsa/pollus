@@ -1,27 +1,27 @@
 
 namespace Pollus.Examples;
 
+using Pollus.Debugging;
 using Pollus.ECS;
+using Pollus.ECS.Core;
 using Pollus.Engine;
+using Pollus.Engine.Debug;
 using static Pollus.ECS.SystemBuilder;
 
 public class ECSExample
 {
-    World world = new();
-
-    ~ECSExample()
-    {
-        world.Dispose();
-    }
-
     public void Run() => Application.Builder
-        .AddPlugin(new TimePlugin())
+        .AddPlugins([
+            new TimePlugin(),
+            new PerformanceTrackerPlugin(),
+        ])
+        .AddSystem(CoreStage.PostInit, FnSystem("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
         .AddSystem(CoreStage.PostInit, FnSystem("Setup",
-        static (World world) =>
+        static (Commands commands) =>
         {
             for (int i = 0; i < 100_000; i++)
             {
-                world.Spawn(new Component1(), new Component2());
+                commands.Spawn(Entity.With(new Component1(), new Component2()));
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem("Update",
@@ -29,8 +29,7 @@ public class ECSExample
         {
             query.ForEach((ref Component1 c1, ref Component2 c2) =>
             {
-                c1.Value++;
-                c2.Value++;
+                c1.Value += c2.Value;
             });
         }))
         .Run();
