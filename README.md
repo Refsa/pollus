@@ -5,31 +5,31 @@ A small endevour into the possibilities of a "pure" C# game engine that can comp
 
 You can find the Breakout clone example running [here](https://refsa.github.io/pollus/)
 
-## WARNING
-This project is still very early in development and any api surface and underlying features might change at any point.  
-There are still a lot of important features missing and most of the WASM and browser support is still a prototype.  
-
 ## Features
 - ECS with some inspiration from bevy
 - Plugin based features
 - WGPU rendering backend
+    - WebGPU on web
+    - Other WGPU supported backends on native
 - Simple audio plugin
 - Simple input plugin
 - Build to Windows and Browser (WASM)
-    - Nothing should stop it from running on Linux and OSX
-    - Mobile support in the future, but also runs in mobile browsers through WASM
 - Dear ImGui renderer, which is the only form of UI right now
-    - Some function mismatches with ImGui.NET bindings for web
-    - f.ex. need to use `ImGui.TextUnformatted` instead of `ImGui.Text`
 
 Currently requires `net8.0` and `net8.0-browser` targets.  
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
+## WARNING
+This project is still very early in development and any api surface and underlying features might change at any point.  
+There are still a lot of important features missing and most of the WASM and browser support is still a prototype.  
+
 ## Getting Started
 `Pollus.Engine` is the glue project and contains all the required Plugins and systems to get up and running.  
+
+### Building WASM for web
 Requires `wasm-experimental` and `wasm-tools` workloads to be installed, which can be done with `dotnet workload install <package>`.  
 Browser is built with `dotnet publish --framework net8.0-browser -c Release` and can be hosted locally with `dotnet serve -S -p <port>`.  
-WebGPU is currently only working in Chromium-based browsers.
+**WebGPU is currently only working in Chromium-based browsers.**
 
 ### Example folder
 The `/examples/` folder in the root directory contains a few different examples for each aspect of the engine.  
@@ -64,6 +64,11 @@ Application.Builder
     }))
     .Run()
 ```
+
+## Known Issues
+- ImGui has some function signature mismatch between Silk.NET generated bindings and the wasm native library file.
+    - `ImGui.Text` might have to be replace with `ImGui.TextUnformatted`
+- Fullscreen mode in browser is broken
 
 ## Libraries
 The aim is to have as few dependencies as possible. This will allow the project to more easily adjust to any differing requirements between web and native. Most pure dotnet projects will work with WASM out of the box, but anything that is built on top of native libraries will not.

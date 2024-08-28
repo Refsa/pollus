@@ -33,4 +33,4 @@ clean:
 
 4. Run `emar rcs cimgui.a cimgui.o` command to create library file from the output of previous command
 
-5. `cimgui.a` has to appear first in the `EmccExtraLDFlags` build property in the csproj file
+5. Link the `cimgui.a` file with `NativeFileReference` in an `ItemGroup` in the csproj file
