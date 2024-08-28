@@ -51,7 +51,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int Hash(scoped in TKey key)
+    readonly int Hash(scoped in TKey key, int capacity)
     {
         var hash = key.GetHashCode();
         return hash * int.Sign(hash) % capacity;
@@ -74,7 +74,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
             TKey key = keys[i];
             TValue value = values[i];
-            int index = key.GetHashCode() % newCapacity;
+            int index = Hash(key, newCapacity);
             int probeCount = 0;
 
             for (int j = 0; j < newCapacity; j++)
@@ -108,7 +108,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
             Resize(capacity * 2);
         }
 
-        int index = Hash(key);
+        int index = Hash(key, capacity);
         int probeCount = 0;
 
         for (int i = 0; i < capacity; i++, index = (index + 1) % capacity, probeCount++)
@@ -121,7 +121,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
                 break;
             }
 
-            int existingProbeCount = (index - Hash(keys[index]) + capacity) % capacity;
+            int existingProbeCount = (index - Hash(keys[index], capacity) + capacity) % capacity;
 
             if (existingProbeCount >= probeCount) continue;
 
@@ -192,7 +192,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int GetIndex(scoped in TKey key)
     {
-        int index = Hash(key);
+        int index = Hash(key, capacity);
         var keySpan = keys.AsSpan();
         for (int i = 0; i < keySpan.Length; i++, index = (index + 1) % capacity)
         {

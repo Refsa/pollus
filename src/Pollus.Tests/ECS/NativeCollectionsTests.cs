@@ -51,7 +51,7 @@ public class NativeCollectionsTests
     [Fact]
     public void NativeMap_NegativeKey()
     {
-        /* using var map = new NativeMap<int, int>(0);
+        using var map = new NativeMap<int, int>(0);
 
         map.Add(-1, 10);
         map.Add(-2, 20);
@@ -67,7 +67,7 @@ public class NativeCollectionsTests
 
         Assert.Equal(10, map.Get(-1));
         Assert.Equal(20, map.Get(-2));
-        Assert.Equal(30, map.Get(-3)); */
+        Assert.Equal(30, map.Get(-3));
     }
 
     [Fact]
