@@ -81,6 +81,38 @@ public class NativeCollectionsTests
     }
 
     [Fact]
+    public void NativeMap_KeyEnumerator()
+    {
+        using var map = new NativeMap<int, int>(0);
+        for (int i = 0; i < 1_000; i++)
+        {
+            map.Add(i, i);
+        }
+
+        int idx = 0;
+        foreach (var key in map.Keys)
+        {
+            Assert.Equal(idx++, key);
+        }
+    }
+
+    [Fact]
+    public void NativeMap_ValueEnumerator()
+    {
+        using var map = new NativeMap<int, int>(0);
+        for (int i = 0; i < 1_000; i++)
+        {
+            map.Add(i, i);
+        }
+
+        int idx = 0;
+        foreach (var value in map.Values)
+        {
+            Assert.Equal(idx++, value);
+        }
+    }
+
+    [Fact]
     public void NativeArray_Test()
     {
         using var array = new NativeArray<int>(1_000);

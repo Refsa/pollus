@@ -11,7 +11,7 @@ public class EventTests
     {
         using var world = new World();
         world.Events.InitEvent<TestEvent>();
-        var reader = world.Events.GetReader<TestEvent>();
+        var reader = world.Events.GetReader<TestEvent>()!;
 
         var writer = world.Events.GetWriter<TestEvent>();
         for (int i = 0; i < 10; i++)

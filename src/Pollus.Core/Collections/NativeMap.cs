@@ -20,8 +20,8 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     int count = 0;
     int capacity;
 
-    public readonly NativeArray<TKey> Keys => keys;
-    public readonly NativeArray<TValue> Values => values;
+    public readonly KeyEnumerator Keys => new(keys);
+    public readonly ValueEnumerator Values => new(Keys, values);
     public readonly int Count => count;
 
     public ref TValue this[in TKey key]
@@ -202,5 +202,61 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
             }
         }
         return -1;
+    }
+
+    public ref struct KeyEnumerator
+    {
+        NativeArray<TKey> keys;
+        int index;
+
+        public KeyEnumerator(NativeArray<TKey> keys)
+        {
+            this.keys = keys;
+            index = -1;
+        }
+
+        public TKey Current => keys[index];
+        public int Index => index;
+
+        public bool MoveNext()
+        {
+            while (++index < keys.Length)
+            {
+                if (!keys[index].Equals(Sentinel))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public KeyEnumerator GetEnumerator() => this;
+    }
+
+    public ref struct ValueEnumerator
+    {
+        KeyEnumerator keys;
+        NativeArray<TValue> values;
+        int index;
+
+        public ValueEnumerator(KeyEnumerator keys, NativeArray<TValue> values)
+        {
+            this.values = values;
+            this.keys = keys;
+        }
+
+        public ref TValue Current => ref values[index];
+
+        public bool MoveNext()
+        {
+            while (keys.MoveNext())
+            {
+                index = keys.Index;
+                return true;
+            }
+            return false;
+        }
+
+        public ValueEnumerator GetEnumerator() => this;
     }
 }
