@@ -27,7 +27,6 @@ There are still a lot of important features missing and most of the WASM and bro
 `Pollus.Engine` is the glue project and contains all the required Plugins and systems to get up and running.  
 
 ### Building WASM for web
-Requires `wasm-experimental` and `wasm-tools` workloads to be installed, which can be done with `dotnet workload install <package>`.  
 Browser is built with `dotnet publish --framework net8.0-browser -c Release` and can be hosted locally with `dotnet serve -S -p <port>`.  
 **WebGPU is currently only working in Chromium-based browsers.**
 
