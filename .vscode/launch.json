@@ -17,7 +17,7 @@
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/examples/bin/Debug/net8.0/Pollus.Examples.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/examples",
+            "cwd": "${workspaceFolder}/examples/bin/Debug/net8.0",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false

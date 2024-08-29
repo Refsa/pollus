@@ -38,9 +38,11 @@
 	- [x] System Locals
 	- [ ] Improve system creation/setup
 	- [ ] Improve delegate foreach in queries
+	- [ ] Coroutines
 	- [ ] versioning
-		- [ ] event lifetimes
-		- [ ] change filter lifetimes
+		- [x] event lifetimes
+		- [x] change filter lifetimes
+		- [ ] entity id recycling
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches

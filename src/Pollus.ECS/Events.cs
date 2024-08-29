@@ -118,7 +118,7 @@ public class EventReader<TEvent> : IDisposable
     internal int Cursor { get; set; }
 
     public bool HasAny => Count > 0;
-    public int Count => 0;
+    public int Count => queue.Count - Cursor;
 
     public EventReader(EventQueue<TEvent> queue)
     {
@@ -133,9 +133,20 @@ public class EventReader<TEvent> : IDisposable
 
     public ReadOnlySpan<TEvent> Read()
     {
-        var data = queue.Events[Cursor..];
-        Cursor += queue.Events.Length;
+        var data = Peek();
+        Cursor += data.Length;
         return data;
+    }
+
+    public ReadOnlySpan<TEvent> Peek()
+    {
+        if (HasAny is false) return ReadOnlySpan<TEvent>.Empty;
+        return queue.Events[Cursor..queue.Count];
+    }
+
+    public void Consume()
+    {
+        Cursor = queue.Count;
     }
 }
 

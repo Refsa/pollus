@@ -31,4 +31,31 @@ public class EventTests
         events = reader.Read();
         Assert.Equal(0, events.Length);
     }
+
+    [Fact]
+    public void Event_ReadWrite()
+    {
+        using var world = new World();
+        world.Events.InitEvent<TestEvent>();
+        var reader = world.Events.GetReader<TestEvent>()!;
+        var writer = world.Events.GetWriter<TestEvent>();
+
+        {
+            for (int i = 0; i < 10; i++) writer.Write(new TestEvent(i));
+            Assert.Equal(10, reader.Count);
+            Assert.True(reader.HasAny);
+            var events = reader.Read();
+            Assert.Equal(10, events.Length);
+            for (int i = 0; i < events.Length; i++) Assert.Equal(i, events[i].Value);
+        }
+
+        {
+            for (int i = 0; i < 10; i++) writer.Write(new TestEvent(i + 10));
+            Assert.Equal(10, reader.Count);
+            Assert.True(reader.HasAny);
+            var events = reader.Read();
+            Assert.Equal(10, events.Length);
+            for (int i = 0; i < events.Length; i++) Assert.Equal(i + 10, events[i].Value);
+        }
+    }
 }

@@ -195,6 +195,7 @@ public class BreakoutGame
         ) =>
         {
             if (!eRestartGame.HasAny) return;
+            eRestartGame.Consume();
 
             qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick, ref Collider brickCollider)
             {
@@ -234,8 +235,9 @@ public class BreakoutGame
         static (Commands commands, GameState gameState, IWindow window, EventReader<Event.SpawnBall> eSpawnBall) =>
         {
             if (!eSpawnBall.HasAny) return;
+            var spawns = eSpawnBall.Read();
 
-            for (int i = 0; i < eSpawnBall.Read()[0].Count; i++)
+            for (int i = 0; i < spawns[0].Count; i++)
                 commands.Spawn(Entity.With(
                     new Ball(),
                     new Velocity { Value = 400f * new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.25f, 0.25f), (float)Random.Shared.NextDouble()).Normalized() },
@@ -358,7 +360,7 @@ public class BreakoutGame
             qVelocities.ForEach((in Entity entity, ref Velocity velocity) =>
             {
                 var reflect = Vec2f.Zero;
-                foreach (var coll in eCollision.Read())
+                foreach (var coll in eCollision.Peek())
                 {
                     if (coll.EntityA == entity || coll.EntityB == entity)
                     {
@@ -418,11 +420,13 @@ public class BreakoutGame
         {
             if (eBrickDestroyed.HasAny)
             {
+                eBrickDestroyed.Consume();
                 gameState.Score += eBrickDestroyed.Count * 100;
             }
 
             if (eCollision.HasAny)
             {
+                eCollision.Consume();
                 commands.Spawn(Entity.With(
                     new MainMixer(),
                     new AudioSource
