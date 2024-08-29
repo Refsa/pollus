@@ -5,19 +5,25 @@ using System.Runtime.CompilerServices;
 
 public struct ArchetypeChunk : IDisposable
 {
+    struct FlagInfo
+    {
+        public ComponentFlags Flag;
+        public int FirstFlagIndex;
+        public int LastFlagIndex;
+        public ulong Version;
+    }
+
     internal NativeMap<int, NativeArray<byte>> components;
     internal NativeArray<Entity> entities;
 
-    NativeMap<int, ComponentFlags> flags;
-    int firstFlagIndex;
-    int lastFlagIndex;
+    ulong version;
+    NativeMap<int, FlagInfo> flags;
 
     int count;
-    int length;
+    readonly int length;
 
-    public int Count => count;
-    public int Length => length;
-    public Range FlagRange => firstFlagIndex..lastFlagIndex;
+    public readonly int Count => count;
+    public readonly int Length => length;
 
     public ArchetypeChunk(scoped in Span<ComponentID> cids, int rows = 0)
     {
@@ -31,7 +37,7 @@ public struct ArchetypeChunk : IDisposable
         {
             var cinfo = Component.GetInfo(cid);
             components.Add(cid, new(rows * cinfo.SizeInBytes));
-            flags.Add(cid, ComponentFlags.None);
+            flags.Add(cid, new FlagInfo { Flag = ComponentFlags.None, Version = version });
         }
     }
 
@@ -46,22 +52,18 @@ public struct ArchetypeChunk : IDisposable
         flags.Dispose();
     }
 
+    internal void Tick(ulong version)
+    {
+        this.version = version;
+    }
+
     public bool HasFlag<C>(ComponentFlags flag)
         where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
-        if (!flags.Has(cid)) return false;
-        return flags.Get(cid).HasFlag(flag);
-    }
-
-    internal void ClearFlags()
-    {
-        foreach (ref var value in flags.Values)
-        {
-            value = ComponentFlags.None;
-        }
-        firstFlagIndex = -1;
-        lastFlagIndex = -1;
+        ref var info = ref flags.Get(cid);
+        if (Unsafe.IsNullRef(ref info)) return false;
+        return (version - info.Version) <= 1 && info.Flag.HasFlag(flag);
     }
 
     internal void SetFlag<C>(ComponentFlags flag, int row)
@@ -72,19 +74,33 @@ public struct ArchetypeChunk : IDisposable
 
     internal void SetFlag(ComponentID cid, ComponentFlags flag, int row)
     {
-        firstFlagIndex = int.Min(firstFlagIndex, row);
-        lastFlagIndex = int.Max(lastFlagIndex, row);
-        if (!flags.Has(cid)) flags.Add(cid, ComponentFlags.None);
-        flags.Get(cid) |= flag;
+        ref var info = ref flags.Get(cid);
+        if (Unsafe.IsNullRef(ref info))
+        {
+            flags.Add(cid, new FlagInfo
+            {
+                Flag = flag,
+                Version = version,
+                FirstFlagIndex = row,
+                LastFlagIndex = row
+            });
+            return;
+        }
+
+        info.Flag |= flag;
+        info.Version = version;
+        info.FirstFlagIndex = int.Min(info.FirstFlagIndex, row);
+        info.LastFlagIndex = int.Max(info.LastFlagIndex, row);
     }
 
     internal void SetAllFlags(ComponentFlags flag, int row)
     {
-        firstFlagIndex = int.Min(firstFlagIndex, row);
-        lastFlagIndex = int.Max(lastFlagIndex, row);
         foreach (ref var value in flags.Values)
         {
-            value |= flag;
+            value.Flag |= flag;
+            value.Version = version;
+            value.FirstFlagIndex = int.Min(value.FirstFlagIndex, row);
+            value.LastFlagIndex = int.Max(value.LastFlagIndex, row);
         }
     }
 
@@ -144,21 +160,9 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    unsafe public Span<Entity> GetEntities()
+    unsafe public readonly ReadOnlySpan<Entity> GetEntities()
     {
-        return new Span<Entity>(entities.Data, count);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    unsafe public Span<C> GetComponents<C>()
-            where C : unmanaged, IComponent
-    {
-        var start = firstFlagIndex != -1 ? firstFlagIndex : 0;
-        var end = lastFlagIndex != -1 ? lastFlagIndex : count;
-
-        var cinfo = Component.GetInfo<C>();
-        var array = components.Get(cinfo.ID);
-        return new Span<C>(array.Data, count)[start..end];
+        return new ReadOnlySpan<Entity>(entities.Data, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

@@ -21,7 +21,7 @@ public class ArchetypeStore : IDisposable
         public int RowIndex { get; set; }
     }
 
-    int version = 0;
+    ulong version = 0;
 
     readonly List<Archetype> archetypes;
     readonly ComponentChanges changes;
@@ -49,6 +49,8 @@ public class ArchetypeStore : IDisposable
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
         foreach (var archetype in archetypes)
         {
             archetype.Dispose();
@@ -249,13 +251,13 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Update()
+    public void Tick(ulong version)
     {
+        this.version = version;
         foreach (var archetype in archetypes)
         {
-            archetype.Update();
+            archetype.Tick(version);
         }
         changes.Clear();
-        version++;
     }
 }

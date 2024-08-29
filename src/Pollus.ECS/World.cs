@@ -14,11 +14,11 @@ public class World : IDisposable
         CommandsFetch.Register();
     }
 
-    int version = 0;
+    ulong version = 0;
 
-    HashSet<Type> registeredPlugins = new();
-    Stack<Commands> commandBuffers = new();
-    Queue<Commands> commandBuffersQueue = new();
+    readonly HashSet<Type> registeredPlugins = new();
+    readonly Stack<Commands> commandBuffers = new();
+    readonly Queue<Commands> commandBuffersQueue = new();
 
     public Schedule Schedule { get; init; }
     public ArchetypeStore Store { get; init; }
@@ -35,6 +35,8 @@ public class World : IDisposable
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
+
         Store.Dispose();
         Resources.Dispose();
         Schedule.Dispose();
@@ -130,7 +132,8 @@ public class World : IDisposable
     {
         try
         {
-            Store.Update();
+            version++;
+            Store.Tick(version);
 
             foreach (var stage in Schedule.Stages)
             {
@@ -149,10 +152,6 @@ public class World : IDisposable
         catch (Exception e)
         {
             Log.Error(e, "An error occurred while running the world schedule.");
-        }
-        finally
-        {
-            version++;
         }
     }
 }

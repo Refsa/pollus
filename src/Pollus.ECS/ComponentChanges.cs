@@ -46,15 +46,16 @@ public class ComponentChanges
 
     Stack<ChangeList> pool = new();
     Dictionary<Entity, ChangeList> changes = new();
+    Dictionary<Entity, ChangeList> previous = new();
 
     public void Clear()
     {
+        (changes, previous) = (previous, changes);
         foreach (var list in changes.Values)
         {
             list.Clear();
             pool.Push(list);
         }
-        changes.Clear();
     }
 
     public void AddChange<C>(Entity entity, ComponentFlags flags)
@@ -81,15 +82,24 @@ public class ComponentChanges
 
     public bool HasChange(in Entity entity, ComponentID id, ComponentFlags flags)
     {
-        if (!changes.TryGetValue(entity, out var list))
-            return false;
-
-        foreach (var change in list.Changes)
+        if (changes.TryGetValue(entity, out var list))
         {
-            if (change.ComponentID == id && change.Flags.HasFlag(flags))
-                return true;
+            foreach (var change in list.Changes)
+            {
+                if (change.ComponentID == id && change.Flags.HasFlag(flags))
+                    return true;
+            }
         }
 
+        if (previous.TryGetValue(entity, out list))
+        {
+            foreach (var change in list.Changes)
+            {
+                if (change.ComponentID == id && change.Flags.HasFlag(flags))
+                    return true;
+            }
+        }
+        
         return false;
     }
 }

@@ -55,7 +55,7 @@ public partial class Archetype : IDisposable
     readonly ArchetypeID id;
     readonly ChunkInfo chunkInfo;
 
-    int version = 0;
+    ulong version = 0;
 
     NativeArray<ArchetypeChunk> chunks;
     int lastChunkIndex = -1;
@@ -246,13 +246,13 @@ public partial class Archetype : IDisposable
         return ref chunks[lastChunkIndex];
     }
 
-    public void Update()
+    public void Tick(ulong version)
     {
+        this.version = version;
         for (int i = 0; i < chunks.Length; i++)
         {
-            chunks[i].ClearFlags();
+            chunks[i].Tick(version);
         }
-        version++;
     }
 }
 

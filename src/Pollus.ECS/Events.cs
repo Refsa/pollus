@@ -17,7 +17,7 @@ public class Events
         events.Add(typeof(TEvent), new EventQueue<TEvent>());
     }
 
-    public void ClearEvents()
+    internal void ClearEvents()
     {
         foreach (var queue in events.Values)
         {
@@ -35,7 +35,7 @@ public class Events
         return default;
     }
 
-    public EventReader<TEvent> GetReader<TEvent>()
+    public EventReader<TEvent>? GetReader<TEvent>()
         where TEvent : struct
     {
         if (events.TryGetValue(typeof(TEvent), out var queue))
@@ -169,6 +169,11 @@ public class EventReaderFetch<TEvent> : IFetch<EventReader<TEvent>>
         }
 
         reader = world.Events.GetReader<TEvent>();
+        if (reader is null)
+        {
+            throw new InvalidOperationException($"Event {typeof(TEvent).Name} is not initialized");
+        }
+
         system.Resources.Add(reader);
         return reader;
     }
