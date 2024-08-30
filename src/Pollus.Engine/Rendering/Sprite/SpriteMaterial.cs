@@ -32,8 +32,8 @@ public class SpriteMaterial : IMaterial
         MultisampleState = MultisampleState.Default,
         PrimitiveState = PrimitiveState.Default with
         {
-            Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleStrip,
-            FrontFace = Silk.NET.WebGPU.FrontFace.Ccw,
+            Topology = PrimitiveTopology.TriangleStrip,
+            FrontFace = FrontFace.Ccw,
         },
     };
 

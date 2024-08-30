@@ -7,8 +7,8 @@ using Pollus.Mathematics;
 
 public enum MeshAttributeType
 {
-    Position = VertexFormat.Float32x3,
-    Normal = VertexFormat.Float32x3,
+    Position3 = VertexFormat.Float32x3,
+    Normal3 = VertexFormat.Float32x3,
     UV0 = VertexFormat.Float32x2,
     UV1 = VertexFormat.Float32x2,
 }
@@ -44,11 +44,11 @@ public class Mesh
             for (int j = 0; j < attributes.Length; j++)
             {
                 var attribute = attributes[j];
-                if (attribute == MeshAttributeType.Position)
+                if (attribute == MeshAttributeType.Position3)
                 {
                     vertexData.Write(i, positions[i], j);
                 }
-                else if (attribute == MeshAttributeType.Normal)
+                else if (attribute == MeshAttributeType.Normal3)
                 {
                     if (normals == null) vertexData.Write(i, Vector3.Zero, j);
                     else vertexData.Write(i, normals![i], j);

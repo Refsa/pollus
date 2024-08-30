@@ -5,7 +5,6 @@ using Pollus.Mathematics;
 public static class Primitives
 {
     static Mesh? sharedQuad;
-
     public static Mesh SharedQuad => sharedQuad ??= CreateQuad();
 
     public static Mesh CreateQuad()

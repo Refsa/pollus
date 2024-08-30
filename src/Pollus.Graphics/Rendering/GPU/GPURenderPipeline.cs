@@ -143,10 +143,10 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
         if (descriptor.PrimitiveState is PrimitiveState primitiveState)
         {
             nativeDescriptor.Primitive = new Silk.NET.WebGPU.PrimitiveState(
-                topology: primitiveState.Topology,
+                topology: (Silk.NET.WebGPU.PrimitiveTopology)primitiveState.Topology,
                 stripIndexFormat: (Silk.NET.WebGPU.IndexFormat)primitiveState.IndexFormat,
-                frontFace: primitiveState.FrontFace,
-                cullMode: primitiveState.CullMode
+                frontFace: (Silk.NET.WebGPU.FrontFace)primitiveState.FrontFace,
+                cullMode: (Silk.NET.WebGPU.CullMode)primitiveState.CullMode
             );
         }
 

@@ -112,7 +112,7 @@ public class ImguiPlugin : IPlugin
                     io.AddMousePosEvent(moved.Position.X, moved.Position.Y);
                 }
             }
-        ).After(InputPlugin.UpdateSystem));
+        ));
 
         world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
             BeginFrameSystem,

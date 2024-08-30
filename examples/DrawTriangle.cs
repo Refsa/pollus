@@ -53,9 +53,9 @@ public class DrawTriangle
                 MultisampleState = MultisampleState.Default,
                 PrimitiveState = PrimitiveState.Default with
                 {
-                    CullMode = Silk.NET.WebGPU.CullMode.None,
-                    FrontFace = Silk.NET.WebGPU.FrontFace.Ccw,
-                    Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList,
+                    CullMode = CullMode.None,
+                    FrontFace = FrontFace.Ccw,
+                    Topology = PrimitiveTopology.TriangleList,
                 },
                 PipelineLayout = null,
             });

@@ -184,9 +184,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             MultisampleState = MultisampleState.Default,
             PrimitiveState = PrimitiveState.Default with
             {
-                Topology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList,
-                FrontFace = Silk.NET.WebGPU.FrontFace.CW,
-                CullMode = Silk.NET.WebGPU.CullMode.None,
+                Topology = PrimitiveTopology.TriangleList,
+                FrontFace = FrontFace.CW,
+                CullMode = CullMode.None,
             },
             PipelineLayout = gpuContext.CreatePipelineLayout(new()
             {
