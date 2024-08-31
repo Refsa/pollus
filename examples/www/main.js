@@ -10,4 +10,5 @@ while (canvas === null) {
 canvas.addEventListener('click', (e) => e.preventDefault());
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
+dotnet.withApplicationArguments('shapes');
 await dotnet.run();

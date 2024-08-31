@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using System.Text;
 using ImGuiNET;
 using Pollus.Debugging;
 using Pollus.ECS;
@@ -109,7 +108,7 @@ public class BreakoutGame
 
             var spriteMaterial = materials.Add(new SpriteMaterial
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/sprite.wgsl"),
+                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/sprite.wgsl"),
                 Texture = assetServer.Load<ImageAsset>("breakout/breakout_sheet.png"),
                 Sampler = samplers.Add(SamplerDescriptor.Nearest),
             });

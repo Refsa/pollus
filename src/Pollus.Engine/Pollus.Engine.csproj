@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <Content Include="./Rendering/**/*.wgsl">
-      <Link>assets/shaders/%(Filename)%(Extension)</Link>
+      <Link>assets/shaders/builtin/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

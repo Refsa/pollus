@@ -5,6 +5,7 @@
 	- [x] Mouse
 		- handle right click and aux mouse buttons in browser
 	- [x] Gamepad
+		- [ ] deadzone
 	- [x] Touch
 	- [ ] Action Map
 - Audio
@@ -39,6 +40,7 @@
 	- [ ] Improve system creation/setup
 	- [ ] Improve delegate foreach in queries
 	- [ ] Coroutines
+	- [ ] Optimized tag components
 	- [ ] versioning
 		- [x] event lifetimes
 		- [x] change filter lifetimes
@@ -54,13 +56,16 @@
 		- [ ] Animated Sprites
 		- [ ] Custom Materials
 		- [ ] Post Processing
+		- [ ] Polygons/Shapes
 	- [x] Extract rendering data
 	- [ ] Rendering Stage/Frame Graph
 	- [ ] Render target
 	- [ ] Gizmos
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders
+	- [ ] Culling
 - 2D Physics
 	- [ ] Spatial Queries
+	- [ ] Collision Queries
 - General
 	- [ ] Seeded random
