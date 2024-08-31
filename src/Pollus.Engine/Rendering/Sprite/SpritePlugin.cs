@@ -15,10 +15,8 @@ public class SpritePlugin : IPlugin
     {
         world.Resources.Add(new SpriteBatches());
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<SpriteMaterial>());
+        world.Resources.Get<RenderSteps>().Add(new SpriteBatchDraw());
         
-        world.Schedule.AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem("InitSpritePlugin",
-            static (RenderSteps renderSteps) => renderSteps.Add(new SpriteBatchDraw())
-        ));
         world.Schedule.AddSystems(CoreStage.PreRender, new ExtractSpritesSystem());
     }
 }

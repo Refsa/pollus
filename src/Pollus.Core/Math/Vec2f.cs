@@ -79,6 +79,11 @@ public record struct Vec2f
         return Math.Sqrt(X * X + Y * Y);
     }
 
+    public float LengthSquared()
+    {
+        return X * X + Y * Y;
+    }
+
     public Vec2f Normalized()
     {
         float length = Length();
@@ -99,5 +104,28 @@ public record struct Vec2f
     public Vec2f Reflect(Vec2f normal)
     {
         return this - 2f * Dot(normal) * normal;
+    }
+
+    public Vec2f Rotate(float angle)
+    {
+        float cos = Math.Cos(angle);
+        float sin = Math.Sin(angle);
+        return new Vec2f(X * cos - Y * sin, X * sin + Y * cos);
+    }
+
+    public Vec2f Rotate(float angle, Vec2f center)
+    {
+        Vec2f offset = this - center;
+        return center + offset.Rotate(angle);
+    }
+
+    public static Vec2f Min(Vec2f a, Vec2f b)
+    {
+        return new Vec2f(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
+    }
+
+    public static Vec2f Max(Vec2f a, Vec2f b)
+    {
+        return new Vec2f(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
     }
 }

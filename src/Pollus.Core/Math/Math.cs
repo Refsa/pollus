@@ -8,12 +8,14 @@ public static class FloatingConstants<T>
 {
     public static readonly T RAD2DEG = T.CreateChecked(Math.RAD2DEG);
     public static readonly T DEG2RAD = T.CreateChecked(Math.DEG2RAD);
+    public static readonly T PI = T.CreateChecked(Math.PI);
 }
 
 public static class Math
 {
     public const double DEG2RAD = 0.0174532925;
     public const double RAD2DEG = 57.2957795;
+    public const double PI = System.Math.PI;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static int Sign<T>(T self)
@@ -111,5 +113,11 @@ public static class Math
         where T : struct, INumber<T>
     {
         return Min(Max(value, min), max);
+    }
+
+    public static void Swap<T>(ref T a, ref T b)
+        where T : struct, INumber<T>
+    {
+        var temp = a; a = b; b = temp;
     }
 }

@@ -28,7 +28,7 @@ public class MeshRenderDataLoader : IRenderDataLoader
         var meshAsset = assetServer.GetAssets<MeshAsset>().Get(handle)
             ?? throw new InvalidOperationException("Mesh asset not found");
 
-        var vertexData = meshAsset.Mesh.GetVertexData([MeshAttributeType.Position, MeshAttributeType.UV0]);
+        var vertexData = meshAsset.Mesh.GetVertexData([MeshAttributeType.Position3, MeshAttributeType.UV0]);
 
         var vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
             meshAsset.Name,

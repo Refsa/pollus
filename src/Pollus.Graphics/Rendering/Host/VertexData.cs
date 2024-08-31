@@ -23,7 +23,7 @@ public struct VertexData : IBufferData
     public ulong SizeInBytes => (ulong)data.Length;
     public uint Stride => stride;
     public uint Capacity => (uint)SizeInBytes / stride;
-    public uint Count => (uint)data.Length;
+    public uint Count => (uint)data.Length / stride;
     public int AttributeCount => attributeCount;
     public BufferType Usage => BufferType.Vertex;
 
