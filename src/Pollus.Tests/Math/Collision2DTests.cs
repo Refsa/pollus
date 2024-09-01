@@ -189,7 +189,7 @@ public class Collision2DTests
 
         var intersection = circle.GetIntersection(bounds);
 
-        AssertIntersection(intersection, new Vec2f(0, 0), Vec2f.Left, 1);
+        AssertIntersection(intersection, new Vec2f(0, 0), Vec2f.Left, 0);
     }
 
     static void AssertIntersection(Intersection intersection, Vec2f point, Vec2f normal, float distance)

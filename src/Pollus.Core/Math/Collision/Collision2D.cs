@@ -4,7 +4,7 @@ using Pollus.Mathematics;
 
 public struct Intersection
 {
-    public static readonly Intersection None = new Intersection { IsIntersecting = false };
+    public static readonly Intersection None = new() { IsIntersecting = false };
 
     public required bool IsIntersecting;
     public Vec2f Point;
@@ -80,18 +80,24 @@ public static class Intersect
         var p4 = other.Origin + other.Direction;
 
         float denominator = (p4.Y - p3.Y) * (p2.X - p1.X) - (p4.X - p3.X) * (p2.Y - p1.Y);
-        if (denominator == 0) return new Intersection { IsIntersecting = false };
+        if (denominator == 0) return new() { IsIntersecting = false };
 
         float ua = ((p4.X - p3.X) * (p1.Y - p3.Y) - (p4.Y - p3.Y) * (p1.X - p3.X)) / denominator;
         float ub = ((p2.X - p1.X) * (p1.Y - p3.Y) - (p2.Y - p1.Y) * (p1.X - p3.X)) / denominator;
 
-        if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return new Intersection { IsIntersecting = false };
+        if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return new() { IsIntersecting = false };
 
         var point = new Vec2f(p1.X + ua * (p2.X - p1.X), p1.Y + ua * (p2.Y - p1.Y));
         var normal = (p2 - p1).Normalized().Rotate(-float.Pi / 2);
         float distance = (point - p1).Length();
 
-        return new Intersection { IsIntersecting = true, Point = point, Normal = normal, Distance = distance };
+        return new()
+        {
+            IsIntersecting = true,
+            Point = point,
+            Normal = normal,
+            Distance = distance
+        };
     }
 
     public static Intersection GetIntersection(this in Ray2D ray, in Bounds2D other)
@@ -108,7 +114,7 @@ public static class Intersect
 
         if (tmax < 0 || tmin > tmax)
         {
-            return new Intersection { IsIntersecting = false };
+            return new() { IsIntersecting = false };
         }
 
         float t = tmin < 0 ? tmax : tmin;
@@ -118,7 +124,7 @@ public static class Intersect
             t == t3 ? -1 : (t == t4 ? 1 : 0)
         );
 
-        return new Intersection
+        return new()
         {
             IsIntersecting = true,
             Point = point,
@@ -178,7 +184,7 @@ public static class Intersect
 
         if (x1 >= x2 || y1 >= y2)
         {
-            return new Intersection { IsIntersecting = false };
+            return new() { IsIntersecting = false };
         }
 
         var intersectionCenterX = (x1 + x2) / 2;
@@ -192,11 +198,23 @@ public static class Intersect
 
         if (Math.Abs(dx) > Math.Abs(dy))
         {
-            return new Intersection { IsIntersecting = true, Point = new Vec2f(x1, y1), Normal = dx < 0 ? Vec2f.Left : Vec2f.Right, Distance = Math.Abs(dx) };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = new Vec2f(x1, y1),
+                Normal = dx < 0 ? Vec2f.Left : Vec2f.Right,
+                Distance = Math.Abs(dx)
+            };
         }
         else
         {
-            return new Intersection { IsIntersecting = true, Point = new Vec2f(x1, y1), Normal = dy < 0 ? Vec2f.Down : Vec2f.Up, Distance = Math.Abs(dy) };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = new Vec2f(x1, y1),
+                Normal = dy < 0 ? Vec2f.Down : Vec2f.Up,
+                Distance = Math.Abs(dy)
+            };
         }
     }
     #endregion
@@ -247,10 +265,16 @@ public static class Intersect
         if (distance <= circle.Radius + other.Radius)
         {
             var point = circle.Center + normal * circle.Radius;
-            return new Intersection { IsIntersecting = true, Point = point, Normal = normal, Distance = distance - circle.Radius - other.Radius };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = point,
+                Normal = normal,
+                Distance = distance - circle.Radius - other.Radius,
+            };
         }
 
-        return new Intersection { IsIntersecting = false };
+        return new() { IsIntersecting = false };
     }
 
     public static Intersection GetIntersection(this in Circle2D circle, in Bounds2D bounds)
@@ -266,11 +290,16 @@ public static class Intersect
         if (distance <= circle.Radius)
         {
             var normal = direction.Normalized();
-            var point = circle.Center + -normal * circle.Radius;
-            return new Intersection { IsIntersecting = true, Point = point, Normal = normal, Distance = distance };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = closestPoint,
+                Normal = normal,
+                Distance = circle.Radius - distance,
+            };
         }
 
-        return new Intersection { IsIntersecting = false };
+        return new() { IsIntersecting = false };
     }
 
     public static Intersection GetIntersection(this in Circle2D circle, in Ray2D ray)
@@ -284,7 +313,7 @@ public static class Intersect
 
         if (discriminant < 0)
         {
-            return new Intersection { IsIntersecting = false };
+            return new() { IsIntersecting = false };
         }
 
         discriminant = Math.Sqrt(discriminant);
@@ -295,17 +324,29 @@ public static class Intersect
         {
             var point = ray.Origin + t1 * ray.Direction;
             var normal = (point - circle.Center).Normalized();
-            return new Intersection { IsIntersecting = true, Point = point, Normal = normal, Distance = t1 };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = point,
+                Normal = normal,
+                Distance = t1,
+            };
         }
 
         if (t2 >= 0)
         {
             var point = ray.Origin + t2 * ray.Direction;
             var normal = (point - circle.Center).Normalized();
-            return new Intersection { IsIntersecting = true, Point = point, Normal = normal, Distance = t2 };
+            return new()
+            {
+                IsIntersecting = true,
+                Point = point,
+                Normal = normal,
+                Distance = t2,
+            };
         }
 
-        return new Intersection { IsIntersecting = false };
+        return new() { IsIntersecting = false };
     }
     #endregion
 }
