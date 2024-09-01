@@ -7,11 +7,15 @@ using Pollus.Engine.Audio;
 using Pollus.Engine.Assets;
 using static Pollus.ECS.SystemBuilder;
 
-public class AudioExample
+public class AudioExample : IExample
 {
+    public string Name => "audio";
+    IApplication? application;
+    public void Stop() => application?.Shutdown();
+
     public void Run()
     {
-        Application.Builder
+        application = Application.Builder
             .AddPlugin(new AssetPlugin { RootPath = "assets" })
             .AddPlugin<TimePlugin>()
             .AddPlugin<AudioPlugin>()
@@ -31,6 +35,7 @@ public class AudioExample
                     }
                 ).Spawn(world);
             }))
-            .Run();
+            .Build();
+        application.Run();
     }
 }

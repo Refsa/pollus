@@ -1,5 +1,8 @@
 namespace Pollus.Engine;
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.JavaScript;
 using Pollus.Audio;
 using Pollus.ECS;
 using Pollus.Engine.Input;
@@ -8,7 +11,7 @@ using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
-public class BrowserApplication : IApplication, IDisposable
+public partial class BrowserApplication : IApplication, IDisposable
 {
     IWindow window;
     GraphicsContext? graphicsContext;
@@ -41,6 +44,12 @@ public class BrowserApplication : IApplication, IDisposable
         window.Dispose();
         graphicsContext?.Dispose();
         world.Dispose();
+    }
+
+    public void Shutdown()
+    {
+        window.Close();
+        Dispose();
     }
 
     public void Run()

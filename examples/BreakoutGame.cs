@@ -20,8 +20,12 @@ using Pollus.Mathematics.Collision2D;
 using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
-public class BreakoutGame
+public class BreakoutGame : IExample
 {
+    public string Name => "breakout";
+    IApplication? application;
+    public void Stop() => application?.Shutdown();
+
     struct Player : IComponent { }
 
     struct Disabled : IComponent { }
@@ -77,7 +81,7 @@ public class BreakoutGame
         public Handle<SpriteMaterial> spritesheet;
     }
 
-    public void Run() => Application.Builder
+    public void Run() => (application = Application.Builder
         .WithWindowOptions(WindowOptions.Default with
         {
             Title = "Breakout Game",
@@ -453,5 +457,6 @@ public class BreakoutGame
                 ));
             }
         }))
+        .Build())
         .Run();
 }

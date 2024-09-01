@@ -17,9 +17,13 @@ class RenderData : IDisposable
     }
 }
 
-public class DrawTriangle
+public class DrawTriangle : IExample
 {
-    public void Run() => Application.Builder
+    public string Name => "draw-triangle";
+    IApplication? application;
+    public void Stop() => application?.Shutdown();
+
+    public void Run() => (application = Application.Builder
         .InitResource<RenderData>()
         .AddSystem(CoreStage.PostInit, FnSystem("Setup",
         static (IWGPUContext gpuContext, Resources resources) =>
@@ -67,8 +71,13 @@ public class DrawTriangle
         .AddSystem(CoreStage.Last, FnSystem("Draw",
         static (IWGPUContext gpuContext, RenderData renderData) =>
         {
-            var surfaceTexture = gpuContext.SurfaceGetCurrentTexture();
-            using var textureView = gpuContext.CreateTextureView(surfaceTexture, new());
+            using var surfaceTexture = new GPUSurfaceTexture(gpuContext);
+            if (!surfaceTexture.Prepare())
+            {
+                Log.Error("Failed to prepare surface texture");
+                surfaceTexture.Dispose();
+                return;
+            }
 
             using var commandEncoder = gpuContext.CreateCommandEncoder("""command-encoder""");
             {
@@ -78,7 +87,7 @@ public class DrawTriangle
                     ColorAttachments = stackalloc RenderPassColorAttachment[1]
                     {
                         new(
-                            textureView: textureView.Native,
+                            textureView: surfaceTexture.TextureView.Native,
                             resolveTarget: nint.Zero,
                             clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
                             loadOp: LoadOp.Clear,
@@ -98,7 +107,7 @@ public class DrawTriangle
             commandBuffer.Dispose();
 
             gpuContext.Present();
-            gpuContext.ReleaseSurfaceTexture(surfaceTexture);
         }))
+        .Build())
         .Run();
 }

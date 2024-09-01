@@ -8,9 +8,14 @@ using Pollus.Engine.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Camera;
 
-public class ImGuiExample
+public class ImGuiExample : IExample
 {
-    public void Run() => Application.Builder
+    public string Name => "imgui";
+
+    IApplication? application;
+    public void Stop() => application?.Shutdown();
+
+    public void Run() => (application = Application.Builder
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
@@ -25,5 +30,6 @@ public class ImGuiExample
         {
             ImGuiNET.ImGui.ShowDemoWindow();
         }))
+        .Build())
         .Run();
 }

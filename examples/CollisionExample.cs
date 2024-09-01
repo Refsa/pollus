@@ -15,6 +15,8 @@ using Pollus.Utils;
 public class CollisionExample : IExample
 {
     public string Name => "collision";
+    IApplication? application;
+    public void Stop() => application?.Shutdown();
 
     struct MoveShape : IComponent
     {
@@ -23,7 +25,7 @@ public class CollisionExample : IExample
         public float Speed;
     }
 
-    public void Run() => Application.Builder
+    public void Run() => (application = Application.Builder
         .AddPlugins([
             new AssetPlugin {RootPath = "assets"},
             new RenderingPlugin(),
@@ -100,5 +102,6 @@ public class CollisionExample : IExample
                 draw.Color = collision ? Color.GREEN : Color.RED;
             });
         }))
+        .Build())
         .Run();
 }

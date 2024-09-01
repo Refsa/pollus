@@ -10,9 +10,14 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public static class ShapesExample
+public class ShapesExample : IExample
 {
-    public static void Run() => Application.Builder
+    public string Name => "shapes";
+    IApplication? application;
+
+    public void Stop() => application?.Shutdown();
+
+    public void Run() => (application = Application.Builder
     .AddPlugins([
         new AssetPlugin {RootPath = "assets"},
         new RenderingPlugin(),
@@ -87,6 +92,6 @@ public static class ShapesExample
                 ShapeHandle = shapes.Add(Shape.Capsule(Vec2f.Down * 32f, Vec2f.Up * 32f, 32f)),
                 Color = Color.ORANGE,
             }));
-    }))
-    .Run();
+    })).Build()
+    ).Run();
 }

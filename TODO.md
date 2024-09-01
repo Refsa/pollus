@@ -5,9 +5,9 @@
 	- [x] Mouse
 		- handle right click and aux mouse buttons in browser
 	- [x] Gamepad
-		- [ ] deadzone
 	- [x] Touch
 	- [ ] Action Map
+		- [ ] deadzone
 - Audio
 	- [x] Desktop
 	- [x] Web
@@ -56,7 +56,7 @@
 		- [ ] Animated Sprites
 		- [ ] Custom Materials
 		- [ ] Post Processing
-		- [ ] Polygons/Shapes
+		- [x] Polygons/Shapes
 	- [x] Extract rendering data
 	- [ ] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph
@@ -65,8 +65,15 @@
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders
 	- [ ] Culling
+	- [ ] MSAA
 - 2D Physics
 	- [ ] Spatial Queries
 	- [ ] Collision Queries
+	- [ ] Intersect methods
+		- [x] Ray
+		- [x] Line
+		- [x] Circle
+		- [x] Bounds
+		- [ ] Polygon
 - General
 	- [ ] Seeded random

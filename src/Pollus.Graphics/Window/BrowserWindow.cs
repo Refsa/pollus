@@ -46,6 +46,7 @@ public partial class BrowserWindow : IWindow
         if (IsOpen is false) return;
         IsOpen = false;
 
+        Emscripten.ClearMainLoop();
         EmscriptenSDL.DestroyWindow(nativeWindow);
         EmscriptenSDL.Quit();
     }

@@ -43,6 +43,11 @@ public class DesktopApplication : IApplication, IDisposable
         world.Dispose();
     }
 
+    public void Shutdown()
+    {
+        isRunning = false;
+    }
+
     public void Run()
     {
         isRunning = true;

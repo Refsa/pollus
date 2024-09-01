@@ -15,33 +15,23 @@ if (args.Length < 1)
     return;
 }
 
-switch (args[0])
+IExample? example = args[0] switch
 {
-    case "shapes":
-        ShapesExample.Run();
-        break;
-    case "ecs":
-        new ECSExample().Run();
-        break;
-    case "input":
-        new InputExample().Run();
-        break;
-    case "audio":
-        new AudioExample().Run();
-        break;
-    case "imgui":
-        new ImGuiExample().Run();
-        break;
-    case "breakout":
-        new BreakoutGame().Run();
-        break;
-    case "draw-triangle":
-        new DrawTriangle().Run();
-        break;
-    case "collision":
-        new CollisionExample().Run();
-        break;
-    default:
-        Console.WriteLine("Unknown example");
-        break;
+    "shapes" => new ShapesExample(),
+    "ecs" => new ECSExample(),
+    "input" => new InputExample(),
+    "audio" => new AudioExample(),
+    "imgui" => new ImGuiExample(),
+    "breakout" => new BreakoutGame(),
+    "draw-triangle" => new DrawTriangle(),
+    "collision" => new CollisionExample(),
+    _ => null
+};
+
+if (example is null)
+{
+    Console.WriteLine("Unknown example: " + args[0]);
+    return;
 }
+
+example?.Run();

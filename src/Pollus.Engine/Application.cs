@@ -18,6 +18,7 @@ public interface IApplication
     World World { get; }
 
     void Run();
+    void Shutdown();
 }
 
 public record class Application

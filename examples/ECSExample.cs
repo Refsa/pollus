@@ -9,14 +9,19 @@ using Pollus.Engine.Debug;
 using Pollus.Graphics.Windowing;
 using static Pollus.ECS.SystemBuilder;
 
-public class ECSExample
+public class ECSExample : IExample
 {
+    public string Name => "ecs";
+    IApplication? application;
+
     struct TestEvent
     {
         public int Value;
     }
 
-    public void Run() => Application.Builder
+    public void Stop() => application?.Shutdown();
+
+    public void Run() => (application = Application.Builder
         .AddPlugins([
             new TimePlugin(),
             // new PerformanceTrackerPlugin(),
@@ -52,5 +57,6 @@ public class ECSExample
         {
             eTestEvent.Write(new TestEvent { Value = counter.Value++ });
         }).RunCriteria(new RunFixed(1f)))
+        .Build())
         .Run();
 }

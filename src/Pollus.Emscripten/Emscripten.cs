@@ -27,6 +27,12 @@ public static partial class Emscripten
     }
 
     [Conditional("BROWSER")]
+    unsafe public static void ClearMainLoop() 
+    {
+        emscripten_set_main_loop((nint)null, 0, false);
+    }
+
+    [Conditional("BROWSER")]
     unsafe public static void RequestAnimationFrame(delegate* unmanaged[Cdecl]<double, void*, void> callback, void* userData)
     {
         emscripten_request_animation_frame((nint)callback, (nint)userData);
