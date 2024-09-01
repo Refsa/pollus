@@ -11,6 +11,7 @@ if (args.Length < 1)
     Console.WriteLine("  imgui");
     Console.WriteLine("  breakout");
     Console.WriteLine("  draw-triangle");
+    Console.WriteLine("  collision");
     return;
 }
 
@@ -36,6 +37,9 @@ switch (args[0])
         break;
     case "draw-triangle":
         new DrawTriangle().Run();
+        break;
+    case "collision":
+        new CollisionExample().Run();
         break;
     default:
         Console.WriteLine("Unknown example");

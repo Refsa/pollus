@@ -101,6 +101,11 @@ public record struct Vec2f
         return X * other.X + Y * other.Y;
     }
 
+    public Vec2f Cross(Vec2f other)
+    {
+        return new Vec2f(X * other.Y - Y * other.X, Y * other.X - X * other.Y);
+    }
+
     public Vec2f Reflect(Vec2f normal)
     {
         return this - 2f * Dot(normal) * normal;

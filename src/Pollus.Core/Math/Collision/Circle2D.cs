@@ -10,4 +10,6 @@ public record struct Circle2D(Vec2f Center, float Radius) : IShape2D
         Vec2f max = Center + new Vec2f(Radius, Radius);
         return new() { Min = min, Max = max };
     }
+
+    public Circle2D Translate(Vec2f translation) => new(Center + translation, Radius);
 }

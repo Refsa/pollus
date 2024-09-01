@@ -2,12 +2,14 @@ namespace Pollus.Mathematics.Collision2D;
 
 using Pollus.Mathematics;
 
-public record struct Bounds2D(Vec2f Min, Vec2f Max)
+public record struct Bounds2D(Vec2f Min, Vec2f Max) : IShape2D
 {
     public static Bounds2D FromCenterExtents(Vec2f center, Vec2f extents)
     {
         return new() { Min = center - extents, Max = center + extents };
     }
+
+    public Bounds2D Translate(Vec2f translation) => new(Min + translation, Max + translation);
 
     public Bounds2D GetAABB()
     {
