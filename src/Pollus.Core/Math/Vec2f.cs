@@ -129,6 +129,11 @@ public record struct Vec2f
         return X.Approximately(other.X, tolerance) && Y.Approximately(other.Y, tolerance);
     }
 
+    public Vec2f Abs()
+    {
+        return new Vec2f(Math.Abs(X), Math.Abs(Y));
+    }
+
     public static Vec2f Min(Vec2f a, Vec2f b)
     {
         return new Vec2f(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));

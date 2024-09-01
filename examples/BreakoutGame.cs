@@ -49,7 +49,7 @@ public class BreakoutGame
         {
             public Entity EntityA;
             public Entity EntityB;
-            public Intersection Intersection;
+            public Intersection2D Intersection;
         }
         public struct RestartGame { }
         public struct SpawnBall
@@ -337,7 +337,7 @@ public class BreakoutGame
                     {
                         EntityA = Entity.NULL,
                         EntityB = ballEntity,
-                        Intersection = new Intersection
+                        Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
                             Normal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right,
@@ -350,7 +350,7 @@ public class BreakoutGame
                     {
                         EntityA = Entity.NULL,
                         EntityB = ballEntity,
-                        Intersection = new Intersection
+                        Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
                             Normal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up,

@@ -20,7 +20,7 @@ public struct CollisionShape : IComponent
     [FieldOffset(4)] Circle2D circle;
     [FieldOffset(4)] Bounds2D rectangle;
 
-    public Intersection GetIntersection(in Transform2 selfTransform, in CollisionShape otherShape, in Transform2 otherTransform)
+    public Intersection2D GetIntersection(in Transform2 selfTransform, in CollisionShape otherShape, in Transform2 otherTransform)
     {
         return Type switch
         {
