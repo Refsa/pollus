@@ -1,3 +1,5 @@
+#pragma warning disable CS0169
+
 namespace Pollus.Engine.Rendering;
 
 using Pollus.Mathematics;
@@ -10,3 +12,5 @@ public struct SceneUniform
 
     Vec3f _padding;
 }
+
+#pragma warning restore CS0169

@@ -1,4 +1,6 @@
 #if !BROWSER
+#pragma warning disable CS8774
+
 namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;
@@ -235,4 +237,6 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         wgpu.SurfaceConfigure(surface, surfaceConfiguration);
     }
 }
+
+#pragma warning restore CS8774
 #endif

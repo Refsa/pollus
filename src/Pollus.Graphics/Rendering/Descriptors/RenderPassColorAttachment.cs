@@ -1,3 +1,5 @@
+#pragma warning disable CS0169
+
 namespace Pollus.Graphics.Rendering;
 
 using Pollus.Mathematics;
@@ -21,3 +23,5 @@ public struct RenderPassColorAttachment
         ClearValue = clearValue;
     }
 }
+
+#pragma warning restore CS0169

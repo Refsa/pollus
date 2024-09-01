@@ -1,3 +1,5 @@
+#pragma warning disable CS8618
+
 namespace Pollus.Graphics.Imgui;
 
 using Pollus.Graphics.Rendering;
@@ -427,3 +429,5 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         }
     }
 }
+
+#pragma warning restore CS8618

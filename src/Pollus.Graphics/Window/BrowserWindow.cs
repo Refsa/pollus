@@ -1,3 +1,5 @@
+#pragma warning disable CS8618
+
 namespace Pollus.Graphics.Windowing;
 
 using Pollus.Mathematics;
@@ -59,3 +61,5 @@ public partial class BrowserWindow : IWindow
         Emscripten.SetMainLoop(&emOnFrameCallback, 0, false);
     }
 }
+
+#pragma warning restore CS8618

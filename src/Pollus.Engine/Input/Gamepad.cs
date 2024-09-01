@@ -46,7 +46,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 {
     nint externalId;
     nint externalDevice;
-    string deviceName;
+    string? deviceName;
     Guid id;
 
     Dictionary<GamepadButton, ButtonState> buttons = [];
@@ -54,7 +54,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
     HashSet<GamepadButton> changedButtons = [];
     HashSet<GamepadAxis> changedAxes = [];
     
-    public string DeviceName => deviceName;
+    public string DeviceName => deviceName ?? "Unknown Gamepad Device Name";
     public nint ExternalId => externalId;
     public Guid Id => id;
     public InputType Type => InputType.Gamepad;
