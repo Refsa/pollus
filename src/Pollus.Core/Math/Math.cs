@@ -81,6 +81,13 @@ public static class Math
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Atan2<T>(T y, T x)
+        where T : struct, IFloatingPoint<T>, IFloatingPointIeee754<T>
+    {
+        return T.Atan2(y, x);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Sqrt<T>(this T self)
         where T : struct, INumber<T>, IRootFunctions<T>
     {
@@ -119,5 +126,11 @@ public static class Math
         where T : struct, INumber<T>
     {
         var temp = a; a = b; b = temp;
+    }
+
+    public static bool Approximately<T>(this T a, T b, T tolerance)
+        where T : struct, IFloatingPoint<T>
+    {
+        return Abs(a - b) <= tolerance;
     }
 }
