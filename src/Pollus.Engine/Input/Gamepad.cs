@@ -4,7 +4,7 @@ using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
-
+using Pollus.Mathematics;
 
 public enum GamepadButton
 {

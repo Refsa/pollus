@@ -10,6 +10,8 @@ public class Time
     public long FrameCount { get; set; }
     public long Ticks { get; set; }
     public double SecondsSinceStartup { get; set; }
+
+    public float DeltaTimeF => (float)DeltaTime;
 }
 
 public class TimeSystem : Sys<Time>

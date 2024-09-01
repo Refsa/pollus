@@ -58,6 +58,7 @@
 		- [ ] Post Processing
 		- [ ] Polygons/Shapes
 	- [x] Extract rendering data
+	- [ ] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph
 	- [ ] Render target
 	- [ ] Gizmos

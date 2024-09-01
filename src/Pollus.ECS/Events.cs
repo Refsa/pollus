@@ -1,9 +1,7 @@
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Pollus.Collections;
-using Pollus.ECS.Core;
-
 namespace Pollus.ECS;
+
+using System.Runtime.CompilerServices;
+using Pollus.ECS.Core;
 
 public class Events
 {
@@ -63,6 +61,7 @@ public class EventQueue<TEvent> : IEventQueue
     public ReadOnlySpan<TEvent> Events => events.AsSpan()[..cursor];
     public int Count => cursor;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void AddEvent(in TEvent e)
     {
         if (cursor >= events.Length) Array.Resize(ref events, events.Length * 2);
@@ -83,6 +82,7 @@ public class EventQueue<TEvent> : IEventQueue
         prevEnd = cursor;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public EventReader<TEvent> GetReader()
     {
         var reader = new EventReader<TEvent>(this);
@@ -90,11 +90,12 @@ public class EventQueue<TEvent> : IEventQueue
         return reader;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void RemoveReader(EventReader<TEvent> reader)
     {
         readers.Remove(reader);
     }
-    
+
     public EventWriter<TEvent> GetWriter() => new(this);
 }
 
@@ -108,6 +109,7 @@ public struct EventWriter<TEvent>
         this.queue = queue;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Write(in TEvent e) => queue.AddEvent(e);
 }
 
@@ -131,6 +133,7 @@ public class EventReader<TEvent> : IDisposable
         queue.RemoveReader(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ReadOnlySpan<TEvent> Read()
     {
         var data = Peek();
@@ -138,12 +141,14 @@ public class EventReader<TEvent> : IDisposable
         return data;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ReadOnlySpan<TEvent> Peek()
     {
         if (HasAny is false) return ReadOnlySpan<TEvent>.Empty;
         return queue.Events[Cursor..queue.Count];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Consume()
     {
         Cursor = queue.Count;

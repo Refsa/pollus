@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using Pollus.Debugging;
 using Pollus.ECS.Core;
 using System.Text;
 
@@ -74,9 +75,16 @@ public record class Stage : IDisposable
 
         foreach (var system in Systems)
         {
-            if (system.ShouldRun(world))
+            try
             {
-                system.Tick(world);
+                if (system.ShouldRun(world))
+                {
+                    system.Tick(world);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Label} in stage {Label.Label}.");
             }
         }
     }

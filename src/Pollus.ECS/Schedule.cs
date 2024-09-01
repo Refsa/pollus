@@ -53,15 +53,7 @@ public class Schedule : IDisposable
             stage.Schedule(world);
         }
     }
-
-    public void Tick(World world)
-    {
-        foreach (var stage in stages)
-        {
-            stage.Tick(world);
-        }
-    }
-
+    
     public Stage? GetStage(StageLabel label)
     {
         return stages.Find(s => s.Label == label);
