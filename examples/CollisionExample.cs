@@ -47,10 +47,7 @@ public class CollisionExample : IExample
                     ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 32f)),
                     Color = Color.BLUE,
                 },
-                new RectangleShape2D
-                {
-                    Shape = Bounds2D.FromCenterExtents(Vec2f.Zero, Vec2f.One * 32f),
-                }
+                CollisionShape.Rectangle(Vec2f.Zero, Vec2f.One * 32f)
             ));
 
             commands.Spawn(Entity.With(
@@ -67,10 +64,7 @@ public class CollisionExample : IExample
                     End = new Vec2f(128f + 96f, 128f + 96f),
                     Speed = 150f,
                 },
-                new CircleShape2D
-                {
-                    Shape = new Circle2D(Vec2f.Zero, 32f),
-                }
+                CollisionShape.Circle(32f)
             ));
         }))
         .AddSystem(CoreStage.Update, SystemBuilder.FnSystem("Update",

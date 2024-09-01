@@ -10,11 +10,13 @@ using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Imgui;
 using Pollus.Engine.Input;
+using Pollus.Engine.Physics;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
+using Pollus.Mathematics.Collision2D;
 using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
@@ -35,11 +37,6 @@ public class BreakoutGame
         public required Vec2f Value;
     }
 
-    struct Collider : IComponent
-    {
-        public required Rect Bounds;
-    }
-
     struct MainMixer : IComponent
     {
 
@@ -52,7 +49,7 @@ public class BreakoutGame
         {
             public Entity EntityA;
             public Entity EntityB;
-            public Vec2f Normal;
+            public Intersection Intersection;
         }
         public struct RestartGame { }
         public struct SpawnBall
@@ -114,16 +111,17 @@ public class BreakoutGame
             });
             gameState.spritesheet = spriteMaterial;
 
+            var paddleSize = new Vec2f(96f, 16f);
             commands.Spawn(Entity.With(
                 new Player(),
                 new Transform2
                 {
-                    Position = (window.Size.X / 2f - 32f, 32f),
-                    Scale = (96f, 16f),
+                    Position = new Vec2f(window.Size.X / 2f - 32f, 32f),
+                    Scale = paddleSize,
                     Rotation = 0f,
                 },
                 new Paddle(),
-                new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(96f, 16f)) },
+                CollisionShape.Rectangle(Vec2f.Zero, paddleSize * 0.5f),
                 new Sprite
                 {
                     Material = spriteMaterial,
@@ -190,13 +188,13 @@ public class BreakoutGame
         .AddSystem(CoreStage.First, FnSystem("BrickSpawner",
         static (Commands commands, IWindow window, GameState gameState,
                 EventReader<Event.RestartGame> eRestartGame,
-                Query<Transform2, Brick, Collider> qBricks
+                Query<Transform2, Brick> qBricks
         ) =>
         {
             if (!eRestartGame.HasAny) return;
             eRestartGame.Consume();
 
-            qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick, ref Collider brickCollider)
+            qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick)
             {
                 commands.Despawn(brickEntity);
             });
@@ -219,7 +217,7 @@ public class BreakoutGame
                             Scale = new Vec2f(width, height),
                             Rotation = 0f,
                         },
-                        new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(width, height)) },
+                        CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(width, height) * 0.5f),
                         new Sprite
                         {
                             Material = gameState.spritesheet,
@@ -252,7 +250,7 @@ public class BreakoutGame
                         Slice = new Rect(0, 0, 16, 16),
                         Color = Color.WHITE,
                     },
-                    new Collider { Bounds = Rect.FromCenterScale(Vec2f.Zero, new Vec2f(16f, 16f)) }
+                    CollisionShape.Circle(8f)
                 ));
         }))
         .AddSystem(CoreStage.Update, FnSystem("UI",
@@ -271,7 +269,7 @@ public class BreakoutGame
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
                 Time time, IWindow window, Query query,
-                Query<Transform2, Collider>.Filter<All<Player>> qPlayer
+                Query<Transform2, CollisionShape>.Filter<All<Player>> qPlayer
         ) =>
         {
             var keyboardInput = keys?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
@@ -292,40 +290,43 @@ public class BreakoutGame
             var player = qPlayer.Single();
             ref var pTransform = ref player.Component0;
             ref var pCollider = ref player.Component1;
+            var colliderShape = pCollider.GetShape<Bounds2D>();
 
             pTransform.Position += movePaddle * 600f * (float)time.DeltaTime;
             pTransform.Position = pTransform.Position.Clamp(
-                windowRect.Min - pCollider.Bounds.Min,
-                windowRect.Max - pCollider.Bounds.Max);
+                windowRect.Min - colliderShape.Min,
+                windowRect.Max - colliderShape.Max);
 
             if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
         }))
         .AddSystem(CoreStage.Update, FnSystem("CollisionSystem",
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,
                 EventWriter<Event.Collision> eCollision,
-                Query<Transform2, Ball, Velocity, Collider> qBalls,
-                Query<Transform2, Collider> qColliders
+                Query<Transform2, Velocity, CollisionShape>.Filter<All<Ball>> qBalls,
+                Query<Transform2, CollisionShape> qColliders
         ) =>
         {
-            qBalls.ForEach(delegate (in Entity _ballEntity, ref Transform2 ballTransform, ref Ball ball, ref Velocity velocity, ref Collider ballCollider)
+            qBalls.ForEach(delegate (in Entity _ballEntity, ref Transform2 _ballTransform, ref Velocity velocity, ref CollisionShape _ballCollider)
             {
-                var nextPos = ballTransform.Position + velocity.Value * (float)time.DeltaTime;
+                var nextPos = _ballTransform.Position + velocity.Value * (float)time.DeltaTime;
 
-                var ballBounds = ballCollider.Bounds.Move(nextPos);
+                var ballTransform = _ballTransform;
+                var ballCollider = _ballCollider;
                 var ballEntity = _ballEntity;
 
-                qColliders.ForEach(delegate (in Entity colliderEntity, ref Transform2 colliderTransform, ref Collider collider)
+                qColliders.ForEach(delegate (in Entity colliderEntity, ref Transform2 colliderTransform, ref CollisionShape collider)
                 {
                     if (colliderEntity == ballEntity) return;
 
-                    var colliderBounds = collider.Bounds.Move(colliderTransform.Position);
-                    if (ballBounds.Intersects(colliderBounds))
+                    var intersection = collider.GetIntersection(colliderTransform, ballCollider, ballTransform);
+
+                    if (intersection.IsIntersecting)
                     {
                         eCollision.Write(new()
                         {
                             EntityA = colliderEntity,
                             EntityB = ballEntity,
-                            Normal = ballBounds.IntersectionNormal(colliderBounds),
+                            Intersection = intersection,
                         });
                     }
                 });
@@ -336,7 +337,11 @@ public class BreakoutGame
                     {
                         EntityA = Entity.NULL,
                         EntityB = ballEntity,
-                        Normal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right,
+                        Intersection = new Intersection
+                        {
+                            IsIntersecting = true,
+                            Normal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right,
+                        }
                     });
                 }
                 if (nextPos.Y < 8f || nextPos.Y > window.Size.Y - 8f)
@@ -345,7 +350,11 @@ public class BreakoutGame
                     {
                         EntityA = Entity.NULL,
                         EntityB = ballEntity,
-                        Normal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up,
+                        Intersection = new Intersection
+                        {
+                            IsIntersecting = true,
+                            Normal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up,
+                        }
                     });
                 }
             });
@@ -353,23 +362,26 @@ public class BreakoutGame
         .AddSystem(CoreStage.Update, FnSystem("CollisionResponseSystem",
         static (Commands commands, EventReader<Event.Collision> eCollision,
                 EventWriter<Event.BrickDestroyed> eBrickDestroyed,
-                Query query, Query<Velocity> qVelocities
+                Query query, Query<Transform2, Velocity> qBodies
         ) =>
         {
-            qVelocities.ForEach((in Entity entity, ref Velocity velocity) =>
+            qBodies.ForEach((in Entity entity, ref Transform2 transform, ref Velocity velocity) =>
             {
                 var reflect = Vec2f.Zero;
+                var correctedPos = transform.Position;
                 foreach (var coll in eCollision.Peek())
                 {
                     if (coll.EntityA == entity || coll.EntityB == entity)
                     {
-                        reflect += coll.Normal;
+                        reflect += coll.Intersection.Normal;
+                        correctedPos += coll.Intersection.Normal * coll.Intersection.Distance;
                     }
                 }
 
                 if (reflect.Length() > 0)
                 {
                     velocity.Value = velocity.Value.Reflect(reflect.Normalized());
+                    transform.Position = correctedPos;
                 }
             });
 
@@ -397,10 +409,10 @@ public class BreakoutGame
         }).After("CollisionResponseSystem"))
         .AddSystem(CoreStage.Update, FnSystem("BallOutOfBoundsSystem",
         static (Commands commands, GameState gameState, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
-                Query<Transform2, Ball, Collider> qBalls, IWindow window
+                Query<Transform2, Ball> qBalls, IWindow window
         ) =>
         {
-            qBalls.ForEach(delegate (in Entity ballEntity, ref Transform2 ballTransform, ref Ball ball, ref Collider ballCollider)
+            qBalls.ForEach(delegate (in Entity ballEntity, ref Transform2 ballTransform, ref Ball ball)
             {
                 if (ballTransform.Position.Y > 16f) return;
                 commands.Despawn(ballEntity);
@@ -419,8 +431,8 @@ public class BreakoutGame
         {
             if (eBrickDestroyed.HasAny)
             {
-                eBrickDestroyed.Consume();
                 gameState.Score += eBrickDestroyed.Count * 100;
+                eBrickDestroyed.Consume();
             }
 
             if (eCollision.HasAny)

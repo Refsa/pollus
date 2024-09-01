@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Physics;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.ECS;
 using Pollus.Engine.Transform;
@@ -12,48 +13,52 @@ public enum CollisionShapeType
     Rectangle,
 }
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 20)]
 public struct CollisionShape : IComponent
 {
-    [FieldOffset(0)] public readonly CollisionShapeType Type;
-    [FieldOffset(4)] Circle2D Circle;
-    [FieldOffset(4)] Bounds2D Rectangle;
+    [FieldOffset(0)] public CollisionShapeType Type;
+    [FieldOffset(4)] Circle2D circle;
+    [FieldOffset(4)] Bounds2D rectangle;
 
     public Intersection GetIntersection(in Transform2 selfTransform, in CollisionShape otherShape, in Transform2 otherTransform)
-    {   
+    {
         return Type switch
         {
-            CollisionShapeType.Circle => otherShape.Type switch {
-                CollisionShapeType.Circle => Circle.Translate(selfTransform.Position).GetIntersection(otherShape.Circle.Translate(otherTransform.Position)),
-                CollisionShapeType.Rectangle => Circle.Translate(selfTransform.Position).GetIntersection(otherShape.Rectangle.Translate(otherTransform.Position)),
-                _ => throw new System.NotImplementedException(),
+            CollisionShapeType.Circle => otherShape.Type switch
+            {
+                CollisionShapeType.Circle => circle.Translate(selfTransform.Position).GetIntersection(otherShape.circle.Translate(otherTransform.Position)),
+                CollisionShapeType.Rectangle => circle.Translate(selfTransform.Position).GetIntersection(otherShape.rectangle.Translate(otherTransform.Position)),
+                _ => throw new NotImplementedException(),
             },
-            CollisionShapeType.Rectangle => otherShape.Type switch {
-                CollisionShapeType.Circle => Rectangle.Translate(selfTransform.Position).GetIntersection(otherShape.Circle.Translate(otherTransform.Position)),
-                CollisionShapeType.Rectangle => Rectangle.Translate(selfTransform.Position).GetIntersection(otherShape.Rectangle.Translate(otherTransform.Position)),
-                _ => throw new System.NotImplementedException(),
+            CollisionShapeType.Rectangle => otherShape.Type switch
+            {
+                CollisionShapeType.Circle => rectangle.Translate(selfTransform.Position).GetIntersection(otherShape.circle.Translate(otherTransform.Position)),
+                CollisionShapeType.Rectangle => rectangle.Translate(selfTransform.Position).GetIntersection(otherShape.rectangle.Translate(otherTransform.Position)),
+                _ => throw new NotImplementedException(),
             },
-            _ => throw new System.NotImplementedException(),
+            _ => throw new NotImplementedException(),
         };
     }
-}
 
-public struct CircleShape2D : ComponentWrapper<CircleShape2D>.Target<CollisionShape>
-{
-    static CircleShape2D() => ComponentWrapper<CircleShape2D>.Target<CollisionShape>.Init();
+    public TShape GetShape<TShape>() where TShape : struct, IShape2D
+    {
+        return Type switch
+        {
+            CollisionShapeType.Circle => Unsafe.As<Circle2D, TShape>(ref circle),
+            CollisionShapeType.Rectangle => Unsafe.As<Bounds2D, TShape>(ref rectangle),
+            _ => throw new NotImplementedException(),
+        };
+    }
 
-    public readonly CollisionShapeType Type = CollisionShapeType.Circle;
-    public required Circle2D Shape;
+    public static CollisionShape Circle(float radius) => new()
+    {
+        Type = CollisionShapeType.Circle,
+        circle = new Circle2D(Vec2f.Zero, radius),
+    };
 
-    public CircleShape2D() { }
-}
-
-public struct RectangleShape2D : ComponentWrapper<RectangleShape2D>.Target<CollisionShape>
-{
-    static RectangleShape2D() => ComponentWrapper<RectangleShape2D>.Target<CollisionShape>.Init();
-
-    public readonly CollisionShapeType Type = CollisionShapeType.Rectangle;
-    public required Bounds2D Shape;
-
-    public RectangleShape2D() { }
+    public static CollisionShape Rectangle(in Vec2f center, in Vec2f extents) => new()
+    {
+        Type = CollisionShapeType.Rectangle,
+        rectangle = Bounds2D.FromCenterExtents(center, extents),
+    };
 }

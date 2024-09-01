@@ -4,6 +4,8 @@ using Pollus.Mathematics;
 
 public struct Intersection
 {
+    public static readonly Intersection None = new Intersection { IsIntersecting = false };
+
     public required bool IsIntersecting;
     public Vec2f Point;
     public Vec2f Normal;
