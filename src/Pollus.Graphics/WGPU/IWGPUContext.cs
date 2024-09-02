@@ -27,6 +27,7 @@ unsafe public interface IWGPUContext : IDisposable
     void Present();
     void ResizeSurface(Vec2<int> size);
 
+#if !BROWSER
     unsafe Silk.NET.WebGPU.SurfaceTexture SurfaceGetCurrentTexture()
     {
         Silk.NET.WebGPU.SurfaceTexture surfaceTexture = new();
@@ -38,6 +39,7 @@ unsafe public interface IWGPUContext : IDisposable
     {
         wgpu.TextureRelease(surfaceTexture.Texture);
     }
+#endif
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);
     GPUCommandEncoder CreateCommandEncoder(ReadOnlySpan<char> label) => new(this, label);

@@ -4,6 +4,17 @@ using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
 
+public interface IRenderData : IDisposable
+{
+}
+
+public interface IRenderDataLoader
+{
+    int TargetType { get; }
+
+    void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle);
+}
+
 public class RenderAssets
 {
     Dictionary<int, IRenderDataLoader> loaders = new();
@@ -41,15 +52,4 @@ public class RenderAssets
         if (renderData.ContainsKey(handle)) return;
         loader.Prepare(this, gpuContext, assetServer, handle);
     }
-}
-
-public interface IRenderData : IDisposable
-{
-}
-
-public interface IRenderDataLoader
-{
-    int TargetType { get; }
-
-    void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle);
 }

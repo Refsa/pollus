@@ -6,6 +6,7 @@ public interface IFetch
 {
     static abstract void Register();
 }
+
 public interface IFetch<out T> : IFetch
 {
     T DoFetch(World world, ISystem system);
@@ -72,14 +73,4 @@ public static class Fetch
 
         return Lookup<T>.Info.Fetch as IFetch<T>;
     }
-}
-
-internal partial class FetchInit
-{
-    public static void Init()
-    {
-        GeneratedFetchInits();
-    }
-
-    static partial void GeneratedFetchInits();
 }

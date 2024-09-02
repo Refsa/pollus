@@ -7,7 +7,6 @@ public class World : IDisposable
 {
     static World()
     {
-        FetchInit.Init();
         ResourceFetch<World>.Register();
         ResourceFetch<Resources>.Register();
         ResourceFetch<Events>.Register();
