@@ -8,7 +8,7 @@ using Pollus.Graphics.WGPU;
 struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMaterial>>
     where TMaterial : IMaterial
 {
-    public required RenderBatches Batches { get; init; }
+    public required MeshRenderBatches Batches { get; init; }
     public required IWGPUContext GpuContext { get; init; }
 
     public void Execute(ref Transform2 transform, ref Renderable<TMaterial> renderable)
@@ -27,7 +27,7 @@ struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMater
     }
 }
 
-class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, RenderBatches, Query<Transform2, Renderable<TMaterial>>>
+class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, MeshRenderBatches, Query<Transform2, Renderable<TMaterial>>>
     where TMaterial : IMaterial
 {
     public ExtractRenderablesSystem()
@@ -36,7 +36,7 @@ class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServ
 
     protected override void OnTick(
         RenderAssets renderAssets, AssetServer assetServer,
-        IWGPUContext gpuContext, RenderBatches batches,
+        IWGPUContext gpuContext, MeshRenderBatches batches,
         Query<Transform2, Renderable<TMaterial>> query)
     {
         foreach (var material in assetServer.GetAssets<TMaterial>().AssetInfos)

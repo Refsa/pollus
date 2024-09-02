@@ -1,16 +1,7 @@
-using Pollus.Collections;
-
 namespace Pollus.Engine.Assets;
 
-public record struct Handle(int AssetType, int ID)
-{
-    public static Handle Null => new(-1, -1);
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(AssetType, ID);
-    }
-}
+using Pollus.Collections;
+using Pollus.Utils;
 
 public record struct Handle<T> where T : notnull
 {

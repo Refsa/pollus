@@ -10,6 +10,7 @@ using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
+using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
 public class RenderingExample

@@ -6,15 +6,16 @@ using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
+using Pollus.Utils;
 
-public class RenderBatches
+public class MeshRenderBatches
 {
-    List<RenderBatch> batches = new();
+    List<MeshRenderBatch> batches = new();
     Dictionary<int, int> batchLookup = new();
 
-    public ListEnumerable<RenderBatch> Batches => new(batches);
+    public ListEnumerable<MeshRenderBatch> Batches => new(batches);
 
-    public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out RenderBatch batch)
+    public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out MeshRenderBatch batch)
     {
         var key = HashCode.Combine(meshHandle, materialHandle);
         if (batchLookup.TryGetValue(key, out var batchIdx))
@@ -26,12 +27,12 @@ public class RenderBatches
         return false;
     }
 
-    public RenderBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
+    public MeshRenderBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
     {
         var key = HashCode.Combine(meshHandle.GetHashCode(), materialHandle.GetHashCode());
         if (batchLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
 
-        var batch = new RenderBatch()
+        var batch = new MeshRenderBatch()
         {
             Key = key,
             Mesh = meshHandle,
@@ -59,7 +60,7 @@ public class RenderBatches
     }
 }
 
-public class RenderBatch : IDisposable
+public class MeshRenderBatch : IDisposable
 {
     public required int Key { get; init; }
     public required Handle<MeshAsset> Mesh { get; init; }
@@ -127,7 +128,7 @@ public class RenderBatchDraw : IRenderStepDraw
 
     public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
     {
-        var batches = resources.Get<RenderBatches>();
+        var batches = resources.Get<MeshRenderBatches>();
 
         foreach (var batch in batches.Batches)
         {

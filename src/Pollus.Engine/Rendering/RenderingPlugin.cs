@@ -19,14 +19,14 @@ public class RenderingPlugin : IPlugin
         AssetsFetch<ShaderAsset>.Register();
         AssetsFetch<UniformAsset<SceneUniform>>.Register();
         ResourceFetch<RenderAssets>.Register();
-        ResourceFetch<RenderBatches>.Register();
+        ResourceFetch<MeshRenderBatches>.Register();
         ResourceFetch<RenderContext>.Register();
         ResourceFetch<RenderSteps>.Register();
     }
 
     public void Apply(World world)
     {
-        world.Resources.Add(new RenderBatches());
+        world.Resources.Add(new MeshRenderBatches());
         world.Resources.Add(new RenderContext());
         world.Resources.Add(new RenderSteps());
         world.Resources.Add(new RenderAssets()

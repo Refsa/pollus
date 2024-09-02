@@ -2,6 +2,7 @@ namespace Pollus.Engine.Rendering;
 
 using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
+using Pollus.Utils;
 
 public class RenderAssets
 {
@@ -32,9 +33,9 @@ public class RenderAssets
 
     public void Prepare(IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
-        if (!loaders.TryGetValue(handle.AssetType, out var loader))
+        if (!loaders.TryGetValue(handle.Type, out var loader))
         {
-            throw new InvalidOperationException($"No loader found for type {AssetLookup.GetType(handle.AssetType)}");
+            throw new InvalidOperationException($"No loader found for type {AssetLookup.GetType(handle.Type)}");
         }
 
         if (renderData.ContainsKey(handle)) return;
