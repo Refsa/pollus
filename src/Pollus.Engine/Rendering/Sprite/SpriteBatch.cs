@@ -3,123 +3,39 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
+using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class SpriteBatch : IDisposable
+public record struct SpriteBatchKey(Handle Material);
+
+public class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
 {
-    public int Key => Material.GetHashCode();
-    public required Handle Material { get; init; }
-    public required GPUBuffer InstanceBuffer;
-
-    VertexData instanceData;
-
-    public int Count;
-    public bool IsEmpty => Count == 0;
-    public bool IsFull => Count == instanceData.Capacity;
-    public int Capacity => (int)instanceData.Capacity;
-
-    public SpriteBatch()
+    public struct InstanceData
     {
-        instanceData = VertexData.From(16, SpriteMaterial.InstanceFormats);
+        public required Vec4f Model_0;
+        public required Vec4f Model_1;
+        public required Vec4f Model_2;
+        public required Vec4f Slice;
+        public required Vec4f Color;
     }
 
-    public void Dispose()
+    public Handle Material { get; init; }
+
+    public SpriteBatch(IWGPUContext gpuContext, in SpriteBatchKey key) : base(gpuContext)
     {
-        InstanceBuffer.Dispose();
-    }
-
-    public void Reset()
-    {
-        Count = 0;
-    }
-
-    public void Write(Vec4f model_0, Vec4f model_1, Vec4f model_2, Vec4f slice, Vec4f color)
-    {
-        instanceData.Write(Count, model_0, 0);
-        instanceData.Write(Count, model_1, 1);
-        instanceData.Write(Count, model_2, 2);
-        instanceData.Write(Count, slice, 3);
-        instanceData.Write(Count, color, 4);
-
-        Count++;
-    }
-
-    public void WriteBuffer()
-    {
-        InstanceBuffer.Write(instanceData.Slice(0, Count), 0);
-    }
-
-    public void Resize(IWGPUContext gpuContext, int capacity)
-    {
-        InstanceBuffer.Dispose();
-        InstanceBuffer = gpuContext.CreateBuffer(new()
-        {
-            Label = $"InstanceBuffer_{Key}",
-            Size = (ulong)capacity * (ulong)SpriteMaterial.InstanceFormats.Stride(),
-            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-        });
-
-        instanceData.Resize((uint)capacity);
+        Key = key.GetHashCode();
+        Material = key.Material;
     }
 }
 
-public class SpriteBatches : IDisposable
+public class SpriteBatches : RenderBatches<SpriteBatch, SpriteBatchKey>
 {
-    List<SpriteBatch> batches = new();
-    Dictionary<int, int> batcheLookup = new();
-
-    public ListEnumerable<SpriteBatch> Batches => new(batches);
-
-    public void Dispose()
+    protected override SpriteBatch CreateBatch(IWGPUContext context, in SpriteBatchKey key)
     {
-        foreach (var batch in batches)
-        {
-            batch.Dispose();
-        }
-        batches.Clear();
-    }
-
-    public bool TryGetBatch(Handle materialHandle, out SpriteBatch batch)
-    {
-        if (batcheLookup.TryGetValue(materialHandle.GetHashCode(), out var batchIdx))
-        {
-            batch = batches[batchIdx];
-            return true;
-        }
-        batch = null!;
-        return false;
-    }
-
-    public SpriteBatch CreateBatch(IWGPUContext context, int capacity, Handle materialHandle)
-    {
-        var key = materialHandle.GetHashCode();
-        if (batcheLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
-
-        var batch = new SpriteBatch()
-        {
-            Material = materialHandle,
-            InstanceBuffer = context.CreateBuffer(new()
-            {
-                Label = $"InstanceBuffer_{key}",
-                Size = (ulong)capacity * (ulong)SpriteMaterial.InstanceFormats.Stride(),
-                Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-            }),
-        };
-
-        batcheLookup.Add(key, batches.Count);
-        batches.Add(batch);
-        return batch;
-    }
-
-    public void Reset()
-    {
-        foreach (var batch in batches)
-        {
-            batch.Reset();
-        }
+        return new SpriteBatch(context, key);
     }
 }
 

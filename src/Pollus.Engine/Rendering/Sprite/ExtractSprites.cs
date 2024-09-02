@@ -12,18 +12,16 @@ struct ExtractSpritesJob : IForEach<Transform2, Sprite>
 
     public void Execute(ref Transform2 transform, ref Sprite sprite)
     {
-        if (!Batches.TryGetBatch(sprite.Material, out var batch))
-        {
-            batch = Batches.CreateBatch(GpuContext, 16, sprite.Material);
-        }
-
-        if (batch.IsFull)
-        {
-            batch.Resize(GpuContext, batch.Capacity * 2);
-        }
-
+        var batch = Batches.GetOrCreate(GpuContext, new SpriteBatchKey(sprite.Material));
         var matrix = transform.ToMat4f().Transpose();
-        batch.Write(matrix.Col0, matrix.Col1, matrix.Col2, sprite.Slice, sprite.Color);
+        batch.Write(new SpriteBatch.InstanceData
+        {
+            Model_0 = matrix.Col0,
+            Model_1 = matrix.Col1,
+            Model_2 = matrix.Col2,
+            Slice = sprite.Slice,
+            Color = sprite.Color,
+        });
     }
 }
 
