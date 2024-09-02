@@ -13,13 +13,13 @@ public class RenderingPlugin : IPlugin
 {
     static RenderingPlugin()
     {
-        AssetsFetch<MeshAsset>.Register();
         AssetsFetch<ImageAsset>.Register();
         AssetsFetch<SamplerAsset>.Register();
         AssetsFetch<ShaderAsset>.Register();
+
         AssetsFetch<UniformAsset<SceneUniform>>.Register();
+
         ResourceFetch<RenderAssets>.Register();
-        ResourceFetch<MeshRenderBatches>.Register();
         ResourceFetch<RenderContext>.Register();
         ResourceFetch<RenderSteps>.Register();
     }
@@ -30,7 +30,6 @@ public class RenderingPlugin : IPlugin
         world.Resources.Add(new RenderContext());
         world.Resources.Add(new RenderSteps());
         world.Resources.Add(new RenderAssets()
-            .AddLoader(new MeshRenderDataLoader())
             .AddLoader(new TextureRenderDataLoader())
             .AddLoader(new SamplerRenderDataLoader())
             .AddLoader(new UniformRenderDataLoader<SceneUniform>())
@@ -50,14 +49,6 @@ public class RenderingPlugin : IPlugin
             new MaterialPlugin<Material>(),
             new SpritePlugin(),
         ]);
-
-        world.Schedule.AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem(
-            "SetupRendering",
-            static (RenderSteps renderGraph) => 
-            {
-                renderGraph.Add(new RenderBatchDraw());
-            }
-        ));
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             "UpdateSceneUniform",
@@ -85,17 +76,6 @@ public class RenderingPlugin : IPlugin
                 var uniformAsset = uniformAssets.Get(handle)!;
                 renderAssets.Prepare(gpuContext, assetServer, handle);
                 renderAssets.Get<UniformRenderData>(handle).WriteBuffer(uniformAsset.Value);
-            }
-        ));
-
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "PrepareMeshAssets",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets) =>
-            {
-                foreach (var meshAsset in assetServer.GetAssets<MeshAsset>().AssetInfos)
-                {
-                    renderAssets.Prepare(gpuContext, assetServer, meshAsset.Handle);
-                }
             }
         ));
 

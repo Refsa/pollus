@@ -3,126 +3,50 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
+using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class MeshRenderBatches
+public record struct MeshBatchKey
 {
-    List<MeshRenderBatch> batches = new();
-    Dictionary<int, int> batchLookup = new();
+    readonly int hashCode;
+    public readonly Handle<MeshAsset> Mesh;
+    public readonly Handle Material;
 
-    public ListEnumerable<MeshRenderBatch> Batches => new(batches);
-
-    public bool TryGetBatch(Handle<MeshAsset> meshHandle, Handle materialHandle, out MeshRenderBatch batch)
+    public MeshBatchKey(Handle<MeshAsset> mesh, Handle material)
     {
-        var key = HashCode.Combine(meshHandle, materialHandle);
-        if (batchLookup.TryGetValue(key, out var batchIdx))
-        {
-            batch = batches[batchIdx];
-            return true;
-        }
-        batch = null!;
-        return false;
+        Mesh = mesh;
+        Material = material;
+        hashCode = HashCode.Combine(mesh, material);
     }
 
-    public MeshRenderBatch CreateBatch(IWGPUContext context, int capacity, Handle<MeshAsset> meshHandle, Handle materialHandle)
+    public override int GetHashCode() => hashCode;
+}
+
+public class MeshRenderBatches : RenderBatches<MeshRenderBatch, MeshBatchKey>
+{
+    protected override MeshRenderBatch CreateBatch(IWGPUContext context, in MeshBatchKey key)
     {
-        var key = HashCode.Combine(meshHandle.GetHashCode(), materialHandle.GetHashCode());
-        if (batchLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
-
-        var batch = new MeshRenderBatch()
-        {
-            Key = key,
-            Mesh = meshHandle,
-            Material = materialHandle,
-            Transforms = new Mat4f[capacity],
-            InstanceBuffer = context.CreateBuffer(new()
-            {
-                Label = $"InstanceBuffer_{key}",
-                Size = (ulong)capacity * (ulong)Mat4f.SizeInBytes,
-                Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-            }),
-        };
-
-        batchLookup.Add(key, batches.Count);
-        batches.Add(batch);
-        return batch;
-    }
-
-    public void Reset()
-    {
-        foreach (var batch in batches)
-        {
-            batch.Reset();
-        }
+        return new MeshRenderBatch(context, key);
     }
 }
 
-public class MeshRenderBatch : IDisposable
+public class MeshRenderBatch : RenderBatch<Mat4f>
 {
-    public required int Key { get; init; }
-    public required Handle<MeshAsset> Mesh { get; init; }
-    public required Handle Material { get; init; }
-    public required Mat4f[] Transforms;
-    public required GPUBuffer InstanceBuffer;
+    public Handle<MeshAsset> Mesh { get; init; }
+    public Handle Material { get; init; }
 
-    public int Count;
-    public bool IsEmpty => Count == 0;
-    public bool IsFull => Count == Transforms.Length;
-    public int Capacity => Transforms.Length;
-
-    public void Dispose()
+    public MeshRenderBatch(IWGPUContext gpuContext, in MeshBatchKey key) : base(gpuContext)
     {
-        InstanceBuffer.Dispose();
-    }
-
-    public void Reset()
-    {
-        Count = 0;
-    }
-
-    public void Write(Mat4f transform)
-    {
-        Transforms[Count++] = transform;
-    }
-
-    public void Write(ReadOnlySpan<Mat4f> transforms)
-    {
-        transforms.CopyTo(Transforms.AsSpan()[Count..]);
-        Count += transforms.Length;
-    }
-
-    public Span<Mat4f> GetBlock(int count)
-    {
-        var block = Transforms.AsSpan()[Count..(Count + count)];
-        Count += count;
-        return block;
-    }
-
-    public void WriteBuffer()
-    {
-        InstanceBuffer.Write<Mat4f>(Transforms.AsSpan()[..Count], 0);
-    }
-
-    public void Resize(IWGPUContext gpuContext, int capacity)
-    {
-        InstanceBuffer.Dispose();
-        InstanceBuffer = gpuContext.CreateBuffer(new()
-        {
-            Label = $"InstanceBuffer_{Key}",
-            Size = (ulong)capacity * (ulong)Mat4f.SizeInBytes,
-            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-        });
-
-        var transforms = new Mat4f[capacity];
-        Transforms.AsSpan().CopyTo(transforms);
-        Transforms = transforms;
-    }
+        Key = key.GetHashCode();
+        Mesh = key.Mesh;
+        Material = key.Material;
+    }   
 }
 
-public class RenderBatchDraw : IRenderStepDraw
+public class MeshRenderBatchDraw : IRenderStepDraw
 {
     public RenderStep2D Stage => RenderStep2D.Main;
 

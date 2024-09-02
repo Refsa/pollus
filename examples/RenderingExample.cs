@@ -77,7 +77,7 @@ public class RenderingExample
                             Scale = (16f, 16f),
                             Rotation = 0f,
                         },
-                        new Renderable<Material>
+                        new MeshDraw<Material>
                         {
                             Mesh = primitives.Quad,
                             Material = materialHandles[(x + y) % materialHandles.Length],

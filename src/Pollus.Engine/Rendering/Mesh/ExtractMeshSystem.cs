@@ -5,29 +5,20 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 
-struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, Renderable<TMaterial>>
+struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, MeshDraw<TMaterial>>
     where TMaterial : IMaterial
 {
     public required MeshRenderBatches Batches { get; init; }
     public required IWGPUContext GpuContext { get; init; }
 
-    public void Execute(ref Transform2 transform, ref Renderable<TMaterial> renderable)
+    public void Execute(ref Transform2 transform, ref MeshDraw<TMaterial> renderable)
     {
-        if (!Batches.TryGetBatch(renderable.Mesh, renderable.Material, out var batch))
-        {
-            batch = Batches.CreateBatch(GpuContext, 16, renderable.Mesh, renderable.Material);
-        }
-
-        if (batch.IsFull)
-        {
-            batch.Resize(GpuContext, batch.Capacity * 2);
-        }
-
+        var batch = Batches.GetOrCreate(GpuContext, new MeshBatchKey(renderable.Mesh, renderable.Material));
         batch.Write(transform.ToMat4f());
     }
 }
 
-class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, MeshRenderBatches, Query<Transform2, Renderable<TMaterial>>>
+class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, MeshRenderBatches, Query<Transform2, MeshDraw<TMaterial>>>
     where TMaterial : IMaterial
 {
     public ExtractRenderablesSystem()
@@ -37,7 +28,7 @@ class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServ
     protected override void OnTick(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, MeshRenderBatches batches,
-        Query<Transform2, Renderable<TMaterial>> query)
+        Query<Transform2, MeshDraw<TMaterial>> query)
     {
         foreach (var material in assetServer.GetAssets<TMaterial>().AssetInfos)
         {

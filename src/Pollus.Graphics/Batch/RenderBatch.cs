@@ -6,6 +6,7 @@ using Pollus.Utils;
 
 public interface IRenderBatch
 {
+    int Capacity { get; }
     int Count { get; }
     bool IsEmpty { get; }
     bool IsFull { get; }
@@ -24,6 +25,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public GPUBuffer InstanceBuffer { get; private set; }
 
     public int Count => count;
+    public int Capacity => scratch.Length;
     public bool IsEmpty => count == 0;
     public bool IsFull => count == scratch.Length;
 
