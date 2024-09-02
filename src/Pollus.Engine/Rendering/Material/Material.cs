@@ -1,8 +1,17 @@
 namespace Pollus.Engine.Rendering;
 
-using System.Text;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
+
+public interface IMaterial
+{
+    public static abstract string Name { get; }
+    public static abstract VertexBufferLayout[] VertexLayouts { get; }
+    public static abstract RenderPipelineDescriptor PipelineDescriptor { get; }
+
+    Handle<ShaderAsset> ShaderSource { get; set; }
+    IBinding[][] Bindings { get; }
+}
 
 public class Material : IMaterial
 {
@@ -42,14 +51,3 @@ public class Material : IMaterial
     public required TextureBinding Texture { get; set; }
     public required SamplerBinding Sampler { get; set; }
 }
-
-public interface IMaterial
-{
-    public static abstract string Name { get; }
-    public static abstract VertexBufferLayout[] VertexLayouts { get; }
-    public static abstract RenderPipelineDescriptor PipelineDescriptor { get; }
-
-    Handle<ShaderAsset> ShaderSource { get; set; }
-    IBinding[][] Bindings { get; }
-}
-
