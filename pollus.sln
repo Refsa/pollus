@@ -23,6 +23,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Emscripten", "src\Po
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pollus.Examples", "examples\Pollus.Examples.csproj", "{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0855686E-7B95-45D5-977B-3255DB48B90A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Generators", "src\Pollus.Generators\Pollus.Generators.csproj", "{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,8 +73,15 @@ Global
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5EBB9F5-327C-49A4-BBB9-805D87DA0463}.Release|Any CPU.Build.0 = Release|Any CPU
+		{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0} = {0855686E-7B95-45D5-977B-3255DB48B90A}
 	EndGlobalSection
 EndGlobal
