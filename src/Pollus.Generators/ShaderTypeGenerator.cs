@@ -15,21 +15,15 @@ public class ShaderTypeGenerator : IIncrementalGenerator
     class TypeInfo
     {
         public string Namespace;
-        public string ContainingType;
         public string ClassName;
         public string FullTypeKind;
         public string Visibility;
-        public bool IsPartial;
     }
 
     class Model
     {
+        public TypeInfo TypeInfo;
         public TypeInfo ContainingType;
-        public string Namespace;
-        public string ClassName;
-        public bool IsPartial;
-        public bool IsRecordStruct;
-        public string Visibility;
         public int SizeOf;
         public int AlignOf;
     }
@@ -50,28 +44,35 @@ public class ShaderTypeGenerator : IIncrementalGenerator
                 var sizeOf = CollectPrimitiveTypes(data, ref alignOf);
 
                 TypeInfo containingType = null;
-                if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class)
+                if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
                 {
+                    var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
+                    if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
                     containingType = new TypeInfo()
                     {
                         Namespace = data.ContainingNamespace.ToDisplayString(),
                         ClassName = data.ContainingType.Name,
-                        FullTypeKind = data.ContainingType.TypeKind.ToString().ToLower(),
-                        IsPartial = data.ContainingType.DeclaringSyntaxReferences.Any(e => e.GetSyntax().IsKind(SyntaxKind.PartialKeyword)),
+                        FullTypeKind = containingTypeKind,
                         Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
                     };
                 }
 
-                return new Model()
+                var fullTypeKind = data.TypeKind.ToString().ToLower();
+                if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
+                TypeInfo typeInfo = new()
                 {
                     Namespace = data.ContainingNamespace.ToDisplayString(),
                     ClassName = data.Name,
-                    IsPartial = data.DeclaringSyntaxReferences.Any(e => e.GetSyntax().IsKind(SyntaxKind.PartialKeyword)),
-                    IsRecordStruct = data.IsRecord,
+                    FullTypeKind = fullTypeKind,
                     Visibility = data.DeclaredAccessibility.ToString().ToLower(),
+                };
+
+                return new Model()
+                {
+                    TypeInfo = typeInfo,
+                    ContainingType = containingType,
                     SizeOf = sizeOf,
                     AlignOf = alignOf,
-                    ContainingType = containingType,
                 };
             }
         );
@@ -79,7 +80,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
             var partialExt = $$"""
-            {{model.Visibility}} partial {{(model.IsRecordStruct ? "record" : "")}} struct {{model.ClassName}} : Pollus.Graphics.IShaderType
+            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Graphics.IShaderType
             {
                 public static uint SizeOf => {{model.SizeOf}};
                 public static uint AlignOf => {{model.AlignOf}};
@@ -97,11 +98,11 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             }
 
             var source = SourceText.From($$"""
-            namespace {{model.Namespace}};
+            namespace {{model.TypeInfo.Namespace}};
             {{partialExt}}
             """, Encoding.UTF8);
 
-            context.AddSource($"{model.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.ClassName}.ShaderType.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.ShaderType.gen.cs", source);
         });
     }
 

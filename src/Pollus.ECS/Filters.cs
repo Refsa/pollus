@@ -1,3 +1,5 @@
+#pragma warning disable IL2062
+
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
@@ -169,3 +171,5 @@ public static class FilterHelpers
         return true;
     }
 }
+
+#pragma warning restore IL2062

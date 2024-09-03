@@ -1,3 +1,5 @@
+#pragma warning disable IL2062
+
 namespace Pollus.ECS.Core;
 
 using System.Runtime.CompilerServices;
@@ -143,3 +145,5 @@ public class FnSystem<T0> : Sys<T0>
         onTick(arg1);
     }
 }
+
+#pragma warning restore IL2062
