@@ -33,8 +33,7 @@
     <NativeFileReference Include=".\bin\Release\net8.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
-  <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative"
-    DependsOnTargets="_PrepareForWasmBuildNative">
+  <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
     <ItemGroup>
       <_WasmPInvokeModules Include="__Internal_emscripten" />
       <_WasmPInvokeModules Include="OpenAL" />

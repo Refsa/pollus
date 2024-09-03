@@ -2,7 +2,6 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
 public interface IRenderBatch
 {
@@ -15,7 +14,7 @@ public interface IRenderBatch
 }
 
 public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
-    where TInstanceData : unmanaged
+    where TInstanceData : unmanaged, IShaderType
 {
     int count;
     IWGPUContext context;
@@ -36,7 +35,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
         InstanceBuffer = context.CreateBuffer(new()
         {
             Label = $"InstanceBuffer_{typeof(TInstanceData).Name}_{Key}",
-            Size = Alignment.GPUAlignedSize<TInstanceData>(16),
+            Size = Alignment.AlignedSize<TInstanceData>((uint)scratch.Length),
             Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
         });
     }
@@ -78,7 +77,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
         InstanceBuffer = context.CreateBuffer(new()
         {
             Label = $"InstanceBuffer_{Key}",
-            Size = Alignment.GPUAlignedSize<TInstanceData>((uint)capacity),
+            Size = Alignment.AlignedSize<TInstanceData>((uint)capacity),
             Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
         });
         

@@ -2,15 +2,15 @@
 
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Graphics;
 using Pollus.Mathematics;
 
-public struct SceneUniform
+[ShaderType]
+public partial struct SceneUniform
 {
     public Mat4f View;
     public Mat4f Projection;
     public float Time;
-
-    Vec3f _padding;
 }
 
 #pragma warning restore CS0169

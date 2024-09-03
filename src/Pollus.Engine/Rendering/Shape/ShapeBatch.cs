@@ -24,9 +24,10 @@ public record struct ShapeBatchKey
     public override int GetHashCode() => hashCode;
 }
 
-public class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
+public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
 {
-    public struct InstanceData
+    [ShaderType]
+    public partial struct InstanceData
     {
         public Vec4f Model_0;
         public Vec4f Model_1;

@@ -9,9 +9,10 @@ using Pollus.Utils;
 
 public record struct SpriteBatchKey(Handle Material);
 
-public class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
+public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
 {
-    public struct InstanceData
+    [ShaderType]
+    public partial struct InstanceData
     {
         public required Vec4f Model_0;
         public required Vec4f Model_1;

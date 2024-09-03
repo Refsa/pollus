@@ -1,7 +1,5 @@
 namespace Pollus.Graphics.Rendering;
 
-using Pollus.Utils;
-
 public struct BindGroupEntry
 {
     public uint Binding;
@@ -36,9 +34,9 @@ public struct BindGroupEntry
     }
 
     public static BindGroupEntry BufferEntry<T>(uint binding, GPUBuffer buffer, ulong offset)
-        where T : unmanaged
+        where T : unmanaged, IShaderType
     {
-        return new BindGroupEntry(binding, buffer, offset, Alignment.GPUAlignedSize<T>(1));
+        return new BindGroupEntry(binding, buffer, offset, Alignment.AlignedSize<T>(1));
     }
 
     public static BindGroupEntry SamplerEntry(uint binding, GPUSampler sampler)

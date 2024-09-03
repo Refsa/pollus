@@ -33,13 +33,13 @@ public ref struct BufferDescriptor
     }
 
     public static BufferDescriptor Uniform<TUniform>(ReadOnlySpan<char> label, ulong? dynamicLength = null)
-        where TUniform : unmanaged
+        where TUniform : unmanaged, IShaderType
     {
         return new BufferDescriptor
         {
             Label = label,
             Usage = BufferUsage.Uniform | BufferUsage.CopyDst,
-            Size = Alignment.GPUAlignedSize<TUniform>(1) * (dynamicLength.HasValue ? dynamicLength.Value : 1),
+            Size = Alignment.AlignedSize<TUniform>((uint)(dynamicLength ?? 1)),
             MappedAtCreation = false,
         };
     }

@@ -1,12 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.Engine.Assets;
+using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
 public class UniformAsset<T>
-    where T : unmanaged
+    where T : unmanaged, IShaderType
 {
     public T Value { get; set; }
 
@@ -26,14 +27,14 @@ public class UniformRenderData : IRenderData
     }
 
     public void WriteBuffer<T>(T value)
-        where T : unmanaged
+        where T : unmanaged, IShaderType
     {
         UniformBuffer.Write(value, 0);
     }
 }
 
 public class UniformRenderDataLoader<T> : IRenderDataLoader
-    where T : unmanaged
+    where T : unmanaged, IShaderType
 {
     public int TargetType => AssetLookup.ID<UniformAsset<T>>();
 

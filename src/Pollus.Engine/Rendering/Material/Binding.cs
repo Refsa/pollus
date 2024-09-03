@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.Engine.Assets;
+using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 
@@ -21,7 +22,7 @@ public interface IBinding
 }
 
 public class UniformBinding<T> : IBinding
-    where T : unmanaged
+    where T : unmanaged, IShaderType
 {
     public BindingType Type => BindingType.Uniform;
 

@@ -7,9 +7,13 @@ using Pollus.Graphics.WGPU;
 using ImGuiNET;
 using Pollus.Mathematics;
 using System.Runtime.CompilerServices;
-using Pollus.Debugging;
-using Pollus.Utils;
-using System.Drawing;
+
+[ShaderType]
+partial struct Uniforms
+{
+    public System.Numerics.Matrix4x4 MVP;
+    public float Gamma;
+}
 
 public class ImguiRenderer : IDisposable
 {
@@ -52,13 +56,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     return vec4<f32>(corrected_color, color.a);
 }
 """;
-
-
-    struct Uniforms
-    {
-        public System.Numerics.Matrix4x4 MVP;
-        public float Gamma;
-    }
 
     IWGPUContext gpuContext;
 
@@ -124,11 +121,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     {
         vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
             """ImGui Vertex Buffer""",
-            Alignment.GPUAlignedSize<ImDrawVert>((uint)hostVertexBuffer.Length, 4)
+            Alignment.AlignedSize<ImDrawVert>((uint)hostVertexBuffer.Length, 4)
         ));
         indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
             """ImGui Index Buffer""",
-            Alignment.GPUAlignedSize<ushort>((uint)hostIndexBuffer.Length, 4)
+            Alignment.AlignedSize<ushort>((uint)hostIndexBuffer.Length, 4)
         ));
 
         fontSampler = gpuContext.CreateSampler(SamplerDescriptor.Default);
@@ -136,7 +133,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         uniformBuffer = gpuContext.CreateBuffer(BufferDescriptor.Uniform<Uniforms>(
             """ImGui Uniform Buffer""",
-            Alignment.GPUAlignedSize<Uniforms>(1)
+            Alignment.AlignedSize<Uniforms>(1)
         ));
 
         using var shader = gpuContext.CreateShaderModule(new()
@@ -331,7 +328,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             vertexBuffer.Dispose();
             vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
                 """ImGui Vertex Buffer""",
-                Alignment.GPUAlignedSize<ImDrawVert>(totalVtxSize, 4)
+                Alignment.AlignedSize<ImDrawVert>(totalVtxSize, 4)
             ));
             hostVertexBuffer = new ImDrawVert[drawData.TotalVtxCount];
         }
@@ -342,7 +339,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             indexBuffer.Dispose();
             indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
                 """ImGui Index Buffer""",
-                Alignment.GPUAlignedSize<ushort>(totalIdxSize, 4)
+                Alignment.AlignedSize<ushort>(totalIdxSize, 4)
             ));
             hostIndexBuffer = new ushort[drawData.TotalIdxCount];
         }
@@ -360,8 +357,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             vtxOffset += (uint)vtxSpan.Length;
             idxOffset += (uint)idxSpan.Length;
         }
-        vertexBuffer.Write<ImDrawVert>(hostVertexBuffer.AsSpan()[..drawData.TotalVtxCount]);
-        indexBuffer.Write<ushort>(hostIndexBuffer.AsSpan()[..drawData.TotalIdxCount]);
+        vertexBuffer.Write<ImDrawVert>(hostVertexBuffer.AsSpan()[..drawData.TotalVtxCount], Alignment.AlignedSize<ImDrawVert>((uint)drawData.TotalVtxCount, 4));
+        indexBuffer.Write<ushort>(hostIndexBuffer.AsSpan()[..drawData.TotalIdxCount], Alignment.AlignedSize<ushort>((uint)drawData.TotalIdxCount, 4));
 
         var io = ImGui.GetIO();
         var uniform = new Uniforms
@@ -414,7 +411,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                         }, 1
                     );
                 }
-                
+
                 encoder.SetScissorRect(
                     (uint)pcmd.ClipRect.X, (uint)pcmd.ClipRect.Y,
                     (uint)(pcmd.ClipRect.Z - pcmd.ClipRect.X), (uint)(pcmd.ClipRect.W - pcmd.ClipRect.Y)

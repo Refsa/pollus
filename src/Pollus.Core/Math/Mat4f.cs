@@ -2,8 +2,10 @@ namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
 using Pollus.Debugging;
+using Pollus.Graphics;
 
-public record struct Mat4f
+[ShaderType]
+public partial record struct Mat4f
 {
     public static int SizeInBytes => Unsafe.SizeOf<float>() * 16;
 

@@ -1,7 +1,5 @@
 namespace Pollus.Graphics.Rendering;
 
-using Pollus.Utils;
-
 public struct BindGroupLayoutEntry
 {
     public static readonly BindGroupLayoutEntry Undefined = new()
@@ -23,7 +21,7 @@ public struct BindGroupLayoutEntry
     public StorageTextureBindingLayout StorageTexture;
 
     public static BindGroupLayoutEntry BufferEntry<T>(uint binding, ShaderStage visibility, BufferBindingType bindingType, bool hasDynamicOffset = false)
-        where T : unmanaged
+        where T : unmanaged, IShaderType
     {
         return Undefined with
         {
@@ -32,14 +30,14 @@ public struct BindGroupLayoutEntry
             Buffer = BufferBindingLayout.Undefined with
             {
                 Type = bindingType,
-                MinBindingSize = Alignment.GPUAlignedSize<T>(1),
+                MinBindingSize = Alignment.AlignedSize<T>(1),
                 HasDynamicOffset = hasDynamicOffset
             },
         };
     }
 
     public static BindGroupLayoutEntry Uniform<T>(uint binding, ShaderStage visibility, bool hasDynamicOffset = false)
-        where T : unmanaged
+        where T : unmanaged, IShaderType
     {
         return BufferEntry<T>(binding, visibility, BufferBindingType.Uniform, hasDynamicOffset);
     }

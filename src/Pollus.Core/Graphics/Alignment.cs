@@ -1,13 +1,17 @@
-namespace Pollus.Utils;
+namespace Pollus.Graphics;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 
 public static class Alignment
 {
-    const uint GPU_MAX_ALIGNMENT = 16;
+    public static uint AlignedSize<T>(uint count)
+        where T : unmanaged, IShaderType
+    {
+        return RoundUp(count * T.SizeOf, T.AlignOf);
+    }
 
-    public static uint GPUAlignedSize<T>(uint count, uint alignment = GPU_MAX_ALIGNMENT)
+    public static uint AlignedSize<T>(uint count, uint alignment)
         where T : unmanaged
     {
         var size = (uint)Unsafe.SizeOf<T>() * count;
