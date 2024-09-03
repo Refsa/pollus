@@ -12,8 +12,6 @@ public class ShapePlugin : IPlugin
     static ShapePlugin()
     {
         AssetsFetch<Shape>.Register();
-        AssetsFetch<ShapeMaterial>.Register();
-        ResourceFetch<ShapeBatches>.Register();
     }
 
     public void Apply(World world)
@@ -43,6 +41,7 @@ public struct ShapeDraw : IComponent
     public required Handle<Shape> ShapeHandle;
     public required Color Color;
 }
+
 
 public class ShapeMaterial : IMaterial
 {

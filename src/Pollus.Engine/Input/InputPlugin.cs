@@ -10,15 +10,6 @@ public class InputPlugin : IPlugin
 {
     public const string UpdateSystem = "Input::Update";
 
-    static InputPlugin()
-    {
-        ResourceFetch<ButtonInput<MouseButton>>.Register();
-        ResourceFetch<AxisInput<MouseAxis>>.Register();
-        ResourceFetch<ButtonInput<GamepadButton>>.Register();
-        ResourceFetch<AxisInput<GamepadAxis>>.Register();
-        ResourceFetch<ButtonInput<Key>>.Register();
-    }
-
     public void Apply(World world)
     {
         SetupBrowser();

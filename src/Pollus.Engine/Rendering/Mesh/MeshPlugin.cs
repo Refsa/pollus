@@ -13,13 +13,6 @@ public struct MeshDraw<TMaterial> : IComponent
 
 public class MeshPlugin : IPlugin
 {
-    static MeshPlugin()
-    {
-        AssetsFetch<MeshAsset>.Register();
-        ResourceFetch<PrimitiveMeshes>.Register();
-        ResourceFetch<MeshRenderBatches>.Register();
-    }
-
     public PrimitiveType SharedPrimitives { get; init; }
 
     public void Apply(World world)

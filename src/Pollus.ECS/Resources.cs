@@ -67,6 +67,27 @@ public class Resources : IDisposable
     }
 }
 
+public static class Resource
+{
+    static class Type<T>
+        where T : notnull
+    {
+        public static int ID;
+
+        static Type()
+        {
+            ID = Interlocked.Increment(ref counter);
+            ResourceFetch<T>.Register();
+        }
+    }
+
+    static volatile int counter = 0;
+    public static int ID<T>() where T : notnull => Type<T>.ID;
+}
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+public sealed class ResourceAttribute : Attribute { }
+
 public class ResourceFetch<TResource> : IFetch<TResource>
     where TResource : notnull
 {
@@ -79,22 +100,4 @@ public class ResourceFetch<TResource> : IFetch<TResource>
     {
         return world.Resources.Get<TResource>();
     }
-}
-
-public static class Resource
-{
-    static class Type<T>
-        where T : notnull
-    {
-        public static int ID;
-
-        static Type()
-        {
-            ID = Interlocked.Increment(ref counter);
-            Fetch.Register(new ResourceFetch<T>(), []);
-        }
-    }
-
-    static volatile int counter = 0;
-    public static int ID<T>() where T : notnull => Type<T>.ID;
 }

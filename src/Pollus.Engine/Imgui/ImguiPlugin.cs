@@ -29,11 +29,6 @@ public class ImguiPlugin : IPlugin
     public const string UpdateSystem = "ImGui::UpdateIO";
     public const string BeginFrameSystem = "ImGui::BeginFrame";
 
-    static ImguiPlugin()
-    {
-        ResourceFetch<ImguiRenderer>.Register();
-    }
-
     public void Apply(World world)
     {
         world.AddPlugins([

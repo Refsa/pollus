@@ -3,7 +3,7 @@
 ## What is Pollus?
 A small endevour into the possibilities of a "pure" C# game engine that can compile to both native and web platforms. It aims to create a smaller 2D engine as a complete package, but still supporting selecting the underlying core modules to create other types of engines.
 
-You can find the Breakout clone example running [here](https://refsa.github.io/pollus/)
+You can find the Breakout clone example running [here](https://refsa.github.io/pollus/?breakout)
 
 ## Features
 - ECS with some inspiration from bevy

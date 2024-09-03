@@ -12,7 +12,7 @@ public static class AssetLookup
 
         static Type()
         {
-            Fetch.Register(new ResourceFetch<T>(), []);
+            AssetsFetch<T>.Register();
             lookup.TryAdd(ID, typeof(T));
         }
     }

@@ -1,29 +1,14 @@
 namespace Pollus.Engine.Rendering;
 
-using ImGuiNET;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {
-    static RenderingPlugin()
-    {
-        AssetsFetch<ImageAsset>.Register();
-        AssetsFetch<SamplerAsset>.Register();
-        AssetsFetch<ShaderAsset>.Register();
-
-        AssetsFetch<UniformAsset<SceneUniform>>.Register();
-
-        ResourceFetch<RenderAssets>.Register();
-        ResourceFetch<RenderContext>.Register();
-        ResourceFetch<RenderSteps>.Register();
-    }
-
     public void Apply(World world)
     {
         world.Resources.Add(new MeshRenderBatches());

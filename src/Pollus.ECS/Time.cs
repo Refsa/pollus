@@ -45,11 +45,6 @@ public class TimeSystem : Sys<Time>
 
 public class TimePlugin : IPlugin
 {
-    static TimePlugin()
-    {
-        ResourceFetch<Time>.Register();
-    }
-
     public void Apply(World world)
     {
         world.Resources.Add<Time>();

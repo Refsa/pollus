@@ -6,6 +6,7 @@ using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
 using Pollus.Mathematics;
 
+
 public class PlatformEvents
 {
     List<Silk.NET.SDL.Event> events { get; } = new();
@@ -33,11 +34,6 @@ public class PlatformEvents
 
 public class PlatformEventsPlugin : IPlugin
 {
-    static PlatformEventsPlugin()
-    {
-        ResourceFetch<PlatformEvents>.Register();
-    }
-
     public void Apply(World world)
     {
         world.Resources.Add(new PlatformEvents());

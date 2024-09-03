@@ -3,7 +3,6 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
-using Pollus.Mathematics;
 using Pollus.Utils;
 
 public class RenderContext
@@ -68,7 +67,7 @@ public class RenderContext
                     View = SurfaceTextureView.Value.Native,
                     LoadOp = loadOp,
                     StoreOp = storeOp,
-                    ClearValue = clearColor.HasValue ? clearColor.Value : new Color.HSV(0.1f, 1f, 0.1f),
+                    ClearValue = clearColor ?? new Color.HSV(0.1f, 1f, 0.1f),
                 },
             },
         });

@@ -42,6 +42,7 @@ public enum PlaybackMode
     Loop,
 }
 
+
 class AudioPools
 {
     Stack<Handle<Pollus.Audio.AudioSource>> sources = [];
@@ -78,19 +79,9 @@ class AudioPools
 
 public class AudioPlugin : IPlugin
 {
-    static AudioPlugin()
-    {
-        ResourceFetch<AudioManager>.Register();
-        ResourceFetch<AudioPools>.Register();
-        AssetsFetch<Pollus.Audio.AudioSource>.Register();
-        AssetsFetch<Pollus.Audio.AudioBuffer>.Register();
-        AssetsFetch<AudioAsset>.Register();
-    }
-
     public void Apply(World world)
     {
-        var audioManager = new AudioManager();
-        world.Resources.Add(audioManager);
+        world.Resources.Add(new AudioManager());
         world.Resources.Add(new AudioPools());
         world.Resources.Get<AssetServer>().AddLoader<WavAssetLoader>();
 
