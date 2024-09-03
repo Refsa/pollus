@@ -1,8 +1,10 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
+using Pollus.Graphics;
 
-public record struct Vec4f
+[ShaderType]
+public partial record struct Vec4f
 {
     public static int SizeInBytes => Unsafe.SizeOf<float>() * 4;
 

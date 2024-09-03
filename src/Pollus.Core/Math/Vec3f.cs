@@ -1,9 +1,10 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
+using Pollus.Graphics;
 
-public record struct Vec3f
+[ShaderType]
+public partial record struct Vec3f
 {
     public static int SizeInBytes => Unsafe.SizeOf<float>() * 3;
     public static Vec3f Zero => new Vec3f(0f, 0f, 0f);

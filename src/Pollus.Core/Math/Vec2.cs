@@ -1,8 +1,10 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
+using Pollus.Graphics;
 
-public record struct Vec2<T>
+[ShaderType]
+public partial record struct Vec2<T>
     where T : struct, System.Numerics.INumber<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 2;

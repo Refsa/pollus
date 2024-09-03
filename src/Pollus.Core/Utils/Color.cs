@@ -1,7 +1,9 @@
 namespace Pollus.Utils;
+
+using Pollus.Graphics;
 using Pollus.Mathematics;
 
-public struct Color
+public partial struct Color
 {
     public static readonly Color BLACK = new(0f, 0f, 0f, 1f);
     public static readonly Color WHITE = new(1f, 1f, 1f, 1f);
@@ -97,7 +99,6 @@ public struct Color
     public float G { get => color.Y; set => color.Y = value; }
     public float B { get => color.Z; set => color.Z = value; }
     public float A { get => color.W; set => color.W = value; }
-
 
     public Color(Hex hex) : this(hex, hex.A) { }
     public Color(Hex hex, float alpha)

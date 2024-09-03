@@ -1,6 +1,9 @@
 namespace Pollus.Mathematics;
 
-public struct Rect
+using Pollus.Graphics;
+
+[ShaderType]
+public partial struct Rect
 {
     public Vec2f Min;
     public Vec2f Max;

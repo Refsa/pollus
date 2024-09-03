@@ -4,9 +4,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using Pollus.Graphics;
 
 [StructLayout(LayoutKind.Explicit)]
-public struct Float3
+[ShaderType]
+public partial struct Float3
 {
     [FieldOffset(0)]
     internal Vector128<float> inner;

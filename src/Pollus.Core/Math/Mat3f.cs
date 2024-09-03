@@ -1,6 +1,9 @@
 namespace Pollus.Mathematics;
 
-public record struct Mat3f
+using Pollus.Graphics;
+
+[ShaderType]
+public partial record struct Mat3f
 {
     public Vec3f Col0;
     public Vec3f Col1;
