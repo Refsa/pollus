@@ -19,18 +19,7 @@ public class UniformAsset<T>
 
 public class UniformRenderData
 {
-    public required GPUBuffer UniformBuffer { get; init; }
-
-    public void Dispose()
-    {
-        UniformBuffer.Dispose();
-    }
-
-    public void WriteBuffer<T>(T value)
-        where T : unmanaged, IShaderType
-    {
-        UniformBuffer.Write(value, 0);
-    }
+    public required Handle<GPUBuffer> UniformBuffer { get; init; }
 }
 
 public class UniformRenderDataLoader<T> : IRenderDataLoader
@@ -47,7 +36,7 @@ public class UniformRenderDataLoader<T> : IRenderDataLoader
 
         renderAssets.Add(handle, new UniformRenderData
         {
-            UniformBuffer = uniformBuffer,
+            UniformBuffer = renderAssets.Add(uniformBuffer),
         });
     }
 }

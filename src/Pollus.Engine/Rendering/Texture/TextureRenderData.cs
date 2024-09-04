@@ -8,13 +8,8 @@ using Pollus.Utils;
 
 public class TextureRenderData
 {
-    public required GPUTexture Texture { get; init; }
-    public required GPUTextureView View { get; init; }
-
-    public void Dispose()
-    {
-        Texture.Dispose();
-    }
+    public required Handle<GPUTexture> Texture { get; init; }
+    public required Handle<GPUTextureView> View { get; init; }
 }
 
 public class TextureRenderDataLoader : IRenderDataLoader
@@ -34,10 +29,11 @@ public class TextureRenderDataLoader : IRenderDataLoader
         ));
         texture.Write(imageAsset.Data);
 
+        var textureView = texture.GetTextureView();
         renderAssets.Add(handle, new TextureRenderData
         {
-            Texture = texture,
-            View = texture.GetTextureView(),
+            Texture = renderAssets.Add(texture),
+            View = renderAssets.Add(textureView),
         });
     }
 }

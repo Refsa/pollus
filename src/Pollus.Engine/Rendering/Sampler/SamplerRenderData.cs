@@ -7,12 +7,7 @@ using Pollus.Utils;
 
 public class SamplerRenderData
 {
-    public required GPUSampler Sampler { get; init; }
-
-    public void Dispose()
-    {
-        Sampler.Dispose();
-    }
+    public required Handle<GPUSampler> Sampler { get; init; }
 }
 
 public class SamplerRenderDataLoader : IRenderDataLoader
@@ -28,7 +23,7 @@ public class SamplerRenderDataLoader : IRenderDataLoader
 
         renderAssets.Add(handle, new SamplerRenderData
         {
-            Sampler = sampler,
+            Sampler = renderAssets.Add(sampler),
         });
     }
 }

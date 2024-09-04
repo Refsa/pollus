@@ -2,6 +2,7 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 public interface IRenderBatch
 {
@@ -22,6 +23,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
 
     public int Key { get; init; }
     public GPUBuffer InstanceBuffer { get; private set; }
+    public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
 
     public int Count => count;
     public int Capacity => scratch.Length;

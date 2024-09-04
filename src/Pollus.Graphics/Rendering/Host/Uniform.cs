@@ -1,7 +1,5 @@
 namespace Pollus.Graphics.Rendering;
 
-using Pollus.Utils;
-
 public class Uniform<T> : IBufferData
     where T : unmanaged, IShaderType
 {

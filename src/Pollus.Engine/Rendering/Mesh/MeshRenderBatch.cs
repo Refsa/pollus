@@ -41,7 +41,7 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
         Key = key.GetHashCode();
         Mesh = key.Mesh;
         Material = key.Material;
-    }   
+    }
 }
 
 public class MeshRenderBatchDraw : IRenderStepDraw
@@ -54,25 +54,25 @@ public class MeshRenderBatchDraw : IRenderStepDraw
 
         foreach (var batch in batches.Batches)
         {
+            if (batch.IsEmpty) continue;
             batch.WriteBuffer();
+            if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null) batch.InstanceBufferHandle = renderAssets.Add(batch.InstanceBuffer);
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
             var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
 
-            encoder.SetPipeline(material.Pipeline);
-            for (int i = 0; i < material.BindGroups.Length; i++)
+            var draw = new Draw()
             {
-                encoder.SetBindGroup(material.BindGroups[i], (uint)i);
-            }
+                Pipeline = material.Pipeline,
+                IndexBuffer = mesh.IndexBuffer,
+                IndexCount = (uint)mesh.IndexCount,
+                InstanceCount = (uint)batch.Count,
+            };
+            material.BindGroups.CopyTo(draw.BindGroups);
+            draw.VertexBuffers[0] = mesh.VertexBuffer;
+            draw.VertexBuffers[1] = batch.InstanceBufferHandle;
 
-            if (mesh.IndexBuffer != null)
-            {
-                encoder.SetIndexBuffer(mesh.IndexBuffer, mesh.IndexFormat);
-            }
-
-            encoder.SetVertexBuffer(0, mesh.VertexBuffer);
-            encoder.SetVertexBuffer(1, batch.InstanceBuffer);
-            encoder.DrawIndexed((uint)mesh.IndexCount, (uint)batch.Count, 0, 0, 0);
+            IRenderStepDraw.Draw(encoder, renderAssets, draw);
         }
     }
 }

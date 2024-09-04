@@ -11,12 +11,7 @@ using Pollus.Utils;
 public class ShapeRenderData
 {
     public required uint VertexCount { get; init; }
-    public required GPUBuffer VertexBuffer { get; init; }
-
-    public void Dispose()
-    {
-        VertexBuffer.Dispose();
-    }
+    public required Handle<GPUBuffer> VertexBuffer { get; init; }
 }
 
 public class ShapeRenderDataLoader : IRenderDataLoader
@@ -39,7 +34,7 @@ public class ShapeRenderDataLoader : IRenderDataLoader
         renderAssets.Add(handle, new ShapeRenderData
         {
             VertexCount = vertexData.Count,
-            VertexBuffer = vertexBuffer,
+            VertexBuffer = renderAssets.Add(vertexBuffer),
         });
     }
 }

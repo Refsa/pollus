@@ -34,9 +34,10 @@ public class UniformBinding<T> : IBinding
     {
         var handle = new Handle<UniformAsset<T>>(0);
         renderAssets.Prepare(gpuContext, assetServer, handle);
-        var uniform = renderAssets.Get<UniformRenderData>(handle);
+        var renderData = renderAssets.Get<UniformRenderData>(handle);
+        var uniform = renderAssets.Get<GPUBuffer>(renderData.UniformBuffer);
 
-        return BindGroupEntry.BufferEntry<T>(binding, uniform.UniformBuffer, 0);
+        return BindGroupEntry.BufferEntry<T>(binding, uniform, 0);
     }
 }
 
@@ -53,8 +54,9 @@ public class TextureBinding : IBinding
     public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
         renderAssets.Prepare(gpuContext, assetServer, Image);
-        var texture = renderAssets.Get<TextureRenderData>(Image);
-        return BindGroupEntry.TextureEntry(binding, texture.View);
+        var renderAsset = renderAssets.Get<TextureRenderData>(Image);
+        var textureView = renderAssets.Get<GPUTextureView>(renderAsset.View);
+        return BindGroupEntry.TextureEntry(binding, textureView);
     }
 }
 
@@ -71,7 +73,8 @@ public class SamplerBinding : IBinding
     public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
         renderAssets.Prepare(gpuContext, assetServer, Sampler);
-        var sampler = renderAssets.Get<SamplerRenderData>(Sampler);
-        return BindGroupEntry.SamplerEntry(binding, sampler.Sampler);
+        var renderAsset = renderAssets.Get<SamplerRenderData>(Sampler);
+        var sampler = renderAssets.Get<GPUSampler>(renderAsset.Sampler);
+        return BindGroupEntry.SamplerEntry(binding, sampler);
     }
 }

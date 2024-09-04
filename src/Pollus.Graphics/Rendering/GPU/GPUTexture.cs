@@ -55,8 +55,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
     public GPUTextureView GetTextureView()
     {
-        var view = context.wgpu.TextureCreateView(texture, null);
-        return new GPUTextureView(context, view);
+        return new GPUTextureView(context, this);
     }
 
     public void Write<T>(ReadOnlySpan<T> data, uint mipLevel = 0, Vec3<uint> origin = default, Vec3<uint>? size = null)

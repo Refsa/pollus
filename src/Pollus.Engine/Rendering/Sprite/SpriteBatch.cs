@@ -49,19 +49,21 @@ public class SpriteBatchDraw : IRenderStepDraw
         foreach (var batch in batches.Batches)
         {
             if (batch.IsEmpty) continue;
-
             batch.WriteBuffer();
+            if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null) batch.InstanceBufferHandle = renderAssets.Add(batch.InstanceBuffer);
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
 
-            encoder.SetPipeline(material.Pipeline);
-            for (int i = 0; i < material.BindGroups.Length; i++)
+            var draw = new Draw()
             {
-                encoder.SetBindGroup(material.BindGroups[i], (uint)i);
-            }
+                Pipeline = material.Pipeline,
+                VertexCount = 6,
+                InstanceCount = (uint)batch.Count,
+            };
+            material.BindGroups.CopyTo(draw.BindGroups);
+            draw.VertexBuffers[0] = batch.InstanceBufferHandle;
 
-            encoder.SetVertexBuffer(0, batch.InstanceBuffer);
-            encoder.Draw(6, (uint)batch.Count, 0, 0);
+            IRenderStepDraw.Draw(encoder, renderAssets, draw);
         }
     }
 }

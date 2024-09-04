@@ -8,16 +8,10 @@ using Pollus.Utils;
 
 public class MeshRenderData
 {
-    public required GPUBuffer VertexBuffer { get; init; }
-    public required GPUBuffer? IndexBuffer { get; init; }
+    public required Handle<GPUBuffer> VertexBuffer { get; init; }
+    public required Handle<GPUBuffer> IndexBuffer { get; init; }
     public IndexFormat IndexFormat { get; init; }
     public int IndexCount { get; init; }
-
-    public void Dispose()
-    {
-        VertexBuffer.Dispose();
-        IndexBuffer?.Dispose();
-    }
 }
 
 public class MeshRenderDataLoader : IRenderDataLoader
@@ -50,8 +44,8 @@ public class MeshRenderDataLoader : IRenderDataLoader
 
         renderAssets.Add(handle, new MeshRenderData
         {
-            VertexBuffer = vertexBuffer,
-            IndexBuffer = indexBuffer,
+            VertexBuffer = renderAssets.Add(vertexBuffer),
+            IndexBuffer = indexBuffer != null ? renderAssets.Add(indexBuffer) : Handle<GPUBuffer>.Null,
             IndexFormat = meshAsset.Mesh.GetIndices()?.Format ?? IndexFormat.Uint16,
             IndexCount = meshAsset.Mesh.GetIndices()?.Count ?? 0,
         });

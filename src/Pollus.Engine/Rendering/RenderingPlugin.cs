@@ -61,7 +61,8 @@ public class RenderingPlugin : IPlugin
                 var handle = new Handle<UniformAsset<SceneUniform>>(0);
                 var uniformAsset = uniformAssets.Get(handle)!;
                 renderAssets.Prepare(gpuContext, assetServer, handle);
-                renderAssets.Get<UniformRenderData>(handle).WriteBuffer(uniformAsset.Value);
+                var renderAsset = renderAssets.Get<UniformRenderData>(handle);
+                renderAssets.Get<GPUBuffer>(renderAsset.UniformBuffer).Write(uniformAsset.Value, 0);
             }
         ));
 

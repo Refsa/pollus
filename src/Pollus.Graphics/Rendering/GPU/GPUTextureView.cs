@@ -8,8 +8,10 @@ using Pollus.Graphics.WGPU;
 unsafe public struct GPUTextureView : IGPUResourceWrapper
 {
     IWGPUContext context;
+    GPUTexture? texture;
     Silk.NET.WebGPU.TextureView* textureView;
     bool isRegistered;
+    bool isDisposed;
 
     public nint Native => (nint)textureView;
 
@@ -17,6 +19,13 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
     {
         this.context = context;
         textureView = context.wgpu.TextureCreateView(texture, null);
+    }
+
+    public GPUTextureView(IWGPUContext context, GPUTexture texture)
+    {
+        this.context = context;
+        this.texture = texture;
+        textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, null);
     }
 
     public GPUTextureView(IWGPUContext context, GPUTexture texture, TextureViewDescriptor descriptor)
@@ -34,7 +43,8 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
             arrayLayerCount: descriptor.ArrayLayerCount,
             aspect: descriptor.Aspect
         );
-
+        
+        this.texture = texture;
         textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, nativeDescriptor);
     }
 
@@ -44,15 +54,18 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
         this.textureView = textureView;
     }
 
+    public void Dispose()
+    {
+        if (isDisposed || texture?.Disposed is true) return;
+        isDisposed = true;
+
+        if (isRegistered) context.ReleaseResource(this);
+        context.wgpu.TextureViewRelease(textureView);
+    }
+
     public void RegisterResource()
     {
         context.RegisterResource(this);
         isRegistered = true;
-    }
-
-    public void Dispose()
-    {
-        if (isRegistered) context.ReleaseResource(this);
-        context.wgpu.TextureViewRelease(textureView);
     }
 }

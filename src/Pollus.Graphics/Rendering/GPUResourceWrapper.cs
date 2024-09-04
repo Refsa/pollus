@@ -12,6 +12,7 @@ public abstract class GPUResourceWrapper : IGPUResourceWrapper
     protected IWGPUContext context;
 
     bool isDisposed;
+    public bool Disposed => isDisposed;
 
     public GPUResourceWrapper(IWGPUContext context)
     {

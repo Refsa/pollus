@@ -77,19 +77,22 @@ public class ShapeBatchDraw : IRenderStepDraw
         {
             if (batch.IsEmpty) continue;
             batch.WriteBuffer();
+            if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null) batch.InstanceBufferHandle = renderAssets.Add(batch.InstanceBuffer);
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
             var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
 
-            encoder.SetPipeline(material.Pipeline);
-            for (int i = 0; i < material.BindGroups.Length; i++)
+            var draw = new Draw()
             {
-                encoder.SetBindGroup(material.BindGroups[i], (uint)i);
-            }
+                Pipeline = material.Pipeline,
+                VertexCount = shape.VertexCount,
+                InstanceCount = (uint)batch.Count,
+            };
+            material.BindGroups.CopyTo(draw.BindGroups);
+            draw.VertexBuffers[0] = shape.VertexBuffer;
+            draw.VertexBuffers[1] = batch.InstanceBufferHandle;
 
-            encoder.SetVertexBuffer(0, shape.VertexBuffer);
-            encoder.SetVertexBuffer(1, batch.InstanceBuffer);
-            encoder.Draw(shape.VertexCount, (uint)batch.Count, 0, 0);
+            IRenderStepDraw.Draw(encoder, renderAssets, draw);
         }
     }
 }
