@@ -6,6 +6,7 @@ using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {

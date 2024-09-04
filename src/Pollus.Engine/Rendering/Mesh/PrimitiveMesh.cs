@@ -2,6 +2,7 @@ namespace Pollus.Engine.Rendering;
 
 using Pollus.Engine.Assets;
 using Pollus.Graphics;
+using Pollus.Utils;
 
 [Flags]
 public enum PrimitiveType

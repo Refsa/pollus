@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using Pollus.ECS.Core;
+using Pollus.Utils;
 
 public class Resources : IDisposable
 {
@@ -21,25 +22,28 @@ public class Resources : IDisposable
     public int Init<TResource>()
         where TResource : notnull
     {
-        return Resource.ID<TResource>();
+        ResourceFetch<TResource>.Register();
+        return TypeLookup.ID<TResource>();
     }
 
     public void Add<TResource>()
         where TResource : notnull, new()
     {
-        resources[Resource.ID<TResource>()] = new TResource();
+        ResourceFetch<TResource>.Register();
+        resources[TypeLookup.ID<TResource>()] = new TResource();
     }
 
     public void Add<TResource>(TResource resource)
         where TResource : notnull
     {
-        resources[Resource.ID<TResource>()] = resource;
+        ResourceFetch<TResource>.Register();
+        resources[TypeLookup.ID<TResource>()] = resource;
     }
 
     public TResource Get<TResource>()
         where TResource : notnull
     {
-        if (!resources.TryGetValue(Resource.ID<TResource>(), out var resource))
+        if (!resources.TryGetValue(TypeLookup.ID<TResource>(), out var resource))
         {
             throw new KeyNotFoundException($"Resource of type {typeof(TResource).Name} not found.");
         }
@@ -50,7 +54,7 @@ public class Resources : IDisposable
     public bool TryGet<TResource>(out TResource resource)
         where TResource : notnull
     {
-        if (resources.TryGetValue(Resource.ID<TResource>(), out var res))
+        if (resources.TryGetValue(TypeLookup.ID<TResource>(), out var res))
         {
             resource = (TResource)res;
             return true;
@@ -63,26 +67,8 @@ public class Resources : IDisposable
     public bool Has<TResource>()
         where TResource : notnull
     {
-        return resources.ContainsKey(Resource.ID<TResource>());
+        return resources.ContainsKey(TypeLookup.ID<TResource>());
     }
-}
-
-public static class Resource
-{
-    static class Type<T>
-        where T : notnull
-    {
-        public static int ID;
-
-        static Type()
-        {
-            ID = Interlocked.Increment(ref counter);
-            ResourceFetch<T>.Register();
-        }
-    }
-
-    static volatile int counter = 0;
-    public static int ID<T>() where T : notnull => Type<T>.ID;
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]

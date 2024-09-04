@@ -46,7 +46,7 @@ public class RenderAssets
     {
         if (!loaders.TryGetValue(handle.Type, out var loader))
         {
-            throw new InvalidOperationException($"No loader found for type {AssetLookup.GetType(handle.Type)}");
+            throw new InvalidOperationException($"No loader found for type {TypeLookup.GetType(handle.Type)}");
         }
 
         if (renderData.ContainsKey(handle)) return;

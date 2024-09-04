@@ -19,7 +19,7 @@ public class TextureRenderData : IRenderData
 
 public class TextureRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => AssetLookup.ID<ImageAsset>();
+    public int TargetType => TypeLookup.ID<ImageAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {

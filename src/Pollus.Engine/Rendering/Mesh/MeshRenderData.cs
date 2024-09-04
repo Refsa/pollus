@@ -22,7 +22,7 @@ public class MeshRenderData : IRenderData
 
 public class MeshRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => AssetLookup.ID<MeshAsset>();
+    public int TargetType => TypeLookup.ID<MeshAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {

@@ -1,29 +1,8 @@
 namespace Pollus.Engine.Assets;
 
+using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Utils;
-
-public record struct Handle<T> where T : notnull
-{
-    public static Handle<T> Null => new(-1);
-
-    public int AssetType { get; }
-    public int ID { get; }
-
-    public Handle(int id)
-    {
-        AssetType = AssetLookup.ID<T>();
-        ID = id;
-    }
-
-    public static implicit operator Handle(Handle<T> handle) => new(handle.AssetType, handle.ID);
-    public static implicit operator Handle<T>(Handle handle) => new(handle.ID);
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(AssetType, ID);
-    }
-}
 
 public enum AssetStatus
 {
@@ -46,9 +25,13 @@ public class AssetInfo<T>
 public class Assets<T> : IDisposable
     where T : notnull
 {
-    static int _assetTypeId = AssetLookup.ID<T>();
+    static int _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
     static int NextID => counter++;
+    static Assets()
+    {
+        AssetsFetch<T>.Register();
+    }
 
     List<AssetInfo<T>> assets = new();
     Dictionary<Handle, int> assetLookup = new();
@@ -162,7 +145,7 @@ public class Assets : IDisposable
     public bool TryGetAssets<T>(out Assets<T> container)
         where T : notnull
     {
-        if (assets.TryGetValue(AssetLookup.ID<T>(), out var containerObject))
+        if (assets.TryGetValue(TypeLookup.ID<T>(), out var containerObject))
         {
             container = (Assets<T>)containerObject;
             return true;
@@ -176,7 +159,7 @@ public class Assets : IDisposable
     {
         if (!TryGetAssets<T>(out var container))
         {
-            var id = AssetLookup.ID<T>();
+            var id = TypeLookup.ID<T>();
             container = new Assets<T>();
             assets.Add(id, container);
         }

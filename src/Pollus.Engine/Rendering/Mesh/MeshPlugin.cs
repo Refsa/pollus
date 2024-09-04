@@ -3,6 +3,7 @@ namespace Pollus.Engine.Rendering;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 public struct MeshDraw<TMaterial> : IComponent
     where TMaterial : IMaterial

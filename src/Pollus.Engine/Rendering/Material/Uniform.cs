@@ -36,7 +36,7 @@ public class UniformRenderData : IRenderData
 public class UniformRenderDataLoader<T> : IRenderDataLoader
     where T : unmanaged, IShaderType
 {
-    public int TargetType => AssetLookup.ID<UniformAsset<T>>();
+    public int TargetType => TypeLookup.ID<UniformAsset<T>>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {

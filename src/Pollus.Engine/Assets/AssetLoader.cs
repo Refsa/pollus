@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Assets;
 
+using Pollus.Utils;
+
 public struct LoadContext
 {
     public required AssetPath Path { get; init; }
@@ -43,7 +45,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         AssetsFetch<TAsset>.Register();
     }
 
-    static readonly int _assetType = AssetLookup.ID<TAsset>();
+    static readonly int _assetType = TypeLookup.ID<TAsset>();
     public int AssetType => _assetType;
 
     public abstract string[] Extensions { get; }

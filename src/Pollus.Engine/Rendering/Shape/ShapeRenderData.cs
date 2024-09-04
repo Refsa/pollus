@@ -21,7 +21,7 @@ public class ShapeRenderData : IRenderData
 
 public class ShapeRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => AssetLookup.ID<Shape>();
+    public int TargetType => TypeLookup.ID<Shape>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {

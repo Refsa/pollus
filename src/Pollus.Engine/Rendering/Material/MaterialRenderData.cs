@@ -7,31 +7,23 @@ using Pollus.Utils;
 
 public class MaterialRenderData : IRenderData
 {
-    public required GPUShader Shader { get; init; }
-    public required GPUBindGroupLayout[] BindGroupLayouts { get; init; }
     public required GPUBindGroup[] BindGroups { get; init; }
-
     public required GPURenderPipeline Pipeline { get; init; }
-    public required GPUPipelineLayout PipelineLayout { get; init; }
 
     public void Dispose()
     {
-        Shader.Dispose();
-        foreach (var layout in BindGroupLayouts)
-        {
-            layout.Dispose();
-        }
         foreach (var bindGroup in BindGroups)
         {
             bindGroup.Dispose();
         }
+        Pipeline.Dispose();
     }
 }
 
 public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
     where TMaterial : IMaterial
 {
-    public int TargetType => AssetLookup.ID<TMaterial>();
+    public int TargetType => TypeLookup.ID<TMaterial>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -41,7 +33,7 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         var shaderAsset = assetServer.GetAssets<ShaderAsset>().Get(material.ShaderSource)
             ?? throw new InvalidOperationException("Shader asset not found");
 
-        var shader = gpuContext.CreateShaderModule(new()
+        using var shader = gpuContext.CreateShaderModule(new()
         {
             Backend = ShaderBackend.WGSL,
             Label = shaderAsset.Name,
@@ -51,21 +43,21 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         var bindGroupLayouts = material.Bindings.Select((group, groupIndex) =>
             gpuContext.CreateBindGroupLayout(new()
             {
-                Label = $"{TMaterial.Name}_BindGroupLayout_{groupIndex}",
+                Label = $"""{TMaterial.Name}_BindGroupLayout_{groupIndex}""",
                 Entries = group.Select((binding, bindingIndex) => binding.Layout((uint)bindingIndex)).ToArray(),
             })).ToArray();
 
         var bindGroups = material.Bindings.Select((group, groupIndex) =>
             gpuContext.CreateBindGroup(new()
             {
-                Label = $"{TMaterial.Name}_BindGroup_{groupIndex}",
+                Label = $"""{TMaterial.Name}_BindGroup_{groupIndex}""",
                 Layout = bindGroupLayouts[groupIndex],
                 Entries = group.Select((binding, bindingIndex) => binding.Binding(renderAssets, gpuContext, assetServer, (uint)bindingIndex)).ToArray(),
             })).ToArray();
 
-        var pipelineLayout = gpuContext.CreatePipelineLayout(new()
+        using var pipelineLayout = gpuContext.CreatePipelineLayout(new()
         {
-            Label = $"{TMaterial.Name}_PipelineLayout",
+            Label = $"""{TMaterial.Name}_PipelineLayout""",
             Layouts = bindGroupLayouts,
         });
         var pipelineDescriptor = TMaterial.PipelineDescriptor;
@@ -88,11 +80,13 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
 
         renderAssets.Add(handle, new MaterialRenderData
         {
-            Shader = shader,
-            BindGroupLayouts = bindGroupLayouts,
             BindGroups = bindGroups,
             Pipeline = pipeline,
-            PipelineLayout = pipelineLayout,
         });
+
+        foreach (var bindGroupLayout in bindGroupLayouts)
+        {
+            bindGroupLayout.Dispose();
+        }
     }
 }

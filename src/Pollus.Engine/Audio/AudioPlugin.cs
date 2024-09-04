@@ -5,7 +5,7 @@ using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Mathematics;
-using Silk.NET.OpenAL;
+using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
 public struct AudioSource : IComponent

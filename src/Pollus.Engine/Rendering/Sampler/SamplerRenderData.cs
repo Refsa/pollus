@@ -17,7 +17,7 @@ public class SamplerRenderData : IRenderData
 
 public class SamplerRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => AssetLookup.ID<SamplerAsset>();
+    public int TargetType => TypeLookup.ID<SamplerAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
