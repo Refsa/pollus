@@ -4,34 +4,51 @@ using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
 
-public interface IRenderData : IDisposable
-{
-}
-
 public interface IRenderDataLoader
 {
     int TargetType { get; }
-
     void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle);
 }
 
-public class RenderAssets
+public class RenderAssets : IDisposable
 {
-    Dictionary<int, IRenderDataLoader> loaders = new();
-    Dictionary<Handle, IRenderData> renderData = new();
+    static volatile int counter;
+    static int NextID => counter++;
 
-    public RenderAssets Add(Handle handle, IRenderData data)
+    readonly Dictionary<int, IRenderDataLoader> loaders = [];
+    readonly Dictionary<Handle, object> renderData = [];
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        foreach (var data in renderData.Values)
+        {
+            if (data is IDisposable disposable) disposable.Dispose();
+        }
+        renderData.Clear();
+    }
+
+    public RenderAssets Add<T>(Handle handle, T data)
+        where T : notnull
     {
         renderData.Add(handle, data);
         return this;
     }
 
-    public IRenderData Get(Handle handle)
+    public Handle<T> Add<T>(T data)
+        where T : notnull
+    {
+        var handle = new Handle<T>(NextID);
+        renderData.Add(handle, data);
+        return handle;
+    }
+
+    public object Get(Handle handle)
     {
         return renderData[handle];
     }
 
-    public TRenderData Get<TRenderData>(Handle handle) where TRenderData : IRenderData
+    public TRenderData Get<TRenderData>(Handle handle) where TRenderData : notnull
     {
         return (TRenderData)renderData[handle];
     }
@@ -51,5 +68,14 @@ public class RenderAssets
 
         if (renderData.ContainsKey(handle)) return;
         loader.Prepare(this, gpuContext, assetServer, handle);
+    }
+
+    public void Unload(Handle handle)
+    {
+        if (renderData.TryGetValue(handle, out var data))
+        {
+            if (data is IDisposable disposable) disposable.Dispose();
+            renderData.Remove(handle);
+        }
     }
 }

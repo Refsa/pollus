@@ -5,19 +5,12 @@ using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
 
-public class MaterialRenderData : IRenderData
+public class MaterialRenderData
 {
     public required GPUBindGroup[] BindGroups { get; init; }
     public required GPURenderPipeline Pipeline { get; init; }
 
-    public void Dispose()
-    {
-        foreach (var bindGroup in BindGroups)
-        {
-            bindGroup.Dispose();
-        }
-        Pipeline.Dispose();
-    }
+    public void Dispose() { }
 }
 
 public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader

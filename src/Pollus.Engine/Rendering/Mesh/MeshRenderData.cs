@@ -6,7 +6,7 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public class MeshRenderData : IRenderData
+public class MeshRenderData
 {
     public required GPUBuffer VertexBuffer { get; init; }
     public required GPUBuffer? IndexBuffer { get; init; }

@@ -17,7 +17,7 @@ public class UniformAsset<T>
     }
 }
 
-public class UniformRenderData : IRenderData
+public class UniformRenderData
 {
     public required GPUBuffer UniformBuffer { get; init; }
 

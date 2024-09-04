@@ -5,7 +5,7 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public class SamplerRenderData : IRenderData
+public class SamplerRenderData
 {
     public required GPUSampler Sampler { get; init; }
 

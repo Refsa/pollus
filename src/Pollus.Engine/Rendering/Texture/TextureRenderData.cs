@@ -6,7 +6,7 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class TextureRenderData : IRenderData
+public class TextureRenderData
 {
     public required GPUTexture Texture { get; init; }
     public required GPUTextureView View { get; init; }

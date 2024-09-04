@@ -8,7 +8,7 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public class ShapeRenderData : IRenderData
+public class ShapeRenderData
 {
     public required uint VertexCount { get; init; }
     public required GPUBuffer VertexBuffer { get; init; }
