@@ -8,27 +8,27 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-struct ExtractSpritesJob : IForEach<Transform2, Sprite>
-{
-    public required SpriteBatches Batches { get; init; }
-
-    public void Execute(ref Transform2 transform, ref Sprite sprite)
-    {
-        var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material));
-        var matrix = transform.ToMat4f().Transpose();
-        batch.Write(new SpriteBatch.InstanceData
-        {
-            Model_0 = matrix.Col0,
-            Model_1 = matrix.Col1,
-            Model_2 = matrix.Col2,
-            Slice = sprite.Slice,
-            Color = sprite.Color,
-        });
-    }
-}
-
 class ExtractSpritesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, SpriteBatches, Query<Transform2, Sprite>>
 {
+    struct ExtractJob : IForEach<Transform2, Sprite>
+    {
+        public required SpriteBatches Batches { get; init; }
+
+        public void Execute(ref Transform2 transform, ref Sprite sprite)
+        {
+            var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material));
+            var matrix = transform.ToMat4f().Transpose();
+            batch.Write(new SpriteBatch.InstanceData
+            {
+                Model_0 = matrix.Col0,
+                Model_1 = matrix.Col1,
+                Model_2 = matrix.Col2,
+                Slice = sprite.Slice,
+                Color = sprite.Color,
+            });
+        }
+    }
+
     public ExtractSpritesSystem()
         : base(new ECS.Core.SystemDescriptor(nameof(ExtractSpritesSystem)))
     { }
@@ -44,7 +44,7 @@ class ExtractSpritesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContex
         }
 
         batches.Reset();
-        query.ForEach(new ExtractSpritesJob
+        query.ForEach(new ExtractJob
         {
             Batches = batches,
         });

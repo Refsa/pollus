@@ -60,7 +60,7 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         context.wgpu.RenderPassEncoderSetBlendConstant(native, c);
     }
 
-    public void SetBindGroup(GPUBindGroup bindGroup, uint groupIndex, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
+    public void SetBindGroup(uint groupIndex, GPUBindGroup bindGroup, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
     {
         if (dynamicOffsetCount > 0)
         {

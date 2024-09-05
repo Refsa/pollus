@@ -1,11 +1,10 @@
 namespace Pollus.Graphics;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public struct Draw
+public record struct Draw
 {
     public const int MAX_BIND_GROUPS = 4;
     public const int MAX_VERTEX_BUFFERS = 4;

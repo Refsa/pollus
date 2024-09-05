@@ -10,6 +10,13 @@ using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {
+    public const string UpdateSceneUniformSystem = "UpdateSceneUniform";
+    public const string PrepareSceneUniformSystem = "PrepareSceneUniform";
+    public const string BeginFrameSystem = "BeginFrame";
+    public const string EndFrameSystem = "EndFrame";
+    public const string RenderStepsCleanupSystem = "RenderStepsCleanup";
+    public const string RenderingSystem = "Rendering";
+
     public void Apply(World world)
     {
         world.Resources.Add(new MeshRenderBatches());
@@ -37,7 +44,7 @@ public class RenderingPlugin : IPlugin
         ]);
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
-            "UpdateSceneUniform",
+            UpdateSceneUniformSystem,
             static (Assets<UniformAsset<SceneUniform>> uniformAssets, Time time, Query<Projection, Transform2>.Filter<All<Camera2D>> qCamera) =>
             {
                 var handle = new Handle<UniformAsset<SceneUniform>>(0);
@@ -55,7 +62,7 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "PrepareSceneUniform",
+            PrepareSceneUniformSystem,
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<UniformAsset<SceneUniform>> uniformAssets) =>
             {
                 var handle = new Handle<UniformAsset<SceneUniform>>(0);
@@ -67,7 +74,7 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "BeginFrame",
+            BeginFrameSystem,
             static (IWGPUContext gpuContext, RenderContext context) =>
             {
                 context.Begin(gpuContext);
@@ -75,7 +82,7 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
-            "EndFrame",
+            EndFrameSystem,
             static (IWGPUContext gpuContext, RenderContext context) =>
             {
                 context.End(gpuContext);
@@ -83,7 +90,7 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
-            "RenderStepsCleanup",
+            RenderStepsCleanupSystem,
             static (RenderSteps renderSteps) =>
             {
                 renderSteps.Cleanup();
@@ -91,7 +98,7 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
-            "Rendering",
+            RenderingSystem,
             static (RenderAssets renderAssets, RenderContext context, RenderSteps renderGraph) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;

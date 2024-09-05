@@ -52,29 +52,51 @@ public class RenderStep
 
     public void Execute(GPURenderPassEncoder encoder, RenderAssets renderAssets)
     {
+        Span<Handle<GPUBindGroup>> bindGroupHandles = stackalloc Handle<GPUBindGroup>[4] { Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null };
+        Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[4] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
+        Handle<GPUBuffer> indexBufferHandle = Handle<GPUBuffer>.Null;
+        Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
+
+        // TODO: Sort commands by resource usage
         foreach (var command in commands.Commands)
         {
-            var pipeline = renderAssets.Get<GPURenderPipeline>(command.Pipeline);
-            encoder.SetPipeline(pipeline);
+            if (command.Pipeline != pipelineHandle)
+            {
+                pipelineHandle = command.Pipeline;
+                encoder.SetPipeline(renderAssets.Get<GPURenderPipeline>(pipelineHandle));
+            }
 
             uint idx = 0;
             foreach (var bindGroup in command.BindGroups)
             {
                 if (bindGroup == Handle<GPUBindGroup>.Null) break;
-                encoder.SetBindGroup(renderAssets.Get<GPUBindGroup>(bindGroup), idx++);
+                if (bindGroupHandles[(int)idx] != bindGroup)
+                {
+                    bindGroupHandles[(int)idx] = bindGroup;
+                    encoder.SetBindGroup(idx, renderAssets.Get<GPUBindGroup>(bindGroup));
+                }
+                idx++;
             }
 
             idx = 0;
             foreach (var vertexBuffer in command.VertexBuffers)
             {
                 if (vertexBuffer == Handle<GPUBuffer>.Null) break;
-                encoder.SetVertexBuffer(idx++, renderAssets.Get<GPUBuffer>(vertexBuffer));
+                if (vertexBufferHandles[(int)idx] != vertexBuffer)
+                {
+                    vertexBufferHandles[(int)idx] = vertexBuffer;
+                    encoder.SetVertexBuffer(idx, renderAssets.Get<GPUBuffer>(vertexBuffer));
+                }
+                idx++;
             }
 
             if (command.IndexBuffer != Handle<GPUBuffer>.Null)
             {
-                encoder.SetIndexBuffer(renderAssets.Get<GPUBuffer>(command.IndexBuffer), IndexFormat.Uint16);
-                encoder.DrawIndexed(command.IndexCount, command.InstanceCount, command.IndexOffset, (int)command.VertexOffset, command.InstanceOffset);
+                if (indexBufferHandle != command.IndexBuffer)
+                {
+                    indexBufferHandle = command.IndexBuffer;
+                    encoder.SetIndexBuffer(renderAssets.Get<GPUBuffer>(command.IndexBuffer), IndexFormat.Uint16);
+                }
             }
             else
             {

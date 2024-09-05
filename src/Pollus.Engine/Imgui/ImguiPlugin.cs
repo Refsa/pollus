@@ -1,6 +1,5 @@
 namespace Pollus.Engine.Imgui;
 
-using System.Runtime.InteropServices;
 using System.Text;
 using ImGuiNET;
 using Pollus.ECS;
@@ -8,26 +7,15 @@ using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Imgui;
-using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
-
-class ImguiDraw
-{
-    public RenderStep2D Stage => RenderStep2D.UI;
-
-    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
-    {
-        var imguiRenderer = resources.Get<ImguiRenderer>();
-        imguiRenderer.Render(encoder);
-    }
-}
 
 public class ImguiPlugin : IPlugin
 {
     public const string SetupSystem = "ImGui::Setup";
     public const string UpdateSystem = "ImGui::UpdateIO";
     public const string BeginFrameSystem = "ImGui::BeginFrame";
+    private const string RenderSystem = "ImGui::Render";
 
     public void Apply(World world)
     {
@@ -116,6 +104,16 @@ public class ImguiPlugin : IPlugin
                 imguiRenderer.Update((float)time.DeltaTime);
             }
         ).After(UpdateSystem));
+
+        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
+            RenderSystem,
+            static (ImguiRenderer imguiRenderer, RenderContext context) =>
+            {
+                var renderPass = context.BeginRenderPass(Graphics.Rendering.LoadOp.Load);
+                imguiRenderer.Render(renderPass);
+                context.EndRenderPass();
+            }
+        ).After(RenderingPlugin.RenderingSystem));
     }
 
     static ImGuiKey MapKey(Key key)

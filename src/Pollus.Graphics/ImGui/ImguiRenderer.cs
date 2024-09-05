@@ -109,7 +109,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     public void Dispose()
     {
-
+        GC.SuppressFinalize(this);
+        ImGui.DestroyContext();
+        vertexBuffer.Dispose();
+        indexBuffer.Dispose();
+        uniformBuffer.Dispose();
+        fontTexture?.Dispose();
+        fontTextureView?.Dispose();
+        fontSampler.Dispose();
+        baseBindGroup.Dispose();
+        baseBindGroupLayout.Dispose();
+        textureBindGroupLayout.Dispose();
+        fontTextureBindGroup.Dispose();
+        renderPipeline.Dispose();
     }
 
     public void Resized(Vec2<int> size)
@@ -384,7 +396,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         encoder.SetPipeline(renderPipeline);
         encoder.SetVertexBuffer(0, vertexBuffer);
         encoder.SetIndexBuffer(indexBuffer, IndexFormat.Uint16);
-        encoder.SetBindGroup(baseBindGroup, 0);
+        encoder.SetBindGroup(0, baseBindGroup);
 
         drawData.ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -404,11 +416,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 if (pcmd.TextureId != nint.Zero)
                 {
                     encoder.SetBindGroup(
-                        pcmd.TextureId switch
+                        1, pcmd.TextureId switch
                         {
                             var id when id == fontAtlasId => fontTextureBindGroup,
                             var id => GetImguiBinding(id).bindGroup
-                        }, 1
+                        }
                     );
                 }
 
