@@ -30,7 +30,6 @@ public class RenderingPlugin : IPlugin
 
         var assetServer = world.Resources.Get<AssetServer>();
         assetServer.AddLoader<WgslShaderSourceLoader>();
-        assetServer.GetAssets<UniformAsset<SceneUniform>>().Add(new UniformAsset<SceneUniform>(new()));
 
         world.AddPlugins([
             new MeshPlugin()
@@ -41,37 +40,18 @@ public class RenderingPlugin : IPlugin
             new CameraPlugin(),
             new MaterialPlugin<Material>(),
             new SpritePlugin(),
+            new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2>>>()
+            {
+                Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
+                {
+                    var qCamera = param.Param1.Single();
+
+                    uniform.Time = (float)param.Param0.DeltaTime;
+                    uniform.Projection = qCamera.Component0.GetProjection();
+                    uniform.View = qCamera.Component1.ToMat4f();
+                }
+            }
         ]);
-
-        world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
-            UpdateSceneUniformSystem,
-            static (Assets<UniformAsset<SceneUniform>> uniformAssets, Time time, Query<Projection, Transform2>.Filter<All<Camera2D>> qCamera) =>
-            {
-                var handle = new Handle<UniformAsset<SceneUniform>>(0);
-                var uniformAsset = uniformAssets.Get(handle)!;
-
-                var sceneUniform = uniformAsset.Value;
-                sceneUniform.Time = (float)time.SecondsSinceStartup;
-
-                var camera = qCamera.Single();
-                sceneUniform.Projection = camera.Component0.GetProjection();
-                sceneUniform.View = camera.Component1.ToMat4f();
-
-                uniformAsset.Value = sceneUniform;
-            }
-        ));
-
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            PrepareSceneUniformSystem,
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<UniformAsset<SceneUniform>> uniformAssets) =>
-            {
-                var handle = new Handle<UniformAsset<SceneUniform>>(0);
-                var uniformAsset = uniformAssets.Get(handle)!;
-                renderAssets.Prepare(gpuContext, assetServer, handle);
-                var renderAsset = renderAssets.Get<UniformRenderData>(handle);
-                renderAssets.Get<GPUBuffer>(renderAsset.UniformBuffer).Write(uniformAsset.Value, 0);
-            }
-        ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
             BeginFrameSystem,
@@ -112,7 +92,7 @@ public class RenderingPlugin : IPlugin
                 {
                     if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
                     var renderPass = context.BeginRenderPass(LoadOp.Load);
-                    
+
                     stage.Execute(renderPass, renderAssets);
 
                     context.EndRenderPass();
