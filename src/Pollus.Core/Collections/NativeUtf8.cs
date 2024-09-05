@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Pollus.Collections;
 
-unsafe public ref struct NativeUtf8
+unsafe public struct NativeUtf8 : IDisposable
 {
     NativeArray<byte> data;
 

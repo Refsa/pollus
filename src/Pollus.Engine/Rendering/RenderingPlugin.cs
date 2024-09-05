@@ -82,9 +82,17 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
+        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
+            "RenderStepsCleanup",
+            static (RenderSteps renderSteps) =>
+            {
+                renderSteps.Cleanup();
+            }
+        ));
+
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             "Rendering",
-            static (RenderAssets renderAssets, Resources resources, RenderContext context, RenderSteps renderGraph) =>
+            static (RenderAssets renderAssets, RenderContext context, RenderSteps renderGraph) =>
             {
                 if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
 
@@ -96,14 +104,9 @@ public class RenderingPlugin : IPlugin
                 for (int i = 0; i < renderGraph.Order.Count; i++)
                 {
                     if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
-                    if (stage.Count == 0) continue;
-
                     var renderPass = context.BeginRenderPass(LoadOp.Load);
-
-                    foreach (var draw in stage)
-                    {
-                        draw.Render(renderPass, resources, renderAssets);
-                    }
+                    
+                    stage.Execute(renderPass, renderAssets);
 
                     context.EndRenderPass();
                 }

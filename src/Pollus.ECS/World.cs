@@ -148,9 +148,9 @@ public class World : IDisposable
             
             Events.ClearEvents();
         }
-        catch (Exception e)
+        catch
         {
-            Log.Error(e, "An error occurred while running the world schedule.");
+            throw;
         }
     }
 }

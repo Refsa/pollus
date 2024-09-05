@@ -18,7 +18,6 @@ public class ShapePlugin : IPlugin
     {
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<ShapeMaterial>());
         world.Resources.Get<RenderAssets>().AddLoader(new ShapeRenderDataLoader());
-        world.Resources.Get<RenderSteps>().Add(new ShapeBatchDraw());
         world.Resources.Add(new ShapeBatches());
 
         world.Schedule.AddSystems(CoreStage.PreRender, [new ExtractShapesSystem()]);

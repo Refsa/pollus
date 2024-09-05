@@ -31,6 +31,20 @@ public struct Draw
         IndexBuffer = Handle<GPUBuffer>.Null;
     }
 
+    public void Clear()
+    {
+        Pipeline = Handle<GPURenderPipeline>.Null;
+        IndexBuffer = Handle<GPUBuffer>.Null;
+        IndexCount = 0;
+        IndexOffset = 0;
+        VertexCount = 0;
+        VertexOffset = 0;
+        InstanceCount = 1;
+        InstanceOffset = 0;
+        for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) VertexBuffers[i] = Handle<GPUBuffer>.Null;
+        for (int i = 0; i < MAX_BIND_GROUPS; i++) BindGroups[i] = Handle<GPUBindGroup>.Null;
+    }
+
     [InlineArray(MAX_VERTEX_BUFFERS)]
     public struct VertexBufferArray
     {

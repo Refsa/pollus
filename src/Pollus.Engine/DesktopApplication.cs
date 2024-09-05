@@ -64,7 +64,14 @@ public class DesktopApplication : IApplication, IDisposable
 
         while (IsRunning)
         {
-            world.Update();
+            try
+            {
+                world.Update();
+            }
+            catch
+            {
+                Shutdown();
+            }
         }
 
         Dispose();

@@ -29,14 +29,6 @@ public class MeshPlugin : IPlugin
             world.Resources.Add(primitives);
         }
 
-        world.Schedule.AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem(
-            "SetupRendering",
-            static (RenderSteps renderGraph) =>
-            {
-                renderGraph.Add(new MeshRenderBatchDraw());
-            }
-        ));
-
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
             "PrepareMeshAssets",
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets) =>

@@ -12,7 +12,7 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
-class ImguiDraw : IRenderStepDraw
+class ImguiDraw
 {
     public RenderStep2D Stage => RenderStep2D.UI;
 
@@ -44,7 +44,6 @@ public class ImguiPlugin : IPlugin
             {
                 var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
                 resources.Add(imguiRenderer);
-                renderGraph.Add(new ImguiDraw());
             }
         ));
 
