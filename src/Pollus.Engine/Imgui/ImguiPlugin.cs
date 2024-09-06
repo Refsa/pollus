@@ -7,6 +7,7 @@ using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Imgui;
+using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 

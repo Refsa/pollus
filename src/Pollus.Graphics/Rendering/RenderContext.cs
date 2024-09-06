@@ -1,6 +1,5 @@
-namespace Pollus.Engine.Rendering;
+namespace Pollus.Graphics.Rendering;
 
-using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
 using Pollus.Utils;
