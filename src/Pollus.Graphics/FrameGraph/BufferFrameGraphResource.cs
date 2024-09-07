@@ -2,26 +2,16 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 
-public class BufferFrameGraphResource : FrameResource
+public struct BufferFrameResource : IFrameGraphResource
 {
-    public struct Descriptor
+    public static FrameGraphResourceType Type => FrameGraphResourceType.Buffer;
+
+    public BufferDescriptor Descriptor { get; }
+    public string Name { get; }
+
+    public BufferFrameResource(string name, BufferDescriptor descriptor)
     {
-        public string Label;
-        public BufferUsage Usage;
-        public ulong Size;
-        public bool MappedAtCreation;
-    }
-
-    Descriptor descriptor;
-
-    public Descriptor BufferDescriptor => descriptor;
-
-    public BufferFrameGraphResource(int index, string name) : base(index, name, Type.Buffer)
-    {
-    }
-
-    public void SetDescriptor(Descriptor descriptor)
-    {
-        this.descriptor = descriptor;
+        Descriptor = descriptor;
+        Name = name;
     }
 }

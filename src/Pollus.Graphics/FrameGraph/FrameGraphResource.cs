@@ -1,52 +1,41 @@
 namespace Pollus.Graphics;
 
-public interface IFrameResource
+public enum FrameGraphResourceType
 {
-    int Index { get; }
-    string Name { get; }
-    bool IsTransient { get; }
-
-    public IReadOnlySet<int> ReadPasses { get; }
-    public IReadOnlySet<int> WritePasses { get; }
-
-    void AddReadPass(int passIndex);
-    void AddWritePass(int passIndex);
+    Texture = 1,
+    Buffer,
 }
 
-public abstract class FrameResource : IFrameResource
+public interface IFrameGraphResource
 {
-    public enum Type
-    {
-        Texture,
-        Buffer,
-    }
-
-    HashSet<int> readPasses = new();
-    HashSet<int> writePasses = new();
-
-    public int Index { get; }
+    public static abstract FrameGraphResourceType Type { get; }
     public string Name { get; }
-    public Type ResourceType { get; }
-    public bool IsTransient { get; }
+}
 
-    public IReadOnlySet<int> ReadPasses => readPasses;
-    public IReadOnlySet<int> WritePasses => writePasses;
+public readonly record struct ResourceHandle<TResource>(int Id, int Hash) where TResource : notnull, IFrameGraphResource;
+public readonly record struct FrameGraphResource<TResource>(string Name, TResource Descriptor) where TResource : notnull, IFrameGraphResource;
 
+public class FrameGraphResources<TResource>
+    where TResource : notnull, IFrameGraphResource
+{
+    TResource[] resources = new TResource[1];
+    Dictionary<string, int> nameLookup = [];
+    int count;
 
-    public FrameResource(int index, string name, Type type)
+    public ResourceHandle<TResource> Add(TResource descriptor)
     {
-        Index = index;
-        Name = name;
-        ResourceType = type;
+        if (count == resources.Length) Array.Resize(ref resources, resources.Length * 2);
+        resources[count] = descriptor;
+        nameLookup[descriptor.Name] = count;
+        return new ResourceHandle<TResource>(count++, descriptor.GetHashCode());
     }
 
-    public void AddReadPass(int passIndex)
+    public ResourceHandle<TResource> GetHandle(string name)
     {
-        readPasses.Add(passIndex);
-    }
-
-    public void AddWritePass(int passIndex)
-    {
-        writePasses.Add(passIndex);
+        if (nameLookup.TryGetValue(name, out int index))
+        {
+            return new ResourceHandle<TResource>(index, resources[index].GetHashCode());
+        }
+        return default;
     }
 }

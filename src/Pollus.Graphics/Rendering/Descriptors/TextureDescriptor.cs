@@ -1,10 +1,11 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Runtime.CompilerServices;
 using Pollus.Mathematics;
 
-public ref struct TextureDescriptor
+public struct TextureDescriptor
 {
-    public ReadOnlySpan<char> Label;
+    public string Label;
 
     public TextureUsage Usage;
     public TextureDimension Dimension;
@@ -13,9 +14,9 @@ public ref struct TextureDescriptor
 
     public uint MipLevelCount;
     public uint SampleCount;
-    public ReadOnlySpan<TextureFormat> ViewFormats;
+    public ViewFormatArray ViewFormats;
 
-    public static TextureDescriptor D1(ReadOnlySpan<char> label, TextureUsage usage, TextureFormat format, uint size, uint mipLevelCount = 1, uint sampleCount = 1)
+    public static TextureDescriptor D1(string label, TextureUsage usage, TextureFormat format, uint size, uint mipLevelCount = 1, uint sampleCount = 1)
     {
         return new()
         {
@@ -29,7 +30,7 @@ public ref struct TextureDescriptor
         };
     }
 
-    public static TextureDescriptor D2(ReadOnlySpan<char> label, TextureUsage usage, TextureFormat format, Vec2<uint> size, uint mipLevelCount = 1, uint sampleCount = 1)
+    public static TextureDescriptor D2(string label, TextureUsage usage, TextureFormat format, Vec2<uint> size, uint mipLevelCount = 1, uint sampleCount = 1)
     {
         return new()
         {
@@ -43,7 +44,7 @@ public ref struct TextureDescriptor
         };
     }
 
-    public static TextureDescriptor D3(ReadOnlySpan<char> label, TextureUsage usage, TextureFormat format, Vec3<uint> size, uint mipLevelCount = 1, uint sampleCount = 1)
+    public static TextureDescriptor D3(string label, TextureUsage usage, TextureFormat format, Vec3<uint> size, uint mipLevelCount = 1, uint sampleCount = 1)
     {
         return new()
         {
@@ -55,5 +56,11 @@ public ref struct TextureDescriptor
             MipLevelCount = mipLevelCount,
             SampleCount = sampleCount,
         };
+    }
+
+    [InlineArray(4)]
+    public struct ViewFormatArray
+    {
+        TextureFormat _first;
     }
 }

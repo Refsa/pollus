@@ -3,14 +3,14 @@ using Pollus.Utils;
 
 namespace Pollus.Graphics.Rendering;
 
-public ref struct BufferDescriptor
+public struct BufferDescriptor
 {
-    public ReadOnlySpan<char> Label;
+    public string Label;
     public BufferUsage Usage;
     public ulong Size;
     public bool MappedAtCreation;
 
-    public static BufferDescriptor Vertex(ReadOnlySpan<char> label, ulong size)
+    public static BufferDescriptor Vertex(string label, ulong size)
     {
         return new BufferDescriptor
         {
@@ -21,7 +21,7 @@ public ref struct BufferDescriptor
         };
     }
 
-    public static BufferDescriptor Index(ReadOnlySpan<char> label, ulong size)
+    public static BufferDescriptor Index(string label, ulong size)
     {
         return new BufferDescriptor
         {
@@ -32,7 +32,7 @@ public ref struct BufferDescriptor
         };
     }
 
-    public static BufferDescriptor Uniform<TUniform>(ReadOnlySpan<char> label, ulong? dynamicLength = null)
+    public static BufferDescriptor Uniform<TUniform>(string label, ulong? dynamicLength = null)
         where TUniform : unmanaged, IShaderType
     {
         return new BufferDescriptor

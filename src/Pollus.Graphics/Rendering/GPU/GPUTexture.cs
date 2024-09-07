@@ -34,10 +34,16 @@ unsafe public class GPUTexture : GPUResourceWrapper
             sampleCount: descriptor.SampleCount
         );
 
-        if (descriptor.ViewFormats.Length > 0)
+        int viewFormatCount = 0;
+        foreach (var viewFormat in descriptor.ViewFormats)
         {
-            throw new NotImplementedException("ViewFormats for GPUTexture is not implemented yet.");
+            if (viewFormat == TextureFormat.Undefined) break;
+            viewFormatCount++;
         }
+        var viewFormats = stackalloc Silk.NET.WebGPU.TextureFormat[viewFormatCount];
+        for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = (Silk.NET.WebGPU.TextureFormat)descriptor.ViewFormats[i];
+        nativeDescriptor.ViewFormatCount = (nuint)viewFormatCount;
+        nativeDescriptor.ViewFormats = viewFormats;
 
         size = descriptor.Size;
         format = descriptor.Format;

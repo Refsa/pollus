@@ -3,95 +3,106 @@ namespace Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 
-public class FrameGraph
+public class FrameGraph<TRenderAssets>
 {
-    IWGPUContext gpuContext;
-    GPUCommandEncoder rendering;
-    GPUCommandEncoder compute;
+    public delegate void BuilderDelegate<TData>(FrameGraphBuilder<TRenderAssets> builder, TData data);
+    public delegate void ExecuteDelegate<TData>(RenderContext context, TRenderAssets renderAssets, TData data);
 
-    Dictionary<int, IFrameResource> resources = new();
-    Dictionary<int, IFramePass> passes = new();
+    FrameGraphResources<BufferFrameResource> bufferResources = new();
+    FrameGraphResources<TextureFrameResource> textureResources = new();
+    List<PassNode> passes = new();
 
-    public FrameGraph(IWGPUContext gpuContext)
+    public FrameGraphResources<BufferFrameResource> BufferResources => bufferResources;
+    public FrameGraphResources<TextureFrameResource> TextureResources => textureResources;
+
+    public FrameGraph()
     {
-        this.gpuContext = gpuContext;
+
     }
 
-    public void BeginFrame()
+    public void AddPass<TData>(string name, BuilderDelegate<TData> builder, ExecuteDelegate<TData> execute)
     {
-        rendering = gpuContext.CreateCommandEncoder("""rendering-command-encoder""");
-        compute = gpuContext.CreateCommandEncoder("""compute-command-encoder""");
+
     }
 
-    public void EndFrame()
+    public FrameGraph<TRenderAssets> Compile()
     {
-        using var renderingCommandBuffer = rendering.Finish("""rendering-command-encoder""");
-        using var computeCommandBuffer = compute.Finish("""compute-command-encoder""");
+        return this;
+    }
 
-        renderingCommandBuffer.Submit();
-        computeCommandBuffer.Submit();
+    public void Execute(IWGPUContext gpuContext)
+    {
+        var runner = new FrameGraphRunner<TRenderAssets>(this, gpuContext);
+        runner.Run();
+    }
 
-        gpuContext.Present();
+    public ResourceHandle<BufferFrameResource> AddBufferResource(BufferFrameResource resource)
+    {
+        return bufferResources.Add(resource);
+    }
 
-        rendering.Dispose();
-        compute.Dispose();
-
-        passes.Clear();
+    public ResourceHandle<TextureFrameResource> AddTextureResource(TextureFrameResource resource)
+    {
+        return textureResources.Add(resource);
     }
 }
 
-public interface IFramePass
+public struct FrameGraphBuilder<TRenderAssets>
 {
-    string Name { get; }
+    FrameGraph<TRenderAssets> frameGraph;
 
-    List<FrameResource> Inputs { get; }
-    List<FrameResource> Outputs { get; }
+    public FrameGraphBuilder(FrameGraph<TRenderAssets> frameGraph)
+    {
+        this.frameGraph = frameGraph;
+    }
+
+    public ResourceHandle<BufferFrameResource> LookupBuffer(string name)
+    {
+        return frameGraph.BufferResources.GetHandle(name);
+    }
+
+    public ResourceHandle<TextureFrameResource> LookupTexture(string name)
+    {
+        return frameGraph.TextureResources.GetHandle(name);
+    }
+
+    public ResourceHandle<BufferFrameResource> Creates(string name, BufferDescriptor descriptor)
+    {
+        return frameGraph.AddBufferResource(new BufferFrameResource(name, descriptor));
+    }
+
+    public ResourceHandle<BufferFrameResource> Writes(ResourceHandle<BufferFrameResource> resource)
+    {
+        return resource;
+    }
+
+    public ResourceHandle<BufferFrameResource> Reads(ResourceHandle<BufferFrameResource> resource)
+    {
+        return resource;
+    }
+
+    public ResourceHandle<TextureFrameResource> Creates(string name, TextureDescriptor descriptor)
+    {
+        return frameGraph.AddTextureResource(new TextureFrameResource(name, descriptor));
+    }
+
+    public ResourceHandle<TextureFrameResource> Writes(ResourceHandle<TextureFrameResource> resource)
+    {
+        return resource;
+    }
+
+    public ResourceHandle<TextureFrameResource> Reads(ResourceHandle<TextureFrameResource> resource)
+    {
+        return resource;
+    }
 }
 
-public class FramePass<TData> : IFramePass
+public struct PassNode
 {
-    public delegate void Execute(TData passData);
+    public IFramePass Pass;
+}
 
-    public string Name { get; }
-    public TData Data { get; }
-    public Execute? ExecutePass { get; private set; }
+public struct ResourceNode
+{
 
-    public List<FrameResource> Inputs { get; } = new();
-    public List<FrameResource> Outputs { get; } = new();
-
-    public FramePass(string name, TData data)
-    {
-        Name = name;
-        Data = data;
-    }
-
-    public FramePass<TData> AddTextureInput(TextureFrameGraphResource resource)
-    {
-        Inputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddTextureOutput(TextureFrameGraphResource resource)
-    {
-        Outputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddBufferInput(BufferFrameGraphResource resource)
-    {
-        Inputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddBufferOutput(BufferFrameGraphResource resource)
-    {
-        Outputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> SetExecute(Execute execute)
-    {
-        ExecutePass = execute;
-        return this;
-    }
 }

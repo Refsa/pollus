@@ -2,32 +2,16 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 
-public class TextureFrameGraphResource : FrameResource
+public struct TextureFrameResource : IFrameGraphResource
 {
-    public struct Descriptor
+    public static FrameGraphResourceType Type => FrameGraphResourceType.Texture;
+
+    public TextureDescriptor Descriptor { get; }
+    public string Name { get; }
+
+    public TextureFrameResource(string name, TextureDescriptor descriptor)
     {
-        public string Label;
-
-        public TextureUsage Usage;
-        public TextureDimension Dimension;
-        public Extent3D Size;
-        public TextureFormat Format;
-
-        public uint MipLevelCount;
-        public uint SampleCount;
-        public TextureFormat[] ViewFormats;
-    }
-
-    Descriptor textureDescriptor;
-
-    public Descriptor TextureDescriptor => textureDescriptor;
-
-    public TextureFrameGraphResource(int index, string name) : base(index, name, Type.Texture)
-    {
-    }
-
-    public void SetDescriptor(Descriptor descriptor)
-    {
-        this.textureDescriptor = descriptor;
+        Descriptor = descriptor;
+        Name = name;
     }
 }
