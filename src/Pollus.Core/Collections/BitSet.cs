@@ -8,10 +8,10 @@ using System.Runtime.CompilerServices;
 /// </summary>
 public record struct BitSet256
 {
-    public long l0;
-    public long l1;
-    public long l2;
-    public long l3;
+    public ulong l0;
+    public ulong l1;
+    public ulong l2;
+    public ulong l3;
 
     public BitSet256()
     {
@@ -31,16 +31,16 @@ public record struct BitSet256
         switch (idx)
         {
             case < 64:
-                l0 |= 1L << idx;
+                l0 |= 1UL << idx;
                 break;
             case < 128:
-                l1 |= 1L << idx - 64;
+                l1 |= 1UL << idx - 64;
                 break;
             case < 192:
-                l2 |= 1L << idx - 128;
+                l2 |= 1UL << idx - 128;
                 break;
             default:
-                l3 |= 1L << idx - 192;
+                l3 |= 1UL << idx - 192;
                 break;
         }
     }
@@ -58,16 +58,16 @@ public record struct BitSet256
         switch (idx)
         {
             case < 64:
-                l0 &= ~(1L << idx);
+                l0 &= ~(1UL << idx);
                 break;
             case < 128:
-                l1 &= ~(1L << idx - 64);
+                l1 &= ~(1UL << idx - 64);
                 break;
             case < 192:
-                l2 &= ~(1L << idx - 128);
+                l2 &= ~(1UL << idx - 128);
                 break;
             default:
-                l3 &= ~(1L << idx - 192);
+                l3 &= ~(1UL << idx - 192);
                 break;
         }
     }
@@ -76,10 +76,10 @@ public record struct BitSet256
     {
         return idx switch
         {
-            < 64 => (l0 & 1L << idx) != 0,
-            < 128 => (l1 & 1L << idx - 64) != 0,
-            < 192 => (l2 & 1L << idx - 128) != 0,
-            _ => (l3 & 1L << idx - 192) != 0
+            < 64 => (l0 & 1UL << idx) != 0,
+            < 128 => (l1 & 1UL << idx - 64) != 0,
+            < 192 => (l2 & 1UL << idx - 128) != 0,
+            _ => (l3 & 1UL << idx - 192) != 0
         };
     }
 
@@ -112,10 +112,72 @@ public record struct BitSet256
 
         return -1;
     }
+
+    public int FirstSetBit()
+    {
+        var b0 = BitOperations.TrailingZeroCount(l0);
+        if (b0 < 64) return b0;
+        var b1 = BitOperations.TrailingZeroCount(l1);
+        if (b1 < 64) return b1 + 64;
+        var b2 = BitOperations.TrailingZeroCount(l2);
+        if (b2 < 64) return b2 + 128;
+        var b3 = BitOperations.TrailingZeroCount(l3);
+        if (b3 < 64) return b3 + 192;
+        return -1;
+    }
+
+    public int LastSetBit()
+    {
+        var b3 = BitOperations.LeadingZeroCount(l3);
+        if (b3 < 64) return 255 - b3;
+        var b2 = BitOperations.LeadingZeroCount(l2);
+        if (b2 < 64) return 191 - b2;
+        var b1 = BitOperations.LeadingZeroCount(l1);
+        if (b1 < 64) return 127 - b1;
+        var b0 = BitOperations.LeadingZeroCount(l0);
+        if (b0 < 64) return 63 - b0;
+        return -1;
+    }
+
+    public Enumerator GetEnumerator()
+    {
+        return new(this);
+    }
+
+    public ref struct Enumerator
+    {
+        BitSet256 bitset;
+        int current;
+        int end;
+
+        public Enumerator(BitSet256 bitset)
+        {
+            this.bitset = bitset;
+            current = bitset.FirstSetBit() - 1;
+            end = bitset.LastSetBit();
+        }
+
+        public int Current => current;
+
+        public bool MoveNext()
+        {
+            if (end == -1) return false;
+
+            while (++current <= end)
+            {
+                if (bitset.Has(current))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
 }
 
 /// <summary>
-/// growing bitset
+/// growing dense bitset
 /// </summary>
 public record struct BitSet : IDisposable
 {
