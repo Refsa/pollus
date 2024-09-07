@@ -3,25 +3,26 @@ namespace Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 
-public class FrameGraphRunner<TRenderAssets>
+public ref struct FrameGraphRunner<TExecuteParam>
 {
-    FrameGraph<TRenderAssets> frameGraph;
-    IWGPUContext gpuContext;
+    internal ReadOnlySpan<int> order;
+    FrameGraph<TExecuteParam> frameGraph;
 
     GPUCommandEncoder rendering;
     GPUCommandEncoder compute;
 
-    public FrameGraphRunner(FrameGraph<TRenderAssets> frameGraph, IWGPUContext gpuContext)
+    public FrameGraphRunner(FrameGraph<TExecuteParam> frameGraph, scoped in ReadOnlySpan<int> order)
     {
         this.frameGraph = frameGraph;
-        this.gpuContext = gpuContext;
+        this.order = order;
     }
 
-    public void Run()
+    public void Execute(IWGPUContext gpuContext, TExecuteParam param)
     {
         BeginFrame(gpuContext);
+        foreach (var passIndex in order)
         {
-            
+
         }
         EndFrame(gpuContext);
     }

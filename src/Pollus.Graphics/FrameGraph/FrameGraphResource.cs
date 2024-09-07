@@ -1,41 +1,98 @@
 namespace Pollus.Graphics;
 
-public enum FrameGraphResourceType
+using Pollus.Graphics.Rendering;
+
+public enum ResourceType
 {
-    Texture = 1,
+    Unknown = 0,
+    Texture,
     Buffer,
 }
 
-public interface IFrameGraphResource
+public readonly record struct ResourceHandle(int Id, int Index);
+public readonly record struct ResourceHandle<TResource>(int Id, int Index)
 {
-    public static abstract FrameGraphResourceType Type { get; }
-    public string Name { get; }
+    public static implicit operator ResourceHandle(ResourceHandle<TResource> handle) => new(handle.Id, handle.Index);
+    public static implicit operator ResourceHandle<TResource>(ResourceHandle handle) => new(handle.Id, handle.Index);
 }
 
-public readonly record struct ResourceHandle<TResource>(int Id, int Hash) where TResource : notnull, IFrameGraphResource;
-public readonly record struct FrameGraphResource<TResource>(string Name, TResource Descriptor) where TResource : notnull, IFrameGraphResource;
-
-public class FrameGraphResources<TResource>
-    where TResource : notnull, IFrameGraphResource
+public class ResourceContainer<TResource>
+    where TResource : struct
 {
     TResource[] resources = new TResource[1];
-    Dictionary<string, int> nameLookup = [];
     int count;
 
-    public ResourceHandle<TResource> Add(TResource descriptor)
+    public ResourceHandle<TResource> Add(int id, TResource resource)
     {
-        if (count == resources.Length) Array.Resize(ref resources, resources.Length * 2);
-        resources[count] = descriptor;
-        nameLookup[descriptor.Name] = count;
-        return new ResourceHandle<TResource>(count++, descriptor.GetHashCode());
+        if (count == resources.Length) Resize();
+        resources[count++] = resource;
+        return new ResourceHandle(id, count - 1);
     }
 
-    public ResourceHandle<TResource> GetHandle(string name)
+    public ref TResource Get(ResourceHandle<TResource> handle)
     {
-        if (nameLookup.TryGetValue(name, out int index))
-        {
-            return new ResourceHandle<TResource>(index, resources[index].GetHashCode());
-        }
-        return default;
+        return ref resources[handle.Index];
+    }
+
+    public void Clear()
+    {
+        count = 0;
+        Array.Fill(resources, default);
+    }
+
+    void Resize()
+    {
+        Array.Resize(ref resources, resources.Length * 2);
+    }
+}
+
+public class ResourceContainers
+{
+    int count;
+    ResourceContainer<TextureDescriptor> textures;
+    ResourceContainer<BufferDescriptor> buffers;
+    Dictionary<string, ResourceHandle> resourceMap;
+
+    public ResourceContainers()
+    {
+        textures = new();
+        buffers = new();
+        resourceMap = new();
+    }
+
+    public void Clear()
+    {
+        count = 0;
+        textures.Clear();
+        buffers.Clear();
+    }
+
+    public ResourceHandle GetHandle(string label)
+    {
+        return resourceMap[label];
+    }
+
+    public ResourceHandle<TextureDescriptor> AddTexture(TextureDescriptor texture)
+    {
+        var handle = textures.Add(count++, texture);
+        resourceMap.Add(texture.Label, handle);
+        return handle;
+    }
+
+    public ResourceHandle<BufferDescriptor> AddBuffer(BufferDescriptor buffer)
+    {
+        var handle = buffers.Add(count++, buffer);
+        resourceMap.Add(buffer.Label, handle);
+        return handle;
+    }
+
+    public ref TextureDescriptor GetTexture(ResourceHandle<TextureDescriptor> handle)
+    {
+        return ref textures.Get(handle);
+    }
+
+    public ref BufferDescriptor GetBuffer(ResourceHandle<BufferDescriptor> handle)
+    {
+        return ref buffers.Get(handle);
     }
 }

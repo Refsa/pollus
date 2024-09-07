@@ -11,50 +11,46 @@ public class FrameGraphExample : IExample
 
     struct SpritesPassData
     {
-        public ResourceHandle<TextureFrameResource> ColorTexture;
+        public ResourceHandle<TextureDescriptor> ColorTexture;
     }
 
     struct BlitPassData
     {
-        public ResourceHandle<TextureFrameResource> Backbuffer;
+        public ResourceHandle<TextureDescriptor> Backbuffer;
     }
 
     public void Run()
     {
         var frameGraph = new FrameGraph<RenderAssets>();
-        frameGraph.AddTextureResource(new TextureFrameResource("backbuffer", TextureDescriptor.D2(
+        frameGraph.AddResource(TextureDescriptor.D2(
             label: "backbuffer",
             size: new Vec2<uint>(800, 600),
             format: TextureFormat.Rgba8Unorm,
             usage: TextureUsage.CopySrc | TextureUsage.RenderAttachment
-        )));
+        ));
 
-        frameGraph.AddPass<SpritesPassData>("sprites-pass",
-        static (builder, data) =>
+        frameGraph.AddPass("sprites-pass",
+        static (ref FrameGraph<RenderAssets>.Builder builder, ref SpritesPassData data) =>
         {
-            data.ColorTexture = builder.Creates("color-texture", TextureDescriptor.D2(
-                label: "color-texture",
-                size: new Vec2<uint>(800, 600),
-                format: TextureFormat.Rgba8Unorm,
-                usage: TextureUsage.CopyDst | TextureUsage.RenderAttachment
-            ));
+            data.ColorTexture = builder.Writes("backbuffer");
         }, 
         static (context, renderAssets, data) =>
         {
             // Execute pass
         });
 
-        frameGraph.AddPass<BlitPassData>("blit-pass",
-        static (builder, data) =>
+        frameGraph.AddPass("blit-pass",
+        static (ref FrameGraph<RenderAssets>.Builder builder, ref BlitPassData data) =>
         {
-            data.Backbuffer = builder.Writes(builder.LookupTexture("backbuffer"));
+
         },
         static (context, renderAssets, data) =>
         {
             // Execute pass
         });
 
-        frameGraph.Compile().Execute(null);
+        frameGraph.Compile();
+        // frameGraph.Execute(null, null);
     }
 
     public void Stop()
