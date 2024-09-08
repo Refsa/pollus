@@ -7,16 +7,18 @@ public class RenderContext
 {
     List<GPUCommandEncoder> commandEncoders = new();
     List<GPUCommandBuffer> commandBuffers = new();
+    RenderResourceCache resources = new();
 
     GPUSurfaceTexture? surfaceTexture;
     public GPUTextureView? SurfaceTextureView;
 
     public required IWGPUContext GPUContext { get; init; }
+    public RenderResourceCache Resources => resources;
     public bool SkipFrame { get; private set; }
 
     public bool PrepareFrame()
     {
-        var surfaceTexture = new GPUSurfaceTexture(GPUContext);
+        var surfaceTexture = GPUContext.CreateSurfaceTexture();
         if (!surfaceTexture.Prepare())
         {
             Log.Error("Failed to prepare surface texture");
@@ -32,19 +34,28 @@ public class RenderContext
 
     public void PrepareResources(ResourceContainers resourceContainers)
     {
-
+        foreach (var resource in resourceContainers.Textures.Resources)
+        {
+            if (resource.Label == "backbuffer" && SurfaceTextureView.HasValue)
+            {
+                resources.AddTextureView(resource.Handle, SurfaceTextureView.Value);
+            }
+            else
+            {
+                // GPUContext.CreateTexture(resource);
+            }
+        }
+        foreach (var resource in resourceContainers.Buffers.Resources)
+        {
+            // GPUContext.CreateBuffer(resource);
+        }
     }
 
     public void CleanupFrame()
     {
-        foreach (var buffer in commandBuffers)
-        {
-            buffer.Dispose();
-        }
-        foreach (var encoder in commandEncoders)
-        {
-            encoder.Dispose();
-        }
+        foreach (var buffer in commandBuffers) buffer.Dispose();
+        foreach (var encoder in commandEncoders) encoder.Dispose();
+
         surfaceTexture?.Dispose();
 
         commandEncoders.Clear();
@@ -62,7 +73,7 @@ public class RenderContext
             var commandBuffers = stackalloc Silk.NET.WebGPU.CommandBuffer*[commandEncoders.Count];
             for (int i = 0; i < commandEncoders.Count; i++)
             {
-                var commandBuffer = commandEncoders[i].Finish(commandEncoders[i].Label + "-CommandBuffer");
+                var commandBuffer = commandEncoders[i].Finish("");
                 this.commandBuffers.Add(commandBuffer);
                 commandBuffers[i] = (Silk.NET.WebGPU.CommandBuffer*)commandBuffer.Native;
             }
@@ -70,7 +81,6 @@ public class RenderContext
         }
 
         GPUContext.Present();
-        CleanupFrame();
     }
 
     public GPUCommandEncoder CreateCommandEncoder(string label)
@@ -95,14 +105,5 @@ public class RenderContext
     public GPUCommandEncoder GetCurrentCommandEncoder()
     {
         return commandEncoders[^1];
-    }
-
-    unsafe public void SubmitCommandBuffers(in GPUCommandBuffer buffer0)
-    {
-        var buffers = stackalloc Silk.NET.WebGPU.CommandBuffer*[]
-        {
-            (Silk.NET.WebGPU.CommandBuffer*)buffer0.Native,
-        };
-        GPUContext.wgpu.QueueSubmit(GPUContext.Queue, 1, buffers);
     }
 }

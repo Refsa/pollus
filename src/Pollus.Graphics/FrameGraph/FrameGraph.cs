@@ -1,5 +1,6 @@
 namespace Pollus.Graphics;
 
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
@@ -9,12 +10,13 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
     public delegate void BuilderDelegate<TData>(ref Builder builder, ref TData data);
     public delegate void ExecuteDelegate<TData>(RenderContext context, TExecuteParam renderAssets, TData data);
 
+    int[]? executionOrder;
     GraphData<PassNode> passNodes;
     GraphData<ResourceNode> resourceNodes;
-
     FramePassContainer<TExecuteParam> passes;
-
     ResourceContainers resources;
+
+    public ResourceContainers Resources => resources;
 
     public FrameGraph()
     {
@@ -30,9 +32,15 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
         // TODO: recycle
         passNodes.Dispose();
         resourceNodes.Dispose();
+        resources.Dispose();
         
         passes.Clear();
-        resources.Clear();
+
+        if (executionOrder != null)
+        {
+            ArrayPool<int>.Shared.Return(executionOrder);
+            executionOrder = null;
+        }
     }
 
     public FrameGraphRunner<TExecuteParam> Compile()
@@ -50,7 +58,7 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
             }
         }
 
-        Span<int> order = stackalloc int[passNodes.Count];
+        executionOrder = ArrayPool<int>.Shared.Rent(passNodes.Count);
         int orderIndex = 0;
         Span<bool> visited = stackalloc bool[passNodes.Count];
         Span<bool> onStack = stackalloc bool[passNodes.Count];
@@ -59,15 +67,15 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
             var adj = adjacencyMatrix[node.Index];
             if (!visited[node.Index])
             {
-                if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, order, ref orderIndex))
+                if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, executionOrder, ref orderIndex))
                 {
                     throw new Exception("Cyclic dependency detected");
                 }
             }
         }
 
-        order.Reverse();
-        return new FrameGraphRunner<TExecuteParam>(this, order.ToArray());
+        executionOrder.AsSpan().Reverse();
+        return new FrameGraphRunner<TExecuteParam>(this, executionOrder);
 
         static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
         {

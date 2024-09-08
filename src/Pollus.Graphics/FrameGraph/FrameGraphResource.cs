@@ -1,5 +1,6 @@
 namespace Pollus.Graphics;
 
+using System.Buffers;
 using Pollus.Graphics.Rendering;
 
 public enum ResourceType
@@ -20,6 +21,8 @@ public readonly record struct ResourceHandle<TResource>(int Id, int Index)
 public interface IFrameGraphResource
 {
     static abstract ResourceType Type { get; }
+
+    ResourceHandle Handle { get; set; }
     string Label { get; }
 }
 
@@ -28,6 +31,7 @@ public struct TextureResource : IFrameGraphResource
     public static ResourceType Type => ResourceType.Texture;
 
     public string Label { get; }
+    public ResourceHandle Handle { get; set; }
     public TextureDescriptor Descriptor { get; }
 
     public TextureResource(string label, TextureDescriptor descriptor)
@@ -44,6 +48,7 @@ public struct BufferResource : IFrameGraphResource
     public static ResourceType Type => ResourceType.Buffer;
 
     public string Label { get; }
+    public ResourceHandle Handle { get; set; }
     public BufferDescriptor Descriptor { get; }
 
     public BufferResource(string label, BufferDescriptor descriptor)
@@ -55,17 +60,28 @@ public struct BufferResource : IFrameGraphResource
     public static implicit operator BufferResource(BufferDescriptor descriptor) => new(descriptor.Label, descriptor);
 }
 
-public class ResourceContainer<TResource>
+public struct ResourceContainer<TResource> : IDisposable
     where TResource : struct, IFrameGraphResource
 {
-    TResource[] resources = new TResource[1];
+    TResource[] resources = ArrayPool<TResource>.Shared.Rent(1);
     int count;
+
+    public ReadOnlySpan<TResource> Resources => resources.AsSpan(0, count);
+
+    public ResourceContainer() { }
+
+    public void Dispose()
+    {
+        Array.Fill(resources, default, 0, count);
+        ArrayPool<TResource>.Shared.Return(resources);
+    }
 
     public ResourceHandle<TResource> Add(int id, TResource resource)
     {
         if (count == resources.Length) Resize();
+        resource.Handle = new ResourceHandle<TResource>(id, count);
         resources[count++] = resource;
-        return new ResourceHandle<TResource>(id, count - 1);
+        return resource.Handle;
     }
 
     public ref TResource Get(ResourceHandle<TResource> handle)
@@ -73,19 +89,16 @@ public class ResourceContainer<TResource>
         return ref resources[handle.Index];
     }
 
-    public void Clear()
-    {
-        count = 0;
-        Array.Fill(resources, default);
-    }
-
     void Resize()
     {
-        Array.Resize(ref resources, resources.Length * 2);
+        var newArray = ArrayPool<TResource>.Shared.Rent(resources.Length * 2);
+        resources.CopyTo(newArray, 0);
+        ArrayPool<TResource>.Shared.Return(resources);
+        resources = newArray;
     }
 }
 
-public class ResourceContainers
+public struct ResourceContainers : IDisposable
 {
     int count;
     ResourceContainer<TextureResource> textures;
@@ -93,6 +106,8 @@ public class ResourceContainers
     Dictionary<string, ResourceHandle> resourceByName;
 
     public IReadOnlyDictionary<string, ResourceHandle> ResourceByName => resourceByName;
+    public ResourceContainer<TextureResource> Textures => textures;
+    public ResourceContainer<BufferResource> Buffers => buffers;
 
     public ResourceContainers()
     {
@@ -101,12 +116,11 @@ public class ResourceContainers
         resourceByName = new();
     }
 
-    public void Clear()
+    public void Dispose()
     {
         count = 0;
-        textures.Clear();
-        buffers.Clear();
-        resourceByName.Clear();
+        textures.Dispose();
+        buffers.Dispose();
     }
 
     public ResourceHandle GetHandle(string label)

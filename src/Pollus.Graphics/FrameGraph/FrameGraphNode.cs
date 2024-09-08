@@ -11,7 +11,7 @@ public interface INode
     void Init(int index, string name);
 }
 
-public struct PassNode : INode, IDisposable
+public struct PassNode : INode
 {
     BitSet256 reads;
     BitSet256 writes;
@@ -23,11 +23,6 @@ public struct PassNode : INode, IDisposable
 
     public readonly BitSet256 Reads => reads;
     public readonly BitSet256 Writes => writes;
-
-    public void Dispose()
-    {
-        
-    }
 
     public void Init(int index, string name)
     {
@@ -64,7 +59,6 @@ public struct ResourceNode : INode
 {
     public int Index { get; private set; }
     public string Name { get; private set; }
-    public int ProducerIndex { get; private set; }
     public ResourceType Type { get; private set; }
     public ResourceHandle Resource { get; private set; }
 
@@ -79,14 +73,9 @@ public struct ResourceNode : INode
         Type = type;
         Resource = resource;
     }
-
-    public void SetProducer(int index)
-    {
-        ProducerIndex = index;
-    }
 }
 
-public class GraphData<TNode> : IDisposable
+public struct GraphData<TNode> : IDisposable
     where TNode : struct, INode
 {
     TNode[] nodes = ArrayPool<TNode>.Shared.Rent(1);
@@ -94,6 +83,8 @@ public class GraphData<TNode> : IDisposable
 
     public Span<TNode> Nodes => nodes.AsSpan(0, count);
     public int Count => count;
+
+    public GraphData() { }
 
     public void Dispose()
     {
@@ -103,12 +94,8 @@ public class GraphData<TNode> : IDisposable
 
     public void Clear()
     {
+        Array.Fill(nodes, default, 0, count);
         count = 0;
-        foreach (var node in nodes)
-        {
-            (node as IDisposable)?.Dispose();
-        }
-        Array.Fill(nodes, default);
     }
 
     public ref TNode CreateNode(string name)

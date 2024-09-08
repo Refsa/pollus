@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
@@ -46,12 +47,11 @@ public class RenderingPlugin : IPlugin
                 Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
                 {
                     uniform.Time = (float)param.Param0.DeltaTime;
+                    Guard.IsTrue(param.Param1.EntityCount() > 0, "No camera entity found");
 
-                    if (param.Param1.EntityCount() > 0) {
-                        var qCamera = param.Param1.Single();
-                        uniform.Projection = qCamera.Component0.GetProjection();
-                        uniform.View = qCamera.Component1.ToMat4f();
-                    }
+                    var qCamera = param.Param1.Single();
+                    uniform.Projection = qCamera.Component0.GetProjection();
+                    uniform.View = qCamera.Component1.ToMat4f();
                 }
             }
         ]);
@@ -72,7 +72,6 @@ public class RenderingPlugin : IPlugin
             static (RenderContext context) =>
             {
                 context.PrepareFrame();
-                var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
             }
         ));
 
@@ -86,18 +85,19 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
             RenderStepsCleanupSystem,
-            static (RenderSteps renderSteps) =>
+            static (RenderContext context, RenderSteps renderSteps) =>
             {
+                context.CleanupFrame();
                 renderSteps.Cleanup();
             }
-        ));
+        ).After(EndFrameSystem));
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             RenderingSystem,
             static (RenderAssets renderAssets, RenderContext context, RenderSteps renderGraph) =>
             {
                 if (context.SurfaceTextureView is null) return;
-                var commandEncoder = context.GetCurrentCommandEncoder();
+                var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
 
                 Span<RenderPassColorAttachment> backbuffer = stackalloc RenderPassColorAttachment[]
                 {
@@ -117,7 +117,7 @@ public class RenderingPlugin : IPlugin
                     });
                 }
 
-                backbuffer[0].LoadOp = LoadOp.Load;
+                /* backbuffer[0].LoadOp = LoadOp.Load;
                 for (int i = 0; i < renderGraph.Order.Count; i++)
                 {
                     if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
@@ -127,7 +127,7 @@ public class RenderingPlugin : IPlugin
                     });
 
                     stage.Execute(renderPass, renderAssets);
-                }
+                } */
             }
         ));
     }

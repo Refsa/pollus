@@ -27,6 +27,13 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
     }
 
+    protected override void Free()
+    {
+        context.wgpu.BufferDestroy(native);
+        context.wgpu.BufferRelease(native);
+        label.Dispose();
+    }
+
     public void Write(ReadOnlySpan<byte> data, int offset)
     {
         fixed (byte* ptr = data)
@@ -82,12 +89,5 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         context.wgpu.BufferDestroy(native);
         context.wgpu.BufferRelease(native);
         native = newBuffer;
-    }
-
-    protected override void Free()
-    {
-        context.wgpu.BufferDestroy(native);
-        context.wgpu.BufferRelease(native);
-        label.Dispose();
     }
 }
