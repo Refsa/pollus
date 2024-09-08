@@ -84,11 +84,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     nint lastAssignedId = 100;
 
     bool frameBegun = false;
-    Vec2<int> size;
+    Vec2<uint> size;
     Vec2<int> scaleFactor = Vec2<int>.One;
     TextureFormat targetFormat;
 
-    public ImguiRenderer(IWGPUContext gpuContext, TextureFormat targetFormat, Vec2<int> size)
+    public ImguiRenderer(IWGPUContext gpuContext, TextureFormat targetFormat, Vec2<uint> size)
     {
         this.size = size;
         this.targetFormat = targetFormat;
@@ -124,7 +124,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         renderPipeline.Dispose();
     }
 
-    public void Resized(Vec2<int> size)
+    public void Resized(Vec2<uint> size)
     {
         this.size = size;
     }

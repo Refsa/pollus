@@ -30,7 +30,7 @@ public class WindowPlugin : IPlugin
                         var windowEvent = @event.Window;
                         if (windowEvent.Event is (int)Silk.NET.SDL.WindowEventID.Resized)
                         {
-                            window.Size = new(windowEvent.Data1, windowEvent.Data2);
+                            window.Size = new((uint)windowEvent.Data1, (uint)windowEvent.Data2);
                             gpuContext.ResizeSurface(window.Size);
                         }
                         break;

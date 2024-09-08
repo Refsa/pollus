@@ -15,7 +15,7 @@ public interface IProjection
 {
     ProjectionType Type { get; }
     Mat4f GetProjection();
-    void Update(Vec2<int> size);
+    void Update(Vec2<uint> size);
 }
 
 [StructLayout(LayoutKind.Explicit)]
@@ -26,7 +26,7 @@ public struct Projection : IComponent, IProjection
     [FieldOffset(0)]
     OrthographicProjection orthographic;
     [FieldOffset(4)]
-    public Vec2<int> Size;
+    public Vec2<uint> Size;
 
     public ProjectionType Type => throw new NotImplementedException();
 
@@ -39,7 +39,7 @@ public struct Projection : IComponent, IProjection
         };
     }
 
-    public void Update(Vec2<int> size)
+    public void Update(Vec2<uint> size)
     {
         Size = size;
         if (type == ProjectionType.Orthographic) orthographic.Update(size);
@@ -81,7 +81,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
     };
 
     readonly ProjectionType type = ProjectionType.Orthographic;
-    public readonly Vec2<int> Size;
+    public readonly Vec2<uint> Size;
 
     public float NearClip;
     public float FarClip;
@@ -94,14 +94,14 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
 
     public OrthographicProjection() { }
 
-    public void Update(Vec2<int> size)
+    public void Update(Vec2<uint> size)
     {
         var (projWidth, projHeight) = ScalingMode switch
         {
             { Mode: ScalingMode.Type.Fixed, A: var width, B: var height } => (width, height),
             { Mode: ScalingMode.Type.WindowSize, A: var scale } => (size.X / scale, size.Y / scale),
-            { Mode: ScalingMode.Type.AutoMin, A: var width, B: var height } => (int.Max(size.X, width), int.Max(size.Y, height)),
-            { Mode: ScalingMode.Type.AutoMax, A: var width, B: var height } => (int.Min(size.X, width), int.Min(size.Y, height)),
+            { Mode: ScalingMode.Type.AutoMin, A: var width, B: var height } => (uint.Max(size.X, (uint)width), uint.Max(size.Y, (uint)height)),
+            { Mode: ScalingMode.Type.AutoMax, A: var width, B: var height } => (uint.Min(size.X, (uint)width), uint.Min(size.Y, (uint)height)),
             _ => throw new IndexOutOfRangeException("Unknown ScalingMode: " + nameof(ScalingMode.Mode)),
         };
 

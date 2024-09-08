@@ -25,7 +25,7 @@ unsafe public interface IWGPUContext : IDisposable
 
     TextureFormat GetSurfaceFormat();
     void Present();
-    void ResizeSurface(Vec2<int> size);
+    void ResizeSurface(Vec2<uint> size);
 
 #if !BROWSER
     unsafe Silk.NET.WebGPU.SurfaceTexture SurfaceGetCurrentTexture()
