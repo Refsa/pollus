@@ -25,6 +25,7 @@ public interface IFrameGraphResource
 
     ResourceHandle Handle { get; set; }
     string Label { get; }
+    int Hash { get; }
 }
 
 public struct TextureResource : IFrameGraphResource
@@ -34,11 +35,18 @@ public struct TextureResource : IFrameGraphResource
     public string Label { get; }
     public ResourceHandle Handle { get; set; }
     public TextureDescriptor Descriptor { get; }
+    public int Hash { get; }
 
     public TextureResource(string label, TextureDescriptor descriptor)
     {
         Label = label;
         Descriptor = descriptor;
+        Hash = HashCode.Combine(
+            descriptor.Dimension, descriptor.Format,
+            descriptor.Size, descriptor.MipLevelCount,
+            descriptor.SampleCount, descriptor.Usage,
+            descriptor.ViewFormats
+        );
     }
 
     public static implicit operator TextureResource(TextureDescriptor descriptor) => new(descriptor.Label, descriptor);
@@ -51,11 +59,13 @@ public struct BufferResource : IFrameGraphResource
     public string Label { get; }
     public ResourceHandle Handle { get; set; }
     public BufferDescriptor Descriptor { get; }
+    public int Hash { get; }
 
     public BufferResource(string label, BufferDescriptor descriptor)
     {
         Label = label;
         Descriptor = descriptor;
+        Hash = HashCode.Combine(descriptor.Size, descriptor.Usage);
     }
 
     public static implicit operator BufferResource(BufferDescriptor descriptor) => new(descriptor.Label, descriptor);

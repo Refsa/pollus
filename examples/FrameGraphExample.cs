@@ -67,12 +67,15 @@ public class FrameGraphExample : IExample
             static (RenderContext renderContext, RenderAssets renderAssets, Resources resources, RenderSteps renderSteps, IWindow window) =>
             {
                 using var frameGraph = new FrameGraph<FrameGraphParam>();
-                frameGraph.AddTexture(TextureDescriptor.D2(
+
+                var backbufferDesc = TextureDescriptor.D2(
                     label: "backbuffer",
                     size: window.Size,
                     format: TextureFormat.Rgba8Unorm,
                     usage: TextureUsage.RenderAttachment
-                ));
+                );
+                var backbufferHandle = frameGraph.AddTexture(backbufferDesc);
+                renderContext.Resources.AddTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
                 frameGraph.AddPass("sprites-pass",
                 static (ref FrameGraph<FrameGraphParam>.Builder builder, ref SpritesPassData data) =>
@@ -88,7 +91,7 @@ public class FrameGraphExample : IExample
                         {
                             new()
                             {
-                                View = context.Resources.GetTextureView(data.Backbuffer).Native,
+                                View = context.Resources.GetTexture(data.Backbuffer).TextureView.Native,
                                 LoadOp = LoadOp.Load,
                                 StoreOp = StoreOp.Store,
                                 ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
@@ -106,6 +109,8 @@ public class FrameGraphExample : IExample
                     RenderSteps = renderSteps,
                     Resources = resources,
                 });
+
+                renderContext.Resources.RemoveTexture(backbufferHandle);
             }))
             .Run();
     }

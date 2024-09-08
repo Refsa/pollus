@@ -36,15 +36,9 @@ public class RenderContext
     {
         foreach (var resource in resourceContainers.Textures.Resources)
         {
-            if (resource.Label == "backbuffer" && SurfaceTextureView.HasValue)
-            {
-                resources.AddTextureView(resource.Handle, SurfaceTextureView.Value);
-            }
-            else
-            {
-                // GPUContext.CreateTexture(resource);
-            }
+            // GPUContext.CreateTexture(resource);
         }
+
         foreach (var resource in resourceContainers.Buffers.Resources)
         {
             // GPUContext.CreateBuffer(resource);

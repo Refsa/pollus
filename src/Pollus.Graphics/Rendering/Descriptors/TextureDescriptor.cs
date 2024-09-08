@@ -62,5 +62,10 @@ public struct TextureDescriptor
     public struct ViewFormatArray
     {
         TextureFormat _first;
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(this[0], this[1], this[2], this[3]);
+        }
     }
 }

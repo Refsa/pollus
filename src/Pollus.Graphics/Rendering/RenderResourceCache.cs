@@ -1,45 +1,154 @@
 namespace Pollus.Graphics.Rendering;
 
-using Pollus.Debugging;
+
+public interface IGPUResource<TResource, TDescriptor>
+    where TResource : notnull
+    where TDescriptor : struct
+{
+    public TResource? Resource { get; set; }
+    public TDescriptor Descriptor { get; set; }
+    public int Hash { get; set; }
+    public ResourceHandle Handle { get; set; }
+}
+
+public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>
+{
+    public int Hash { get; set; }
+    public ResourceHandle Handle { get; set; }
+
+    public GPUTexture? Resource { get; set; }
+    public GPUTextureView TextureView { get; set; }
+    public TextureDescriptor Descriptor { get; set; }
+
+    public TextureGPUResource(GPUTexture? texture, GPUTextureView textureView, TextureDescriptor descriptor)
+    {
+        Resource = texture;
+        TextureView = textureView;
+        Descriptor = descriptor;
+        Hash = HashCode.Combine(
+            descriptor.Dimension, descriptor.Format,
+            descriptor.Size, descriptor.MipLevelCount,
+            descriptor.SampleCount, descriptor.Usage,
+            descriptor.ViewFormats
+        );
+    }
+}
+
+public struct BufferGPUResource : IGPUResource<GPUBuffer, BufferDescriptor>
+{
+    public int Hash { get; set; }
+    public ResourceHandle Handle { get; set; }
+    public GPUBuffer? Resource { get; set; }
+    public BufferDescriptor Descriptor { get; set; }
+
+    public BufferGPUResource(GPUBuffer resource, BufferDescriptor descriptor)
+    {
+        Resource = resource;
+        Descriptor = descriptor;
+        Hash = HashCode.Combine(
+            descriptor.Size, descriptor.Usage
+        );
+    }
+}
+
+public record struct ResourceMeta
+{
+    public required ResourceHandle Handle { get; init; }
+    public required string Label { get; init; }
+    public required int Index { get; init; }
+    public required int Hash { get; init; }
+}
 
 public class RenderResourceCache
 {
-    Dictionary<ResourceHandle, GPUTextureView> textureViews = new();
-    Dictionary<ResourceHandle, GPUBuffer> bufferViews = new();
+    List<TextureGPUResource> textures = [];
+    List<BufferGPUResource> buffers = [];
 
-    public void AddTextureView(ResourceHandle handle, GPUTextureView view)
+    Dictionary<ResourceHandle, ResourceMeta> lookup = [];
+
+    public ResourceHandle AddTexture(ResourceHandle handle, TextureGPUResource resource)
     {
-        textureViews[handle] = view;
+        textures.Add(resource);
+        resource.Handle = handle;
+        lookup[handle] = new()
+        {
+            Label = resource.Descriptor.Label,
+            Handle = handle,
+            Index = textures.Count - 1,
+            Hash = resource.Hash
+        };
+        return handle;
     }
 
-    public void AddBufferView(ResourceHandle handle, GPUBuffer buffer)
+    public ResourceHandle AddBuffer(ResourceHandle handle, BufferGPUResource resource)
     {
-        bufferViews[handle] = buffer;
+        buffers.Add(resource);
+        resource.Handle = handle;
+        lookup[handle] = new()
+        {
+            Label = resource.Descriptor.Label,
+            Handle = handle,
+            Index = buffers.Count - 1,
+            Hash = resource.Hash
+        };
+        return handle;
     }
 
-    public GPUTextureView GetTextureView(ResourceHandle handle)
+    public TextureGPUResource GetTexture(ResourceHandle handle)
     {
-        Guard.IsTrue(textureViews.TryGetValue(handle, out var view), "TextureView not found");
-        return view;
+        if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
+        if (meta.Handle.Type != ResourceType.Texture) throw new Exception("Resource type mismatch");
+        return textures[meta.Index];
     }
 
-    public GPUBuffer GetBufferView(ResourceHandle handle)
+    public BufferGPUResource GetBuffer(ResourceHandle handle)
     {
-        Guard.IsTrue(bufferViews.TryGetValue(handle, out var buffer), "BufferView not found");
-        return buffer!;
+        if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
+        if (meta.Handle.Type != ResourceType.Buffer) throw new Exception("Resource type mismatch");
+        return buffers[meta.Index];
     }
 
-    public GPUTextureView RemoveTextureView(ResourceHandle handle)
+    public TextureGPUResource RemoveTexture(ResourceHandle resourceHandle)
     {
-        Guard.IsTrue(textureViews.TryGetValue(handle, out var view), "TextureView not found");
-        textureViews.Remove(handle);
-        return view;
+        if (!lookup.TryGetValue(resourceHandle, out var meta)) throw new Exception("Resource not found");
+        if (meta.Handle.Type != ResourceType.Texture) throw new Exception("Resource type mismatch");
+
+        var index = meta.Index;
+        var resource = textures[index];
+        textures.RemoveAt(index);
+        lookup.Remove(resourceHandle);
+
+        for (int i = index; i < textures.Count; i++)
+        {
+            var current = lookup[textures[i].Handle];
+            lookup[textures[i].Handle] = current with
+            {
+                Index = i
+            };
+        }
+
+        return resource;
     }
 
-    public GPUBuffer RemoveBufferView(ResourceHandle handle)
+    public BufferGPUResource RemoveBuffer(ResourceHandle resourceHandle)
     {
-        Guard.IsTrue(bufferViews.TryGetValue(handle, out var buffer), "BufferView not found");
-        bufferViews.Remove(handle);
-        return buffer!;
+        if (!lookup.TryGetValue(resourceHandle, out var meta)) throw new Exception("Resource not found");
+        if (meta.Handle.Type != ResourceType.Buffer) throw new Exception("Resource type mismatch");
+
+        var index = meta.Index;
+        var resource = buffers[index];
+        buffers.RemoveAt(index);
+        lookup.Remove(resourceHandle);
+
+        for (int i = index; i < buffers.Count; i++)
+        {
+            var current = lookup[buffers[i].Handle];
+            lookup[buffers[i].Handle] = current with
+            {
+                Index = i
+            };
+        }
+
+        return resource;
     }
 }
