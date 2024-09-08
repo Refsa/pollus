@@ -1,3 +1,4 @@
+using System.Buffers;
 using Pollus.Collections;
 
 namespace Pollus.Graphics;
@@ -85,14 +86,20 @@ public struct ResourceNode : INode
     }
 }
 
-public class GraphData<TNode>
+public class GraphData<TNode> : IDisposable
     where TNode : struct, INode
 {
-    TNode[] nodes = new TNode[1];
+    TNode[] nodes = ArrayPool<TNode>.Shared.Rent(1);
     int count;
 
     public Span<TNode> Nodes => nodes.AsSpan(0, count);
     public int Count => count;
+
+    public void Dispose()
+    {
+        Clear();
+        ArrayPool<TNode>.Shared.Return(nodes);
+    }
 
     public void Clear()
     {
@@ -116,6 +123,9 @@ public class GraphData<TNode>
 
     void Resize()
     {
-        Array.Resize(ref nodes, nodes.Length * 2);
+        var newArray = ArrayPool<TNode>.Shared.Rent(nodes.Length * 2);
+        nodes.CopyTo(newArray, 0);
+        ArrayPool<TNode>.Shared.Return(nodes);
+        nodes = newArray;
     }
 }

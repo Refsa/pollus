@@ -8,8 +8,7 @@ public ref struct FrameGraphRunner<TExecuteParam>
     internal ReadOnlySpan<int> order;
     FrameGraph<TExecuteParam> frameGraph;
 
-    GPUCommandEncoder rendering;
-    GPUCommandEncoder compute;
+    GPUCommandEncoder encoder;
 
     public FrameGraphRunner(FrameGraph<TExecuteParam> frameGraph, scoped in ReadOnlySpan<int> order)
     {
@@ -17,33 +16,26 @@ public ref struct FrameGraphRunner<TExecuteParam>
         this.order = order;
     }
 
-    public void Execute(IWGPUContext gpuContext, TExecuteParam param)
+    public void Execute(RenderContext renderContext, TExecuteParam param)
     {
-        BeginFrame(gpuContext);
+        // BeginFrame(renderContext);
         foreach (var passIndex in order)
         {
-
+            frameGraph.ExecutePass(passIndex, renderContext, param);
         }
-        EndFrame(gpuContext);
+        // EndFrame(renderContext);
     }
 
-    void BeginFrame(IWGPUContext gpuContext)
+    void BeginFrame(RenderContext renderContext)
     {
-        rendering = gpuContext.CreateCommandEncoder("""rendering-command-encoder""");
-        compute = gpuContext.CreateCommandEncoder("""compute-command-encoder""");
+        encoder = renderContext.GPUContext.CreateCommandEncoder("""frame-graph-command-encoder""");
     }
 
-    void EndFrame(IWGPUContext gpuContext)
+    void EndFrame(RenderContext renderContext)
     {
-        using var renderingCommandBuffer = rendering.Finish("""rendering-command-encoder""");
-        using var computeCommandBuffer = compute.Finish("""compute-command-encoder""");
+        using var renderingCommandBuffer = encoder.Finish("""rendering-command-encoder""");
 
-        renderingCommandBuffer.Submit();
-        computeCommandBuffer.Submit();
-
-        gpuContext.Present();
-
-        rendering.Dispose();
-        compute.Dispose();
+        renderContext.GPUContext.Present();
+        encoder.Dispose();
     }
 }

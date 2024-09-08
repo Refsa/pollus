@@ -25,12 +25,8 @@ unsafe public struct GPURenderPassEncoder : IDisposable
 
     public void Dispose()
     {
-        context.wgpu.RenderPassEncoderRelease(native);
-    }
-
-    public void End()
-    {
         context.wgpu.RenderPassEncoderEnd(native);
+        context.wgpu.RenderPassEncoderRelease(native);
     }
 
     public void SetPipeline(GPURenderPipeline pipeline)

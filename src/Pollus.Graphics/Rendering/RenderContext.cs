@@ -2,83 +2,107 @@ namespace Pollus.Graphics.Rendering;
 
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
-using Pollus.Utils;
 
 public class RenderContext
 {
-    public GPUSurfaceTexture? SurfaceTexture;
-    public GPUTextureView? SurfaceTextureView;
-    public GPUCommandEncoder? CommandEncoder;
-    public GPURenderPassEncoder? CurrentRenderPass;
+    List<GPUCommandEncoder> commandEncoders = new();
+    List<GPUCommandBuffer> commandBuffers = new();
 
+    GPUSurfaceTexture? surfaceTexture;
+    public GPUTextureView? SurfaceTextureView;
+
+    public required IWGPUContext GPUContext { get; init; }
     public bool SkipFrame { get; private set; }
 
-    public void Begin(IWGPUContext gpuContext)
+    public bool PrepareFrame()
     {
-        var surfaceTexture = new GPUSurfaceTexture(gpuContext);
+        var surfaceTexture = new GPUSurfaceTexture(GPUContext);
         if (!surfaceTexture.Prepare())
         {
             Log.Error("Failed to prepare surface texture");
             surfaceTexture.Dispose();
             SkipFrame = true;
-            return;
+            return false;
         }
 
-        SurfaceTexture = surfaceTexture;
+        this.surfaceTexture = surfaceTexture;
         SurfaceTextureView = surfaceTexture.TextureView;
-        CommandEncoder = gpuContext.CreateCommandEncoder("""command-encoder""");
+        return true;
     }
 
-    public void End(IWGPUContext gpuContext)
+    public void PrepareResources(ResourceContainers resourceContainers)
     {
-        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
-        Guard.IsNotNull(SurfaceTexture, "SurfaceTexture is null");
+
+    }
+
+    public void CleanupFrame()
+    {
+        foreach (var buffer in commandBuffers)
+        {
+            buffer.Dispose();
+        }
+        foreach (var encoder in commandEncoders)
+        {
+            encoder.Dispose();
+        }
+        surfaceTexture?.Dispose();
+
+        commandEncoders.Clear();
+        commandBuffers.Clear();
+        surfaceTexture = null;
+        SurfaceTextureView = null;
+    }
+
+    unsafe public void EndFrame()
+    {
+        Guard.IsNotNull(surfaceTexture, "SurfaceTexture is null");
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
 
         {
-            using var commandBuffer = CommandEncoder!.Value.Finish("""command-buffer""");
-            commandBuffer.Submit();
-            gpuContext.Present();
+            var commandBuffers = stackalloc Silk.NET.WebGPU.CommandBuffer*[commandEncoders.Count];
+            for (int i = 0; i < commandEncoders.Count; i++)
+            {
+                var commandBuffer = commandEncoders[i].Finish(commandEncoders[i].Label + "-CommandBuffer");
+                this.commandBuffers.Add(commandBuffer);
+                commandBuffers[i] = (Silk.NET.WebGPU.CommandBuffer*)commandBuffer.Native;
+            }
+            GPUContext.wgpu.QueueSubmit(GPUContext.Queue, (uint)commandEncoders.Count, commandBuffers);
         }
 
-        CommandEncoder.Value.Dispose();
-        
-        SurfaceTexture?.Dispose();
-        SurfaceTexture = null;
-        SurfaceTextureView = null;
-
-        CommandEncoder = null;
+        GPUContext.Present();
+        CleanupFrame();
     }
 
-    public GPURenderPassEncoder BeginRenderPass(LoadOp loadOp = LoadOp.Clear, StoreOp storeOp = StoreOp.Store, Color? clearColor = null)
+    public GPUCommandEncoder CreateCommandEncoder(string label)
     {
-        Guard.IsNull(CurrentRenderPass, "CurrentRenderPass is not null");
-        Guard.IsNotNull(SurfaceTextureView, "SurfaceTextureView is null");
-        Guard.IsNotNull(CommandEncoder, "CommandEncoder is null");
+        var encoder = GPUContext.CreateCommandEncoder(label);
+        commandEncoders.Add(encoder);
+        return encoder;
+    }
 
-        CurrentRenderPass = CommandEncoder.Value.BeginRenderPass(new()
+    public GPUCommandEncoder GetCommandEncoder(string label)
+    {
+        for (int i = 0; i < commandEncoders.Count; i++)
         {
-            Label = """RenderPass""",
-            ColorAttachments = stackalloc RenderPassColorAttachment[1]
+            if (commandEncoders[i].Label == label)
             {
-                new RenderPassColorAttachment()
-                {
-                    View = SurfaceTextureView.Value.Native,
-                    LoadOp = loadOp,
-                    StoreOp = storeOp,
-                    ClearValue = clearColor ?? new Color.HSV(0.1f, 1f, 0.1f),
-                },
-            },
-        });
-
-        return CurrentRenderPass.Value;
+                return commandEncoders[i];
+            }
+        }
+        return CreateCommandEncoder(label);
+    }
+    
+    public GPUCommandEncoder GetCurrentCommandEncoder()
+    {
+        return commandEncoders[^1];
     }
 
-    public void EndRenderPass()
+    unsafe public void SubmitCommandBuffers(in GPUCommandBuffer buffer0)
     {
-        Guard.IsNotNull(CurrentRenderPass, "CurrentRenderPass is null");
-        CurrentRenderPass.Value.End();
-        CurrentRenderPass.Value.Dispose();
-        CurrentRenderPass = null;
+        var buffers = stackalloc Silk.NET.WebGPU.CommandBuffer*[]
+        {
+            (Silk.NET.WebGPU.CommandBuffer*)buffer0.Native,
+        };
+        GPUContext.wgpu.QueueSubmit(GPUContext.Queue, 1, buffers);
     }
 }

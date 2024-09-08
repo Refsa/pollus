@@ -7,20 +7,18 @@ using Pollus.Mathematics;
 public struct RenderPassColorAttachment
 {
     nint padding1;
-    public nint View;
+    public required nint View;
     public nint ResolveTarget;
 
     public LoadOp LoadOp;
     public StoreOp StoreOp;
     public Vec4<double> ClearValue;
 
-    public RenderPassColorAttachment(nint textureView, nint resolveTarget, Vec4<double> clearValue, LoadOp loadOp, StoreOp storeOp)
+    public RenderPassColorAttachment()
     {
-        this.View = textureView;
-        this.ResolveTarget = resolveTarget;
-        LoadOp = loadOp;
-        StoreOp = storeOp;
-        ClearValue = clearValue;
+        LoadOp = LoadOp.Clear;
+        StoreOp = StoreOp.Store;
+        ClearValue = Vec4<double>.One;
     }
 }
 

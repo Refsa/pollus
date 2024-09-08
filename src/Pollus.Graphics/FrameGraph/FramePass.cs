@@ -2,7 +2,10 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 
-public readonly record struct FramePassHandle(int PassIndex);
+public readonly record struct FramePassHandle(int PassIndex)
+{
+    public static implicit operator FramePassHandle(int passIndex) => new(passIndex);
+}
 
 public interface IFramePass
 {
@@ -86,6 +89,11 @@ public class FramePassContainer<TExecuteParam>
         containerLookup.Add(typeof(TData), handle.PassIndex);
         container.Set(data, execute);
         return handle;
+    }
+
+    public void ExecutePass(FramePassHandle handle, RenderContext renderContext, TExecuteParam param)
+    {
+        containers[handle.PassIndex].Execute(renderContext, param);
     }
 
     public IFramePassContainer<TExecuteParam> GetPass(in FramePassHandle handle)

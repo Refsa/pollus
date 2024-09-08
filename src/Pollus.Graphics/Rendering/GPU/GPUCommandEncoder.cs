@@ -8,13 +8,16 @@ using Pollus.Graphics.WGPU;
 
 unsafe public struct GPUCommandEncoder : IDisposable
 {
+    string label;
     IWGPUContext context;
     Silk.NET.WebGPU.CommandEncoder* native;
 
     public nint Native => (nint)native;
+    public string Label => label;
 
-    public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label)
+    public GPUCommandEncoder(IWGPUContext context, string label)
     {
+        this.label = label;
         using var labelData = new NativeUtf8(label);
 
         this.context = context;

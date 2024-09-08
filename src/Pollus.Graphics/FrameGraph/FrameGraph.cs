@@ -28,8 +28,9 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
     public void Dispose()
     {
         // TODO: recycle
-        passNodes.Clear();
-        resourceNodes.Clear();
+        passNodes.Dispose();
+        resourceNodes.Dispose();
+        
         passes.Clear();
         resources.Clear();
     }
@@ -99,6 +100,11 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
 
         var builder = new Builder(ref passNode, this);
         build(ref builder, ref pass.Get().Data);
+    }
+
+    public void ExecutePass(int passIndex, RenderContext renderContext, TExecuteParam param)
+    {
+        passes.ExecutePass(passIndex, renderContext, param);
     }
 
     public ResourceHandle<TResource> AddResource<TResource>(TResource resource)

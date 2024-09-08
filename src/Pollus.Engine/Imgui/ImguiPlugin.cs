@@ -110,9 +110,23 @@ public class ImguiPlugin : IPlugin
             RenderSystem,
             static (ImguiRenderer imguiRenderer, RenderContext context) =>
             {
-                var renderPass = context.BeginRenderPass(Graphics.Rendering.LoadOp.Load);
+                if (context.SurfaceTextureView is null) return;
+
+                var commandEncoder = context.GetCurrentCommandEncoder();
+                using var renderPass = commandEncoder.BeginRenderPass(new()
+                {
+                    ColorAttachments = stackalloc RenderPassColorAttachment[]
+                    {
+                        new()
+                        {
+                            View = context.SurfaceTextureView.Value.Native,
+                            LoadOp = LoadOp.Load,
+                            StoreOp = StoreOp.Store,
+                            ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
+                        }
+                    }
+                });
                 imguiRenderer.Render(renderPass);
-                context.EndRenderPass();
             }
         ).After(RenderingPlugin.RenderingSystem));
     }
