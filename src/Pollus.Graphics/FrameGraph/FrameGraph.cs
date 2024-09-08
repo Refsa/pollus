@@ -29,12 +29,10 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
 
     public void Dispose()
     {
-        // TODO: recycle
         passNodes.Dispose();
         resourceNodes.Dispose();
         resources.Dispose();
-        
-        passes.Clear();
+        passes.Dispose();
 
         if (executionOrder != null)
         {

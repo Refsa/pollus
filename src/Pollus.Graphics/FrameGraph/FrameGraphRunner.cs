@@ -5,7 +5,7 @@ using Pollus.Graphics.Rendering;
 public ref struct FrameGraphRunner<TExecuteParam>
 {
     internal ReadOnlySpan<int> order;
-    FrameGraph<TExecuteParam> frameGraph;
+    readonly FrameGraph<TExecuteParam> frameGraph;
 
     public FrameGraphRunner(FrameGraph<TExecuteParam> frameGraph, scoped in ReadOnlySpan<int> order)
     {

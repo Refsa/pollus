@@ -1,6 +1,7 @@
 namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
+using Pollus.Utils;
 
 public readonly record struct FramePassHandle(int PassIndex)
 {
@@ -48,6 +49,7 @@ public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExe
     public void Clear()
     {
         pass = default;
+        Pool<FramePassContainer<TExecuteParam, TData>>.Shared.Return(this);
     }
 
     public void Execute(RenderContext context, TExecuteParam renderAssets)
@@ -56,22 +58,25 @@ public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExe
     }
 }
 
-public class FramePassContainer<TExecuteParam>
+public struct FramePassContainer<TExecuteParam> : IDisposable
 {
-    List<IFramePassContainer<TExecuteParam>> containers = [];
-    Dictionary<Type, int> containerLookup = [];
+    List<IFramePassContainer<TExecuteParam>> containers;
+    Dictionary<Type, int> containerLookup;
 
     public FramePassContainer()
     {
-        containers = new List<IFramePassContainer<TExecuteParam>>();
-        containerLookup = new Dictionary<Type, int>();
+        containers = Pool<List<IFramePassContainer<TExecuteParam>>>.Shared.Rent();
+        containerLookup = Pool<Dictionary<Type, int>>.Shared.Rent();
     }
 
-    public void Clear()
+    public void Dispose()
     {
-        // TODO: recycle
+        for (int i = 0; i < containers.Count; i++) containers[i].Clear();
         containers.Clear();
         containerLookup.Clear();
+        
+        Pool<List<IFramePassContainer<TExecuteParam>>>.Shared.Return(containers);
+        Pool<Dictionary<Type, int>>.Shared.Return(containerLookup);
     }
 
     public FramePassHandle AddPass<TData>(in TData data, FrameGraph<TExecuteParam>.ExecuteDelegate<TData> execute)
@@ -83,7 +88,8 @@ public class FramePassContainer<TExecuteParam>
         }
 
         // TODO: recycle
-        var container = new FramePassContainer<TExecuteParam, TData>();
+        var container = Pool<FramePassContainer<TExecuteParam, TData>>.Shared.Rent();
+
         var handle = new FramePassHandle(containers.Count);
         containers.Add(container);
         containerLookup.Add(typeof(TData), handle.PassIndex);

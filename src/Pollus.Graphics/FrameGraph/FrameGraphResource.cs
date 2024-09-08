@@ -2,6 +2,7 @@ namespace Pollus.Graphics;
 
 using System.Buffers;
 using Pollus.Graphics.Rendering;
+using Pollus.Utils;
 
 public enum ResourceType
 {
@@ -113,7 +114,7 @@ public struct ResourceContainers : IDisposable
     {
         textures = new();
         buffers = new();
-        resourceByName = new();
+        resourceByName = Pool<Dictionary<string, ResourceHandle>>.Shared.Rent();
     }
 
     public void Dispose()
@@ -121,6 +122,8 @@ public struct ResourceContainers : IDisposable
         count = 0;
         textures.Dispose();
         buffers.Dispose();
+        resourceByName.Clear();
+        Pool<Dictionary<string, ResourceHandle>>.Shared.Return(resourceByName);
     }
 
     public ResourceHandle GetHandle(string label)
