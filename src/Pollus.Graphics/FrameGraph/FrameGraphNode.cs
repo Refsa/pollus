@@ -12,31 +12,29 @@ public interface INode
 
 public struct PassNode : INode, IDisposable
 {
-    BitSet reads;
-    BitSet writes;
-    BitSet creates;
+    BitSet256 reads;
+    BitSet256 writes;
+    BitSet256 creates;
 
     public int Index { get; private set; }
     public string Name { get; private set; }
     public FramePassHandle Pass { get; private set; }
 
-    public readonly BitSet Reads => reads;
-    public readonly BitSet Writes => writes;
+    public readonly BitSet256 Reads => reads;
+    public readonly BitSet256 Writes => writes;
 
     public void Dispose()
     {
-        reads.Dispose();
-        writes.Dispose();
-        creates.Dispose();
+        
     }
 
     public void Init(int index, string name)
     {
         Index = index;
         Name = name;
-        reads = new BitSet(1);
-        writes = new BitSet(1);
-        creates = new BitSet(1);
+        reads = new();
+        writes = new();
+        creates = new();
     }
 
     public void SetPass(in FramePassHandle pass)

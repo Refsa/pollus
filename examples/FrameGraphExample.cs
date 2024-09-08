@@ -11,18 +11,18 @@ public class FrameGraphExample : IExample
 
     struct SpritesPassData
     {
-        public ResourceHandle<TextureDescriptor> ColorTexture;
+        public ResourceHandle<TextureResource> ColorTexture;
     }
 
     struct BlitPassData
     {
-        public ResourceHandle<TextureDescriptor> Backbuffer;
+        public ResourceHandle<TextureResource> Backbuffer;
     }
 
     public void Run()
     {
         var frameGraph = new FrameGraph<RenderAssets>();
-        frameGraph.AddResource(TextureDescriptor.D2(
+        frameGraph.AddTexture(TextureDescriptor.D2(
             label: "backbuffer",
             size: new Vec2<uint>(800, 600),
             format: TextureFormat.Rgba8Unorm,
@@ -32,7 +32,7 @@ public class FrameGraphExample : IExample
         frameGraph.AddPass("sprites-pass",
         static (ref FrameGraph<RenderAssets>.Builder builder, ref SpritesPassData data) =>
         {
-            data.ColorTexture = builder.Writes("backbuffer");
+            data.ColorTexture = builder.Writes<TextureResource>("backbuffer");
         }, 
         static (context, renderAssets, data) =>
         {

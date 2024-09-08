@@ -1,12 +1,10 @@
 namespace Pollus.Graphics;
 
-using System.Net.Http.Headers;
-using System.Runtime.ExceptionServices;
+using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
-using Pollus.Graphics.WGPU;
 
-public struct FrameGraph<TExecuteParam> : IDisposable
+public partial struct FrameGraph<TExecuteParam> : IDisposable
 {
     public delegate void BuilderDelegate<TData>(ref Builder builder, ref TData data);
     public delegate void ExecuteDelegate<TData>(RenderContext context, TExecuteParam renderAssets, TData data);
@@ -47,7 +45,7 @@ public struct FrameGraph<TExecuteParam> : IDisposable
             {
                 if (current.Index == other.Index) continue;
 
-                if (current.Reads.HasAny(other.Writes)) edges.Set(other.Index);
+                if (current.Writes.HasAny(other.Reads)) edges.Set(other.Index);
             }
         }
 
@@ -67,6 +65,7 @@ public struct FrameGraph<TExecuteParam> : IDisposable
             }
         }
 
+        order.Reverse();
         return new FrameGraphRunner<TExecuteParam>(this, order.ToArray());
 
         static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
@@ -76,17 +75,11 @@ public struct FrameGraph<TExecuteParam> : IDisposable
 
             foreach (var adj in adjacencyMatrix[node])
             {
-                if (!visited[adj])
-                {
-                    if (!DFS(adj, ref visited, ref onStack, adjacencyMatrix, order, ref orderIndex))
-                    {
-                        return false;
-                    }
-                }
-                else if (onStack[adj])
-                {
-                    return false;
-                }
+                if (visited[adj] && onStack[adj]) return false;
+                if (visited[adj]) continue;
+
+                var ok = DFS(adj, ref visited, ref onStack, adjacencyMatrix, order, ref orderIndex);
+                if (!ok) return false;
             }
 
             onStack[node] = false;
@@ -108,69 +101,34 @@ public struct FrameGraph<TExecuteParam> : IDisposable
         build(ref builder, ref pass.Get().Data);
     }
 
-    public ResourceHandle AddResource<TResource>(TResource resource)
+    public ResourceHandle<TResource> AddResource<TResource>(TResource resource)
+        where TResource : struct, IFrameGraphResource
     {
-        if (resource is TextureDescriptor texture)
+        if (resource is TextureResource texture)
         {
-            return resources.AddTexture(texture);
+            var handle = resources.AddTexture(texture);
+            return Unsafe.As<ResourceHandle<TextureResource>, ResourceHandle<TResource>>(ref handle);
         }
-        else if (resource is BufferDescriptor buffer)
+        else if (resource is BufferResource buffer)
         {
-            return resources.AddBuffer(buffer);
+            var handle = resources.AddBuffer(buffer);
+            return Unsafe.As<ResourceHandle<BufferResource>, ResourceHandle<TResource>>(ref handle);
         }
-        else
-        {
-            throw new NotImplementedException();
-        }
+        throw new Exception("Unknown resource type");
+    }
+
+    public ResourceHandle<TextureResource> AddTexture(TextureResource texture)
+    {
+        return resources.AddTexture(texture);
+    }
+
+    public ResourceHandle<BufferResource> AddBuffer(BufferResource buffer)
+    {
+        return resources.AddBuffer(buffer);
     }
 
     public ResourceHandle GetResourceHandle(string name)
     {
         return resources.GetHandle(name);
-    } 
-
-    public ref struct Builder
-    {
-        FrameGraph<TExecuteParam> frameGraph;
-        ref PassNode passNode;
-
-        public Builder(ref PassNode node, FrameGraph<TExecuteParam> frameGraph)
-        {
-            this.frameGraph = frameGraph;
-            passNode = ref node;
-        }
-
-        public ResourceHandle Creates<TResource>(TResource resource)
-        {
-            var handle = frameGraph.AddResource(resource);
-            passNode.SetCreate(handle);
-            return handle;
-        }
-
-        public ResourceHandle Writes(ResourceHandle handle)
-        {
-            passNode.SetWrite(handle);
-            return handle;
-        }
-
-        public ResourceHandle Writes(string name)
-        {
-            var handle = frameGraph.GetResourceHandle(name);
-            passNode.SetWrite(handle);
-            return handle;
-        }
-
-        public ResourceHandle Reads(ResourceHandle handle)
-        {
-            passNode.SetRead(handle);
-            return handle;
-        }
-
-        public ResourceHandle Reads(string name)
-        {
-            var handle = frameGraph.GetResourceHandle(name);
-            passNode.SetRead(handle);
-            return handle;
-        }
     }
 }

@@ -8,24 +8,24 @@ public class FrameGraphTests
 {
     struct PassData1
     {
-        public ResourceHandle<TextureDescriptor> Texture1;
+        public ResourceHandle<TextureResource> Texture1;
     }
 
     struct PassData2
     {
-        public ResourceHandle<TextureDescriptor> Texture1;
+        public ResourceHandle<TextureResource> Texture1;
     }
 
     struct PassData3
     {
-        public ResourceHandle<TextureDescriptor> Texture1;
+        public ResourceHandle<TextureResource> Texture1;
     }
 
     [Fact]
     public void FrameGraph_Compile()
     {
         var frameGraph = new FrameGraph<object>();
-        var texture1Handle = frameGraph.AddResource(TextureDescriptor.D2(
+        var texture1Handle = frameGraph.AddTexture(TextureDescriptor.D2(
             label: "texture1",
             size: new Vec2<uint>(800, 600),
             format: TextureFormat.Rgba8Unorm,
@@ -36,8 +36,8 @@ public class FrameGraphTests
             "pass1",
             (ref FrameGraph<object>.Builder builder, ref PassData1 data) =>
             {
-                data.Texture1 = builder.Reads("texture1");
-                Assert.Equal(texture1Handle, (ResourceHandle)data.Texture1);
+                data.Texture1 = builder.Reads<TextureResource>("texture1");
+                Assert.Equal(texture1Handle, data.Texture1);
             },
             (context, renderAssets, data) => { }
         );
@@ -46,8 +46,8 @@ public class FrameGraphTests
             "pass2",
             (ref FrameGraph<object>.Builder builder, ref PassData2 data) =>
             {
-                data.Texture1 = builder.Writes("texture1");
-                Assert.Equal(texture1Handle, (ResourceHandle)data.Texture1);
+                data.Texture1 = builder.Writes<TextureResource>("texture1");
+                Assert.Equal(texture1Handle, data.Texture1);
             },
             (context, renderAssets, data) => {}
         );
@@ -56,16 +56,18 @@ public class FrameGraphTests
             "pass3",
             (ref FrameGraph<object>.Builder builder, ref PassData3 data) =>
             {
-                data.Texture1 = builder.Writes("texture1");
-                Assert.Equal(texture1Handle, (ResourceHandle)data.Texture1);
+                data.Texture1 = builder.Writes<TextureResource>("texture1");
+                Assert.Equal(texture1Handle, data.Texture1);
             },
             (context, renderAssets, data) => { }
         );
 
         var runner = frameGraph.Compile();
+        File.WriteAllText("frame-graph.dot", frameGraph.Visualize());
+
         Assert.Equal(3, runner.order.Length);
-        Assert.Equal(1, runner.order[0]);
-        Assert.Equal(2, runner.order[1]);
+        Assert.Equal(2, runner.order[0]);
+        Assert.Equal(1, runner.order[1]);
         Assert.Equal(0, runner.order[2]);
     }
 }

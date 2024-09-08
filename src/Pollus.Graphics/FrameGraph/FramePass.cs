@@ -1,7 +1,6 @@
 namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
-using Silk.NET.WebGPU;
 
 public readonly record struct FramePassHandle(int PassIndex);
 

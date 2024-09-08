@@ -23,7 +23,7 @@ public class RenderContext
             SkipFrame = true;
             return;
         }
-        
+
         SurfaceTexture = surfaceTexture;
         SurfaceTextureView = surfaceTexture.TextureView;
         CommandEncoder = gpuContext.CreateCommandEncoder("""command-encoder""");
