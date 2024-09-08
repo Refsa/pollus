@@ -183,8 +183,9 @@ public record struct BitSet : IDisposable
 {
     NativeArray<ulong> data;
 
-    public BitSet(int bitcount)
+    public BitSet(int bitcount = 1)
     {
+        bitcount = Math.Max(1, bitcount);
         data = new(bitcount / 64 + 1);
     }
 
@@ -209,8 +210,18 @@ public record struct BitSet : IDisposable
         if (bucket >= data.Length)
         {
             Resize();
+            Set(idx);
+            return;
         }
         data[bucket] |= 1UL << idx % 64;
+    }
+
+    public void Set(ReadOnlySpan<int> indices)
+    {
+        foreach (var idx in indices)
+        {
+            Set(idx);
+        }
     }
 
     public void Unset(int idx)
@@ -279,6 +290,19 @@ public record struct BitSet : IDisposable
         return -1;
     }
 
+    public int LastSetBit()
+    {
+        for (int i = data.Length - 1; i >= 0; i--)
+        {
+            var b = BitOperations.LeadingZeroCount(data[i]);
+            if (b < 64)
+            {
+                return i * 64 + 63 - b;
+            }
+        }
+        return -1;
+    }
+
     public void Clear()
     {
         for (int i = 0; i < data.Length; i++)
@@ -290,8 +314,62 @@ public record struct BitSet : IDisposable
     unsafe void Resize()
     {
         var newData = new NativeArray<ulong>(data.Length * 2);
-        Unsafe.CopyBlock(data.Data, newData.Data, (uint)data.Length * sizeof(ulong));
+        Unsafe.CopyBlock(newData.Data, data.Data, (uint)data.Length * sizeof(ulong));
         data.Dispose();
         data = newData;
+    }
+
+    public Enumerator GetEnumerator() => new(this);
+
+    public ref struct Enumerator
+    {
+        BitSet bitset;
+        int blockIdx;
+        int bitIdx;
+        int lastIdx;
+
+        public Enumerator(BitSet bitset)
+        {
+            this.bitset = bitset;
+            blockIdx = -1;
+        }
+
+        public int Current => blockIdx * 64 + bitIdx;
+
+        public bool MoveNext()
+        {
+            if (bitIdx == lastIdx)
+            {
+                while (++blockIdx < bitset.data.Length && bitset.data[blockIdx] == 0);
+                if (blockIdx >= bitset.data.Length) return false;
+                lastIdx = LastSetBit(bitset.data[blockIdx]);
+                bitIdx = FirstSetBit(bitset.data[blockIdx]) - 1;
+            }
+
+            while (++bitIdx < lastIdx)
+            {
+                if (HasBit(bitset.data[blockIdx], bitIdx))
+                {
+                    return true;
+                }
+            }
+
+            return true;
+        }
+
+        bool HasBit(ulong value, int idx)
+        {
+            return (value & 1UL << idx) != 0;
+        }
+
+        int FirstSetBit(ulong value)
+        {
+            return BitOperations.TrailingZeroCount(value);
+        }
+
+        int LastSetBit(ulong value)
+        {
+            return 63 - BitOperations.LeadingZeroCount(value);
+        }
     }
 }
