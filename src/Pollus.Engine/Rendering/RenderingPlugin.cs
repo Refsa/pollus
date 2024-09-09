@@ -58,12 +58,14 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
             SetupSystem,
-            static (IWGPUContext gpuContext, Resources resources) =>
+            static (IWGPUContext gpuContext, Resources resources, RenderAssets renderAssets) =>
             {
                 resources.Add(new RenderContext
                 {
                     GPUContext = gpuContext,
                 });
+
+                renderAssets.Add(new Handle<Blit>(0), new Blit());
             }
         ));
 
