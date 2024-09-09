@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Diagnostics.CodeAnalysis;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
@@ -37,24 +38,31 @@ public class Blit : IDisposable
     }
     """;
 
-    GPURenderPipeline? pipeline;
     GPUSampler? sampler;
     GPUBindGroupLayout? bindGroupLayout;
+    GPUShader? shaderModule;
 
     // TODO: should probably move this out of here, lifetime of BindGroup is tied to the texture view
     Dictionary<nint, GPUBindGroup> bindGroups = new();
+    Dictionary<nint, GPURenderPipeline> pipelines = new();
 
     public void Dispose()
     {
+        foreach (var pipeline in pipelines.Values) pipeline.Dispose();
+        pipelines.Clear();
+
         foreach (var bindGroup in bindGroups.Values) bindGroup.Dispose();
         bindGroups.Clear();
-        pipeline?.Dispose();
+
+        shaderModule?.Dispose();
         sampler?.Dispose();
         bindGroupLayout?.Dispose();
     }
 
-    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null)
+    [MemberNotNull(nameof(sampler), nameof(bindGroupLayout), nameof(shaderModule))]
+    void CreateSharedResources(IWGPUContext gpuContext)
     {
+        sampler ??= gpuContext.CreateSampler(SamplerDescriptor.Default);
         bindGroupLayout ??= gpuContext.CreateBindGroupLayout(new()
         {
             Entries = [
@@ -62,59 +70,72 @@ public class Blit : IDisposable
                 BindGroupLayoutEntry.SamplerEntry(1, ShaderStage.Fragment, SamplerBindingType.Filtering),
             ]
         });
-        sampler ??= gpuContext.CreateSampler(SamplerDescriptor.Default);
-        if (pipeline is null)
+        shaderModule ??= gpuContext.CreateShaderModule(new()
         {
-            using var shaderModule = gpuContext.CreateShaderModule(new()
-            {
-                Label = """blit-shader""",
-                Backend = ShaderBackend.WGSL,
-                Content = BLIT_SHADER,
-            });
+            Label = """blit-shader""",
+            Backend = ShaderBackend.WGSL,
+            Content = BLIT_SHADER,
+        });
+    }
 
-            pipeline = gpuContext.CreateRenderPipeline(new()
+    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, GPUTextureView dest)
+    {
+        if (pipelines.TryGetValue(dest.Native, out var pipeline)) return pipeline;
+
+        pipeline = gpuContext.CreateRenderPipeline(new()
+        {
+            Label = """blit-pipeline""",
+            VertexState = new()
             {
-                Label = """blit-pipeline""",
-                VertexState = new()
-                {
-                    ShaderModule = shaderModule,
-                    EntryPoint = """vs_main""",
-                },
-                FragmentState = new()
-                {
-                    ShaderModule = shaderModule,
-                    EntryPoint = """fs_main""",
-                    ColorTargets = [
-                        ColorTargetState.Default with
+                ShaderModule = shaderModule!,
+                EntryPoint = """vs_main""",
+            },
+            FragmentState = new()
+            {
+                ShaderModule = shaderModule!,
+                EntryPoint = """fs_main""",
+                ColorTargets = [
+                    ColorTargetState.Default with
                         {
                             Format = dest.Descriptor.Format,
                         }
-                    ]
-                },
-                MultisampleState = MultisampleState.Default,
-                PrimitiveState = PrimitiveState.Default with
-                {
-                    Topology = PrimitiveTopology.TriangleStrip,
-                    CullMode = CullMode.None,
-                    FrontFace = FrontFace.CW,
-                },
-                PipelineLayout = gpuContext.CreatePipelineLayout(new()
-                {
-                    Label = """blit-pipeline-layout""",
-                    Layouts = [bindGroupLayout]
-                }),
-            });
-        }
-
-        if (!bindGroups.TryGetValue(source.Native, out var bindGroup))
-        {
-            bindGroup = gpuContext.CreateBindGroup(new()
+                ]
+            },
+            MultisampleState = MultisampleState.Default,
+            PrimitiveState = PrimitiveState.Default with
             {
-                Layout = bindGroupLayout,
-                Entries = [BindGroupEntry.TextureEntry(0, source), BindGroupEntry.SamplerEntry(1, sampler)]
-            });
-            bindGroups.Add(source.Native, bindGroup);
-        }
+                Topology = PrimitiveTopology.TriangleStrip,
+                CullMode = CullMode.None,
+                FrontFace = FrontFace.CW,
+            },
+            PipelineLayout = gpuContext.CreatePipelineLayout(new()
+            {
+                Label = """blit-pipeline-layout""",
+                Layouts = [bindGroupLayout!]
+            }),
+        });
+        pipelines.Add(dest.Native, pipeline);
+        return pipeline;
+    }
+
+    GPUBindGroup GetBindGroup(IWGPUContext gpuContext, GPUTextureView source)
+    {
+        if (bindGroups.TryGetValue(source.Native, out var bindGroup)) return bindGroup;
+
+        bindGroup = gpuContext.CreateBindGroup(new()
+        {
+            Layout = bindGroupLayout!,
+            Entries = [BindGroupEntry.TextureEntry(0, source), BindGroupEntry.SamplerEntry(1, sampler!)]
+        });
+        bindGroups.Add(source.Native, bindGroup);
+        return bindGroup;
+    }
+
+    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null)
+    {
+        CreateSharedResources(gpuContext);
+        var pipeline = GetRenderPipeline(gpuContext, dest);
+        var bindGroup = GetBindGroup(gpuContext, source);
 
         using var pass = encoder.BeginRenderPass(new()
         {
