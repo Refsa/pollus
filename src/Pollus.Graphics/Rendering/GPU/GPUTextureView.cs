@@ -1,7 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using ImGuiNET;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
@@ -10,14 +9,18 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
     IWGPUContext context;
     GPUTexture? texture;
     Silk.NET.WebGPU.TextureView* textureView;
+    TextureViewDescriptor descriptor;
+
     bool isRegistered;
     bool isDisposed;
 
     public nint Native => (nint)textureView;
+    public readonly TextureViewDescriptor Descriptor => descriptor;
 
-    public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.Texture* texture)
+    public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.Texture* texture, TextureViewDescriptor descriptor)
     {
         this.context = context;
+        this.descriptor = descriptor;
         textureView = context.wgpu.TextureCreateView(texture, null);
     }
 
@@ -25,6 +28,21 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
     {
         this.context = context;
         this.texture = texture;
+        this.descriptor = new()
+        {
+            MipLevelCount = texture.Descriptor.MipLevelCount,
+            BaseArrayLayer = 0,
+            ArrayLayerCount = 1,
+            Dimension = texture.Descriptor.Dimension switch
+            {
+                TextureDimension.Dimension1D => TextureViewDimension.Dimension1D,
+                TextureDimension.Dimension2D => TextureViewDimension.Dimension2D,
+                TextureDimension.Dimension3D => TextureViewDimension.Dimension3D,
+                _ => throw new NotSupportedException("Unsupported texture dimension for view")
+            },
+            BaseMipLevel = 0,
+            Format = texture.Descriptor.Format,
+        };
         textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, null);
     }
 
@@ -43,15 +61,16 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
             arrayLayerCount: descriptor.ArrayLayerCount,
             aspect: descriptor.Aspect
         );
-        
+
         this.texture = texture;
         textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, nativeDescriptor);
     }
 
-    public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.TextureView* textureView)
+    public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.TextureView* textureView, TextureViewDescriptor descriptor)
     {
         this.context = context;
         this.textureView = textureView;
+        this.descriptor = descriptor;
     }
 
     public void Dispose()

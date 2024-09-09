@@ -4,12 +4,12 @@ public partial struct FrameGraph<TExecuteParam>
 {
     public ref struct Builder
     {
-        FrameGraph<TExecuteParam> frameGraph;
+        ref FrameGraph<TExecuteParam> frameGraph;
         ref PassNode passNode;
 
-        public Builder(ref PassNode node, FrameGraph<TExecuteParam> frameGraph)
+        public Builder(ref PassNode node, ref FrameGraph<TExecuteParam> frameGraph)
         {
-            this.frameGraph = frameGraph;
+            this.frameGraph = ref frameGraph;
             passNode = ref node;
         }
 

@@ -49,7 +49,7 @@ unsafe public interface IWGPUContext : IDisposable
     GPUBuffer CreateBuffer(BufferDescriptor descriptor) => new(this, descriptor);
     GPUTexture CreateTexture(TextureDescriptor descriptor) => new(this, descriptor);
     GPUTextureView CreateTextureView(GPUTexture texture, TextureViewDescriptor descriptor) => new(this, texture, descriptor);
-    GPUTextureView CreateTextureView(Silk.NET.WebGPU.SurfaceTexture texture, TextureViewDescriptor descriptor) => new(this, texture.Texture);
+    GPUTextureView CreateTextureView(Silk.NET.WebGPU.SurfaceTexture texture, TextureViewDescriptor descriptor) => new(this, texture.Texture, descriptor);
     GPUSampler CreateSampler(SamplerDescriptor descriptor) => new(this, descriptor);
     GPUBindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
     GPUBindGroup CreateBindGroup(BindGroupDescriptor descriptor) => new(this, descriptor);

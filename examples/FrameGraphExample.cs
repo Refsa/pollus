@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using System.Net.Http.Headers;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -20,6 +21,12 @@ public class FrameGraphExample : IExample
 
     struct SpritesPassData
     {
+        public ResourceHandle<TextureResource> ColorAttachment;
+    }
+
+    struct BlitPassData
+    {
+        public ResourceHandle<TextureResource> ColorAttachment;
         public ResourceHandle<TextureResource> Backbuffer;
     }
 
@@ -69,18 +76,23 @@ public class FrameGraphExample : IExample
                 using var frameGraph = new FrameGraph<FrameGraphParam>();
 
                 var backbufferDesc = TextureDescriptor.D2(
-                    label: "backbuffer",
-                    size: window.Size,
-                    format: TextureFormat.Rgba8Unorm,
-                    usage: TextureUsage.RenderAttachment
+                    "backbuffer",
+                    TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
+                    renderContext.SurfaceTextureView!.Value.Descriptor.Format,
+                    window.Size
                 );
-                var backbufferHandle = frameGraph.AddTexture(backbufferDesc);
-                renderContext.Resources.AddTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
+                var backbufferHandle = frameGraph.AddTexture(new("backbuffer", backbufferDesc));
+                renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
                 frameGraph.AddPass("sprites-pass",
-                static (ref FrameGraph<FrameGraphParam>.Builder builder, ref SpritesPassData data) =>
+                (ref FrameGraph<FrameGraphParam>.Builder builder, ref SpritesPassData data) =>
                 {
-                    data.Backbuffer = builder.Writes<TextureResource>("backbuffer");
+                    data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
+                        "color-attachment",
+                        TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
+                        renderContext.SurfaceTextureView!.Value.Descriptor.Format,
+                        window.Size
+                    ));
                 },
                 static (context, param, data) =>
                 {
@@ -91,7 +103,7 @@ public class FrameGraphExample : IExample
                         {
                             new()
                             {
-                                View = context.Resources.GetTexture(data.Backbuffer).TextureView.Native,
+                                View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
                                 LoadOp = LoadOp.Load,
                                 StoreOp = StoreOp.Store,
                                 ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
@@ -103,14 +115,29 @@ public class FrameGraphExample : IExample
                     stage.Execute(passEncoder, param.RenderAssets);
                 });
 
+                frameGraph.AddPass("blit-pass",
+                static (ref FrameGraph<FrameGraphParam>.Builder builder, ref BlitPassData data) =>
+                {
+                    data.ColorAttachment = builder.Reads<TextureResource>("color-attachment");
+                    data.Backbuffer = builder.Writes<TextureResource>("backbuffer");
+                },
+                static (context, param, data) =>
+                {
+                    var commandEncoder = context.GetCurrentCommandEncoder();
+
+                    var srcTex = context.Resources.GetTexture(data.ColorAttachment);
+                    var dstTex = context.Resources.GetTexture(data.Backbuffer);
+
+                    var blit = param.RenderAssets.Get<Blit>(Blit.Handle);
+                    blit.BlitTexture(context.GPUContext, commandEncoder, srcTex.TextureView, dstTex.TextureView);
+                });
+
                 frameGraph.Compile().Execute(renderContext, new()
                 {
                     RenderAssets = renderAssets,
                     RenderSteps = renderSteps,
                     Resources = resources,
                 });
-
-                renderContext.Resources.RemoveTexture(backbufferHandle);
             }))
             .Run();
     }

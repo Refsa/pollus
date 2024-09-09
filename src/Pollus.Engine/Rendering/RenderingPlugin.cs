@@ -65,7 +65,7 @@ public class RenderingPlugin : IPlugin
                     GPUContext = gpuContext,
                 });
 
-                renderAssets.Add(new Handle<Blit>(0), new Blit());
+                renderAssets.Add(Blit.Handle, new Blit());
             }
         ));
 

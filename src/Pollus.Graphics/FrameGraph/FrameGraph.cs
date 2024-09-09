@@ -104,7 +104,7 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
         ref var passNode = ref passNodes.CreateNode(name);
         passNode.SetPass(passHandle);
 
-        var builder = new Builder(ref passNode, this);
+        var builder = new Builder(ref passNode, ref this);
         build(ref builder, ref pass.Get().Data);
     }
 

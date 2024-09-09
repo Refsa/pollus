@@ -66,31 +66,47 @@ public class RenderResourceCache
 
     Dictionary<ResourceHandle, ResourceMeta> lookup = [];
 
-    public ResourceHandle AddTexture(ResourceHandle handle, TextureGPUResource resource)
+    public bool Has(ResourceHandle handle) => lookup.ContainsKey(handle);
+
+    public ResourceHandle SetTexture(ResourceHandle handle, TextureGPUResource resource)
     {
-        textures.Add(resource);
-        resource.Handle = handle;
-        lookup[handle] = new()
+        if (lookup.TryGetValue(handle, out var meta))
         {
-            Label = resource.Descriptor.Label,
-            Handle = handle,
-            Index = textures.Count - 1,
-            Hash = resource.Hash
-        };
+            textures[meta.Index] = resource;
+        }
+        else
+        {
+            textures.Add(resource);
+            resource.Handle = handle;
+            lookup[handle] = new()
+            {
+                Label = resource.Descriptor.Label,
+                Handle = handle,
+                Index = textures.Count - 1,
+                Hash = resource.Hash
+            };
+        }
         return handle;
     }
 
-    public ResourceHandle AddBuffer(ResourceHandle handle, BufferGPUResource resource)
+    public ResourceHandle SetBuffer(ResourceHandle handle, BufferGPUResource resource)
     {
-        buffers.Add(resource);
-        resource.Handle = handle;
-        lookup[handle] = new()
+        if (lookup.TryGetValue(handle, out var meta))
         {
-            Label = resource.Descriptor.Label,
-            Handle = handle,
-            Index = buffers.Count - 1,
-            Hash = resource.Hash
-        };
+            buffers[meta.Index] = resource;
+        }
+        else
+        {
+            buffers.Add(resource);
+            resource.Handle = handle;
+            lookup[handle] = new()
+            {
+                Label = resource.Descriptor.Label,
+                Handle = handle,
+                Index = buffers.Count - 1,
+                Hash = resource.Hash
+            };
+        }
         return handle;
     }
 

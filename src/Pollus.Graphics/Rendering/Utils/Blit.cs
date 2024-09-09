@@ -53,7 +53,7 @@ public class Blit : IDisposable
         bindGroupLayout?.Dispose();
     }
 
-    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest)
+    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null)
     {
         bindGroupLayout ??= gpuContext.CreateBindGroupLayout(new()
         {
@@ -87,7 +87,7 @@ public class Blit : IDisposable
                     ColorTargets = [
                         ColorTargetState.Default with
                         {
-                            Format = TextureFormat.Rgba8UnormSrgb,
+                            Format = dest.Descriptor.Format,
                         }
                     ]
                 },
@@ -123,9 +123,9 @@ public class Blit : IDisposable
                 new()
                 {
                     View = dest.Native,
-                    LoadOp = LoadOp.Load,
+                    LoadOp = clearValue is null ? LoadOp.Load : LoadOp.Clear,
                     StoreOp = StoreOp.Store,
-                    ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
+                    ClearValue = clearValue ?? new(0.1f, 0.1f, 0.1f, 1.0f),
                 }
             }
         });

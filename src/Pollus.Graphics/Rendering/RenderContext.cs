@@ -36,12 +36,32 @@ public class RenderContext
     {
         foreach (var resource in resourceContainers.Textures.Resources)
         {
-            // GPUContext.CreateTexture(resource);
+            if (resources.Has(resource.Handle)) continue;
+
+            var texture = GPUContext.CreateTexture(resource.Descriptor);
+            var textureView = GPUContext.CreateTextureView(texture, TextureViewDescriptor.D2 with
+            {
+                Label = resource.Descriptor.Label,
+                Format = resource.Descriptor.Format,
+                MipLevelCount = resource.Descriptor.MipLevelCount,
+                ArrayLayerCount = resource.Descriptor.Size.DepthOrArrayLayers,
+                Dimension = resource.Descriptor.Dimension switch
+                {
+                    TextureDimension.Dimension1D => TextureViewDimension.Dimension1D,
+                    TextureDimension.Dimension2D => TextureViewDimension.Dimension2D,
+                    TextureDimension.Dimension3D => TextureViewDimension.Dimension3D,
+                    _ => throw new NotImplementedException(),
+                },
+            });
+            resources.SetTexture(resource.Handle, new TextureGPUResource(texture, textureView, resource.Descriptor));
         }
 
         foreach (var resource in resourceContainers.Buffers.Resources)
         {
-            // GPUContext.CreateBuffer(resource);
+            if (resources.Has(resource.Handle)) continue;
+
+            var buffer = GPUContext.CreateBuffer(resource.Descriptor);
+            resources.SetBuffer(resource.Handle, new BufferGPUResource(buffer, resource.Descriptor));
         }
     }
 
@@ -95,7 +115,7 @@ public class RenderContext
         }
         return CreateCommandEncoder(label);
     }
-    
+
     public GPUCommandEncoder GetCurrentCommandEncoder()
     {
         return commandEncoders[^1];

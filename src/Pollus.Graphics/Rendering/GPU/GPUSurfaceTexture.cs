@@ -35,11 +35,23 @@ unsafe public struct GPUSurfaceTexture : IDisposable
 #if BROWSER
         var native = context.wgpu.SwapChainGetCurrentTextureView(context.SwapChain);
         if (native == null) throw new ApplicationException("Failed to get current texture view");
-        textureView = new GPUTextureView(context, native);
+        textureView = new GPUTextureView(context, native, new()
+        {
+            Dimension = TextureViewDimension.Dimension2D,
+            Format = context.GetSurfaceFormat(),
+            MipLevelCount = 1,
+            ArrayLayerCount = 1,
+        });
         return true;
 #else
         surfaceTexture = context.SurfaceGetCurrentTexture();
-        textureView = context.CreateTextureView(surfaceTexture.Value, new());
+        textureView = context.CreateTextureView(surfaceTexture.Value, new()
+        {
+            Dimension = TextureViewDimension.Dimension2D,
+            Format = context.GetSurfaceFormat(),
+            MipLevelCount = 1,
+            ArrayLayerCount = 1,
+        });
         return CheckSurface(surfaceTexture.Value.Status);
 #endif
     }

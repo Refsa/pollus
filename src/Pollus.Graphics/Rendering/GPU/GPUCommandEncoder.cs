@@ -72,4 +72,17 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
         return new GPURenderPassEncoder(context, native, wgpuDescriptor);
     }
+
+    public void CopyTextureToTexture(GPUTexture srcTex, GPUTexture dstTex, Extent3D copySize)
+    {
+        var silkExtents = new Silk.NET.WebGPU.Extent3D(copySize.Width, copySize.Height, copySize.DepthOrArrayLayers);
+        Silk.NET.WebGPU.ImageCopyTexture src = new(
+            texture: (Silk.NET.WebGPU.Texture*)srcTex.Native
+        );
+        Silk.NET.WebGPU.ImageCopyTexture dst = new(
+            texture: (Silk.NET.WebGPU.Texture*)dstTex.Native
+        );
+
+        context.wgpu.CommandEncoderCopyTextureToTexture(native, src, dst, silkExtents);
+    }
 }
