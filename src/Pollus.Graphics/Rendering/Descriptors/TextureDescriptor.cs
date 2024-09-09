@@ -16,6 +16,11 @@ public struct TextureDescriptor
     public uint SampleCount;
     public ViewFormatArray ViewFormats;
 
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Label, Usage, Dimension, Size, Format, MipLevelCount, SampleCount, ViewFormats);
+    }
+
     public static TextureDescriptor D1(string label, TextureUsage usage, TextureFormat format, uint size, uint mipLevelCount = 1, uint sampleCount = 1)
     {
         return new()

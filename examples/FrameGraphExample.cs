@@ -75,10 +75,11 @@ public class FrameGraphExample : IExample
             {
                 using var frameGraph = new FrameGraph<FrameGraphParam>();
 
+                var backbufferFormat = renderContext.SurfaceTextureView!.Value.Descriptor.Format;
                 var backbufferDesc = TextureDescriptor.D2(
                     "backbuffer",
                     TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
-                    renderContext.SurfaceTextureView!.Value.Descriptor.Format,
+                    backbufferFormat,
                     window.Size
                 );
                 var backbufferHandle = frameGraph.AddTexture(new("backbuffer", backbufferDesc));
@@ -90,7 +91,7 @@ public class FrameGraphExample : IExample
                     data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
                         "color-attachment",
                         TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
-                        renderContext.SurfaceTextureView!.Value.Descriptor.Format,
+                        backbufferFormat,
                         window.Size
                     ));
                 },
@@ -106,7 +107,6 @@ public class FrameGraphExample : IExample
                                 View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
                                 LoadOp = LoadOp.Load,
                                 StoreOp = StoreOp.Store,
-                                ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
                             }
                         }
                     });

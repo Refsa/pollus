@@ -41,12 +41,7 @@ public struct TextureResource : IFrameGraphResource
     {
         Label = label;
         Descriptor = descriptor;
-        Hash = HashCode.Combine(
-            descriptor.Dimension, descriptor.Format,
-            descriptor.Size, descriptor.MipLevelCount,
-            descriptor.SampleCount, descriptor.Usage,
-            descriptor.ViewFormats
-        );
+        Hash = descriptor.GetHashCode();
     }
 
     public static implicit operator TextureResource(TextureDescriptor descriptor) => new(descriptor.Label, descriptor);
@@ -65,7 +60,7 @@ public struct BufferResource : IFrameGraphResource
     {
         Label = label;
         Descriptor = descriptor;
-        Hash = HashCode.Combine(descriptor.Size, descriptor.Usage);
+        Hash = descriptor.GetHashCode();
     }
 
     public static implicit operator BufferResource(BufferDescriptor descriptor) => new(descriptor.Label, descriptor);

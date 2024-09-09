@@ -10,6 +10,11 @@ public struct BufferDescriptor
     public ulong Size;
     public bool MappedAtCreation;
 
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Label, Usage, Size, MappedAtCreation);
+    }
+
     public static BufferDescriptor Vertex(string label, ulong size)
     {
         return new BufferDescriptor

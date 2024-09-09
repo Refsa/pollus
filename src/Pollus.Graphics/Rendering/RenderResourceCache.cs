@@ -25,12 +25,7 @@ public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>
         Resource = texture;
         TextureView = textureView;
         Descriptor = descriptor;
-        Hash = HashCode.Combine(
-            descriptor.Dimension, descriptor.Format,
-            descriptor.Size, descriptor.MipLevelCount,
-            descriptor.SampleCount, descriptor.Usage,
-            descriptor.ViewFormats
-        );
+        Hash = descriptor.GetHashCode();
     }
 }
 
@@ -45,9 +40,7 @@ public struct BufferGPUResource : IGPUResource<GPUBuffer, BufferDescriptor>
     {
         Resource = resource;
         Descriptor = descriptor;
-        Hash = HashCode.Combine(
-            descriptor.Size, descriptor.Usage
-        );
+        Hash = descriptor.GetHashCode();
     }
 }
 
@@ -78,6 +71,7 @@ public class RenderResourceCache
         {
             textures.Add(resource);
             resource.Handle = handle;
+            
             lookup[handle] = new()
             {
                 Label = resource.Descriptor.Label,
@@ -99,6 +93,7 @@ public class RenderResourceCache
         {
             buffers.Add(resource);
             resource.Handle = handle;
+
             lookup[handle] = new()
             {
                 Label = resource.Descriptor.Label,
