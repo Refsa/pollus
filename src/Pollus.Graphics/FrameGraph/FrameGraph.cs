@@ -1,7 +1,9 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
 
@@ -44,6 +46,7 @@ public partial struct FrameGraph<TParam> : IDisposable
     public FrameGraphRunner<TParam> Compile()
     {
         Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
+        passNodes.Nodes.Sort(static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
 
         foreach (ref var current in passNodes.Nodes)
         {
@@ -57,6 +60,10 @@ public partial struct FrameGraph<TParam> : IDisposable
         }
 
         executionOrder = ArrayPool<int>.Shared.Rent(passNodes.Count);
+        var executionOrderSpan = executionOrder.AsSpan(0, passNodes.Count);
+        for (int i = 0; i < passNodes.Count; i++) executionOrderSpan[i] = passNodes.Nodes[i].Index;
+        passNodes.Nodes.Sort(executionOrderSpan, static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
+
         int orderIndex = 0;
         Span<bool> visited = stackalloc bool[passNodes.Count];
         Span<bool> onStack = stackalloc bool[passNodes.Count];
@@ -65,15 +72,15 @@ public partial struct FrameGraph<TParam> : IDisposable
             var adj = adjacencyMatrix[node.Index];
             if (!visited[node.Index])
             {
-                if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, executionOrder, ref orderIndex))
+                if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, executionOrderSpan, ref orderIndex))
                 {
                     throw new Exception("Cyclic dependency detected");
                 }
             }
         }
 
-        executionOrder.AsSpan().Reverse();
-        return new FrameGraphRunner<TParam>(this, executionOrder);
+        executionOrderSpan.Reverse();
+        return new FrameGraphRunner<TParam>(this, executionOrderSpan);
 
         static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
         {
@@ -95,13 +102,14 @@ public partial struct FrameGraph<TParam> : IDisposable
         }
     }
 
-    public void AddPass<TData>(string name, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
+    public void AddPass<TData, TOrder>(TOrder order, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
         where TData : struct
+        where TOrder : struct, Enum, IConvertible
     {
-        var passHandle = passes.AddPass(new(), execute);
+        var passHandle = passes.AddPass(new(), order.ToInt32(null), execute);
         var pass = (FramePassContainer<TParam, TData>)passes.GetPass(passHandle);
 
-        ref var passNode = ref passNodes.CreateNode(name);
+        ref var passNode = ref passNodes.CreateNode(typeof(TData).Name);
         passNode.SetPass(passHandle);
 
         var builder = new Builder(ref passNode, ref this);
@@ -110,7 +118,7 @@ public partial struct FrameGraph<TParam> : IDisposable
 
     public void ExecutePass(int passIndex, RenderContext renderContext, TParam param)
     {
-        passes.ExecutePass(passIndex, renderContext, param);
+        passes.ExecutePass(new(passIndex, 0), renderContext, param);
     }
 
     public ResourceHandle<TResource> AddResource<TResource>(TResource resource)

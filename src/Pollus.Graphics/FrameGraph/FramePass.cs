@@ -3,13 +3,14 @@ namespace Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public readonly record struct FramePassHandle(int PassIndex)
+public readonly record struct FramePassHandle(int PassIndex, int PassOrder)
 {
-    public static implicit operator FramePassHandle(int passIndex) => new(passIndex);
+
 }
 
 public interface IFramePass
 {
+    int Order { get; }
 }
 
 public struct FramePass<TParam, TData> : IFramePass
@@ -18,10 +19,13 @@ public struct FramePass<TParam, TData> : IFramePass
     public TData Data;
     public FrameGraph<TParam>.ExecuteDelegate<TData> Execute;
 
-    public FramePass(TData data, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
+    public int Order { get; set; }
+
+    public FramePass(TData data, int order, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
     {
         Data = data;
         Execute = execute;
+        Order = order;
     }
 }
 
@@ -36,9 +40,9 @@ public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExe
 {
     FramePass<TExecuteParam, TData> pass;
 
-    public void Set(in TData data, FrameGraph<TExecuteParam>.ExecuteDelegate<TData> execute)
+    public void Set(in TData data, int order, FrameGraph<TExecuteParam>.ExecuteDelegate<TData> execute)
     {
-        pass = new FramePass<TExecuteParam, TData>(data, execute);
+        pass = new FramePass<TExecuteParam, TData>(data, order, execute);
     }
 
     public ref FramePass<TExecuteParam, TData> Get()
@@ -74,12 +78,12 @@ public struct FramePassContainer<TParam> : IDisposable
         for (int i = 0; i < containers.Count; i++) containers[i].Clear();
         containers.Clear();
         containerLookup.Clear();
-        
+
         Pool<List<IFramePassContainer<TParam>>>.Shared.Return(containers);
         Pool<Dictionary<Type, int>>.Shared.Return(containerLookup);
     }
 
-    public FramePassHandle AddPass<TData>(in TData data, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
+    public FramePassHandle AddPass<TData>(in TData data, int order, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
         where TData : struct
     {
         if (containerLookup.ContainsKey(typeof(TData)))
@@ -90,10 +94,10 @@ public struct FramePassContainer<TParam> : IDisposable
         // TODO: recycle
         var container = Pool<FramePassContainer<TParam, TData>>.Shared.Rent();
 
-        var handle = new FramePassHandle(containers.Count);
+        var handle = new FramePassHandle(containers.Count, order);
         containers.Add(container);
         containerLookup.Add(typeof(TData), handle.PassIndex);
-        container.Set(data, execute);
+        container.Set(data, order, execute);
         return handle;
     }
 

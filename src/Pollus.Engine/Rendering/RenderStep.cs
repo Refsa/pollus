@@ -7,9 +7,11 @@ using Pollus.Utils;
 
 public enum RenderStep2D
 {
-    Main,
-    PostProcess,
-    UI,
+    First = 1000,
+    Main = 2000,
+    PostProcess = 3000,
+    UI = 4000,
+    Last = 5000,
 }
 
 public class DrawCommands

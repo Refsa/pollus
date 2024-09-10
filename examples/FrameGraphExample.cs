@@ -95,7 +95,7 @@ public class FrameGraphExample : IExample
                 var backbufferHandle = frameGraph.AddTexture(new("backbuffer", backbufferDesc));
                 renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
-                frameGraph.AddPass("sprites-pass", param,
+                frameGraph.AddPass(RenderStep2D.Main, param,
                 static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref SpritesPassData data) =>
                 {
                     data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
@@ -125,7 +125,7 @@ public class FrameGraphExample : IExample
                     stage.Execute(passEncoder, param.RenderAssets);
                 });
 
-                frameGraph.AddPass("blit-pass", param,
+                frameGraph.AddPass(RenderStep2D.Last, param,
                 static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref BlitPassData data) =>
                 {
                     data.ColorAttachment = builder.Reads<TextureResource>("color-attachment");
