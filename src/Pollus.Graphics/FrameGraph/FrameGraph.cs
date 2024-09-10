@@ -1,9 +1,7 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
 
@@ -22,7 +20,6 @@ public partial struct FrameGraph<TParam> : IDisposable
 
     public FrameGraph()
     {
-        // TODO: recycle
         passNodes = new();
         resourceNodes = new();
         passes = new();

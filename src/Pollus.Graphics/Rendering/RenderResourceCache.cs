@@ -1,6 +1,5 @@
 namespace Pollus.Graphics.Rendering;
 
-
 public interface IGPUResource<TResource, TDescriptor>
     where TResource : notnull
     where TDescriptor : struct
