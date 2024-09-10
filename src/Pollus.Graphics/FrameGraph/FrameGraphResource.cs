@@ -11,12 +11,12 @@ public enum ResourceType
     Buffer,
 }
 
-public readonly record struct ResourceHandle(int Id, int Index, ResourceType Type);
-public readonly record struct ResourceHandle<TResource>(int Id, int Index)
+public readonly record struct ResourceHandle(int Id, int Index, int Hash, ResourceType Type);
+public readonly record struct ResourceHandle<TResource>(int Id, int Index, int Hash)
     where TResource : struct, IFrameGraphResource
 {
-    public static implicit operator ResourceHandle(ResourceHandle<TResource> handle) => new(handle.Id, handle.Index, TResource.Type);
-    public static implicit operator ResourceHandle<TResource>(ResourceHandle handle) => new(handle.Id, handle.Index);
+    public static implicit operator ResourceHandle(ResourceHandle<TResource> handle) => new(handle.Id, handle.Index, handle.Hash, TResource.Type);
+    public static implicit operator ResourceHandle<TResource>(ResourceHandle handle) => new(handle.Id, handle.Index, handle.Hash);
 }
 
 public interface IFrameGraphResource
@@ -85,7 +85,7 @@ public struct ResourceContainer<TResource> : IDisposable
     public ResourceHandle<TResource> Add(int id, TResource resource)
     {
         if (count == resources.Length) Resize();
-        resource.Handle = new ResourceHandle<TResource>(id, count);
+        resource.Handle = new ResourceHandle<TResource>(id, count, resource.Hash);
         resources[count++] = resource;
         return resource.Handle;
     }
@@ -164,8 +164,8 @@ public struct ResourceContainers : IDisposable
     {
         return handle.Type switch
         {
-            ResourceType.Texture => textures.Get(new(handle.Id, handle.Index)),
-            ResourceType.Buffer => buffers.Get(new(handle.Id, handle.Index)),
+            ResourceType.Texture => textures.Get(handle),
+            ResourceType.Buffer => buffers.Get(handle),
             _ => throw new NotImplementedException(),
         };
     }

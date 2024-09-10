@@ -16,6 +16,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
 
     public nint Native => (nint)textureView;
     public readonly TextureViewDescriptor Descriptor => descriptor;
+    public readonly TextureDescriptor TextureDescriptor => texture?.Descriptor ?? default;
 
     public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.Texture* texture, TextureViewDescriptor descriptor)
     {

@@ -43,8 +43,8 @@ public class Blit : IDisposable
     GPUShader? shaderModule;
 
     // TODO: should probably move this out of here, lifetime of BindGroup is tied to the texture view
-    Dictionary<nint, GPUBindGroup> bindGroups = new();
-    Dictionary<nint, GPURenderPipeline> pipelines = new();
+    Dictionary<int, GPUBindGroup> bindGroups = new();
+    Dictionary<int, GPURenderPipeline> pipelines = new();
 
     public void Dispose()
     {
@@ -78,9 +78,10 @@ public class Blit : IDisposable
         });
     }
 
-    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, GPUTextureView dest)
+    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, GPUTextureView dest, GPUTextureView? msaaResolve = null)
     {
-        if (pipelines.TryGetValue(dest.Native, out var pipeline)) return pipeline;
+        var pipelineHash = HashCode.Combine(dest.TextureDescriptor.GetHashCode(), msaaResolve.HasValue ? msaaResolve.Value.TextureDescriptor.GetHashCode() : 0);
+        if (pipelines.TryGetValue(pipelineHash, out var pipeline)) return pipeline;
 
         pipeline = gpuContext.CreateRenderPipeline(new()
         {
@@ -96,12 +97,15 @@ public class Blit : IDisposable
                 EntryPoint = """fs_main""",
                 ColorTargets = [
                     ColorTargetState.Default with
-                        {
-                            Format = dest.Descriptor.Format,
-                        }
+                    {
+                        Format = dest.Descriptor.Format,
+                    }
                 ]
             },
-            MultisampleState = MultisampleState.Default,
+            MultisampleState = MultisampleState.Default with
+            {
+                Count = msaaResolve.HasValue ? msaaResolve.Value.TextureDescriptor.SampleCount : 1,
+            },
             PrimitiveState = PrimitiveState.Default with
             {
                 Topology = PrimitiveTopology.TriangleStrip,
@@ -114,27 +118,28 @@ public class Blit : IDisposable
                 Layouts = [bindGroupLayout!]
             }),
         });
-        pipelines.Add(dest.Native, pipeline);
+        pipelines.Add(pipelineHash, pipeline);
         return pipeline;
     }
 
     GPUBindGroup GetBindGroup(IWGPUContext gpuContext, GPUTextureView source)
     {
-        if (bindGroups.TryGetValue(source.Native, out var bindGroup)) return bindGroup;
+        var bindGroupHash = source.Native.GetHashCode();
+        if (bindGroups.TryGetValue(bindGroupHash, out var bindGroup)) return bindGroup;
 
         bindGroup = gpuContext.CreateBindGroup(new()
         {
             Layout = bindGroupLayout!,
             Entries = [BindGroupEntry.TextureEntry(0, source), BindGroupEntry.SamplerEntry(1, sampler!)]
         });
-        bindGroups.Add(source.Native, bindGroup);
+        bindGroups.Add(bindGroupHash, bindGroup);
         return bindGroup;
     }
 
-    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null)
+    public void BlitTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null)
     {
         CreateSharedResources(gpuContext);
-        var pipeline = GetRenderPipeline(gpuContext, dest);
+        var pipeline = GetRenderPipeline(gpuContext, dest, msaaResolve);
         var bindGroup = GetBindGroup(gpuContext, source);
 
         using var pass = encoder.BeginRenderPass(new()
@@ -143,7 +148,8 @@ public class Blit : IDisposable
             {
                 new()
                 {
-                    View = dest.Native,
+                    View = msaaResolve.HasValue ? msaaResolve.Value.Native : dest.Native,
+                    ResolveTarget = msaaResolve.HasValue ? dest.Native : nint.Zero,
                     LoadOp = clearValue is null ? LoadOp.Load : LoadOp.Clear,
                     StoreOp = StoreOp.Store,
                     ClearValue = clearValue ?? new(0.1f, 0.1f, 0.1f, 1.0f),

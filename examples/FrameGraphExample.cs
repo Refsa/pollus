@@ -27,6 +27,7 @@ public class FrameGraphExample : IExample
     struct BlitPassData
     {
         public ResourceHandle<TextureResource> ColorAttachment;
+        public ResourceHandle<TextureResource> MSAAColorAttachment;
         public ResourceHandle<TextureResource> Backbuffer;
     }
 
@@ -116,7 +117,7 @@ public class FrameGraphExample : IExample
                 });
 
                 frameGraph.AddPass("blit-pass",
-                static (ref FrameGraph<FrameGraphParam>.Builder builder, ref BlitPassData data) =>
+                (ref FrameGraph<FrameGraphParam>.Builder builder, ref BlitPassData data) =>
                 {
                     data.ColorAttachment = builder.Reads<TextureResource>("color-attachment");
                     data.Backbuffer = builder.Writes<TextureResource>("backbuffer");
@@ -129,7 +130,11 @@ public class FrameGraphExample : IExample
                     var dstTex = context.Resources.GetTexture(data.Backbuffer);
 
                     var blit = param.RenderAssets.Get<Blit>(Blit.Handle);
-                    blit.BlitTexture(context.GPUContext, commandEncoder, srcTex.TextureView, dstTex.TextureView);
+                    blit.BlitTexture(
+                        context.GPUContext, commandEncoder, 
+                        srcTex.TextureView, dstTex.TextureView, 
+                        clearValue: new(0.1f, 0.1f, 0.1f, 1.0f)
+                    );
                 });
 
                 frameGraph.Compile().Execute(renderContext, new()
