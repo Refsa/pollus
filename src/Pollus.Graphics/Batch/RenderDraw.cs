@@ -1,11 +1,10 @@
 namespace Pollus.Graphics;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public struct Draw
+public record struct Draw
 {
     public const int MAX_BIND_GROUPS = 4;
     public const int MAX_VERTEX_BUFFERS = 4;
@@ -29,6 +28,20 @@ public struct Draw
         for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) VertexBuffers[i] = Handle<GPUBuffer>.Null;
         for (int i = 0; i < MAX_BIND_GROUPS; i++) BindGroups[i] = Handle<GPUBindGroup>.Null;
         IndexBuffer = Handle<GPUBuffer>.Null;
+    }
+
+    public void Clear()
+    {
+        Pipeline = Handle<GPURenderPipeline>.Null;
+        IndexBuffer = Handle<GPUBuffer>.Null;
+        IndexCount = 0;
+        IndexOffset = 0;
+        VertexCount = 0;
+        VertexOffset = 0;
+        InstanceCount = 1;
+        InstanceOffset = 0;
+        for (int i = 0; i < MAX_VERTEX_BUFFERS; i++) VertexBuffers[i] = Handle<GPUBuffer>.Null;
+        for (int i = 0; i < MAX_BIND_GROUPS; i++) BindGroups[i] = Handle<GPUBindGroup>.Null;
     }
 
     [InlineArray(MAX_VERTEX_BUFFERS)]

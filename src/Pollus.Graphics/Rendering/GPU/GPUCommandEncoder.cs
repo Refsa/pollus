@@ -8,13 +8,16 @@ using Pollus.Graphics.WGPU;
 
 unsafe public struct GPUCommandEncoder : IDisposable
 {
+    string label;
     IWGPUContext context;
     Silk.NET.WebGPU.CommandEncoder* native;
 
     public nint Native => (nint)native;
+    public string Label => label;
 
-    public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label)
+    public GPUCommandEncoder(IWGPUContext context, string label)
     {
+        this.label = label;
         using var labelData = new NativeUtf8(label);
 
         this.context = context;
@@ -68,5 +71,18 @@ unsafe public struct GPUCommandEncoder : IDisposable
 #endif
 
         return new GPURenderPassEncoder(context, native, wgpuDescriptor);
+    }
+
+    public void CopyTextureToTexture(GPUTexture srcTex, GPUTexture dstTex, Extent3D copySize)
+    {
+        var silkExtents = new Silk.NET.WebGPU.Extent3D(copySize.Width, copySize.Height, copySize.DepthOrArrayLayers);
+        Silk.NET.WebGPU.ImageCopyTexture src = new(
+            texture: (Silk.NET.WebGPU.Texture*)srcTex.Native
+        );
+        Silk.NET.WebGPU.ImageCopyTexture dst = new(
+            texture: (Silk.NET.WebGPU.Texture*)dstTex.Native
+        );
+
+        context.wgpu.CommandEncoderCopyTextureToTexture(native, src, dst, silkExtents);
     }
 }

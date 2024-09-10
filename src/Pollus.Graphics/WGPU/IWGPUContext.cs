@@ -25,7 +25,7 @@ unsafe public interface IWGPUContext : IDisposable
 
     TextureFormat GetSurfaceFormat();
     void Present();
-    void ResizeSurface(Vec2<int> size);
+    void ResizeSurface(Vec2<uint> size);
 
 #if !BROWSER
     unsafe Silk.NET.WebGPU.SurfaceTexture SurfaceGetCurrentTexture()
@@ -42,14 +42,14 @@ unsafe public interface IWGPUContext : IDisposable
 #endif
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);
-    GPUCommandEncoder CreateCommandEncoder(ReadOnlySpan<char> label) => new(this, label);
+    GPUCommandEncoder CreateCommandEncoder(string label) => new(this, label);
     GPURenderPipeline CreateRenderPipeline(RenderPipelineDescriptor descriptor) => new(this, descriptor);
     GPUPipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor descriptor) => new(this, descriptor);
     GPUShader CreateShaderModule(ShaderModuleDescriptor descriptor) => new(this, descriptor);
     GPUBuffer CreateBuffer(BufferDescriptor descriptor) => new(this, descriptor);
     GPUTexture CreateTexture(TextureDescriptor descriptor) => new(this, descriptor);
     GPUTextureView CreateTextureView(GPUTexture texture, TextureViewDescriptor descriptor) => new(this, texture, descriptor);
-    GPUTextureView CreateTextureView(Silk.NET.WebGPU.SurfaceTexture texture, TextureViewDescriptor descriptor) => new(this, texture.Texture);
+    GPUTextureView CreateTextureView(Silk.NET.WebGPU.SurfaceTexture texture, TextureViewDescriptor descriptor) => new(this, texture.Texture, descriptor);
     GPUSampler CreateSampler(SamplerDescriptor descriptor) => new(this, descriptor);
     GPUBindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
     GPUBindGroup CreateBindGroup(BindGroupDescriptor descriptor) => new(this, descriptor);

@@ -1,97 +1,151 @@
 namespace Pollus.Graphics;
 
+using System.Buffers;
+using System.Runtime.CompilerServices;
+using Pollus.Collections;
 using Pollus.Graphics.Rendering;
-using Pollus.Graphics.WGPU;
 
-public class FrameGraph
+public partial struct FrameGraph<TParam> : IDisposable
 {
-    IWGPUContext gpuContext;
-    GPUCommandEncoder rendering;
-    GPUCommandEncoder compute;
+    public delegate void BuilderDelegate<TData>(ref Builder builder, TParam param, ref TData data);
+    public delegate void ExecuteDelegate<TData>(RenderContext context, TParam param, TData data);
 
-    Dictionary<int, IFrameResource> resources = new();
-    Dictionary<int, IFramePass> passes = new();
+    int[]? executionOrder;
+    GraphData<PassNode> passNodes;
+    GraphData<ResourceNode> resourceNodes;
+    FramePassContainer<TParam> passes;
+    ResourceContainers resources;
 
-    public FrameGraph(IWGPUContext gpuContext)
+    public ResourceContainers Resources => resources;
+
+    public FrameGraph()
     {
-        this.gpuContext = gpuContext;
+        passNodes = new();
+        resourceNodes = new();
+        passes = new();
+        resources = new();
     }
 
-    public void BeginFrame()
+    public void Dispose()
     {
-        rendering = gpuContext.CreateCommandEncoder("""rendering-command-encoder""");
-        compute = gpuContext.CreateCommandEncoder("""compute-command-encoder""");
+        passNodes.Dispose();
+        resourceNodes.Dispose();
+        resources.Dispose();
+        passes.Dispose();
+
+        if (executionOrder != null)
+        {
+            ArrayPool<int>.Shared.Return(executionOrder);
+            executionOrder = null;
+        }
     }
 
-    public void EndFrame()
+    public FrameGraphRunner<TParam> Compile()
     {
-        using var renderingCommandBuffer = rendering.Finish("""rendering-command-encoder""");
-        using var computeCommandBuffer = compute.Finish("""compute-command-encoder""");
+        Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
+        passNodes.Nodes.Sort(static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
 
-        renderingCommandBuffer.Submit();
-        computeCommandBuffer.Submit();
+        foreach (ref var current in passNodes.Nodes)
+        {
+            ref var edges = ref adjacencyMatrix[current.Index];
+            foreach (ref var other in passNodes.Nodes)
+            {
+                if (current.Index == other.Index) continue;
 
-        gpuContext.Present();
+                if (current.Writes.HasAny(other.Reads)) edges.Set(other.Index);
+            }
+        }
 
-        rendering.Dispose();
-        compute.Dispose();
+        executionOrder = ArrayPool<int>.Shared.Rent(passNodes.Count);
+        var executionOrderSpan = executionOrder.AsSpan(0, passNodes.Count);
+        for (int i = 0; i < passNodes.Count; i++) executionOrderSpan[i] = passNodes.Nodes[i].Index;
+        passNodes.Nodes.Sort(executionOrderSpan, static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
 
-        passes.Clear();
-    }
-}
+        int orderIndex = 0;
+        Span<bool> visited = stackalloc bool[passNodes.Count];
+        Span<bool> onStack = stackalloc bool[passNodes.Count];
+        foreach (var node in passNodes.Nodes)
+        {
+            var adj = adjacencyMatrix[node.Index];
+            if (!visited[node.Index])
+            {
+                if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, executionOrderSpan, ref orderIndex))
+                {
+                    throw new Exception("Cyclic dependency detected");
+                }
+            }
+        }
 
-public interface IFramePass
-{
-    string Name { get; }
+        executionOrderSpan.Reverse();
+        return new FrameGraphRunner<TParam>(this, executionOrderSpan);
 
-    List<FrameResource> Inputs { get; }
-    List<FrameResource> Outputs { get; }
-}
+        static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
+        {
+            visited[node] = true;
+            onStack[node] = true;
 
-public class FramePass<TData> : IFramePass
-{
-    public delegate void Execute(TData passData);
+            foreach (var adj in adjacencyMatrix[node])
+            {
+                if (visited[adj] && onStack[adj]) return false;
+                if (visited[adj]) continue;
 
-    public string Name { get; }
-    public TData Data { get; }
-    public Execute? ExecutePass { get; private set; }
+                var ok = DFS(adj, ref visited, ref onStack, adjacencyMatrix, order, ref orderIndex);
+                if (!ok) return false;
+            }
 
-    public List<FrameResource> Inputs { get; } = new();
-    public List<FrameResource> Outputs { get; } = new();
-
-    public FramePass(string name, TData data)
-    {
-        Name = name;
-        Data = data;
-    }
-
-    public FramePass<TData> AddTextureInput(TextureFrameGraphResource resource)
-    {
-        Inputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddTextureOutput(TextureFrameGraphResource resource)
-    {
-        Outputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddBufferInput(BufferFrameGraphResource resource)
-    {
-        Inputs.Add(resource);
-        return this;
-    }
-
-    public FramePass<TData> AddBufferOutput(BufferFrameGraphResource resource)
-    {
-        Outputs.Add(resource);
-        return this;
+            onStack[node] = false;
+            order[orderIndex++] = node;
+            return true;
+        }
     }
 
-    public FramePass<TData> SetExecute(Execute execute)
+    public void AddPass<TData, TOrder>(TOrder order, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
+        where TData : struct
+        where TOrder : struct, Enum, IConvertible
     {
-        ExecutePass = execute;
-        return this;
+        var passHandle = passes.AddPass(new(), order.ToInt32(null), execute);
+        var pass = (FramePassContainer<TParam, TData>)passes.GetPass(passHandle);
+
+        ref var passNode = ref passNodes.CreateNode(typeof(TData).Name);
+        passNode.SetPass(passHandle);
+
+        var builder = new Builder(ref passNode, ref this);
+        build(ref builder, param, ref pass.Get().Data);
+    }
+
+    public void ExecutePass(int passIndex, RenderContext renderContext, TParam param)
+    {
+        passes.ExecutePass(new(passIndex, 0), renderContext, param);
+    }
+
+    public ResourceHandle<TResource> AddResource<TResource>(TResource resource)
+        where TResource : struct, IFrameGraphResource
+    {
+        if (resource is TextureResource texture)
+        {
+            var handle = resources.AddTexture(texture);
+            return Unsafe.As<ResourceHandle<TextureResource>, ResourceHandle<TResource>>(ref handle);
+        }
+        else if (resource is BufferResource buffer)
+        {
+            var handle = resources.AddBuffer(buffer);
+            return Unsafe.As<ResourceHandle<BufferResource>, ResourceHandle<TResource>>(ref handle);
+        }
+        throw new Exception("Unknown resource type");
+    }
+
+    public ResourceHandle<TextureResource> AddTexture(TextureResource texture)
+    {
+        return resources.AddTexture(texture);
+    }
+
+    public ResourceHandle<BufferResource> AddBuffer(BufferResource buffer)
+    {
+        return resources.AddBuffer(buffer);
+    }
+
+    public ResourceHandle GetResourceHandle(string name)
+    {
+        return resources.GetHandle(name);
     }
 }

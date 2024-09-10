@@ -1,6 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
-public struct Extent3D
+public record struct Extent3D
 {
     public uint Width;
     public uint Height;

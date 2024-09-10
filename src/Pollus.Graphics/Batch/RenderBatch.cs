@@ -18,11 +18,9 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     where TInstanceData : unmanaged, IShaderType
 {
     int count;
-    IWGPUContext context;
     TInstanceData[] scratch;
 
     public int Key { get; init; }
-    public GPUBuffer InstanceBuffer { get; private set; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
 
     public int Count => count;
@@ -30,16 +28,9 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public bool IsEmpty => count == 0;
     public bool IsFull => count == scratch.Length;
 
-    public RenderBatch(IWGPUContext gpuContext)
+    public RenderBatch()
     {
-        context = gpuContext;
         scratch = new TInstanceData[16];
-        InstanceBuffer = context.CreateBuffer(new()
-        {
-            Label = $"InstanceBuffer_{typeof(TInstanceData).Name}_{Key}",
-            Size = Alignment.AlignedSize<TInstanceData>((uint)scratch.Length),
-            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-        });
     }
 
     public void Dispose()
@@ -67,22 +58,29 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
         count += data.Length;
     }
 
-    public void WriteBuffer()
+    public ReadOnlySpan<TInstanceData> GetData()
     {
-        if (count == 0) return;
-        InstanceBuffer.Write<TInstanceData>(scratch.AsSpan()[..count], 0);
+        return scratch.AsSpan(0, count);
+    }
+
+    public GPUBuffer CreateBuffer(IWGPUContext context)
+    {
+        return context.CreateBuffer(new()
+        {
+            Label = $"InstanceBuffer_{typeof(TInstanceData).Name}_{Key}",
+            Size = Alignment.AlignedSize<TInstanceData>((uint)scratch.Length),
+            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
+        });
+    }
+
+    public void EnsureCapacity(GPUBuffer buffer)
+    {
+        var size = Alignment.AlignedSize<TInstanceData>((uint)count);
+        if (buffer.Size < size) buffer.Resize<TInstanceData>((uint)count);
     }
 
     void Resize(int capacity)
     {
-        InstanceBuffer.Dispose();
-        InstanceBuffer = context.CreateBuffer(new()
-        {
-            Label = $"InstanceBuffer_{Key}",
-            Size = Alignment.AlignedSize<TInstanceData>((uint)capacity),
-            Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
-        });
-        
         var next = new TInstanceData[capacity];
         scratch.AsSpan().CopyTo(next);
         scratch = next;

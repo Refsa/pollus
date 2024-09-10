@@ -10,14 +10,14 @@ public class DesktopWindow : IWindow, INativeWindowSource
 
     public bool IsOpen { get; private set; }
     public WindowOptions Options { get; private set; }
-    public Vec2<int> Size { get; set; }
+    public Vec2<uint> Size { get; set; }
 
     public INativeWindow? Native => native;
 
     public DesktopWindow(WindowOptions options)
     {
         Options = options;
-        Size = new Vec2<int>(options.Width, options.Height);
+        Size = new Vec2<uint>(options.Width, options.Height);
         native = SDLWrapper.CreateWindow(options);
         IsOpen = true;
     }

@@ -44,11 +44,10 @@ public class ExtractShapesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPU
     struct Job : IForEach<Transform2, ShapeDraw>
     {
         public required ShapeBatches Batches { get; init; }
-        public required IWGPUContext GpuContext { get; init; }
 
         public void Execute(ref Transform2 transform, ref ShapeDraw shape)
         {
-            var batch = Batches.GetOrCreate(GpuContext, new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle));
+            var batch = Batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle));
 
             batch.Write(transform.ToMat4f(), shape.Color);
         }
@@ -76,7 +75,6 @@ public class ExtractShapesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPU
         query.ForEach(new Job
         {
             Batches = batches,
-            GpuContext = gpuContext,
         });
     }
 }

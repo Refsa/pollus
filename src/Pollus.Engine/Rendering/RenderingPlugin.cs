@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
@@ -10,10 +11,18 @@ using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {
+    public const string SetupSystem = "Rendering::Setup";
+    public const string UpdateSceneUniformSystem = "UpdateSceneUniform";
+    public const string PrepareSceneUniformSystem = "PrepareSceneUniform";
+    public const string BeginFrameSystem = "BeginFrame";
+    public const string EndFrameSystem = "EndFrame";
+    public const string RenderStepsCleanupSystem = "RenderStepsCleanup";
+    public const string RenderingSystem = "Rendering";
+
     public void Apply(World world)
     {
         world.Resources.Add(new MeshRenderBatches());
-        world.Resources.Add(new RenderContext());
+        world.Resources.Init<RenderContext>();
         world.Resources.Add(new RenderSteps());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new TextureRenderDataLoader())
@@ -23,7 +32,6 @@ public class RenderingPlugin : IPlugin
 
         var assetServer = world.Resources.Get<AssetServer>();
         assetServer.AddLoader<WgslShaderSourceLoader>();
-        assetServer.GetAssets<UniformAsset<SceneUniform>>().Add(new UniformAsset<SceneUniform>(new()));
 
         world.AddPlugins([
             new MeshPlugin()
@@ -34,79 +42,94 @@ public class RenderingPlugin : IPlugin
             new CameraPlugin(),
             new MaterialPlugin<Material>(),
             new SpritePlugin(),
+            new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2>>>()
+            {
+                Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
+                {
+                    uniform.Time = (float)param.Param0.DeltaTime;
+                    Guard.IsTrue(param.Param1.EntityCount() > 0, "No camera entity found");
+
+                    var qCamera = param.Param1.Single();
+                    uniform.Projection = qCamera.Component0.GetProjection();
+                    uniform.View = qCamera.Component1.ToMat4f();
+                }
+            }
         ]);
 
-        world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
-            "UpdateSceneUniform",
-            static (Assets<UniformAsset<SceneUniform>> uniformAssets, Time time, Query<Projection, Transform2>.Filter<All<Camera2D>> qCamera) =>
+        world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
+            SetupSystem,
+            static (IWGPUContext gpuContext, Resources resources, RenderAssets renderAssets) =>
             {
-                var handle = new Handle<UniformAsset<SceneUniform>>(0);
-                var uniformAsset = uniformAssets.Get(handle)!;
+                resources.Add(new RenderContext
+                {
+                    GPUContext = gpuContext,
+                });
 
-                var sceneUniform = uniformAsset.Value;
-                sceneUniform.Time = (float)time.SecondsSinceStartup;
-
-                var camera = qCamera.Single();
-                sceneUniform.Projection = camera.Component0.GetProjection();
-                sceneUniform.View = camera.Component1.ToMat4f();
-
-                uniformAsset.Value = sceneUniform;
+                renderAssets.Add(Blit.Handle, new Blit());
             }
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "PrepareSceneUniform",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<UniformAsset<SceneUniform>> uniformAssets) =>
+            BeginFrameSystem,
+            static (RenderContext context) =>
             {
-                var handle = new Handle<UniformAsset<SceneUniform>>(0);
-                var uniformAsset = uniformAssets.Get(handle)!;
-                renderAssets.Prepare(gpuContext, assetServer, handle);
-                var renderAsset = renderAssets.Get<UniformRenderData>(handle);
-                renderAssets.Get<GPUBuffer>(renderAsset.UniformBuffer).Write(uniformAsset.Value, 0);
-            }
-        ));
-
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "BeginFrame",
-            static (IWGPUContext gpuContext, RenderContext context) =>
-            {
-                context.Begin(gpuContext);
+                context.PrepareFrame();
             }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
-            "EndFrame",
-            static (IWGPUContext gpuContext, RenderContext context) =>
+            EndFrameSystem,
+            static (RenderContext context) =>
             {
-                context.End(gpuContext);
+                context.EndFrame();
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
-            "Rendering",
-            static (RenderAssets renderAssets, Resources resources, RenderContext context, RenderSteps renderGraph) =>
+        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
+            RenderStepsCleanupSystem,
+            static (RenderContext context, RenderSteps renderSteps) =>
             {
-                if (context.SurfaceTextureView is null || context.CommandEncoder is null) return;
+                context.CleanupFrame();
+                renderSteps.Cleanup();
+            }
+        ).After(EndFrameSystem));
+
+        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
+            RenderingSystem,
+            static (RenderAssets renderAssets, RenderContext context, RenderSteps renderGraph) =>
+            {
+                if (context.SurfaceTextureView is null) return;
+                var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
+
+                Span<RenderPassColorAttachment> backbuffer = stackalloc RenderPassColorAttachment[]
+                {
+                    new()
+                    {
+                        View = context.SurfaceTextureView.Value.Native,
+                        LoadOp = LoadOp.Clear,
+                        StoreOp = StoreOp.Store,
+                        ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
+                    }
+                };
 
                 { // Clear
-                    var renderPass = context.BeginRenderPass();
-                    context.EndRenderPass();
+                    using var renderPass = commandEncoder.BeginRenderPass(new()
+                    {
+                        ColorAttachments = backbuffer
+                    });
                 }
 
+                /* backbuffer[0].LoadOp = LoadOp.Load;
                 for (int i = 0; i < renderGraph.Order.Count; i++)
                 {
                     if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
-                    if (stage.Count == 0) continue;
-
-                    var renderPass = context.BeginRenderPass(LoadOp.Load);
-
-                    foreach (var draw in stage)
+                    using var renderPass = commandEncoder.BeginRenderPass(new()
                     {
-                        draw.Render(renderPass, resources, renderAssets);
-                    }
+                        ColorAttachments = backbuffer
+                    });
 
-                    context.EndRenderPass();
-                }
+                    stage.Execute(renderPass, renderAssets);
+                } */
             }
         ));
     }

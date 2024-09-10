@@ -85,6 +85,7 @@ public record class Stage : IDisposable
             catch (Exception e)
             {
                 Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Label} in stage {Label.Label}.");
+                throw;
             }
         }
     }

@@ -25,9 +25,9 @@ public record struct MeshBatchKey
 
 public class MeshRenderBatches : RenderBatches<MeshRenderBatch, MeshBatchKey>
 {
-    protected override MeshRenderBatch CreateBatch(IWGPUContext context, in MeshBatchKey key)
+    protected override MeshRenderBatch CreateBatch( in MeshBatchKey key)
     {
-        return new MeshRenderBatch(context, key);
+        return new MeshRenderBatch(key);
     }
 }
 
@@ -36,7 +36,7 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
     public Handle<MeshAsset> Mesh { get; init; }
     public Handle Material { get; init; }
 
-    public MeshRenderBatch(IWGPUContext gpuContext, in MeshBatchKey key) : base(gpuContext)
+    public MeshRenderBatch(in MeshBatchKey key)
     {
         Key = key.GetHashCode();
         Mesh = key.Mesh;
@@ -44,7 +44,7 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
     }
 }
 
-public class MeshRenderBatchDraw : IRenderStepDraw
+public class MeshRenderBatchDraw
 {
     public RenderStep2D Stage => RenderStep2D.Main;
 
@@ -55,8 +55,6 @@ public class MeshRenderBatchDraw : IRenderStepDraw
         foreach (var batch in batches.Batches)
         {
             if (batch.IsEmpty) continue;
-            batch.WriteBuffer();
-            if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null) batch.InstanceBufferHandle = renderAssets.Add(batch.InstanceBuffer);
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
             var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
@@ -71,8 +69,6 @@ public class MeshRenderBatchDraw : IRenderStepDraw
             material.BindGroups.CopyTo(draw.BindGroups);
             draw.VertexBuffers[0] = mesh.VertexBuffer;
             draw.VertexBuffers[1] = batch.InstanceBufferHandle;
-
-            IRenderStepDraw.Draw(encoder, renderAssets, draw);
         }
     }
 }

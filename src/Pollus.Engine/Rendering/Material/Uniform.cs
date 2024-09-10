@@ -9,11 +9,13 @@ using Pollus.Utils;
 public class UniformAsset<T>
     where T : unmanaged, IShaderType
 {
-    public T Value { get; set; }
+    T value;
+
+    public ref T Value => ref value;
 
     public UniformAsset(T value)
     {
-        Value = value;
+        this.value = value;
     }
 }
 

@@ -1,52 +1,172 @@
 namespace Pollus.Graphics;
 
-public interface IFrameResource
+using System.Buffers;
+using Pollus.Graphics.Rendering;
+using Pollus.Utils;
+
+public enum ResourceType
 {
-    int Index { get; }
-    string Name { get; }
-    bool IsTransient { get; }
-
-    public IReadOnlySet<int> ReadPasses { get; }
-    public IReadOnlySet<int> WritePasses { get; }
-
-    void AddReadPass(int passIndex);
-    void AddWritePass(int passIndex);
+    Unknown = 0,
+    Texture,
+    Buffer,
 }
 
-public abstract class FrameResource : IFrameResource
+public readonly record struct ResourceHandle(int Id, int Index, int Hash, ResourceType Type);
+public readonly record struct ResourceHandle<TResource>(int Id, int Index, int Hash)
+    where TResource : struct, IFrameGraphResource
 {
-    public enum Type
+    public static implicit operator ResourceHandle(ResourceHandle<TResource> handle) => new(handle.Id, handle.Index, handle.Hash, TResource.Type);
+    public static implicit operator ResourceHandle<TResource>(ResourceHandle handle) => new(handle.Id, handle.Index, handle.Hash);
+}
+
+public interface IFrameGraphResource
+{
+    static abstract ResourceType Type { get; }
+
+    ResourceHandle Handle { get; set; }
+    string Label { get; }
+    int Hash { get; }
+}
+
+public struct TextureResource : IFrameGraphResource
+{
+    public static ResourceType Type => ResourceType.Texture;
+
+    public string Label { get; }
+    public ResourceHandle Handle { get; set; }
+    public TextureDescriptor Descriptor { get; }
+    public int Hash { get; }
+
+    public TextureResource(string label, TextureDescriptor descriptor)
     {
-        Texture,
-        Buffer,
+        Label = label;
+        Descriptor = descriptor;
+        Hash = descriptor.GetHashCode();
     }
 
-    HashSet<int> readPasses = new();
-    HashSet<int> writePasses = new();
+    public static implicit operator TextureResource(TextureDescriptor descriptor) => new(descriptor.Label, descriptor);
+}
 
-    public int Index { get; }
-    public string Name { get; }
-    public Type ResourceType { get; }
-    public bool IsTransient { get; }
+public struct BufferResource : IFrameGraphResource
+{
+    public static ResourceType Type => ResourceType.Buffer;
 
-    public IReadOnlySet<int> ReadPasses => readPasses;
-    public IReadOnlySet<int> WritePasses => writePasses;
+    public string Label { get; }
+    public ResourceHandle Handle { get; set; }
+    public BufferDescriptor Descriptor { get; }
+    public int Hash { get; }
 
-
-    public FrameResource(int index, string name, Type type)
+    public BufferResource(string label, BufferDescriptor descriptor)
     {
-        Index = index;
-        Name = name;
-        ResourceType = type;
+        Label = label;
+        Descriptor = descriptor;
+        Hash = descriptor.GetHashCode();
     }
 
-    public void AddReadPass(int passIndex)
+    public static implicit operator BufferResource(BufferDescriptor descriptor) => new(descriptor.Label, descriptor);
+}
+
+public struct ResourceContainer<TResource> : IDisposable
+    where TResource : struct, IFrameGraphResource
+{
+    TResource[] resources = ArrayPool<TResource>.Shared.Rent(1);
+    int count;
+
+    public ReadOnlySpan<TResource> Resources => resources.AsSpan(0, count);
+
+    public ResourceContainer() { }
+
+    public void Dispose()
     {
-        readPasses.Add(passIndex);
+        Array.Fill(resources, default, 0, count);
+        ArrayPool<TResource>.Shared.Return(resources);
     }
 
-    public void AddWritePass(int passIndex)
+    public ResourceHandle<TResource> Add(int id, TResource resource)
     {
-        writePasses.Add(passIndex);
+        if (count == resources.Length) Resize();
+        resource.Handle = new ResourceHandle<TResource>(id, count, resource.Hash);
+        resources[count++] = resource;
+        return resource.Handle;
+    }
+
+    public ref TResource Get(ResourceHandle<TResource> handle)
+    {
+        return ref resources[handle.Index];
+    }
+
+    void Resize()
+    {
+        var newArray = ArrayPool<TResource>.Shared.Rent(resources.Length * 2);
+        resources.CopyTo(newArray, 0);
+        ArrayPool<TResource>.Shared.Return(resources);
+        resources = newArray;
+    }
+}
+
+public struct ResourceContainers : IDisposable
+{
+    int count;
+    ResourceContainer<TextureResource> textures;
+    ResourceContainer<BufferResource> buffers;
+    Dictionary<string, ResourceHandle> resourceByName;
+
+    public IReadOnlyDictionary<string, ResourceHandle> ResourceByName => resourceByName;
+    public ResourceContainer<TextureResource> Textures => textures;
+    public ResourceContainer<BufferResource> Buffers => buffers;
+
+    public ResourceContainers()
+    {
+        textures = new();
+        buffers = new();
+        resourceByName = Pool<Dictionary<string, ResourceHandle>>.Shared.Rent();
+    }
+
+    public void Dispose()
+    {
+        count = 0;
+        textures.Dispose();
+        buffers.Dispose();
+        resourceByName.Clear();
+        Pool<Dictionary<string, ResourceHandle>>.Shared.Return(resourceByName);
+    }
+
+    public ResourceHandle GetHandle(string label)
+    {
+        return resourceByName[label];
+    }
+
+    public ResourceHandle<TextureResource> AddTexture(TextureResource texture)
+    {
+        var handle = textures.Add(count++, texture);
+        resourceByName.Add(texture.Label, handle);
+        return handle;
+    }
+
+    public ResourceHandle<BufferResource> AddBuffer(BufferResource buffer)
+    {
+        var handle = buffers.Add(count++, buffer);
+        resourceByName.Add(buffer.Label, handle);
+        return handle;
+    }
+
+    public ref TextureResource GetTexture(ResourceHandle<TextureResource> handle)
+    {
+        return ref textures.Get(handle);
+    }
+
+    public ref BufferResource GetBuffer(ResourceHandle<BufferResource> handle)
+    {
+        return ref buffers.Get(handle);
+    }
+
+    public IFrameGraphResource Get(ResourceHandle handle)
+    {
+        return handle.Type switch
+        {
+            ResourceType.Texture => textures.Get(handle),
+            ResourceType.Buffer => buffers.Get(handle),
+            _ => throw new NotImplementedException(),
+        };
     }
 }

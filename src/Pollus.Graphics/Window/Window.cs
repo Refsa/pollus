@@ -9,8 +9,8 @@ public record class WindowOptions
     public static WindowOptions Default => new();
 
     public string Title { get; set; } = "Pollus";
-    public int Width { get; set; } = 1600;
-    public int Height { get; set; } = 900;
+    public uint Width { get; set; } = 1600;
+    public uint Height { get; set; } = 900;
     public int X { get; set; } = 100;
     public int Y { get; set; } = 100;
     public bool VSync { get; set; } = false;
@@ -25,7 +25,7 @@ public interface IWindow : IDisposable, INativeWindowSource
 {
     bool IsOpen { get; }
     WindowOptions Options { get; }
-    Vec2<int> Size { get; set; }
+    Vec2<uint> Size { get; set; }
 
     public void Run(Action loop);
 

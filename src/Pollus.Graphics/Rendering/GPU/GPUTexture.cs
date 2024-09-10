@@ -11,14 +11,10 @@ using Pollus.Mathematics;
 unsafe public class GPUTexture : GPUResourceWrapper
 {
     Silk.NET.WebGPU.Texture* texture;
-
-    TextureDimension dimension;
-    Extent3D size;
-    TextureFormat format;
-    uint mipLevelCount;
-    uint sampleCount;
+    TextureDescriptor descriptor;
 
     public nint Native => (nint)texture;
+    public ref readonly TextureDescriptor Descriptor => ref descriptor;
 
     public GPUTexture(IWGPUContext context, TextureDescriptor descriptor) : base(context)
     {
@@ -34,16 +30,18 @@ unsafe public class GPUTexture : GPUResourceWrapper
             sampleCount: descriptor.SampleCount
         );
 
-        if (descriptor.ViewFormats.Length > 0)
+        int viewFormatCount = 0;
+        foreach (var viewFormat in descriptor.ViewFormats)
         {
-            throw new NotImplementedException("ViewFormats for GPUTexture is not implemented yet.");
+            if (viewFormat == TextureFormat.Undefined) break;
+            viewFormatCount++;
         }
+        var viewFormats = stackalloc Silk.NET.WebGPU.TextureFormat[viewFormatCount];
+        for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = (Silk.NET.WebGPU.TextureFormat)descriptor.ViewFormats[i];
+        nativeDescriptor.ViewFormatCount = (nuint)viewFormatCount;
+        nativeDescriptor.ViewFormats = viewFormats;
 
-        size = descriptor.Size;
-        format = descriptor.Format;
-        dimension = descriptor.Dimension;
-        mipLevelCount = descriptor.MipLevelCount;
-        sampleCount = descriptor.SampleCount;
+        this.descriptor = descriptor;
         texture = context.wgpu.DeviceCreateTexture(context.Device, nativeDescriptor);
     }
 
@@ -83,8 +81,8 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
         var layout = new Silk.NET.WebGPU.TextureDataLayout(
             offset: 0,
-            bytesPerRow: GetBytesPerPixel() * this.size.Width,
-            rowsPerImage: this.size.Height
+            bytesPerRow: GetBytesPerPixel() * descriptor.Size.Width,
+            rowsPerImage: descriptor.Size.Height
         );
 
         var writeSize = size switch
@@ -94,7 +92,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
                 height: y,
                 depthOrArrayLayers: z
             ),
-            _ => this.size,
+            _ => descriptor.Size,
         };
 
         context.wgpu.QueueWriteTexture(context.Queue, destination,
@@ -106,7 +104,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
 
     private uint GetBytesPerPixel()
     {
-        return format switch
+        return descriptor.Format switch
         {
             // 1 byte
             TextureFormat.R8Unorm => 1,
@@ -161,7 +159,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
             TextureFormat.Depth32float => 4,
             TextureFormat.Depth24Plus => 4,
             TextureFormat.Depth24PlusStencil8 => 4,
-            _ => throw new IndexOutOfRangeException($"Unknown texture format: {format}")
+            _ => throw new IndexOutOfRangeException($"Unknown texture format: {descriptor.Format}")
         };
     }
 }

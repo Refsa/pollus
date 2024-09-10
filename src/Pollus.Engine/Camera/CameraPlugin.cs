@@ -18,7 +18,7 @@ public class CameraPlugin : IPlugin
 
 struct CameraProjectionUpdateForEach : IForEach<Projection>
 {
-    public required Vec2<int> WindowSize { get; init; }
+    public required Vec2<uint> WindowSize { get; init; }
 
     public void Execute(ref Projection projection)
     {

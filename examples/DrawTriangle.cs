@@ -86,20 +86,19 @@ public class DrawTriangle : IExample
                     Label = """render-pass""",
                     ColorAttachments = stackalloc RenderPassColorAttachment[1]
                     {
-                        new(
-                            textureView: surfaceTexture.TextureView.Native,
-                            resolveTarget: nint.Zero,
-                            clearValue: new(0.2f, 0.1f, 0.01f, 1.0f),
-                            loadOp: LoadOp.Clear,
-                            storeOp: StoreOp.Store
-                        )
+                        new()
+                        {
+                            View = surfaceTexture.TextureView.Native,
+                            ResolveTarget = nint.Zero,
+                            ClearValue = new(0.2f, 0.1f, 0.01f, 1.0f),
+                            LoadOp = LoadOp.Clear,
+                            StoreOp = StoreOp.Store
+                        }
                     },
                 });
 
                 renderPass.SetPipeline(renderData.RenderPipeline);
                 renderPass.Draw(3, 1, 0, 0);
-
-                renderPass.End();
             }
 
             using var commandBuffer = commandEncoder.Finish("""command-buffer""");

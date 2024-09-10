@@ -228,7 +228,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     }
 
-    public void ResizeSurface(Vec2<int> size)
+    public void ResizeSurface(Vec2<uint> size)
     {
 
     }

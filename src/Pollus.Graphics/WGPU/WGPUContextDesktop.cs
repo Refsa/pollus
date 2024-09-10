@@ -230,10 +230,10 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         wgpu.SurfacePresent(surface);
     }
 
-    public void ResizeSurface(Vec2<int> size)
+    public void ResizeSurface(Vec2<uint> size)
     {
-        surfaceConfiguration.Width = (uint)size.X;
-        surfaceConfiguration.Height = (uint)size.Y;
+        surfaceConfiguration.Width = size.X;
+        surfaceConfiguration.Height = size.Y;
         wgpu.SurfaceConfigure(surface, surfaceConfiguration);
     }
 }

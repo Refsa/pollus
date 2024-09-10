@@ -5,6 +5,7 @@ using Pollus.Graphics.WGPU;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
+    NativeUtf8 label;
     Silk.NET.WebGPU.Buffer* native;
     ulong size;
 
@@ -13,17 +14,24 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
     public GPUBuffer(IWGPUContext context, BufferDescriptor descriptor) : base(context)
     {
-        using var labelData = new NativeUtf8(descriptor.Label);
+        label = new NativeUtf8(descriptor.Label);
         size = descriptor.Size;
 
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
-            label: labelData.Pointer,
+            label: label.Pointer,
             usage: (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
             size: descriptor.Size,
             mappedAtCreation: descriptor.MappedAtCreation
         );
 
         native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
+    }
+
+    protected override void Free()
+    {
+        context.wgpu.BufferDestroy(native);
+        context.wgpu.BufferRelease(native);
+        label.Dispose();
     }
 
     public void Write(ReadOnlySpan<byte> data, int offset)
@@ -66,9 +74,20 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         }
     }
 
-    protected override void Free()
+    public void Resize<TElement>(uint newCapacity)
+        where TElement : unmanaged, IShaderType
     {
+        size = Alignment.AlignedSize<TElement>(newCapacity);
+
+        var newBuffer = context.wgpu.DeviceCreateBuffer(context.Device, new Silk.NET.WebGPU.BufferDescriptor
+        {
+            Label = label.Pointer,
+            Size = size,
+            Usage = Silk.NET.WebGPU.BufferUsage.CopyDst | Silk.NET.WebGPU.BufferUsage.Vertex,
+        });
+
         context.wgpu.BufferDestroy(native);
         context.wgpu.BufferRelease(native);
+        native = newBuffer;
     }
 }

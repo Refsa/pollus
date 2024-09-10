@@ -12,6 +12,7 @@ if (args.Length < 1)
     Console.WriteLine("  breakout");
     Console.WriteLine("  draw-triangle");
     Console.WriteLine("  collision");
+    Console.WriteLine("  frame-graph");
     return;
 }
 
@@ -25,6 +26,7 @@ IExample? example = args[0] switch
     "breakout" => new BreakoutGame(),
     "draw-triangle" => new DrawTriangle(),
     "collision" => new CollisionExample(),
+    "frame-graph" => new FrameGraphExample(),
     _ => null
 };
 

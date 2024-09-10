@@ -9,11 +9,10 @@ struct ExtractRenderablesJob<TMaterial> : IForEach<Transform2, MeshDraw<TMateria
     where TMaterial : IMaterial
 {
     public required MeshRenderBatches Batches { get; init; }
-    public required IWGPUContext GpuContext { get; init; }
 
     public void Execute(ref Transform2 transform, ref MeshDraw<TMaterial> renderable)
     {
-        var batch = Batches.GetOrCreate(GpuContext, new MeshBatchKey(renderable.Mesh, renderable.Material));
+        var batch = Batches.GetOrCreate(new MeshBatchKey(renderable.Mesh, renderable.Material));
         batch.Write(transform.ToMat4f());
     }
 }
@@ -39,7 +38,6 @@ class ExtractRenderablesSystem<TMaterial> : ECS.Core.Sys<RenderAssets, AssetServ
         query.ForEach(new ExtractRenderablesJob<TMaterial>
         {
             Batches = batches,
-            GpuContext = gpuContext,
         });
     }
 }

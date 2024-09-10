@@ -2,7 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 public struct RenderPipelineDescriptor
 {
-    public string Label { get; set; }
+    public required string Label { get; set; }
 
     public VertexState? VertexState { get; set; }
 

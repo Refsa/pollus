@@ -1,7 +1,6 @@
 namespace Pollus.Graphics;
 
 using Pollus.Collections;
-using Pollus.Graphics.WGPU;
 
 public abstract class RenderBatches<TBatch, TKey> : IDisposable
     where TBatch : IRenderBatch
@@ -32,12 +31,12 @@ public abstract class RenderBatches<TBatch, TKey> : IDisposable
         return false;
     }
 
-    public TBatch GetOrCreate(IWGPUContext context, in TKey key)
+    public TBatch GetOrCreate(in TKey key)
     {
         var keyHash = key.GetHashCode();
         if (batchLookup.TryGetValue(keyHash, out var batchIdx)) return batches[batchIdx];
 
-        var batch = CreateBatch(context, key);
+        var batch = CreateBatch(key);
         batchLookup.Add(keyHash, batches.Count);
         batches.Add(batch);
         return batch;
@@ -51,5 +50,5 @@ public abstract class RenderBatches<TBatch, TKey> : IDisposable
         }
     }
 
-    protected abstract TBatch CreateBatch(IWGPUContext context, in TKey key);
+    protected abstract TBatch CreateBatch(in TKey key);
 }

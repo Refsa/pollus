@@ -9,6 +9,7 @@ public partial record struct Vec4<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 4;
 
+    public static Vec4<T> One => new Vec4<T>(T.One, T.One, T.One, T.One);
     public static Vec4<T> Zero => new Vec4<T>(default, default, default, default);
     public static Vec4<T> UnitX => new Vec4<T>(T.One, T.Zero, T.Zero, T.Zero);
     public static Vec4<T> UnitY => new Vec4<T>(T.Zero, T.One, T.Zero, T.Zero);

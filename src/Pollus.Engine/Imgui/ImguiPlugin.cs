@@ -1,6 +1,5 @@
 namespace Pollus.Engine.Imgui;
 
-using System.Runtime.InteropServices;
 using System.Text;
 using ImGuiNET;
 using Pollus.ECS;
@@ -12,22 +11,12 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
-class ImguiDraw : IRenderStepDraw
-{
-    public RenderStep2D Stage => RenderStep2D.UI;
-
-    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
-    {
-        var imguiRenderer = resources.Get<ImguiRenderer>();
-        imguiRenderer.Render(encoder);
-    }
-}
-
 public class ImguiPlugin : IPlugin
 {
     public const string SetupSystem = "ImGui::Setup";
     public const string UpdateSystem = "ImGui::UpdateIO";
     public const string BeginFrameSystem = "ImGui::BeginFrame";
+    private const string RenderSystem = "ImGui::Render";
 
     public void Apply(World world)
     {
@@ -44,7 +33,6 @@ public class ImguiPlugin : IPlugin
             {
                 var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
                 resources.Add(imguiRenderer);
-                renderGraph.Add(new ImguiDraw());
             }
         ));
 
@@ -117,6 +105,30 @@ public class ImguiPlugin : IPlugin
                 imguiRenderer.Update((float)time.DeltaTime);
             }
         ).After(UpdateSystem));
+
+        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
+            RenderSystem,
+            static (ImguiRenderer imguiRenderer, RenderContext context) =>
+            {
+                if (context.SurfaceTextureView is null) return;
+
+                var commandEncoder = context.GetCurrentCommandEncoder();
+                using var renderPass = commandEncoder.BeginRenderPass(new()
+                {
+                    ColorAttachments = stackalloc RenderPassColorAttachment[]
+                    {
+                        new()
+                        {
+                            View = context.SurfaceTextureView.Value.Native,
+                            LoadOp = LoadOp.Load,
+                            StoreOp = StoreOp.Store,
+                            ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
+                        }
+                    }
+                });
+                imguiRenderer.Render(renderPass);
+            }
+        ).After(RenderingPlugin.RenderingSystem));
     }
 
     static ImGuiKey MapKey(Key key)

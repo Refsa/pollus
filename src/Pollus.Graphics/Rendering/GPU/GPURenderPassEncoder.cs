@@ -25,12 +25,8 @@ unsafe public struct GPURenderPassEncoder : IDisposable
 
     public void Dispose()
     {
-        context.wgpu.RenderPassEncoderRelease(native);
-    }
-
-    public void End()
-    {
         context.wgpu.RenderPassEncoderEnd(native);
+        context.wgpu.RenderPassEncoderRelease(native);
     }
 
     public void SetPipeline(GPURenderPipeline pipeline)
@@ -60,7 +56,7 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         context.wgpu.RenderPassEncoderSetBlendConstant(native, c);
     }
 
-    public void SetBindGroup(GPUBindGroup bindGroup, uint groupIndex, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
+    public void SetBindGroup(uint groupIndex, GPUBindGroup bindGroup, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
     {
         if (dynamicOffsetCount > 0)
         {

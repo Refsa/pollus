@@ -26,8 +26,8 @@ public static class SDLWrapper
             options.Title,
             options.X,
             options.Y,
-            options.Width,
-            options.Height,
+            (int)options.Width,
+            (int)options.Height,
             (uint)flags
         );
 

@@ -57,10 +57,22 @@
 		- [ ] Custom Materials
 		- [ ] Post Processing
 		- [x] Polygons/Shapes
+		- [ ] 2D Frame Graph Passes
 	- [x] Extract rendering data
 	- [x] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph
+		- [x] frame graph builder
+		- [x] create transient resources
+		- [x] graph execution
+		- [ ] transient resource lifetime/cleanup
+			- track last read/write
+			- release unused resources
+		- [ ] external resource handling
+			- keep in cache for just the frame or cleanup when not used
+			- explicit mark on resource
+		- [ ] ensure stable ordering
 	- [ ] Render target
+		- [x] frame graph color targets
 	- [ ] Gizmos
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders

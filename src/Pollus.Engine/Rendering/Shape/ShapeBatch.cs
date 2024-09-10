@@ -37,7 +37,7 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
     public Handle Material { get; }
     public Handle<Shape> Shape { get; }
 
-    public ShapeBatch(IWGPUContext gpuContext, in ShapeBatchKey key) : base(gpuContext)
+    public ShapeBatch(in ShapeBatchKey key)
     {
         Key = key.GetHashCode();
         Material = key.Material;
@@ -59,13 +59,13 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
 
 public class ShapeBatches : RenderBatches<ShapeBatch, ShapeBatchKey>
 {
-    protected override ShapeBatch CreateBatch(IWGPUContext context, in ShapeBatchKey key)
+    protected override ShapeBatch CreateBatch(in ShapeBatchKey key)
     {
-        return new ShapeBatch(context, key);
+        return new ShapeBatch(key);
     }
 }
 
-public class ShapeBatchDraw : IRenderStepDraw
+public class ShapeBatchDraw
 {
     public RenderStep2D Stage => RenderStep2D.Main;
 
@@ -76,8 +76,6 @@ public class ShapeBatchDraw : IRenderStepDraw
         foreach (var batch in batches.Batches)
         {
             if (batch.IsEmpty) continue;
-            batch.WriteBuffer();
-            if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null) batch.InstanceBufferHandle = renderAssets.Add(batch.InstanceBuffer);
 
             var material = renderAssets.Get<MaterialRenderData>(batch.Material);
             var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
@@ -91,8 +89,6 @@ public class ShapeBatchDraw : IRenderStepDraw
             material.BindGroups.CopyTo(draw.BindGroups);
             draw.VertexBuffers[0] = shape.VertexBuffer;
             draw.VertexBuffers[1] = batch.InstanceBufferHandle;
-
-            IRenderStepDraw.Draw(encoder, renderAssets, draw);
         }
     }
 }
