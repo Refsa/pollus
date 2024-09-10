@@ -1,6 +1,6 @@
 namespace Pollus.Graphics;
 
-public partial struct FrameGraph<TExecuteParam>
+public partial struct FrameGraph<TParam>
 {
     /// <summary>
     /// Visualize the frame graph in DOT format

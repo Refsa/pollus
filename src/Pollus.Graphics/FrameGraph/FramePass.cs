@@ -12,23 +12,23 @@ public interface IFramePass
 {
 }
 
-public struct FramePass<TExecuteParam, TData> : IFramePass
+public struct FramePass<TParam, TData> : IFramePass
     where TData : struct
 {
     public TData Data;
-    public FrameGraph<TExecuteParam>.ExecuteDelegate<TData> Execute;
+    public FrameGraph<TParam>.ExecuteDelegate<TData> Execute;
 
-    public FramePass(TData data, FrameGraph<TExecuteParam>.ExecuteDelegate<TData> execute)
+    public FramePass(TData data, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
     {
         Data = data;
         Execute = execute;
     }
 }
 
-public interface IFramePassContainer<TExecuteParam>
+public interface IFramePassContainer<TParam>
 {
     void Clear();
-    void Execute(RenderContext context, TExecuteParam renderAssets);
+    void Execute(RenderContext context, TParam renderAssets);
 }
 
 public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExecuteParam>
@@ -58,14 +58,14 @@ public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExe
     }
 }
 
-public struct FramePassContainer<TExecuteParam> : IDisposable
+public struct FramePassContainer<TParam> : IDisposable
 {
-    List<IFramePassContainer<TExecuteParam>> containers;
+    List<IFramePassContainer<TParam>> containers;
     Dictionary<Type, int> containerLookup;
 
     public FramePassContainer()
     {
-        containers = Pool<List<IFramePassContainer<TExecuteParam>>>.Shared.Rent();
+        containers = Pool<List<IFramePassContainer<TParam>>>.Shared.Rent();
         containerLookup = Pool<Dictionary<Type, int>>.Shared.Rent();
     }
 
@@ -75,11 +75,11 @@ public struct FramePassContainer<TExecuteParam> : IDisposable
         containers.Clear();
         containerLookup.Clear();
         
-        Pool<List<IFramePassContainer<TExecuteParam>>>.Shared.Return(containers);
+        Pool<List<IFramePassContainer<TParam>>>.Shared.Return(containers);
         Pool<Dictionary<Type, int>>.Shared.Return(containerLookup);
     }
 
-    public FramePassHandle AddPass<TData>(in TData data, FrameGraph<TExecuteParam>.ExecuteDelegate<TData> execute)
+    public FramePassHandle AddPass<TData>(in TData data, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
         where TData : struct
     {
         if (containerLookup.ContainsKey(typeof(TData)))
@@ -88,7 +88,7 @@ public struct FramePassContainer<TExecuteParam> : IDisposable
         }
 
         // TODO: recycle
-        var container = Pool<FramePassContainer<TExecuteParam, TData>>.Shared.Rent();
+        var container = Pool<FramePassContainer<TParam, TData>>.Shared.Rent();
 
         var handle = new FramePassHandle(containers.Count);
         containers.Add(container);
@@ -97,27 +97,27 @@ public struct FramePassContainer<TExecuteParam> : IDisposable
         return handle;
     }
 
-    public void ExecutePass(FramePassHandle handle, RenderContext renderContext, TExecuteParam param)
+    public void ExecutePass(FramePassHandle handle, RenderContext renderContext, TParam param)
     {
         containers[handle.PassIndex].Execute(renderContext, param);
     }
 
-    public IFramePassContainer<TExecuteParam> GetPass(in FramePassHandle handle)
+    public IFramePassContainer<TParam> GetPass(in FramePassHandle handle)
     {
         return containers[handle.PassIndex];
     }
 
-    public ref FramePass<TExecuteParam, TData> GetPass<TData>()
+    public ref FramePass<TParam, TData> GetPass<TData>()
         where TData : struct
     {
-        var container = (FramePassContainer<TExecuteParam, TData>)containers[containerLookup[typeof(TData)]];
+        var container = (FramePassContainer<TParam, TData>)containers[containerLookup[typeof(TData)]];
         return ref container.Get();
     }
 
-    public ref FramePass<TExecuteParam, TData> GetPass<TData>(in FramePassHandle handle)
+    public ref FramePass<TParam, TData> GetPass<TData>(in FramePassHandle handle)
         where TData : struct
     {
-        var container = (FramePassContainer<TExecuteParam, TData>)containers[handle.PassIndex];
+        var container = (FramePassContainer<TParam, TData>)containers[handle.PassIndex];
         return ref container.Get();
     }
 }

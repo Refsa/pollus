@@ -2,18 +2,18 @@ namespace Pollus.Graphics;
 
 using Pollus.Graphics.Rendering;
 
-public ref struct FrameGraphRunner<TExecuteParam>
+public ref struct FrameGraphRunner<TParam>
 {
     internal ReadOnlySpan<int> order;
-    readonly FrameGraph<TExecuteParam> frameGraph;
+    readonly FrameGraph<TParam> frameGraph;
 
-    public FrameGraphRunner(FrameGraph<TExecuteParam> frameGraph, scoped in ReadOnlySpan<int> order)
+    public FrameGraphRunner(FrameGraph<TParam> frameGraph, scoped in ReadOnlySpan<int> order)
     {
         this.frameGraph = frameGraph;
         this.order = order;
     }
 
-    public void Execute(RenderContext renderContext, TExecuteParam param)
+    public void Execute(RenderContext renderContext, TParam param)
     {
         renderContext.PrepareResources(frameGraph.Resources);
         renderContext.CreateCommandEncoder("""frame-graph-command-encoder""");

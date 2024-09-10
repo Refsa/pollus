@@ -5,15 +5,15 @@ using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
 
-public partial struct FrameGraph<TExecuteParam> : IDisposable
+public partial struct FrameGraph<TParam> : IDisposable
 {
-    public delegate void BuilderDelegate<TData>(ref Builder builder, ref TData data);
-    public delegate void ExecuteDelegate<TData>(RenderContext context, TExecuteParam renderAssets, TData data);
+    public delegate void BuilderDelegate<TData>(ref Builder builder, TParam param, ref TData data);
+    public delegate void ExecuteDelegate<TData>(RenderContext context, TParam param, TData data);
 
     int[]? executionOrder;
     GraphData<PassNode> passNodes;
     GraphData<ResourceNode> resourceNodes;
-    FramePassContainer<TExecuteParam> passes;
+    FramePassContainer<TParam> passes;
     ResourceContainers resources;
 
     public ResourceContainers Resources => resources;
@@ -41,7 +41,7 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
         }
     }
 
-    public FrameGraphRunner<TExecuteParam> Compile()
+    public FrameGraphRunner<TParam> Compile()
     {
         Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
 
@@ -73,7 +73,7 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
         }
 
         executionOrder.AsSpan().Reverse();
-        return new FrameGraphRunner<TExecuteParam>(this, executionOrder);
+        return new FrameGraphRunner<TParam>(this, executionOrder);
 
         static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
         {
@@ -95,20 +95,20 @@ public partial struct FrameGraph<TExecuteParam> : IDisposable
         }
     }
 
-    public void AddPass<TData>(string name, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
+    public void AddPass<TData>(string name, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
         where TData : struct
     {
         var passHandle = passes.AddPass(new(), execute);
-        var pass = (FramePassContainer<TExecuteParam, TData>)passes.GetPass(passHandle);
+        var pass = (FramePassContainer<TParam, TData>)passes.GetPass(passHandle);
 
         ref var passNode = ref passNodes.CreateNode(name);
         passNode.SetPass(passHandle);
 
         var builder = new Builder(ref passNode, ref this);
-        build(ref builder, ref pass.Get().Data);
+        build(ref builder, param, ref pass.Get().Data);
     }
 
-    public void ExecutePass(int passIndex, RenderContext renderContext, TExecuteParam param)
+    public void ExecutePass(int passIndex, RenderContext renderContext, TParam param)
     {
         passes.ExecutePass(passIndex, renderContext, param);
     }

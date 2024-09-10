@@ -1,13 +1,13 @@
 namespace Pollus.Graphics;
 
-public partial struct FrameGraph<TExecuteParam>
+public partial struct FrameGraph<TParam>
 {
     public ref struct Builder
     {
-        ref FrameGraph<TExecuteParam> frameGraph;
+        ref FrameGraph<TParam> frameGraph;
         ref PassNode passNode;
 
-        public Builder(ref PassNode node, ref FrameGraph<TExecuteParam> frameGraph)
+        public Builder(ref PassNode node, ref FrameGraph<TParam> frameGraph)
         {
             this.frameGraph = ref frameGraph;
             passNode = ref node;

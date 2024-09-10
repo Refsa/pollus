@@ -33,9 +33,11 @@ public class FrameGraphExample : IExample
 
     struct FrameGraphParam
     {
-        public RenderAssets RenderAssets;
-        public RenderSteps RenderSteps;
-        public Resources Resources;
+        public required RenderAssets RenderAssets;
+        public required RenderSteps RenderSteps;
+        public required Resources Resources;
+        public required TextureFormat BackbufferFormat;
+        public required Vec2<uint> BackbufferSize;
     }
 
     public void Run()
@@ -75,25 +77,32 @@ public class FrameGraphExample : IExample
             static (RenderContext renderContext, RenderAssets renderAssets, Resources resources, RenderSteps renderSteps, IWindow window) =>
             {
                 using var frameGraph = new FrameGraph<FrameGraphParam>();
+                var param = new FrameGraphParam()
+                {
+                    RenderAssets = renderAssets,
+                    RenderSteps = renderSteps,
+                    Resources = resources,
+                    BackbufferFormat = renderContext.SurfaceTextureView!.Value.Descriptor.Format,
+                    BackbufferSize = window.Size,
+                };
 
-                var backbufferFormat = renderContext.SurfaceTextureView!.Value.Descriptor.Format;
                 var backbufferDesc = TextureDescriptor.D2(
                     "backbuffer",
                     TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
-                    backbufferFormat,
-                    window.Size
+                    param.BackbufferFormat,
+                    param.BackbufferSize
                 );
                 var backbufferHandle = frameGraph.AddTexture(new("backbuffer", backbufferDesc));
                 renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
-                frameGraph.AddPass("sprites-pass",
-                (ref FrameGraph<FrameGraphParam>.Builder builder, ref SpritesPassData data) =>
+                frameGraph.AddPass("sprites-pass", param,
+                static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref SpritesPassData data) =>
                 {
                     data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
                         "color-attachment",
                         TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
-                        backbufferFormat,
-                        window.Size
+                        param.BackbufferFormat,
+                        param.BackbufferSize
                     ));
                 },
                 static (context, param, data) =>
@@ -116,8 +125,8 @@ public class FrameGraphExample : IExample
                     stage.Execute(passEncoder, param.RenderAssets);
                 });
 
-                frameGraph.AddPass("blit-pass",
-                (ref FrameGraph<FrameGraphParam>.Builder builder, ref BlitPassData data) =>
+                frameGraph.AddPass("blit-pass", param,
+                static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref BlitPassData data) =>
                 {
                     data.ColorAttachment = builder.Reads<TextureResource>("color-attachment");
                     data.Backbuffer = builder.Writes<TextureResource>("backbuffer");
@@ -137,12 +146,7 @@ public class FrameGraphExample : IExample
                     );
                 });
 
-                frameGraph.Compile().Execute(renderContext, new()
-                {
-                    RenderAssets = renderAssets,
-                    RenderSteps = renderSteps,
-                    Resources = resources,
-                });
+                frameGraph.Compile().Execute(renderContext, param);
             }))
             .Run();
     }
