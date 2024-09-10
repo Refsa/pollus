@@ -82,15 +82,15 @@ class WriteSpriteBatchesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUCo
     }
 }
 
-class DrawSpriteBatchesSystem : ECS.Core.Sys<RenderSteps, RenderAssets, SpriteBatches>
+class DrawSpriteBatchesSystem : ECS.Core.Sys<DrawGroups2D, RenderAssets, SpriteBatches>
 {
     public DrawSpriteBatchesSystem() : base(new ECS.Core.SystemDescriptor(nameof(DrawSpriteBatchesSystem)).After(nameof(WriteSpriteBatchesSystem)))
     {
     }
 
-    protected override void OnTick(RenderSteps renderSteps, RenderAssets renderAssets, SpriteBatches batches)
+    protected override void OnTick(DrawGroups2D renderSteps, RenderAssets renderAssets, SpriteBatches batches)
     {
-        var commands = renderSteps.GetCommands(RenderStep2D.Main);
+        var commands = renderSteps.GetDrawList(RenderStep2D.Main);
 
         foreach (var batch in batches.Batches)
         {

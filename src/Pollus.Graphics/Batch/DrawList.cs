@@ -1,20 +1,9 @@
-namespace Pollus.Engine.Rendering;
+namespace Pollus.Graphics;
 
-using Pollus.ECS;
-using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public enum RenderStep2D
-{
-    First = 1000,
-    Main = 2000,
-    PostProcess = 3000,
-    UI = 4000,
-    Last = 5000,
-}
-
-public class DrawCommands
+public class DrawList
 {
     Draw[] commands = new Draw[4];
     int count;
@@ -39,20 +28,15 @@ public class DrawCommands
     }
 }
 
-public class RenderStep
+public class DrawGroup<TGroup>
+    where TGroup : struct, Enum, IConvertible
 {
-    DrawCommands commands = new();
-    RenderStep2D stage;
+    DrawList drawLists = new();
 
-    public RenderStep2D Stage => stage;
-    public DrawCommands Commands => commands;
+    public TGroup Group { get; init; }
+    public DrawList DrawLists => drawLists;
 
-    public RenderStep(RenderStep2D stage)
-    {
-        this.stage = stage;
-    }
-
-    public void Execute(GPURenderPassEncoder encoder, RenderAssets renderAssets)
+    public void Execute(GPURenderPassEncoder encoder, IRenderAssets renderAssets)
     {
         Span<Handle<GPUBindGroup>> bindGroupHandles = stackalloc Handle<GPUBindGroup>[Draw.MAX_BIND_GROUPS] { Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null };
         Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[Draw.MAX_VERTEX_BUFFERS] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
@@ -60,7 +44,7 @@ public class RenderStep
         Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
 
         // TODO: Sort commands by resource usage
-        foreach (var command in commands.Commands)
+        foreach (var command in drawLists.Commands)
         {
             if (command.Pipeline != pipelineHandle)
             {
@@ -108,24 +92,26 @@ public class RenderStep
     }
 }
 
-public class RenderSteps
+public class DrawGroups<TGroup>
+    where TGroup : struct, Enum, IConvertible
 {
-    List<RenderStep2D> order = [RenderStep2D.Main, RenderStep2D.PostProcess, RenderStep2D.UI];
-    Dictionary<RenderStep2D, RenderStep> stages = new()
+    Dictionary<TGroup, DrawGroup<TGroup>> drawGroups = new();
+
+    public IReadOnlyDictionary<TGroup, DrawGroup<TGroup>> Groups => drawGroups;
+
+    public void Add(TGroup group)
     {
-        [RenderStep2D.Main] = new(RenderStep2D.Main),
-        [RenderStep2D.PostProcess] = new(RenderStep2D.PostProcess),
-        [RenderStep2D.UI] = new(RenderStep2D.UI),
-    };
-
-    public IReadOnlyDictionary<RenderStep2D, RenderStep> Stages => stages;
-    public IReadOnlyList<RenderStep2D> Order => order;
-
-    public RenderStep Get(RenderStep2D stage) => stages[stage];
-    public DrawCommands GetCommands(RenderStep2D stage) => stages[stage].Commands;
+        var drawGroup = new DrawGroup<TGroup>()
+        {
+            Group = group
+        };
+        drawGroups.Add(group, drawGroup);
+    }
+    public DrawGroup<TGroup> Get(TGroup group) => drawGroups[group];
+    public DrawList GetDrawList(TGroup group) => drawGroups[group].DrawLists;
 
     public void Cleanup()
     {
-        foreach (var stage in stages.Values) stage.Commands.Clear();
+        foreach (var group in drawGroups.Values) group.DrawLists.Clear();
     }
 }

@@ -34,7 +34,7 @@ public class FrameGraphExample : IExample
     struct FrameGraphParam
     {
         public required RenderAssets RenderAssets;
-        public required RenderSteps RenderSteps;
+        public required DrawGroups2D RenderSteps;
         public required Resources Resources;
         public required TextureFormat BackbufferFormat;
         public required Vec2<uint> BackbufferSize;
@@ -74,7 +74,7 @@ public class FrameGraphExample : IExample
                 ));
             }))
             .AddSystem(CoreStage.Render, SystemBuilder.FnSystem("FrameGraph",
-            static (RenderContext renderContext, RenderAssets renderAssets, Resources resources, RenderSteps renderSteps, IWindow window) =>
+            static (RenderContext renderContext, RenderAssets renderAssets, Resources resources, DrawGroups2D renderSteps, IWindow window) =>
             {
                 using var frameGraph = new FrameGraph<FrameGraphParam>();
                 var param = new FrameGraphParam()

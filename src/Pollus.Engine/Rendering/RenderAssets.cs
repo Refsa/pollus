@@ -3,6 +3,7 @@ namespace Pollus.Engine.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
+using Pollus.Graphics;
 
 public interface IRenderDataLoader
 {
@@ -10,7 +11,7 @@ public interface IRenderDataLoader
     void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle);
 }
 
-public class RenderAssets : IDisposable
+public class RenderAssets : IRenderAssets, IDisposable
 {
     static volatile int counter;
     static int NextID => counter++;
@@ -26,6 +27,11 @@ public class RenderAssets : IDisposable
             if (data is IDisposable disposable) disposable.Dispose();
         }
         renderData.Clear();
+    }
+
+    IRenderAssets IRenderAssets.Add<T>(Handle handle, T data)
+    {
+        return Add(handle, data);
     }
 
     public RenderAssets Add<T>(Handle handle, T data)

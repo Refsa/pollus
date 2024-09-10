@@ -23,7 +23,7 @@ public class RenderingPlugin : IPlugin
     {
         world.Resources.Add(new MeshRenderBatches());
         world.Resources.Init<RenderContext>();
-        world.Resources.Add(new RenderSteps());
+        world.Resources.Add(new DrawGroups2D());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new TextureRenderDataLoader())
             .AddLoader(new SamplerRenderDataLoader())
@@ -87,7 +87,7 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
             RenderStepsCleanupSystem,
-            static (RenderContext context, RenderSteps renderSteps) =>
+            static (RenderContext context, DrawGroups2D renderSteps) =>
             {
                 context.CleanupFrame();
                 renderSteps.Cleanup();
@@ -96,10 +96,11 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
             RenderingSystem,
-            static (RenderAssets renderAssets, RenderContext context, RenderSteps renderGraph) =>
+            static (RenderAssets renderAssets, RenderContext context, DrawGroups2D renderGraph) =>
             {
                 if (context.SurfaceTextureView is null) return;
-                var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
+
+                /* var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
 
                 Span<RenderPassColorAttachment> backbuffer = stackalloc RenderPassColorAttachment[]
                 {
@@ -119,7 +120,7 @@ public class RenderingPlugin : IPlugin
                     });
                 }
 
-                /* backbuffer[0].LoadOp = LoadOp.Load;
+                backbuffer[0].LoadOp = LoadOp.Load;
                 for (int i = 0; i < renderGraph.Order.Count; i++)
                 {
                     if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;

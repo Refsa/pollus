@@ -29,7 +29,7 @@ public class ImguiPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
             SetupSystem,
-            static (Resources resources, IWGPUContext gpuContext, IWindow window, RenderSteps renderGraph) =>
+            static (Resources resources, IWGPUContext gpuContext, IWindow window, DrawGroups2D renderGraph) =>
             {
                 var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
                 resources.Add(imguiRenderer);
