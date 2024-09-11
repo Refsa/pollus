@@ -13,6 +13,7 @@ if (args.Length < 1)
     Console.WriteLine("  draw-triangle");
     Console.WriteLine("  collision");
     Console.WriteLine("  frame-graph");
+    Console.WriteLine("  sprite-benchmark");
     return;
 }
 
@@ -27,6 +28,7 @@ IExample? example = args[0] switch
     "draw-triangle" => new DrawTriangle(),
     "collision" => new CollisionExample(),
     "frame-graph" => new FrameGraphExample(),
+    "sprite-benchmark" => new SpriteBenchmark(),
     _ => null
 };
 
