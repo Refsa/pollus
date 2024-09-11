@@ -7,6 +7,7 @@ export const breakout = "breakout";
 export const drawTriangle = "draw-triangle";
 export const collision = "collision";
 export const frameGraph  = "frame-graph";
+export const spriteBench = "sprite-benchmark";
 
 export function setupExampleButtons() {
     var container = document.getElementsByClassName('buttons')[0];
@@ -21,6 +22,7 @@ export function setupExampleButtons() {
         drawTriangle,
         collision,
         frameGraph,
+        spriteBench,
     ];
 
     for (const example of examples) {

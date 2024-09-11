@@ -79,10 +79,10 @@ public class SpriteBenchmark : IExample
                         ));
                     }
                 }
-                if (fps.Value.Frames < 60)
+                else if (fps.Value.Frames < 60)
                 {
                     var targetDist = 60 - fps.Value.Frames;
-                    for (int i = 0; i < targetDist * 10; i++)
+                    for (int i = 0; i < targetDist * 100; i++)
                     {
                         qSprites.ForEach((in Entity entity, ref Sprite sprite) =>
                         {
