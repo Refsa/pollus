@@ -4,7 +4,10 @@ using Pollus.Debugging;
 using Pollus.ECS.Core;
 using System.Text;
 
-public record struct StageLabel(string Label);
+public record struct StageLabel(string Label)
+{
+    public override string ToString() => $"Stage<{Label}>";
+}
 
 public static class CoreStage
 {
@@ -55,18 +58,55 @@ public record class Stage : IDisposable
 
     public void Schedule(World world)
     {
-        Systems.Sort((a, b) =>
+        var graph = new Dictionary<ISystem, List<ISystem>>();
+        var inDegree = new Dictionary<ISystem, int>();
+        foreach (var system in Systems)
         {
-            if (a.Descriptor.RunsBefore.Contains(b.Descriptor.Label))
+            graph[system] = [];
+            inDegree[system] = 0;
+        }
+
+        foreach (var system in Systems)
+        {
+            var systemGraph = graph[system];
+            foreach (var otherSystem in Systems)
             {
-                return -1;
+                if (system == otherSystem) continue;
+                if (system.Descriptor.RunsBefore.Contains(otherSystem.Descriptor.Label))
+                {
+                    systemGraph.Add(otherSystem);
+                    inDegree[otherSystem]++;
+                }
+                else if (system.Descriptor.RunsAfter.Contains(otherSystem.Descriptor.Label))
+                {
+                    graph[otherSystem].Add(system);
+                    inDegree[system]++;
+                }
             }
-            if (a.Descriptor.RunsAfter.Contains(b.Descriptor.Label))
+        }
+
+        var queue = new Queue<ISystem>();
+        foreach (var system in Systems)
+        {
+            if (inDegree[system] == 0) queue.Enqueue(system);
+        }
+
+        int index = 0;
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            Systems[index++] = current;
+
+            foreach (var neighbor in graph[current])
             {
-                return 1;
+                if (--inDegree[neighbor] == 0) queue.Enqueue(neighbor);
             }
-            return 0;
-        });
+        }
+
+        if (index != Systems.Count)
+        {
+            throw new InvalidOperationException($"A cycle was detected in stage {Label.Label}.");
+        }
     }
 
     public void Tick(World world)
@@ -92,12 +132,17 @@ public record class Stage : IDisposable
 
     public override string ToString()
     {
-        var sb = new StringBuilder($"\tStage {Label.Label}:\n");
+        var sb = new StringBuilder();
+        sb.AppendLine(Label.ToString());
         foreach (var system in Systems)
         {
-            sb.AppendLine($"\t\t{system.Descriptor.Label.Label}");
-            sb.AppendLine($"\t\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
-            sb.AppendLine($"\t\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
+            sb.AppendLine($"\t{system.Descriptor.Label.Label}");
+            sb.AppendLine($"\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
+            sb.AppendLine($"\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
+            if (system.Descriptor.RunsBefore.Count > 0)
+                sb.AppendLine($"\t\tRuns Before: {string.Join(", ", system.Descriptor.RunsBefore)}");
+            if (system.Descriptor.RunsAfter.Count > 0)
+                sb.AppendLine($"\t\tRuns After: {string.Join(", ", system.Descriptor.RunsAfter)}");
         }
         return sb.ToString();
     }

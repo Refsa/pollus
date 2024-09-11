@@ -12,6 +12,7 @@ public delegate void SystemDelegate<T0>(T0 arg1);
 public record struct SystemLabel(string Label)
 {
     public static implicit operator SystemLabel(string label) => new(label);
+    public override string ToString() => $"System<{Label}>";
 }
 
 public class SystemDescriptor
