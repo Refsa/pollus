@@ -17,6 +17,9 @@
 - Assets
 	- [ ] Async loading
 	- [ ] Streaming / partial loading
+- Plugins
+	- [ ] Defer applying plugins
+	- [ ] Plugin dependency graph
 - ECS
 	- [ ] Proper Testing
 	- [x] Systems
@@ -48,6 +51,7 @@
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches
+		- [ ] Implement as Render Pass
 	- [ ] dunno some custom UI stuff
 - Rendering
 	- [ ] Text/Font
@@ -71,6 +75,7 @@
 			- keep in cache for just the frame or cleanup when not used
 			- explicit mark on resource
 		- [ ] ensure stable ordering
+		- [ ] debug groups
 	- [ ] Render target
 		- [x] frame graph color targets
 	- [ ] Gizmos

@@ -38,9 +38,21 @@ public class Blit : IDisposable
     }
     """;
 
+    const string CLEAR_SHADER = """
+    @vertex
+    fn vs_main() -> @builtin(position) vec4f {
+        return vec4f(0.0, 0.0, 0.0, 0.0);
+    }
+    @fragment
+    fn fs_main() -> @location(0) vec4f {
+        discard;
+    }
+    """;
+
     GPUSampler? sampler;
     GPUBindGroupLayout? bindGroupLayout;
-    GPUShader? shaderModule;
+    GPUShader? blitShaderModule;
+    GPUShader? clearShaderModule;
 
     // TODO: should probably move this out of here, lifetime of BindGroup is tied to the texture view
     Dictionary<int, GPUBindGroup> bindGroups = new();
@@ -54,12 +66,13 @@ public class Blit : IDisposable
         foreach (var bindGroup in bindGroups.Values) bindGroup.Dispose();
         bindGroups.Clear();
 
-        shaderModule?.Dispose();
+        clearShaderModule?.Dispose();
+        blitShaderModule?.Dispose();
         sampler?.Dispose();
         bindGroupLayout?.Dispose();
     }
 
-    [MemberNotNull(nameof(sampler), nameof(bindGroupLayout), nameof(shaderModule))]
+    [MemberNotNull(nameof(sampler), nameof(bindGroupLayout), nameof(blitShaderModule), nameof(clearShaderModule))]
     void CreateSharedResources(IWGPUContext gpuContext)
     {
         sampler ??= gpuContext.CreateSampler(SamplerDescriptor.Default);
@@ -70,11 +83,17 @@ public class Blit : IDisposable
                 BindGroupLayoutEntry.SamplerEntry(1, ShaderStage.Fragment, SamplerBindingType.Filtering),
             ]
         });
-        shaderModule ??= gpuContext.CreateShaderModule(new()
+        blitShaderModule ??= gpuContext.CreateShaderModule(new()
         {
             Label = """blit-shader""",
             Backend = ShaderBackend.WGSL,
             Content = BLIT_SHADER,
+        });
+        clearShaderModule ??= gpuContext.CreateShaderModule(new()
+        {
+            Label = """clear-shader""",
+            Backend = ShaderBackend.WGSL,
+            Content = CLEAR_SHADER,
         });
     }
 
@@ -88,12 +107,12 @@ public class Blit : IDisposable
             Label = """blit-pipeline""",
             VertexState = new()
             {
-                ShaderModule = shaderModule!,
+                ShaderModule = blitShaderModule!,
                 EntryPoint = """vs_main""",
             },
             FragmentState = new()
             {
-                ShaderModule = shaderModule!,
+                ShaderModule = blitShaderModule!,
                 EntryPoint = """fs_main""",
                 ColorTargets = [
                     ColorTargetState.Default with
@@ -117,6 +136,30 @@ public class Blit : IDisposable
                 Label = """blit-pipeline-layout""",
                 Layouts = [bindGroupLayout!]
             }),
+        });
+        pipelines.Add(pipelineHash, pipeline);
+        return pipeline;
+    }
+
+    GPURenderPipeline GetClearRenderPipeline(IWGPUContext gpuContext, TextureFormat targetFormat)
+    {
+        var pipelineHash = targetFormat.GetHashCode();
+        if (pipelines.TryGetValue(pipelineHash, out var pipeline)) return pipeline;
+
+        pipeline = gpuContext.CreateRenderPipeline(new()
+        {
+            Label = """clear-pipeline""",
+            VertexState = new()
+            {
+                ShaderModule = clearShaderModule!,
+                EntryPoint = """vs_main""",
+            },
+            FragmentState = new()
+            {
+                ShaderModule = clearShaderModule!,
+                EntryPoint = """fs_main""",
+                ColorTargets = [ColorTargetState.Default with { Format = targetFormat }]
+            },
         });
         pipelines.Add(pipelineHash, pipeline);
         return pipeline;
@@ -160,5 +203,28 @@ public class Blit : IDisposable
         pass.SetPipeline(pipeline);
         pass.SetBindGroup(0, bindGroup);
         pass.Draw(4, 1, 0, 0);
+    }
+
+    public void ClearTexture(IWGPUContext gpuContext, GPUCommandEncoder encoder, GPUTextureView dest, Color clearValue)
+    {
+        CreateSharedResources(gpuContext);
+        var pipeline = GetClearRenderPipeline(gpuContext, dest.TextureDescriptor.Format);
+
+        using var pass = encoder.BeginRenderPass(new()
+        {
+            ColorAttachments = stackalloc RenderPassColorAttachment[]
+            {
+                new()
+                {
+                    View = dest.Native,
+                    LoadOp = LoadOp.Clear,
+                    StoreOp = StoreOp.Store,
+                    ClearValue = clearValue,
+                }
+            }
+        });
+
+        pass.SetPipeline(pipeline);
+        pass.Draw(0, 1, 0, 0);
     }
 }

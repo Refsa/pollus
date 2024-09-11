@@ -131,6 +131,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
             nativeDescriptor.DepthStencil = &temp;
         }
 
+        descriptor.MultisampleState ??= MultisampleState.Default;
         if (descriptor.MultisampleState is MultisampleState multisampleState)
         {
             nativeDescriptor.Multisample = new Silk.NET.WebGPU.MultisampleState(
@@ -140,6 +141,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
             );
         }
 
+        descriptor.PrimitiveState ??= PrimitiveState.Default;
         if (descriptor.PrimitiveState is PrimitiveState primitiveState)
         {
             nativeDescriptor.Primitive = new Silk.NET.WebGPU.PrimitiveState(
