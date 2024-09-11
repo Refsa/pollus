@@ -45,7 +45,7 @@ public class Blit : IDisposable
     }
     @fragment
     fn fs_main() -> @location(0) vec4f {
-        discard;
+        return vec4f(0.0, 0.0, 0.0, 0.0);
     }
     """;
 
