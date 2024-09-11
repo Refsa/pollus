@@ -7,8 +7,10 @@ using Pollus.Graphics.Rendering;
 
 public partial struct FrameGraph<TParam> : IDisposable
 {
-    public delegate void BuilderDelegate<TData>(ref Builder builder, TParam param, ref TData data);
-    public delegate void ExecuteDelegate<TData>(RenderContext context, TParam param, TData data);
+    public delegate void BuilderDelegate<TData>(ref Builder builder, TParam param, ref TData data)
+        where TData : struct;
+    public delegate void ExecuteDelegate<TData>(RenderContext context, TParam param, TData data)
+        where TData : struct;
 
     int[]? executionOrder;
     GraphData<PassNode> passNodes;

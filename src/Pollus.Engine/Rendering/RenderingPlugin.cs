@@ -12,12 +12,11 @@ using Pollus.Utils;
 public class RenderingPlugin : IPlugin
 {
     public const string SetupSystem = "Rendering::Setup";
-    public const string UpdateSceneUniformSystem = "UpdateSceneUniform";
-    public const string PrepareSceneUniformSystem = "PrepareSceneUniform";
-    public const string BeginFrameSystem = "BeginFrame";
-    public const string EndFrameSystem = "EndFrame";
-    public const string RenderStepsCleanupSystem = "RenderStepsCleanup";
-    public const string RenderingSystem = "Rendering";
+    public const string UpdateSceneUniformSystem = "Rendering::UpdateSceneUniform";
+    public const string PrepareSceneUniformSystem = "Rendering::PrepareSceneUniform";
+    public const string BeginFrameSystem = "Rendering::BeginFrame";
+    public const string EndFrameSystem = "Rendering::EndFrame";
+    public const string RenderStepsCleanupSystem = "Rendering::RenderStepsCleanup";
 
     public void Apply(World world)
     {
@@ -42,6 +41,7 @@ public class RenderingPlugin : IPlugin
             new CameraPlugin(),
             new MaterialPlugin<Material>(),
             new SpritePlugin(),
+            new FrameGraph2DPlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2>>>()
             {
                 Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
@@ -93,45 +93,5 @@ public class RenderingPlugin : IPlugin
                 renderSteps.Cleanup();
             }
         ).After(EndFrameSystem));
-
-        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
-            RenderingSystem,
-            static (RenderAssets renderAssets, RenderContext context, DrawGroups2D renderGraph) =>
-            {
-                if (context.SurfaceTextureView is null) return;
-
-                /* var commandEncoder = context.CreateCommandEncoder("""rendering-command-encoder""");
-
-                Span<RenderPassColorAttachment> backbuffer = stackalloc RenderPassColorAttachment[]
-                {
-                    new()
-                    {
-                        View = context.SurfaceTextureView.Value.Native,
-                        LoadOp = LoadOp.Clear,
-                        StoreOp = StoreOp.Store,
-                        ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
-                    }
-                };
-
-                { // Clear
-                    using var renderPass = commandEncoder.BeginRenderPass(new()
-                    {
-                        ColorAttachments = backbuffer
-                    });
-                }
-
-                backbuffer[0].LoadOp = LoadOp.Load;
-                for (int i = 0; i < renderGraph.Order.Count; i++)
-                {
-                    if (!renderGraph.Stages.TryGetValue(renderGraph.Order[i], out var stage)) continue;
-                    using var renderPass = commandEncoder.BeginRenderPass(new()
-                    {
-                        ColorAttachments = backbuffer
-                    });
-
-                    stage.Execute(renderPass, renderAssets);
-                } */
-            }
-        ));
     }
 }

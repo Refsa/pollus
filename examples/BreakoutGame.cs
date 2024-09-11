@@ -102,6 +102,10 @@ public class BreakoutGame : IExample
             new PerformanceTrackerPlugin(),
         ])
         .AddResource(new GameState { State = State.NewGame, Lives = 3, Score = 0 })
+        .AddSystem(CoreStage.Init, FnSystem("LogSchedule", static (World world) =>
+        {
+            Log.Info(world.Schedule.ToString());
+        }))
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
         static (Commands commands, GameState gameState, IWindow window,
             AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>

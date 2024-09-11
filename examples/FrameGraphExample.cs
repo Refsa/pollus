@@ -121,7 +121,7 @@ public class FrameGraphExample : IExample
                         }
                     });
 
-                    var stage = param.RenderSteps.Stages[RenderStep2D.Main];
+                    var stage = param.RenderSteps.Groups[RenderStep2D.Main];
                     stage.Execute(passEncoder, param.RenderAssets);
                 });
 

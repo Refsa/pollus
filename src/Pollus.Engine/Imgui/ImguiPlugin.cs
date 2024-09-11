@@ -106,7 +106,7 @@ public class ImguiPlugin : IPlugin
             }
         ).After(UpdateSystem));
 
-        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
             RenderSystem,
             static (ImguiRenderer imguiRenderer, RenderContext context) =>
             {
@@ -128,7 +128,7 @@ public class ImguiPlugin : IPlugin
                 });
                 imguiRenderer.Render(renderPass);
             }
-        ).After(RenderingPlugin.RenderingSystem));
+        ).Before(RenderingPlugin.EndFrameSystem));
     }
 
     static ImGuiKey MapKey(Key key)
