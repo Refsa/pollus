@@ -80,7 +80,7 @@ public class FrameGraph2DPlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(BeginFrame,
         static (RenderContext renderContext, RenderAssets renderAssets,
                 DrawGroups2D drawGroups, Resources resources,
-                IWindow window, FrameGraph2D pipeline) =>
+                IWindow window, FrameGraph2D renderGraph) =>
         {
             var param = new FrameGraph2DParam()
             {
@@ -122,7 +122,7 @@ public class FrameGraph2DPlugin : IPlugin
             });
 
             frameGraph.AddPass(RenderStep2D.Main, param,
-            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref SpritePass data) =>
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref MainPass data) =>
             {
                 data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
             },
@@ -146,6 +146,31 @@ public class FrameGraph2DPlugin : IPlugin
                 stage.Execute(passEncoder, param.RenderAssets);
             });
 
+            frameGraph.AddPass(RenderStep2D.UI, param,
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref UIPass data) =>
+            {
+                data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
+            },
+            static (context, param, data) =>
+            {
+                var commandEncoder = context.GetCurrentCommandEncoder();
+                using var passEncoder = commandEncoder.BeginRenderPass(new()
+                {
+                    ColorAttachments = stackalloc RenderPassColorAttachment[]
+                    {
+                        new()
+                        {
+                            View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
+                            LoadOp = LoadOp.Load,
+                            StoreOp = StoreOp.Store,
+                        }
+                    }
+                });
+
+                var stage = param.DrawGroups.Groups[RenderStep2D.UI];
+                stage.Execute(passEncoder, param.RenderAssets);
+            });
+
             frameGraph.AddPass(RenderStep2D.Last, param,
             static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref FinalBlitPass data) =>
             {
@@ -163,13 +188,13 @@ public class FrameGraph2DPlugin : IPlugin
                     colorTexture.TextureView, backbufferTexture.TextureView);
             });
 
-            pipeline.BeginFrame(frameGraph, param);
+            renderGraph.BeginFrame(frameGraph, param);
         }).After(RenderingPlugin.BeginFrameSystem));
 
         world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(Render,
-        static (FrameGraph2D pipeline, RenderContext context) =>
+        static (FrameGraph2D renderGraph, RenderContext context) =>
         {
-            pipeline.Compile().Execute(context, pipeline.Param);
+            renderGraph.Compile().Execute(context, renderGraph.Param);
         }));
     }
 }

@@ -22,3 +22,13 @@ public class DrawGroups2D : DrawGroups<RenderStep2D>
         Add(RenderStep2D.Last);
     }
 }
+
+struct MainPass
+{
+    public ResourceHandle<TextureResource> ColorAttachment;
+}
+
+struct UIPass
+{
+    public ResourceHandle<TextureResource> ColorAttachment;
+}

@@ -82,11 +82,6 @@ class WriteSpriteBatchesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUCo
     }
 }
 
-struct SpritePass
-{
-    public ResourceHandle<TextureResource> ColorAttachment;
-}
-
 class DrawSpriteBatchesSystem : ECS.Core.Sys<DrawGroups2D, RenderAssets, SpriteBatches>
 {
     public DrawSpriteBatchesSystem() : base(new ECS.Core.SystemDescriptor(nameof(DrawSpriteBatchesSystem)).After(nameof(WriteSpriteBatchesSystem)))

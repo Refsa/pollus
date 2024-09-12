@@ -1,5 +1,6 @@
 namespace Pollus.Graphics;
 
+using System.Runtime.CompilerServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
@@ -28,13 +29,48 @@ public class DrawList
     }
 }
 
+public class CommandList
+{
+    RenderCommands[] commands = new RenderCommands[4];
+    int count;
+
+    public ReadOnlySpan<RenderCommands> Commands => commands.AsSpan(0, count);
+
+    public void Add(in RenderCommands command)
+    {
+        if (count == commands.Length)
+        {
+            var newCommands = new RenderCommands[commands.Length * 2];
+            commands.CopyTo(newCommands, 0);
+            commands = newCommands;
+        }
+        commands[count++] = command;
+    }
+
+    public void Clear()
+    {
+        foreach (var command in Commands) command.Dispose();
+        Unsafe.SkipInit<RenderCommands>(out var def);
+        Array.Fill(commands, def);
+        count = 0;
+    }
+}
+
 public class DrawGroup<TGroup>
     where TGroup : struct, Enum, IConvertible
 {
     DrawList drawLists = new();
+    CommandList commandLists = new();
 
     public TGroup Group { get; init; }
     public DrawList DrawLists => drawLists;
+    public CommandList CommandLists => commandLists;
+
+    public void Clear()
+    {
+        drawLists.Clear();
+        commandLists.Clear();
+    }
 
     public void Execute(GPURenderPassEncoder encoder, IRenderAssets renderAssets)
     {
@@ -89,6 +125,11 @@ public class DrawGroup<TGroup>
                 encoder.Draw(command.VertexCount, command.InstanceCount, command.VertexOffset, command.InstanceOffset);
             }
         }
+
+        foreach (var command in commandLists.Commands)
+        {
+            command.Apply(encoder, renderAssets);
+        }
     }
 }
 
@@ -109,9 +150,13 @@ public class DrawGroups<TGroup>
     }
     public DrawGroup<TGroup> Get(TGroup group) => drawGroups[group];
     public DrawList GetDrawList(TGroup group) => drawGroups[group].DrawLists;
+    public CommandList GetCommandList(TGroup group) => drawGroups[group].CommandLists;
 
     public void Cleanup()
     {
-        foreach (var group in drawGroups.Values) group.DrawLists.Clear();
+        foreach (var group in drawGroups.Values)
+        {
+            group.Clear();
+        }
     }
 }

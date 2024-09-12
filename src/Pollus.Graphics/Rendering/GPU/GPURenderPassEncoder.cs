@@ -68,14 +68,17 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         }
     }
 
-    public void SetVertexBuffer(uint slot, GPUBuffer buffer)
+    public void SetVertexBuffer(uint slot, GPUBuffer buffer, ulong? offset = null, ulong? length = null)
     {
-        context.wgpu.RenderPassEncoderSetVertexBuffer(native, slot, (Silk.NET.WebGPU.Buffer*)buffer.Native, 0, buffer.Size);
+        context.wgpu.RenderPassEncoderSetVertexBuffer(native, slot, (Silk.NET.WebGPU.Buffer*)buffer.Native, offset ?? 0, length ?? buffer.Size);
     }
 
-    public void SetIndexBuffer(GPUBuffer indexBuffer, IndexFormat format)
+    public void SetIndexBuffer(GPUBuffer indexBuffer, IndexFormat format, ulong? offset = null, ulong? length = null)
     {
-        context.wgpu.RenderPassEncoderSetIndexBuffer(native, (Silk.NET.WebGPU.Buffer*)indexBuffer.Native, (Silk.NET.WebGPU.IndexFormat)format, 0, indexBuffer.Size);
+        context.wgpu.RenderPassEncoderSetIndexBuffer(native,
+            (Silk.NET.WebGPU.Buffer*)indexBuffer.Native,
+            (Silk.NET.WebGPU.IndexFormat)format,
+            offset ?? 0, length ?? indexBuffer.Size);
     }
 
     public void Draw(uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance)

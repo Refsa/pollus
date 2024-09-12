@@ -59,6 +59,11 @@ public class RenderAssets : IRenderAssets, IDisposable
         return (TRenderData)renderData[handle];
     }
 
+    public TRenderData Get<TRenderData>(Handle<TRenderData> handle) where TRenderData : notnull
+    {
+        return (TRenderData)renderData[handle];
+    }
+
     public RenderAssets AddLoader<TLoader>(TLoader loader) where TLoader : IRenderDataLoader
     {
         loaders.Add(loader.TargetType, loader);
