@@ -7,6 +7,7 @@ using Pollus.Graphics.WGPU;
 using ImGuiNET;
 using Pollus.Mathematics;
 using System.Runtime.CompilerServices;
+using Pollus.Utils;
 
 [ShaderType]
 partial struct Uniforms
@@ -58,27 +59,28 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 """;
 
     IWGPUContext gpuContext;
+    IRenderAssets renderAssets;
 
-    GPUBuffer vertexBuffer;
+    Handle<GPUBuffer> vertexBuffer;
     ImDrawVert[] hostVertexBuffer = new ImDrawVert[1000];
-    GPUBuffer indexBuffer;
+    Handle<GPUBuffer> indexBuffer;
     ushort[] hostIndexBuffer = new ushort[1000];
-    GPUBuffer uniformBuffer;
+    Handle<GPUBuffer> uniformBuffer;
 
-    GPUTexture fontTexture;
-    GPUTextureView? fontTextureView;
-    GPUSampler fontSampler;
+    Handle<GPUTexture> fontTexture = Handle<GPUTexture>.Null;
+    Handle<GPUTextureView> fontTextureView = Handle<GPUTextureView>.Null;
+    Handle<GPUSampler> fontSampler;
 
-    GPUBindGroup baseBindGroup;
-    GPUBindGroupLayout baseBindGroupLayout;
-    GPUBindGroupLayout textureBindGroupLayout;
-    GPUBindGroup fontTextureBindGroup;
+    Handle<GPUBindGroup> baseBindGroup;
+    Handle<GPUBindGroupLayout> baseBindGroupLayout;
+    Handle<GPUBindGroupLayout> textureBindGroupLayout;
+    Handle<GPUBindGroup> fontTextureBindGroup;
 
-    GPURenderPipeline renderPipeline;
+    Handle<GPURenderPipeline> renderPipeline;
 
-    Dictionary<GPUTextureView, (nint imguiBindingId, GPUBindGroup bindGroup)> setsByView = [];
-    Dictionary<GPUTexture, GPUTextureView> autoViewsByTexture = [];
-    Dictionary<nint, (nint imguiBindingId, GPUBindGroup bindGroup)> viewsById = [];
+    Dictionary<Handle<GPUTextureView>, (nint imguiBindingId, Handle<GPUBindGroup> bindGroup)> setsByView = [];
+    Dictionary<Handle<GPUTexture>, Handle<GPUTextureView>> autoViewsByTexture = [];
+    Dictionary<nint, (nint imguiBindingId, Handle<GPUBindGroup> bindGroup)> viewsById = [];
 
     nint fontAtlasId = 1;
     nint lastAssignedId = 100;
@@ -88,11 +90,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     Vec2<int> scaleFactor = Vec2<int>.One;
     TextureFormat targetFormat;
 
-    public ImguiRenderer(IWGPUContext gpuContext, TextureFormat targetFormat, Vec2<uint> size)
+    public ImguiRenderer(IWGPUContext gpuContext, IRenderAssets renderAssets, TextureFormat targetFormat, Vec2<uint> size)
     {
         this.size = size;
         this.targetFormat = targetFormat;
         this.gpuContext = gpuContext;
+        this.renderAssets = renderAssets;
 
         ImGui.CreateContext();
         var io = ImGui.GetIO();
@@ -111,17 +114,41 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     {
         GC.SuppressFinalize(this);
         ImGui.DestroyContext();
-        vertexBuffer.Dispose();
-        indexBuffer.Dispose();
-        uniformBuffer.Dispose();
-        fontTexture?.Dispose();
-        fontTextureView?.Dispose();
-        fontSampler.Dispose();
-        baseBindGroup.Dispose();
-        baseBindGroupLayout.Dispose();
-        textureBindGroupLayout.Dispose();
-        fontTextureBindGroup.Dispose();
-        renderPipeline.Dispose();
+
+        renderAssets.Unload(renderPipeline);
+        renderAssets.Unload(baseBindGroup);
+        renderAssets.Unload(baseBindGroupLayout);
+        renderAssets.Unload(textureBindGroupLayout);
+        renderAssets.Unload(fontTextureBindGroup);
+        renderAssets.Unload(fontSampler);
+        if (fontTexture != Handle<GPUTexture>.Null)
+        {
+            renderAssets.Unload(fontTexture);
+            renderAssets.Unload(fontTextureView);
+        }
+        renderAssets.Unload(uniformBuffer);
+        renderAssets.Unload(indexBuffer);
+        renderAssets.Unload(vertexBuffer);
+
+        ClearCachedImageResources();
+    }
+
+    public void ClearCachedImageResources()
+    {
+        foreach (var (_, (_, bindGroup)) in setsByView)
+        {
+            renderAssets.Unload(bindGroup);
+        }
+
+        foreach (var (_, view) in autoViewsByTexture)
+        {
+            renderAssets.Unload(view);
+        }
+
+        viewsById.Clear();
+        setsByView.Clear();
+        autoViewsByTexture.Clear();
+        lastAssignedId = 100;
     }
 
     public void Resized(Vec2<uint> size)
@@ -131,22 +158,26 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     void SetupRenderResources()
     {
-        vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
+        var vertexBufferValue = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
             """ImGui Vertex Buffer""",
             Alignment.AlignedSize<ImDrawVert>((uint)hostVertexBuffer.Length, 4)
         ));
-        indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
+        vertexBuffer = renderAssets.Add(vertexBufferValue);
+        var indexBufferValue = gpuContext.CreateBuffer(BufferDescriptor.Index(
             """ImGui Index Buffer""",
             Alignment.AlignedSize<ushort>((uint)hostIndexBuffer.Length, 4)
         ));
+        indexBuffer = renderAssets.Add(indexBufferValue);
 
-        fontSampler = gpuContext.CreateSampler(SamplerDescriptor.Default);
+        var fontSamplerValue = gpuContext.CreateSampler(SamplerDescriptor.Default);
+        fontSampler = renderAssets.Add(fontSamplerValue);
         RecreateFontTexture();
 
-        uniformBuffer = gpuContext.CreateBuffer(BufferDescriptor.Uniform<Uniforms>(
+        var uniformBufferValue = gpuContext.CreateBuffer(BufferDescriptor.Uniform<Uniforms>(
             """ImGui Uniform Buffer""",
             Alignment.AlignedSize<Uniforms>(1)
         ));
+        uniformBuffer = renderAssets.Add(uniformBufferValue);
 
         using var shader = gpuContext.CreateShaderModule(new()
         {
@@ -155,7 +186,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             Content = SHADER,
         });
 
-        baseBindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        var baseBindGroupLayoutValue = gpuContext.CreateBindGroupLayout(new()
         {
             Label = "ImGui Base Bind Group Layout",
             Entries = [
@@ -163,15 +194,18 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 BindGroupLayoutEntry.SamplerEntry(1, ShaderStage.Fragment, SamplerBindingType.Filtering),
             ]
         });
-        textureBindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        baseBindGroupLayout = renderAssets.Add(baseBindGroupLayoutValue);
+
+        var textureBindGroupLayoutValue = gpuContext.CreateBindGroupLayout(new()
         {
             Label = "ImGui Texture Bind Group Layout",
             Entries = [
                 BindGroupLayoutEntry.TextureEntry(0, ShaderStage.Fragment, TextureSampleType.Float, TextureViewDimension.Dimension2D),
             ]
         });
+        textureBindGroupLayout = renderAssets.Add(textureBindGroupLayoutValue);
 
-        renderPipeline = gpuContext.CreateRenderPipeline(new()
+        renderPipeline = renderAssets.Add(gpuContext.CreateRenderPipeline(new()
         {
             Label = """ImGui Render Pipeline""",
             VertexState = new()
@@ -202,42 +236,46 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             PipelineLayout = gpuContext.CreatePipelineLayout(new()
             {
                 Label = """ImGui Pipeline Layout""",
-                Layouts = [baseBindGroupLayout, textureBindGroupLayout]
+                Layouts = [baseBindGroupLayoutValue, textureBindGroupLayoutValue]
             })
-        });
+        }));
 
-        baseBindGroup = gpuContext.CreateBindGroup(new()
+        baseBindGroup = renderAssets.Add(gpuContext.CreateBindGroup(new()
         {
             Label = """ImGui Base Bind Group""",
-            Layout = baseBindGroupLayout,
+            Layout = baseBindGroupLayoutValue,
             Entries = [
-                BindGroupEntry.BufferEntry<Uniforms>(0, uniformBuffer, 0),
-                BindGroupEntry.SamplerEntry(1, fontSampler)
+                BindGroupEntry.BufferEntry<Uniforms>(0, uniformBufferValue, 0),
+                BindGroupEntry.SamplerEntry(1, fontSamplerValue)
             ]
-        });
+        }));
 
-        fontTextureBindGroup = gpuContext.CreateBindGroup(new()
+        var fontTextureViewValue = renderAssets.Get(fontTextureView);
+        fontTextureBindGroup = renderAssets.Add(gpuContext.CreateBindGroup(new()
         {
             Label = """ImGui Texture Bind Group""",
-            Layout = textureBindGroupLayout,
+            Layout = textureBindGroupLayoutValue,
             Entries = [
-                BindGroupEntry.TextureEntry(0, fontTextureView!.Value)
+                BindGroupEntry.TextureEntry(0, fontTextureViewValue)
             ]
-        });
+        }));
     }
 
-    public nint GetOrCreateImguiBinding(GPUTextureView textureView)
+    public nint GetOrCreateImguiBinding(Handle<GPUTextureView> textureView)
     {
         if (!setsByView.TryGetValue(textureView, out var set))
         {
-            var bindGroup = gpuContext.CreateBindGroup(new()
+            var textureBindGroupLayoutValue = renderAssets.Get(textureBindGroupLayout);
+            var textureViewValue = renderAssets.Get(textureView);
+
+            var bindGroup = renderAssets.Add(gpuContext.CreateBindGroup(new()
             {
                 Label = "ImGui Texture Bind Group",
-                Layout = textureBindGroupLayout,
+                Layout = textureBindGroupLayoutValue,
                 Entries = [
-                    BindGroupEntry.TextureEntry(0, textureView)
+                    BindGroupEntry.TextureEntry(0, textureViewValue)
                 ]
-            });
+            }));
 
             var imguiBindingId = lastAssignedId++;
             set = (imguiBindingId, bindGroup);
@@ -248,61 +286,48 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return set.imguiBindingId;
     }
 
-    public nint GetOrCreateImguiBinding(GPUTexture texture)
+    public nint GetOrCreateImguiBinding(Handle<GPUTexture> texture)
     {
         if (!autoViewsByTexture.TryGetValue(texture, out var view))
         {
-            view = texture.GetTextureView();
+            var textureValue = renderAssets.Get(texture);
+            view = renderAssets.Add(textureValue.GetTextureView());
             autoViewsByTexture[texture] = view;
         }
 
         return GetOrCreateImguiBinding(view);
     }
 
-    public (nint imguiBindingId, GPUBindGroup bindGroup) GetImguiBinding(nint imguiBindingId)
+    public (nint imguiBindingId, Handle<GPUBindGroup> bindGroup) GetImguiBinding(nint imguiBindingId)
     {
         return viewsById[imguiBindingId];
     }
 
-    public void ClearCachedImageResources()
-    {
-        viewsById.Clear();
-        setsByView.Clear();
-        autoViewsByTexture.Clear();
-        lastAssignedId = 100;
-    }
-
     public void RecreateFontTexture()
     {
-        fontTexture?.Dispose();
-        fontTextureView?.Dispose();
+        if (fontTexture != Handle<GPUTexture>.Null)
+        {
+            renderAssets.Unload(fontTexture);
+            renderAssets.Unload(fontTextureView);
+        }
 
         var io = ImGui.GetIO();
 
         io.Fonts.GetTexDataAsRGBA32(out nint pixels, out var width, out var height, out var bytesPerPixel);
         io.Fonts.SetTexID(fontAtlasId);
 
-        fontTexture = gpuContext.CreateTexture(TextureDescriptor.D2(
+        var fontTextureValue = gpuContext.CreateTexture(TextureDescriptor.D2(
             """ImGui Font Texture""",
             TextureUsage.CopyDst | TextureUsage.TextureBinding,
             TextureFormat.Rgba8Unorm,
             new Vec2<uint>((uint)width, (uint)height)
         ));
+        fontTexture = renderAssets.Add(fontTextureValue);
 
-        fontTexture.Write(pixels, width * height * bytesPerPixel);
-        fontTextureView = fontTexture.GetTextureView();
+        fontTextureValue.Write(pixels, width * height * bytesPerPixel);
+        fontTextureView = renderAssets.Add(fontTextureValue.GetTextureView());
 
         io.Fonts.ClearTexData();
-    }
-
-    public void Render(GPURenderPassEncoder encoder)
-    {
-        if (frameBegun)
-        {
-            frameBegun = false;
-            ImGui.Render();
-            RenderImDrawData(ImGui.GetDrawData(), encoder);
-        }
     }
 
     public void Update(float deltaTime)
@@ -327,7 +352,17 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         io.DeltaTime = deltaTime;
     }
 
-    unsafe void RenderImDrawData(ImDrawDataPtr drawData, GPURenderPassEncoder encoder)
+    public void Render(ref RenderCommands commands)
+    {
+        if (frameBegun)
+        {
+            frameBegun = false;
+            ImGui.Render();
+            RenderImDrawData(ImGui.GetDrawData(), ref commands);
+        }
+    }
+
+    unsafe void RenderImDrawData(ImDrawDataPtr drawData, ref RenderCommands commands)
     {
         if (drawData.CmdListsCount == 0)
         {
@@ -336,23 +371,25 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
         if (drawData.TotalVtxCount > hostVertexBuffer.Length)
         {
+            renderAssets.Unload(vertexBuffer);
+
             uint totalVtxSize = (uint)(drawData.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
-            vertexBuffer.Dispose();
-            vertexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Vertex(
+            vertexBuffer = renderAssets.Add(gpuContext.CreateBuffer(BufferDescriptor.Vertex(
                 """ImGui Vertex Buffer""",
                 Alignment.AlignedSize<ImDrawVert>(totalVtxSize, 4)
-            ));
+            )));
             hostVertexBuffer = new ImDrawVert[drawData.TotalVtxCount];
         }
 
         if (drawData.TotalIdxCount > hostIndexBuffer.Length)
         {
+            renderAssets.Unload(indexBuffer);
+
             uint totalIdxSize = (uint)(drawData.TotalIdxCount * Unsafe.SizeOf<ushort>());
-            indexBuffer.Dispose();
-            indexBuffer = gpuContext.CreateBuffer(BufferDescriptor.Index(
+            indexBuffer = renderAssets.Add(gpuContext.CreateBuffer(BufferDescriptor.Index(
                 """ImGui Index Buffer""",
                 Alignment.AlignedSize<ushort>(totalIdxSize, 4)
-            ));
+            )));
             hostIndexBuffer = new ushort[drawData.TotalIdxCount];
         }
 
@@ -369,8 +406,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             vtxOffset += (uint)vtxSpan.Length;
             idxOffset += (uint)idxSpan.Length;
         }
-        vertexBuffer.Write<ImDrawVert>(hostVertexBuffer.AsSpan()[..drawData.TotalVtxCount], Alignment.AlignedSize<ImDrawVert>((uint)drawData.TotalVtxCount, 4));
-        indexBuffer.Write<ushort>(hostIndexBuffer.AsSpan()[..drawData.TotalIdxCount], Alignment.AlignedSize<ushort>((uint)drawData.TotalIdxCount, 4));
+        {
+            var vertexBufferValue = renderAssets.Get(vertexBuffer);
+            vertexBufferValue.Write<ImDrawVert>(hostVertexBuffer.AsSpan()[..drawData.TotalVtxCount], Alignment.AlignedSize<ImDrawVert>((uint)drawData.TotalVtxCount, 4));
+            var indexBufferValue = renderAssets.Get(indexBuffer);
+            indexBufferValue.Write<ushort>(hostIndexBuffer.AsSpan()[..drawData.TotalIdxCount], Alignment.AlignedSize<ushort>((uint)drawData.TotalIdxCount, 4));
+        }
 
         var io = ImGui.GetIO();
         var uniform = new Uniforms
@@ -385,18 +426,21 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                 _ => 1.0f
             }
         };
-        uniformBuffer.Write(uniform, 0);
+        {
+            var uniformBufferValue = renderAssets.Get(uniformBuffer);
+            uniformBufferValue.Write(uniform, 0);
+        }
 
-        encoder.SetViewport(
+        commands.SetViewport(
             Vec2f.Zero,
             new Vec2f(drawData.FramebufferScale.X * drawData.DisplaySize.X, drawData.FramebufferScale.Y * drawData.DisplaySize.Y),
             0f, 1f
         );
-        encoder.SetBlendConstant(Vec4<double>.Zero);
-        encoder.SetPipeline(renderPipeline);
-        encoder.SetVertexBuffer(0, vertexBuffer);
-        encoder.SetIndexBuffer(indexBuffer, IndexFormat.Uint16);
-        encoder.SetBindGroup(0, baseBindGroup);
+        commands.SetBlendConstant(Vec4<double>.Zero);
+        commands.SetPipeline(renderPipeline);
+        commands.SetVertexBuffer(0, vertexBuffer);
+        commands.SetIndexBuffer(indexBuffer, IndexFormat.Uint16);
+        commands.SetBindGroup(0, baseBindGroup);
 
         drawData.ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -415,7 +459,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
                 if (pcmd.TextureId != nint.Zero)
                 {
-                    encoder.SetBindGroup(
+                    commands.SetBindGroup(
                         1, pcmd.TextureId switch
                         {
                             var id when id == fontAtlasId => fontTextureBindGroup,
@@ -424,11 +468,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                     );
                 }
 
-                encoder.SetScissorRect(
+                commands.SetScissorRect(
                     (uint)pcmd.ClipRect.X, (uint)pcmd.ClipRect.Y,
                     (uint)(pcmd.ClipRect.Z - pcmd.ClipRect.X), (uint)(pcmd.ClipRect.W - pcmd.ClipRect.Y)
                 );
-                encoder.DrawIndexed(
+                commands.DrawIndexed(
                     pcmd.ElemCount, 1, pcmd.IdxOffset + idxOffset, (int)(pcmd.VtxOffset + vtxOffset), 0
                 );
             }

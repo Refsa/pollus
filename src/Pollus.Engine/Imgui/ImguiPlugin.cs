@@ -6,6 +6,7 @@ using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
 using Pollus.Engine.Rendering;
+using Pollus.Graphics;
 using Pollus.Graphics.Imgui;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -29,9 +30,9 @@ public class ImguiPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
             SetupSystem,
-            static (Resources resources, IWGPUContext gpuContext, IWindow window, DrawGroups2D renderGraph) =>
+            static (Resources resources, IWGPUContext gpuContext, IWindow window, RenderAssets renderAssets) =>
             {
-                var imguiRenderer = new ImguiRenderer(gpuContext, gpuContext.GetSurfaceFormat(), window.Size);
+                var imguiRenderer = new ImguiRenderer(gpuContext, renderAssets, gpuContext.GetSurfaceFormat(), window.Size);
                 resources.Add(imguiRenderer);
             }
         ));
@@ -106,29 +107,20 @@ public class ImguiPlugin : IPlugin
             }
         ).After(UpdateSystem));
 
-        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
             RenderSystem,
-            static (ImguiRenderer imguiRenderer, RenderContext context) =>
+            static (ImguiRenderer imguiRenderer, RenderContext context, DrawGroups2D renderSteps) =>
             {
                 if (context.SurfaceTextureView is null) return;
+                var commands = new RenderCommands();
+                imguiRenderer.Render(ref commands);
 
-                var commandEncoder = context.GetCurrentCommandEncoder();
-                using var renderPass = commandEncoder.BeginRenderPass(new()
+                if (commands.Count > 0)
                 {
-                    ColorAttachments = stackalloc RenderPassColorAttachment[]
-                    {
-                        new()
-                        {
-                            View = context.SurfaceTextureView.Value.Native,
-                            LoadOp = LoadOp.Load,
-                            StoreOp = StoreOp.Store,
-                            ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
-                        }
-                    }
-                });
-                imguiRenderer.Render(renderPass);
+                    renderSteps.GetCommandList(RenderStep2D.UI).Add(commands);
+                }
             }
-        ).Before(RenderingPlugin.EndFrameSystem));
+        ));
     }
 
     static ImGuiKey MapKey(Key key)
