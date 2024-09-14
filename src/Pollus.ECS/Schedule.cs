@@ -23,7 +23,9 @@ public class Schedule : IDisposable
                 new Stage(CoreStage.PostInit) with { RunCriteria = new RunOnce() },
 
                 new Stage(CoreStage.First),
+                new Stage(CoreStage.PreUpdate),
                 new Stage(CoreStage.Update),
+                new Stage(CoreStage.PostUpdate),
                 new Stage(CoreStage.Last),
 
                 new Stage(CoreStage.PreRender),

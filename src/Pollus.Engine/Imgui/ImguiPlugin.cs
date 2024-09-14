@@ -114,11 +114,10 @@ public class ImguiPlugin : IPlugin
                 if (context.SurfaceTextureView is null) return;
                 var commands = new RenderCommands();
                 imguiRenderer.Render(ref commands);
-
                 if (commands.Count > 0)
-                {
                     renderSteps.GetCommandList(RenderStep2D.UI).Add(commands);
-                }
+                else
+                    commands.Dispose();
             }
         ));
     }

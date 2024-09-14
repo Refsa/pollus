@@ -73,7 +73,7 @@ class WriteSpriteBatchesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUCo
             }
             else
             {
-                instanceBuffer = renderAssets.Get<GPUBuffer>(batch.InstanceBufferHandle);
+                instanceBuffer = renderAssets.Get(batch.InstanceBufferHandle);
                 batch.EnsureCapacity(instanceBuffer);
             }
 
