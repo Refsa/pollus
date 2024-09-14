@@ -51,7 +51,7 @@ public class SpriteBenchmark : IExample
                 });
             }))
             .AddSystem(CoreStage.Update, SystemBuilder.FnSystem("SpriteBenchmark::Update",
-            static (Commands commands, SharedAssets sharedAssets, Time time, IWindow window, Local<FPS> fps, Query<Sprite> qSprites) =>
+            static (Commands commands, SharedAssets sharedAssets, Time time, IWindow window, Random random, Local<FPS> fps, Query<Sprite> qSprites) =>
             {
                 fps.Value.Frames++;
                 fps.Value.Time += time.DeltaTimeF;
@@ -67,7 +67,7 @@ public class SpriteBenchmark : IExample
                         commands.Spawn(Entity.With(
                             Transform2.Default with
                             {
-                                Position = new Vec2f(Random.Shared.NextSingle() * window.Size.X, Random.Shared.NextSingle() * window.Size.Y),
+                                Position = new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
                                 Scale = Vec2f.One * 16f,
                             },
                             new Sprite

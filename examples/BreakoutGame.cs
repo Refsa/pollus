@@ -100,6 +100,7 @@ public class BreakoutGame : IExample
             new ImguiPlugin(),
             new AudioPlugin(),
             new PerformanceTrackerPlugin(),
+            new RandomPlugin(),
         ])
         .AddResource(new GameState { State = State.NewGame, Lives = 3, Score = 0 })
         .AddSystem(CoreStage.Init, FnSystem("LogSchedule", static (World world) =>
@@ -139,7 +140,7 @@ public class BreakoutGame : IExample
                 }
             ));
         }))
-        .AddSystem(CoreStage.First, FnSystem("GameState",
+        .AddSystem(CoreStage.PreUpdate, FnSystem("GameState",
         static (World world, GameState gameState, EventWriter<Event.RestartGame> eRestartGame,
                 EventWriter<Event.SpawnBall> eSpawnBall, ButtonInput<Key> keys,
                 Query<Brick> qBricks
@@ -163,8 +164,8 @@ public class BreakoutGame : IExample
             }
             else if (gameState.State == State.GameOver)
             {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.FirstUseEver);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
+                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
                 if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
                 {
                     ImGui.TextUnformatted("Game Over");
@@ -179,8 +180,8 @@ public class BreakoutGame : IExample
             }
             else if (gameState.State == State.Won)
             {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.FirstUseEver);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.FirstUseEver);
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
+                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
                 if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
                 {
                     ImGui.TextUnformatted("You Won!");
@@ -238,7 +239,7 @@ public class BreakoutGame : IExample
             }
         }))
         .AddSystem(CoreStage.First, FnSystem("BallSpawner",
-        static (Commands commands, GameState gameState, IWindow window, EventReader<Event.SpawnBall> eSpawnBall) =>
+        static (Commands commands, GameState gameState, IWindow window, Random random, EventReader<Event.SpawnBall> eSpawnBall) =>
         {
             if (!eSpawnBall.HasAny) return;
             var spawns = eSpawnBall.Read();
@@ -246,7 +247,7 @@ public class BreakoutGame : IExample
             for (int i = 0; i < spawns[0].Count; i++)
                 commands.Spawn(Entity.With(
                     new Ball(),
-                    new Velocity { Value = 400f * new Vec2f(((float)Random.Shared.NextDouble() * 2f - 1f).Wrap(-0.25f, 0.25f), (float)Random.Shared.NextDouble()).Normalized() },
+                    new Velocity { Value = 400f * new Vec2f((random.NextFloat() * 2f - 1f).Wrap(-0.25f, 0.25f), random.NextFloat()).Normalized() },
                     new Transform2
                     {
                         Position = (window.Size.X / 2f, 128f),
@@ -433,7 +434,7 @@ public class BreakoutGame : IExample
             });
         }).After("VelocitySystem"))
         .AddSystem(CoreStage.Last, FnSystem("BrickEventsSystem",
-        static (Commands commands, GameState gameState, AssetServer assetServer,
+        static (Commands commands, GameState gameState, AssetServer assetServer, Random random,
                 EventReader<Event.BrickDestroyed> eBrickDestroyed,
                 EventReader<Event.Collision> eCollision
         ) =>
@@ -451,8 +452,8 @@ public class BreakoutGame : IExample
                     new MainMixer(),
                     new AudioSource
                     {
-                        Gain = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
-                        Pitch = (float)Random.Shared.NextDouble().Wrap(0.8, 1),
+                        Gain = random.NextFloat().Wrap(0.8f, 1f),
+                        Pitch = random.NextFloat().Wrap(0.8f, 1f),
                         Mode = PlaybackMode.Once
                     },
                     new AudioPlayback
