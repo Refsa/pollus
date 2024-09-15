@@ -73,6 +73,11 @@ unsafe public struct GPUCommandEncoder : IDisposable
         return new GPURenderPassEncoder(context, native, wgpuDescriptor);
     }
 
+    public GPUComputePassEncoder BeginComputePass(string label)
+    {
+        return new GPUComputePassEncoder(context, this, label);
+    }
+
     public void CopyTextureToTexture(GPUTexture srcTex, GPUTexture dstTex, Extent3D copySize)
     {
         var silkExtents = new Silk.NET.WebGPU.Extent3D(copySize.Width, copySize.Height, copySize.DepthOrArrayLayers);

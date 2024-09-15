@@ -11,6 +11,7 @@ public enum BindingType
     Uniform,
     Texture,
     Sampler,
+    Buffer,
 }
 
 public interface IBinding
@@ -35,7 +36,7 @@ public class UniformBinding<T> : IBinding
         var handle = new Handle<UniformAsset<T>>(0);
         renderAssets.Prepare(gpuContext, assetServer, handle);
         var renderData = renderAssets.Get<UniformRenderData>(handle);
-        var uniform = renderAssets.Get<GPUBuffer>(renderData.UniformBuffer);
+        var uniform = renderAssets.Get(renderData.UniformBuffer);
 
         return BindGroupEntry.BufferEntry<T>(binding, uniform, 0);
     }
@@ -55,7 +56,7 @@ public class TextureBinding : IBinding
     {
         renderAssets.Prepare(gpuContext, assetServer, Image);
         var renderAsset = renderAssets.Get<TextureRenderData>(Image);
-        var textureView = renderAssets.Get<GPUTextureView>(renderAsset.View);
+        var textureView = renderAssets.Get(renderAsset.View);
         return BindGroupEntry.TextureEntry(binding, textureView);
     }
 }
@@ -74,7 +75,29 @@ public class SamplerBinding : IBinding
     {
         renderAssets.Prepare(gpuContext, assetServer, Sampler);
         var renderAsset = renderAssets.Get<SamplerRenderData>(Sampler);
-        var sampler = renderAssets.Get<GPUSampler>(renderAsset.Sampler);
+        var sampler = renderAssets.Get(renderAsset.Sampler);
         return BindGroupEntry.SamplerEntry(binding, sampler);
+    }
+}
+
+public class BufferBinding<TElement> : IBinding
+    where TElement : unmanaged, IShaderType
+{
+    public BindingType Type => BindingType.Buffer;
+    public required ShaderStage Visibility { get; init; }
+    public required BufferBindingType BufferType { get; init; }
+    public required Handle<Buffer> Buffer { get; set; }
+
+    public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
+    {
+        renderAssets.Prepare(gpuContext, assetServer, Buffer);
+        var renderAsset = renderAssets.Get<BufferRenderData>(Buffer);
+        var buffer = renderAssets.Get(renderAsset.Buffer);
+        return BindGroupEntry.BufferEntry<TElement>(binding, buffer, 0);
+    }
+
+    public BindGroupLayoutEntry Layout(uint binding)
+    {
+        return BindGroupLayoutEntry.BufferEntry<TElement>(binding, Visibility, BufferType);
     }
 }

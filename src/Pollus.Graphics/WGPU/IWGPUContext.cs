@@ -53,6 +53,7 @@ unsafe public interface IWGPUContext : IDisposable
     GPUSampler CreateSampler(SamplerDescriptor descriptor) => new(this, descriptor);
     GPUBindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
     GPUBindGroup CreateBindGroup(BindGroupDescriptor descriptor) => new(this, descriptor);
+    GPUComputePipeline CreateComputePipeline(ComputePipelineDescriptor descriptor) => new(this, descriptor);
 
     void QueuePoll() => wgpu.QueueSubmit(Queue, 0, null);
 }

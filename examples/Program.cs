@@ -14,6 +14,7 @@ if (args.Length < 1)
     Console.WriteLine("  collision");
     Console.WriteLine("  frame-graph");
     Console.WriteLine("  sprite-benchmark");
+    Console.WriteLine("  compute");
     return;
 }
 
@@ -29,6 +30,7 @@ IExample? example = args[0] switch
     "collision" => new CollisionExample(),
     "frame-graph" => new FrameGraphExample(),
     "sprite-benchmark" => new SpriteBenchmark(),
+    "compute" => new ComputeExample(),
     _ => null
 };
 

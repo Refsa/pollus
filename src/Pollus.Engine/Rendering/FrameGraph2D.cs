@@ -183,9 +183,9 @@ public class FrameGraph2DPlugin : IPlugin
                 var colorTexture = context.Resources.GetTexture(data.ColorAttachment);
                 var backbufferTexture = context.Resources.GetTexture(data.Backbuffer);
 
-                param.RenderAssets.Get<Blit>(Blit.Handle).BlitTexture(
+                param.RenderAssets.Get(Blit.Handle).BlitTexture(
                     context.GPUContext, commandEncoder,
-                    colorTexture.TextureView, backbufferTexture.TextureView);
+                    colorTexture.TextureView, backbufferTexture.TextureView, Color.BLACK);
             });
 
             renderGraph.BeginFrame(frameGraph, param);

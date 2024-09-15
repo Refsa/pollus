@@ -60,12 +60,12 @@ public class AssetServer : IDisposable
 
         if (!AssetIO.Exists(path))
         {
-            return new Handle(-1, -1);
+            return Handle<TAsset>.Null;
         }
 
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx))
         {
-            return new Handle(-1, -1);
+            return Handle<TAsset>.Null;
         }
 
         var loader = loaders[loaderIdx];
@@ -85,6 +85,6 @@ public class AssetServer : IDisposable
             return handle;
         }
 
-        return new Handle(-1, -1);
+        return Handle<TAsset>.Null;
     }
 }

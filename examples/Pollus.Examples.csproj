@@ -60,5 +60,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Pollus.Engine\Pollus.Engine.csproj" />
+    <ProjectReference Include="..\src\Pollus.Generators\Pollus.Generators.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

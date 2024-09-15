@@ -29,6 +29,11 @@ public class RenderAssets : IRenderAssets, IDisposable
         renderData.Clear();
     }
 
+    public bool Has(Handle handle)
+    {
+        return renderData.ContainsKey(handle);
+    }
+
     IRenderAssets IRenderAssets.Add<T>(Handle handle, T data)
     {
         return Add(handle, data);
