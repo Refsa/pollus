@@ -5,20 +5,6 @@ using System.Runtime.InteropServices;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 
-public ref struct ComputePipelineDescriptor
-{
-    public string Label { get; init; }
-    public GPUPipelineLayout? Layout { get; init; }
-    public ProgrammableStageDescriptor Compute { get; init; }
-}
-
-public ref struct ProgrammableStageDescriptor
-{
-    public GPUShader Shader { get; init; }
-    public string EntryPoint { get; init; }
-    public ReadOnlySpan<ConstantEntry> Constants { get; init; }
-}
-
 unsafe public class GPUComputePipeline : GPUResourceWrapper
 {
     Silk.NET.WebGPU.ComputePipeline* native;
