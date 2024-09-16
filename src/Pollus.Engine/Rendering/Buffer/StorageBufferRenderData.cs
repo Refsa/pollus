@@ -20,16 +20,18 @@ public class StorageBufferRenderDataLoader : IRenderDataLoader
         var buffer = assetServer.GetAssets<StorageBuffer>().Get(handle)
             ?? throw new InvalidOperationException("Buffer asset not found");
 
+        var gpuBuffer = gpuContext.CreateBuffer(new()
+        {
+            Label = buffer.GetType().Name,
+            Size = buffer.SizeInBytes,
+            Usage = buffer.Usage,
+        });
         var bufferData = new StorageBufferRenderData
         {
-            Buffer = renderAssets.Add(gpuContext.CreateBuffer(new()
-            {
-                Label = buffer.GetType().Name,
-                Size = buffer.SizeInBytes,
-                Usage = buffer.Usage,
-            })),
+            Buffer = renderAssets.Add(gpuBuffer),
             Stride = buffer.Stride,
         };
+        buffer.WriteTo(gpuBuffer, 0);
 
         renderAssets.Add(handle, bufferData);
     }

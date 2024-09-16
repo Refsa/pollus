@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using System.Reflection.Metadata;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
@@ -143,25 +142,18 @@ public partial class ComputeExample : IExample
                 });
             }))
             .AddSystem(CoreStage.Render, SystemBuilder.FnSystem("Compute",
-            static (Local<bool> initialized,
-                    RenderContext renderContext, RenderAssets renderAssets, AssetServer assetServer,
+            static (RenderContext renderContext, RenderAssets renderAssets, AssetServer assetServer,
                     Random random, IWindow window, ComputeData computeData) =>
             {
                 if (!renderAssets.Has(computeData.Compute)) return;
 
                 var compute = renderAssets.Get<ComputeRenderData>(computeData.Compute);
-                var pipeline = renderAssets.Get<GPUComputePipeline>(compute.Pipeline);
+                var pipeline = renderAssets.Get(compute.Pipeline);
 
                 var particleMaterial = assetServer.GetAssets<ParticleMaterial>().Get(computeData.ParticleMaterial);
                 var particleHostBuffer = assetServer.GetAssets<StorageBuffer>().Get(particleMaterial!.ParticleBuffer.Buffer);
                 var particleBufferData = renderAssets.Get<StorageBufferRenderData>(particleMaterial!.ParticleBuffer.Buffer);
-                var particleBuffer = renderAssets.Get<GPUBuffer>(particleBufferData.Buffer);
-
-                if (!initialized.Value)
-                {
-                    particleHostBuffer!.WriteTo(particleBuffer, 0);
-                    initialized.Value = true;
-                }
+                var particleBuffer = renderAssets.Get(particleBufferData.Buffer);
 
                 var commandEncoder = renderContext.GetCurrentCommandEncoder();
                 {
@@ -169,7 +161,7 @@ public partial class ComputeExample : IExample
                     computeEncoder.SetPipeline(pipeline);
                     for (int i = 0; i < compute.BindGroups.Length; i++)
                     {
-                        computeEncoder.SetBindGroup((uint)i, renderAssets.Get<GPUBindGroup>(compute.BindGroups[i]));
+                        computeEncoder.SetBindGroup((uint)i, renderAssets.Get(compute.BindGroups[i]));
                     }
                     computeEncoder.Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1);
                 }
@@ -190,7 +182,7 @@ public partial class ComputeExample : IExample
                     renderEncoder.SetPipeline(renderAssets.Get(particleRenderMaterial.Pipeline));
                     for (int i = 0; i < particleRenderMaterial.BindGroups.Length; i++)
                     {
-                        renderEncoder.SetBindGroup((uint)i, renderAssets.Get<GPUBindGroup>(particleRenderMaterial.BindGroups[i]));
+                        renderEncoder.SetBindGroup((uint)i, renderAssets.Get(particleRenderMaterial.BindGroups[i]));
                     }
                     renderEncoder.SetVertexBuffer(0, particleBuffer, 0);
                     renderEncoder.Draw(4, 1_000_000, 0, 0);
