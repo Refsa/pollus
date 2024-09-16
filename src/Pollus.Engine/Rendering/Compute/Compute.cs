@@ -11,7 +11,7 @@ public interface IComputeShader
     public string Label { get; }
     public Handle<ShaderAsset> Shader { get; }
     public string EntryPoint { get; }
-    BindGroupLayoutEntry[][]? Bindings { get; }
+    IBinding[][] Bindings { get; }
 }
 
 public class ComputeShader : IComputeShader
@@ -19,76 +19,7 @@ public class ComputeShader : IComputeShader
     public required string Label { get; init; }
     public required Handle<ShaderAsset> Shader { get; init; }
     public required string EntryPoint { get; init; }
-    public BindGroupLayoutEntry[][]? Bindings { get; init; }
-}
-
-public class ComputeRenderData
-{
-    public required Handle<GPUComputePipeline> Pipeline { get; init; }
-    public required GPUBindGroupLayout[] BindGroupLayouts { get; init; }
-}
-
-public class ComputeRenderDataLoader<TCompute> : IRenderDataLoader
-    where TCompute : IComputeShader
-{
-    public int TargetType => TypeLookup.ID<TCompute>();
-
-    public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
-    {
-        var compute = assetServer.GetAssets<TCompute>().Get(handle)
-            ?? throw new InvalidOperationException("Compute shader not found");
-
-        var shaderAsset = assetServer.GetAssets<ShaderAsset>().Get(compute.Shader)
-            ?? throw new InvalidOperationException("Shader asset not found");
-
-        using var shader = gpuContext.CreateShaderModule(new()
-        {
-            Backend = ShaderBackend.WGSL,
-            Label = shaderAsset.Name,
-            Content = shaderAsset.Source,
-        });
-
-        var bindGroupLayouts = new GPUBindGroupLayout[compute.Bindings?.Length ?? 0];
-        GPUPipelineLayout? pipelineLayout = null;
-        if (compute.Bindings != null)
-        {
-            for (int g = 0; g < compute.Bindings.Length; g++)
-            {
-                var group = compute.Bindings[g];
-                bindGroupLayouts[g] = gpuContext.CreateBindGroupLayout(new()
-                {
-                    Label = $"""{compute.Label}_BindGroupLayout_{g}""",
-                    Entries = group,
-                });
-            }
-
-            pipelineLayout = gpuContext.CreatePipelineLayout(new()
-            {
-                Label = $"""{compute.Label}_PipelineLayout""",
-                Layouts = bindGroupLayouts,
-            });
-        }
-
-        var pipeline = gpuContext.CreateComputePipeline(new()
-        {
-            Label = $"""{compute.Label}_Pipeline""",
-            Layout = pipelineLayout,
-            Compute = new()
-            {
-                Shader = shader,
-                EntryPoint = compute.EntryPoint,
-            },
-        });
-
-        var output = new ComputeRenderData()
-        {
-            Pipeline = renderAssets.Add(pipeline),
-            BindGroupLayouts = bindGroupLayouts,
-        };
-        renderAssets.Add(handle, output);
-
-        pipelineLayout?.Dispose();
-    }
+    public IBinding[][] Bindings { get; init; } = [];
 }
 
 public class ComputePlugin<TCompute> : IPlugin

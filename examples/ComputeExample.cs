@@ -27,7 +27,6 @@ public partial class ComputeExample : IExample
     class ComputeData
     {
         public Handle<ComputeShader> Compute;
-        public Handle<GPUBindGroup> ComputeBindGroup = Handle<GPUBindGroup>.Null;
         public Handle<ParticleMaterial> ParticleMaterial = Handle<ParticleMaterial>.Null;
     }
 
@@ -107,6 +106,7 @@ public partial class ComputeExample : IExample
                 commands.Spawn(Camera2D.Bundle);
 
                 var particleBuffer = Buffer.From<Particle>(1_000_000);
+                var particleBufferHandle = particleBuffers.Add(particleBuffer);
                 for (int i = 0; i < particleBuffer.Capacity; i++)
                 {
                     particleBuffer.Write<Particle>(i, new Particle()
@@ -121,7 +121,7 @@ public partial class ComputeExample : IExample
                     ShaderSource = assetServer.Load<ShaderAsset>("shaders/particle.wgsl"),
                     ParticleBuffer = new()
                     {
-                        Buffer = particleBuffers.Add(particleBuffer),
+                        Buffer = particleBufferHandle,
                         BufferType = BufferBindingType.ReadOnlyStorage,
                         Visibility = ShaderStage.Vertex | ShaderStage.Fragment,
                     },
@@ -133,12 +133,21 @@ public partial class ComputeExample : IExample
                     EntryPoint = "main",
                     Shader = assetServer.Load<ShaderAsset>("shaders/compute.wgsl"),
                     Bindings = [
-                        [BindGroupLayoutEntry.BufferEntry<Particle>(0, ShaderStage.Compute, BufferBindingType.Storage)],
+                        [
+                            new BufferBinding<Particle>()
+                            {
+                                Visibility = ShaderStage.Compute,
+                                BufferType = BufferBindingType.Storage,
+                                Buffer = particleBufferHandle,
+                            }
+                        ],
                     ]
                 });
             }))
             .AddSystem(CoreStage.Render, SystemBuilder.FnSystem("Compute",
-            static (RenderContext renderContext, RenderAssets renderAssets, AssetServer assetServer, Random random, IWindow window, ComputeData computeData) =>
+            static (Local<bool> initialized,
+                    RenderContext renderContext, RenderAssets renderAssets, AssetServer assetServer,
+                    Random random, IWindow window, ComputeData computeData) =>
             {
                 if (!renderAssets.Has(computeData.Compute)) return;
 
@@ -151,26 +160,20 @@ public partial class ComputeExample : IExample
                 var particleBufferData = renderAssets.Get<BufferRenderData>(particleMaterial!.ParticleBuffer.Buffer);
                 var particleBuffer = renderAssets.Get<GPUBuffer>(particleBufferData.Buffer);
 
-                if (computeData.ComputeBindGroup == Handle<GPUBindGroup>.Null)
+                if (!initialized.Value)
                 {
                     particleHostBuffer!.WriteTo(particleBuffer, 0);
-
-                    var computeBindGroup = renderContext.GPUContext.CreateBindGroup(new()
-                    {
-                        Label = "compute",
-                        Layout = compute.BindGroupLayouts[0],
-                        Entries = [
-                            BindGroupEntry.BufferEntry<Particle>(0, particleBuffer, 0),
-                        ]
-                    });
-                    computeData.ComputeBindGroup = renderAssets.Add(computeBindGroup);
+                    initialized.Value = true;
                 }
 
                 var commandEncoder = renderContext.GetCurrentCommandEncoder();
                 {
                     using var computeEncoder = commandEncoder.BeginComputePass("compute");
                     computeEncoder.SetPipeline(pipeline);
-                    computeEncoder.SetBindGroup(0, renderAssets.Get<GPUBindGroup>(computeData.ComputeBindGroup));
+                    for (int i = 0; i < compute.BindGroups.Length; i++)
+                    {
+                        computeEncoder.SetBindGroup((uint)i, renderAssets.Get<GPUBindGroup>(compute.BindGroups[i]));
+                    }
                     computeEncoder.Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1);
                 }
                 {
@@ -187,7 +190,10 @@ public partial class ComputeExample : IExample
                         ]
                     });
                     renderEncoder.SetPipeline(renderAssets.Get(particleRenderMaterial.Pipeline));
-                    renderEncoder.SetBindGroup(0, renderAssets.Get<GPUBindGroup>(particleRenderMaterial.BindGroups[0]));
+                    for (int i = 0; i < particleRenderMaterial.BindGroups.Length; i++)
+                    {
+                        renderEncoder.SetBindGroup((uint)i, renderAssets.Get<GPUBindGroup>(particleRenderMaterial.BindGroups[i]));
+                    }
                     renderEncoder.SetVertexBuffer(0, particleBuffer, 0);
                     renderEncoder.Draw(4, 1_000_000, 0, 0);
                 }

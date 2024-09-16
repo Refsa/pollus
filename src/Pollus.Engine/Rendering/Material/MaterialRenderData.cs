@@ -7,8 +7,8 @@ using Pollus.Utils;
 
 public class MaterialRenderData
 {
-    public required Handle<GPUBindGroup>[] BindGroups { get; init; }
     public required Handle<GPURenderPipeline> Pipeline { get; init; }
+    public required Handle<GPUBindGroup>[] BindGroups { get; init; }
 }
 
 public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
@@ -72,8 +72,8 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
 
         renderAssets.Add(handle, new MaterialRenderData
         {
-            BindGroups = bindGroups.Select(e => renderAssets.Add(e)).ToArray(),
             Pipeline = renderAssets.Add(pipeline),
+            BindGroups = bindGroups.Select(e => renderAssets.Add(e)).ToArray(),
         });
 
         foreach (var bindGroupLayout in bindGroupLayouts)
