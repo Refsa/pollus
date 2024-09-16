@@ -6,15 +6,15 @@ public struct BlendState
     {
         Color = new BlendComponent
         {
-            Operation = Silk.NET.WebGPU.BlendOperation.Add,
-            SrcFactor = Silk.NET.WebGPU.BlendFactor.SrcAlpha,
-            DstFactor = Silk.NET.WebGPU.BlendFactor.OneMinusSrcAlpha,
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
         },
         Alpha = new BlendComponent
         {
-            Operation = Silk.NET.WebGPU.BlendOperation.Add,
-            SrcFactor = Silk.NET.WebGPU.BlendFactor.One,
-            DstFactor = Silk.NET.WebGPU.BlendFactor.Zero,
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.One,
+            DstFactor = BlendFactor.Zero,
         },
     };
 

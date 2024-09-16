@@ -28,13 +28,14 @@ struct SceneUniform {
 fn vs_main(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     
-    let vo = vec2f(f32(in.vertex_index & 0x1u), f32((in.vertex_index & 0x2u) >> 1u)) * 16.0;
+    var vo = vec2f(f32(in.vertex_index & 0x1u), f32((in.vertex_index & 0x2u) >> 1u)) * 24.0;
+    vo = vo - vec2f(12.0, 12.0);
     let vertex = scene_uniform.projection * scene_uniform.view * vec4f(in.position + vo, 0.0, 1.0);
 
     out.position = vertex;
     out.uv = vec2f(
-        f32((in.vertex_index << 1u) & 2u),
-        f32(in.vertex_index & 2u)
+        f32(in.vertex_index & 1u),
+        f32((in.vertex_index & 2u) >> 1u)
     );
     out.uv.y = 1.0 - out.uv.y;
 
@@ -43,5 +44,10 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-    return vec4(in.uv, 0.0, 1.0);
+    let dist = length(in.uv - vec2f(0.5, 0.5));
+    let dist_inv = 1.0 - dist;
+    let color = vec3f(1.0, 1.0, 1.0) * pow(1.0 - dist, 10.0);
+    return vec4f(color, pow(dist_inv, 10.0));
+
+    // return vec4(in.uv, 0.0, 1.0);
 }

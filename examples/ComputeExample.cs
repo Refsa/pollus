@@ -5,6 +5,7 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
+using Pollus.Engine.Debug;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -59,6 +60,21 @@ public partial class ComputeExample : IExample
                 FrontFace = FrontFace.CW,
             },
         };
+        public static BlendState? Blend => BlendState.Default with
+        {
+            Color = new()
+            {
+                SrcFactor = BlendFactor.SrcAlpha,
+                DstFactor = BlendFactor.OneMinusSrcAlpha,
+                Operation = BlendOperation.Add,
+            },
+            Alpha = new()
+            {
+                SrcFactor = BlendFactor.One,
+                DstFactor = BlendFactor.Zero,
+                Operation = BlendOperation.Add,
+            },
+        };
 
         public required Handle<ShaderAsset> ShaderSource { get; set; }
         public required BufferBinding<Particle> ParticleBuffer { get; set; }
@@ -79,6 +95,7 @@ public partial class ComputeExample : IExample
                 new ComputePlugin<ComputeShader>(),
                 new MaterialPlugin<ParticleMaterial>(),
                 new RandomPlugin(),
+                new PerformanceTrackerPlugin(),
             ])
             .AddResource(new ComputeData())
             .AddSystem(CoreStage.Init, SystemBuilder.FnSystem("Setup",
@@ -89,8 +106,8 @@ public partial class ComputeExample : IExample
             {
                 commands.Spawn(Camera2D.Bundle);
 
-                var particleBuffer = Buffer.From<Particle>(1000);
-                for (int i = 0; i < 1000; i++)
+                var particleBuffer = Buffer.From<Particle>(1_000_000);
+                for (int i = 0; i < particleBuffer.Capacity; i++)
                 {
                     particleBuffer.Write<Particle>(i, new Particle()
                     {
@@ -154,7 +171,7 @@ public partial class ComputeExample : IExample
                     using var computeEncoder = commandEncoder.BeginComputePass("compute");
                     computeEncoder.SetPipeline(pipeline);
                     computeEncoder.SetBindGroup(0, renderAssets.Get<GPUBindGroup>(computeData.ComputeBindGroup));
-                    computeEncoder.Dispatch(1000, 1, 1);
+                    computeEncoder.Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1);
                 }
                 {
                     using var renderEncoder = commandEncoder.BeginRenderPass(new()
@@ -172,7 +189,7 @@ public partial class ComputeExample : IExample
                     renderEncoder.SetPipeline(renderAssets.Get(particleRenderMaterial.Pipeline));
                     renderEncoder.SetBindGroup(0, renderAssets.Get<GPUBindGroup>(particleRenderMaterial.BindGroups[0]));
                     renderEncoder.SetVertexBuffer(0, particleBuffer, 0);
-                    renderEncoder.Draw(4, 1000, 0, 0);
+                    renderEncoder.Draw(4, 1_000_000, 0, 0);
                 }
             }).After(FrameGraph2DPlugin.Render))
             .Build();

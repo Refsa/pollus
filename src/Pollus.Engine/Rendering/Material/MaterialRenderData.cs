@@ -63,6 +63,7 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
                 ColorTargetState.Default with
                 {
                     Format = gpuContext.GetSurfaceFormat(),
+                    Blend = TMaterial.Blend ?? BlendState.Default,
                 }
             ]
         };

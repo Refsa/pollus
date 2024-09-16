@@ -36,6 +36,7 @@ public class SpriteBenchmark : IExample
                 new AssetPlugin{ RootPath = "assets"},
                 new RenderingPlugin(),
                 new InputPlugin(),
+                new RandomPlugin(),
             ])
             .AddResource(new SharedAssets())
             .AddSystem(CoreStage.PostInit, SystemBuilder.FnSystem("SpriteBenchmark::Setup",
