@@ -50,10 +50,13 @@ $param_fields$
 $do_fetches$
         };
     }
+
+    public void Deconstruct($deconstruct_args$)
+    {
+$deconstruct_assignments$
+    }
 }
         ";
-
-        var sb = new StringBuilder();
 
         var gen_args = "T0";
         var fetch_infos = "\tstatic readonly Fetch.Info t0Fetch;";
@@ -62,6 +65,8 @@ $do_fetches$
         var dependencies = ".. t0Fetch.Dependencies";
         var param_fields = "\tpublic T0 Param0;";
         var do_fetches = "\t\t\tParam0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, system),";
+        var deconstruct_args = "out T0 param0";
+        var deconstruct_assignments = "param0 = Param0;";
 
         for (int i = 1; i < 16; i++)
         {
@@ -72,6 +77,8 @@ $do_fetches$
             dependencies += $", .. t{i}Fetch.Dependencies";
             param_fields += $"\n\tpublic T{i} Param{i};";
             do_fetches += $"\n\t\t\tParam{i} = ((IFetch<T{i}>)t{i}Fetch.Fetch).DoFetch(world, system),";
+            deconstruct_args += $", out T{i} param{i}";
+            deconstruct_assignments += $"\n\t\tparam{i} = Param{i};";
 
             context.AddSource($"SystemParams{i}.gen.cs", TEMPLATE
                 .Replace("$gen_args$", gen_args)
@@ -80,7 +87,10 @@ $do_fetches$
                 .Replace("$assign_fetch_infos$", assign_fetch_infos)
                 .Replace("$dependencies$", dependencies)
                 .Replace("$param_fields$", param_fields)
-                .Replace("$do_fetches$", do_fetches));
+                .Replace("$do_fetches$", do_fetches)
+                .Replace("$deconstruct_args$", deconstruct_args)
+                .Replace("$deconstruct_assignments$", deconstruct_assignments)
+            );
         }
 
     }

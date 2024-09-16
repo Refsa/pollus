@@ -47,12 +47,14 @@ public class RenderingPlugin : IPlugin
             {
                 Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
                 {
-                    uniform.Time = (float)param.Param0.DeltaTime;
-                    Guard.IsTrue(param.Param1.EntityCount() > 0, "No camera entity found");
+                    var (time, qCamera) = param;
 
-                    var qCamera = param.Param1.Single();
-                    uniform.Projection = qCamera.Component0.GetProjection();
-                    uniform.View = qCamera.Component1.ToMat4f();
+                    uniform.Time = (float)time.DeltaTime;
+                    Guard.IsTrue(qCamera.EntityCount() > 0, "No camera entity found");
+
+                    var camera = qCamera.Single();
+                    uniform.Projection = camera.Component0.GetProjection();
+                    uniform.View = camera.Component1.ToMat4f();
                 }
             }
         ]);
