@@ -12,8 +12,6 @@ using Pollus.Utils;
 public class RenderingPlugin : IPlugin
 {
     public const string SetupSystem = "Rendering::Setup";
-    public const string UpdateSceneUniformSystem = "Rendering::UpdateSceneUniform";
-    public const string PrepareSceneUniformSystem = "Rendering::PrepareSceneUniform";
     public const string BeginFrameSystem = "Rendering::BeginFrame";
     public const string EndFrameSystem = "Rendering::EndFrame";
     public const string RenderStepsCleanupSystem = "Rendering::RenderStepsCleanup";
@@ -27,7 +25,6 @@ public class RenderingPlugin : IPlugin
             .AddLoader(new TextureRenderDataLoader<Texture2D>())
             .AddLoader(new SamplerRenderDataLoader())
             .AddLoader(new StorageBufferRenderDataLoader())
-            .AddLoader(new UniformRenderDataLoader<SceneUniform>())
         );
 
         var assetServer = world.Resources.Get<AssetServer>();

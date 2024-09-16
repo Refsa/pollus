@@ -17,8 +17,8 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
 
     public void Apply(World world)
     {
-        var assetServer = world.Resources.Get<AssetServer>();
-        assetServer.GetAssets<Uniform<TUniform>>().Add(new Uniform<TUniform>());
+        world.Resources.Get<AssetServer>().GetAssets<Uniform<TUniform>>().Add(new Uniform<TUniform>());
+        world.Resources.Get<RenderAssets>().AddLoader(new UniformRenderDataLoader<TUniform>());
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             $"{typeof(TUniform).Name}UpdateSystem",

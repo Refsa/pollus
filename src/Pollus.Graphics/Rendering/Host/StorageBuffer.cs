@@ -23,6 +23,12 @@ public class StorageBuffer : IBufferData
         data = new byte[stride * capacity];
     }
 
+    /// <summary>
+    /// Creates a new storage buffer with the specified capacity and usage.
+    /// <para>
+    /// BufferUsage.Storage is always added to the usage.
+    /// </para>
+    /// </summary>
     public static StorageBuffer From<TElement>(uint capacity, BufferUsage usage)
         where TElement : unmanaged, IShaderType
     {

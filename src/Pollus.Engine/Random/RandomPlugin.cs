@@ -39,6 +39,7 @@ public class Random
     }
 
     public float NextFloat() => Source.NextSingle();
+    public float NextFloat(float min, float max) => min + (max - min) * NextFloat();
     public Vec2f NextVec2f() => new(NextFloat() * 2f - 1f, NextFloat() * 2f - 1f);
     public Vec3f NextVec3f() => new(NextFloat(), NextFloat(), NextFloat());
     public Vec4f NextVec4f() => new(NextFloat(), NextFloat(), NextFloat(), NextFloat());

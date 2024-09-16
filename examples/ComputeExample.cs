@@ -23,6 +23,15 @@ public partial class ComputeExample : IExample
         public Vec2f Velocity;
     }
 
+    [ShaderType]
+    partial struct SceneData
+    {
+        public float Time;
+        public float DeltaTime;
+        public uint Width;
+        public uint Height;
+    }
+
     class ComputeData
     {
         public Handle<ComputeShader> Compute = Handle<ComputeShader>.Null;
@@ -33,12 +42,7 @@ public partial class ComputeExample : IExample
     {
         public static string Name => "particle";
 
-        public static VertexBufferLayout[] VertexLayouts => [
-            VertexBufferLayout.Instance(0, [
-                VertexFormat.Float32x2,
-                VertexFormat.Float32x2,
-            ])
-        ];
+        public static VertexBufferLayout[] VertexLayouts => [];
         public static RenderPipelineDescriptor PipelineDescriptor => new()
         {
             Label = "particle",
@@ -60,16 +64,10 @@ public partial class ComputeExample : IExample
         };
         public static BlendState? Blend => BlendState.Default with
         {
-            Color = new()
+            Alpha = new()
             {
                 SrcFactor = BlendFactor.SrcAlpha,
                 DstFactor = BlendFactor.OneMinusSrcAlpha,
-                Operation = BlendOperation.Add,
-            },
-            Alpha = new()
-            {
-                SrcFactor = BlendFactor.One,
-                DstFactor = BlendFactor.Zero,
                 Operation = BlendOperation.Add,
             },
         };
@@ -94,6 +92,17 @@ public partial class ComputeExample : IExample
                 new MaterialPlugin<ParticleMaterial>(),
                 new RandomPlugin(),
                 new PerformanceTrackerPlugin(),
+                new UniformPlugin<SceneData, Param<Time, IWindow>>()
+                {
+                    Extract = static (in Param<Time, IWindow> param, ref SceneData sceneData) =>
+                    {
+                        var (time, window) = param;
+                        sceneData.Time = (float)time.SecondsSinceStartup;
+                        sceneData.DeltaTime = (float)time.DeltaTime;
+                        sceneData.Width = (uint)window.Size.X;
+                        sceneData.Height = (uint)window.Size.Y;
+                    }
+                },
             ])
             .AddResource(new ComputeData())
             .AddSystem(CoreStage.Init, SystemBuilder.FnSystem("Setup",
@@ -104,14 +113,14 @@ public partial class ComputeExample : IExample
             {
                 commands.Spawn(Camera2D.Bundle);
 
-                var particleBuffer = StorageBuffer.From<Particle>(1_000_000, BufferUsage.CopyDst | BufferUsage.Vertex);
+                var particleBuffer = StorageBuffer.From<Particle>(1_000_000, BufferUsage.CopyDst);
                 var particleBufferHandle = particleBuffers.Add(particleBuffer);
                 for (int i = 0; i < particleBuffer.Capacity; i++)
                 {
                     particleBuffer.Write<Particle>(i, new Particle()
                     {
-                        Position = new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
-                        Velocity = random.NextVec2f().Normalized(),
+                        Position = new Vec2f(random.NextFloat(0, window.Size.X), random.NextFloat(0, window.Size.Y)),
+                        Velocity = random.NextVec2f().Normalized() * random.NextFloat(5f, 50f),
                     });
                 }
 
@@ -137,6 +146,10 @@ public partial class ComputeExample : IExample
                             Visibility = ShaderStage.Compute,
                             BufferType = BufferBindingType.Storage,
                             Buffer = particleBufferHandle,
+                        },
+                        new UniformBinding<SceneData>()
+                        {
+                            Visibility = ShaderStage.Compute,
                         }
                     ]]
                 });
@@ -150,9 +163,9 @@ public partial class ComputeExample : IExample
                 var compute = renderAssets.Get<ComputeRenderData>(computeData.Compute);
                 var pipeline = renderAssets.Get(compute.Pipeline);
 
-                var particleMaterial = assetServer.GetAssets<ParticleMaterial>().Get(computeData.ParticleMaterial);
-                var particleHostBuffer = assetServer.GetAssets<StorageBuffer>().Get(particleMaterial!.ParticleBuffer.Buffer);
-                var particleBufferData = renderAssets.Get<StorageBufferRenderData>(particleMaterial!.ParticleBuffer.Buffer);
+                var particleMaterial = assetServer.GetAssets<ParticleMaterial>().Get(computeData.ParticleMaterial)!;
+                var particleHostBuffer = assetServer.GetAssets<StorageBuffer>().Get(particleMaterial.ParticleBuffer.Buffer);
+                var particleBufferData = renderAssets.Get<StorageBufferRenderData>(particleMaterial.ParticleBuffer.Buffer);
                 var particleBuffer = renderAssets.Get(particleBufferData.Buffer);
 
                 var commandEncoder = renderContext.GetCurrentCommandEncoder();
@@ -184,7 +197,6 @@ public partial class ComputeExample : IExample
                     {
                         renderEncoder.SetBindGroup((uint)i, renderAssets.Get(particleRenderMaterial.BindGroups[i]));
                     }
-                    renderEncoder.SetVertexBuffer(0, particleBuffer, 0);
                     renderEncoder.Draw(4, 1_000_000, 0, 0);
                 }
             }).After(FrameGraph2DPlugin.Render))
