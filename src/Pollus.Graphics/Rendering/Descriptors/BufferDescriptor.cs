@@ -48,4 +48,16 @@ public struct BufferDescriptor
             MappedAtCreation = false,
         };
     }
+
+    public static BufferDescriptor Storage<TElement>(string label, uint size)
+        where TElement : unmanaged, IShaderType
+    {
+        return new BufferDescriptor
+        {
+            Label = label,
+            Usage = BufferUsage.Storage | BufferUsage.CopyDst,
+            Size = Alignment.AlignedSize<TElement>(size),
+            MappedAtCreation = false,
+        };
+    }
 }

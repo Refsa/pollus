@@ -80,6 +80,17 @@ public partial class ComputeExample : IExample
         ]];
     }
 
+    struct ComputePassData
+    {
+        public ResourceHandle<BufferResource> ParticleBuffer;
+    }
+
+    struct ParticlePassData
+    {
+        public ResourceHandle<TextureResource> ColorAttachment;
+        public ResourceHandle<BufferResource> ParticleBuffer;
+    }
+
     IApplication? app;
 
     public void Run()
@@ -88,7 +99,6 @@ public partial class ComputeExample : IExample
             .AddPlugins([
                 new AssetPlugin() {RootPath = "assets"},
                 new RenderingPlugin(),
-                new ComputePlugin<ComputeShader>(),
                 new MaterialPlugin<ParticleMaterial>(),
                 new RandomPlugin(),
                 new PerformanceTrackerPlugin(),
@@ -154,52 +164,64 @@ public partial class ComputeExample : IExample
                     ]]
                 });
             }))
-            .AddSystem(CoreStage.Render, SystemBuilder.FnSystem("Compute",
-            static (RenderContext renderContext, RenderAssets renderAssets, AssetServer assetServer,
-                    Random random, IWindow window, ComputeData computeData) =>
+            .AddSystem(CoreStage.PreRender, SystemBuilder.FnSystem("PrepareRender",
+            static (FrameGraph2D frameGraph, RenderContext renderContext, RenderAssets renderAssets, ComputeData computeData) =>
             {
-                if (!renderAssets.Has(computeData.Compute)) return;
+                frameGraph.FrameGraph.AddBuffer(BufferDescriptor.Storage<Particle>("particles_buffer", 1_000_000));
 
-                var compute = renderAssets.Get<ComputeRenderData>(computeData.Compute);
-                var pipeline = renderAssets.Get(compute.Pipeline);
-
-                var particleMaterial = assetServer.GetAssets<ParticleMaterial>().Get(computeData.ParticleMaterial)!;
-                var particleHostBuffer = assetServer.GetAssets<StorageBuffer>().Get(particleMaterial.ParticleBuffer.Buffer);
-                var particleBufferData = renderAssets.Get<StorageBufferRenderData>(particleMaterial.ParticleBuffer.Buffer);
-                var particleBuffer = renderAssets.Get(particleBufferData.Buffer);
-
-                var commandEncoder = renderContext.GetCurrentCommandEncoder();
+                frameGraph.AddPass(RenderStep2D.Main,
+                static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref ComputePassData data) =>
                 {
-                    using var computeEncoder = commandEncoder.BeginComputePass("compute");
-                    computeEncoder.SetPipeline(pipeline);
-                    for (int i = 0; i < compute.BindGroups.Length; i++)
+                    data.ParticleBuffer = builder.Writes<BufferResource>("particles_buffer");
+                },
+                static (context, param, data) =>
+                {
+                    var computeData = param.Resources.Get<ComputeData>();
+                    var compute = param.RenderAssets.Get<ComputeRenderData>(computeData.Compute);
+                    using var computeEncoder = context.GetCurrentCommandEncoder().BeginComputePass("""particles_compute""");
+
+                    ComputeCommands.Builder
+                        .SetPipeline(compute.Pipeline)
+                        .SetBindGroups(0, compute.BindGroups)
+                        .Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1)
+                        .ApplyAndDispose(computeEncoder, param.RenderAssets);
+                });
+
+                frameGraph.AddPass(RenderStep2D.Main,
+                static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref ParticlePassData data) =>
+                {
+                    data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget);
+                    data.ParticleBuffer = builder.Reads<BufferResource>("particles_buffer");
+                },
+                static (context, param, data) =>
+                {
+                    var computeData = param.Resources.Get<ComputeData>();
+                    var particleMaterial = param.RenderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
+
+                    var cmd = new RenderCommands();
+                    cmd.SetPipeline(particleMaterial.Pipeline);
+                    for (int i = 0; i < particleMaterial.BindGroups.Length; i++)
                     {
-                        computeEncoder.SetBindGroup((uint)i, renderAssets.Get(compute.BindGroups[i]));
+                        cmd.SetBindGroup((uint)i, particleMaterial.BindGroups[i]);
                     }
-                    computeEncoder.Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1);
-                }
-                {
-                    var particleRenderMaterial = renderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
-                    using var renderEncoder = commandEncoder.BeginRenderPass(new()
+                    cmd.Draw(4, 1_000_000, 0, 0);
+
+                    using var renderEncoder = context.GetCurrentCommandEncoder().BeginRenderPass(new()
                     {
+                        Label = """particles_render""",
                         ColorAttachments = [
                             new()
                             {
-                                View = renderContext.SurfaceTextureView!.Value.Native,
-                                LoadOp = LoadOp.Clear,
+                                View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
+                                LoadOp = LoadOp.Load,
                                 StoreOp = StoreOp.Store,
-                                ClearValue = new(0.1f, 0.1f, 0.1f, 1.0f),
                             }
                         ]
                     });
-                    renderEncoder.SetPipeline(renderAssets.Get(particleRenderMaterial.Pipeline));
-                    for (int i = 0; i < particleRenderMaterial.BindGroups.Length; i++)
-                    {
-                        renderEncoder.SetBindGroup((uint)i, renderAssets.Get(particleRenderMaterial.BindGroups[i]));
-                    }
-                    renderEncoder.Draw(4, 1_000_000, 0, 0);
-                }
-            }).After(FrameGraph2DPlugin.Render))
+                    cmd.Apply(renderEncoder, param.RenderAssets);
+                    cmd.Dispose();
+                });
+            }).After(FrameGraph2DPlugin.BeginFrame))
             .Build();
         app.Run();
     }

@@ -79,6 +79,7 @@
 			- explicit mark on resource
 		- [ ] ensure stable ordering
 		- [ ] debug groups
+		- [ ] move to builder pattern for better readability and resource handling
 	- [ ] Render target
 		- [x] frame graph color targets
 	- [ ] Gizmos

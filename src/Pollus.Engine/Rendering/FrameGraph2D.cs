@@ -40,6 +40,7 @@ public class FrameGraph2D
     FrameGraph2DParam param;
 
     public ref readonly FrameGraph2DParam Param => ref param;
+    public ref FrameGraph<FrameGraph2DParam> FrameGraph => ref frameGraph;
     public bool FrameStarted => frameStarted;
 
     public void BeginFrame(FrameGraph<FrameGraph2DParam> frameGraph, FrameGraph2DParam param)
