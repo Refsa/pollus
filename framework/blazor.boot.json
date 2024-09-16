@@ -1,18 +1,18 @@
 {
   "mainAssemblyName": "Pollus.Examples.dll",
   "resources": {
-    "hash": "sha256-cbIHeXPhO2sU4cAHF25hhfZElhH1uOyzn92kzt5Udl8=",
+    "hash": "sha256-UZ6hAhrvd/bQuvjnIgqnzvUYDJo1RICec21DCECPbso=",
     "jsModuleNative": {
-      "dotnet.native.js": "sha256-hlW6sLwN8/YtvpfG7mjvUEvbyn70gyR4TjBVYeoDoTA="
+      "dotnet.native.js": "sha256-aZ/OlvvgKf0DJn9d4p0vAi/zPIFXNWlf9p271ydndhU="
     },
     "jsModuleRuntime": {
       "dotnet.runtime.js": "sha256-0Dpj/NkVD5WqSC16ZvJLmlc38iv9+Je+umYBVOycPVU="
     },
     "wasmNative": {
-      "dotnet.native.wasm": "sha256-pXo/EVtfzBTRk8+tBJ1kIBCLaEvLPVswBNYcLc8I8eM="
+      "dotnet.native.wasm": "sha256-R0TvRp/9sO0sRTO8UDlmoVlpSaoZbzP3pK8U6rdNCqQ="
     },
     "wasmSymbols": {
-      "dotnet.native.js.symbols": "sha256-b5t0J4ojuDNga4d9AFyRTujnbEeJ11WoTT27QG6BPiE="
+      "dotnet.native.js.symbols": "sha256-z5D7h2SBgdTXSZDGFQF4hEeevdWdnS+ZYqxxMfUCyCg="
     },
     "icu": {
       "icudt_CJK.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -21,13 +21,13 @@
     },
     "assembly": {
       "ImGui.NET.wasm": "sha256-OySH5jybM3Q56KnTKDgZAkFiN+hoDIWE+44WhygRmSk=",
-      "Pollus.Audio.wasm": "sha256-u5LMiM9Q9FuKLejvihj6aOltTA1TiqtHyN8KUlqb4/w=",
-      "Pollus.Core.wasm": "sha256-zpCGZHNLMq5/N3PA5tG2gDlMd1VZg50lNK8yWoO6ztU=",
-      "Pollus.ECS.wasm": "sha256-iZK0qSFra/m3diASQMNbLyvceYIgo6CADC8TX3lw04s=",
-      "Pollus.Emscripten.wasm": "sha256-Vo+RAJ26+gCA7fnHbTu2b72AnStcxnlbd5ixo8jdorw=",
-      "Pollus.Engine.wasm": "sha256-ry9fi03OtwG5UvWrvTeLzdo/HR0O4FfN89hxpPL5G+U=",
-      "Pollus.Examples.wasm": "sha256-M/Uy24xZ3LxieNonO6hyMBUNbmJKQZln0KxBPGPublo=",
-      "Pollus.Graphics.wasm": "sha256-eFAo6THpSnX3QazorHC+HhyuKtRWQ5WNyYlKiaYI38U=",
+      "Pollus.Audio.wasm": "sha256-yt0YXKehA7Kf8Ps9ClW8BjEznbqTNJdYM9OIa6n1SfU=",
+      "Pollus.Core.wasm": "sha256-VkJ4iafTnzeR6t7hPl2gGQgJr+j4uax9qR06WYdxaSM=",
+      "Pollus.ECS.wasm": "sha256-/YknuuS9wVOYwwQLzWER/gMVoiC+ZRxpKpdRQ3XWv6g=",
+      "Pollus.Emscripten.wasm": "sha256-x7AFHC7U3QzG4WtCRNPCHuHOfH32V/fLEDH7EzSuigo=",
+      "Pollus.Engine.wasm": "sha256-xrrIlYyd7U8YgcvWX77Kc4S46sdRVKkUsv4+9/guH7U=",
+      "Pollus.Examples.wasm": "sha256-UBG0toxIRsAJ2admkqWD00AeIzvVGLQJAVUXHvHKrXA=",
+      "Pollus.Graphics.wasm": "sha256-rqCK7wg7VSis7H3+hCqulVpe1nP535ZHHxj5vxYGgi8=",
       "Silk.NET.Core.wasm": "sha256-1K/Dv7SF20WVtmIqbSsSIi3ZTe7TWu4INEdfnTjCYWA=",
       "Silk.NET.OpenAL.wasm": "sha256-rtyLDTX98Qv1AfdMys9VD17wfkRF6E7o/tCzVLcmD9Y=",
       "Silk.NET.SDL.wasm": "sha256-yT64xAwb9zfOkVWj1Sxwrh3/Jn4rNM4gYNu0/vrCtFU=",
