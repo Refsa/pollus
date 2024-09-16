@@ -6,6 +6,9 @@ export const imgui = "imgui";
 export const breakout = "breakout";
 export const drawTriangle = "draw-triangle";
 export const collision = "collision";
+export const frameGraph  = "frame-graph";
+export const spriteBench = "sprite-benchmark";
+export const compute = "compute";
 
 export function setupExampleButtons() {
     var container = document.getElementsByClassName('buttons')[0];
@@ -18,7 +21,10 @@ export function setupExampleButtons() {
         imgui,
         breakout,
         drawTriangle,
-        collision
+        collision,
+        frameGraph,
+        spriteBench,
+        compute,
     ];
 
     for (const example of examples) {
