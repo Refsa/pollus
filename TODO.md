@@ -17,6 +17,9 @@
 - Assets
 	- [ ] Async loading
 	- [ ] Streaming / partial loading
+	- [ ] dependency / hierarchy
+		- an asset might require one or more other assets to complete its loading
+		- f.ex. shader imports, scene files, etc.
 - Plugins
 	- [ ] Defer applying plugins
 	- [ ] Plugin dependency graph
@@ -81,6 +84,8 @@
 	- [ ] Gizmos
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders
+		- [x] setup and run compute shaders
+		- [ ] Compute commands
 	- [ ] Culling
 	- [ ] MSAA
 - 2D Physics

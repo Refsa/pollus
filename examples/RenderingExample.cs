@@ -44,25 +44,25 @@ public class RenderingExample
                 materials.Add(new Material()
                 {
                     ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<ImageAsset>("breakout/ball_1.png"),
+                    Texture = assetServer.Load<Texture2D>("breakout/ball_1.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
                     ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<ImageAsset>("breakout/ball_2.png"),
+                    Texture = assetServer.Load<Texture2D>("breakout/ball_2.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
                     ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<ImageAsset>("breakout/ball_3.png"),
+                    Texture = assetServer.Load<Texture2D>("breakout/ball_3.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
                     ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<ImageAsset>("breakout/ball_4.png"),
+                    Texture = assetServer.Load<Texture2D>("breakout/ball_4.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
             ];

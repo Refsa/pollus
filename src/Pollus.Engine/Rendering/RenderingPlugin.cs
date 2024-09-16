@@ -24,7 +24,7 @@ public class RenderingPlugin : IPlugin
         world.Resources.Init<RenderContext>();
         world.Resources.Add(new DrawGroups2D());
         world.Resources.Add(new RenderAssets()
-            .AddLoader(new TextureRenderDataLoader())
+            .AddLoader(new TextureRenderDataLoader<Texture2D>())
             .AddLoader(new SamplerRenderDataLoader())
             .AddLoader(new StorageBufferRenderDataLoader())
             .AddLoader(new UniformRenderDataLoader<SceneUniform>())

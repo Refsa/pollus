@@ -2,12 +2,13 @@ namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
 using Pollus.Engine.Assets;
+using Pollus.Graphics.Rendering;
 
 public class ImagePlugin : IPlugin
 {
     static ImagePlugin()
     {
-        AssetsFetch<ImageAsset>.Register();
+        AssetsFetch<Texture2D>.Register();
     }
 
     public void Apply(World world)

@@ -9,10 +9,10 @@ public class TextureBinding : IBinding
 {
     public BindingType Type => BindingType.Texture;
 
-    public required Handle<ImageAsset> Image { get; set; }
+    public required Handle<Texture2D> Image { get; set; }
     public ShaderStage Visibility { get; init; } = ShaderStage.Fragment;
 
-    public static implicit operator TextureBinding(Handle<ImageAsset> image) => new() { Image = image };
+    public static implicit operator TextureBinding(Handle<Texture2D> image) => new() { Image = image };
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.TextureEntry(binding, Visibility, TextureSampleType.Float, TextureViewDimension.Dimension2D);
     public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
