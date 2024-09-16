@@ -197,15 +197,6 @@ public partial class ComputeExample : IExample
                 {
                     var computeData = param.Resources.Get<ComputeData>();
                     var particleMaterial = param.RenderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
-
-                    var cmd = new RenderCommands();
-                    cmd.SetPipeline(particleMaterial.Pipeline);
-                    for (int i = 0; i < particleMaterial.BindGroups.Length; i++)
-                    {
-                        cmd.SetBindGroup((uint)i, particleMaterial.BindGroups[i]);
-                    }
-                    cmd.Draw(4, 1_000_000, 0, 0);
-
                     using var renderEncoder = context.GetCurrentCommandEncoder().BeginRenderPass(new()
                     {
                         Label = """particles_render""",
@@ -218,8 +209,12 @@ public partial class ComputeExample : IExample
                             }
                         ]
                     });
-                    cmd.Apply(renderEncoder, param.RenderAssets);
-                    cmd.Dispose();
+
+                    RenderCommands.Builder
+                        .SetPipeline(particleMaterial.Pipeline)
+                        .SetBindGroups(0, particleMaterial.BindGroups)
+                        .Draw(4, 1_000_000, 0, 0)
+                        .ApplyAndDispose(renderEncoder, param.RenderAssets);
                 });
             }).After(FrameGraph2DPlugin.BeginFrame))
             .Build();

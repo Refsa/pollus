@@ -44,6 +44,8 @@ public struct RenderCommands : IDisposable
         commands = ArrayPool<byte>.Shared.Rent(256);
     }
 
+    public static RenderCommands Builder => new();
+
     public void Dispose()
     {
         commands.AsSpan(0, count).Clear();
@@ -64,9 +66,17 @@ public struct RenderCommands : IDisposable
             Resize();
     }
 
+    TCommand ReadCommand<TCommand>(ref int offset)
+        where TCommand : unmanaged, IRenderCommand
+    {
+        TCommand command = Unsafe.ReadUnaligned<TCommand>(ref commands[offset]);
+        offset += TCommand.SizeInBytes;
+        return command;
+    }
+
     public void WriteCommand<TCommand>(in TCommand command) where TCommand : unmanaged, IRenderCommand
     {
-        EnsureSize<SetViewport>();
+        EnsureSize<SetViewportCommand>();
         MemoryMarshal.Write(commands.AsSpan(cursor), in command);
         cursor += TCommand.SizeInBytes;
         count++;
@@ -81,47 +91,47 @@ public struct RenderCommands : IDisposable
             switch (type)
             {
                 case RenderCommandType.SetViewport:
-                    SetViewport viewportCommand = ReadCommand<SetViewport>(ref offset);
+                    SetViewportCommand viewportCommand = ReadCommand<SetViewportCommand>(ref offset);
                     viewportCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetScissorRect:
-                    SetScissorRect scissorRectCommand = ReadCommand<SetScissorRect>(ref offset);
+                    SetScissorRectCommand scissorRectCommand = ReadCommand<SetScissorRectCommand>(ref offset);
                     scissorRectCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetBlendConstant:
-                    SetBlendConstant blendConstantCommand = ReadCommand<SetBlendConstant>(ref offset);
+                    SetBlendConstantCommand blendConstantCommand = ReadCommand<SetBlendConstantCommand>(ref offset);
                     blendConstantCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetPipeline:
-                    SetPipeline pipelineCommand = ReadCommand<SetPipeline>(ref offset);
+                    SetPipelineCommand pipelineCommand = ReadCommand<SetPipelineCommand>(ref offset);
                     pipelineCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetVertexBuffer:
-                    SetVertexBuffer vertexBufferCommand = ReadCommand<SetVertexBuffer>(ref offset);
+                    SetVertexBufferCommand vertexBufferCommand = ReadCommand<SetVertexBufferCommand>(ref offset);
                     vertexBufferCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetIndexBuffer:
-                    SetIndexBuffer indexBufferCommand = ReadCommand<SetIndexBuffer>(ref offset);
+                    SetIndexBufferCommand indexBufferCommand = ReadCommand<SetIndexBufferCommand>(ref offset);
                     indexBufferCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.SetBindGroup:
-                    SetBindGroup bindGroupCommand = ReadCommand<SetBindGroup>(ref offset);
+                    SetBindGroupCommand bindGroupCommand = ReadCommand<SetBindGroupCommand>(ref offset);
                     bindGroupCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.Draw:
-                    Draw drawCommand = ReadCommand<Draw>(ref offset);
+                    DrawCommand drawCommand = ReadCommand<DrawCommand>(ref offset);
                     drawCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.DrawIndexed:
-                    DrawIndexed drawIndexedCommand = ReadCommand<DrawIndexed>(ref offset);
+                    DrawIndexedCommand drawIndexedCommand = ReadCommand<DrawIndexedCommand>(ref offset);
                     drawIndexedCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.DrawIndirect:
-                    DrawIndirect drawIndirectCommand = ReadCommand<DrawIndirect>(ref offset);
+                    DrawIndirectCommand drawIndirectCommand = ReadCommand<DrawIndirectCommand>(ref offset);
                     drawIndirectCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 case RenderCommandType.DrawIndexedIndirect:
-                    DrawIndexedIndirect drawIndexedIndirectCommand = ReadCommand<DrawIndexedIndirect>(ref offset);
+                    DrawIndexedIndirectCommand drawIndexedIndirectCommand = ReadCommand<DrawIndexedIndirectCommand>(ref offset);
                     drawIndexedIndirectCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 default:
@@ -130,20 +140,150 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    TCommand ReadCommand<TCommand>(ref int offset)
-        where TCommand : unmanaged, IRenderCommand
+    public void ApplyAndDispose(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
     {
-        TCommand command = Unsafe.ReadUnaligned<TCommand>(ref commands[offset]);
-        offset += TCommand.SizeInBytes;
-        return command;
+        Apply(renderPassEncoder, renderAssets);
+        Dispose();
     }
 
-    public struct SetViewport : IRenderCommand
+    public RenderCommands SetViewport(Vec2f origin, Vec2f size, float minDepth, float maxDepth)
     {
-        static readonly int sizeInBytes = Unsafe.SizeOf<SetViewport>();
+        WriteCommand(new SetViewportCommand
+        {
+            Origin = origin,
+            Size = size,
+            MinDepth = minDepth,
+            MaxDepth = maxDepth,
+        });
+        return this;
+    }
+
+    public RenderCommands SetScissorRect(uint x, uint y, uint width, uint height)
+    {
+        WriteCommand(new SetScissorRectCommand
+        {
+            X = x,
+            Y = y,
+            Width = width,
+            Height = height,
+        });
+        return this;
+    }
+
+    public RenderCommands SetBlendConstant(Vec4<double> blendConstant)
+    {
+        WriteCommand(new SetBlendConstantCommand
+        {
+            BlendConstant = blendConstant,
+        });
+        return this;
+    }
+
+    public RenderCommands SetPipeline(Handle<GPURenderPipeline> pipeline)
+    {
+        WriteCommand(new SetPipelineCommand
+        {
+            Pipeline = pipeline,
+        });
+        return this;
+    }
+
+    public RenderCommands SetVertexBuffer(uint slot, Handle<GPUBuffer> buffer, uint? offset = null, uint? length = null)
+    {
+        WriteCommand(new SetVertexBufferCommand
+        {
+            Slot = slot,
+            Buffer = buffer,
+            Offset = offset,
+            Length = length,
+        });
+        return this;
+    }
+
+    public RenderCommands SetIndexBuffer(Handle<GPUBuffer> buffer, IndexFormat format, uint? offset = null, uint? length = null)
+    {
+        WriteCommand(new SetIndexBufferCommand
+        {
+            Buffer = buffer,
+            Format = format,
+            Offset = offset,
+            Length = length,
+        });
+        return this;
+    }
+
+    public RenderCommands SetBindGroup(uint groupIndex, Handle<GPUBindGroup> bindGroup, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
+    {
+        WriteCommand(new SetBindGroupCommand
+        {
+            GroupIndex = groupIndex,
+            BindGroup = bindGroup,
+            DynamicOffsetCount = dynamicOffsetCount,
+            DynamicOffsets = dynamicOffsets,
+        });
+        return this;
+    }
+
+    public RenderCommands SetBindGroups(uint groupIndex, Handle<GPUBindGroup>[] bindGroups, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
+    {
+        for (int i = 0; i < bindGroups.Length; i++)
+        {
+            SetBindGroup(groupIndex + (uint)i, bindGroups[i], dynamicOffsetCount, dynamicOffsets);
+        }
+        return this;
+    }
+
+    public RenderCommands Draw(uint vertexCount, uint instanceCount, uint vertexOffset = 0, uint instanceOffset = 0)
+    {
+        WriteCommand(new DrawCommand
+        {
+            VertexCount = vertexCount,
+            InstanceCount = instanceCount,
+            VertexOffset = vertexOffset,
+            InstanceOffset = instanceOffset,
+        });
+        return this;
+    }
+
+    public RenderCommands DrawIndexed(uint indexCount, uint instanceCount, uint firstIndex = 0, int baseVertex = 0, uint firstInstance = 0)
+    {
+        WriteCommand(new DrawIndexedCommand
+        {
+            IndexCount = indexCount,
+            InstanceCount = instanceCount,
+            FirstIndex = firstIndex,
+            BaseVertex = baseVertex,
+            FirstInstance = firstInstance,
+        });
+        return this;
+    }
+
+    public RenderCommands DrawIndirect(Handle<GPUBuffer> indirectBuffer, uint indirectOffset)
+    {
+        WriteCommand(new DrawIndirectCommand
+        {
+            IndirectBuffer = indirectBuffer,
+            IndirectOffset = indirectOffset,
+        });
+        return this;
+    }
+
+    public RenderCommands DrawIndexedIndirect(Handle<GPUBuffer> indirectBuffer, uint indirectOffset)
+    {
+        WriteCommand(new DrawIndexedIndirectCommand
+        {
+            IndirectBuffer = indirectBuffer,
+            IndirectOffset = indirectOffset,
+        });
+        return this;
+    }
+
+    public struct SetViewportCommand : IRenderCommand
+    {
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetViewportCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetViewport() { }
+        public SetViewportCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetViewport;
         public required Vec2f Origin;
@@ -157,12 +297,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetScissorRect : IRenderCommand
+    public struct SetScissorRectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetScissorRect>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetScissorRectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetScissorRect() { }
+        public SetScissorRectCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetScissorRect;
         public required uint X;
@@ -176,12 +316,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetBlendConstant : IRenderCommand
+    public struct SetBlendConstantCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBlendConstant>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBlendConstantCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetBlendConstant() { }
+        public SetBlendConstantCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetBlendConstant;
         public required Vec4<double> BlendConstant;
@@ -192,12 +332,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetPipeline : IRenderCommand
+    public struct SetPipelineCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetPipeline>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetPipelineCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetPipeline() { }
+        public SetPipelineCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetPipeline;
         public required Handle<GPURenderPipeline> Pipeline;
@@ -209,12 +349,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetVertexBuffer : IRenderCommand
+    public struct SetVertexBufferCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetVertexBuffer>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetVertexBufferCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetVertexBuffer() { }
+        public SetVertexBufferCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetVertexBuffer;
         public required uint Slot;
@@ -229,12 +369,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetIndexBuffer : IRenderCommand
+    public struct SetIndexBufferCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetIndexBuffer>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetIndexBufferCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetIndexBuffer() { }
+        public SetIndexBufferCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetIndexBuffer;
         public required Handle<GPUBuffer> Buffer;
@@ -249,12 +389,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct SetBindGroup : IRenderCommand
+    public struct SetBindGroupCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBindGroup>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBindGroupCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public SetBindGroup() { }
+        public SetBindGroupCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.SetBindGroup;
         public required uint GroupIndex;
@@ -269,12 +409,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct Draw : IRenderCommand
+    public struct DrawCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<Draw>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public Draw() { }
+        public DrawCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.Draw;
         public required uint VertexCount;
@@ -288,12 +428,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct DrawIndexed : IRenderCommand
+    public struct DrawIndexedCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexed>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public DrawIndexed() { }
+        public DrawIndexedCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.DrawIndexed;
         public required uint IndexCount;
@@ -308,12 +448,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct DrawIndirect : IRenderCommand
+    public struct DrawIndirectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndirect>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndirectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public DrawIndirect() { }
+        public DrawIndirectCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.DrawIndirect;
         public required Handle<GPUBuffer> IndirectBuffer;
@@ -326,12 +466,12 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public struct DrawIndexedIndirect : IRenderCommand
+    public struct DrawIndexedIndirectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedIndirect>();
+        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedIndirectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
-        public DrawIndexedIndirect() { }
+        public DrawIndexedIndirectCommand() { }
 
         public readonly RenderCommandType Type = RenderCommandType.DrawIndexedIndirect;
         public required Handle<GPUBuffer> IndirectBuffer;
@@ -342,132 +482,5 @@ public struct RenderCommands : IDisposable
             var buffer = renderAssets.Get(IndirectBuffer);
             renderPassEncoder.DrawIndexedIndirect(buffer, IndirectOffset);
         }
-    }
-}
-
-
-public static class RenderCommandsExt
-{
-    public static ref RenderCommands SetViewport(this ref RenderCommands commands, Vec2f origin, Vec2f size, float minDepth, float maxDepth)
-    {
-        commands.WriteCommand(new RenderCommands.SetViewport
-        {
-            Origin = origin,
-            Size = size,
-            MinDepth = minDepth,
-            MaxDepth = maxDepth,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetScissorRect(this ref RenderCommands commands, uint x, uint y, uint width, uint height)
-    {
-        commands.WriteCommand(new RenderCommands.SetScissorRect
-        {
-            X = x,
-            Y = y,
-            Width = width,
-            Height = height,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetBlendConstant(this ref RenderCommands commands, Vec4<double> blendConstant)
-    {
-        commands.WriteCommand(new RenderCommands.SetBlendConstant
-        {
-            BlendConstant = blendConstant,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetPipeline(this ref RenderCommands commands, Handle<GPURenderPipeline> pipeline)
-    {
-        commands.WriteCommand(new RenderCommands.SetPipeline
-        {
-            Pipeline = pipeline,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetVertexBuffer(this ref RenderCommands commands, uint slot, Handle<GPUBuffer> buffer, uint? offset = null, uint? length = null)
-    {
-        commands.WriteCommand(new RenderCommands.SetVertexBuffer
-        {
-            Slot = slot,
-            Buffer = buffer,
-            Offset = offset,
-            Length = length,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetIndexBuffer(this ref RenderCommands commands, Handle<GPUBuffer> buffer, IndexFormat format, uint? offset = null, uint? length = null)
-    {
-        commands.WriteCommand(new RenderCommands.SetIndexBuffer
-        {
-            Buffer = buffer,
-            Format = format,
-            Offset = offset,
-            Length = length,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands SetBindGroup(this ref RenderCommands commands, uint groupIndex, Handle<GPUBindGroup> bindGroup, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)
-    {
-        commands.WriteCommand(new RenderCommands.SetBindGroup
-        {
-            GroupIndex = groupIndex,
-            BindGroup = bindGroup,
-            DynamicOffsetCount = dynamicOffsetCount,
-            DynamicOffsets = dynamicOffsets,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands Draw(this ref RenderCommands commands, uint vertexCount, uint instanceCount, uint vertexOffset = 0, uint instanceOffset = 0)
-    {
-        commands.WriteCommand(new RenderCommands.Draw
-        {
-            VertexCount = vertexCount,
-            InstanceCount = instanceCount,
-            VertexOffset = vertexOffset,
-            InstanceOffset = instanceOffset,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands DrawIndexed(this ref RenderCommands commands, uint indexCount, uint instanceCount, uint firstIndex = 0, int baseVertex = 0, uint firstInstance = 0)
-    {
-        commands.WriteCommand(new RenderCommands.DrawIndexed
-        {
-            IndexCount = indexCount,
-            InstanceCount = instanceCount,
-            FirstIndex = firstIndex,
-            BaseVertex = baseVertex,
-            FirstInstance = firstInstance,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands DrawIndirect(this ref RenderCommands commands, Handle<GPUBuffer> indirectBuffer, uint indirectOffset)
-    {
-        commands.WriteCommand(new RenderCommands.DrawIndirect
-        {
-            IndirectBuffer = indirectBuffer,
-            IndirectOffset = indirectOffset,
-        });
-        return ref commands;
-    }
-
-    public static ref RenderCommands DrawIndexedIndirect(this ref RenderCommands commands, Handle<GPUBuffer> indirectBuffer, uint indirectOffset)
-    {
-        commands.WriteCommand(new RenderCommands.DrawIndexedIndirect
-        {
-            IndirectBuffer = indirectBuffer,
-            IndirectOffset = indirectOffset,
-        });
-        return ref commands;
     }
 }
