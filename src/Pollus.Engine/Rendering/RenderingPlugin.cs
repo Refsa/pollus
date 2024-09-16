@@ -26,7 +26,7 @@ public class RenderingPlugin : IPlugin
         world.Resources.Add(new RenderAssets()
             .AddLoader(new TextureRenderDataLoader())
             .AddLoader(new SamplerRenderDataLoader())
-            .AddLoader(new BufferRenderDataLoader())
+            .AddLoader(new StorageBufferRenderDataLoader())
             .AddLoader(new UniformRenderDataLoader<SceneUniform>())
         );
 

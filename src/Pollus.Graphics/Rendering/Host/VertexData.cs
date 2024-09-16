@@ -25,7 +25,8 @@ public struct VertexData : IBufferData
     public uint Capacity => (uint)SizeInBytes / stride;
     public uint Count => (uint)data.Length / stride;
     public int AttributeCount => attributeCount;
-    public BufferType Usage => BufferType.Vertex;
+    public BufferType Type => BufferType.Vertex;
+    public BufferUsage Usage => BufferUsage.Vertex;
 
     // create array accessor
     public Span<byte> this[int index]

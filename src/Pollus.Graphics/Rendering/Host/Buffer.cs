@@ -11,7 +11,8 @@ public enum BufferType
 
 public interface IBufferData
 {
-    BufferType Usage { get; }
+    BufferUsage Usage { get; }
+    BufferType Type { get; }
     ulong SizeInBytes { get; }
 
     void WriteTo(GPUBuffer target, int offset);

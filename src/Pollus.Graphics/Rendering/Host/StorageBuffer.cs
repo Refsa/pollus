@@ -1,10 +1,8 @@
-namespace Pollus.Engine.Rendering;
-
 using System.Runtime.InteropServices;
-using Pollus.Graphics;
-using Pollus.Graphics.Rendering;
 
-public class Buffer
+namespace Pollus.Graphics.Rendering;
+
+public class StorageBuffer : IBufferData
 {
     byte[] data;
     uint capacity;
@@ -13,7 +11,11 @@ public class Buffer
     public uint Alignment { get; }
     public uint Capacity => capacity;
 
-    public Buffer(uint stride, uint alignment, uint capacity)
+    public BufferType Type => BufferType.Storage;
+    public BufferUsage Usage { get; init; } = BufferUsage.Storage;
+    public ulong SizeInBytes => (ulong)data.Length;
+
+    public StorageBuffer(uint stride, uint alignment, uint capacity)
     {
         this.capacity = capacity;
         Stride = stride;
@@ -21,10 +23,13 @@ public class Buffer
         data = new byte[stride * capacity];
     }
 
-    public static Buffer From<TElement>(uint capacity)
+    public static StorageBuffer From<TElement>(uint capacity, BufferUsage usage)
         where TElement : unmanaged, IShaderType
     {
-        return new Buffer(TElement.SizeOf, TElement.AlignOf, capacity);
+        return new StorageBuffer(TElement.SizeOf, TElement.AlignOf, capacity)
+        {
+            Usage = BufferUsage.Storage | usage
+        };
     }
 
     public Span<TElement> AsSpan<TElement>()

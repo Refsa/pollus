@@ -26,7 +26,7 @@ public partial class ComputeExample : IExample
 
     class ComputeData
     {
-        public Handle<ComputeShader> Compute;
+        public Handle<ComputeShader> Compute = Handle<ComputeShader>.Null;
         public Handle<ParticleMaterial> ParticleMaterial = Handle<ParticleMaterial>.Null;
     }
 
@@ -76,7 +76,7 @@ public partial class ComputeExample : IExample
         };
 
         public required Handle<ShaderAsset> ShaderSource { get; set; }
-        public required BufferBinding<Particle> ParticleBuffer { get; set; }
+        public required StorageBufferBinding<Particle> ParticleBuffer { get; set; }
         public IBinding[][] Bindings => [[
             new UniformBinding<SceneUniform>(),
             ParticleBuffer
@@ -101,11 +101,11 @@ public partial class ComputeExample : IExample
             static (Commands commands, Random random, IWindow window,
                     ComputeData computeData, RenderAssets renderAssets, AssetServer assetServer,
                     Assets<ComputeShader> computeShaders, Assets<ParticleMaterial> particleMaterials,
-                    Assets<Buffer> particleBuffers) =>
+                    Assets<StorageBuffer> particleBuffers) =>
             {
                 commands.Spawn(Camera2D.Bundle);
 
-                var particleBuffer = Buffer.From<Particle>(1_000_000);
+                var particleBuffer = StorageBuffer.From<Particle>(1_000_000, BufferUsage.CopyDst | BufferUsage.Vertex);
                 var particleBufferHandle = particleBuffers.Add(particleBuffer);
                 for (int i = 0; i < particleBuffer.Capacity; i++)
                 {
@@ -132,16 +132,14 @@ public partial class ComputeExample : IExample
                     Label = "compute",
                     EntryPoint = "main",
                     Shader = assetServer.Load<ShaderAsset>("shaders/compute.wgsl"),
-                    Bindings = [
-                        [
-                            new BufferBinding<Particle>()
-                            {
-                                Visibility = ShaderStage.Compute,
-                                BufferType = BufferBindingType.Storage,
-                                Buffer = particleBufferHandle,
-                            }
-                        ],
-                    ]
+                    Bindings = [[
+                        new StorageBufferBinding<Particle>()
+                        {
+                            Visibility = ShaderStage.Compute,
+                            BufferType = BufferBindingType.Storage,
+                            Buffer = particleBufferHandle,
+                        }
+                    ]]
                 });
             }))
             .AddSystem(CoreStage.Render, SystemBuilder.FnSystem("Compute",
@@ -154,10 +152,9 @@ public partial class ComputeExample : IExample
                 var compute = renderAssets.Get<ComputeRenderData>(computeData.Compute);
                 var pipeline = renderAssets.Get<GPUComputePipeline>(compute.Pipeline);
 
-                var particleRenderMaterial = renderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
                 var particleMaterial = assetServer.GetAssets<ParticleMaterial>().Get(computeData.ParticleMaterial);
-                var particleHostBuffer = assetServer.GetAssets<Buffer>().Get(particleMaterial!.ParticleBuffer.Buffer);
-                var particleBufferData = renderAssets.Get<BufferRenderData>(particleMaterial!.ParticleBuffer.Buffer);
+                var particleHostBuffer = assetServer.GetAssets<StorageBuffer>().Get(particleMaterial!.ParticleBuffer.Buffer);
+                var particleBufferData = renderAssets.Get<StorageBufferRenderData>(particleMaterial!.ParticleBuffer.Buffer);
                 var particleBuffer = renderAssets.Get<GPUBuffer>(particleBufferData.Buffer);
 
                 if (!initialized.Value)
@@ -177,6 +174,7 @@ public partial class ComputeExample : IExample
                     computeEncoder.Dispatch((uint)MathF.Ceiling(1_000_000 / 256f), 1, 1);
                 }
                 {
+                    var particleRenderMaterial = renderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
                     using var renderEncoder = commandEncoder.BeginRenderPass(new()
                     {
                         ColorAttachments = [

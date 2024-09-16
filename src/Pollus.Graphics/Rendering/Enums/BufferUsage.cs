@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+[Flags]
 public enum BufferUsage
 {
     None = 0,
