@@ -18,27 +18,27 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
     public void Apply(World world)
     {
         var assetServer = world.Resources.Get<AssetServer>();
-        assetServer.GetAssets<UniformAsset<TUniform>>().Add(new UniformAsset<TUniform>(new()));
+        assetServer.GetAssets<Uniform<TUniform>>().Add(new Uniform<TUniform>());
 
         world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
             $"{typeof(TUniform).Name}UpdateSystem",
-            static (Local<ExtractDelegate> extract, Assets<UniformAsset<TUniform>> uniformAssets, TExtractParam extractParams) =>
+            static (Local<ExtractDelegate> extract, Assets<Uniform<TUniform>> uniformAssets, TExtractParam extractParams) =>
             {
-                var handle = new Handle<UniformAsset<TUniform>>(0);
+                var handle = new Handle<Uniform<TUniform>>(0);
                 var uniformAsset = uniformAssets.Get(handle)!;
-                extract.Value(extractParams, ref uniformAsset.Value);
+                extract.Value(extractParams, ref uniformAsset.Data);
             }
         ).InitLocal(Extract));
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
             $"{typeof(TUniform).Name}PrepareSystem",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<UniformAsset<TUniform>> uniformAssets) =>
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<Uniform<TUniform>> uniformAssets) =>
             {
-                var handle = new Handle<UniformAsset<TUniform>>(0);
+                var handle = new Handle<Uniform<TUniform>>(0);
                 var uniformAsset = uniformAssets.Get(handle)!;
                 renderAssets.Prepare(gpuContext, assetServer, handle);
                 var renderAsset = renderAssets.Get<UniformRenderData>(handle);
-                renderAssets.Get<GPUBuffer>(renderAsset.UniformBuffer).Write(uniformAsset.Value, 0);
+                renderAssets.Get(renderAsset.UniformBuffer).Write(uniformAsset.Data, 0);
             }
         ));
     }

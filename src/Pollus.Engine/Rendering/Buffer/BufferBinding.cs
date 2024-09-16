@@ -38,7 +38,7 @@ public class UniformBinding<T> : IBinding
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.Uniform<T>(binding, Visibility, false);
     public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
-        var handle = new Handle<UniformAsset<T>>(0);
+        var handle = new Handle<Uniform<T>>(0);
         renderAssets.Prepare(gpuContext, assetServer, handle);
         var renderData = renderAssets.Get<UniformRenderData>(handle);
         var uniform = renderAssets.Get(renderData.UniformBuffer);

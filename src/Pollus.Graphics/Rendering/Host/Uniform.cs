@@ -7,7 +7,8 @@ public class Uniform<T> : IBufferData
     public BufferType Type => BufferType.Uniform;
     public ulong SizeInBytes => Alignment.AlignedSize<T>(1);
 
-    public T Data { get; set; }
+    T data;
+    public ref T Data => ref data;
 
     public void WriteTo(GPUBuffer target, int offset)
     {

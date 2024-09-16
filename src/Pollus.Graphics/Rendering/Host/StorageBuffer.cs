@@ -1,6 +1,6 @@
-using System.Runtime.InteropServices;
-
 namespace Pollus.Graphics.Rendering;
+
+using System.Runtime.InteropServices;
 
 public class StorageBuffer : IBufferData
 {
