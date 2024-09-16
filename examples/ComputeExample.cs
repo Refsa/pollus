@@ -70,7 +70,7 @@ public partial class ComputeExample : IExample
                 DstFactor = BlendFactor.OneMinusSrcAlpha,
                 Operation = BlendOperation.Add,
             },
-        };
+        }; 
 
         public required Handle<ShaderAsset> ShaderSource { get; set; }
         public required StorageBufferBinding<Particle> ParticleBuffer { get; set; }
