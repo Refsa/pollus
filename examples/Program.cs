@@ -15,6 +15,7 @@ if (args.Length < 1)
     Console.WriteLine("  frame-graph");
     Console.WriteLine("  sprite-benchmark");
     Console.WriteLine("  compute");
+    Console.WriteLine("  mesh-rendering");
     return;
 }
 
@@ -31,6 +32,7 @@ IExample? example = args[0] switch
     "frame-graph" => new FrameGraphExample(),
     "sprite-benchmark" => new SpriteBenchmark(),
     "compute" => new ComputeExample(),
+    "mesh-rendering" => new MeshRenderingExample(),
     _ => null
 };
 

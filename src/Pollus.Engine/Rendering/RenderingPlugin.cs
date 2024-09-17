@@ -37,8 +37,8 @@ public class RenderingPlugin : IPlugin
             },
             new ImagePlugin(),
             new CameraPlugin(),
-            new MaterialPlugin<Material>(),
             new ComputePlugin<ComputeShader>(),
+            new MeshPlugin(),
             new SpritePlugin(),
             new FrameGraph2DPlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2>>>()

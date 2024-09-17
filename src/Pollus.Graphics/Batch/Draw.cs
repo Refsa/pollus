@@ -24,7 +24,9 @@ public record struct Draw
     public required Handle<GPURenderPipeline> Pipeline;
     public BindGroupArray BindGroups;
     public VertexBufferArray VertexBuffers;
+
     public Handle<GPUBuffer> IndexBuffer;
+    public IndexFormat IndexFormat;
 
     public uint IndexCount;
     public uint IndexOffset;
@@ -85,16 +87,12 @@ public record struct Draw
         return this;
     }
 
-    public Draw SetIndexBuffer(Handle<GPUBuffer> indexBuffer)
+    public Draw SetIndexBuffer(Handle<GPUBuffer> indexBuffer, IndexFormat indexFormat, uint indexCount, uint indexOffset)
     {
         IndexBuffer = indexBuffer;
-        return this;
-    }
-
-    public Draw SetIndexInfo(uint indexCount, uint indexOffset)
-    {
         IndexCount = indexCount;
         IndexOffset = indexOffset;
+        IndexFormat = indexFormat;
         return this;
     }
 

@@ -85,7 +85,7 @@ public class DrawGroup<TGroup>
             if (command.Pipeline != pipelineHandle)
             {
                 pipelineHandle = command.Pipeline;
-                encoder.SetPipeline(renderAssets.Get<GPURenderPipeline>(pipelineHandle));
+                encoder.SetPipeline(renderAssets.Get(pipelineHandle));
             }
 
             uint idx = 0;
@@ -95,7 +95,7 @@ public class DrawGroup<TGroup>
                 if (bindGroupHandles[(int)idx] != bindGroup)
                 {
                     bindGroupHandles[(int)idx] = bindGroup;
-                    encoder.SetBindGroup(idx, renderAssets.Get<GPUBindGroup>(bindGroup));
+                    encoder.SetBindGroup(idx, renderAssets.Get(bindGroup));
                 }
                 idx++;
             }
@@ -107,7 +107,7 @@ public class DrawGroup<TGroup>
                 if (vertexBufferHandles[(int)idx] != vertexBuffer)
                 {
                     vertexBufferHandles[(int)idx] = vertexBuffer;
-                    encoder.SetVertexBuffer(idx, renderAssets.Get<GPUBuffer>(vertexBuffer));
+                    encoder.SetVertexBuffer(idx, renderAssets.Get(vertexBuffer));
                 }
                 idx++;
             }
@@ -117,8 +117,10 @@ public class DrawGroup<TGroup>
                 if (indexBufferHandle != command.IndexBuffer)
                 {
                     indexBufferHandle = command.IndexBuffer;
-                    encoder.SetIndexBuffer(renderAssets.Get<GPUBuffer>(command.IndexBuffer), IndexFormat.Uint16);
+                    encoder.SetIndexBuffer(renderAssets.Get(command.IndexBuffer), command.IndexFormat);
                 }
+
+                encoder.DrawIndexed(command.IndexCount, command.InstanceCount, command.IndexOffset, (int)command.VertexOffset, command.InstanceOffset);
             }
             else
             {

@@ -13,8 +13,10 @@ using Pollus.Mathematics;
 using Pollus.Utils;
 using static Pollus.ECS.SystemBuilder;
 
-public class RenderingExample
+public class MeshRenderingExample : IExample
 {
+    public string Name => "mesh-rendering";
+
     struct RotateMe : IComponent
     {
         public float Speed;
@@ -30,15 +32,18 @@ public class RenderingExample
         }
     }
 
-    public void Run() => Application.Builder
+    IApplication? app;
+
+    public void Run() => (app = Application.Builder
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
+            new MeshDrawPlugin<Material>(),
             new InputPlugin(),
             new PerformanceTrackerPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
-        static (World world, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<SamplerAsset> samplers) =>
+        static (Commands commands, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<SamplerAsset> samplers) =>
         {
             Handle[] materialHandles = [
                 materials.Add(new Material()
@@ -70,10 +75,10 @@ public class RenderingExample
             for (int x = 0; x < 10; x++)
                 for (int y = 0; y < 10; y++)
                 {
-                    world.Spawn(
+                    commands.Spawn(Entity.With(
                         new Transform2
                         {
-                            Position = (x * 16f, y * 16f),
+                            Position = (x * 24f + 128f, y * 24f + 128f),
                             Scale = (16f, 16f),
                             Rotation = 0f,
                         },
@@ -83,10 +88,10 @@ public class RenderingExample
                             Material = materialHandles[(x + y) % materialHandles.Length],
                         },
                         new RotateMe { Speed = (x * y * 5).Wrap(45, 720) }
-                    );
+                    ));
                 }
 
-            world.Spawn(Camera2D.Bundle);
+            commands.Spawn(Camera2D.Bundle);
         }))
         .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
         static (InputManager input, Time time,
@@ -116,6 +121,10 @@ public class RenderingExample
             });
 
             qRotateMe.ForEach(new RotateMeForEach { SecondsSinceStartup = (float)time.SecondsSinceStartup });
-        }))
-        .Run();
+        })).Build()).Run();
+
+    public void Stop()
+    {
+        app?.Shutdown();
+    }
 }

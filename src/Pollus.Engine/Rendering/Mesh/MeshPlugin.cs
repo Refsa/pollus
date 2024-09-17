@@ -2,15 +2,15 @@ namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
 using Pollus.Engine.Assets;
+using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
-public struct MeshDraw<TMaterial> : IComponent
-    where TMaterial : IMaterial
+public class MeshAsset
 {
-    public required Handle<MeshAsset> Mesh;
-    public required Handle<TMaterial> Material;
+    public required string Name { get; init; }
+    public required Mesh Mesh { get; init; }
 }
+
 
 public class MeshPlugin : IPlugin
 {
@@ -30,10 +30,10 @@ public class MeshPlugin : IPlugin
         }
 
         world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
-            "PrepareMeshAssets",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets) =>
+            "MeshPlugin::PrepareMeshAssets",
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<MeshAsset> meshAssets) =>
             {
-                foreach (var meshAsset in assetServer.GetAssets<MeshAsset>().AssetInfos)
+                foreach (var meshAsset in meshAssets.AssetInfos)
                 {
                     renderAssets.Prepare(gpuContext, assetServer, meshAsset.Handle);
                 }
