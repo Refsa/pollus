@@ -9,6 +9,18 @@ public record struct Draw
     public const int MAX_BIND_GROUPS = 4;
     public const int MAX_VERTEX_BUFFERS = 4;
 
+    [InlineArray(MAX_VERTEX_BUFFERS)]
+    public struct VertexBufferArray
+    {
+        Handle<GPUBuffer> _first;
+    }
+
+    [InlineArray(MAX_BIND_GROUPS)]
+    public struct BindGroupArray
+    {
+        Handle<GPUBindGroup> _first;
+    }
+
     public required Handle<GPURenderPipeline> Pipeline;
     public BindGroupArray BindGroups;
     public VertexBufferArray VertexBuffers;
@@ -30,6 +42,11 @@ public record struct Draw
         IndexBuffer = Handle<GPUBuffer>.Null;
     }
 
+    public static Draw Create(Handle<GPURenderPipeline> pipeline) => new()
+    {
+        Pipeline = pipeline,
+    };
+
     public void Clear()
     {
         Pipeline = Handle<GPURenderPipeline>.Null;
@@ -44,15 +61,54 @@ public record struct Draw
         for (int i = 0; i < MAX_BIND_GROUPS; i++) BindGroups[i] = Handle<GPUBindGroup>.Null;
     }
 
-    [InlineArray(MAX_VERTEX_BUFFERS)]
-    public struct VertexBufferArray
+    public Draw SetPipeline(Handle<GPURenderPipeline> pipeline)
     {
-        Handle<GPUBuffer> _first;
+        Pipeline = pipeline;
+        return this;
     }
 
-    [InlineArray(MAX_BIND_GROUPS)]
-    public struct BindGroupArray
+    public Draw SetBindGroup(int slot, Handle<GPUBindGroup> bindGroup)
     {
-        Handle<GPUBindGroup> _first;
+        BindGroups[slot] = bindGroup;
+        return this;
+    }
+
+    public Draw SetBindGroups(ReadOnlySpan<Handle<GPUBindGroup>> bindGroups)
+    {
+        bindGroups.CopyTo(BindGroups);
+        return this;
+    }
+
+    public Draw SetVertexBuffer(int slot, Handle<GPUBuffer> vertexBuffers)
+    {
+        VertexBuffers[slot] = vertexBuffers;
+        return this;
+    }
+
+    public Draw SetIndexBuffer(Handle<GPUBuffer> indexBuffer)
+    {
+        IndexBuffer = indexBuffer;
+        return this;
+    }
+
+    public Draw SetIndexInfo(uint indexCount, uint indexOffset)
+    {
+        IndexCount = indexCount;
+        IndexOffset = indexOffset;
+        return this;
+    }
+
+    public Draw SetVertexInfo(uint vertexCount, uint vertexOffset)
+    {
+        VertexCount = vertexCount;
+        VertexOffset = vertexOffset;
+        return this;
+    }
+
+    public Draw SetInstanceInfo(uint instanceCount, uint instanceOffset)
+    {
+        InstanceCount = instanceCount;
+        InstanceOffset = instanceOffset;
+        return this;
     }
 }

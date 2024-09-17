@@ -2,7 +2,14 @@ namespace Pollus.Graphics;
 
 using Pollus.Collections;
 
-public abstract class RenderBatches<TBatch, TKey> : IDisposable
+public interface IRenderBatches<TBatch>
+    where TBatch : IRenderBatch
+{
+    ListEnumerable<TBatch> Batches { get; }
+    void Reset();
+}
+
+public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDisposable
     where TBatch : IRenderBatch
     where TKey : notnull
 {

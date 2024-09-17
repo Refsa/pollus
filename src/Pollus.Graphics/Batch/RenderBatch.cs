@@ -1,5 +1,6 @@
 namespace Pollus.Graphics;
 
+using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
@@ -10,8 +11,12 @@ public interface IRenderBatch
     int Count { get; }
     bool IsEmpty { get; }
     bool IsFull { get; }
+    public Handle<GPUBuffer> InstanceBufferHandle { get; set; }
 
     void Reset();
+    GPUBuffer CreateBuffer(IWGPUContext context);
+    void EnsureCapacity(GPUBuffer buffer);
+    ReadOnlySpan<byte> GetBytes();
 }
 
 public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
@@ -61,6 +66,11 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public ReadOnlySpan<TInstanceData> GetData()
     {
         return scratch.AsSpan(0, count);
+    }
+
+    public ReadOnlySpan<byte> GetBytes()
+    {
+        return MemoryMarshal.AsBytes(GetData());
     }
 
     public GPUBuffer CreateBuffer(IWGPUContext context)
