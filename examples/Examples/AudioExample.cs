@@ -1,7 +1,6 @@
 namespace Pollus.Examples;
 
 using Pollus.Engine;
-using Pollus.Mathematics;
 using Pollus.ECS;
 using Pollus.Engine.Audio;
 using Pollus.Engine.Assets;

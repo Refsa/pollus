@@ -17,7 +17,7 @@ class RenderData : IDisposable
     }
 }
 
-public class DrawTriangle : IExample
+public class DrawTriangleExample : IExample
 {
     public string Name => "draw-triangle";
     IApplication? application;

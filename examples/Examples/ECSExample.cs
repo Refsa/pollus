@@ -3,16 +3,23 @@ namespace Pollus.Examples;
 
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.ECS.Core;
 using Pollus.Engine;
-using Pollus.Engine.Debug;
-using Pollus.Graphics.Windowing;
 using static Pollus.ECS.SystemBuilder;
 
 public class ECSExample : IExample
 {
     public string Name => "ecs";
     IApplication? application;
+
+    public struct Component1 : IComponent
+    {
+        public int Value;
+    }
+
+    public struct Component2 : IComponent
+    {
+        public int Value;
+    }
 
     struct TestEvent
     {
@@ -24,7 +31,6 @@ public class ECSExample : IExample
     public void Run() => (application = Application.Builder
         .AddPlugins([
             new TimePlugin(),
-            // new PerformanceTrackerPlugin(),
         ])
         .InitEvent<TestEvent>()
         .AddSystem(CoreStage.PostInit, FnSystem("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))

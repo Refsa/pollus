@@ -43,6 +43,7 @@
 	- [ ] State Flags
 	- [ ] Auto setup Fetches
 	- [x] System Locals
+	- [x] System Param Sets
 	- [ ] Improve system creation/setup
 	- [ ] Improve delegate foreach in queries
 	- [ ] Coroutines
@@ -54,7 +55,7 @@
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches
-		- [ ] Implement as Render Pass
+		- [x] Implement as Render Pass
 	- [ ] dunno some custom UI stuff
 - Rendering
 	- [ ] Text/Font
@@ -62,9 +63,9 @@
 		- [x] Sprites
 		- [ ] Animated Sprites
 		- [ ] Custom Materials
-		- [ ] Post Processing
+		- [-] Post Processing
 		- [x] Polygons/Shapes
-		- [ ] 2D Frame Graph Passes
+		- [-] 2D Frame Graph Passes
 	- [x] Extract rendering data
 	- [x] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph
@@ -86,9 +87,11 @@
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders
 		- [x] setup and run compute shaders
-		- [ ] Compute commands
+		- [x] Compute commands
+		- [ ] on-demand dispatch
 	- [ ] Culling
 	- [ ] MSAA
+	- [ ] Per-Camera frame graphs/rendering
 - 2D Physics
 	- [ ] Spatial Queries
 	- [ ] Collision Queries

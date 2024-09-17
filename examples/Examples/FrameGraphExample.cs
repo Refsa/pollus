@@ -1,7 +1,5 @@
 namespace Pollus.Examples;
 
-using System.Net.Http.Headers;
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;

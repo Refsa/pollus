@@ -9,7 +9,6 @@ using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
 using Pollus.Mathematics;
-using Pollus.Mathematics.Collision2D;
 using Pollus.Utils;
 
 public class CollisionExample : IExample

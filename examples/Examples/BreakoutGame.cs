@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using System.Text;
 using ImGuiNET;
 using Pollus.Debugging;
 using Pollus.ECS;

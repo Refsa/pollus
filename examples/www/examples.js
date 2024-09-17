@@ -9,6 +9,7 @@ export const collision = "collision";
 export const frameGraph  = "frame-graph";
 export const spriteBench = "sprite-benchmark";
 export const compute = "compute";
+export const meshRendering = "mesh-rendering";
 
 export function setupExampleButtons() {
     var container = document.getElementsByClassName('buttons')[0];
@@ -25,6 +26,7 @@ export function setupExampleButtons() {
         frameGraph,
         spriteBench,
         compute,
+        meshRendering,
     ];
 
     for (const example of examples) {
