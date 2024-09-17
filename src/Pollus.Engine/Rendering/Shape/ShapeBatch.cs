@@ -64,31 +64,3 @@ public class ShapeBatches : RenderBatches<ShapeBatch, ShapeBatchKey>
         return new ShapeBatch(key);
     }
 }
-
-public class ShapeBatchDraw
-{
-    public RenderStep2D Stage => RenderStep2D.Main;
-
-    public void Render(GPURenderPassEncoder encoder, Resources resources, RenderAssets renderAssets)
-    {
-        var batches = resources.Get<ShapeBatches>();
-
-        foreach (var batch in batches.Batches)
-        {
-            if (batch.IsEmpty) continue;
-
-            var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-            var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
-
-            var draw = new Draw()
-            {
-                Pipeline = material.Pipeline,
-                VertexCount = shape.VertexCount,
-                InstanceCount = (uint)batch.Count,
-            };
-            material.BindGroups.CopyTo(draw.BindGroups);
-            draw.VertexBuffers[0] = shape.VertexBuffer;
-            draw.VertexBuffers[1] = batch.InstanceBufferHandle;
-        }
-    }
-}

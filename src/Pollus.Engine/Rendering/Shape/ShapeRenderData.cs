@@ -1,8 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.ECS;
 using Pollus.Engine.Assets;
-using Pollus.Engine.Transform;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -35,46 +33,6 @@ public class ShapeRenderDataLoader : IRenderDataLoader
         {
             VertexCount = vertexData.Count,
             VertexBuffer = renderAssets.Add(vertexBuffer),
-        });
-    }
-}
-
-public class ExtractShapesSystem : ECS.Core.Sys<RenderAssets, AssetServer, IWGPUContext, ShapeBatches, Query<Transform2, ShapeDraw>>
-{
-    struct Job : IForEach<Transform2, ShapeDraw>
-    {
-        public required ShapeBatches Batches { get; init; }
-
-        public void Execute(ref Transform2 transform, ref ShapeDraw shape)
-        {
-            var batch = Batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle));
-
-            batch.Write(transform.ToMat4f(), shape.Color);
-        }
-    }
-
-    public ExtractShapesSystem()
-        : base(new ECS.Core.SystemDescriptor("ExtractShapes"))
-    { }
-
-    protected override void OnTick(
-        RenderAssets renderAssets, AssetServer assetServer,
-        IWGPUContext gpuContext, ShapeBatches batches,
-        Query<Transform2, ShapeDraw> query)
-    {
-        foreach (var shape in assetServer.GetAssets<Shape>().AssetInfos)
-        {
-            renderAssets.Prepare(gpuContext, assetServer, shape.Handle);
-        }
-        foreach (var material in assetServer.GetAssets<ShapeMaterial>().AssetInfos)
-        {
-            renderAssets.Prepare(gpuContext, assetServer, material.Handle);
-        }
-
-        batches.Reset();
-        query.ForEach(new Job
-        {
-            Batches = batches,
         });
     }
 }
