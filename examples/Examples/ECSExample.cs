@@ -1,6 +1,7 @@
 
 namespace Pollus.Examples;
 
+using System.Runtime.CompilerServices;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;

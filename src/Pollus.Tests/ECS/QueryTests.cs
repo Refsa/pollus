@@ -67,4 +67,32 @@ public class QueryTests
             Assert.Equal(index++, c1.Value);
         });
     }
+
+    [Fact]
+    public void Query_Iter_Foreach()
+    {
+        using var world = new World();
+        var q = new Query<TestComponent1>(world);
+        for (int i = 0; i < 100; i++)
+        {
+            Entity.With(new TestComponent1 { Value = i }).Spawn(world);
+        }
+
+        int count = 0;
+        foreach (var row in q)
+        {
+            ref var c1 = ref row.Component0;
+            c1.Value++;
+            count++;
+        }
+
+        Assert.Equal(100, count);
+
+        count = 1;
+        foreach (var row in q)
+        {
+            ref var c1 = ref row.Component0;
+            Assert.Equal(count++, c1.Value);
+        }
+    }
 }

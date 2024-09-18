@@ -122,7 +122,7 @@ public class ArchetypeTests
 
         archetype.RemoveEntity(entity);
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.Chunks[0].Count);
-        Assert.Equal(0, archetype.Chunks[1].Count);
+        Assert.Equal(1, archetype.Chunks.Length);
         Assert.Equal(nextEntity, archetype.Chunks[0].GetEntities()[0]);
 
         archetype.Optimize();

@@ -9,7 +9,8 @@ using Pollus.ECS;
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]
-[SimpleJob(RuntimeMoniker.Net80)]
+// [SimpleJob(RuntimeMoniker.Net90)]
+// [SimpleJob(RuntimeMoniker.Net80)]
 // [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
 public class QueryBenchmarks
 {
@@ -34,38 +35,70 @@ public class QueryBenchmarks
         twoComponentWorld.Dispose();
     }
 
-    [Benchmark]
-    public void Query_One_ForEach_IForEach()
+    /* [Benchmark]
+    public int Query_One_ForEach_IForEach()
     {
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(new ForEachOne());
-    }
+        return 0;
+    } */
 
-    [Benchmark]
+    /* [Benchmark]
+    public int Query_One_ForEach_Delegate()
+    {
+        var q = new Query<Component1>(oneComponentWorld);
+        q.ForEach(static (ref Component1 c) => c.First++);
+        return 0;
+    } */
+
+    /* [Benchmark]
     public void Query_One_ForEach_IChunkForEach()
     {
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(new ChunkForEachOne());
-    }
+    } */
 
     [Benchmark]
-    public void Query_One_ForEach_Delegate()
+    public int Query_One_ForEach_Enumerator()
     {
         var q = new Query<Component1>(oneComponentWorld);
-        q.ForEach((ref Component1 c) => c.First++);
+        foreach (var row in q)
+        {
+            ref var tc0 = ref row.Component0;
+            tc0.First++;
+        }
+
+        return 0;
     }
 
-    [Benchmark]
+    /* [Benchmark]
+    public int Query_One_ForEach_IEntityForEach()
+    {
+        var q = new Query<Component1>(oneComponentWorld);
+        q.ForEach(new ForEachOne_Entity());
+        return 0;
+    } */
+
+    /* [Benchmark]
     public void Query_Two_ForEach_IForEach()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
         q.ForEach(new ForEachTwo());
-    }
+    } */
 
     struct ForEachOne : IForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public readonly void Execute(ref Component1 c)
+        {
+            c.First++;
+        }
+    }
+
+    struct ForEachOne_Entity : IEntityForEach<Component1>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        public readonly void Execute(in Entity e, ref Component1 c)
         {
             c.First++;
         }

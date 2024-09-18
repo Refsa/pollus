@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Pollus.Debugging;
 using Pollus.ECS.Core;
 
 public interface IQuery
@@ -11,6 +12,20 @@ public interface IQueryCreate<TQuery>
     where TQuery : struct, IQuery
 {
     static abstract TQuery Create(World world);
+}
+
+public class QueryFetch<TQuery> : IFetch<TQuery>
+    where TQuery : struct, IQuery, IQueryCreate<TQuery>
+{
+    public static void Register()
+    {
+        Fetch.Register(new QueryFetch<TQuery>(), [.. TQuery.Infos.Select(e => e.Type)]);
+    }
+
+    public TQuery DoFetch(World world, ISystem system)
+    {
+        return TQuery.Create(world);
+    }
 }
 
 public struct Query : IQuery, IQueryCreate<Query>
@@ -248,6 +263,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     }
 
     static readonly Component.Info[] infos = [Component.Register<C0>()];
+    static readonly ComponentID[] cids = [infos[0].ID];
     public static Component.Info[] Infos => infos;
 
     static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new(world);
@@ -269,25 +285,25 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
     public readonly void ForEach(ForEachDelegate<C0> pred)
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
-            foreach (ref var curr in comp1)
+            for (int i = 0; i < count; i++)
             {
-                pred(ref curr);
+                pred(ref comp1[i]);
             }
         }
     }
 
     public readonly void ForEach(ForEachEntityDelegate<C0> pred)
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
             scoped var entities = chunk.GetEntities();
-            for (int i = 0; i < chunk.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 pred(entities[i], ref comp1[i]);
             }
@@ -297,15 +313,15 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : struct, IForEachBase<C0>
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
 
             if (iter is IForEach<C0>)
             {
                 scoped ref var curr = ref comp1[0];
-                for (int i = 0; i < chunk.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
+                for (int i = 0; i < count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
                     iter.Execute(ref curr);
                 }
@@ -313,7 +329,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             else if (iter is IEntityForEach<C0>)
             {
                 scoped var entities = chunk.GetEntities();
-                for (int i = 0; i < chunk.Count; i++)
+                for (int i = 0; i < count; i++)
                 {
                     iter.Execute(entities[i], ref comp1[i]);
                 }
@@ -328,8 +344,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public int EntityCount()
     {
         int count = 0;
-        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -338,35 +353,63 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
     public EntityRow Single()
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[1] { infos[0].ID };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return new EntityRow
             {
                 Entity = chunk.GetEntities()[0],
-                Component = ref chunk.GetComponents<C0>(cids[0])[0],
+                Component0 = ref chunk.GetComponents<C0>(cids[0])[0],
             };
         }
         throw new InvalidOperationException("No entities found");
     }
 
+    public Enumerator GetEnumerator()
+    {
+        return new Enumerator(this);
+    }
+
+    public ref struct Enumerator
+    {
+        ArchetypeChunkEnumerable chunks;
+        ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
+        int index = 0;
+        ref C0 currentComponent0;
+        ref Entity currentEntity;
+
+        public Enumerator(scoped in Query<C0> query)
+        {
+            chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, cids, query.filterArchetype, query.filterChunk);
+            chunksEnumerator = chunks.GetEnumerator();
+        }
+
+        public EntityRow Current => new()
+        {
+            Entity = currentEntity,
+            Component0 = ref currentComponent0,
+        };
+
+        public bool MoveNext()
+        {
+            if (--index < 0)
+            {
+                if (!chunksEnumerator.MoveNext()) return false;
+                ref var currentChunk = ref chunksEnumerator.Current;
+                currentEntity = ref currentChunk.GetEntity(0);
+                currentComponent0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
+                index = currentChunk.Count - 1;
+                return true;
+            }
+
+            currentEntity = ref Unsafe.Add(ref currentEntity, 1);
+            currentComponent0 = ref Unsafe.Add(ref currentComponent0, 1);
+            return true;
+        }
+    }
+
     public ref struct EntityRow
     {
         public Entity Entity;
-        public ref C0 Component;
-    }
-}
-
-public class QueryFetch<TQuery> : IFetch<TQuery>
-    where TQuery : struct, IQuery, IQueryCreate<TQuery>
-{
-    public static void Register()
-    {
-        Fetch.Register(new QueryFetch<TQuery>(), [.. TQuery.Infos.Select(e => e.Type)]);
-    }
-
-    public TQuery DoFetch(World world, ISystem system)
-    {
-        return TQuery.Create(world);
+        public ref C0 Component0;
     }
 }

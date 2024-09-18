@@ -103,11 +103,12 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEach(ForEachDelegate<$gen_args$> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             $comp_spans$
             
-            for (int i = 0; i < chunk.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 pred($comp_args$);
             }
@@ -117,12 +118,13 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             $comp_spans$
             scoped var entities = chunk.GetEntities();
 
-            for (int i = 0; i < chunk.Count; i++)
+            for (int i = 0; i < count; i++)
             {
                 pred(entities[i], $comp_args$);
             }
@@ -133,13 +135,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         where TForEach : struct, IForEachBase<$gen_args$>
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
+            var count = chunk.Count;
             $comp_spans$
 
             if (iter is IForEach<$gen_args$>)
             {
-                for (int i = 0; i < chunk.Count; i++)
+                for (int i = 0; i < count; i++)
                 {
                     iter.Execute($comp_args$);
                 }
@@ -147,7 +150,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             else if (iter is IEntityForEach<$gen_args$>)
             {
                 scoped var entities = chunk.GetEntities();
-                for (int i = 0; i < chunk.Count; i++)
+                for (int i = 0; i < count; i++)
                 {
                     iter.Execute(entities[i], $comp_args$);
                 }
@@ -163,7 +166,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     {
         int count = 0;
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -173,7 +176,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public EntityRow Single()
     {
         scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return new EntityRow
             {

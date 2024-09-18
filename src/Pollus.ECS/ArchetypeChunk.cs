@@ -166,6 +166,12 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public readonly ref Entity GetEntity(int row)
+    {
+        return ref entities[row];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public Span<C> GetComponents<C>(ComponentID cid)
             where C : unmanaged, IComponent
     {
@@ -193,7 +199,13 @@ public struct ArchetypeChunk : IDisposable
     unsafe public ref C GetComponent<C>(int row)
             where C : unmanaged, IComponent
     {
-        var cid = Component.GetInfo<C>().ID;
+        return ref GetComponent<C>(row, Component.GetInfo<C>().ID);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public ref C GetComponent<C>(int row, scoped in ComponentID cid)
+            where C : unmanaged, IComponent
+    {
         var array = components.Get(cid);
         return ref *(C*)Unsafe.Add<C>(array.Data, row);
     }

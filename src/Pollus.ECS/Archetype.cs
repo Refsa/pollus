@@ -62,7 +62,7 @@ public partial class Archetype : IDisposable
     int entityCount;
 
     public ArchetypeID ID => id;
-    public Span<ArchetypeChunk> Chunks => chunks.AsSpan();
+    public Span<ArchetypeChunk> Chunks => chunks.Slice(0, lastChunkIndex + 1);
     public int EntityCount => entityCount;
     public ChunkInfo GetChunkInfo() => chunkInfo;
 
@@ -109,7 +109,7 @@ public partial class Archetype : IDisposable
         var row = chunk.AddEntity(entity);
         return new()
         {
-            ChunkIndex = chunks.Length - 1,
+            ChunkIndex = lastChunkIndex,
             RowIndex = row
         };
     }
@@ -262,9 +262,9 @@ public ref struct ArchetypeChunkEnumerable
     readonly ReadOnlySpan<ComponentID> componentIDs;
     readonly FilterArchetypeDelegate? filterArchetype;
     readonly FilterChunkDelegate? filterChunk;
-    
+
     public ArchetypeChunkEnumerable(
-        List<Archetype> archetypes, in ReadOnlySpan<ComponentID> componentIDs, 
+        List<Archetype> archetypes, scoped in ReadOnlySpan<ComponentID> componentIDs,
         FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.archetypes = archetypes;
@@ -273,28 +273,32 @@ public ref struct ArchetypeChunkEnumerable
         this.componentIDs = componentIDs;
     }
 
-    public ChunkEnumerator GetEnumerator() => new(this);
+    public ChunkEnumerator GetEnumerator() => new(in this);
 
     public ref struct Enumerator
     {
-        readonly ArchetypeChunkEnumerable filter;
+        readonly List<Archetype> archetypes;
+        readonly ReadOnlySpan<ComponentID> componentIDs;
+        readonly FilterArchetypeDelegate? filterArchetype;
         int index;
 
-        public Enumerator(ArchetypeChunkEnumerable filter)
+        public Enumerator(scoped in ArchetypeChunkEnumerable filter)
         {
-            this.filter = filter;
+            archetypes = filter.archetypes;
+            componentIDs = filter.componentIDs;
+            filterArchetype = filter.filterArchetype;
             index = -1;
         }
 
-        public Archetype Current => filter.archetypes[index];
+        public Archetype Current => archetypes[index];
 
         public bool MoveNext()
         {
-            while (++index < filter.archetypes.Count)
+            while (++index < archetypes.Count)
             {
-                if (filter.archetypes[index].EntityCount == 0) continue;
-                if (filter.archetypes[index].HasAll(filter.componentIDs) is false) continue;
-                if (filter.filterArchetype is null || filter.filterArchetype(filter.archetypes[index]))
+                if (archetypes[index].EntityCount == 0) continue;
+                if (archetypes[index].HasAll(componentIDs) is false) continue;
+                if (filterArchetype is null || filterArchetype(archetypes[index]))
                 {
                     return true;
                 }
@@ -305,40 +309,38 @@ public ref struct ArchetypeChunkEnumerable
 
     public ref struct ChunkEnumerator
     {
-        readonly ArchetypeChunkEnumerable filter;
+        readonly FilterChunkDelegate? filterChunk;
         Enumerator enumerator;
+
         int chunkIndex;
         ref ArchetypeChunk current;
+        public ref ArchetypeChunk Current => ref current;
 
-        public ChunkEnumerator(ArchetypeChunkEnumerable filter)
+        public ChunkEnumerator(scoped in ArchetypeChunkEnumerable filter)
         {
-            this.filter = filter;
-            enumerator = new(filter);
-            chunkIndex = -1;
+            filterChunk = filter.filterChunk;
+            enumerator = new(in filter);
         }
-
-        public ArchetypeChunk Current => current;
 
         public bool MoveNext()
         {
-            if (chunkIndex == -1)
+            if (--chunkIndex < 0)
             {
                 if (enumerator.MoveNext() is false) return false;
+                var archetype = enumerator.Current;
+                chunkIndex = archetype.Chunks.Length - 1;
+                current = ref archetype.Chunks[0];
+            }
+            else
+            {
+                current = ref Unsafe.Add(ref current, 1);
             }
 
-            var archetype = enumerator.Current;
-            chunkIndex++;
-            if (chunkIndex >= archetype.Chunks.Length)
-            {
-                chunkIndex = -1;
-                return MoveNext();
-            }
-            if (filter.filterChunk is not null && filter.filterChunk(archetype.Chunks[chunkIndex]) is false)
+            if (filterChunk is not null && filterChunk(in current) is false)
             {
                 return MoveNext();
             }
 
-            current = ref archetype.Chunks[chunkIndex];
             return true;
         }
     }
