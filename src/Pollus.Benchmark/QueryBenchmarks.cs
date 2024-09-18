@@ -58,7 +58,7 @@ public class QueryBenchmarks
         q.ForEach(new ChunkForEachOne());
     } */
 
-    [Benchmark]
+    /* [Benchmark]
     public int Query_One_ForEach_Enumerator()
     {
         var q = new Query<Component1>(oneComponentWorld);
@@ -69,7 +69,7 @@ public class QueryBenchmarks
         }
 
         return 0;
-    }
+    } */
 
     /* [Benchmark]
     public int Query_One_ForEach_IEntityForEach()
@@ -79,12 +79,27 @@ public class QueryBenchmarks
         return 0;
     } */
 
-    /* [Benchmark]
+    [Benchmark]
     public void Query_Two_ForEach_IForEach()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
         q.ForEach(new ForEachTwo());
-    } */
+    }
+
+    [Benchmark]
+    public int Query_Two_ForEach_Enumerator()
+    {
+        var q = new Query<Component1, Component2>(twoComponentWorld);
+        foreach (var row in q)
+        {
+            ref var tc0 = ref row.Component0;
+            ref var tc1 = ref row.Component1;
+
+            tc0.First += tc1.First;
+        }
+
+        return 0;
+    }
 
     struct ForEachOne : IForEach<Component1>
     {

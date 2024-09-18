@@ -391,18 +391,18 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         public bool MoveNext()
         {
-            if (--index < 0)
+            if (--index >= 0)
             {
-                if (!chunksEnumerator.MoveNext()) return false;
-                ref var currentChunk = ref chunksEnumerator.Current;
-                currentEntity = ref currentChunk.GetEntity(0);
-                currentComponent0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
-                index = currentChunk.Count - 1;
+                currentEntity = ref Unsafe.Add(ref currentEntity, 1);
+                currentComponent0 = ref Unsafe.Add(ref currentComponent0, 1);
                 return true;
             }
 
-            currentEntity = ref Unsafe.Add(ref currentEntity, 1);
-            currentComponent0 = ref Unsafe.Add(ref currentComponent0, 1);
+            if (!chunksEnumerator.MoveNext()) return false;
+            ref var currentChunk = ref chunksEnumerator.Current;
+            currentEntity = ref currentChunk.GetEntity(0);
+            currentComponent0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
+            index = currentChunk.Count - 1;
             return true;
         }
     }

@@ -81,6 +81,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     static readonly Component.Info[] infos = [$infos$];
+    static readonly ComponentID[] cids = [$comp_ids$];
     public static Component.Info[] Infos => infos;
 
     static Query<$gen_args$> IQueryCreate<Query<$gen_args$>>.Create(World world) => new Query<$gen_args$>(world);
@@ -102,7 +103,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
     public readonly void ForEach(ForEachDelegate<$gen_args$> pred)
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
@@ -117,7 +117,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
@@ -134,7 +133,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : struct, IForEachBase<$gen_args$>
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
@@ -165,7 +163,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public int EntityCount()
     {
         int count = 0;
-        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
@@ -175,7 +172,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
     public EntityRow Single()
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[$gen_count$] { $comp_ids$ };
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return new EntityRow
@@ -186,6 +182,49 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         throw new InvalidOperationException(""No entities found"");
+    }
+
+    public Enumerator GetEnumerator()
+    {
+        return new Enumerator(this);
+    }
+
+    public ref struct Enumerator
+    {
+        ArchetypeChunkEnumerable chunks;
+        ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
+        int index = 0;
+        $entity_row_fields$
+        ref Entity currentEntity;
+
+        public Enumerator(scoped in Query<$gen_args$> query)
+        {
+            chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, cids, query.filterArchetype, query.filterChunk);
+            chunksEnumerator = chunks.GetEnumerator();
+        }
+
+        public EntityRow Current => new()
+        {
+            Entity = currentEntity,
+            $enumerator_current_fields$
+        };
+
+        public bool MoveNext()
+        {
+            if (--index >= 0)
+            {
+                currentEntity = ref Unsafe.Add(ref currentEntity, 1);
+                $enumerator_move_next$
+                return true;
+            }
+
+            if (!chunksEnumerator.MoveNext()) return false;
+            ref var currentChunk = ref chunksEnumerator.Current;
+            currentEntity = ref currentChunk.GetEntity(0);
+            $enumerator_set_fields$
+            index = currentChunk.Count - 1;
+            return true;
+        }
     }
 
     public ref struct EntityRow
@@ -205,6 +244,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             var chunk_args = "comp0";
             var set_entity_row = "Component0 = ref chunk.GetComponents<C0>(cids[0])[0],";
             var entity_row_fields = "public ref C0 Component0;";
+            var enumerator_current_fields = "Component0 = ref Component0,";
+            var enumerator_set_fields = "Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];";
+            var enumerator_move_next = "Component0 = ref Unsafe.Add(ref Component0, 1);";
 
             for (int i = 1; i < 16; i++)
             {
@@ -217,6 +259,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 chunk_args += $", comp{i}";
                 set_entity_row += $"\n                    Component{i} = ref chunk.GetComponents<C{i}>(cids[{i}])[0],";
                 entity_row_fields += $"\n        public ref C{i} Component{i};";
+                enumerator_current_fields += $"\n            Component{i} = ref Component{i},";
+                enumerator_set_fields += $"\n            Component{i} = ref currentChunk.GetComponents<C{i}>(cids[{i}])[0];";
+                enumerator_move_next += $"\n                Component{i} = ref Unsafe.Add(ref Component{i}, 1);";
 
                 sb.Clear().Append(TEMPLATE)
                     .Replace("$gen_args$", gen_args)
@@ -229,7 +274,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                     .Replace("$chunk_args$", chunk_args)
                     .Replace("$set_entity_row$", set_entity_row)
                     .Replace("$entity_row_fields$", entity_row_fields)
-                    ;
+                    .Replace("$enumerator_current_fields$", enumerator_current_fields)
+                    .Replace("$enumerator_set_fields$", enumerator_set_fields)
+                    .Replace("$enumerator_move_next$", enumerator_move_next);
 
                 context.AddSource($"Query{i + 1}.gen.cs", sb.ToString());
             }
