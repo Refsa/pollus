@@ -260,4 +260,9 @@ public class ArchetypeStore : IDisposable
         }
         changes.Clear();
     }
+
+    public void ClearChanges()
+    {
+        changes.Clear();
+    }
 }

@@ -46,7 +46,7 @@ public class ECSExample : IExample
         .AddSystem(CoreStage.Update, FnSystem("Update",
         static (Query<Component1, Component2> query) =>
         {
-            query.ForEach((ref Component1 c1, ref Component2 c2) =>
+            query.ForEach(static (ref Component1 c1, ref Component2 c2) =>
             {
                 c1.Value += c2.Value;
             });

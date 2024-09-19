@@ -79,10 +79,10 @@ public class QueryTests
         }
 
         int count = 0;
+        var query = new Query(world);
         foreach (var row in q)
         {
-            ref var c1 = ref row.Component0;
-            c1.Value++;
+            row.Component0.Value++;
             count++;
         }
 
@@ -91,8 +91,22 @@ public class QueryTests
         count = 1;
         foreach (var row in q)
         {
-            ref var c1 = ref row.Component0;
-            Assert.Equal(count++, c1.Value);
+            Assert.Equal(count++, row.Component0.Value);
         }
+    }
+
+    [Fact]
+    public void Query_SetChanged()
+    {
+        using var world = new World();
+        var e1 = Entity.With(new TestComponent1 { Value = 1 }).Spawn(world);
+        var e2 = Entity.With(new TestComponent1 { Value = 2 }).Spawn(world);
+
+        var q = new Query(world);
+        q.SetChanged<TestComponent1>(e1);
+        q.SetChanged<TestComponent1>(e2);
+
+        Assert.True(q.Changed<TestComponent1>(e1));
+        Assert.True(q.Changed<TestComponent1>(e2));
     }
 }

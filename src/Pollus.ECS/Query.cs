@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Microsoft.VisualBasic;
 using Pollus.Debugging;
 using Pollus.ECS.Core;
 
@@ -288,10 +289,12 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
-            scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
-            for (int i = 0; i < count; i++)
+            scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
+            scoped ref var end = ref Unsafe.Add(ref curr, count);
+            while (Unsafe.IsAddressLessThan(ref curr, ref end))
             {
-                pred(ref comp1[i]);
+                pred(ref curr);
+                curr = ref Unsafe.Add(ref curr, 1);
             }
         }
     }
@@ -301,11 +304,14 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
-            scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
-            scoped var entities = chunk.GetEntities();
-            for (int i = 0; i < count; i++)
+            scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
+            scoped ref var end = ref Unsafe.Add(ref curr, count);
+            scoped ref var ent = ref chunk.GetEntity(0);
+            while (Unsafe.IsAddressLessThan(ref curr, ref end))
             {
-                pred(entities[i], ref comp1[i]);
+                pred(ent, ref curr);
+                ent = ref Unsafe.Add(ref ent, 1);
+                curr = ref Unsafe.Add(ref curr, 1);
             }
         }
     }
@@ -328,10 +334,12 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             }
             else if (iter is IEntityForEach<C0>)
             {
-                scoped var entities = chunk.GetEntities();
-                for (int i = 0; i < count; i++)
+                scoped ref var curr = ref comp1[0];
+                scoped ref var ent = ref chunk.GetEntity(0);
+
+                for (int i = 0; i < count; i++, curr = ref Unsafe.Add(ref curr, 1), ent = ref Unsafe.Add(ref ent, 1))
                 {
-                    iter.Execute(entities[i], ref comp1[i]);
+                    iter.Execute(ent, ref curr);
                 }
             }
             else if (iter is IChunkForEach<C0>)
@@ -373,9 +381,9 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     {
         ArchetypeChunkEnumerable chunks;
         ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
-        int index = 0;
-        ref C0 currentComponent0;
         ref Entity currentEntity;
+        ref Entity endEntity;
+        EntityRow currentRow;
 
         public Enumerator(scoped in Query<C0> query)
         {
@@ -383,26 +391,25 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             chunksEnumerator = chunks.GetEnumerator();
         }
 
-        public EntityRow Current => new()
-        {
-            Entity = currentEntity,
-            Component0 = ref currentComponent0,
-        };
+        public EntityRow Current => currentRow;
 
         public bool MoveNext()
         {
-            if (--index >= 0)
+            if (!Unsafe.IsNullRef(ref currentEntity) && Unsafe.IsAddressLessThan(ref currentEntity, ref endEntity))
             {
                 currentEntity = ref Unsafe.Add(ref currentEntity, 1);
-                currentComponent0 = ref Unsafe.Add(ref currentComponent0, 1);
+                currentRow.Component0 = ref Unsafe.Add(ref currentRow.Component0, 1);
+                currentRow.Entity = currentEntity;
                 return true;
             }
 
             if (!chunksEnumerator.MoveNext()) return false;
-            ref var currentChunk = ref chunksEnumerator.Current;
+
+            scoped ref var currentChunk = ref chunksEnumerator.Current;
             currentEntity = ref currentChunk.GetEntity(0);
-            currentComponent0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
-            index = currentChunk.Count - 1;
+            endEntity = ref Unsafe.Add(ref currentEntity, currentChunk.Count - 1);
+            currentRow.Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
+            currentRow.Entity = currentEntity;
             return true;
         }
     }

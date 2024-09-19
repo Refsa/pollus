@@ -1,7 +1,9 @@
 namespace Pollus.Benchmark;
 
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
@@ -41,35 +43,35 @@ public class QueryBenchmarks
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(new ForEachOne());
         return 0;
-    } */
+    }
 
-    /* [Benchmark]
+    [Benchmark]
     public int Query_One_ForEach_Delegate()
     {
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(static (ref Component1 c) => c.First++);
         return 0;
-    } */
+    }
 
-    /* [Benchmark]
-    public void Query_One_ForEach_IChunkForEach()
+    [Benchmark]
+    public int Query_One_ForEach_IChunkForEach()
     {
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(new ChunkForEachOne());
+        return 0;
     } */
 
-    /* [Benchmark]
+    [Benchmark]
     public int Query_One_ForEach_Enumerator()
     {
         var q = new Query<Component1>(oneComponentWorld);
         foreach (var row in q)
         {
-            ref var tc0 = ref row.Component0;
-            tc0.First++;
+            row.Component0.First++;
         }
 
         return 0;
-    } */
+    }
 
     /* [Benchmark]
     public int Query_One_ForEach_IEntityForEach()
@@ -79,7 +81,7 @@ public class QueryBenchmarks
         return 0;
     } */
 
-    [Benchmark]
+    /* [Benchmark]
     public void Query_Two_ForEach_IForEach()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
@@ -87,6 +89,13 @@ public class QueryBenchmarks
     }
 
     [Benchmark]
+    public void Query_Two_ForEach_Delegate()
+    {
+        var q = new Query<Component1, Component2>(twoComponentWorld);
+        q.ForEach(static (ref Component1 c1, ref Component2 c2) => c1.First += c2.First);
+    } */
+
+    /* [Benchmark]
     public int Query_Two_ForEach_Enumerator()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
@@ -99,7 +108,7 @@ public class QueryBenchmarks
         }
 
         return 0;
-    }
+    } */
 
     struct ForEachOne : IForEach<Component1>
     {

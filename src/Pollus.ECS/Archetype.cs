@@ -292,6 +292,7 @@ public ref struct ArchetypeChunkEnumerable
 
         public Archetype Current => archetypes[index];
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public bool MoveNext()
         {
             while (++index < archetypes.Count)
@@ -312,8 +313,8 @@ public ref struct ArchetypeChunkEnumerable
         readonly FilterChunkDelegate? filterChunk;
         Enumerator enumerator;
 
-        int chunkIndex;
         ref ArchetypeChunk current;
+        ref ArchetypeChunk end;
         public ref ArchetypeChunk Current => ref current;
 
         public ChunkEnumerator(scoped in ArchetypeChunkEnumerable filter)
@@ -322,14 +323,15 @@ public ref struct ArchetypeChunkEnumerable
             enumerator = new(in filter);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public bool MoveNext()
         {
-            if (--chunkIndex < 0)
+            if (Unsafe.IsNullRef(ref current) || !Unsafe.IsAddressLessThan(ref current, ref end))
             {
                 if (enumerator.MoveNext() is false) return false;
                 var archetype = enumerator.Current;
-                chunkIndex = archetype.Chunks.Length - 1;
                 current = ref archetype.Chunks[0];
+                end = ref archetype.Chunks[^1];
             }
             else
             {
