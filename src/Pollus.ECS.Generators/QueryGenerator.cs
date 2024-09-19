@@ -193,9 +193,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     {
         ArchetypeChunkEnumerable chunks;
         ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
-        int index = 0;
-        $entity_row_fields$
         ref Entity currentEntity;
+        ref Entity endEntity;
+        EntityRow currentRow;
 
         public Enumerator(scoped in Query<$gen_args$> query)
         {
@@ -203,26 +203,25 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             chunksEnumerator = chunks.GetEnumerator();
         }
 
-        public EntityRow Current => new()
-        {
-            Entity = currentEntity,
-            $enumerator_current_fields$
-        };
+        public EntityRow Current => currentRow;
 
         public bool MoveNext()
         {
-            if (--index >= 0)
+            if (!Unsafe.IsNullRef(ref currentEntity) && Unsafe.IsAddressLessThan(ref currentEntity, ref endEntity))
             {
                 currentEntity = ref Unsafe.Add(ref currentEntity, 1);
                 $enumerator_move_next$
+                currentRow.Entity = currentEntity;
                 return true;
             }
 
             if (!chunksEnumerator.MoveNext()) return false;
-            ref var currentChunk = ref chunksEnumerator.Current;
+
+            scoped ref var currentChunk = ref chunksEnumerator.Current;
             currentEntity = ref currentChunk.GetEntity(0);
+            endEntity = ref Unsafe.Add(ref currentEntity, currentChunk.Count - 1);
             $enumerator_set_fields$
-            index = currentChunk.Count - 1;
+            currentRow.Entity = currentEntity;
             return true;
         }
     }
@@ -244,9 +243,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             var chunk_args = "comp0";
             var set_entity_row = "Component0 = ref chunk.GetComponents<C0>(cids[0])[0],";
             var entity_row_fields = "public ref C0 Component0;";
-            var enumerator_current_fields = "Component0 = ref Component0,";
-            var enumerator_set_fields = "Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];";
-            var enumerator_move_next = "Component0 = ref Unsafe.Add(ref Component0, 1);";
+            var enumerator_set_fields = "currentRow.Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];";
+            var enumerator_move_next = "currentRow.Component0 = ref Unsafe.Add(ref currentRow.Component0, 1);";
 
             for (int i = 1; i < 16; i++)
             {
@@ -259,9 +257,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 chunk_args += $", comp{i}";
                 set_entity_row += $"\n                    Component{i} = ref chunk.GetComponents<C{i}>(cids[{i}])[0],";
                 entity_row_fields += $"\n        public ref C{i} Component{i};";
-                enumerator_current_fields += $"\n            Component{i} = ref Component{i},";
-                enumerator_set_fields += $"\n            Component{i} = ref currentChunk.GetComponents<C{i}>(cids[{i}])[0];";
-                enumerator_move_next += $"\n                Component{i} = ref Unsafe.Add(ref Component{i}, 1);";
+                enumerator_set_fields += $"\n            currentRow.Component{i} = ref currentChunk.GetComponents<C{i}>(cids[{i}])[0];";
+                enumerator_move_next += $"\n            currentRow.Component{i} = ref Unsafe.Add(ref currentRow.Component{i}, 1);";
 
                 sb.Clear().Append(TEMPLATE)
                     .Replace("$gen_args$", gen_args)
@@ -274,7 +271,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                     .Replace("$chunk_args$", chunk_args)
                     .Replace("$set_entity_row$", set_entity_row)
                     .Replace("$entity_row_fields$", entity_row_fields)
-                    .Replace("$enumerator_current_fields$", enumerator_current_fields)
                     .Replace("$enumerator_set_fields$", enumerator_set_fields)
                     .Replace("$enumerator_move_next$", enumerator_move_next);
 
