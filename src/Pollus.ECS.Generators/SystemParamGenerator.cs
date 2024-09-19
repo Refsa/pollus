@@ -16,7 +16,6 @@ public class SystemParamGenerator : IIncrementalGenerator
     {
         const string TEMPLATE = @"
 namespace Pollus.ECS;
-using Pollus.ECS.Core;
 using System.Runtime.CompilerServices;
 
 public struct Param<$gen_args$> : IFetch<Param<$gen_args$>>, ISystemParam

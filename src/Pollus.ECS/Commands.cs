@@ -1,5 +1,3 @@
-using Pollus.ECS.Core;
-
 namespace Pollus.ECS;
 
 public interface ICommand

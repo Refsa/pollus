@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 using Pollus.ECS;
-using Pollus.ECS.Core;
 using Pollus.Graphics;
 using Pollus.Engine.Platform;
 using Pollus.Engine.Window;

@@ -1,7 +1,5 @@
 namespace Pollus.ECS;
 
-using Pollus.ECS.Core;
-
 public partial class SystemBuilder
 {
     public ISystem System { get; }

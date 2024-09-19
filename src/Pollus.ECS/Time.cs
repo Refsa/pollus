@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using System.Diagnostics;
-using Pollus.ECS.Core;
 using Pollus.Mathematics;
 
 public class Time
@@ -14,7 +13,7 @@ public class Time
     public float DeltaTimeF => (float)DeltaTime;
 }
 
-public class TimeSystem : Sys<Time>
+public class TimeSystem : SystemBase<Time>
 {
     Stopwatch stopwatch = new();
     long previousTicks = 0;

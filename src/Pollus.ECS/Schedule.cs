@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using Pollus.Collections;
-using Pollus.ECS.Core;
 using System.Collections.Generic;
 using System.Text;
 

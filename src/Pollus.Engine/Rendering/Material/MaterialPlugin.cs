@@ -1,7 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
-using Pollus.ECS.Core;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
 
@@ -17,7 +16,7 @@ public class MaterialPlugin<TMaterial> : IPlugin
     }
 }
 
-public class ExtractMaterialSystem<TMaterial> : Sys<RenderAssets, AssetServer, IWGPUContext, Assets<TMaterial>>
+public class ExtractMaterialSystem<TMaterial> : SystemBase<RenderAssets, AssetServer, IWGPUContext, Assets<TMaterial>>
     where TMaterial : IMaterial
 {
     public ExtractMaterialSystem()

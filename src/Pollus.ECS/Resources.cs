@@ -1,6 +1,5 @@
 namespace Pollus.ECS;
 
-using Pollus.ECS.Core;
 using Pollus.Utils;
 
 public class Resources : IDisposable

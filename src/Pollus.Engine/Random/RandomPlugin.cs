@@ -1,7 +1,6 @@
 namespace Pollus.Engine;
 
 using Pollus.ECS;
-using Pollus.ECS.Core;
 using Pollus.Mathematics;
 using Pollus.Utils;
 

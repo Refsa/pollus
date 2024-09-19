@@ -1,14 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
-using Pollus.ECS.Core;
 using Pollus.Engine.Assets;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : Sys<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
+public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
     where TBatches : IRenderBatches<TBatch>
     where TBatch : IRenderBatch
     where TExtractQuery : IQuery
@@ -29,7 +28,7 @@ public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : Sys<R
     protected abstract void Extract(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, TBatches batches, TExtractQuery query);
 }
 
-public class WriteBatchesSystem<TBatches, TBatch> : Sys<RenderAssets, AssetServer, IWGPUContext, TBatches>
+public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches>
     where TBatches : IRenderBatches<TBatch>
     where TBatch : IRenderBatch
 {
@@ -62,7 +61,7 @@ public class WriteBatchesSystem<TBatches, TBatch> : Sys<RenderAssets, AssetServe
     }
 }
 
-public class DrawBatchesSystem<TBatches, TBatch> : Sys<DrawGroups2D, RenderAssets, TBatches>
+public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, RenderAssets, TBatches>
     where TBatches : IRenderBatches<TBatch>
     where TBatch : IRenderBatch
 {

@@ -1,7 +1,6 @@
 namespace Pollus.Engine.Assets;
 
 using Pollus.ECS;
-using Pollus.ECS.Core;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 public sealed class AssetAttribute : Attribute { }

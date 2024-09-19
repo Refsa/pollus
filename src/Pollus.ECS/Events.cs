@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
-using Pollus.ECS.Core;
 
 public class Events
 {

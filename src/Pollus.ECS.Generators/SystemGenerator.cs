@@ -17,7 +17,6 @@ namespace Pollus.ECS.Generators
         {
             const string TEMPLATE =
 @"namespace Pollus.ECS;
-using Pollus.ECS.Core;
 
 #pragma warning disable IL2059
 
@@ -51,21 +50,21 @@ $methods$
         void GenerateSystems(IncrementalGeneratorPostInitializationContext context)
         {
             const string TEMPLATE =
-@"namespace Pollus.ECS.Core;
+@"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
 #pragma warning disable IL2059
 
 public delegate void SystemDelegate<$gen_args$>($gen_params$);
 
-public abstract class Sys<$gen_args$> : Sys
+public abstract class SystemBase<$gen_args$> : SystemBase
 {
     static readonly HashSet<Type> dependencies;
     public static new HashSet<Type> Dependencies => dependencies;
 
     $fetch_fields$
 
-    static Sys()
+    static SystemBase()
     {
 #pragma warning disable IL2059
         $run_class_ctor$
@@ -74,7 +73,7 @@ public abstract class Sys<$gen_args$> : Sys
         dependencies = [$fetch_dependencies$];
     }
 
-    public Sys(SystemDescriptor descriptor) : base(descriptor)
+    public SystemBase(SystemDescriptor descriptor) : base(descriptor)
     {
         $set_parameter$
         descriptor.Dependencies.UnionWith(dependencies);
@@ -90,7 +89,7 @@ public abstract class Sys<$gen_args$> : Sys
     protected abstract void OnTick($gen_params$);
 }
 
-public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$gen_args$> onTick) : Sys<$gen_args$>(descriptor)
+public class FnSystem<$gen_args$>(SystemDescriptor descriptor, SystemDelegate<$gen_args$> onTick) : SystemBase<$gen_args$>(descriptor)
 {
     readonly SystemDelegate<$gen_args$> onTick = onTick;
 

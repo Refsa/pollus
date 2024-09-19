@@ -1,7 +1,5 @@
 namespace Pollus.ECS;
 
-using Pollus.ECS.Core;
-
 public interface IFetch
 {
     static abstract void Register();

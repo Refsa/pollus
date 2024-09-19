@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using Pollus.Debugging;
-using Pollus.ECS.Core;
 using System.Text;
 
 public record struct StageLabel(string Label)
