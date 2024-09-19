@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
+
 using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic;
-using Pollus.Debugging;
 using Pollus.ECS.Core;
 
 public interface IQuery
@@ -286,7 +285,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
     public readonly void ForEach(ForEachDelegate<C0> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -299,9 +298,24 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
     }
 
+    public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, C0> pred)
+    {
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            var count = chunk.Count;
+            scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
+            scoped ref var end = ref Unsafe.Add(ref curr, count);
+            while (Unsafe.IsAddressLessThan(ref curr, ref end))
+            {
+                pred(in userData, ref curr);
+                curr = ref Unsafe.Add(ref curr, 1);
+            }
+        }
+    }
+
     public readonly void ForEach(ForEachEntityDelegate<C0> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -316,10 +330,27 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
     }
 
+    public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, C0> pred)
+    {
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            var count = chunk.Count;
+            scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
+            scoped ref var end = ref Unsafe.Add(ref curr, count);
+            scoped ref var ent = ref chunk.GetEntity(0);
+            while (Unsafe.IsAddressLessThan(ref curr, ref end))
+            {
+                pred(in userData, ent, ref curr);
+                ent = ref Unsafe.Add(ref ent, 1);
+                curr = ref Unsafe.Add(ref curr, 1);
+            }
+        }
+    }
+
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : struct, IForEachBase<C0>
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);

@@ -1,7 +1,7 @@
+namespace Pollus.ECS;
+
 using System.Runtime.CompilerServices;
 using Pollus.Debugging;
-
-namespace Pollus.ECS;
 
 public class World : IDisposable
 {

@@ -115,6 +115,20 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
     }
 
+    public readonly void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            var count = chunk.Count;
+            $comp_spans$
+            
+            for (int i = 0; i < count; i++)
+            {
+                pred(in userData, $comp_args$);
+            }
+        }
+    }
+
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
     {
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -126,6 +140,21 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             for (int i = 0; i < count; i++)
             {
                 pred(entities[i], $comp_args$);
+            }
+        }
+    }
+
+    public readonly void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            var count = chunk.Count;
+            $comp_spans$
+            scoped var entities = chunk.GetEntities();
+
+            for (int i = 0; i < count; i++)
+            {
+                pred(in userData, entities[i], $comp_args$);
             }
         }
     }
@@ -287,7 +316,13 @@ using System.Runtime.CompilerServices;
 public delegate void ForEachDelegate<$gen_args$>($args$) 
     $gen_constraints$;
 
-public delegate void ForEachEntityDelegate<$gen_args$>(in Entity entity, $args$)
+public delegate void ForEachUserDataDelegate<TUserData, $gen_args$>(scoped in TUserData userData, $args$)
+    $gen_constraints$;
+
+public delegate void ForEachEntityDelegate<$gen_args$>(scoped in Entity entity, $args$)
+    $gen_constraints$;
+
+public delegate void ForEachEntityUserDataDelegate<TUserData, $gen_args$>(scoped in TUserData userData, scoped in Entity entity, $args$)
     $gen_constraints$;
 
 public interface IForEachBase<$gen_args$>
