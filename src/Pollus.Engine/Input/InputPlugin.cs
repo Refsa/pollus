@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Engine.Platform;
-using static Pollus.ECS.SystemBuilder;
+
 
 public class InputPlugin : IPlugin
 {
@@ -28,7 +28,7 @@ public class InputPlugin : IPlugin
         world.Resources.Add(new AxisInput<GamepadAxis>());
         world.Resources.Add(new ButtonInput<Key>());
 
-        world.Schedule.AddSystems(CoreStage.First, FnSystem(UpdateSystem,
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,
         (InputManager input, PlatformEvents platform, Events events,
          ButtonInput<MouseButton> mButtons, AxisInput<MouseAxis> mAxes,
          ButtonInput<GamepadButton> gButtons, AxisInput<GamepadAxis> gAxes,

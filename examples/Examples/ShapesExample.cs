@@ -23,7 +23,7 @@ public class ShapesExample : IExample
         new RenderingPlugin(),
         new ShapePlugin(),
     ])
-    .AddSystem(CoreStage.PostInit, SystemBuilder.FnSystem("SetupShapes",
+    .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupShapes",
     static (Commands commands, AssetServer assetServer, Assets<Shape> shapes, Assets<ShapeMaterial> shapeMaterials) =>
     {
         commands.Spawn(Camera2D.Bundle);

@@ -20,17 +20,20 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
         world.Resources.Get<AssetServer>().GetAssets<Uniform<TUniform>>().Add(new Uniform<TUniform>());
         world.Resources.Get<RenderAssets>().AddLoader(new UniformRenderDataLoader<TUniform>());
 
-        world.Schedule.AddSystems(CoreStage.Last, SystemBuilder.FnSystem(
-            $"{typeof(TUniform).Name}UpdateSystem",
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(
+            new($"{typeof(TUniform).Name}UpdateSystem")
+            {
+                Locals = [Local.From(Extract)]
+            },
             static (Local<ExtractDelegate> extract, Assets<Uniform<TUniform>> uniformAssets, TExtractParam extractParams) =>
             {
                 var handle = new Handle<Uniform<TUniform>>(0);
                 var uniformAsset = uniformAssets.Get(handle)!;
                 extract.Value(extractParams, ref uniformAsset.Data);
             }
-        ).InitLocal(Extract));
+        ));
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             $"{typeof(TUniform).Name}PrepareSystem",
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<Uniform<TUniform>> uniformAssets) =>
             {

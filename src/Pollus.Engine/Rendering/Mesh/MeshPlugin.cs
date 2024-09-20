@@ -29,7 +29,7 @@ public class MeshPlugin : IPlugin
             world.Resources.Add(primitives);
         }
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             "MeshPlugin::PrepareMeshAssets",
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<MeshAsset> meshAssets) =>
             {

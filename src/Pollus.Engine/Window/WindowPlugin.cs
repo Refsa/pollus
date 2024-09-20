@@ -13,7 +13,7 @@ public class WindowPlugin : IPlugin
             new PlatformEventsPlugin()
         ]);
 
-        world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem("WindowUpdate",
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create("WindowUpdate",
         static (IWindow window, PlatformEvents platformEvents, IWGPUContext gpuContext) =>
         {
             foreach (var @event in platformEvents.Events)

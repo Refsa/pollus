@@ -3,13 +3,13 @@ namespace Pollus.Engine.Camera;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
-using static Pollus.ECS.SystemBuilder;
+
 
 public class CameraPlugin : IPlugin
 {
     public void Apply(World world)
     {
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem("Camera::Update", static (IWindow window, Query<Projection> query) =>
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create("Camera::Update", static (IWindow window, Query<Projection> query) =>
         {
             query.ForEach(new CameraProjectionUpdateForEach { WindowSize = window.Size });
         }));

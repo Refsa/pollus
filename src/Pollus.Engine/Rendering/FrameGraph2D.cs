@@ -78,7 +78,10 @@ public class FrameGraph2DPlugin : IPlugin
     {
         world.Resources.Add(new FrameGraph2D());
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(BeginFrame,
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(BeginFrame)
+        {
+            RunsAfter = [RenderingPlugin.BeginFrameSystem]
+        },
         static (RenderContext renderContext, RenderAssets renderAssets,
                 DrawGroups2D drawGroups, Resources resources,
                 IWindow window, FrameGraph2D renderGraph) =>
@@ -190,9 +193,9 @@ public class FrameGraph2DPlugin : IPlugin
             });
 
             renderGraph.BeginFrame(frameGraph, param);
-        }).After(RenderingPlugin.BeginFrameSystem));
+        }));
 
-        world.Schedule.AddSystems(CoreStage.Render, SystemBuilder.FnSystem(Render,
+        world.Schedule.AddSystems(CoreStage.Render, FnSystem.Create(Render,
         static (FrameGraph2D renderGraph, RenderContext context) =>
         {
             renderGraph.Compile().Execute(context, renderGraph.Param);

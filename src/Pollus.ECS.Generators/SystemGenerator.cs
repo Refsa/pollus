@@ -20,15 +20,15 @@ namespace Pollus.ECS.Generators
 
 #pragma warning disable IL2059
 
-public partial class SystemBuilder
+public partial class FnSystem
 {
-$methods$
+$fn_system_methods$
 }
 
 #pragma warning restore IL2059
 ";
 
-            var sb = new StringBuilder();
+            var fn_system_methods = new StringBuilder();
 
             var gen_args = "T0";
 
@@ -36,15 +36,23 @@ $methods$
             {
                 gen_args += $", T{i}";
 
-                sb.AppendLine(@$"
-    public static SystemBuilder FnSystem<$gen_args$>(SystemLabel label, SystemDelegate<$gen_args$> onTick)
+                fn_system_methods.AppendLine(@$"
+    public static FnSystem<$gen_args$> Create<$gen_args$>(SystemBuilderDescriptor descriptor, SystemDelegate<$gen_args$> onTick)
     {{
-        return new SystemBuilder(new FnSystem<$gen_args$>(new SystemDescriptor(label), onTick));
+        var system = new FnSystem<$gen_args$>(descriptor, onTick)
+        {{
+            RunCriteria = descriptor.RunCriteria
+        }};
+        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+        return system;
     }}").Replace("$gen_args$", gen_args);
             }
 
 
-            context.AddSource("SystemBuilder.gen.cs", TEMPLATE.Replace("$methods$", sb.ToString()));
+            context.AddSource("SystemBuilder.gen.cs", TEMPLATE
+                .Replace("$fn_system_methods$", fn_system_methods.ToString())
+            );
         }
 
         void GenerateSystems(IncrementalGeneratorPostInitializationContext context)

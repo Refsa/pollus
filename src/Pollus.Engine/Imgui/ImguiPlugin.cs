@@ -28,7 +28,7 @@ public class ImguiPlugin : IPlugin
 
         world.Resources.Init<ImguiRenderer>();
 
-        world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.Init, FnSystem.Create(
             SetupSystem,
             static (Resources resources, IWGPUContext gpuContext, IWindow window, RenderAssets renderAssets) =>
             {
@@ -37,7 +37,7 @@ public class ImguiPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(
             UpdateSystem,
             static (
                 PlatformEvents platformEvents,
@@ -98,16 +98,19 @@ public class ImguiPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.First, SystemBuilder.FnSystem(
-            BeginFrameSystem,
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(
+            new(BeginFrameSystem)
+            {
+                RunsAfter = [UpdateSystem],
+            },
             static (ImguiRenderer imguiRenderer, Time time, IWindow window, PlatformEvents platformEvents) =>
             {
                 imguiRenderer.Resized(window.Size);
                 imguiRenderer.Update((float)time.DeltaTime);
             }
-        ).After(UpdateSystem));
+        ));
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             RenderSystem,
             static (ImguiRenderer imguiRenderer, RenderContext context, DrawGroups2D renderSteps) =>
             {

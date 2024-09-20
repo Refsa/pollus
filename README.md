@@ -41,12 +41,12 @@ Application.Builder
         new AssetPlugin { RootPath = "assets" },
         new InputPlugin(),
     ])
-    .AddSystems(CoreStage.PostInit, SystemBuilder.FnSystem("SetupEntities",
+    .AddSystems(CoreStage.PostInit, FnSystem.Create("SetupEntities",
     static (Commands commands) => 
     {
         commands.Spawn(Entity.With(Transform2.Default, new Player()));
     }))
-    .AddSystems(CoreStage.Update, SystemBuilder.FnSystem("UpdateEntities",
+    .AddSystems(CoreStage.Update, FnSystem.Create("UpdateEntities",
     static (Query<Transform2>.Filter<All<Player>> query, ButtonInput<Key> keys) => 
     {
         query.ForEach((ref Transform2 transform) =>

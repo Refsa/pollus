@@ -38,13 +38,12 @@ public class PlatformEventsPlugin : IPlugin
     {
         world.Resources.Add(new PlatformEvents());
 
-        world.Schedule.AddSystems(CoreStage.First, new[]
-        {
-            SystemBuilder.FnSystem("PollEvents", (PlatformEvents events) =>
+        world.Schedule.AddSystems(CoreStage.First, [
+            FnSystem.Create("PollEvents", static (PlatformEvents events) =>
             {
                 events.ClearEvents();
                 events.PollEvents();
             })
-        });
+        ]);
     }
 }

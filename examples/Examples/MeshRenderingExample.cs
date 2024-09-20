@@ -11,7 +11,7 @@ using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
-using static Pollus.ECS.SystemBuilder;
+
 
 public class MeshRenderingExample : IExample
 {
@@ -42,7 +42,7 @@ public class MeshRenderingExample : IExample
             new InputPlugin(),
             new PerformanceTrackerPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupEntities",
         static (Commands commands, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<SamplerAsset> samplers) =>
         {
             Handle[] materialHandles = [
@@ -93,7 +93,7 @@ public class MeshRenderingExample : IExample
 
             commands.Spawn(Camera2D.Bundle);
         }))
-        .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
+        .AddSystem(CoreStage.Update, FnSystem.Create("PlayerUpdate",
         static (InputManager input, Time time,
             Query<Transform2, OrthographicProjection>.Filter<All<Camera2D>> qCamera,
             Query<Transform2, RotateMe> qRotateMe) =>

@@ -5,7 +5,7 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using static Pollus.ECS.SystemBuilder;
+
 
 class RenderData : IDisposable
 {
@@ -25,7 +25,7 @@ public class DrawTriangleExample : IExample
 
     public void Run() => (application = Application.Builder
         .InitResource<RenderData>()
-        .AddSystem(CoreStage.PostInit, FnSystem("Setup",
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
         static (IWGPUContext gpuContext, Resources resources) =>
         {
             using var shaderModule = gpuContext.CreateShaderModule(new()
@@ -68,7 +68,7 @@ public class DrawTriangleExample : IExample
 
             Log.Info("Render Pipeline Created");
         }))
-        .AddSystem(CoreStage.Last, FnSystem("Draw",
+        .AddSystem(CoreStage.Last, FnSystem.Create("Draw",
         static (IWGPUContext gpuContext, RenderData renderData) =>
         {
             using var surfaceTexture = new GPUSurfaceTexture(gpuContext);

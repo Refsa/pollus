@@ -22,11 +22,11 @@ public class ImGuiExample : IExample
             new InputPlugin(),
             new ImguiPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, SystemBuilder.FnSystem("Spawn", (Commands commands) =>
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", (Commands commands) =>
         {
             commands.Spawn(Camera2D.Bundle);
         }))
-        .AddSystem(CoreStage.Update, SystemBuilder.FnSystem("ImGui", () =>
+        .AddSystem(CoreStage.Update, FnSystem.Create("ImGui", () =>
         {
             ImGuiNET.ImGui.ShowDemoWindow();
         }))

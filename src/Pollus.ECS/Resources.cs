@@ -39,6 +39,11 @@ public class Resources : IDisposable
         resources[TypeLookup.ID<TResource>()] = resource;
     }
 
+    public void Add(object obj, int typeId)
+    {
+        resources[typeId] = obj;
+    }
+
     public TResource Get<TResource>()
         where TResource : notnull
     {

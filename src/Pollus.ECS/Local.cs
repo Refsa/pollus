@@ -1,10 +1,26 @@
 namespace Pollus.ECS;
 
-public class Local<T>
+using Pollus.Utils;
+
+public abstract class Local
 {
-    static Local() => LocalFetch<T>.Register();
+    public abstract int TypeID { get; }
+
+    public static Local<T> From<T>(T local)
+    {
+        return new Local<T>(local);
+    }
+}
+
+public class Local<T> : Local
+{
+    static Local()
+    {
+        LocalFetch<T>.Register();
+    }
 
     public T Value;
+    public override int TypeID => TypeLookup.ID<T>();
 
     public Local(T value)
     {

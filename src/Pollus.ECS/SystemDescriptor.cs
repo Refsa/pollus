@@ -37,15 +37,39 @@ public class SystemDescriptor
         return this;
     }
 
+    public SystemDescriptor Before(HashSet<SystemLabel> labels)
+    {
+        RunsBefore.UnionWith(labels);
+        return this;
+    }
+
     public SystemDescriptor After(SystemLabel label)
     {
         RunsAfter.Add(label);
         return this;
     }
 
+    public SystemDescriptor After(HashSet<SystemLabel> labels)
+    {
+        RunsAfter.UnionWith(labels);
+        return this;
+    }
+
     public SystemDescriptor DependsOn<T>()
     {
         Dependencies.Add(typeof(T));
+        return this;
+    }
+
+    public SystemDescriptor DependsOn(Type dependency)
+    {
+        Dependencies.Add(dependency);
+        return this;
+    }
+
+    public SystemDescriptor DependsOn(HashSet<Type> dependencies)
+    {
+        Dependencies.UnionWith(dependencies);
         return this;
     }
 }

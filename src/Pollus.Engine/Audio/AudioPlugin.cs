@@ -6,7 +6,7 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Mathematics;
 using Pollus.Utils;
-using static Pollus.ECS.SystemBuilder;
+
 
 public struct AudioSource : IComponent
 {
@@ -86,7 +86,7 @@ public class AudioPlugin : IPlugin
         world.Resources.Get<AssetServer>().AddLoader<WavAssetLoader>();
 
         world.Schedule.AddSystems(CoreStage.Last, [
-            FnSystem("AudioUpdate", static (
+            FnSystem.Create("AudioUpdate", static (
                 Commands commands, Time time, AudioManager audioManager,
                 AudioPools audioPools, Assets<AudioAsset> audioAssets,
                 Assets<Pollus.Audio.AudioSource> deviceSources,

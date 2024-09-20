@@ -70,7 +70,7 @@ public class Schedule : IDisposable
         return this;
     }
 
-    public Schedule AddSystems(StageLabel stageLabel, params SystemBuilder[] builders)
+    public Schedule AddSystems(StageLabel stageLabel, params ISystemBuilder[] builders)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Label} not found");
         foreach (var builder in builders)

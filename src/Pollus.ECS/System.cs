@@ -74,13 +74,35 @@ public abstract class SystemBase<T0> : SystemBase
     protected abstract void OnTick(T0 arg1);
 }
 
-public class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick) : SystemBase(descriptor)
+public partial class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick) : SystemBase(descriptor)
 {
     readonly SystemDelegate onTick = onTick;
 
     protected override void OnTick()
     {
         onTick();
+    }
+
+    public static FnSystem Create(SystemBuilderDescriptor descriptor, SystemDelegate onTick)
+    {
+        var system = new FnSystem(descriptor, onTick)
+        {
+            RunCriteria = descriptor.RunCriteria
+        };
+        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+        return system;
+    }
+
+    public static FnSystem<T0> Create<T0>(SystemBuilderDescriptor descriptor, SystemDelegate<T0> onTick)
+    {
+        var system = new FnSystem<T0>(descriptor, onTick)
+        {
+            RunCriteria = descriptor.RunCriteria
+        };
+        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+        return system;
     }
 }
 

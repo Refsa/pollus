@@ -4,7 +4,6 @@ using Pollus.Engine;
 using Pollus.ECS;
 using Pollus.Engine.Audio;
 using Pollus.Engine.Assets;
-using static Pollus.ECS.SystemBuilder;
 
 public class AudioExample : IExample
 {
@@ -18,7 +17,7 @@ public class AudioExample : IExample
             .AddPlugin(new AssetPlugin { RootPath = "assets" })
             .AddPlugin<TimePlugin>()
             .AddPlugin<AudioPlugin>()
-            .AddSystem(CoreStage.PostInit, FnSystem("Setup",
+            .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
             static (World world, AssetServer assetServer) =>
             {
                 Entity.With(

@@ -30,7 +30,7 @@ public class ComputePlugin<TCompute> : IPlugin
     {
         world.Resources.Get<RenderAssets>().AddLoader(new ComputeRenderDataLoader<TCompute>());
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(SetupSystem,
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(SetupSystem,
         static (IWGPUContext gpuContext, AssetServer assetServer, Assets<TCompute> computeShaders, RenderAssets renderAssets) =>
         {
             foreach (var info in computeShaders.AssetInfos)

@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
-using static Pollus.ECS.SystemBuilder;
 
 public class ECSExample : IExample
 {
@@ -34,8 +33,8 @@ public class ECSExample : IExample
             new TimePlugin(),
         ])
         .InitEvent<TestEvent>()
-        .AddSystem(CoreStage.PostInit, FnSystem("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
-        .AddSystem(CoreStage.PostInit, FnSystem("Setup",
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
         static (Commands commands) =>
         {
             for (int i = 0; i < 100_000; i++)
@@ -43,7 +42,7 @@ public class ECSExample : IExample
                 commands.Spawn(Entity.With(new Component1(), new Component2()));
             }
         }))
-        .AddSystem(CoreStage.Update, FnSystem("Update",
+        .AddSystem(CoreStage.Update, FnSystem.Create("Update",
         static (Query<Component1, Component2> query) =>
         {
             query.ForEach(static (ref Component1 c1, ref Component2 c2) =>
@@ -51,7 +50,7 @@ public class ECSExample : IExample
                 c1.Value += c2.Value;
             });
         }))
-        .AddSystem(CoreStage.First, FnSystem("ReadEventFirst",
+        .AddSystem(CoreStage.First, FnSystem.Create("ReadEventFirst",
         static (EventReader<TestEvent> eTestEvent) =>
         {
             foreach (var e in eTestEvent.Read())
@@ -59,11 +58,14 @@ public class ECSExample : IExample
                 Log.Info($"Event: {e.Value}");
             }
         }))
-        .AddSystem(CoreStage.Last, FnSystem("WriteEventLast",
+        .AddSystem(CoreStage.Last, FnSystem.Create(new("WriteEventLast")
+        {
+            RunCriteria = new RunFixed(1f)
+        },
         static (Local<int> counter, EventWriter<TestEvent> eTestEvent) =>
         {
             eTestEvent.Write(new TestEvent { Value = counter.Value++ });
-        }).RunCriteria(new RunFixed(1f)))
+        }))
         .Build())
         .Run();
 }

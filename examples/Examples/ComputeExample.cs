@@ -70,7 +70,7 @@ public partial class ComputeExample : IExample
                 DstFactor = BlendFactor.OneMinusSrcAlpha,
                 Operation = BlendOperation.Add,
             },
-        }; 
+        };
 
         public required Handle<ShaderAsset> ShaderSource { get; set; }
         public required StorageBufferBinding<Particle> ParticleBuffer { get; set; }
@@ -115,7 +115,7 @@ public partial class ComputeExample : IExample
                 },
             ])
             .AddResource(new ComputeData())
-            .AddSystem(CoreStage.Init, SystemBuilder.FnSystem("Setup",
+            .AddSystem(CoreStage.Init, FnSystem.Create("Setup",
             static (Commands commands, Random random, IWindow window,
                     ComputeData computeData, RenderAssets renderAssets, AssetServer assetServer,
                     Assets<ComputeShader> computeShaders, Assets<ParticleMaterial> particleMaterials,
@@ -164,7 +164,10 @@ public partial class ComputeExample : IExample
                     ]]
                 });
             }))
-            .AddSystem(CoreStage.PreRender, SystemBuilder.FnSystem("PrepareRender",
+            .AddSystem(CoreStage.PreRender, FnSystem.Create(new("PrepareRender")
+            {
+                RunsAfter = ["FrameGraph2DPlugin.BeginFrame"],
+            },
             static (FrameGraph2D frameGraph, RenderContext renderContext, RenderAssets renderAssets, ComputeData computeData) =>
             {
                 frameGraph.FrameGraph.AddBuffer(BufferDescriptor.Storage<Particle>("particles_buffer", 1_000_000));
@@ -216,7 +219,7 @@ public partial class ComputeExample : IExample
                         .Draw(4, 1_000_000, 0, 0)
                         .ApplyAndDispose(renderEncoder, param.RenderAssets);
                 });
-            }).After(FrameGraph2DPlugin.BeginFrame))
+            }))
             .Build();
         app.Run();
     }

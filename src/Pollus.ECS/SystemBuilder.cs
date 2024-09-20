@@ -1,62 +1,43 @@
+using Pollus.Debugging;
+
 namespace Pollus.ECS;
 
-public partial class SystemBuilder
+public interface ISystemBuilder
 {
-    public ISystem System { get; }
+    ISystem Build();
+}
 
-    public SystemBuilder(ISystem system)
+public struct SystemBuilderDescriptor
+{
+    public SystemLabel Label { get; }
+    public HashSet<SystemLabel> RunsBefore { get; init; } = [];
+    public HashSet<SystemLabel> RunsAfter { get; init; } = [];
+    public HashSet<Type> Dependencies { get; init; } = [];
+    public HashSet<Local> Locals { get; init; } = [];
+    public bool IsExclusive { get; init; } = false;
+    public IRunCriteria RunCriteria { get; init; } = RunAlways.Instance;
+
+    public SystemBuilderDescriptor(SystemLabel label)
     {
-        System = system;
+        Label = label;
     }
 
-    public ISystem Build()
+    public static implicit operator SystemDescriptor(SystemBuilderDescriptor builder)
     {
-        return System;
+        var descriptor = new SystemDescriptor(builder.Label);
+        descriptor.Before(builder.RunsBefore);
+        descriptor.After(builder.RunsAfter);
+        descriptor.DependsOn(builder.Dependencies);
+        return descriptor;
     }
 
-    public SystemBuilder Before(SystemLabel label)
+    public static implicit operator SystemBuilderDescriptor(string label)
     {
-        System.Descriptor.Before(label);
-        return this;
+        return new(label);
     }
 
-    public SystemBuilder After(SystemLabel label)
+    public static implicit operator SystemBuilderDescriptor(SystemLabel label)
     {
-        System.Descriptor.After(label);
-        return this;
-    }
-
-    public SystemBuilder DependsOn<T>()
-    {
-        System.Descriptor.DependsOn<T>();
-        return this;
-    }
-
-    public SystemBuilder RunCriteria(IRunCriteria runCriteria)
-    {
-        System.RunCriteria = runCriteria;
-        return this;
-    }
-
-    public SystemBuilder Exclusive()
-    {
-        System.Descriptor.DependsOn<ExclusiveSystemMarker>();
-        return this;
-    }
-
-    public SystemBuilder InitLocal<T>(T value)
-    {
-        System.Resources.Add(new Local<T>(value));
-        return this;
-    }
-
-    public static SystemBuilder FnSystem(SystemLabel label, SystemDelegate onTick)
-    {
-        return new SystemBuilder(new FnSystem(new SystemDescriptor(label), onTick));
-    }
-
-    public static SystemBuilder FnSystem<T1>(SystemLabel label, SystemDelegate<T1> onTick)
-    {
-        return new SystemBuilder(new FnSystem<T1>(new SystemDescriptor(label), onTick));
+        return new(label);
     }
 }

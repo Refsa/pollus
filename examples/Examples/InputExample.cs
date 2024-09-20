@@ -4,7 +4,7 @@ using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
-using static Pollus.ECS.SystemBuilder;
+
 
 public class InputExample : IExample
 {
@@ -17,7 +17,7 @@ public class InputExample : IExample
     {
         application = Application.Builder
             .AddPlugin<InputPlugin>()
-            .AddSystem(CoreStage.Update, FnSystem("Update",
+            .AddSystem(CoreStage.Update, FnSystem.Create("Update",
             static (EventReader<ButtonEvent<Key>> eKeys) =>
             {
                 foreach (var key in eKeys.Read())

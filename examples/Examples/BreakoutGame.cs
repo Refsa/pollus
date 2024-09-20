@@ -18,7 +18,6 @@ using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.Mathematics.Collision2D;
 using Pollus.Utils;
-using static Pollus.ECS.SystemBuilder;
 
 public class BreakoutGame : IExample
 {
@@ -102,11 +101,12 @@ public class BreakoutGame : IExample
             new RandomPlugin(),
         ])
         .AddResource(new GameState { State = State.NewGame, Lives = 3, Score = 0 })
-        .AddSystem(CoreStage.Init, FnSystem("LogSchedule", static (World world) =>
+        .AddSystem(CoreStage.Init, FnSystem.Create("LogSchedule",
+        static (World world) =>
         {
             Log.Info(world.Schedule.ToString());
         }))
-        .AddSystem(CoreStage.PostInit, FnSystem("SetupEntities",
+        .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupEntities",
         static (Commands commands, GameState gameState, IWindow window,
             AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
         {
@@ -139,7 +139,7 @@ public class BreakoutGame : IExample
                 }
             ));
         }))
-        .AddSystem(CoreStage.PreUpdate, FnSystem("GameState",
+        .AddSystem(CoreStage.PreUpdate, FnSystem.Create("GameState",
         static (World world, GameState gameState, EventWriter<Event.RestartGame> eRestartGame,
                 EventWriter<Event.SpawnBall> eSpawnBall, ButtonInput<Key> keys,
                 Query<Brick> qBricks
@@ -194,7 +194,7 @@ public class BreakoutGame : IExample
                 }
             }
         }))
-        .AddSystem(CoreStage.First, FnSystem("BrickSpawner",
+        .AddSystem(CoreStage.First, FnSystem.Create("BrickSpawner",
         static (Commands commands, IWindow window, GameState gameState,
                 EventReader<Event.RestartGame> eRestartGame,
                 Query<Transform2, Brick> qBricks
@@ -237,7 +237,7 @@ public class BreakoutGame : IExample
                 }
             }
         }))
-        .AddSystem(CoreStage.First, FnSystem("BallSpawner",
+        .AddSystem(CoreStage.First, FnSystem.Create("BallSpawner",
         static (Commands commands, GameState gameState, IWindow window, Random random, EventReader<Event.SpawnBall> eSpawnBall) =>
         {
             if (!eSpawnBall.HasAny) return;
@@ -262,7 +262,7 @@ public class BreakoutGame : IExample
                     CollisionShape.Circle(8f)
                 ));
         }))
-        .AddSystem(CoreStage.Update, FnSystem("UI",
+        .AddSystem(CoreStage.Update, FnSystem.Create("UI",
         static (GameState gameState) =>
         {
             ImGui.SetNextWindowSize(new System.Numerics.Vector2(100, 50), ImGuiCond.FirstUseEver);
@@ -275,7 +275,7 @@ public class BreakoutGame : IExample
                 ImGui.End();
             }
         }))
-        .AddSystem(CoreStage.Update, FnSystem("PlayerUpdate",
+        .AddSystem(CoreStage.Update, FnSystem.Create("PlayerUpdate",
         static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
                 Time time, IWindow window, Query query,
                 Query<Transform2, CollisionShape>.Filter<All<Player>> qPlayer
@@ -308,7 +308,7 @@ public class BreakoutGame : IExample
 
             if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
         }))
-        .AddSystem(CoreStage.Update, FnSystem("CollisionSystem",
+        .AddSystem(CoreStage.Update, FnSystem.Create("CollisionSystem",
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,
                 EventWriter<Event.Collision> eCollision,
                 Query<Transform2, Velocity, CollisionShape>.Filter<All<Ball>> qBalls,
@@ -368,7 +368,10 @@ public class BreakoutGame : IExample
                 }
             });
         }))
-        .AddSystem(CoreStage.Update, FnSystem("CollisionResponseSystem",
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("CollisionResponseSystem")
+        {
+            RunsAfter = ["CollisionSystem"],
+        },
         static (Commands commands, EventReader<Event.Collision> eCollision,
                 EventWriter<Event.BrickDestroyed> eBrickDestroyed,
                 Query query, Query<Transform2, Velocity> qBodies
@@ -407,16 +410,22 @@ public class BreakoutGame : IExample
                     eBrickDestroyed.Write(new Event.BrickDestroyed());
                 }
             }
-        }).After("CollisionSystem"))
-        .AddSystem(CoreStage.Update, FnSystem("VelocitySystem",
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("VelocitySystem")
+        {
+            RunsAfter = ["CollisionResponseSystem"],
+        },
         static (Query<Transform2, Velocity> qTransforms, Time time) =>
         {
             qTransforms.ForEach(delegate (ref Transform2 transform, ref Velocity velocity)
             {
                 transform.Position += velocity.Value * (float)time.DeltaTime;
             });
-        }).After("CollisionResponseSystem"))
-        .AddSystem(CoreStage.Update, FnSystem("BallOutOfBoundsSystem",
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("BallOutOfBoundsSystem")
+        {
+            RunsAfter = ["VelocitySystem"],
+        },
         static (Commands commands, GameState gameState, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
                 Query<Transform2, Ball> qBalls, IWindow window
         ) =>
@@ -431,8 +440,8 @@ public class BreakoutGame : IExample
                     _ => State.SpawnBall,
                 };
             });
-        }).After("VelocitySystem"))
-        .AddSystem(CoreStage.Last, FnSystem("BrickEventsSystem",
+        }))
+        .AddSystem(CoreStage.Last, FnSystem.Create("BrickEventsSystem",
         static (Commands commands, GameState gameState, AssetServer assetServer, Random random,
                 EventReader<Event.BrickDestroyed> eBrickDestroyed,
                 EventReader<Event.Collision> eCollision

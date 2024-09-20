@@ -57,7 +57,7 @@ public class RenderingPlugin : IPlugin
             }
         ]);
 
-        world.Schedule.AddSystems(CoreStage.Init, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.Init, FnSystem.Create(
             SetupSystem,
             static (IWGPUContext gpuContext, Resources resources, RenderAssets renderAssets) =>
             {
@@ -70,7 +70,7 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.PreRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
             static (RenderContext context) =>
             {
@@ -78,7 +78,7 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
+        world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
             EndFrameSystem,
             static (RenderContext context) =>
             {
@@ -86,13 +86,16 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.PostRender, SystemBuilder.FnSystem(
-            RenderStepsCleanupSystem,
+        world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
+            new(RenderStepsCleanupSystem)
+            {
+                RunsAfter = [EndFrameSystem],
+            },
             static (RenderContext context, DrawGroups2D renderSteps) =>
             {
                 context.CleanupFrame();
                 renderSteps.Cleanup();
             }
-        ).After(EndFrameSystem));
+        ));
     }
 }

@@ -98,7 +98,7 @@ public record class Application
         return this;
     }
 
-    public Application AddSystem(StageLabel stage, params SystemBuilder[] systems)
+    public Application AddSystem(StageLabel stage, params ISystemBuilder[] systems)
     {
         world.Schedule.AddSystems(stage, systems);
         return this;
