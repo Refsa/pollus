@@ -98,7 +98,7 @@ public partial class FnSystem(SystemDescriptor descriptor, SystemDelegate onTick
     {
         var system = new FnSystem<T0>(descriptor, onTick)
         {
-            RunCriteria = descriptor.RunCriteria
+            RunCriteria = descriptor.RunCriteria,
         };
         if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
         foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);

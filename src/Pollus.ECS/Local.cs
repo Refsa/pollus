@@ -20,7 +20,7 @@ public class Local<T> : Local
     }
 
     public T Value;
-    public override int TypeID => TypeLookup.ID<T>();
+    public override int TypeID => TypeLookup.ID<Local<T>>();
 
     public Local(T value)
     {
