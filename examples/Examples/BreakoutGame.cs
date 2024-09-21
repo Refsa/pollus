@@ -73,7 +73,6 @@ public class BreakoutGame : IExample
 
     class GameState
     {
-        public State State;
         public int Lives;
         public int Score;
 
@@ -99,8 +98,9 @@ public class BreakoutGame : IExample
             new AudioPlugin(),
             new PerformanceTrackerPlugin(),
             new RandomPlugin(),
+            new StatePlugin<State>(State.NewGame),
         ])
-        .AddResource(new GameState { State = State.NewGame, Lives = 3, Score = 0 })
+        .AddResource(new GameState { Lives = 3, Score = 0 })
         .AddSystem(CoreStage.Init, FnSystem.Create("LogSchedule",
         static (World world) =>
         {
@@ -139,63 +139,63 @@ public class BreakoutGame : IExample
                 }
             ));
         }))
-        .AddSystem(CoreStage.PreUpdate, FnSystem.Create("GameState",
-        static (World world, GameState gameState, EventWriter<Event.RestartGame> eRestartGame,
-                EventWriter<Event.SpawnBall> eSpawnBall, ButtonInput<Key> keys,
-                Query<Brick> qBricks
-        ) =>
+        .AddSystem(CoreStage.PreUpdate, FnSystem.Create(new("NewGameStateSystem")
         {
-            if (gameState.State == State.NewGame)
+            RunCriteria = StateRunCriteria<State>.OnEnter(State.NewGame)
+        }, static (GameState gameState, State<State> state, EventWriter<Event.RestartGame> eRestartGame) =>
+        {
+            gameState.Score = 0;
+            gameState.Lives = 3;
+            eRestartGame.Write(new Event.RestartGame());
+        }))
+        .AddSystem(CoreStage.PreUpdate, FnSystem.Create(new("SpawnBallStateSystem")
+        {
+            RunCriteria = StateRunCriteria<State>.OnEnter(State.SpawnBall)
+        }, static (GameState gameState, State<State> state, EventWriter<Event.SpawnBall> eSpawnBall) =>
+        {
+            eSpawnBall.Write(new Event.SpawnBall { Count = 1 });
+            state.Set(State.Play);
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("PlayStateSystem")
+        {
+            RunCriteria = StateRunCriteria<State>.OnCurrent(State.Play)
+        }, static (Query<Brick> qBricks, State<State> state) =>
+        {
+            if (qBricks.EntityCount() == 0) state.Set(State.Won);
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("GameOverStateSystem")
+        {
+            RunCriteria = StateRunCriteria<State>.OnCurrent(State.GameOver)
+        }, static (State<State> state, GameState gameState) =>
+        {
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
+            if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
             {
-                gameState.Score = 0;
-                gameState.Lives = 3;
-                gameState.State = State.SpawnBall;
-                eRestartGame.Write(new Event.RestartGame());
+                ImGui.TextUnformatted("Game Over");
+                ImGui.TextUnformatted($"Final Score: {gameState.Score}");
+                if (ImGui.Button("Restart")) state.Set(State.NewGame);
+                ImGui.End();
             }
-            else if (gameState.State == State.SpawnBall)
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new("GameOverStateSystem")
+        {
+            RunCriteria = StateRunCriteria<State>.OnCurrent(State.GameOver)
+        }, static (State<State> state, GameState gameState) =>
+        {
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
+            if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
             {
-                eSpawnBall.Write(new Event.SpawnBall { Count = 1 });
-                gameState.State = State.Play;
-            }
-            else if (gameState.State == State.Play)
-            {
-                if (qBricks.EntityCount() == 0) gameState.State = State.Won;
-            }
-            else if (gameState.State == State.GameOver)
-            {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
-                if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
-                {
-                    ImGui.TextUnformatted("Game Over");
-                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
-                    if (ImGui.Button("Restart"))
-                    {
-                        gameState.State = State.NewGame;
-                    }
-
-                    ImGui.End();
-                }
-            }
-            else if (gameState.State == State.Won)
-            {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
-                if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
-                {
-                    ImGui.TextUnformatted("You Won!");
-                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
-                    if (ImGui.Button("Restart"))
-                    {
-                        gameState.State = State.NewGame;
-                    }
-
-                    ImGui.End();
-                }
+                ImGui.TextUnformatted("You Won!");
+                ImGui.TextUnformatted($"Final Score: {gameState.Score}");
+                if (ImGui.Button("Restart")) state.Set(State.NewGame);
+                ImGui.End();
             }
         }))
         .AddSystem(CoreStage.First, FnSystem.Create("BrickSpawner",
-        static (Commands commands, IWindow window, GameState gameState,
+        static (Commands commands, IWindow window, 
+                GameState gameState, State<State> state,
                 EventReader<Event.RestartGame> eRestartGame,
                 Query<Transform2, Brick> qBricks
         ) =>
@@ -236,6 +236,8 @@ public class BreakoutGame : IExample
                     ));
                 }
             }
+
+            state.Set(State.SpawnBall);
         }))
         .AddSystem(CoreStage.First, FnSystem.Create("BallSpawner",
         static (Commands commands, GameState gameState, IWindow window, Random random, EventReader<Event.SpawnBall> eSpawnBall) =>
@@ -426,7 +428,8 @@ public class BreakoutGame : IExample
         {
             RunsAfter = ["VelocitySystem"],
         },
-        static (Commands commands, GameState gameState, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
+        static (Commands commands, GameState gameState, 
+                State<State> state, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
                 Query<Transform2, Ball> qBalls, IWindow window
         ) =>
         {
@@ -434,15 +437,16 @@ public class BreakoutGame : IExample
             {
                 if (ballTransform.Position.Y > 16f) return;
                 commands.Despawn(ballEntity);
-                gameState.State = --gameState.Lives switch
+                state.Set(--gameState.Lives switch
                 {
                     0 => State.GameOver,
                     _ => State.SpawnBall,
-                };
+                });
             });
         }))
         .AddSystem(CoreStage.Last, FnSystem.Create("BrickEventsSystem",
-        static (Commands commands, GameState gameState, AssetServer assetServer, Random random,
+        static (Commands commands, GameState gameState, 
+                AssetServer assetServer, Random random,
                 EventReader<Event.BrickDestroyed> eBrickDestroyed,
                 EventReader<Event.Collision> eCollision
         ) =>

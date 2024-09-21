@@ -1,7 +1,5 @@
 namespace Pollus.ECS;
 
-using Pollus.Debugging;
-
 public enum StateTransition
 {
     Enter,
@@ -32,7 +30,7 @@ public record State<T>
 
     public State(T defaultState)
     {
-        Current = defaultState;
+        Next = defaultState;
     }
 
     public void Set(T state)
@@ -64,7 +62,7 @@ public class StateRunCriteria<T> : IRunCriteria
             return EqualityComparer<T>.Default.Equals(stateRes.Current, state) && target == StateTransition.Current;
         }
 
-        var head = events[0];
+        var head = events[^1];
         return head.Transition == target && EqualityComparer<T>.Default.Equals(head.State, state);
     }
 
@@ -135,26 +133,33 @@ public class StatePlugin<T> : IPlugin
 
         foreach (var state in Enum.GetValues<T>().Reverse())
         {
-            var enterStage = new Stage(StateEnter.On<T>(state));
-            enterStage.RunCriteria = StateRunCriteria<T>.OnEnter(state);
-            var exitStage = new Stage(StateExit.On<T>(state));
-            exitStage.RunCriteria = StateRunCriteria<T>.OnExit(state);
+            var enterStage = new Stage(StateEnter.On<T>(state))
+            {
+                RunCriteria = StateRunCriteria<T>.OnEnter(state)
+            };
+            var exitStage = new Stage(StateExit.On<T>(state))
+            {
+                RunCriteria = StateRunCriteria<T>.OnExit(state)
+            };
 
             world.Schedule.AddStage(exitStage, before: null, after: CoreStage.First);
-            world.Schedule.AddStage(enterStage, before: null, after: CoreStage.First); 
+            world.Schedule.AddStage(enterStage, before: null, after: CoreStage.First);
         }
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(
-            $"{typeof(T).Name}StateTransitionSystem",
+            $"StateTransitionSystem<{typeof(T).Name}>",
             static (State<T> state, EventWriter<StateEvent<T>> writer) =>
             {
-                if (state.Next != null)
+                if (state.Next is T nextState)
                 {
-                    writer.Write(new StateEvent<T>
+                    if (!EqualityComparer<T>.Default.Equals(state.Current, nextState))
                     {
-                        State = state.Current,
-                        Transition = StateTransition.Exit
-                    });
+                        writer.Write(new StateEvent<T>
+                        {
+                            State = state.Current,
+                            Transition = StateTransition.Exit
+                        });
+                    }
 
                     state.Apply();
 

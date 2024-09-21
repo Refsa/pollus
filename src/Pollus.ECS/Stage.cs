@@ -138,12 +138,12 @@ public record class Stage : IDisposable
         foreach (var system in Systems)
         {
             sb.AppendLine($"\t{system.Descriptor.Label.Label}");
-            sb.AppendLine($"\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
-            sb.AppendLine($"\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
-            if (system.Descriptor.RunsBefore.Count > 0)
-                sb.AppendLine($"\t\tRuns Before: {string.Join(", ", system.Descriptor.RunsBefore)}");
-            if (system.Descriptor.RunsAfter.Count > 0)
-                sb.AppendLine($"\t\tRuns After: {string.Join(", ", system.Descriptor.RunsAfter)}");
+            // sb.AppendLine($"\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
+            // sb.AppendLine($"\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
+            // if (system.Descriptor.RunsBefore.Count > 0)
+                // sb.AppendLine($"\t\tRuns Before: {string.Join(", ", system.Descriptor.RunsBefore)}");
+            // if (system.Descriptor.RunsAfter.Count > 0)
+                // sb.AppendLine($"\t\tRuns After: {string.Join(", ", system.Descriptor.RunsAfter)}");
         }
         return sb.ToString();
     }
