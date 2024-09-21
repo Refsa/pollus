@@ -1,6 +1,7 @@
 namespace Pollus.Examples;
 
 using ImGuiNET;
+using Pollus.Coroutine;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -193,51 +194,54 @@ public class BreakoutGame : IExample
                 ImGui.End();
             }
         }))
-        .AddSystem(CoreStage.First, FnSystem.Create("BrickSpawner",
-        static (Commands commands, IWindow window, 
-                GameState gameState, State<State> state,
-                EventReader<Event.RestartGame> eRestartGame,
-                Query<Transform2, Brick> qBricks
-        ) =>
+        .AddSystem(CoreStage.First, Coroutine.Create(new("BrickSpawner"),
+        static (Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2, Brick>> param) =>
         {
-            if (!eRestartGame.HasAny) return;
-            eRestartGame.Consume();
-
-            qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick)
+            return Routine(param);
+            static IEnumerator<Yield> Routine(Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2, Brick>> param)
             {
-                commands.Despawn(brickEntity);
-            });
+                var (commands, window, gameState, state, eRestartGame, qBricks) = param;
 
-            // spawn bricks that fits the window size
-            var spacing = 8f;
-            var bricksPerRow = 10;
-            var width = (window.Size.X - spacing * (bricksPerRow + 1)) / bricksPerRow;
-            var height = width * 0.33f;
-            for (int x = 0; x < bricksPerRow; x++)
-            {
+                while (!eRestartGame.HasAny) yield return Yield.Return();
+                eRestartGame.Consume();
+
+                qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick)
+                {
+                    commands.Despawn(brickEntity);
+                });
+
+                // spawn bricks that fits the window size
+                var spacing = 8f;
+                var bricksPerRow = 10;
+                var width = (window.Size.X - spacing * (bricksPerRow + 1)) / bricksPerRow;
+                var height = width * 0.33f;
                 for (int y = 0; y < 8; y++)
                 {
-                    commands.Spawn(Entity.With(
-                        new Brick(),
-                        new Transform2
-                        {
-                            Position = new Vec2f(x * (width + spacing) + width * 0.5f + spacing,
-                                        window.Size.Y - 32f - y * (height + spacing) - height * 0.5f),
-                            Scale = new Vec2f(width, height),
-                            Rotation = 0f,
-                        },
-                        CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(width, height) * 0.5f),
-                        new Sprite
-                        {
-                            Material = gameState.spritesheet,
-                            Slice = new Rect(16, (x + y) % 3 * 16, 48, 16),
-                            Color = Color.WHITE,
-                        }
-                    ));
+                    for (int x = 0; x < bricksPerRow; x++)
+                    {
+                        commands.Spawn(Entity.With(
+                            new Brick(),
+                            new Transform2
+                            {
+                                Position = new Vec2f(x * (width + spacing) + width * 0.5f + spacing,
+                                            window.Size.Y - 32f - y * (height + spacing) - height * 0.5f),
+                                Scale = new Vec2f(width, height),
+                                Rotation = 0f,
+                            },
+                            CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(width, height) * 0.5f),
+                            new Sprite
+                            {
+                                Material = gameState.spritesheet,
+                                Slice = new Rect(16, (x + y) % 3 * 16, 48, 16),
+                                Color = Color.WHITE,
+                            }
+                        ));
+                    }
+                    yield return Yield.WaitForSeconds(0.1f);
                 }
-            }
 
-            state.Set(State.SpawnBall);
+                state.Set(State.SpawnBall);
+            }
         }))
         .AddSystem(CoreStage.First, FnSystem.Create("BallSpawner",
         static (Commands commands, GameState gameState, IWindow window, Random random, EventReader<Event.SpawnBall> eSpawnBall) =>
@@ -428,7 +432,7 @@ public class BreakoutGame : IExample
         {
             RunsAfter = ["VelocitySystem"],
         },
-        static (Commands commands, GameState gameState, 
+        static (Commands commands, GameState gameState,
                 State<State> state, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
                 Query<Transform2, Ball> qBalls, IWindow window
         ) =>
@@ -445,7 +449,7 @@ public class BreakoutGame : IExample
             });
         }))
         .AddSystem(CoreStage.Last, FnSystem.Create("BrickEventsSystem",
-        static (Commands commands, GameState gameState, 
+        static (Commands commands, GameState gameState,
                 AssetServer assetServer, Random random,
                 EventReader<Event.BrickDestroyed> eBrickDestroyed,
                 EventReader<Event.Collision> eCollision
