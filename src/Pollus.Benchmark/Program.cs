@@ -13,6 +13,7 @@ public static class Program
         // BenchmarkRunner.Run<NativeMapBenchmarks>();
 
         // BenchmarkRunner.Run<SpawnBenchmarks>();
-        BenchmarkRunner.Run<QueryBenchmarks>();
+        // BenchmarkRunner.Run<QueryBenchmarks>();
+        BenchmarkRunner.Run<SystemBenchmark>();
     }
 }

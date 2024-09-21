@@ -16,6 +16,7 @@ if (args.Length < 1)
     Console.WriteLine("  sprite-benchmark");
     Console.WriteLine("  compute");
     Console.WriteLine("  mesh-rendering");
+    Console.WriteLine("  coroutine");
     return;
 }
 
@@ -33,6 +34,7 @@ IExample? example = args[0] switch
     "sprite-benchmark" => new SpriteBenchmark(),
     "compute" => new ComputeExample(),
     "mesh-rendering" => new MeshRenderingExample(),
+    "coroutine" => new CoroutineExample(),
     _ => null
 };
 
