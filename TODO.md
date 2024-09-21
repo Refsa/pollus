@@ -40,13 +40,13 @@
 	- [ ] Hierarchies
 	- [x] Events
 	- [x] Commands
-	- [ ] State Flags
-	- [ ] Auto setup Fetches
+	- [-] State Flags
+	- [-] Auto setup Fetches
 	- [x] System Locals
 	- [x] System Param Sets
-	- [ ] Improve system creation/setup
-	- [ ] Improve delegate foreach in queries
-	- [ ] Coroutines
+	- [-] Improve system creation/setup
+	- [x] Improve delegate foreach in queries
+	- [-] Coroutines
 	- [ ] Optimized tag components
 	- [ ] versioning
 		- [x] event lifetimes
@@ -103,3 +103,4 @@
 		- [ ] Polygon
 - General
 	- [x] Seeded random
+	- [ ] Tweens

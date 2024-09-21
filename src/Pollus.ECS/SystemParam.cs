@@ -36,8 +36,9 @@ public struct Param<T0> : IFetch<Param<T0>>, ISystemParam
         return new Param<T0> { Param0 = t0 };
     }
 
-    public void Deconstruct(out T0 param0)
+    public void Deconstruct(out T0 param0, out byte discard)
     {
         param0 = Param0;
+        discard = 0;
     }
 }

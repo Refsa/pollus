@@ -41,6 +41,16 @@ public class Events
         }
         return default;
     }
+
+    public ReadOnlySpan<TEvent> ReadEvents<TEvent>()
+        where TEvent : struct
+    {
+        if (events.TryGetValue(typeof(TEvent), out var queue))
+        {
+            return ((EventQueue<TEvent>)queue).Events;
+        }
+        return default;
+    }
 }
 
 public interface IEventQueue

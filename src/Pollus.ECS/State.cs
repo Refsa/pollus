@@ -1,6 +1,6 @@
-using Pollus.Debugging;
-
 namespace Pollus.ECS;
+
+using Pollus.Debugging;
 
 public enum StateTransition
 {
@@ -10,14 +10,14 @@ public enum StateTransition
 }
 
 public struct StateEvent<T>
-    where T : struct, Enum
+    where T : unmanaged, Enum
 {
     public required T State { get; init; }
     public required StateTransition Transition { get; init; }
 }
 
 public record State<T>
-    where T : struct, Enum
+    where T : unmanaged, Enum
 {
     public static readonly string OnExit = $"OnExit<{typeof(T).Name}>";
     public static readonly string OnEnter = $"OnEnter<{typeof(T).Name}>";
@@ -50,23 +50,22 @@ public record State<T>
 }
 
 public class StateRunCriteria<T> : IRunCriteria
-    where T : struct, Enum
+    where T : unmanaged, Enum
 {
-    EventReader<StateEvent<T>>? reader;
     T state;
     StateTransition target;
 
     public bool ShouldRun(World world)
     {
-        reader ??= world.Events.GetReader<StateEvent<T>>()!;
-        if (!reader.HasAny)
+        var events = world.Events.ReadEvents<StateEvent<T>>();
+        if (events.Length == 0)
         {
             var stateRes = world.Resources.Get<State<T>>();
-            return stateRes.Current.Equals(state) && target == StateTransition.Current;
+            return EqualityComparer<T>.Default.Equals(stateRes.Current, state) && target == StateTransition.Current;
         }
 
-        var head = reader.Read()[0];
-        return head.Transition == target && head.State.Equals(state);
+        var head = events[0];
+        return head.Transition == target && EqualityComparer<T>.Default.Equals(head.State, state);
     }
 
     public static StateRunCriteria<T> OnEnter(T state)
