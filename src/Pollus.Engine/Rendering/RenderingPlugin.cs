@@ -91,9 +91,10 @@ public class RenderingPlugin : IPlugin
             {
                 RunsAfter = [EndFrameSystem],
             },
-            static (RenderContext context, DrawGroups2D renderSteps) =>
+            static (RenderContext context, DrawGroups2D renderSteps, FrameGraph2D frameGraph) =>
             {
                 context.CleanupFrame();
+                frameGraph.Cleanup();
                 renderSteps.Cleanup();
             }
         ));

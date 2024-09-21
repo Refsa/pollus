@@ -259,6 +259,11 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         {
             return query.EntityCount();
         }
+
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(query);
+        }
     }
 
     static readonly Component.Info[] infos = [Component.Register<C0>()];

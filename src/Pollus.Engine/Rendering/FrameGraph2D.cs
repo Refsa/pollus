@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using System.Runtime.CompilerServices;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -27,7 +28,7 @@ public struct FinalBlitPass
     public ResourceHandle<TextureResource> Backbuffer;
 }
 
-public class FrameGraph2D
+public class FrameGraph2D : IDisposable
 {
     public static class Textures
     {
@@ -42,6 +43,11 @@ public class FrameGraph2D
     public ref readonly FrameGraph2DParam Param => ref param;
     public ref FrameGraph<FrameGraph2DParam> FrameGraph => ref frameGraph;
     public bool FrameStarted => frameStarted;
+
+    public void Dispose()
+    {
+        Cleanup();
+    }
 
     public void BeginFrame(FrameGraph<FrameGraph2DParam> frameGraph, FrameGraph2DParam param)
     {
@@ -66,6 +72,12 @@ public class FrameGraph2D
             throw new InvalidOperationException("Frame not started");
 
         frameGraph.AddPass(step, param, builder, executor);
+    }
+
+    public void Cleanup()
+    {
+        frameGraph.Dispose();
+        Unsafe.SkipInit(out frameGraph);
     }
 }
 
@@ -97,12 +109,12 @@ public class FrameGraph2DPlugin : IPlugin
 
             var frameGraph = new FrameGraph<FrameGraph2DParam>();
             var backbufferDesc = TextureDescriptor.D2(
-                "backbuffer",
+                FrameGraph2D.Textures.Backbuffer,
                 TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
                 param.BackbufferFormat,
                 param.BackbufferSize
             );
-            var backbufferHandle = frameGraph.AddTexture(new("backbuffer", backbufferDesc));
+            var backbufferHandle = frameGraph.AddTexture(new(FrameGraph2D.Textures.Backbuffer, backbufferDesc));
             renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
             frameGraph.AddPass(RenderStep2D.First, param,
@@ -120,7 +132,7 @@ public class FrameGraph2DPlugin : IPlugin
                 var commandEncoder = context.GetCurrentCommandEncoder();
                 var colorTexture = context.Resources.GetTexture(data.ColorAttachment);
 
-                param.RenderAssets.Get<Blit>(Blit.Handle).ClearTexture(
+                param.RenderAssets.Get(Blit.Handle).ClearTexture(
                     context.GPUContext, commandEncoder,
                     colorTexture.TextureView, new Color(0.1f, 0.1f, 0.1f, 1.0f));
             });

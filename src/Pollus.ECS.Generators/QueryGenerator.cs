@@ -78,6 +78,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         {
             return query.EntityCount();
         }
+
+        public Enumerator GetEnumerator()
+        {
+            return query.GetEnumerator();
+        }
     }
 
     static readonly Component.Info[] infos = [$infos$];

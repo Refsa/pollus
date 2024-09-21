@@ -321,37 +321,39 @@ public class BreakoutGame : IExample
                 Query<Transform2, CollisionShape> qColliders
         ) =>
         {
-            qBalls.ForEach(delegate (in Entity _ballEntity, ref Transform2 _ballTransform, ref Velocity velocity, ref CollisionShape _ballCollider)
+            foreach (var ball in qBalls)
             {
-                var nextPos = _ballTransform.Position + velocity.Value * (float)time.DeltaTime;
+                ref var ballTransform = ref ball.Component0;
+                ref var ballVelocity = ref ball.Component1;
+                ref var ballCollider = ref ball.Component2;
 
-                var ballTransform = _ballTransform;
-                var ballCollider = _ballCollider;
-                var ballEntity = _ballEntity;
+                var nextPos = ballTransform.Position + ballVelocity.Value * (float)time.DeltaTime;
 
-                qColliders.ForEach(delegate (in Entity colliderEntity, ref Transform2 colliderTransform, ref CollisionShape collider)
+                foreach (var collider in qColliders)
                 {
-                    if (colliderEntity == ballEntity) return;
+                    ref var colliderTransform = ref collider.Component0;
+                    ref var colliderShape = ref collider.Component1;
+                    if (collider.Entity == ball.Entity) continue;
 
-                    var intersection = collider.GetIntersection(colliderTransform, ballCollider, ballTransform);
+                    var intersection = colliderShape.GetIntersection(colliderTransform, ballCollider, ballTransform);
 
                     if (intersection.IsIntersecting)
                     {
                         eCollision.Write(new()
                         {
-                            EntityA = colliderEntity,
-                            EntityB = ballEntity,
+                            EntityA = collider.Entity,
+                            EntityB = ball.Entity,
                             Intersection = intersection,
                         });
                     }
-                });
+                }
 
                 if (nextPos.X < 8f || nextPos.X > window.Size.X - 8f)
                 {
                     eCollision.Write(new()
                     {
                         EntityA = Entity.NULL,
-                        EntityB = ballEntity,
+                        EntityB = ball.Entity,
                         Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
@@ -364,7 +366,7 @@ public class BreakoutGame : IExample
                     eCollision.Write(new()
                     {
                         EntityA = Entity.NULL,
-                        EntityB = ballEntity,
+                        EntityB = ball.Entity,
                         Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
@@ -372,7 +374,7 @@ public class BreakoutGame : IExample
                         }
                     });
                 }
-            });
+            }
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create(new("CollisionResponseSystem")
         {
@@ -383,13 +385,18 @@ public class BreakoutGame : IExample
                 Query query, Query<Transform2, Velocity> qBodies
         ) =>
         {
-            qBodies.ForEach((in Entity entity, ref Transform2 transform, ref Velocity velocity) =>
+            var collisions = eCollision.Read();
+
+            foreach (var body in qBodies)
             {
+                ref var transform = ref body.Component0;
+                ref var velocity = ref body.Component1;
+
                 var reflect = Vec2f.Zero;
                 var correctedPos = transform.Position;
-                foreach (var coll in eCollision.Peek())
+                foreach (var coll in collisions)
                 {
-                    if (coll.EntityA == entity || coll.EntityB == entity)
+                    if (coll.EntityA == body.Entity || coll.EntityB == body.Entity)
                     {
                         reflect += coll.Intersection.Normal;
                         correctedPos += coll.Intersection.Normal * coll.Intersection.Distance;
@@ -401,9 +408,9 @@ public class BreakoutGame : IExample
                     velocity.Value = velocity.Value.Reflect(reflect.Normalized());
                     transform.Position = correctedPos;
                 }
-            });
+            }
 
-            foreach (var coll in eCollision.Read())
+            foreach (var coll in collisions)
             {
                 if (coll.EntityA != Entity.NULL && query.Has<Brick>(coll.EntityA))
                 {
@@ -423,9 +430,10 @@ public class BreakoutGame : IExample
         },
         static (Query<Transform2, Velocity> qTransforms, Time time) =>
         {
-            qTransforms.ForEach(delegate (ref Transform2 transform, ref Velocity velocity)
+            qTransforms.ForEach(time.DeltaTimeF,
+            static (in float deltaTime, ref Transform2 transform, ref Velocity velocity) =>
             {
-                transform.Position += velocity.Value * (float)time.DeltaTime;
+                transform.Position += velocity.Value * deltaTime;
             });
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create(new("BallOutOfBoundsSystem")
@@ -437,16 +445,17 @@ public class BreakoutGame : IExample
                 Query<Transform2, Ball> qBalls, IWindow window
         ) =>
         {
-            qBalls.ForEach(delegate (in Entity ballEntity, ref Transform2 ballTransform, ref Ball ball)
+            foreach (var ball in qBalls)
             {
-                if (ballTransform.Position.Y > 16f) return;
-                commands.Despawn(ballEntity);
+                ref var ballTransform = ref ball.Component0;
+                if (ballTransform.Position.Y > 16f) continue;
+                commands.Despawn(ball.Entity);
                 state.Set(--gameState.Lives switch
                 {
                     0 => State.GameOver,
                     _ => State.SpawnBall,
                 });
-            });
+            }
         }))
         .AddSystem(CoreStage.Last, FnSystem.Create("BrickEventsSystem",
         static (Commands commands, GameState gameState,

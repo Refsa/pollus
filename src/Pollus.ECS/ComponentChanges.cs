@@ -44,9 +44,9 @@ public class ComponentChanges
         }
     }
 
-    Stack<ChangeList> pool = new();
-    Dictionary<Entity, ChangeList> changes = new();
-    Dictionary<Entity, ChangeList> previous = new();
+    Stack<ChangeList> pool = new(512);
+    Dictionary<Entity, ChangeList> changes = new(512);
+    Dictionary<Entity, ChangeList> previous = new(512);
 
     public void Clear()
     {

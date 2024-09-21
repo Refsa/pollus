@@ -1,6 +1,7 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
@@ -61,7 +62,6 @@ public partial struct FrameGraph<TParam> : IDisposable
         executionOrder = ArrayPool<int>.Shared.Rent(passNodes.Count);
         var executionOrderSpan = executionOrder.AsSpan(0, passNodes.Count);
         for (int i = 0; i < passNodes.Count; i++) executionOrderSpan[i] = passNodes.Nodes[i].Index;
-        passNodes.Nodes.Sort(executionOrderSpan, static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
 
         int orderIndex = 0;
         Span<bool> visited = stackalloc bool[passNodes.Count];
@@ -103,9 +103,9 @@ public partial struct FrameGraph<TParam> : IDisposable
 
     public void AddPass<TData, TOrder>(TOrder order, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
         where TData : struct
-        where TOrder : struct, Enum, IConvertible
+        where TOrder : unmanaged, Enum
     {
-        var passHandle = passes.AddPass(new(), order.ToInt32(null), execute);
+        var passHandle = passes.AddPass(new(), order.GetHashCode(), execute);
         var pass = (FramePassContainer<TParam, TData>)passes.GetPass(passHandle);
 
         ref var passNode = ref passNodes.CreateNode(typeof(TData).Name);
