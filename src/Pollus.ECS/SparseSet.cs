@@ -1,5 +1,7 @@
 namespace Pollus.ECS;
 
+using System.Runtime.CompilerServices;
+
 public class SparseSet<T>
 {
     T[] values;
@@ -17,18 +19,31 @@ public class SparseSet<T>
     public void Add(int item, T value)
     {
         var idx = sparseSet.Add(item);
+        if (idx >= values.Length) Array.Resize(ref values, idx * 2);
         values[idx] = value;
     }
 
     public void Remove(int item)
     {
         var idx = sparseSet.Remove(item);
-        values[idx] = default!;
+        if (idx != -1) values[idx] = default!;
     }
 
     public bool Contains(int item)
     {
         return sparseSet.Contains(item);
+    }
+
+    public ref T Get(int idx)
+    {
+        var i = sparseSet.Get(idx);
+        if (i == -1) return ref Unsafe.NullRef<T>();
+        return ref values[i];
+    }
+
+    public void Clear()
+    {
+        sparseSet.Clear();
     }
 
     public Enumerator GetEnumerator()
@@ -61,8 +76,8 @@ public class SparseSet<T>
 
 public class SparseSet
 {
-    readonly int[] dense;
-    readonly int[] sparse;
+    int[] dense;
+    int[] sparse;
     int n;
 
     public int Length => n;
@@ -83,7 +98,13 @@ public class SparseSet
 
     public bool Contains(int idx)
     {
+        if (idx >= sparse.Length) return false;
         return sparse[idx] != -1;
+    }
+
+    public int Get(int idx)
+    {
+        return sparse[idx];
     }
 
     /// <summary>
@@ -95,6 +116,8 @@ public class SparseSet
     {
         if (Contains(idx))
             return sparse[idx];
+        if (idx >= sparse.Length) ResizeSparse(idx);
+        if (n >= dense.Length) ResizeDense();
 
         sparse[idx] = n;
         dense[n] = idx;
@@ -110,8 +133,7 @@ public class SparseSet
     /// <returns></returns>
     public int Remove(int idx)
     {
-        if (!Contains(idx))
-            return -1;
+        if (!Contains(idx)) return -1;
 
         n--;
         int d = sparse[idx];
@@ -121,6 +143,16 @@ public class SparseSet
         sparse[idx] = -1;
 
         return d;
+    }
+
+    void ResizeSparse(int size)
+    {
+        Array.Resize(ref sparse, size * 2);
+    }
+
+    void ResizeDense()
+    {
+        Array.Resize(ref dense, n * 2);
     }
 
     public Enumerator GetEnumerator()

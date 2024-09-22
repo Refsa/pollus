@@ -52,6 +52,7 @@
 		- [x] event lifetimes
 		- [x] change filter lifetimes
 		- [ ] entity id recycling
+	- [ ] Serialization
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches

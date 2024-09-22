@@ -151,7 +151,8 @@ public struct Query : IQuery, IQueryCreate<Query>
     public readonly bool Added<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        return world.Store.Changes.HasFlag<C>(entity, ComponentFlags.Added);
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].HasFlag<C>(entityInfo.RowIndex, ComponentFlags.Added);
     }
 
     /// <summary>
@@ -177,7 +178,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
-        world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Changed, entityInfo.RowIndex);
+        world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Changed);
     }
 
     /// <summary>
@@ -189,7 +190,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public readonly bool Removed<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        return world.Store.Changes.HasFlag<C>(entity, ComponentFlags.Removed);
+        return world.Store.Changes.WasRemoved<C>(entity);
     }
 
     public ref C Get<C>(in Entity entity)

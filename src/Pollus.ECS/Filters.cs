@@ -161,7 +161,7 @@ public static class FilterHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static bool RunChunkFilters(ArchetypeChunk chunk, IFilter[] filters)
+    public static bool RunChunkFilters(in ArchetypeChunk chunk, IFilter[] filters)
     {
         for (int i = 0; i < filters.Length; i++)
         {

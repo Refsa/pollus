@@ -9,6 +9,7 @@ struct ArchetypeChunkInfo : IDisposable
     public int LastFlagIndex;
     public ulong AddedVersion;
     public ulong ChangedVersion;
+    public ulong RemovedVersion;
     public NativeArray<ArchetypeChunkComponentInfo> Changes;
 
     public void Dispose()
@@ -22,6 +23,7 @@ struct ArchetypeChunkInfo : IDisposable
         {
             ComponentFlags.Added => (version - AddedVersion) <= 1,
             ComponentFlags.Changed => (version - ChangedVersion) <= 1,
+            ComponentFlags.Removed => (version - RemovedVersion) <= 1,
             _ => false
         };
     }
@@ -30,6 +32,7 @@ struct ArchetypeChunkInfo : IDisposable
     {
         if (flag == ComponentFlags.Added) AddedVersion = version;
         else if (flag == ComponentFlags.Changed) ChangedVersion = version;
+        else if (flag == ComponentFlags.Removed) RemovedVersion = version;
     }
 }
 
@@ -103,38 +106,45 @@ public struct ArchetypeChunk : IDisposable
     public bool HasFlag<C>(int row, ComponentFlags flag)
         where C : unmanaged, IComponent
     {
-        if (flag == ComponentFlags.Removed) return false;
-
         var cid = Component.GetInfo<C>().ID;
         ref var info = ref flags.Get(cid);
         if (Unsafe.IsNullRef(ref info)) return false;
 
         if (!info.CheckFlag(flag, version)) return false;
-        if (row >= 0 && !info.Changes[row].CheckFlag(flag, version)) return false;
+        if (flag != ComponentFlags.Removed && row >= 0 && !info.Changes[row].CheckFlag(flag, version)) return false;
         return true;
     }
 
-    internal void SetFlag<C>(ComponentFlags flag, int row)
+    internal void SetFlag<C>(int row, ComponentFlags flag)
         where C : unmanaged, IComponent
     {
-        SetFlag(Component.GetInfo<C>().ID, flag, row);
+        SetFlag(row, Component.GetInfo<C>().ID, flag);
     }
 
-    internal void SetFlag(ComponentID cid, ComponentFlags flag, int row)
+    internal void SetFlag(int row, ComponentID cid, ComponentFlags flag)
     {
-        if (flag == ComponentFlags.Removed) return;
-
         ref var info = ref flags.Get(cid);
-        info.SetFlag(flag, version);
+        if (Unsafe.IsNullRef(ref info))
+        {
+            flags.Add(cid, new ArchetypeChunkInfo { RemovedVersion = version });
+            info = ref flags.Get(cid);
+        }
+
+        if (flag != ComponentFlags.Removed)
+        {
+            info.SetFlag(flag, version);
+            info.Changes[row].SetFlag(flag, version);
+        }
+
         info.FirstFlagIndex = int.Min(info.FirstFlagIndex, row);
         info.LastFlagIndex = int.Max(info.LastFlagIndex, row);
-        info.Changes[row].SetFlag(flag, version);
     }
 
     internal void SetAllFlags(ComponentFlags flag, int row)
     {
-        foreach (ref var value in flags.Values)
+        foreach (var cid in components.Keys)
         {
+            ref var value = ref flags.Get(cid);
             value.SetFlag(flag, version);
             value.FirstFlagIndex = int.Min(value.FirstFlagIndex, row);
             value.LastFlagIndex = int.Max(value.LastFlagIndex, row);

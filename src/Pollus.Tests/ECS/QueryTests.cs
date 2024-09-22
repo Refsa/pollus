@@ -109,4 +109,77 @@ public class QueryTests
         Assert.True(q.Changed<TestComponent1>(e1));
         Assert.True(q.Changed<TestComponent1>(e2));
     }
+
+    [Fact]
+    public void Query_Filter_Added()
+    {
+        using var world = new World();
+        var qTc1 = new Query.Filter<Added<TestComponent1>>(world);
+        var qTc2 = new Query.Filter<Added<TestComponent2>>(world);
+        var e1 = world.Spawn(Entity.With(new TestComponent1 { Value = 1 }));
+
+        {
+            Assert.Equal(1, qTc1.EntityCount());
+            Assert.Equal(0, qTc2.EntityCount());
+
+            world.Update();
+            Assert.Equal(1, qTc1.EntityCount());
+            Assert.Equal(0, qTc2.EntityCount());
+
+            world.Update();
+            Assert.Equal(0, qTc1.EntityCount());
+            Assert.Equal(0, qTc2.EntityCount());
+        }
+
+        world.Store.AddComponent(e1, new TestComponent2 { Value = 2 });
+        {
+            Assert.Equal(0, qTc1.EntityCount());
+            Assert.Equal(1, qTc2.EntityCount());
+
+            world.Update();
+            Assert.Equal(0, qTc1.EntityCount());
+            Assert.Equal(1, qTc2.EntityCount());
+
+            world.Update();
+            Assert.Equal(0, qTc1.EntityCount());
+            Assert.Equal(0, qTc2.EntityCount());
+        }
+    }
+
+    [Fact]
+    public void Query_Filter_Changed()
+    {
+        using var world = new World();
+        var qTc1 = new Query.Filter<Changed<TestComponent1>>(world);
+        var e1 = world.Spawn(Entity.With(new TestComponent1 { Value = 1 }));
+        world.Update();
+
+        world.Store.SetComponent(e1, new TestComponent1 { Value = 2 });
+        Assert.Equal(1, qTc1.EntityCount());
+        world.Update();
+        Assert.Equal(1, qTc1.EntityCount());
+        world.Update();
+        Assert.Equal(0, qTc1.EntityCount());
+    }
+
+    [Fact]
+    public void Query_Filter_Removed()
+    {
+        using var world = new World();
+        var qTc1 = new Query.Filter<Removed<TestComponent1>>(world);
+        var e1 = world.Spawn(Entity.With(
+            new TestComponent1 { Value = 1 },
+            new TestComponent2 { Value = 2 }
+        ));
+
+        world.Update();
+        Assert.Equal(0, qTc1.EntityCount());
+        
+        world.Store.RemoveComponent<TestComponent1>(e1);
+        Assert.Equal(1, qTc1.EntityCount());
+        world.Update();
+        Assert.Equal(1, qTc1.EntityCount());
+        world.Update();
+        Assert.Equal(0, qTc1.EntityCount());
+    }
 }

@@ -164,6 +164,7 @@ public partial class Archetype : IDisposable
     {
         ref var chunk = ref chunks[chunkIndex];
         chunk.SetComponent(rowIndex, component);
+        chunk.SetFlag<C>(rowIndex, ComponentFlags.Changed);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -220,6 +221,7 @@ public partial class Archetype : IDisposable
         for (int i = prevLength; i < chunks.Length; i++)
         {
             chunks[i] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
+            chunks[i].Tick(version);
         }
 
         lastChunkIndex = int.Max(0, lastChunkIndex);
@@ -243,6 +245,7 @@ public partial class Archetype : IDisposable
         {
             chunks.Resize(chunks.Length + 1);
             chunks[^1] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
+            chunks[^1].Tick(version);
             lastChunkIndex = chunks.Length - 1;
         }
         return ref chunks[lastChunkIndex];

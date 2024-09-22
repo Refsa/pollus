@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System;
+using System.Runtime;
 
 public enum ComponentFlags : byte
 {
@@ -15,8 +16,6 @@ public class ComponentChanges
     struct Change
     {
         public ComponentID ComponentID;
-        public ulong AddedVersion;
-        public ulong ChangedVersion;
         public ulong RemovedVersion;
     }
 
@@ -27,27 +26,16 @@ public class ComponentChanges
 
         public ReadOnlySpan<Change> Changes => changes.AsSpan(0, count);
 
-        public void SetFlag(in ComponentID cid, ComponentFlags flag, ulong version)
+        public void SetFlag(in ComponentID cid, ulong version)
         {
             ref var change = ref GetOrCreate(cid);
-            if (flag == ComponentFlags.Added)
-                change.AddedVersion = version;
-            else if (flag == ComponentFlags.Changed)
-                change.ChangedVersion = version;
-            else if (flag == ComponentFlags.Removed)
-                change.RemovedVersion = version;
+            change.RemovedVersion = version;
         }
 
-        public bool HasFlag(in ComponentID cid, ComponentFlags flag, ulong version)
+        public bool HasFlag(in ComponentID cid, ulong version)
         {
             ref var change = ref GetOrCreate(cid);
-            if (flag == ComponentFlags.Added)
-                return version - change.AddedVersion <= 1;
-            else if (flag == ComponentFlags.Changed)
-                return version - change.ChangedVersion <= 1;
-            else if (flag == ComponentFlags.Removed)
-                return version - change.RemovedVersion <= 1;
-            return false;
+            return version - change.RemovedVersion <= 1;
         }
 
         ref Change GetOrCreate(in ComponentID id)
@@ -57,7 +45,7 @@ public class ComponentChanges
                 if (changes[i].ComponentID == id)
                     return ref changes[i];
             }
-            
+
             if (count >= changes.Length) Array.Resize(ref changes, changes.Length * 2);
             ref var change = ref changes[count++];
             change.ComponentID = id;
@@ -71,42 +59,42 @@ public class ComponentChanges
     }
 
     ulong version = 0;
-    Dictionary<Entity, ChangeList> changes = new(512);
+    SparseSet<ChangeList> changes = new(32);
 
     public void Tick(ulong version)
     {
         this.version = version;
+        foreach (var change in changes)
+        {
+            change.Clear();
+        }
     }
 
-    public void SetFlag<C>(Entity entity, ComponentFlags flags)
+    public void SetRemoved<C>(Entity entity)
         where C : unmanaged, IComponent
     {
-        SetFlag(entity, Component.GetInfo<C>().ID, flags);
+        SetRemoved(entity, Component.GetInfo<C>().ID);
     }
 
-    public void SetFlag(Entity entity, ComponentID id, ComponentFlags flags)
+    public void SetRemoved(Entity entity, ComponentID cid)
     {
-        if (!changes.TryGetValue(entity, out var list))
+        if (!changes.Contains(entity.ID))
         {
-            list = new();
-            changes[entity] = list;
+            changes.Add(entity.ID, new ChangeList());
         }
-        list.SetFlag(id, flags, version);
-    }
 
-    public bool HasFlag<C>(in Entity entity, ComponentFlags flags)
+        var list = changes.Get(entity.ID);
+        list.SetFlag(cid, version);
+    }
+    
+    public bool WasRemoved<C>(Entity entity)
         where C : unmanaged, IComponent
     {
-        return HasFlag(entity, Component.GetInfo<C>().ID, flags);
+        return WasRemoved(entity, Component.GetInfo<C>().ID);
     }
 
-    public bool HasFlag(in Entity entity, ComponentID cid, ComponentFlags flags)
+    public bool WasRemoved(Entity entity, ComponentID cid)
     {
-        if (changes.TryGetValue(entity, out var list))
-        {
-            return list.HasFlag(cid, flags, version);
-        }
-        
-        return false;
+        return changes.Contains(entity.ID) && changes.Get(entity.ID).HasFlag(cid, version);
     }
 }

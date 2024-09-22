@@ -84,6 +84,7 @@ public class ArchetypeStore : IDisposable
         };
 
         var archetype = new Archetype(aid, cids);
+        archetype.Tick(version);
         archetypes.Add(archetype);
         archetypeLookup.Add(aid, archetypes.Count - 1);
         return (archetype, archetypes.Count - 1);
@@ -195,8 +196,7 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
 
-        changes.SetFlag<C>(entity, ComponentFlags.Added);
-        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Added, info.RowIndex);
+        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(info.RowIndex, ComponentFlags.Added);
     }
 
     public void RemoveComponent<C>(in Entity entity)
@@ -234,8 +234,20 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
 
-        changes.SetFlag<C>(entity, ComponentFlags.Removed);
-        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Removed, info.RowIndex);
+        changes.SetRemoved<C>(entity);
+        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(nextInfo.RowIndex, ComponentFlags.Removed);
+    }
+
+    public void SetComponent<C>(in Entity entity, scoped in C component)
+        where C : unmanaged, IComponent
+    {
+        if (!entities.TryGetValue(entity, out var info))
+        {
+            throw new ArgumentException("Entity does not exist");
+        }
+
+        var archetype = archetypes[info.ArchetypeIndex];
+        archetype.SetComponent(info.ChunkIndex, info.RowIndex, component);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
