@@ -401,7 +401,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         {
             return new EntityRow
             {
-                Entity = chunk.GetEntities()[0],
+                entity = ref chunk.GetEntity(0),
                 Component0 = ref chunk.GetComponents<C0>(cids[0])[0],
             };
         }
@@ -417,7 +417,6 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     {
         ArchetypeChunkEnumerable chunks;
         ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
-        ref Entity currentEntity;
         ref Entity endEntity;
         EntityRow currentRow;
 
@@ -431,28 +430,27 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         public bool MoveNext()
         {
-            if (!Unsafe.IsNullRef(ref currentEntity) && Unsafe.IsAddressLessThan(ref currentEntity, ref endEntity))
+            if (!Unsafe.IsNullRef(ref currentRow.entity) && Unsafe.IsAddressLessThan(ref currentRow.entity, ref endEntity))
             {
-                currentEntity = ref Unsafe.Add(ref currentEntity, 1);
+                currentRow.entity = ref Unsafe.Add(ref currentRow.entity, 1);
                 currentRow.Component0 = ref Unsafe.Add(ref currentRow.Component0, 1);
-                currentRow.Entity = currentEntity;
                 return true;
             }
 
             if (!chunksEnumerator.MoveNext()) return false;
 
             scoped ref var currentChunk = ref chunksEnumerator.Current;
-            currentEntity = ref currentChunk.GetEntity(0);
-            endEntity = ref Unsafe.Add(ref currentEntity, currentChunk.Count - 1);
+            currentRow.entity = ref currentChunk.GetEntity(0);
+            endEntity = ref Unsafe.Add(ref currentRow.entity, currentChunk.Count - 1);
             currentRow.Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];
-            currentRow.Entity = currentEntity;
             return true;
         }
     }
 
     public ref struct EntityRow
     {
-        public Entity Entity;
+        internal ref Entity entity;
         public ref C0 Component0;
+        public readonly ref readonly Entity Entity => ref entity;
     }
 }

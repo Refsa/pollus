@@ -210,7 +210,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         {
             return new EntityRow
             {
-                Entity = chunk.GetEntities()[0],
+                entity = ref chunk.GetEntity(0),
                 $set_entity_row$
             };
         }
@@ -227,7 +227,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     {
         ArchetypeChunkEnumerable chunks;
         ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
-        ref Entity currentEntity;
         ref Entity endEntity;
         EntityRow currentRow;
 
@@ -241,28 +240,27 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
         public bool MoveNext()
         {
-            if (!Unsafe.IsNullRef(ref currentEntity) && Unsafe.IsAddressLessThan(ref currentEntity, ref endEntity))
+            if (!Unsafe.IsNullRef(ref currentRow.entity) && Unsafe.IsAddressLessThan(ref currentRow.entity, ref endEntity))
             {
-                currentEntity = ref Unsafe.Add(ref currentEntity, 1);
+                currentRow.entity = ref Unsafe.Add(ref currentRow.entity, 1);
                 $enumerator_move_next$
-                currentRow.Entity = currentEntity;
                 return true;
             }
 
             if (!chunksEnumerator.MoveNext()) return false;
 
             scoped ref var currentChunk = ref chunksEnumerator.Current;
-            currentEntity = ref currentChunk.GetEntity(0);
-            endEntity = ref Unsafe.Add(ref currentEntity, currentChunk.Count - 1);
+            currentRow.entity = ref currentChunk.GetEntity(0);
+            endEntity = ref Unsafe.Add(ref currentRow.entity, currentChunk.Count - 1);
             $enumerator_set_fields$
-            currentRow.Entity = currentEntity;
             return true;
         }
     }
 
     public ref struct EntityRow
     {
-        public Entity Entity;
+        internal ref Entity entity;
+        public readonly ref readonly Entity Entity => ref entity;
         $entity_row_fields$
     }
 }";
