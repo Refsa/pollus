@@ -35,6 +35,20 @@ public class QueryBenchmarks
     }
 
     [Benchmark]
+    public int Query_One_ForEach_Enumerator_ChangeTracking()
+    {
+        var query = new Query(oneComponentWorld);
+        var q = new Query<Component1>(oneComponentWorld);
+        foreach (var row in q)
+        {
+            row.Component0.First++;
+            query.SetChanged<Component1>(row.Entity);
+        }
+
+        return 0;
+    }
+
+    [Benchmark]
     public int Query_One_ForEach_IForEach()
     {
         var q = new Query<Component1>(oneComponentWorld);

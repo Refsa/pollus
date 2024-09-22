@@ -1,23 +1,67 @@
 namespace Pollus.ECS;
 
-using Pollus.Collections;
 using System.Runtime.CompilerServices;
+using Pollus.Collections;
+
+struct ArchetypeChunkInfo : IDisposable
+{
+    public int FirstFlagIndex;
+    public int LastFlagIndex;
+    public ulong AddedVersion;
+    public ulong ChangedVersion;
+    public NativeArray<ArchetypeChunkComponentInfo> Changes;
+
+    public void Dispose()
+    {
+        Changes.Dispose();
+    }
+
+    public bool CheckFlag(ComponentFlags flag, ulong version)
+    {
+        return flag switch
+        {
+            ComponentFlags.Added => (version - AddedVersion) <= 1,
+            ComponentFlags.Changed => (version - ChangedVersion) <= 1,
+            _ => false
+        };
+    }
+
+    public void SetFlag(ComponentFlags flag, ulong version)
+    {
+        if (flag == ComponentFlags.Added) AddedVersion = version;
+        else if (flag == ComponentFlags.Changed) ChangedVersion = version;
+    }
+}
+
+struct ArchetypeChunkComponentInfo
+{
+    public ulong AddedVersion;
+    public ulong ChangedVersion;
+
+    public bool CheckFlag(ComponentFlags flag, ulong version)
+    {
+        return flag switch
+        {
+            ComponentFlags.Added => (version - AddedVersion) <= 1,
+            ComponentFlags.Changed => (version - ChangedVersion) <= 1,
+            _ => false
+        };
+    }
+
+    public void SetFlag(ComponentFlags flag, ulong version)
+    {
+        if (flag == ComponentFlags.Added) AddedVersion = version;
+        else if (flag == ComponentFlags.Changed) ChangedVersion = version;
+    }
+}
 
 public struct ArchetypeChunk : IDisposable
 {
-    struct FlagInfo
-    {
-        public ComponentFlags Flag;
-        public int FirstFlagIndex;
-        public int LastFlagIndex;
-        public ulong Version;
-    }
-
     internal NativeMap<int, NativeArray<byte>> components;
     internal NativeArray<Entity> entities;
 
     ulong version;
-    NativeMap<int, FlagInfo> flags;
+    NativeMap<int, ArchetypeChunkInfo> flags;
 
     int count;
     readonly int length;
@@ -37,18 +81,17 @@ public struct ArchetypeChunk : IDisposable
         {
             var cinfo = Component.GetInfo(cid);
             components.Add(cid, new(rows * cinfo.SizeInBytes));
-            flags.Add(cid, new FlagInfo { Flag = ComponentFlags.None, Version = version });
+            flags.Add(cid, new ArchetypeChunkInfo { AddedVersion = version, ChangedVersion = version, Changes = new(rows) });
         }
     }
 
     public void Dispose()
     {
-        foreach (var value in components.Values)
-        {
-            value.Dispose();
-        }
+        foreach (var value in components.Values) value.Dispose();
         components.Dispose();
         entities.Dispose();
+
+        foreach (var value in flags.Values) value.Dispose();
         flags.Dispose();
     }
 
@@ -57,13 +100,18 @@ public struct ArchetypeChunk : IDisposable
         this.version = version;
     }
 
-    public bool HasFlag<C>(ComponentFlags flag)
+    public bool HasFlag<C>(int row, ComponentFlags flag)
         where C : unmanaged, IComponent
     {
+        if (flag == ComponentFlags.Removed) return false;
+
         var cid = Component.GetInfo<C>().ID;
         ref var info = ref flags.Get(cid);
         if (Unsafe.IsNullRef(ref info)) return false;
-        return (version - info.Version) <= 1 && info.Flag.HasFlag(flag);
+
+        if (!info.CheckFlag(flag, version)) return false;
+        if (row >= 0 && !info.Changes[row].CheckFlag(flag, version)) return false;
+        return true;
     }
 
     internal void SetFlag<C>(ComponentFlags flag, int row)
@@ -74,33 +122,23 @@ public struct ArchetypeChunk : IDisposable
 
     internal void SetFlag(ComponentID cid, ComponentFlags flag, int row)
     {
-        ref var info = ref flags.Get(cid);
-        if (Unsafe.IsNullRef(ref info))
-        {
-            flags.Add(cid, new FlagInfo
-            {
-                Flag = flag,
-                Version = version,
-                FirstFlagIndex = row,
-                LastFlagIndex = row
-            });
-            return;
-        }
+        if (flag == ComponentFlags.Removed) return;
 
-        info.Flag |= flag;
-        info.Version = version;
+        ref var info = ref flags.Get(cid);
+        info.SetFlag(flag, version);
         info.FirstFlagIndex = int.Min(info.FirstFlagIndex, row);
         info.LastFlagIndex = int.Max(info.LastFlagIndex, row);
+        info.Changes[row].SetFlag(flag, version);
     }
 
     internal void SetAllFlags(ComponentFlags flag, int row)
     {
         foreach (ref var value in flags.Values)
         {
-            value.Flag |= flag;
-            value.Version = version;
+            value.SetFlag(flag, version);
             value.FirstFlagIndex = int.Min(value.FirstFlagIndex, row);
             value.LastFlagIndex = int.Max(value.LastFlagIndex, row);
+            value.Changes[row].SetFlag(flag, version);
         }
     }
 

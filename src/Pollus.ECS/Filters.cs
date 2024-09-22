@@ -75,7 +75,7 @@ public class Added<C0> : IFilterChunk
 
     public bool FilterChunk(ArchetypeChunk chunk)
     {
-        return chunk.HasFlag<C0>(ComponentFlags.Added);
+        return chunk.HasFlag<C0>(-1, ComponentFlags.Added);
     }
 }
 
@@ -92,7 +92,7 @@ public class Removed<C0> : IFilterChunk
 
     public bool FilterChunk(ArchetypeChunk chunk)
     {
-        return chunk.HasFlag<C0>(ComponentFlags.Removed);
+        return chunk.HasFlag<C0>(-1, ComponentFlags.Removed);
     }
 }
 
@@ -109,7 +109,7 @@ public class Changed<C0> : IFilterChunk
 
     public bool FilterChunk(ArchetypeChunk chunk)
     {
-        return chunk.HasFlag<C0>(ComponentFlags.Changed);
+        return chunk.HasFlag<C0>(-1, ComponentFlags.Changed);
     }
 }
 

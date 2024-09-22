@@ -25,7 +25,7 @@ public class ArchetypeStore : IDisposable
 
     readonly List<Archetype> archetypes;
     readonly ComponentChanges changes;
-    NativeMap<int, int> archetypeLookup;
+    NativeMap<ArchetypeID, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
     volatile int entityCounter = 1;
 
@@ -44,7 +44,7 @@ public class ArchetypeStore : IDisposable
 
         var aid = ArchetypeID.Create([]);
         archetypes.Add(new Archetype(aid, []));
-        archetypeLookup.Add((int)aid, 0);
+        archetypeLookup.Add(aid, 0);
     }
 
     public void Dispose()
@@ -62,7 +62,7 @@ public class ArchetypeStore : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public (Archetype archetype, int index)? GetArchetype(in ArchetypeID aid)
     {
-        if (archetypeLookup.TryGetValue((int)aid, out var index))
+        if (archetypeLookup.TryGetValue(aid, out var index))
         {
             return (archetypes[index], index);
         }
@@ -78,14 +78,14 @@ public class ArchetypeStore : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
     {
-        if (archetypeLookup.TryGetValue((int)aid, out var index))
+        if (archetypeLookup.TryGetValue(aid, out var index))
         {
             return (archetypes[index], index);
         };
 
         var archetype = new Archetype(aid, cids);
         archetypes.Add(archetype);
-        archetypeLookup.Add((int)aid, archetypes.Count - 1);
+        archetypeLookup.Add(aid, archetypes.Count - 1);
         return (archetype, archetypes.Count - 1);
     }
 
@@ -195,7 +195,7 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
 
-        changes.AddChange<C>(entity, ComponentFlags.Added);
+        changes.SetFlag<C>(entity, ComponentFlags.Added);
         nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Added, info.RowIndex);
     }
 
@@ -234,7 +234,7 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
 
-        changes.AddChange<C>(entity, ComponentFlags.Removed);
+        changes.SetFlag<C>(entity, ComponentFlags.Removed);
         nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(ComponentFlags.Removed, info.RowIndex);
     }
 
@@ -254,15 +254,10 @@ public class ArchetypeStore : IDisposable
     public void Tick(ulong version)
     {
         this.version = version;
+        changes.Tick(version);
         foreach (var archetype in archetypes)
         {
             archetype.Tick(version);
         }
-        changes.Clear();
-    }
-
-    public void ClearChanges()
-    {
-        changes.Clear();
     }
 }

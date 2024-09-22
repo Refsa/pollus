@@ -33,6 +33,8 @@ public record struct ArchetypeID(int Hash)
     {
         return new ArchetypeID(HashCode.Combine(Hash, cid));
     }
+
+    public override int GetHashCode() => Hash;
 }
 
 public partial class Archetype : IDisposable

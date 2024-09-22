@@ -13,6 +13,8 @@ public record struct ComponentID(int ID)
 {
     public static implicit operator int(ComponentID cid) => cid.ID;
     public static implicit operator ComponentID(int id) => new(id);
+
+    public override int GetHashCode() => ID;
 }
 
 public static class Component

@@ -17,6 +17,7 @@ if (args.Length < 1)
     Console.WriteLine("  compute");
     Console.WriteLine("  mesh-rendering");
     Console.WriteLine("  coroutine");
+    Console.WriteLine("  change-tracking");
     return;
 }
 
@@ -35,6 +36,7 @@ IExample? example = args[0] switch
     "compute" => new ComputeExample(),
     "mesh-rendering" => new MeshRenderingExample(),
     "coroutine" => new CoroutineExample(),
+    "change-tracking" => new ChangeTrackingExample(),
     _ => null
 };
 
