@@ -1,14 +1,12 @@
 namespace Pollus.ECS;
 
 using System;
-using System.Runtime;
 
-public enum ComponentFlags : byte
+public enum ComponentFlags
 {
-    None = 0,
-    Added = 1,
-    Changed = 2,
-    Removed = 3,
+    Added,
+    Changed,
+    Removed,
 }
 
 public class ComponentChanges

@@ -106,7 +106,7 @@ public class ArchetypeStore : IDisposable
         var entity = new Entity(entityCounter++);
         var (archetype, archetypeIndex) = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeInfo = archetype.AddEntity(entity);
-        archetype.Chunks[archetypeInfo.ChunkIndex].SetAllFlags(ComponentFlags.Added, archetypeInfo.RowIndex);
+        archetype.Chunks[archetypeInfo.ChunkIndex].SetAllFlags(archetypeInfo.RowIndex, ComponentFlags.Added);
 
         entities.Add(entity, new()
         {
