@@ -7,7 +7,7 @@ using Pollus.ECS;
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]
-[SimpleJob(RuntimeMoniker.Net80)]
+// [SimpleJob(RuntimeMoniker.Net80)]
 // [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
 public class SpawnBenchmarks
 {

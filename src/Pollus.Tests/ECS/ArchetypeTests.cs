@@ -247,6 +247,36 @@ public class ArchetypeTests
     }
 
     [Fact]
+    public void ArchetypeStore_DestroyEntity_Many_Tons()
+    {
+        using var world = new World();
+
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
+        var entity2 = Entity.With(new TestComponent1 { Value = 20 }).Spawn(world);
+
+        List<Entity> entities = new();
+
+        for (int k = 0; k < 10; k++)
+        {
+            for (int i = 0; i < 100_000; i++)
+            {
+                var entity = Entity.With(new TestComponent1 { Value = i }).Spawn(world);
+                entities.Add(entity);
+            }
+            world.Update();
+
+            for (int i = 0; i < 100_000; i++)
+            {
+                world.Despawn(entities[i]);
+            }
+            entities.Clear();
+            world.Update();
+        }
+
+        Assert.Equal(2, world.Store.EntityCount);
+    }
+
+    [Fact]
     public void ArchetypeStore_DestroyEntity_Many_Descending()
     {
         using var world = new World();

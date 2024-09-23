@@ -243,10 +243,18 @@ public partial class Archetype : IDisposable
     {
         if (lastChunkIndex == -1 || chunks[lastChunkIndex].Count >= chunkInfo.RowsPerChunk)
         {
-            chunks.Resize(chunks.Length + 1);
-            chunks[^1] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
-            chunks[^1].Tick(version);
-            lastChunkIndex = chunks.Length - 1;
+            if (lastChunkIndex < chunks.Length - 1)
+            {
+                lastChunkIndex++;
+                chunks[lastChunkIndex].Tick(version);
+            }
+            else
+            {
+                chunks.Resize(chunks.Length + 1);
+                chunks[^1] = new(chunkInfo.ComponentIDs, chunkInfo.RowsPerChunk);
+                chunks[^1].Tick(version);
+                lastChunkIndex = chunks.Length - 1;
+            }
         }
         return ref chunks[lastChunkIndex];
     }
@@ -341,6 +349,7 @@ public ref struct ArchetypeChunkEnumerable
             else
             {
                 current = ref Unsafe.Add(ref current, 1);
+                if (current.Count == 0) return MoveNext();
             }
 
             if (filterChunk is not null && filterChunk(in current) is false)

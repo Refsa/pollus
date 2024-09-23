@@ -18,6 +18,7 @@ if (args.Length < 1)
     Console.WriteLine("  mesh-rendering");
     Console.WriteLine("  coroutine");
     Console.WriteLine("  change-tracking");
+    Console.WriteLine("  ecs-spawn");
     return;
 }
 
@@ -37,6 +38,7 @@ IExample? example = args[0] switch
     "mesh-rendering" => new MeshRenderingExample(),
     "coroutine" => new CoroutineExample(),
     "change-tracking" => new ChangeTrackingExample(),
+    "ecs-spawn" => new ECSSpawnExample(),
     _ => null
 };
 

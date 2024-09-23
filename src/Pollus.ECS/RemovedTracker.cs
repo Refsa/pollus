@@ -9,7 +9,7 @@ public enum ComponentFlags
     Removed,
 }
 
-public class ComponentChanges
+public class RemovedTracker
 {
     struct Change
     {

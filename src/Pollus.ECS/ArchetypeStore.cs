@@ -24,14 +24,14 @@ public class ArchetypeStore : IDisposable
     ulong version = 0;
 
     readonly List<Archetype> archetypes;
-    readonly ComponentChanges changes;
+    readonly RemovedTracker changes;
     NativeMap<ArchetypeID, int> archetypeLookup;
     NativeMap<Entity, EntityInfo> entities;
     volatile int entityCounter = 1;
 
     public List<Archetype> Archetypes => archetypes;
     public int EntityCount => entities.Count;
-    public ComponentChanges Changes => changes;
+    public RemovedTracker Changes => changes;
 
     public ArchetypeStore()
     {
@@ -126,25 +126,27 @@ public class ArchetypeStore : IDisposable
 
     public void DestroyEntity(in Entity entity)
     {
-        if (entities.TryGetValue(entity, out var info))
+        if (!entities.TryGetValue(entity, out var info))
         {
-            entities.Remove(entity);
-            var archetype = archetypes[info.ArchetypeIndex];
-            var movedEntity = archetype.RemoveEntity(new()
-            {
-                Entity = entity,
-                ChunkIndex = info.ChunkIndex,
-                RowIndex = info.RowIndex
-            });
+            throw new ArgumentException("Entity does not exist");
+        }
 
-            if (movedEntity != Entity.NULL)
-            {
-                ref var movedEntityInfo = ref entities.Get(movedEntity);
-                Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), "Moved entity is null");
+        entities.Remove(entity);
+        var archetype = archetypes[info.ArchetypeIndex];
+        var movedEntity = archetype.RemoveEntity(new()
+        {
+            Entity = entity,
+            ChunkIndex = info.ChunkIndex,
+            RowIndex = info.RowIndex
+        });
 
-                movedEntityInfo.ChunkIndex = info.ChunkIndex;
-                movedEntityInfo.RowIndex = info.RowIndex;
-            }
+        if (movedEntity != Entity.NULL)
+        {
+            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), "Moved entity is null");
+
+            movedEntityInfo.ChunkIndex = info.ChunkIndex;
+            movedEntityInfo.RowIndex = info.RowIndex;
         }
     }
 

@@ -154,7 +154,7 @@ public struct ArchetypeChunk : IDisposable
         if (row < 0 || row >= count) return;
 
         entities[row] = Entity.NULL;
-        count--;
+        count = int.Max(0, count - 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

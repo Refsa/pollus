@@ -48,6 +48,12 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Despawn(in Entity entity)
+    {
+        Store.DestroyEntity(entity);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
