@@ -6,20 +6,9 @@ using Pollus.Debugging;
 
 public class ArchetypeStore : IDisposable
 {
-    public record struct EntityInfo
-    {
-        public int ArchetypeIndex { get; set; }
-        public int ChunkIndex { get; set; }
-        public int RowIndex { get; set; }
-    }
-
-    public struct EntityChange
-    {
-        public Entity Entity { get; set; }
-        public Archetype Archetype { get; set; }
-        public int ChunkIndex { get; set; }
-        public int RowIndex { get; set; }
-    }
+    public record struct EntityInfo(int ArchetypeIndex, int ChunkIndex, int RowIndex);
+    public record struct EntityChange(Entity Entity, Archetype Archetype, int ChunkIndex, int RowIndex);
+    public record struct ArchetypeInfo(Archetype Archetype, int Index);
 
     ulong version = 0;
 
@@ -74,18 +63,16 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public (Archetype archetype, int index) GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
+    public ArchetypeInfo GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
     {
         if (archetypeLookup.TryGetValue(aid, out var index))
-        {
-            return (archetypes[index], index);
-        };
+            return new(archetypes[index], index);
 
         var archetype = new Archetype(aid, cids);
         archetype.Tick(version);
         archetypes.Add(archetype);
         archetypeLookup.Add(aid, archetypes.Count - 1);
-        return (archetype, archetypes.Count - 1);
+        return new(archetype, archetypes.Count - 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -102,24 +89,12 @@ public class ArchetypeStore : IDisposable
         where TBuilder : struct, IEntityBuilder
     {
         var entity = new Entity(entityCounter++);
-        var (archetype, archetypeIndex) = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
-        var archetypeInfo = archetype.AddEntity(entity);
-        archetype.Chunks[archetypeInfo.ChunkIndex].SetAllFlags(archetypeInfo.RowIndex, ComponentFlags.Added);
+        var archetypeInfo = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        var archetypeEntityInfo = archetypeInfo.Archetype.AddEntity(entity);
+        archetypeInfo.Archetype.Chunks[archetypeEntityInfo.ChunkIndex].SetAllFlags(archetypeEntityInfo.RowIndex, ComponentFlags.Added);
 
-        entities.Add(entity, new()
-        {
-            ArchetypeIndex = archetypeIndex,
-            ChunkIndex = archetypeInfo.ChunkIndex,
-            RowIndex = archetypeInfo.RowIndex
-        });
-
-        return new()
-        {
-            Entity = entity,
-            Archetype = archetype,
-            ChunkIndex = archetypeInfo.ChunkIndex,
-            RowIndex = archetypeInfo.RowIndex
-        };
+        entities.Add(entity, new(archetypeInfo.Index, archetypeEntityInfo.ChunkIndex, archetypeEntityInfo.RowIndex));
+        return new(entity, archetypeInfo.Archetype, archetypeEntityInfo.ChunkIndex, archetypeEntityInfo.RowIndex);
     }
 
     public void DestroyEntity(in Entity entity)

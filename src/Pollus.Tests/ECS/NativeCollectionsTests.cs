@@ -78,6 +78,44 @@ public class NativeCollectionsTests
         {
             map.Add(i, i);
         }
+
+        for (int i = 0; i < 1_000_000; i++)
+        {
+            Assert.True(map.Has(i));
+            Assert.Equal(i, map.Get(i));
+        }
+    }
+
+    [Fact]
+    public void NativeMap_Large_Negative_Sparse()
+    {
+        using var map = new NativeMap<int, int>(0);
+        for (int i = 0; i > -100_000_000; i -= 100)
+        {
+            map.Add(i, i);
+        }
+
+        for (int i = 0; i > -100_000_000; i -= 100)
+        {
+            Assert.True(map.Has(i), $"Key {i} not found");
+            Assert.Equal(i, map.Get(i));
+        }
+    }
+
+    [Fact]
+    public void NativeMap_Large_Negative_Dense()
+    {
+        using var map = new NativeMap<int, int>(0);
+        for (int i = 0; i > -1_000_000; i--)
+        {
+            map.Add(i, i);
+        }
+
+        for (int i = 0; i > -1_000_000; i--)
+        {
+            Assert.True(map.Has(i), $"Key {i} not found");
+            Assert.Equal(i, map.Get(i));
+        }
     }
 
     [Fact]

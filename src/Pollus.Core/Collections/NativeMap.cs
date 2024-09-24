@@ -75,17 +75,17 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
             if (key.state != EntryState.Occupied) continue;
 
             int hash = Hash(key.Key, newCapacity);
-            int quadProbe = hash;
+            int probe = hash;
             int j = 0;
 
-            while (newKeys[quadProbe].state != EntryState.Empty)
+            while (newKeys[probe].state != EntryState.Empty)
             {
                 j++;
-                quadProbe = (hash + j * j) & (newCapacity - 1);
+                probe = (hash + j) & (newCapacity - 1);
             }
 
-            newKeys[quadProbe] = key;
-            newValues[quadProbe] = values[i];
+            newKeys[probe] = key;
+            newValues[probe] = values[i];
         }
 
         keys.Dispose();
@@ -106,18 +106,18 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
         int hash = Hash(key, capacity);
         int i = 0;
-        int quadProbe;
+        int probe;
 
         while (true)
         {
-            quadProbe = (hash + i * i) & (capacity - 1);
-            ref var entry = ref keys[quadProbe];
+            probe = (hash + i) & (capacity - 1);
+            ref var entry = ref keys[probe];
 
             if (entry.state != EntryState.Occupied)
             {
                 entry.Key = key;
                 entry.state = EntryState.Occupied;
-                values[quadProbe] = value;
+                values[probe] = value;
                 count++;
                 return;
             }
@@ -176,11 +176,11 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         var keySpan = keys.AsSpan();
         for (int i = 0; i < keySpan.Length; i++)
         {
-            int quadProbe = (hash + i * i) & (capacity - 1);
-            ref var entry = ref keySpan[quadProbe];
+            int probe = (hash + i) & (capacity - 1);
+            ref var entry = ref keySpan[probe];
 
             if (entry.state == EntryState.Empty) break;
-            if (entry.state == EntryState.Occupied && entry.Key.Equals(key)) return ref values[quadProbe];
+            if (entry.state == EntryState.Occupied && entry.Key.Equals(key)) return ref values[probe];
         }
 
         return ref Unsafe.NullRef<TValue>();
@@ -192,8 +192,8 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         var keySpan = keys.AsSpan();
         for (int i = 0; i < keySpan.Length; i++)
         {
-            int quadProbe = (hash + i * i) & (capacity - 1);
-            ref var entry = ref keySpan[quadProbe];
+            int probe = (hash + i) & (capacity - 1);
+            ref var entry = ref keySpan[probe];
 
             if (entry.state == EntryState.Empty) break;
             if (entry.state == EntryState.Occupied && entry.Key.Equals(key)) return ref entry;
@@ -247,7 +247,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
 
         public bool MoveNext()
         {
-            while (keys.MoveNext())
+            if (keys.MoveNext())
             {
                 index = keys.Index;
                 return true;

@@ -28,9 +28,7 @@
 	- [x] Systems
 	- [ ] Change Detection
 		- [x] added/removed
-			- slightly unoptimal recording structure
-		- [ ] changed
-			- has manual flagging
+		- [-] changed
 	- [ ] Schedule systems
 		- [ ] ordering
 		- [ ] parallel planner
