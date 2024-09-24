@@ -412,12 +412,12 @@ public class BreakoutGame : IExample
 
             foreach (var coll in collisions)
             {
-                if (coll.EntityA != Entity.NULL && query.Has<Brick>(coll.EntityA))
+                if (!coll.EntityA.IsNull && query.Has<Brick>(coll.EntityA))
                 {
                     commands.Despawn(coll.EntityA);
                     eBrickDestroyed.Write(new Event.BrickDestroyed());
                 }
-                if (coll.EntityB != Entity.NULL && query.Has<Brick>(coll.EntityB))
+                if (!coll.EntityB.IsNull && query.Has<Brick>(coll.EntityB))
                 {
                     commands.Despawn(coll.EntityB);
                     eBrickDestroyed.Write(new Event.BrickDestroyed());

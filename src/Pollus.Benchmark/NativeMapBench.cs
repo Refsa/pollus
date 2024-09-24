@@ -31,7 +31,7 @@ public class NativeMapBenchmarks
         nativeMap.Dispose();
     }
 
-    [Benchmark]
+    /* [Benchmark]
     [BenchmarkCategory("Add")]
     public void DictionaryAdd()
     {
@@ -59,7 +59,7 @@ public class NativeMapBenchmarks
                 dict.Add(i, i);
             }
         }
-    }
+    } */
 
     [Benchmark]
     [BenchmarkCategory("Add")]
@@ -91,7 +91,7 @@ public class NativeMapBenchmarks
         }
     }
 
-    [Benchmark]
+    /* [Benchmark]
     [BenchmarkCategory("Get")]
     public int DictionaryGet()
     {
@@ -104,7 +104,7 @@ public class NativeMapBenchmarks
             }
         }
         return sum;
-    }
+    } */
 
     [Benchmark]
     [BenchmarkCategory("Get")]
@@ -121,7 +121,7 @@ public class NativeMapBenchmarks
         return sum;
     }
 
-    [Benchmark]
+    /* [Benchmark]
     [BenchmarkCategory("Has")]
     public int DictionaryHas()
     {
@@ -131,7 +131,7 @@ public class NativeMapBenchmarks
             sum += dictionary.ContainsKey(i) ? 1 : 0;
         }
         return sum;
-    }
+    } */
 
     [Benchmark]
     [BenchmarkCategory("Has")]

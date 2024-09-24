@@ -26,7 +26,7 @@ public class ECSSpawnExample : IExample
             ])
             .AddSystem(CoreStage.First, FnSystem.Create(new("Spawn")
             {
-                Locals = [Local.From(new Tracker(0.1f, true))]
+                Locals = [Local.From(new Tracker(0.0f, true))]
             },
             static (Local<Tracker> doAction, Time time, Commands commands, Query<Component1> query) =>
             {

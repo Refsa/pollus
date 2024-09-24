@@ -35,8 +35,6 @@ public class ArchetypeStore : IDisposable
 
     public ArchetypeStore()
     {
-        NativeMap<Entity, EntityInfo>.Sentinel = Entity.NULL;
-
         entities = new(0);
         archetypeLookup = new(0);
         archetypes = [];
@@ -140,7 +138,7 @@ public class ArchetypeStore : IDisposable
             RowIndex = info.RowIndex
         });
 
-        if (movedEntity != Entity.NULL)
+        if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entities.Get(movedEntity);
             Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), "Moved entity is null");
@@ -191,7 +189,7 @@ public class ArchetypeStore : IDisposable
         nextArchetype.SetComponent(nextArchetypeInfo.ChunkIndex, nextArchetypeInfo.RowIndex, component);
 
         var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
-        if (movedEntity != Entity.NULL)
+        if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entities.Get(movedEntity);
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
@@ -229,7 +227,7 @@ public class ArchetypeStore : IDisposable
         nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
 
         var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
-        if (movedEntity != Entity.NULL)
+        if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entities.Get(movedEntity);
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;

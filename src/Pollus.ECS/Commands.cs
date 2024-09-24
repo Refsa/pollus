@@ -25,18 +25,14 @@ public class CommandBuffer<TCommand> : ICommandBuffer
     public void AddCommand(TCommand command)
     {
         if (count == commands.Length)
-        {
-            var newCommands = new TCommand[commands.Length * 2];
-            commands.CopyTo(newCommands, 0);
-            commands = newCommands;
-        }
+            Array.Resize(ref commands, commands.Length * 2);
 
         commands[count++] = command;
     }
 
     public void Execute(World world)
     {
-        foreach (var command in commands.AsSpan(0, count))
+        foreach (ref var command in commands.AsSpan(0, count))
         {
             command.Execute(world);
         }
@@ -63,11 +59,8 @@ public class Commands
     {
         foreach (var buffer in commandBuffers.Values)
         {
-            if (buffer is ICommandBuffer commandBuffer)
-            {
-                commandBuffer.Execute(world);
-                commandBuffer.Clear();
-            }
+            buffer.Execute(world);
+            buffer.Clear();
         }
     }
 

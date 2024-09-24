@@ -50,7 +50,8 @@ public struct ArchetypeChunk : IDisposable
     internal NativeArray<Entity> entities;
 
     ulong version;
-    NativeMap<int, ChunkComponentInfo> flags;
+    NativeMap<int, int> changesLookup;
+    NativeArray<ChunkComponentInfo> changes;
 
     int count;
     readonly int length;
@@ -64,14 +65,18 @@ public struct ArchetypeChunk : IDisposable
         count = 0;
         entities = new(rows);
         components = new(cids.Length);
-        flags = new(cids.Length);
+        changesLookup = new(cids.Length);
+        changes = new(cids.Length);
 
         int idx = 0;
         foreach (var cid in cids)
         {
             var cinfo = Component.GetInfo(cid);
             components.Add(cid, new(rows * cinfo.SizeInBytes));
-            flags.Add(cid, new ChunkComponentInfo(idx++, version, rows));
+
+            changesLookup.Add(cid, idx);
+            changes[idx] = new ChunkComponentInfo(idx, version, rows);
+            idx++;
         }
     }
 
@@ -81,8 +86,8 @@ public struct ArchetypeChunk : IDisposable
         components.Dispose();
         entities.Dispose();
 
-        foreach (var value in flags.Values) value.Dispose();
-        flags.Dispose();
+        foreach (var value in changes) value.Dispose();
+        changesLookup.Dispose();
     }
 
     internal void Tick(ulong version)
@@ -94,10 +99,10 @@ public struct ArchetypeChunk : IDisposable
         where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
-        ref var info = ref flags.Get(cid);
+        ref var info = ref changesLookup.Get(cid);
         if (Unsafe.IsNullRef(ref info)) return false;
 
-        if (!info.CheckFlag(row, flag, version)) return false;
+        if (!changes[info].CheckFlag(row, flag, version)) return false;
         return true;
     }
 
@@ -109,22 +114,26 @@ public struct ArchetypeChunk : IDisposable
 
     internal void SetFlag(int row, in ComponentID cid, ComponentFlags flag)
     {
-        scoped ref var info = ref flags.Get(cid.ID);
+        scoped ref var info = ref changesLookup.Get(cid.ID);
         if (flag == ComponentFlags.Removed)
         {
-            if (Unsafe.IsNullRef(ref info)) flags.Add(cid, new ChunkComponentInfo(flags.Count, version, 0));
-            else info.SetFlag(-1, flag, version);
+            if (Unsafe.IsNullRef(ref info))
+            {
+                changes.Resize(changes.Length + 1);
+                changes[^1] = new ChunkComponentInfo(changesLookup.Count, version, 0);
+                changesLookup.Add(cid, changes.Length - 1);
+            }
+            else changes[info].SetFlag(-1, flag, version);
             return;
         }
 
-        info.SetFlag(row, flag, version);
+        changes[info].SetFlag(row, flag, version);
     }
 
     internal void SetAllFlags(int row, ComponentFlags flag)
     {
-        foreach (var cid in components.Keys)
+        foreach (ref var value in changes)
         {
-            ref var value = ref flags.Get(cid);
             value.SetFlag(row, flag, version);
         }
     }
@@ -166,9 +175,8 @@ public struct ArchetypeChunk : IDisposable
         return the moved entity
         */
 
-        entities[row] = src.entities[src.count - 1];
-        src.entities[src.count - 1] = Entity.NULL;
-        src.count--;
+        entities[row] = src.entities[--src.count];
+        src.entities[src.count] = Entity.NULL;
 
         foreach (var cid in components.Keys)
         {
