@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
 using Pollus.Debugging;
+using Pollus.Utils;
 
 public class World : IDisposable
 {
@@ -16,7 +17,7 @@ public class World : IDisposable
     ulong version = 0;
 
     readonly HashSet<Type> registeredPlugins = new();
-    readonly Stack<Commands> commandBuffers = new();
+    readonly Pool<Commands> commandBuffers = new(() => new(), 1);
     readonly Queue<Commands> commandBuffersQueue = new();
 
     public Schedule Schedule { get; init; }
@@ -108,18 +109,9 @@ public class World : IDisposable
 
     public Commands GetCommands()
     {
-        if (commandBuffers.Count == 0)
-        {
-            var commands = new Commands();
-            commandBuffersQueue.Enqueue(commands);
-            return commands;
-        }
-        else
-        {
-            var commands = commandBuffers.Pop();
-            commandBuffersQueue.Enqueue(commands);
-            return commands;
-        }
+        var commands = commandBuffers.Rent();
+        commandBuffersQueue.Enqueue(commands);
+        return commands;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -148,10 +140,10 @@ public class World : IDisposable
                 {
                     var commands = commandBuffersQueue.Dequeue();
                     commands.Flush(this);
-                    commandBuffers.Push(commands);
+                    commandBuffers.Return(commands);
                 }
             }
-            
+
             Events.ClearEvents();
         }
         catch

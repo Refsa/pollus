@@ -3,21 +3,18 @@ namespace Pollus.ECS;
 using Pollus.Coroutine;
 using Pollus.Utils;
 
-public enum WorldYieldInstruction
-{
-    WaitForEvent,
-}
-
 public struct WaitForStateEnter<TState>
     where TState : unmanaged, Enum
 {
+    public static readonly Type[] Dependencies = [typeof(StateEvent<TState>)];
     static WaitForStateEnter()
     {
-        YieldCustomInstructionHandler<WorldYieldInstruction, Param<World>>.AddHandler(TypeLookup.ID<WaitForStateEnter<TState>>(), (in Yield yield, Param<World> param) =>
+        Coroutine.RegisterHandler<WaitForStateEnter<TState>>(
+        static (in Yield yield, Param<World> param) =>
         {
-            var handler = yield.GetData<WaitForStateEnter<TState>>(8);
+            var handler = yield.GetCustomData<WaitForStateEnter<TState>>();
             return handler.Execute(param);
-        });
+        }, Dependencies);
     }
 
     public TState State { get; }
@@ -45,13 +42,16 @@ public struct WaitForStateEnter<TState>
 public struct WaitForStateExit<TState>
     where TState : unmanaged, Enum
 {
+    public static readonly Type[] Dependencies = [typeof(StateEvent<TState>)];
+
     static WaitForStateExit()
     {
-        YieldCustomInstructionHandler<WorldYieldInstruction, Param<World>>.AddHandler(TypeLookup.ID<WaitForStateExit<TState>>(), (in Yield yield, Param<World> param) =>
+        Coroutine.RegisterHandler<WaitForStateExit<TState>>(
+        static (in Yield yield, Param<World> param) =>
         {
-            var handler = yield.GetData<WaitForStateExit<TState>>(8);
+            var handler = yield.GetCustomData<WaitForStateExit<TState>>();
             return handler.Execute(param);
-        });
+        }, Dependencies);
     }
 
     public TState State { get; }

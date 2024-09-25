@@ -2,6 +2,7 @@ namespace Pollus.Coroutine;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Pollus.Utils;
 
 public struct Yield
 {
@@ -36,6 +37,12 @@ public struct Yield
         return MemoryMarshal.Read<T>(instructionData[offset..(offset + Unsafe.SizeOf<T>())]);
     }
 
+    public TCustomData GetCustomData<TCustomData>()
+        where TCustomData : struct
+    {
+        return MemoryMarshal.Read<TCustomData>(instructionData[4..]);
+    }
+
     public void SetData<T>(in T value)
         where T : unmanaged
     {
@@ -55,35 +62,50 @@ public struct Yield
         where TCustomData : struct
     {
         var yield = new Yield(Type.Custom, ReadOnlySpan<byte>.Empty);
-        MemoryMarshal.Write(yield.instructionData, data);
+        MemoryMarshal.Write(yield.instructionData, new YieldCustomData<TCustomData>(data));
         return yield;
     }
 }
 
-public struct YieldCustomData<TInstruction, TData>
-    where TInstruction : unmanaged
-    where TData : unmanaged
+public struct YieldCustomData<TData>
+    where TData : struct
 {
-    public required TInstruction Instruction;
-    public required int TypeID;
-    public required TData Data;
+    public readonly int TypeID = TypeLookup.ID<TData>();
+    public TData Data;
+
+    public YieldCustomData(TData data)
+    {
+        Data = data;
+    }
 }
 
-public static class YieldCustomInstructionHandler<TInstruction, TParam>
-    where TInstruction : unmanaged
+public static class YieldCustomInstructionHandler<TParam>
     where TParam : struct
 {
-    public delegate bool HandlerDelegate(in Yield yield, TParam param);
-    static Dictionary<int, HandlerDelegate> handlers = new();
-    public static void AddHandler(int typeId, HandlerDelegate handler)
+    class HandlerData
     {
-        handlers[typeId] = handler;
+        public required HandlerDelegate Handler;
+        public required Type[] Dependencies;
+    }
+
+    public delegate bool HandlerDelegate(in Yield yield, TParam param);
+    static Dictionary<int, HandlerData> handlers = new();
+
+    public static void AddHandler<TCustomData>(HandlerDelegate handler, Type[] dependencies)
+        where TCustomData : struct
+    {
+        handlers[TypeLookup.ID<TCustomData>()] = new HandlerData { Handler = handler, Dependencies = dependencies };
     }
 
     public static bool Handle(in Yield yield, TParam param)
     {
-        var instruction = yield.GetData<TInstruction>(0);
-        var typeId = yield.GetData<int>(Unsafe.SizeOf<TInstruction>());
-        return handlers[typeId](in yield, param);
+        var typeId = yield.GetData<int>(0);
+        return handlers[typeId].Handler(in yield, param);
+    }
+
+    public static Type[] GetDependencies(in Yield yield)
+    {
+        var typeId = yield.GetData<int>(0);
+        return handlers[typeId].Dependencies;
     }
 }

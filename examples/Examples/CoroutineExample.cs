@@ -26,7 +26,7 @@ public class CoroutineExample : IExample
         ])
         .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
         {
-            Locals = [Local.From(1f)]
+            Locals = [Local.From(1f)],
         },
         static (Param<Local<float>, Time> param) =>
         {
