@@ -124,6 +124,17 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasComponent<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        if (!entities.TryGetValue(entity, out var info))
+        {
+            throw new ArgumentException("Entity does not exist");
+        }
+        return archetypes[info.ArchetypeIndex].HasComponent<C>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref C GetComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {

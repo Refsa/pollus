@@ -38,6 +38,10 @@
 	- [ ] Hierarchies
 	- [x] Events
 	- [x] Commands
+	- [ ] Improve spawn commands
+		- should be able to chain commands that works on entities
+		- i.e. spawn -> set parent and other similar operations
+		- could be implemented on EntityBuilder
 	- [-] State Flags
 	- [-] Auto setup Fetches
 	- [x] System Locals

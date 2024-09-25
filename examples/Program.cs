@@ -19,6 +19,7 @@ if (args.Length < 1)
     Console.WriteLine("  coroutine");
     Console.WriteLine("  change-tracking");
     Console.WriteLine("  ecs-spawn");
+    Console.WriteLine("  hierarchy");
     return;
 }
 
@@ -39,6 +40,7 @@ IExample? example = args[0] switch
     "coroutine" => new CoroutineExample(),
     "change-tracking" => new ChangeTrackingExample(),
     "ecs-spawn" => new ECSSpawnExample(),
+    "hierarchy" => new HierarchyExample(),
     _ => null
 };
 

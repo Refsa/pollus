@@ -83,7 +83,7 @@ public partial class Archetype : IDisposable
         var rowsPerChunk = rowStride switch
         {
             > 0 => (MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>()) / (uint)rowStride,
-            _ => 0,
+            _ => 1,
         };
 
         chunkInfo = new ChunkInfo
