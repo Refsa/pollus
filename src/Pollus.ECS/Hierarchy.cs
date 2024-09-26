@@ -26,7 +26,7 @@ public class HierarchyPlugin : IPlugin
             // TODO: We dont currently track the underlying removed components
             // either they need to be tracked or the user needs to use the hierarchy commands
             // to remove the child and parent relationships
-            
+
             /* foreach (var child in qChildRemoved)
             {
                 commands.RemoveChild(child.Parent, child);
@@ -37,6 +37,64 @@ public class HierarchyPlugin : IPlugin
                 commands.RemoveChildren(parent);
             } */
         }));
+    }
+}
+
+public ref struct HierarchyEnumerator
+{
+    readonly Query query;
+    readonly Entity root;
+    CurrentEntity currentEntity;
+    public CurrentEntity Current => currentEntity;
+
+    public HierarchyEnumerator(Entity root, Query query)
+    {
+        this.query = query;
+        this.root = root;
+        currentEntity = new CurrentEntity(root, 0);
+    }
+
+    public bool MoveNext()
+    {
+        if (currentEntity.Entity == Entity.NULL) return false;
+
+        if (query.Has<Parent>(currentEntity.Entity))
+        {
+            currentEntity.Entity = query.Get<Parent>(currentEntity.Entity).FirstChild;
+            currentEntity.Depth++;
+            return true;
+        }
+
+        ref var cChild = ref query.Get<Child>(currentEntity.Entity);
+        if (cChild.NextSibling != Entity.NULL)
+        {
+            currentEntity.Entity = cChild.NextSibling;
+            return true;
+        }
+
+        if (cChild.Parent == root) return false;
+
+        currentEntity.Entity = query.Get<Child>(cChild.Parent).NextSibling;
+        currentEntity.Depth--;
+        return currentEntity.Entity != Entity.NULL;
+    }
+
+    public ref struct CurrentEntity(Entity entity, int depth)
+    {
+        public Entity Entity = entity;
+        public int Depth = depth;
+    }
+}
+
+public ref struct HierarchyEnumerable(Query Query, Entity Root)
+{
+    public HierarchyEnumerator GetEnumerator() => new(Root, Query);
+}
+public static class HierarchyQueryExt
+{
+    public static HierarchyEnumerable HierarchyDFS(this Query query, in Entity root)
+    {
+        return new HierarchyEnumerable(query, root);
     }
 }
 
@@ -121,6 +179,8 @@ public struct AddChildCommand : ICommand
 
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         ref var cChild = ref world.Store.GetComponent<Child>(Child);
+
+        cChild.Parent = Parent;
 
         if (cParent.FirstChild != Entity.NULL)
         {

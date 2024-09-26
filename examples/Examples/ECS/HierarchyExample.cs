@@ -13,27 +13,42 @@ public class HierarchyExample : IExample
     struct Component1 : IComponent { }
 
     public void Run() => (app = Application.Builder
+        .AddPlugins([
+            new TimePlugin(),
+            new HierarchyPlugin(),
+        ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (World world, Commands commands) =>
         {
             var parent = world.Spawn();
-            var child = world.Spawn();
-            commands.AddChild(parent, child);
+            commands.AddChild(parent, world.Spawn());
+            commands.AddChild(parent, world.Spawn());
+            commands.AddChild(parent, world.Spawn());
+
+            var ent5 = world.Spawn();
+            commands.AddChild(parent, ent5);
+            commands.AddChild(ent5, world.Spawn());
+            commands.AddChild(ent5, world.Spawn());
+            commands.AddChild(ent5, world.Spawn());
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Print",
-        static (Query<Parent> qParents, Query query) =>
+        static (Local<float> logCD, Time time, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
         {
-            foreach (var parent in qParents)
+            logCD.Value -= time.DeltaTimeF;
+            if (logCD.Value > 0)
+                return;
+
+            logCD.Value = 1;
+
+            foreach (var root in qRoots)
             {
-                Log.Info($"Parent: {parent.Entity}");
-                
-                var current = parent.Component0.FirstChild;
-                while (current != Entity.NULL)
+                Log.Info($"{root.Entity}");
+                foreach (var child in query.HierarchyDFS(root.Entity))
                 {
-                    Log.Info($"    Child: {current}");
-                    current = query.Get<Child>(current).NextSibling;
+                    Log.Info($"{new string(' ', child.Depth * 2)}{child.Entity}");
                 }
             }
+            Log.Info("");
         }))
         .Build())
         .Run();
