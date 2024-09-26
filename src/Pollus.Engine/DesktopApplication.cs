@@ -71,6 +71,7 @@ public class DesktopApplication : IApplication, IDisposable
             catch
             {
                 Shutdown();
+                throw;
             }
         }
 

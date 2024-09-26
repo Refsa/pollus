@@ -90,6 +90,7 @@ public ref struct HierarchyEnumerable(Query Query, Entity Root)
 {
     public HierarchyEnumerator GetEnumerator() => new(Root, Query);
 }
+
 public static class HierarchyQueryExt
 {
     public static HierarchyEnumerable HierarchyDFS(this Query query, in Entity root)
@@ -268,11 +269,15 @@ public struct DespawnHierarchyCommand : ICommand
 
     void DespawnDFS(World world, in Entity entity)
     {
-        var current = world.Store.GetComponent<Parent>(entity).FirstChild;
-        while (current != Entity.NULL)
+        if (world.Store.HasComponent<Parent>(entity))
         {
-            DespawnDFS(world, current);
-            current = world.Store.GetComponent<Child>(current).NextSibling;
+            var current = world.Store.GetComponent<Parent>(entity).FirstChild;
+            while (current != Entity.NULL)
+            {
+                var down = current;
+                current = world.Store.GetComponent<Child>(current).NextSibling;
+                DespawnDFS(world, down);
+            }
         }
 
         world.Despawn(entity);

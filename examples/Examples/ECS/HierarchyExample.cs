@@ -3,6 +3,7 @@ namespace Pollus.Examples;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
+using Pollus.Engine.Input;
 
 public class HierarchyExample : IExample
 {
@@ -16,6 +17,7 @@ public class HierarchyExample : IExample
         .AddPlugins([
             new TimePlugin(),
             new HierarchyPlugin(),
+            new InputPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (World world, Commands commands) =>
@@ -49,6 +51,31 @@ public class HierarchyExample : IExample
                 }
             }
             Log.Info("");
+        }))
+        .AddSystem(CoreStage.Update, FnSystem.Create("Destroy",
+        static (ButtonInput<Key> keys, World world, Commands commands, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
+        {
+            if (!keys.JustPressed(Key.KeyQ)) return;
+
+            if (qRoots.EntityCount() > 0)
+            {
+                Log.Info($"Despawning {qRoots.Single().Entity}");
+                commands.DespawnHierarchy(qRoots.Single().Entity);
+            }
+            else
+            {
+                Log.Info("Spawning");
+                var parent = world.Spawn();
+                commands.AddChild(parent, world.Spawn());
+                commands.AddChild(parent, world.Spawn());
+                commands.AddChild(parent, world.Spawn());
+
+                var ent5 = world.Spawn();
+                commands.AddChild(parent, ent5);
+                commands.AddChild(ent5, world.Spawn());
+                commands.AddChild(ent5, world.Spawn());
+                commands.AddChild(ent5, world.Spawn());
+            }
         }))
         .Build())
         .Run();
