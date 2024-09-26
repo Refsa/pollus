@@ -196,6 +196,8 @@ public class ArchetypeStore : IDisposable
         var archetype = archetypes[info.ArchetypeIndex];
         if (!archetype.HasComponent<C>()) return;
 
+        var component = archetype.GetChunk(info.ChunkIndex).GetComponent<C>(info.RowIndex);
+
         Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length - 1];
         var index = 0;
         foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
@@ -220,7 +222,7 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
 
-        changes.SetRemoved<C>(entity);
+        changes.SetRemoved(entity, in component);
         nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(nextInfo.RowIndex, ComponentFlags.Removed);
     }
 

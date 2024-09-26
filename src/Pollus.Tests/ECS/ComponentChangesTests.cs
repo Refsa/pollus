@@ -5,19 +5,23 @@ using Pollus.ECS;
 public class ComponentChangesTests
 {
     [Fact]
-    public void ComponentChanges_OneFrame_Lifetime()
+    public void ChangeTracker_OneFrame_Lifetime()
     {
         using var world = new World();
         var entity = new Entity(100);
         for (int i = 0; i < 10; i++) world.Update();
 
-        world.Store.Changes.SetRemoved(entity, 0);
+        world.Store.Changes.GetTracker<TestComponent1>().SetRemoved(entity, new TestComponent1 { Value = 321 });
+        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Equal(321, world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity).Value);
 
         world.Update();
-        Assert.True(world.Store.Changes.WasRemoved(entity, 0));
+        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Equal(321, world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity).Value);
 
         world.Update();
-        Assert.False(world.Store.Changes.WasRemoved(entity, 0));
+        Assert.False(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Throws<NullReferenceException>(() => world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity));
     }
 
     [Fact]
@@ -56,6 +60,6 @@ public class ComponentChangesTests
         world.Store.RemoveComponent<TestComponent1>(entity);
 
         var info = world.Store.GetEntityInfo(entity);
-        Assert.True(world.Store.Changes.WasRemoved<TestComponent1>(entity));
+        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
     }
 }

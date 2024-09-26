@@ -1,6 +1,6 @@
 namespace Pollus.ECS;
 
-using System;
+using Pollus.Collections;
 
 public enum ComponentFlags
 {
@@ -11,88 +11,119 @@ public enum ComponentFlags
 
 public class RemovedTracker
 {
-    struct Change
-    {
-        public ComponentID ComponentID;
-        public ulong RemovedVersion;
-    }
-
-    class ChangeList
-    {
-        Change[] changes = new Change[4];
-        int count;
-
-        public ReadOnlySpan<Change> Changes => changes.AsSpan(0, count);
-
-        public void SetFlag(in ComponentID cid, ulong version)
-        {
-            ref var change = ref GetOrCreate(cid);
-            change.RemovedVersion = version;
-        }
-
-        public bool HasFlag(in ComponentID cid, ulong version)
-        {
-            ref var change = ref GetOrCreate(cid);
-            return version - change.RemovedVersion <= 1;
-        }
-
-        ref Change GetOrCreate(in ComponentID id)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                if (changes[i].ComponentID == id)
-                    return ref changes[i];
-            }
-
-            if (count >= changes.Length) Array.Resize(ref changes, changes.Length * 2);
-            ref var change = ref changes[count++];
-            change.ComponentID = id;
-            return ref change;
-        }
-
-        public void Clear()
-        {
-            count = 0;
-        }
-    }
-
     ulong version = 0;
-    SparseSet<ChangeList> changes = new(32);
+    List<IRemovedTracker> trackers = new();
+    Dictionary<int, int> trackerLookup = new();
 
     public void Tick(ulong version)
     {
         this.version = version;
-        foreach (var change in changes)
+        foreach (var tracker in new ListEnumerable<IRemovedTracker>(trackers))
         {
-            change.Clear();
+            tracker.Tick(version);
         }
     }
 
-    public void SetRemoved<C>(Entity entity)
+    public RemovedTracker<C> GetTracker<C>()
         where C : unmanaged, IComponent
     {
-        SetRemoved(entity, Component.GetInfo<C>().ID);
-    }
-
-    public void SetRemoved(Entity entity, ComponentID cid)
-    {
-        if (!changes.Contains(entity.ID))
+        if (!trackerLookup.TryGetValue(Component.GetInfo<C>().ID, out var index))
         {
-            changes.Add(entity.ID, new ChangeList());
+            index = trackers.Count;
+            trackerLookup.Add(Component.GetInfo<C>().ID, index);
+            var tracker = new RemovedTracker<C>();
+            tracker.Tick(version);
+            trackers.Add(tracker);
         }
 
-        var list = changes.Get(entity.ID);
-        list.SetFlag(cid, version);
+        return (RemovedTracker<C>)trackers[index];
     }
-    
+
+    public void SetRemoved<C>(Entity entity, in C component)
+        where C : unmanaged, IComponent
+    {
+        GetTracker<C>().SetRemoved(entity, in component);
+    }
+
     public bool WasRemoved<C>(Entity entity)
         where C : unmanaged, IComponent
     {
-        return WasRemoved(entity, Component.GetInfo<C>().ID);
+        return GetTracker<C>().WasRemoved(entity);
     }
 
-    public bool WasRemoved(Entity entity, ComponentID cid)
+    public ref C GetRemoved<C>(Entity entity)
+        where C : unmanaged, IComponent
     {
-        return changes.Contains(entity.ID) && changes.Get(entity.ID).HasFlag(cid, version);
+        return ref GetTracker<C>().GetRemoved(entity);
+    }
+}
+
+public interface IRemovedTracker
+{
+    void Tick(ulong version);
+    bool WasRemoved(Entity entity);
+}
+
+public class RemovedTracker<C> : IRemovedTracker
+    where C : unmanaged, IComponent
+{
+    static RemovedTracker() => RemoveTrackerFetch<C>.Register();
+
+    struct Removed
+    {
+        public int Entity;
+        public C Component;
+        public ulong Version;
+    }
+
+    SparseSet<Removed> tracker = new(32);
+    ulong version = 0;
+
+    public void Tick(ulong version)
+    {
+        this.version = version;
+        foreach (var removed in tracker)
+        {
+            if (version - removed.Version <= 1) continue;
+            tracker.Remove(removed.Entity);
+        }
+    }
+
+    public void SetRemoved(Entity entity, in C component)
+    {
+        if (!tracker.Contains(entity.ID))
+        {
+            tracker.Add(entity.ID, new Removed { Entity = entity.ID, Component = component, Version = version });
+            return;
+        }
+
+        var removed = tracker.Get(entity.ID);
+        removed.Component = component;
+        removed.Version = version;
+    }
+
+    public bool WasRemoved(Entity entity)
+    {
+        if (!tracker.Contains(entity.ID)) return false;
+        return (version - tracker.Get(entity.ID).Version) <= 1;
+    }
+
+    public ref C GetRemoved(Entity entity)
+    {
+        return ref tracker.Get(entity.ID).Component;
+    }
+}
+
+public class RemoveTrackerFetch<C> : IFetch<RemovedTracker<C>>
+    where C : unmanaged, IComponent
+{
+    public static void Register()
+    {
+        Fetch.Register(new RemoveTrackerFetch<C>(), []);
+    }
+
+    public RemovedTracker<C> DoFetch(World world, ISystem system)
+    {
+        return world.Store.Changes.GetTracker<C>();
     }
 }
