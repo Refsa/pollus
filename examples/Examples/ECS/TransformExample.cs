@@ -75,6 +75,12 @@ public class TransformExample : IExample
                     MaterialHandle = shapeMaterial,
                     ShapeHandle = shapes.Add(Shape.EquilateralTriangle(Vec2f.Zero, 32f)),
                     Color = Color.RED,
+                },
+                new Rotate()
+                {
+                    MinAngle = -180f,
+                    MaxAngle = 180f,
+                    Speed = 180f,
                 }
             ));
 

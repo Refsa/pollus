@@ -35,7 +35,7 @@
 		- [ ] per stage/system command dispatchs
 	- [ ] Parallel queries
 	- [ ] Relationships
-	- [ ] Hierarchies
+	- [-] Hierarchies
 	- [x] Events
 	- [x] Commands
 	- [ ] Improve spawn commands

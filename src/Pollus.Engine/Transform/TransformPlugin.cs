@@ -17,15 +17,15 @@ public class TransformPlugin<TTransform> : IPlugin
                 Query<GlobalTransform, TTransform>.Filter<None<Parent, Child>> qOrphans
             ) =>
             {
-                foreach (var root in qRoots)
+                qRoots.ForEach(query, static (in Query query, in Entity root, ref GlobalTransform globalTransform, ref TTransform transform, ref Parent parent) =>
                 {
-                    PropagateDown(root.Entity, query, Mat4f.Identity());
-                }
+                    PropagateDown(root, query, Mat4f.Identity());
+                });
 
-                foreach (var orphan in qOrphans)
+                qOrphans.ForEach(static (ref GlobalTransform globalTransform, ref TTransform transform) =>
                 {
-                    orphan.Component0.Value = orphan.Component1.ToMat4f();
-                }
+                    globalTransform.Value = transform.ToMat4f();
+                });
 
                 static void PropagateDown(in Entity current, in Query query, in Mat4f parentTransform)
                 {

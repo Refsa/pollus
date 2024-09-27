@@ -63,6 +63,16 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             query.ForEach(pred);
         }
 
+        public void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
+        {
+            query.ForEach(userData, pred);
+        }
+
+        public void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
+        {
+            query.ForEach(userData, pred);
+        }
+
         public readonly void ForEach<TForEach>(TForEach iter)
             where TForEach : struct, IForEachBase<$gen_args$>
         {
