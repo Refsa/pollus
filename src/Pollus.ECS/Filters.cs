@@ -2,6 +2,7 @@
 
 namespace Pollus.ECS;
 
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 public delegate bool FilterArchetypeDelegate(Archetype archetype);
@@ -118,7 +119,7 @@ public static class FilterHelpers
     public static IFilter[] UnwrapFilters<TFilters>()
         where TFilters : ITuple, new()
     {
-        if (typeof(TFilters).IsAssignableFrom(typeof(ITuple)) is false)
+        if (typeof(TFilters).Name.StartsWith("ValueTuple") is false)
         {
             if (typeof(TFilters).IsAssignableTo(typeof(IFilter)) is false)
             {
@@ -137,10 +138,6 @@ public static class FilterHelpers
             if (types[i].IsAssignableTo(typeof(IFilter)) is false)
             {
                 throw new ArgumentException("Type must implement IFilter");
-            }
-            if (types[i].IsValueType is false)
-            {
-                throw new ArgumentException("Type must be a value type");
             }
 
 #pragma warning disable IL2062

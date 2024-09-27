@@ -60,6 +60,11 @@ public struct Query : IQuery, IQueryCreate<Query>
             query.ForEach(pred);
         }
 
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
+        {
+            query.ForEach(userData, pred);
+        }
+
         public Entity Single()
         {
             return query.Single();
@@ -99,7 +104,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public void ForEach(ForEachEntityDelegate pred)
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
         foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var entities = chunk.GetEntities();
@@ -110,9 +115,22 @@ public struct Query : IQuery, IQueryCreate<Query>
         }
     }
 
+    public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
+    {
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            var entities = chunk.GetEntities();
+            for (int i = 0; i < chunk.Count; i++)
+            {
+                pred(userData, entities[i]);
+            }
+        }
+    }
+
     public Entity Single()
     {
-        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
         foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             return chunk.GetEntities()[0];
@@ -123,7 +141,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public int EntityCount()
     {
         int count = 0;
-        scoped Span<ComponentID> cids = stackalloc ComponentID[0];
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
         foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             count += chunk.Count;
