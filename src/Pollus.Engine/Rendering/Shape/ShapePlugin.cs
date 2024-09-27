@@ -46,14 +46,14 @@ public class ShapePlugin : IPlugin
 
 public struct ShapeDraw : IComponent
 {
-    public static EntityBuilder<ShapeDraw, Transform2> Bundle => new(
+    public static EntityBuilder<ShapeDraw, Transform2D> Bundle => new(
         new()
         {
             MaterialHandle = Handle<ShapeMaterial>.Null,
             ShapeHandle = Handle<Shape>.Null,
             Color = Color.WHITE,
         },
-        Transform2.Default
+        Transform2D.Default
     );
 
     public required Handle<ShapeMaterial> MaterialHandle;

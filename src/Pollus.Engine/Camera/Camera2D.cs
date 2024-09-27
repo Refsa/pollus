@@ -6,9 +6,9 @@ using Pollus.Mathematics;
 
 public struct Camera2D : IComponent
 {
-    public static EntityBuilder<Camera2D, Transform2, Projection> Bundle => new(
+    public static EntityBuilder<Camera2D, Transform2D, Projection> Bundle => new(
         new(),
-        Transform2.Default,
+        Transform2D.Default,
         Projection.Orthographic(OrthographicProjection.Default)
     );
 }

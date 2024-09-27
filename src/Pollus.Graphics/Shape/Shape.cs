@@ -138,6 +138,26 @@ public class Shape
         return Polygon(position, radius, resolution);
     }
 
+    public static Shape Triangle(Vec2f p1, Vec2f p2, Vec2f p3)
+    {
+        return new()
+        {
+            Name = "Triangle",
+            Positions = [p1, p2, p3],
+            Uvs = [Vec2f.Zero, Vec2f.One, Vec2f.Zero],
+        };
+    }
+
+    public static Shape EquilateralTriangle(Vec2f center, float size)
+    {
+        var height = size * Math.Sqrt(3f) * 0.5f;
+        var p1 = center + new Vec2f(0, height);
+        var p2 = center + new Vec2f(size, -height);
+        var p3 = center + new Vec2f(-size, -height);
+
+        return Triangle(p1, p2, p3);
+    }
+
     public static Shape Capsule(Vec2f start, Vec2f end, float radius, int resolution = 32)
     {
         var direction = (end - start).Normalized();

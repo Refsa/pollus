@@ -200,6 +200,26 @@ public partial record struct Mat4f
         return Quat.FromMat4(this);
     }
 
+    public Vec3f GetScale()
+    {
+        return new Vec3f(Col0.Length(), Col1.Length(), Col2.Length());
+    }
+
+    public float GetRotationX()
+    {
+        return Math.Atan2(Col2.Y, Col2.Z);
+    }
+
+    public float GetRotationY()
+    {
+        return Math.Atan2(-Col2.X, Math.Sqrt(Col2.Y * Col2.Y + Col2.Z * Col2.Z));
+    }
+
+    public float GetRotationZ()
+    {
+        return Math.Atan2(Col1.X, Col0.X);
+    }
+
     public Mat4f Transpose()
     {
         return new(

@@ -34,7 +34,7 @@ public class ShapesExample : IExample
         });
 
         commands.Spawn(ShapeDraw.Bundle
-            .Set(Transform2.Default with
+            .Set(Transform2D.Default with
             {
                 Position = new Vec2f(128f, 128f),
             })
@@ -46,7 +46,7 @@ public class ShapesExample : IExample
             }));
 
         commands.Spawn(ShapeDraw.Bundle
-            .Set(Transform2.Default with
+            .Set(Transform2D.Default with
             {
                 Position = new Vec2f(256f, 128f),
             })
@@ -58,7 +58,7 @@ public class ShapesExample : IExample
             }));
 
         commands.Spawn(ShapeDraw.Bundle
-            .Set(Transform2.Default with
+            .Set(Transform2D.Default with
             {
                 Position = new Vec2f(384f, 128f),
             })
@@ -70,7 +70,7 @@ public class ShapesExample : IExample
             }));
 
         commands.Spawn(ShapeDraw.Bundle
-            .Set(Transform2.Default with
+            .Set(Transform2D.Default with
             {
                 Position = new Vec2f(512f, 128f),
             })
@@ -82,7 +82,7 @@ public class ShapesExample : IExample
             }));
 
         commands.Spawn(ShapeDraw.Bundle
-            .Set(Transform2.Default with
+            .Set(Transform2D.Default with
             {
                 Position = new Vec2f(640f, 128f),
             })

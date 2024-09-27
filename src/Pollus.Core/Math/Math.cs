@@ -122,15 +122,24 @@ public static class Math
         return Min(Max(value, min), max);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static void Swap<T>(ref T a, ref T b)
         where T : struct, INumber<T>
     {
         var temp = a; a = b; b = temp;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static bool Approximately<T>(this T a, T b, T tolerance)
         where T : struct, IFloatingPoint<T>
     {
         return Abs(a - b) <= tolerance;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Lerp<T>(T a, T b, T t)
+        where T : struct, INumber<T>
+    {
+        return a + (b - a) * t;
     }
 }

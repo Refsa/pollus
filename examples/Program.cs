@@ -20,6 +20,7 @@ if (args.Length < 1)
     Console.WriteLine("  change-tracking");
     Console.WriteLine("  ecs-spawn");
     Console.WriteLine("  hierarchy");
+    Console.WriteLine("  transform");
     return;
 }
 
@@ -41,6 +42,7 @@ IExample? example = args[0] switch
     "change-tracking" => new ChangeTrackingExample(),
     "ecs-spawn" => new ECSSpawnExample(),
     "hierarchy" => new HierarchyExample(),
+    "transform" => new TransformExample(),
     _ => null
 };
 

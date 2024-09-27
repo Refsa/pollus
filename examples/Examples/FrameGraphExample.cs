@@ -58,7 +58,7 @@ public class FrameGraphExample : IExample
 
                 commands.Spawn(Camera2D.Bundle);
                 commands.Spawn(Entity.With(
-                    Transform2.Default with
+                    Transform2D.Default with
                     {
                         Position = new Vec2f(100, 100),
                         Scale = new Vec2f(48, 16),

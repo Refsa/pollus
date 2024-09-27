@@ -66,7 +66,7 @@ public class SpriteBenchmark : IExample
                     for (int i = 0; i < int.Min(targetDist * 10000, 100_000); i++)
                     {
                         commands.Spawn(Entity.With(
-                            Transform2.Default with
+                            Transform2D.Default with
                             {
                                 Position = new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
                                 Scale = Vec2f.One * 16f,

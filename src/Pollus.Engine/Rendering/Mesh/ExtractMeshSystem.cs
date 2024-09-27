@@ -5,14 +5,14 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 
-public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatches, MeshRenderBatch, Query<Transform2, MeshDraw<TMaterial>>>
+public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatches, MeshRenderBatch, Query<Transform2D, MeshDraw<TMaterial>>>
     where TMaterial : IMaterial
 {
-    struct ExtractJob : IForEach<Transform2, MeshDraw<TMaterial>>
+    struct ExtractJob : IForEach<Transform2D, MeshDraw<TMaterial>>
     {
         public required MeshRenderBatches Batches { get; init; }
 
-        public void Execute(ref Transform2 transform, ref MeshDraw<TMaterial> renderable)
+        public void Execute(ref Transform2D transform, ref MeshDraw<TMaterial> renderable)
         {
             var batch = Batches.GetOrCreate(new MeshBatchKey(renderable.Mesh, renderable.Material));
             batch.Write(transform.ToMat4f());
@@ -22,7 +22,7 @@ public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatc
     protected override void Extract(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, MeshRenderBatches batches,
-        Query<Transform2, MeshDraw<TMaterial>> query)
+        Query<Transform2D, MeshDraw<TMaterial>> query)
     {
         query.ForEach(new ExtractJob
         {

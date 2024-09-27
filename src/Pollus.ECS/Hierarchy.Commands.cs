@@ -84,7 +84,7 @@ public struct AddChildCommand : ICommand
 
         cChild.Parent = Parent;
 
-        if (cParent.FirstChild != Entity.NULL)
+        if (!cParent.FirstChild.IsNull)
         {
             cChild.NextSibling = cParent.FirstChild;
             world.Store.GetComponent<Child>(cParent.FirstChild).PreviousSibling = Child;
@@ -114,7 +114,7 @@ public struct RemoveChildCommand : ICommand
         {
             cParent.FirstChild = cChild.NextSibling;
 
-            if (cChild.NextSibling != Entity.NULL)
+            if (!cChild.NextSibling.IsNull)
             {
                 world.Store.GetComponent<Child>(cChild.NextSibling).PreviousSibling = Entity.NULL;
             }
@@ -149,7 +149,7 @@ public struct RemoveChildrenCommand : ICommand
 
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         var current = cParent.FirstChild;
-        while (current != Entity.NULL)
+        while (!current.IsNull)
         {
             world.Store.RemoveComponent<Child>(current);
             current = world.Store.GetComponent<Child>(current).NextSibling;
@@ -173,7 +173,7 @@ public struct DespawnHierarchyCommand : ICommand
         if (world.Store.HasComponent<Parent>(entity))
         {
             var current = world.Store.GetComponent<Parent>(entity).FirstChild;
-            while (current != Entity.NULL)
+            while (!current.IsNull)
             {
                 var down = current;
                 current = world.Store.GetComponent<Child>(current).NextSibling;

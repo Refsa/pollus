@@ -41,9 +41,9 @@ public class RenderingPlugin : IPlugin
             new MeshPlugin(),
             new SpritePlugin(),
             new FrameGraph2DPlugin(),
-            new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2>>>()
+            new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2D>>>()
             {
-                Extract = static (in Param<Time, Query<Projection, Transform2>> param, ref SceneUniform uniform) =>
+                Extract = static (in Param<Time, Query<Projection, Transform2D>> param, ref SceneUniform uniform) =>
                 {
                     var (time, qCamera) = param;
 

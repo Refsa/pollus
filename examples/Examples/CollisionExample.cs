@@ -41,7 +41,7 @@ public class CollisionExample : IExample
             });
 
             commands.Spawn(Entity.With(
-                Transform2.Default with { Position = new Vec2f(128f, 128f) },
+                Transform2D.Default with { Position = new Vec2f(128f, 128f) },
                 new ShapeDraw
                 {
                     MaterialHandle = shapeMaterial,
@@ -52,7 +52,7 @@ public class CollisionExample : IExample
             ));
 
             commands.Spawn(Entity.With(
-                Transform2.Default with { Position = new Vec2f(128f - 96f, 128f - 96f) },
+                Transform2D.Default with { Position = new Vec2f(128f - 96f, 128f - 96f) },
                 new ShapeDraw
                 {
                     MaterialHandle = shapeMaterial,
@@ -69,9 +69,9 @@ public class CollisionExample : IExample
             ));
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-        static (Query<Transform2, MoveShape, ShapeDraw> qMoveShapes, Query<Transform2, CollisionShape, ShapeDraw> qCollisions, Time time) =>
+        static (Query<Transform2D, MoveShape, ShapeDraw> qMoveShapes, Query<Transform2D, CollisionShape, ShapeDraw> qCollisions, Time time) =>
         {
-            qMoveShapes.ForEach((ref Transform2 transform, ref MoveShape moveShape, ref ShapeDraw shapeDraw) =>
+            qMoveShapes.ForEach((ref Transform2D transform, ref MoveShape moveShape, ref ShapeDraw shapeDraw) =>
             {
                 var direction = (moveShape.End - transform.Position).Normalized();
                 transform.Position += direction * moveShape.Speed * (float)time.DeltaTimeF;
@@ -84,14 +84,14 @@ public class CollisionExample : IExample
                 }
             });
 
-            qCollisions.ForEach((in Entity entity, ref Transform2 transform, ref CollisionShape shape, ref ShapeDraw draw) =>
+            qCollisions.ForEach((in Entity entity, ref Transform2D transform, ref CollisionShape shape, ref ShapeDraw draw) =>
             {
                 var _entity = entity;
                 var _shape = shape;
                 var _transform = transform;
                 bool collision = false;
 
-                qCollisions.ForEach((in Entity oEntity, ref Transform2 oTransform, ref CollisionShape oShape, ref ShapeDraw oDraw) =>
+                qCollisions.ForEach((in Entity oEntity, ref Transform2D oTransform, ref CollisionShape oShape, ref ShapeDraw oDraw) =>
                 {
                     if (_entity == oEntity) return;
                     

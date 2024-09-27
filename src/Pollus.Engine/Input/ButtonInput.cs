@@ -44,13 +44,13 @@ public class ButtonInput<TButton>
     public float GetAxis(TButton negative, TButton positive, Guid? device = null)
     {
         float value = 0;
-        if (Pressed(positive, device)) value += 1;
         if (Pressed(negative, device)) value -= 1;
+        if (Pressed(positive, device)) value += 1;
         return value;
     }
 
     public Vec2f GetAxis2D(TButton negativeX, TButton positiveX, TButton negativeY, TButton positiveY, Guid? device = null)
     {
-        return new(GetAxis(positiveX, negativeX, device), GetAxis(positiveY, negativeY, device));
+        return new(GetAxis(negativeX, positiveX, device), GetAxis(negativeY, positiveY, device));
     }
 }

@@ -44,12 +44,12 @@ Application.Builder
     .AddSystems(CoreStage.PostInit, FnSystem.Create("SetupEntities",
     static (Commands commands) => 
     {
-        commands.Spawn(Entity.With(Transform2.Default, new Player()));
+        commands.Spawn(Entity.With(Transform2D.Default, new Player()));
     }))
     .AddSystems(CoreStage.Update, FnSystem.Create("UpdateEntities",
-    static (Query<Transform2>.Filter<All<Player>> query, ButtonInput<Key> keys) => 
+    static (Query<Transform2D>.Filter<All<Player>> query, ButtonInput<Key> keys) => 
     {
-        query.ForEach((ref Transform2 transform) =>
+        query.ForEach((ref Transform2D transform) =>
         {
             if (keys.Pressed(Key.ArrowLeft))
             {

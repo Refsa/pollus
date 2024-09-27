@@ -22,11 +22,11 @@ public class MeshRenderingExample : IExample
         public float Speed;
     }
 
-    struct RotateMeForEach : IForEach<Transform2, RotateMe>
+    struct RotateMeForEach : IForEach<Transform2D, RotateMe>
     {
         public required float SecondsSinceStartup;
 
-        public void Execute(ref Transform2 transform, ref RotateMe rotateMe)
+        public void Execute(ref Transform2D transform, ref RotateMe rotateMe)
         {
             transform.Rotation = (SecondsSinceStartup * rotateMe.Speed).Wrap(0f, 360f);
         }
@@ -76,7 +76,7 @@ public class MeshRenderingExample : IExample
                 for (int y = 0; y < 10; y++)
                 {
                     commands.Spawn(Entity.With(
-                        new Transform2
+                        new Transform2D
                         {
                             Position = (x * 24f + 128f, y * 24f + 128f),
                             Scale = (16f, 16f),
@@ -95,8 +95,8 @@ public class MeshRenderingExample : IExample
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("PlayerUpdate",
         static (InputManager input, Time time,
-            Query<Transform2, OrthographicProjection>.Filter<All<Camera2D>> qCamera,
-            Query<Transform2, RotateMe> qRotateMe) =>
+            Query<Transform2D, OrthographicProjection>.Filter<All<Camera2D>> qCamera,
+            Query<Transform2D, RotateMe> qRotateMe) =>
         {
             var keyboard = input.GetDevice("keyboard") as Keyboard;
             var inputVec = keyboard!.GetAxis2D(Key.ArrowLeft, Key.ArrowRight, Key.ArrowUp, Key.ArrowDown);
@@ -104,7 +104,7 @@ public class MeshRenderingExample : IExample
             var zoomIn = keyboard.JustPressed(Key.ArrowUp);
             var zoomOut = keyboard.JustPressed(Key.ArrowDown);
 
-            qCamera.ForEach((ref Transform2 transform, ref OrthographicProjection projection) =>
+            qCamera.ForEach((ref Transform2D transform, ref OrthographicProjection projection) =>
             {
                 if (controlHeld)
                 {

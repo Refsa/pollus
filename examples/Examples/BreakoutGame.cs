@@ -124,7 +124,7 @@ public class BreakoutGame : IExample
             var paddleSize = new Vec2f(96f, 16f);
             commands.Spawn(Entity.With(
                 new Player(),
-                new Transform2
+                new Transform2D
                 {
                     Position = new Vec2f(window.Size.X / 2f - 32f, 32f),
                     Scale = paddleSize,
@@ -195,17 +195,17 @@ public class BreakoutGame : IExample
             }
         }))
         .AddSystem(CoreStage.First, Coroutine.Create(new("BrickSpawner"),
-        static (Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2, Brick>> param) =>
+        static (Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2D, Brick>> param) =>
         {
             return Routine(param);
-            static IEnumerator<Yield> Routine(Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2, Brick>> param)
+            static IEnumerator<Yield> Routine(Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2D, Brick>> param)
             {
                 var (commands, window, gameState, state, eRestartGame, qBricks) = param;
 
                 while (!eRestartGame.HasAny) yield return Yield.Return();
                 eRestartGame.Consume();
 
-                qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2 brickTransform, ref Brick brick)
+                qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2D brickTransform, ref Brick brick)
                 {
                     commands.Despawn(brickEntity);
                 });
@@ -221,7 +221,7 @@ public class BreakoutGame : IExample
                     {
                         commands.Spawn(Entity.With(
                             new Brick(),
-                            new Transform2
+                            new Transform2D
                             {
                                 Position = new Vec2f(x * (width + spacing) + width * 0.5f + spacing,
                                             window.Size.Y - 32f - y * (height + spacing) - height * 0.5f),
@@ -253,7 +253,7 @@ public class BreakoutGame : IExample
                 commands.Spawn(Entity.With(
                     new Ball(),
                     new Velocity { Value = 400f * new Vec2f((random.NextFloat() * 2f - 1f).Wrap(-0.25f, 0.25f), random.NextFloat()).Normalized() },
-                    new Transform2
+                    new Transform2D
                     {
                         Position = (window.Size.X / 2f, 128f),
                         Scale = (16f, 16f),
@@ -284,7 +284,7 @@ public class BreakoutGame : IExample
         .AddSystem(CoreStage.Update, FnSystem.Create("PlayerUpdate",
         static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
                 Time time, IWindow window, Query query,
-                Query<Transform2, CollisionShape>.Filter<All<Player>> qPlayer
+                Query<Transform2D, CollisionShape>.Filter<All<Player>> qPlayer
         ) =>
         {
             var keyboardInput = keys?.GetAxis(Key.ArrowLeft, Key.ArrowRight) ?? 0;
@@ -312,13 +312,13 @@ public class BreakoutGame : IExample
                 windowRect.Min - colliderShape.Min,
                 windowRect.Max - colliderShape.Max);
 
-            if (movePaddle.Length() > 0) query.SetChanged<Transform2>(player.Entity);
+            if (movePaddle.Length() > 0) query.SetChanged<Transform2D>(player.Entity);
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("CollisionSystem",
         static (Commands commands, Time time, IWindow window, AssetServer assetServer,
                 EventWriter<Event.Collision> eCollision,
-                Query<Transform2, Velocity, CollisionShape>.Filter<All<Ball>> qBalls,
-                Query<Transform2, CollisionShape> qColliders
+                Query<Transform2D, Velocity, CollisionShape>.Filter<All<Ball>> qBalls,
+                Query<Transform2D, CollisionShape> qColliders
         ) =>
         {
             foreach (var ball in qBalls)
@@ -382,7 +382,7 @@ public class BreakoutGame : IExample
         },
         static (Commands commands, EventReader<Event.Collision> eCollision,
                 EventWriter<Event.BrickDestroyed> eBrickDestroyed,
-                Query query, Query<Transform2, Velocity> qBodies
+                Query query, Query<Transform2D, Velocity> qBodies
         ) =>
         {
             var collisions = eCollision.Read();
@@ -428,10 +428,10 @@ public class BreakoutGame : IExample
         {
             RunsAfter = ["CollisionResponseSystem"],
         },
-        static (Query<Transform2, Velocity> qTransforms, Time time) =>
+        static (Query<Transform2D, Velocity> qTransforms, Time time) =>
         {
             qTransforms.ForEach(time.DeltaTimeF,
-            static (in float deltaTime, ref Transform2 transform, ref Velocity velocity) =>
+            static (in float deltaTime, ref Transform2D transform, ref Velocity velocity) =>
             {
                 transform.Position += velocity.Value * deltaTime;
             });
@@ -442,7 +442,7 @@ public class BreakoutGame : IExample
         },
         static (Commands commands, GameState gameState,
                 State<State> state, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
-                Query<Transform2, Ball> qBalls, IWindow window
+                Query<Transform2D, Ball> qBalls, IWindow window
         ) =>
         {
             foreach (var ball in qBalls)
