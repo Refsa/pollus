@@ -22,6 +22,19 @@ public record struct Quat
 
     public Quat(Vec4f f) : this(f.X, f.Y, f.Z, f.W) { }
 
+    public static Quat operator *(Quat q1, Quat q2) => new(
+        q1.W * q2.X + q1.X * q2.W + q1.Y * q2.Z - q1.Z * q2.Y,
+        q1.W * q2.Y + q1.Y * q2.W + q1.Z * q2.X - q1.X * q2.Z,
+        q1.W * q2.Z + q1.Z * q2.W + q1.X * q2.Y - q1.Y * q2.X,
+        q1.W * q2.W - q1.X * q2.X - q1.Y * q2.Y - q1.Z * q2.Z
+    );
+
+    public static Vec3f operator *(Quat q, Vec3f v) => new(
+        v.X * q.W + v.Y * q.Z - v.Z * q.Y + q.X * v.X + q.Y * v.Z - q.Z * v.Y,
+        -v.X * q.Z + v.Y * q.W + v.Z * q.X + q.X * v.X - q.Y * v.Z + q.Z * v.Y,
+        v.X * q.Y - v.Y * q.X + v.Z * q.W + q.X * v.X + q.Y * v.Y - q.Z * v.X
+    );
+
     public float LengthSquared()
     {
         return X * X + Y * Y + Z * Z + W * W;

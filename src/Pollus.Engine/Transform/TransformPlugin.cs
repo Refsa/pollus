@@ -3,6 +3,12 @@ namespace Pollus.Engine.Transform;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
+public interface ITransform
+{
+    Mat4f ToMat4f();
+    GlobalTransform ToGlobalTransform(Mat4f parentTransform);
+}
+
 public class TransformPlugin<TTransform> : IPlugin
     where TTransform : unmanaged, ITransform, IComponent
 {
