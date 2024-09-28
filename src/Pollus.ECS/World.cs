@@ -16,9 +16,9 @@ public class World : IDisposable
 
     ulong version = 0;
 
-    readonly HashSet<Type> registeredPlugins = new();
-    readonly Pool<Commands> commandBuffers = new(() => new(), 1);
-    readonly Queue<Commands> commandBuffersQueue = new();
+    readonly HashSet<Type> registeredPlugins;
+    readonly Pool<Commands> commandBuffers;
+    readonly Queue<Commands> commandBuffersQueue;
 
     public Schedule Schedule { get; init; }
     public ArchetypeStore Store { get; init; }
@@ -31,6 +31,10 @@ public class World : IDisposable
         Schedule = Schedule.CreateDefault();
         Resources = new();
         Events = new();
+        
+        commandBuffers = new(() => new(Store.Entities), 1);
+        registeredPlugins = new();
+        commandBuffersQueue = new();
     }
 
     public void Dispose()

@@ -1,6 +1,7 @@
+namespace Pollus.ECS;
+
 using System.Runtime.CompilerServices;
 
-namespace Pollus.ECS;
 
 public partial record struct Entity(int ID, int Version = 0)
 {
@@ -13,58 +14,103 @@ public partial record struct Entity(int ID, int Version = 0)
 
 public class Entities
 {
+    public struct EntityInfo
+    {
+        public bool IsAlive = false;
+        public Entity Entity = Entity.NULL;
+        public int ArchetypeIndex = -1;
+        public int ChunkIndex = -1;
+        public int RowIndex = -1;
+
+        public EntityInfo() { }
+    }
+
     volatile int counter = -1;
-    EntityFreeList freeList = new();
+    int aliveCount = 0;
+    EntityInfo[] entities = new EntityInfo[64];
+    MinHeap freeList = new();
+
+    public int AliveCount => Volatile.Read(ref aliveCount);
 
     public Entity Create()
     {
-        var entity = freeList.Pop();
-        if (entity.IsNull) entity = new Entity(Interlocked.Increment(ref counter), 0);
+        var entityId = freeList.Pop();
+        ref var entityInfo = ref Unsafe.NullRef<EntityInfo>();
+        
+        if (entityId == -1) entityInfo = ref NewEntity();
+        else entityInfo = ref entities[entityId];
 
-        return entity;
+        entityInfo.Entity.Version++;
+        entityInfo.IsAlive = true;
+        Interlocked.Increment(ref aliveCount);
+
+        return entityInfo.Entity;
     }
 
-    public void Create(in Span<Entity> entities)
+    public void Create(in Span<Entity> target)
     {
-        for (int i = 0; i < entities.Length; i++)
+        for (int i = 0; i < target.Length; i++)
         {
-            var entity = freeList.Pop();
-            if (entity.IsNull) entity = new Entity(Interlocked.Increment(ref counter), 0);
-            entities[i] = entity;
+            target[i] = Create();
         }
+        Interlocked.Add(ref aliveCount, target.Length);
     }
 
     public void Free(in Entity entity)
     {
-        freeList.Push(entity);
+        ref var entityInfo = ref GetEntityInfo(entity);
+        entityInfo.IsAlive = false;
+        freeList.Push(entity.ID);
+        Interlocked.Decrement(ref aliveCount);
+    }
+
+    public bool IsAlive(in Entity entity)
+    {
+        return Volatile.Read(ref aliveCount) > 0 && entities[entity.ID].IsAlive;
+    }
+
+    public ref EntityInfo GetEntityInfo(in Entity entity)
+    {
+        return ref entities[entity.ID];
+    }
+
+    ref EntityInfo NewEntity()
+    {
+        var id = Interlocked.Increment(ref counter);
+        if (id >= entities.Length) Array.Resize(ref entities, id * 2);
+        ref var entityInfo = ref entities[id];
+
+        entityInfo.Entity.ID = id;
+        entityInfo.Entity.Version = -1;
+
+        return ref entityInfo;
     }
 }
 
-public class EntityFreeList
+public class MinHeap
 {
-    Entity[] heap;
+    int[] heap;
     int size;
-    SpinWait spin = new SpinWait();
+    SpinWait spin = new();
 
-    public EntityFreeList(int initialCapacity = 1024)
+    public MinHeap(int initialCapacity = 1024)
     {
-        heap = new Entity[initialCapacity];
+        heap = new int[initialCapacity];
         size = 0;
     }
 
     public bool HasFree => Volatile.Read(ref size) > 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public Entity Pop()
+    public int Pop()
     {
         while (true)
         {
             int currentSize = Volatile.Read(ref size);
-            if (currentSize == 0)
-                return Entity.NULL;
+            if (currentSize == 0) return -1;
 
-            Entity minEntity = heap[0];
-            Entity lastEntity = heap[currentSize - 1];
+            int minEntity = heap[0];
+            int lastEntity = heap[currentSize - 1];
 
             if (Interlocked.CompareExchange(ref size, currentSize - 1, currentSize) != currentSize)
             {
@@ -78,13 +124,12 @@ public class EntityFreeList
                 HeapifyDown(0, currentSize - 1);
             }
 
-            minEntity.Version++;
             return minEntity;
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Push(in Entity entity)
+    public void Push(int id)
     {
         while (true)
         {
@@ -95,7 +140,7 @@ public class EntityFreeList
                 continue;
             }
 
-            heap[currentSize] = entity;
+            heap[currentSize] = id;
             if (Interlocked.CompareExchange(ref size, currentSize + 1, currentSize) == currentSize)
             {
                 HeapifyUp(currentSize);
@@ -109,7 +154,7 @@ public class EntityFreeList
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void GrowHeap()
     {
-        var newHeap = new Entity[heap.Length * 2];
+        var newHeap = new int[heap.Length * 2];
         Array.Copy(heap, newHeap, heap.Length);
         Interlocked.CompareExchange(ref heap, newHeap, heap);
     }
@@ -117,12 +162,12 @@ public class EntityFreeList
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void HeapifyUp(int index)
     {
-        Entity newEntity = heap[index];
+        int newEntity = heap[index];
         while (index > 0)
         {
             int parentIndex = (index - 1) / 2;
-            Entity parent = heap[parentIndex];
-            if (parent.ID <= newEntity.ID)
+            int parent = heap[parentIndex];
+            if (parent <= newEntity)
                 break;
             heap[index] = parent;
             index = parentIndex;
@@ -133,7 +178,7 @@ public class EntityFreeList
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void HeapifyDown(int index, int heapSize)
     {
-        Entity topEntity = heap[index];
+        int topEntity = heap[index];
         while (true)
         {
             int leftChild = 2 * index + 1;
@@ -141,9 +186,9 @@ public class EntityFreeList
                 break;
 
             int rightChild = leftChild + 1;
-            int minChild = (rightChild < heapSize && heap[rightChild].ID < heap[leftChild].ID) ? rightChild : leftChild;
+            int minChild = (rightChild < heapSize && heap[rightChild] < heap[leftChild]) ? rightChild : leftChild;
 
-            if (topEntity.ID <= heap[minChild].ID)
+            if (topEntity <= heap[minChild])
                 break;
 
             heap[index] = heap[minChild];

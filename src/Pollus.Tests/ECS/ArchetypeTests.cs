@@ -102,7 +102,7 @@ public class ArchetypeTests
 
         using var archetype = new Archetype(ArchetypeID.Create(cids), cids);
 
-        var entity = archetype.AddEntity(new(archetype.EntityCount));
+        var entityInfo = archetype.AddEntity(new(archetype.EntityCount));
         Assert.Equal(1, archetype.EntityCount);
         Assert.Equal(1, archetype.Chunks.Length);
         Assert.Equal(1, archetype.Chunks[0].Count);
@@ -120,7 +120,7 @@ public class ArchetypeTests
         Assert.Equal(2, archetype.Chunks.Length);
         Assert.Equal(1, archetype.Chunks[1].Count);
 
-        archetype.RemoveEntity(entity);
+        archetype.RemoveEntity(entityInfo.ChunkIndex, entityInfo.RowIndex);
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.Chunks[0].Count);
         Assert.Equal(1, archetype.Chunks.Length);
         Assert.Equal(nextEntity, archetype.Chunks[0].GetEntities()[0]);

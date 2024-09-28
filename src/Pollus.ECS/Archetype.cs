@@ -47,13 +47,6 @@ public partial class Archetype : IDisposable
         public ComponentID[] ComponentIDs { get; init; }
     }
 
-    public readonly record struct EntityInfo
-    {
-        public Entity Entity { get; init; }
-        public int ChunkIndex { get; init; }
-        public int RowIndex { get; init; }
-    }
-
     readonly ArchetypeID id;
     readonly ChunkInfo chunkInfo;
 
@@ -103,35 +96,30 @@ public partial class Archetype : IDisposable
         chunks.Dispose();
     }
 
-    public EntityInfo AddEntity(in Entity entity)
+    public (int ChunkIndex, int RowIndex) AddEntity(in Entity entity)
     {
         entityCount++;
-
         ref var chunk = ref GetVacantChunk();
         var row = chunk.AddEntity(entity);
-        return new()
-        {
-            ChunkIndex = lastChunkIndex,
-            RowIndex = row
-        };
+        return (lastChunkIndex, row);
     }
 
-    public Entity RemoveEntity(in EntityInfo info)
+    public Entity RemoveEntity(int chunkIndex, int rowIndex)
     {
         if (entityCount == 0 || lastChunkIndex == -1) return Entity.NULL;
         entityCount = int.Max(0, entityCount - 1);
 
-        ref var chunk = ref chunks[info.ChunkIndex];
+        ref var chunk = ref chunks[chunkIndex];
         ref var lastChunk = ref chunks[lastChunkIndex];
 
         var movedEntity = Entity.NULL;
-        if (info.ChunkIndex == lastChunkIndex && info.RowIndex == chunk.Count - 1)
+        if (chunkIndex == lastChunkIndex && rowIndex == chunk.Count - 1)
         {
-            lastChunk.RemoveEntity(info.RowIndex);
+            lastChunk.RemoveEntity(rowIndex);
         }
         else
         {
-            movedEntity = chunk.SwapRemoveEntity(info.RowIndex, ref lastChunk);
+            movedEntity = chunk.SwapRemoveEntity(rowIndex, ref lastChunk);
         }
 
         if (lastChunk.Count == 0)
@@ -142,21 +130,21 @@ public partial class Archetype : IDisposable
         return movedEntity;
     }
 
-    public Entity MoveEntity(in EntityInfo srcInfo, Archetype destination, in EntityInfo dstInfo)
+    public Entity MoveEntity(int srcChunkIndex, int srcRowIndex, Archetype destination, int dstChunkIndex, int dstRowIndex)
     {
-        ref var srcChunk = ref chunks[srcInfo.ChunkIndex];
-        ref var dstChunk = ref destination.chunks[dstInfo.ChunkIndex];
+        ref var srcChunk = ref chunks[srcChunkIndex];
+        ref var dstChunk = ref destination.chunks[dstChunkIndex];
 
         for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)
         {
             var cid = chunkInfo.ComponentIDs[i];
             if (destination.HasComponent(cid) is false) continue;
 
-            var comp = srcChunk.GetComponent(srcInfo.RowIndex, cid);
-            dstChunk.SetComponent(dstInfo.RowIndex, cid, comp);
+            var comp = srcChunk.GetComponent(srcRowIndex, cid);
+            dstChunk.SetComponent(dstRowIndex, cid, comp);
         }
 
-        return RemoveEntity(srcInfo);
+        return RemoveEntity(srcChunkIndex, srcRowIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
