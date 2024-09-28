@@ -1,12 +1,17 @@
+using Pollus.Collections;
+
 namespace Pollus.ECS;
 
 public interface ICommand
 {
+    static abstract int Priority { get; }
     void Execute(World world);
 }
 
 public interface ICommandBuffer
 {
+    int Priority { get; }
+
     void Clear();
     void Execute(World world);
 }
@@ -16,6 +21,8 @@ public class CommandBuffer<TCommand> : ICommandBuffer
 {
     TCommand[] commands = new TCommand[1];
     int count = 0;
+
+    public int Priority => TCommand.Priority;
 
     public void Clear()
     {
@@ -41,15 +48,35 @@ public class CommandBuffer<TCommand> : ICommandBuffer
 
 public class Commands
 {
-    Dictionary<Type, ICommandBuffer> commandBuffers = [];
+    bool needsSort = false;
+    readonly Entities entities;
+    readonly List<ICommandBuffer> commandBuffers = [];
+    readonly Dictionary<Type, int> commandBuffersLookup = [];
+
+    public Commands()
+    {
+        throw new InvalidOperationException("Commands cannot be instantiated directly. Use World.GetCommands() instead.");
+    }
+
+    public Commands(Entities entities)
+    {
+        this.entities = entities;
+    }
 
     public void AddCommand<TCommand>(in TCommand command)
         where TCommand : ICommand
     {
-        if (!commandBuffers.TryGetValue(typeof(TCommand), out var buffer))
+        ICommandBuffer? buffer;
+        if (commandBuffersLookup.TryGetValue(typeof(TCommand), out var idx))
+        {
+            buffer = commandBuffers[idx];
+        }
+        else
         {
             buffer = new CommandBuffer<TCommand>();
-            commandBuffers.Add(typeof(TCommand), buffer);
+            commandBuffers.Add(buffer);
+            commandBuffersLookup.Add(typeof(TCommand), commandBuffers.Count - 1);
+            needsSort = true;
         }
 
         ((CommandBuffer<TCommand>)buffer).AddCommand(command);
@@ -57,18 +84,32 @@ public class Commands
 
     public void Flush(World world)
     {
-        foreach (var buffer in commandBuffers.Values)
+        if (needsSort)
+        {
+            commandBuffers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+            needsSort = false;
+        }
+
+        foreach (var buffer in commandBuffers)
         {
             buffer.Execute(world);
             buffer.Clear();
         }
     }
 
-    public Commands Spawn<TBuilder>(in TBuilder builder)
+    public Entity Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
-        AddCommand(SpawnEntityCommand<TBuilder>.From(builder));
-        return this;
+        var entity = entities.Create();
+        AddCommand(SpawnEntityCommand<TBuilder>.From(builder, entity));
+        return entity;
+    }
+
+    public Entity Spawn()
+    {
+        var entity = entities.Create();
+        AddCommand(SpawnEntityCommand<EntityBuilder>.From(new EntityBuilder(), entity));
+        return entity;
     }
 
     public Commands Despawn(in Entity entity)
@@ -114,24 +155,30 @@ public class CommandsFetch : IFetch<Commands>
 public struct SpawnEntityCommand<TBuilder> : ICommand
     where TBuilder : IEntityBuilder
 {
-    TBuilder builder;
+    public static int Priority => 100;
 
-    public static SpawnEntityCommand<TBuilder> From(in TBuilder builder)
+    TBuilder builder;
+    Entity entity;
+
+    public static SpawnEntityCommand<TBuilder> From(in TBuilder builder, in Entity entity)
     {
         return new SpawnEntityCommand<TBuilder>()
         {
-            builder = builder
+            builder = builder,
+            entity = entity
         };
     }
 
     public void Execute(World world)
     {
-        builder.Spawn(world);
+        builder.Spawn(world, entity);
     }
 }
 
 public struct DespawnEntityCommand : ICommand
 {
+    public static int Priority => 0;
+
     Entity entity;
 
     public static DespawnEntityCommand From(Entity entity)
@@ -151,6 +198,8 @@ public struct DespawnEntityCommand : ICommand
 public struct AddComponentCommand<C> : ICommand
     where C : unmanaged, IComponent
 {
+    public static int Priority => 50;
+
     Entity entity;
     C component;
 
@@ -172,6 +221,8 @@ public struct AddComponentCommand<C> : ICommand
 public struct RemoveComponentCommand<C> : ICommand
     where C : unmanaged, IComponent
 {
+    public static int Priority => 50;
+
     Entity entity;
 
     public static RemoveComponentCommand<C> From(in Entity entity)
@@ -190,6 +241,8 @@ public struct RemoveComponentCommand<C> : ICommand
 
 public struct DelegateCommand : ICommand
 {
+    public static int Priority => 50;
+
     Action<World> action;
 
     public static DelegateCommand From(Action<World> action)

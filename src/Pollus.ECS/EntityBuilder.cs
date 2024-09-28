@@ -8,6 +8,7 @@ public interface IEntityBuilder
     static abstract ArchetypeID ArchetypeID { get; }
 
     Entity Spawn(World world);
+    Entity Spawn(World world, in Entity entity);
 }
 
 unsafe public struct EntityBuilder : IEntityBuilder
@@ -21,6 +22,12 @@ unsafe public struct EntityBuilder : IEntityBuilder
     public Entity Spawn(World world)
     {
         return world.Store.CreateEntity<EntityBuilder>().Entity;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Entity Spawn(World world, in Entity entity)
+    {
+        return world.Store.InsertEntity<EntityBuilder>(entity).Entity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -55,6 +62,15 @@ public struct EntityBuilder<C0> : IEntityBuilder
     public Entity Spawn(World world)
     {
         var entityRef = world.Store.CreateEntity<EntityBuilder<C0>>();
+        ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
+        chunk.SetComponent(entityRef.RowIndex, Component0);
+        return entityRef.Entity;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Entity Spawn(World world, in Entity entity)
+    {
+        var entityRef = world.Store.InsertEntity<EntityBuilder<C0>>(entity);
         ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         chunk.SetComponent(entityRef.RowIndex, Component0);
         return entityRef.Entity;

@@ -20,18 +20,18 @@ public class HierarchyExample : IExample
             new InputPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
-        static (World world, Commands commands) =>
+        static (Commands commands) =>
         {
-            var parent = world.Spawn();
-            commands.AddChild(parent, world.Spawn());
-            commands.AddChild(parent, world.Spawn());
-            commands.AddChild(parent, world.Spawn());
+            var parent = commands.Spawn();
+            commands.AddChild(parent, commands.Spawn());
+            commands.AddChild(parent, commands.Spawn());
+            commands.AddChild(parent, commands.Spawn());
 
-            var ent5 = world.Spawn();
+            var ent5 = commands.Spawn();
             commands.AddChild(parent, ent5);
-            commands.AddChild(ent5, world.Spawn());
-            commands.AddChild(ent5, world.Spawn());
-            commands.AddChild(ent5, world.Spawn());
+            commands.AddChild(ent5, commands.Spawn());
+            commands.AddChild(ent5, commands.Spawn());
+            commands.AddChild(ent5, commands.Spawn());
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Print",
         static (Local<float> logCD, Time time, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
@@ -53,7 +53,7 @@ public class HierarchyExample : IExample
             Log.Info("");
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Destroy",
-        static (ButtonInput<Key> keys, World world, Commands commands, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
+        static (ButtonInput<Key> keys, Commands commands, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
         {
             if (!keys.JustPressed(Key.KeyQ)) return;
 
@@ -65,16 +65,16 @@ public class HierarchyExample : IExample
             else
             {
                 Log.Info("Spawning");
-                var parent = world.Spawn();
-                commands.AddChild(parent, world.Spawn());
-                commands.AddChild(parent, world.Spawn());
-                commands.AddChild(parent, world.Spawn());
+                var parent = commands.Spawn();
+                commands.AddChild(parent, commands.Spawn());
+                commands.AddChild(parent, commands.Spawn());
+                commands.AddChild(parent, commands.Spawn());
 
-                var ent5 = world.Spawn();
+                var ent5 = commands.Spawn();
                 commands.AddChild(parent, ent5);
-                commands.AddChild(ent5, world.Spawn());
-                commands.AddChild(ent5, world.Spawn());
-                commands.AddChild(ent5, world.Spawn());
+                commands.AddChild(ent5, commands.Spawn());
+                commands.AddChild(ent5, commands.Spawn());
+                commands.AddChild(ent5, commands.Spawn());
             }
         }))
         .Build())

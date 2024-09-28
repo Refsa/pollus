@@ -68,6 +68,8 @@ public static class HierarchyCommandsExt
 
 public struct AddChildCommand : ICommand
 {
+    public static int Priority => 80;
+
     public required Entity Parent;
     public required Entity Child;
 
@@ -96,6 +98,8 @@ public struct AddChildCommand : ICommand
 
 public struct RemoveChildCommand : ICommand
 {
+    public static int Priority => 70;
+
     public required Entity Parent;
     public required Entity Child;
 
@@ -140,6 +144,8 @@ public struct RemoveChildCommand : ICommand
 
 public struct RemoveChildrenCommand : ICommand
 {
+    public static int Priority => 70;
+
     public required Entity Parent;
 
     public void Execute(World world)
@@ -161,6 +167,8 @@ public struct RemoveChildrenCommand : ICommand
 
 public struct DespawnHierarchyCommand : ICommand
 {
+    public static int Priority => 1;
+
     public required Entity Root;
 
     public void Execute(World world)

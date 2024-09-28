@@ -157,6 +157,17 @@ $chunk_set_component$
         return entityRef.Entity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Entity Spawn(World world, in Entity entity)
+    {
+        var entityRef = world.Store.InsertEntity<EntityBuilder<$gen_args$>>(entity);
+        ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
+        
+$chunk_set_component$
+
+        return entityRef.Entity;
+    }
+
 $with_method$
 
 $set_method$

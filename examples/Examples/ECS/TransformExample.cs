@@ -39,9 +39,8 @@ public class TransformExample : IExample
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (
-            World world, Commands commands,
-            AssetServer assetServer, Assets<Shape> shapes,
-            Assets<ShapeMaterial> shapeMaterials
+            Commands commands, AssetServer assetServer,
+            Assets<Shape> shapes, Assets<ShapeMaterial> shapeMaterials
         ) =>
         {
             commands.Spawn(Camera2D.Bundle);
@@ -50,7 +49,7 @@ public class TransformExample : IExample
                 ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
-            var parent = world.Spawn(
+            var parent = commands.Spawn(Entity.With(
                 GlobalTransform.Default,
                 Transform2D.Default with
                 {
@@ -62,9 +61,9 @@ public class TransformExample : IExample
                     MaterialHandle = shapeMaterial,
                     ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 32f)),
                     Color = Color.GREEN,
-                });
+                }));
 
-            commands.AddChild(parent, world.Spawn(
+            commands.AddChild(parent, commands.Spawn(Entity.With(
                 GlobalTransform.Default,
                 Transform2D.Default with
                 {
@@ -82,9 +81,9 @@ public class TransformExample : IExample
                     MaxAngle = 180f,
                     Speed = 180f,
                 }
-            ));
+            )));
 
-            var child2 = world.Spawn(
+            var child2 = commands.Spawn(Entity.With(
                 GlobalTransform.Default,
                 Transform2D.Default with
                 {
@@ -102,10 +101,10 @@ public class TransformExample : IExample
                     MaxAngle = 45f,
                     Speed = 180f,
                 }
-            );
+            ));
             commands.AddChild(parent, child2);
 
-            commands.AddChild(child2, world.Spawn(
+            commands.AddChild(child2, commands.Spawn(Entity.With(
                 GlobalTransform.Default,
                 Transform2D.Default with
                 {
@@ -117,10 +116,10 @@ public class TransformExample : IExample
                     ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 32f)),
                     Color = Color.BLUE,
                 }
-            ));
+            )));
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Move",
-        static (Time time, ButtonInput<Key> keys, 
+        static (Time time, ButtonInput<Key> keys,
                 Query<Transform2D>.Filter<All<Base>> qRoots,
                 Query<Transform2D, Rotate> qRotate
         ) =>
