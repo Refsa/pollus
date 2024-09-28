@@ -207,14 +207,15 @@ public class ArchetypeTests
     {
         using var world = new World();
 
+        var entities = new List<Entity>();
         for (int i = 0; i < 10; i++)
         {
-            Entity.With(new TestComponent1 { Value = i }).Spawn(world);
+            entities.Add(Entity.With(new TestComponent1 { Value = i }).Spawn(world));
         }
 
         for (int i = 0; i < 10; i++)
         {
-            world.Store.DestroyEntity(new Entity(i + 1));
+            world.Store.DestroyEntity(entities[i]);
         }
 
         world.Store.Archetypes[1].Optimize();
@@ -305,8 +306,7 @@ public class ArchetypeTests
         var entities = new List<Entity>();
         for (int i = 0; i < 10000; i++)
         {
-            Entity.With(new TestComponent1 { Value = i }).Spawn(world);
-            entities.Add(new Entity(i + 1));
+            entities.Add(Entity.With(new TestComponent1 { Value = i }).Spawn(world));
         }
 
         while (world.Store.EntityCount > 11)
@@ -441,7 +441,7 @@ public class ArchetypeTests
     }
 
     [Fact]
-    public void Archetypestore_Preallocate()
+    public void ArchetypeStore_Preallocate()
     {
         using var world = new World();
         world.Preallocate(Entity.With(new TestComponent1(), new TestComponent2()), 1_000_000);

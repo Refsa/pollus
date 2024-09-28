@@ -15,19 +15,20 @@ public class ArchetypeStore : IDisposable
     readonly List<Archetype> archetypes;
     readonly RemovedTracker changes;
     NativeMap<ArchetypeID, int> archetypeLookup;
-    NativeMap<Entity, EntityInfo> entities;
-    volatile int entityCounter = 1;
+    NativeMap<Entity, EntityInfo> aliveEntities;
+    Entities entityHandler;
 
     public List<Archetype> Archetypes => archetypes;
-    public int EntityCount => entities.Count;
+    public int EntityCount => aliveEntities.Count;
     public RemovedTracker Changes => changes;
 
     public ArchetypeStore()
     {
-        entities = new(0);
+        aliveEntities = new(0);
         archetypeLookup = new(0);
         archetypes = [];
         changes = new();
+        entityHandler = new();
 
         var aid = ArchetypeID.Create([]);
         archetypes.Add(new Archetype(aid, []));
@@ -42,7 +43,7 @@ public class ArchetypeStore : IDisposable
         {
             archetype.Dispose();
         }
-        entities.Dispose();
+        aliveEntities.Dispose();
         archetypeLookup.Dispose();
     }
 
@@ -78,9 +79,9 @@ public class ArchetypeStore : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity CreateEntity()
     {
-        var entity = new Entity(entityCounter++);
+        var entity = entityHandler.Create();
         var archetypeInfo = archetypes[0].AddEntity(entity);
-        entities.Add(entity, new EntityInfo { ArchetypeIndex = 0, ChunkIndex = archetypeInfo.ChunkIndex, RowIndex = archetypeInfo.RowIndex });
+        aliveEntities.Add(entity, new EntityInfo { ArchetypeIndex = 0, ChunkIndex = archetypeInfo.ChunkIndex, RowIndex = archetypeInfo.RowIndex });
         return entity;
     }
 
@@ -88,23 +89,25 @@ public class ArchetypeStore : IDisposable
     public EntityChange CreateEntity<TBuilder>()
         where TBuilder : struct, IEntityBuilder
     {
-        var entity = new Entity(entityCounter++);
+        var entity = entityHandler.Create();
         var archetypeInfo = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
         var archetypeEntityInfo = archetypeInfo.Archetype.AddEntity(entity);
         archetypeInfo.Archetype.Chunks[archetypeEntityInfo.ChunkIndex].SetAllFlags(archetypeEntityInfo.RowIndex, ComponentFlags.Added);
 
-        entities.Add(entity, new(archetypeInfo.Index, archetypeEntityInfo.ChunkIndex, archetypeEntityInfo.RowIndex));
+        aliveEntities.Add(entity, new(archetypeInfo.Index, archetypeEntityInfo.ChunkIndex, archetypeEntityInfo.RowIndex));
         return new(entity, archetypeInfo.Archetype, archetypeEntityInfo.ChunkIndex, archetypeEntityInfo.RowIndex);
     }
 
     public void DestroyEntity(in Entity entity)
     {
-        if (!entities.TryGetValue(entity, out var info))
+        if (!aliveEntities.TryGetValue(entity, out var info))
         {
             throw new ArgumentException("Entity does not exist");
         }
 
-        entities.Remove(entity);
+        aliveEntities.Remove(entity);
+        entityHandler.Free(entity);
+
         var archetype = archetypes[info.ArchetypeIndex];
         var movedEntity = archetype.RemoveEntity(new()
         {
@@ -115,7 +118,7 @@ public class ArchetypeStore : IDisposable
 
         if (!movedEntity.IsNull)
         {
-            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            ref var movedEntityInfo = ref aliveEntities.Get(movedEntity);
             Guard.IsFalse(Unsafe.IsNullRef(ref movedEntityInfo), "Moved entity is null");
 
             movedEntityInfo.ChunkIndex = info.ChunkIndex;
@@ -127,7 +130,7 @@ public class ArchetypeStore : IDisposable
     public bool HasComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        if (!entities.TryGetValue(entity, out var info))
+        if (!aliveEntities.TryGetValue(entity, out var info))
         {
             throw new ArgumentException("Entity does not exist");
         }
@@ -138,7 +141,7 @@ public class ArchetypeStore : IDisposable
     public ref C GetComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        if (entities.TryGetValue(entity, out var info))
+        if (aliveEntities.TryGetValue(entity, out var info))
         {
             var archetype = archetypes[info.ArchetypeIndex];
             if (!archetype.HasComponent<C>()) throw new ArgumentException("Entity does not have component");
@@ -151,7 +154,7 @@ public class ArchetypeStore : IDisposable
     public void AddComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
-        if (!entities.TryGetValue(entity, out var info))
+        if (!aliveEntities.TryGetValue(entity, out var info))
         {
             throw new ArgumentException("Entity does not exist");
         }
@@ -167,7 +170,7 @@ public class ArchetypeStore : IDisposable
         var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
         var nextArchetypeInfo = nextArchetype.AddEntity(entity);
 
-        ref var nextInfo = ref entities.Get(entity);
+        ref var nextInfo = ref aliveEntities.Get(entity);
         nextInfo.ArchetypeIndex = nextArchetypeIndex;
         nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
         nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
@@ -177,7 +180,7 @@ public class ArchetypeStore : IDisposable
         var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
         if (!movedEntity.IsNull)
         {
-            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            ref var movedEntityInfo = ref aliveEntities.Get(movedEntity);
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
@@ -188,7 +191,7 @@ public class ArchetypeStore : IDisposable
     public void RemoveComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        if (!entities.TryGetValue(entity, out var info))
+        if (!aliveEntities.TryGetValue(entity, out var info))
         {
             throw new ArgumentException("Entity does not exist");
         }
@@ -209,7 +212,7 @@ public class ArchetypeStore : IDisposable
         var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
         var nextArchetypeInfo = nextArchetype.AddEntity(entity);
 
-        ref var nextInfo = ref entities.Get(entity);
+        ref var nextInfo = ref aliveEntities.Get(entity);
         nextInfo.ArchetypeIndex = nextArchetypeIndex;
         nextInfo.ChunkIndex = nextArchetypeInfo.ChunkIndex;
         nextInfo.RowIndex = nextArchetypeInfo.RowIndex;
@@ -217,7 +220,7 @@ public class ArchetypeStore : IDisposable
         var movedEntity = archetype.MoveEntity(new() { ChunkIndex = info.ChunkIndex, RowIndex = info.RowIndex }, nextArchetype, nextArchetypeInfo);
         if (!movedEntity.IsNull)
         {
-            ref var movedEntityInfo = ref entities.Get(movedEntity);
+            ref var movedEntityInfo = ref aliveEntities.Get(movedEntity);
             movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
             movedEntityInfo.RowIndex = nextInfo.RowIndex;
         }
@@ -229,7 +232,7 @@ public class ArchetypeStore : IDisposable
     public void SetComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
-        if (!entities.TryGetValue(entity, out var info))
+        if (!aliveEntities.TryGetValue(entity, out var info))
         {
             throw new ArgumentException("Entity does not exist");
         }
@@ -241,13 +244,13 @@ public class ArchetypeStore : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool EntityExists(in Entity entity)
     {
-        return entities.Has(entity);
+        return aliveEntities.Has(entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public EntityInfo GetEntityInfo(in Entity entity)
     {
-        return entities.Get(entity);
+        return aliveEntities.Get(entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
