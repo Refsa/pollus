@@ -76,6 +76,11 @@ public partial record struct Vec2f
         return new Vec2f(left.X / right, left.Y / right);
     }
 
+    public float Angle()
+    {
+        return Math.Atan2(Y, X);
+    }
+
     public float Length()
     {
         return Math.Sqrt(X * X + Y * Y);
@@ -96,6 +101,18 @@ public partial record struct Vec2f
     public Vec2f Clamp(Vec2f min, Vec2f max)
     {
         return new Vec2f(Math.Clamp(X, min.X, max.X), Math.Clamp(Y, min.Y, max.Y));
+    }
+
+    public Vec2f ClampLength(float min, float max)
+    {
+        float length = Length();
+        if (length == 0) return Zero;
+        return Normalized() * Math.Clamp(length, min, max);
+    }
+
+    public static Vec2f Lerp(Vec2f a, Vec2f b, float t)
+    {
+        return new Vec2f(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
     }
 
     public float Dot(Vec2f other)

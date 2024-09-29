@@ -142,4 +142,11 @@ public static class Math
     {
         return a + (b - a) * t;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Pow<T>(this T self, T exponent)
+        where T : struct, IPowerFunctions<T>
+    {
+        return T.Pow(self, exponent);
+    }
 }
