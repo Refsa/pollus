@@ -210,7 +210,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public readonly bool Removed<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        return world.Store.Changes.WasRemoved<C>(entity);
+        return world.Store.Removed.WasRemoved<C>(entity);
     }
 
     public ref C Get<C>(in Entity entity)

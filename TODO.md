@@ -50,10 +50,10 @@
 	- [x] Improve delegate foreach in queries
 	- [-] Coroutines
 	- [ ] Optimized tag components
-	- [ ] versioning
+	- [x] versioning
 		- [x] event lifetimes
 		- [x] change filter lifetimes
-		- [ ] entity id recycling
+		- [x] entity id recycling
 	- [ ] Serialization
 - UI
 	- [x] IMGUI

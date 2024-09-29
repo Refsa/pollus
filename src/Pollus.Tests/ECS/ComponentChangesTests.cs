@@ -11,17 +11,17 @@ public class ComponentChangesTests
         var entity = new Entity(100);
         for (int i = 0; i < 10; i++) world.Update();
 
-        world.Store.Changes.GetTracker<TestComponent1>().SetRemoved(entity, new TestComponent1 { Value = 321 });
-        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
-        Assert.Equal(321, world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity).Value);
+        world.Store.Removed.GetTracker<TestComponent1>().SetRemoved(entity, new TestComponent1 { Value = 321 });
+        Assert.True(world.Store.Removed.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Equal(321, world.Store.Removed.GetTracker<TestComponent1>().GetRemoved(entity).Value);
 
         world.Update();
-        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
-        Assert.Equal(321, world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity).Value);
+        Assert.True(world.Store.Removed.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Equal(321, world.Store.Removed.GetTracker<TestComponent1>().GetRemoved(entity).Value);
 
         world.Update();
-        Assert.False(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
-        Assert.Throws<NullReferenceException>(() => world.Store.Changes.GetTracker<TestComponent1>().GetRemoved(entity));
+        Assert.False(world.Store.Removed.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.Throws<NullReferenceException>(() => world.Store.Removed.GetTracker<TestComponent1>().GetRemoved(entity));
     }
 
     [Fact]
@@ -60,6 +60,6 @@ public class ComponentChangesTests
         world.Store.RemoveComponent<TestComponent1>(entity);
 
         var info = world.Store.GetEntityInfo(entity);
-        Assert.True(world.Store.Changes.GetTracker<TestComponent1>().WasRemoved(entity));
+        Assert.True(world.Store.Removed.GetTracker<TestComponent1>().WasRemoved(entity));
     }
 }

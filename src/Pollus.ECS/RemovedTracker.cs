@@ -124,6 +124,6 @@ public class RemoveTrackerFetch<C> : IFetch<RemovedTracker<C>>
 
     public RemovedTracker<C> DoFetch(World world, ISystem system)
     {
-        return world.Store.Changes.GetTracker<C>();
+        return world.Store.Removed.GetTracker<C>();
     }
 }

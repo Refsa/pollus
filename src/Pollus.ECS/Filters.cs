@@ -2,7 +2,6 @@
 
 namespace Pollus.ECS;
 
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 public delegate bool FilterArchetypeDelegate(Archetype archetype);

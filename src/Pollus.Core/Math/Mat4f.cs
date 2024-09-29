@@ -14,6 +14,14 @@ public partial record struct Mat4f
     public Vec4f Col2;
     public Vec4f Col3;
 
+    public Vec3f Left => new(Col0.X, Col0.Y, Col0.Z);
+    public Vec3f Right => new(Col0.X, Col0.Y, Col0.Z);
+    public Vec3f Up => new(Col1.X, Col1.Y, Col1.Z);
+    public Vec3f Down => new(Col1.X, Col1.Y, Col1.Z);
+    public Vec3f Forward => new(Col2.X, Col2.Y, Col2.Z);
+    public Vec3f Back => new(Col2.X, Col2.Y, Col2.Z);
+
+
     public Mat4f(Vec4f row0, Vec4f row1, Vec4f row2, Vec4f row3)
     {
         Col0 = row0;
