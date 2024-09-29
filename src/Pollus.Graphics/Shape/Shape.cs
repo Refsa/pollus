@@ -176,4 +176,24 @@ public class Shape
             Uvs = [.. arc1.Uvs, .. line1.Uvs, .. line2.Uvs, .. arc2.Uvs],
         };
     }
+
+    public static Shape Kite(Vec2f center, float width, float height)
+    {
+        return new()
+        {
+            Name = "Kite",
+            Positions = [
+                center + new Vec2f(-width * 0.5f, -height * 0.5f),
+                center + new Vec2f(width * 0.5f, -height * 0.5f),
+                center + new Vec2f(0, height),
+                center + new Vec2f(-width * 0.5f, -height * 0.5f),
+            ],
+            Uvs = [
+                Vec2f.Zero,
+                new Vec2f(1, 0),
+                new Vec2f(0.5f, 1),
+                Vec2f.Zero,
+            ],
+        };
+    }
 }

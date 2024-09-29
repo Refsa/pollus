@@ -46,5 +46,21 @@ public class ShapeMaterial : IMaterial
         [new UniformBinding<SceneUniform>()]
     ];
 
+    public static BlendState? Blend => BlendState.Default with
+    {
+        Color = new BlendComponent
+        {
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+        Alpha = new BlendComponent
+        {
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+    };
+
     public required Handle<ShaderAsset> ShaderSource { get; set; }
 }

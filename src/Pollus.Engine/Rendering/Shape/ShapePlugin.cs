@@ -25,7 +25,7 @@ public class ShapePlugin : IPlugin
             new DrawBatchesSystem<ShapeBatches, ShapeBatch>()
             {
                 RenderStep = RenderStep2D.Main,
-                DrawExec = static (renderAssets, batch) => 
+                DrawExec = static (renderAssets, batch) =>
                 {
                     var material = renderAssets.Get<MaterialRenderData>(batch.Material);
                     var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
@@ -46,14 +46,15 @@ public class ShapePlugin : IPlugin
 
 public struct ShapeDraw : IComponent
 {
-    public static EntityBuilder<ShapeDraw, Transform2D> Bundle => new(
+    public static EntityBuilder<ShapeDraw, Transform2D, GlobalTransform> Bundle => new(
         new()
         {
             MaterialHandle = Handle<ShapeMaterial>.Null,
             ShapeHandle = Handle<Shape>.Null,
             Color = Color.WHITE,
         },
-        Transform2D.Default
+        Transform2D.Default,
+        GlobalTransform.Default
     );
 
     public required Handle<ShapeMaterial> MaterialHandle;
