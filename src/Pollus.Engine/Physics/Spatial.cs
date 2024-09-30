@@ -6,25 +6,25 @@ using Pollus.Mathematics;
 
 public class SpatialQuery
 {
-    KdTree<Entity> tree;
+    SpatialHashGrid<Entity> cache;
 
-    public SpatialQuery()
+    public SpatialQuery(int cellSize, int width, int height)
     {
-        tree = new KdTree<Entity>();
+        cache = new SpatialHashGrid<Entity>(cellSize, width, height);
     }
 
     public void Insert(Entity entity, Vec2f position, float radius, uint layer)
     {
-        tree.Insert(entity, position, radius, layer);
+        cache.Insert(entity, position, radius, layer);
     }
 
     public void Query(Vec2f position, float radius, uint layer, ArrayList<Entity> results)
     {
-        tree.RangeSearch(position, radius, layer, results);
+        cache.Query(position, radius, layer, results);
     }
 
     public void Clear()
     {
-        tree.Clear();
+        cache.Clear();
     }
 }

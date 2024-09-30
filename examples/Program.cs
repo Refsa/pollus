@@ -1,4 +1,5 @@
 ﻿using Pollus.Examples;
+using Pollus.Examples.Flocking;
 
 if (args.Length < 1)
 {
@@ -21,6 +22,7 @@ if (args.Length < 1)
     Console.WriteLine("  ecs-spawn");
     Console.WriteLine("  hierarchy");
     Console.WriteLine("  transform");
+    Console.WriteLine("  flocking");
     return;
 }
 
@@ -43,6 +45,7 @@ IExample? example = args[0] switch
     "ecs-spawn" => new ECSSpawnExample(),
     "hierarchy" => new HierarchyExample(),
     "transform" => new TransformExample(),
+    "flocking" => new FlockingExample(),
     _ => null
 };
 
