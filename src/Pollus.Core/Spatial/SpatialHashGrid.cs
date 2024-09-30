@@ -13,12 +13,12 @@ public class SpatialHashGrid<TData>
         public Vec2f Position;
     }
 
-    public class Cell
+    public struct Cell
     {
         CellEntry[] entries = new CellEntry[1];
         int count;
 
-        public ReadOnlySpan<CellEntry> Entries => entries.AsSpan(0, count);
+        public Span<CellEntry> Entries => entries.AsSpan(0, count);
 
         public Cell() { }
 
@@ -89,7 +89,7 @@ public class SpatialHashGrid<TData>
         {
             for (int y = minY; y <= maxY; y++)
             {
-                foreach (var cellEntry in cells[x + y * width].Entries)
+                foreach (ref var cellEntry in cells[x + y * width].Entries)
                 {
                     if ((cellEntry.Layer & layer) != 0)
                     {

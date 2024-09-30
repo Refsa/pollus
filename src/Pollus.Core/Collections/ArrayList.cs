@@ -14,9 +14,9 @@ public class ArrayList<T>
 
     public Span<T> AsSpan() => new(items, 0, count);
 
-    public void Clear()
+    public void Clear(bool zero = false)
     {
-        // Array.Clear(items, 0, count);
+        if (zero) Array.Clear(items, 0, count);
         count = 0;
     }
 

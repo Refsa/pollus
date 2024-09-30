@@ -8,6 +8,9 @@ public partial struct Rect
     public Vec2f Min;
     public Vec2f Max;
 
+    public float Width => Max.X - Min.X;
+    public float Height => Max.Y - Min.Y;
+
     public Rect(Vec2f min, Vec2f max)
     {
         Min = min;
