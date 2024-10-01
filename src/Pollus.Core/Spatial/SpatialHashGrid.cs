@@ -1,5 +1,6 @@
 namespace Pollus.Spatial;
 
+using System.Numerics;
 using Pollus.Collections;
 using Pollus.Mathematics;
 
@@ -11,31 +12,44 @@ public class SpatialHashGrid<TData>
         public uint Layer;
         public float Radius;
         public Vec2f Position;
+
+        public bool HasLayer(uint layer) => (Layer & layer) != 0;
     }
 
     public struct Cell
     {
         CellEntry[] entries = new CellEntry[1];
         int count;
+        uint layerMask;
 
         public Span<CellEntry> Entries => entries.AsSpan(0, count);
+        public int Count => count;
 
         public Cell() { }
 
-        public void Clear() => count = 0;
+        public void Clear()
+        {
+            count = 0;
+            layerMask = 0;
+        }
+
         public ref CellEntry this[int index] => ref entries[index];
         public ref CellEntry Next()
         {
             if (count == entries.Length) Array.Resize(ref entries, count * 2);
             return ref entries[count++];
         }
+
+        public void AddLayer(uint layer) => layerMask |= layer;
+        public void RemoveLayer(uint layer) => layerMask &= ~layer;
+        public bool HasLayer(uint layer) => (layerMask & layer) != 0;
     }
 
     readonly int cellSize;
     readonly int width;
     readonly int height;
     readonly Vec2f offset;
-    
+
     int entryCount;
     Cell[] cells;
 
@@ -59,7 +73,9 @@ public class SpatialHashGrid<TData>
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var cellIdx = GetCell(position);
-        ref var cellEntry = ref cells[cellIdx].Next();
+        ref var cell = ref cells[cellIdx];
+        ref var cellEntry = ref cell.Next();
+        cell.AddLayer(layer);
         cellEntry.Data = data;
         cellEntry.Layer = layer;
         cellEntry.Radius = radius;
@@ -89,16 +105,15 @@ public class SpatialHashGrid<TData>
         {
             for (int y = minY; y <= maxY; y++)
             {
-                foreach (ref var cellEntry in cells[x + y * width].Entries)
+                ref var cell = ref cells[x + y * width];
+                if (cell.Count == 0 || !cell.HasLayer(layer)) continue;
+
+                foreach (ref var cellEntry in cell.Entries)
                 {
-                    if ((cellEntry.Layer & layer) != 0)
-                    {
-                        Vec2f relativePosition = cellEntry.Position - position;
-                        if (relativePosition.LengthSquared() <= radiusSquared)
-                        {
-                            list.Add(cellEntry.Data);
-                        }
-                    }
+                    if (!cellEntry.HasLayer(layer)) continue;
+                    var relativePosition = cellEntry.Position - position;
+                    if (relativePosition.LengthSquared() > radiusSquared) continue;
+                    list.Add(cellEntry.Data);
                 }
             }
         }

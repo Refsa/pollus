@@ -73,6 +73,20 @@ public static partial class Intersect2D
 
         return false;
     }
+
+    public static Intersection2D GetIntersection<TShape>(this in Bounds2D bounds, in TShape other)
+        where TShape : struct, IShape2D
+    {
+        return other switch
+        {
+            Circle2D otherCircle => GetIntersection(bounds, otherCircle),
+            Bounds2D otherBounds => GetIntersection(bounds, otherBounds),
+            Ray2D otherRay => GetIntersection(bounds, otherRay),
+            Line2D otherLine => GetIntersection(bounds, otherLine),
+            _ => throw new NotImplementedException(),
+        };
+    }
+
     public static Intersection2D GetIntersection(this in Bounds2D bounds, in Ray2D ray)
     {
         return ray.GetIntersection(bounds);

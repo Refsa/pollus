@@ -40,12 +40,33 @@ public struct CollisionShape : IComponent
         };
     }
 
+    public Intersection2D GetIntersection<TShape>(in Transform2D selfTransform, in TShape otherShape, in Transform2D otherTransform) 
+        where TShape : struct, IShape2D
+    {
+        return Type switch
+        {
+            CollisionShapeType.Circle => circle.Translate(selfTransform.Position).GetIntersection(otherShape.Translate(otherTransform.Position)),
+            CollisionShapeType.Rectangle => rectangle.Translate(selfTransform.Position).GetIntersection(otherShape.Translate(otherTransform.Position)),
+            _ => throw new NotImplementedException(),
+        };
+    }
+
     public TShape GetShape<TShape>() where TShape : struct, IShape2D
     {
         return Type switch
         {
             CollisionShapeType.Circle => Unsafe.As<Circle2D, TShape>(ref circle),
             CollisionShapeType.Rectangle => Unsafe.As<Bounds2D, TShape>(ref rectangle),
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    public Bounds2D GetAABB(in Transform2D transform)
+    {
+        return Type switch
+        {
+            CollisionShapeType.Circle => circle.Translate(transform.Position).GetAABB(),
+            CollisionShapeType.Rectangle => rectangle.Translate(transform.Position).GetAABB(),
             _ => throw new NotImplementedException(),
         };
     }

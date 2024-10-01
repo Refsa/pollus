@@ -69,6 +69,20 @@ public static partial class Intersect2D
         var closestPoint = line.ClosestPoint(circle.Center);
         return (circle.Center - closestPoint).Length() < circle.Radius;
     }
+
+    public static Intersection2D GetIntersection<TShape>(this in Circle2D circle, in TShape other)
+        where TShape : struct, IShape2D
+    {
+        return other switch
+        {
+            Circle2D otherCircle => GetIntersection(circle, otherCircle),
+            Bounds2D otherBounds => GetIntersection(circle, otherBounds),
+            Ray2D otherRay => GetIntersection(circle, otherRay),
+            Line2D otherLine => GetIntersection(circle, otherLine),
+            _ => throw new NotImplementedException(),
+        };
+    }
+
     public static Intersection2D GetIntersection(this in Circle2D circle, in Circle2D other)
     {
         var direction = other.Center - circle.Center;
