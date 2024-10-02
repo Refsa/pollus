@@ -12,7 +12,12 @@ public class ArrayList<T>
         items = new T[capacity];
     }
 
-    public Span<T> AsSpan() => new(items, 0, count);
+    public Span<T> AsSpan(int count) => items.AsSpan(0, count);
+
+    public void SetCount(int count)
+    {
+        this.count = count;
+    }
 
     public void Clear(bool zero = false)
     {
@@ -29,6 +34,11 @@ public class ArrayList<T>
     public ref T Get(int index)
     {
         return ref items[index];
+    }
+
+    public void EnsureCapacity(int capacity)
+    {
+        if (items.Length < capacity) Array.Resize(ref items, capacity);
     }
 
     public T this[int index]

@@ -91,7 +91,7 @@ public class SpatialHashGrid<TData>
         return x + y * width;
     }
 
-    public void Query(Vec2f position, float radius, uint layer, ArrayList<TData> list)
+    public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
         var offsetPosition = position + offset;
         var minX = Math.Clamp((int)((offsetPosition.X - radius) / cellSize), 0, width - 1);
@@ -100,6 +100,7 @@ public class SpatialHashGrid<TData>
         var maxY = Math.Clamp((int)((offsetPosition.Y + radius) / cellSize), 0, height - 1);
 
         var radiusSquared = radius * radius;
+        var resultCursor = 0;
 
         for (int x = minX; x <= maxX; x++)
         {
@@ -113,9 +114,12 @@ public class SpatialHashGrid<TData>
                     if (!cellEntry.HasLayer(layer)) continue;
                     var relativePosition = cellEntry.Position - position;
                     if (relativePosition.LengthSquared() > radiusSquared) continue;
-                    list.Add(cellEntry.Data);
+                    result[resultCursor++] = cellEntry.Data;
+                    if (resultCursor >= result.Length) return resultCursor;
                 }
             }
         }
+        
+        return resultCursor;
     }
 }
