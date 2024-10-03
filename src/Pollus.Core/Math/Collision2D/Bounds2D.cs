@@ -4,6 +4,9 @@ using Pollus.Mathematics;
 
 public record struct Bounds2D(Vec2f Min, Vec2f Max) : IShape2D
 {
+    public Vec2f Center => (Min + Max) / 2;
+    public Vec2f Extents => (Max - Min) / 2;
+
     public static Bounds2D FromCenterExtents(Vec2f center, Vec2f extents)
     {
         return new() { Min = center - extents, Max = center + extents };

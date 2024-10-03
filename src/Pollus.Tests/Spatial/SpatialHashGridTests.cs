@@ -13,25 +13,25 @@ public class SpatialHashGridTests
 
         grid.Insert(1, new Vec2f(0, 0), 1f, 1 << 0);
 
-        var query = new ArrayList<SpatialHashGrid<int>.CellEntry>();
+        Span<int> query = stackalloc int[1024];
 
         {
-            grid.Query(new Vec2f(0, 0), 1f, 1 << 0, query);
-            Assert.Equal(1, query.Count);
-            Assert.Equal(1, query.AsSpan()[0].Data);
+            var count = grid.Query(new Vec2f(0, 0), 1f, 1 << 0, query);
+            Assert.Equal(1, count);
+            Assert.Equal(1, query[0]);
         }
         query.Clear();
 
         {
-            grid.Query(new Vec2f(2, 0), 1f, 1 << 0, query);
-            Assert.Equal(0, query.Count);
+            var count = grid.Query(new Vec2f(2, 0), 1f, 1 << 0, query);
+            Assert.Equal(0, count);
         }
         query.Clear();
 
         {
-            grid.Query(new Vec2f(2, 0), 2f, 1 << 0, query);
-            Assert.Equal(1, query.Count);
-            Assert.Equal(1, query.AsSpan()[0].Data);
+            var count = grid.Query(new Vec2f(2, 0), 2f, 1 << 0, query);
+            Assert.Equal(1, count);
+            Assert.Equal(1, query[0]);
         }
     }
 
@@ -42,10 +42,10 @@ public class SpatialHashGridTests
 
         grid.Insert(1, new Vec2f(0, 0), 1f, 1 << 0);
 
-        var query = new ArrayList<SpatialHashGrid<int>.CellEntry>();
+        Span<int> query = stackalloc int[1024];
 
-        grid.Query(new Vec2f(0, 0), 1f, 1 << 1, query);
-        Assert.Equal(0, query.Count);
+        var count = grid.Query(new Vec2f(0, 0), 1f, 1 << 1, query);
+        Assert.Equal(0, count);
     }
 
     [Fact]
@@ -55,15 +55,15 @@ public class SpatialHashGridTests
 
         grid.Insert(1, new Vec2f(0, 0), 1f, 1 << 0);
 
-        var query = new ArrayList<SpatialHashGrid<int>.CellEntry>();
+        Span<int> query = stackalloc int[1024];
 
-        grid.Query(new Vec2f(15, 0), 1f, 1 << 0, query);
-        Assert.Equal(0, query.Count);
+        var count = grid.Query(new Vec2f(15, 0), 1f, 1 << 0, query);
+        Assert.Equal(0, count);
         query.Clear();
 
-        grid.Query(new Vec2f(15, 0), 20f, 1 << 0, query);
-        Assert.Equal(1, query.Count);
-        Assert.Equal(1, query.AsSpan()[0].Data);
+        count = grid.Query(new Vec2f(15, 0), 20f, 1 << 0, query);
+        Assert.Equal(1, count);
+        Assert.Equal(1, query[0]);
         query.Clear();
     }
 
@@ -78,8 +78,8 @@ public class SpatialHashGridTests
                 grid.Insert(x + y * 100, new Vec2f(x / 10f, y / 10f), 1f, 1 << 0);
             }
 
-        var query = new ArrayList<SpatialHashGrid<int>.CellEntry>();
-        grid.Query(new Vec2f(5f, 5f), 7.1f, 1 << 0, query);
-        Assert.Equal(10_000, query.Count);
+        Span<int> query = stackalloc int[10_000];
+        var count = grid.Query(new Vec2f(5f, 5f), 7.1f, 1 << 0, query);
+        Assert.Equal(10_000, count);
     }
 }

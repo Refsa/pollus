@@ -2,7 +2,7 @@ namespace Pollus.Mathematics.Collision2D;
 
 using Pollus.Mathematics;
 
-public struct Intersection2D
+public record struct Intersection2D
 {
     public static readonly Intersection2D None = new() { IsIntersecting = false };
 

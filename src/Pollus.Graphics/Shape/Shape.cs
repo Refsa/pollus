@@ -62,9 +62,8 @@ public class Shape
             Positions = [
                 center + new Vec2f(-extents.X, -extents.Y),
                 center + new Vec2f(extents.X, -extents.Y),
-                center + new Vec2f(extents.X, extents.Y),
                 center + new Vec2f(-extents.X, extents.Y),
-                center + new Vec2f(-extents.X, -extents.Y),
+                center + new Vec2f(extents.X, extents.Y),
             ],
             Uvs = [
                 Vec2f.Zero,
