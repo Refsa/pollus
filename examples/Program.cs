@@ -23,6 +23,7 @@ if (args.Length < 1)
     Console.WriteLine("  hierarchy");
     Console.WriteLine("  transform");
     Console.WriteLine("  flocking");
+    Console.WriteLine("  gizmo");
     return;
 }
 
@@ -46,6 +47,7 @@ IExample? example = args[0] switch
     "hierarchy" => new HierarchyExample(),
     "transform" => new TransformExample(),
     "flocking" => new FlockingExample(),
+    "gizmo" => new GizmoExample(),
     _ => null
 };
 
