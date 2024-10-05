@@ -9,4 +9,9 @@ public static class DebugUtils
             System.Threading.Thread.Sleep(100);
         }
     }
+
+    public static void Break()
+    {
+        System.Diagnostics.Debugger.Break();
+    }
 }
