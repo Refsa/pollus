@@ -1,6 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
-public struct ColorTargetState
+public record struct ColorTargetState
 {
     public static readonly ColorTargetState Default = new ColorTargetState
     {

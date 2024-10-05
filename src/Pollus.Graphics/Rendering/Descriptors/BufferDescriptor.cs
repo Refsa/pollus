@@ -26,6 +26,12 @@ public struct BufferDescriptor
         };
     }
 
+    public static BufferDescriptor Vertex<TVertexData>(string label, uint count)
+        where TVertexData : unmanaged, IShaderType
+    {
+        return Vertex(label, Alignment.AlignedSize<TVertexData>(count));
+    }
+
     public static BufferDescriptor Index(string label, ulong size)
     {
         return new BufferDescriptor
@@ -57,6 +63,17 @@ public struct BufferDescriptor
             Label = label,
             Usage = BufferUsage.Storage | BufferUsage.CopyDst,
             Size = Alignment.AlignedSize<TElement>(size),
+            MappedAtCreation = false,
+        };
+    }
+
+    public static BufferDescriptor Indirect(string label, uint elements)
+    {
+        return new BufferDescriptor()
+        {
+            Label = label,
+            Usage = BufferUsage.Indirect | BufferUsage.CopyDst,
+            Size = Alignment.AlignedSize<IndirectBufferData>(elements),
             MappedAtCreation = false,
         };
     }

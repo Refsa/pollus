@@ -160,6 +160,8 @@ public class Blit : IDisposable
                 EntryPoint = """fs_main""",
                 ColorTargets = [ColorTargetState.Default with { Format = targetFormat }]
             },
+            MultisampleState = MultisampleState.Default,
+            PrimitiveState = PrimitiveState.Default,
         });
         pipelines.Add(pipelineHash, pipeline);
         return pipeline;

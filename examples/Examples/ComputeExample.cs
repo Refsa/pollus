@@ -43,7 +43,7 @@ public partial class ComputeExample : IExample
         public static string Name => "particle";
 
         public static VertexBufferLayout[] VertexLayouts => [];
-        public static RenderPipelineDescriptor PipelineDescriptor => new()
+        public static RenderPipelineDescriptor PipelineDescriptor => RenderPipelineDescriptor.Default with
         {
             Label = "particle",
             VertexState = new()

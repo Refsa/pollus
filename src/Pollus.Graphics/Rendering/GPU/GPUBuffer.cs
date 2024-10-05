@@ -6,6 +6,7 @@ using Pollus.Graphics.WGPU;
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
     NativeUtf8 label;
+    BufferDescriptor descriptor;
     Silk.NET.WebGPU.Buffer* native;
     ulong size;
 
@@ -16,6 +17,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     {
         label = new NativeUtf8(descriptor.Label);
         size = descriptor.Size;
+        this.descriptor = descriptor;
 
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
             label: label.Pointer,
@@ -77,13 +79,15 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Resize<TElement>(uint newCapacity)
         where TElement : unmanaged, IShaderType
     {
-        size = Alignment.AlignedSize<TElement>(newCapacity);
+        var newSize = Alignment.AlignedSize<TElement>(newCapacity);
+        if (newSize == 0 || newSize <= size) return;
+        size = newSize;
 
         var newBuffer = context.wgpu.DeviceCreateBuffer(context.Device, new Silk.NET.WebGPU.BufferDescriptor
         {
             Label = label.Pointer,
             Size = size,
-            Usage = Silk.NET.WebGPU.BufferUsage.CopyDst | Silk.NET.WebGPU.BufferUsage.Vertex,
+            Usage = (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
         });
 
         context.wgpu.BufferDestroy(native);

@@ -52,11 +52,11 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
             Layouts = bindGroupLayouts,
         });
         var pipelineDescriptor = TMaterial.PipelineDescriptor;
-        if (pipelineDescriptor.VertexState != null) pipelineDescriptor.VertexState = pipelineDescriptor.VertexState.Value with
+        pipelineDescriptor.VertexState = pipelineDescriptor.VertexState with
         {
             ShaderModule = shader,
         };
-        if (pipelineDescriptor.FragmentState != null) pipelineDescriptor.FragmentState = pipelineDescriptor.FragmentState.Value with
+        pipelineDescriptor.FragmentState = pipelineDescriptor.FragmentState with
         {
             ShaderModule = shader,
             ColorTargets = [
