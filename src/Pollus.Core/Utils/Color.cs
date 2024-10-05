@@ -3,6 +3,7 @@ namespace Pollus.Utils;
 using Pollus.Graphics;
 using Pollus.Mathematics;
 
+[ShaderType]
 public partial struct Color
 {
     public static readonly Color BLACK = new(0f, 0f, 0f, 1f);

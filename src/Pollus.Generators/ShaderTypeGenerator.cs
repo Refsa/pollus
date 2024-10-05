@@ -117,7 +117,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             var totalSize = 0;
             foreach (var member in type.GetMembers())
             {
-                if (member is IFieldSymbol field)
+                if (member is IFieldSymbol field && !field.IsStatic && !field.IsConst && !field.IsAbstract)
                 {
                     totalSize += CollectPrimitiveTypes(field.Type, ref maxAlignOf);
                 }
