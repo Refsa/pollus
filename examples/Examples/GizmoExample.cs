@@ -50,8 +50,8 @@ public class GizmoExample : IExample
                     new(800, 500),
                 }, Color.RED, 10f);
 
-                gizmos.DrawRect(Vec2f.One * 100f, Vec2f.One * 50f, 0f, Color.RED, true);
-                gizmos.DrawRect(Vec2f.One * 100f + Vec2f.Right * 150f, Vec2f.One * 50f, Math.Sin((float)time.SecondsSinceStartup * 0.25f) * 360f, Color.BLUE, false);
+                gizmos.DrawRectFilled(Vec2f.One * 100f, Vec2f.One * 50f, 0f, Color.RED);
+                gizmos.DrawRect(Vec2f.One * 100f + Vec2f.Right * 150f, Vec2f.One * 50f, Math.Sin((float)time.SecondsSinceStartup * 0.25f) * 360f, Color.BLUE);
 
                 {
                     frameTimes.Value.Enqueue(time.DeltaTimeF);
@@ -62,7 +62,7 @@ public class GizmoExample : IExample
 
                     var bounds = Rect.FromCenterScale(new Vec2f(1000f, 400f), new Vec2f(200f, 50f));
 
-                    gizmos.DrawRect(bounds.Center(), bounds.Extents(), 0f, Color.BLUE, false);
+                    gizmos.DrawRect(bounds.Center(), bounds.Extents(), 0f, Color.BLUE);
                     Span<Vec2f> points = stackalloc Vec2f[frameTimes.Value.Count];
                     var i = 0;
                     foreach (var frameTime in frameTimes.Value)
@@ -75,8 +75,15 @@ public class GizmoExample : IExample
                     gizmos.DrawLineString(points, Color.RED, 1f);
                 }
 
-                gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, false, 16);
-                gizmos.DrawCircle(new Vec2f(1100f, 800f), 32f, Color.RED, true, 16);
+                gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, 16);
+                gizmos.DrawCircleFilled(new Vec2f(1100f, 800f), 32f, Color.RED, 16);
+
+                {
+                    var start = new Vec2f(1000f, 200f);
+                    var dir = (Vec2f.Up * 100f).Rotate(Math.Sin((float)time.SecondsSinceStartup) * MathF.PI);
+                    gizmos.DrawArrow(start, start + dir, Color.RED);
+                    gizmos.DrawRay(start + Vec2f.Right * 100f, dir.Normalized(), Color.GREEN, 100f);
+                }
             }))
             .Build();
         app.Run();

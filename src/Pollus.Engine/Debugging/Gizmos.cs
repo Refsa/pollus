@@ -19,8 +19,6 @@ public partial struct GizmoVertex
 public class Gizmos
 {
     GizmoRenderData renderData = new();
-    Handle<GPURenderPipeline> pipelineFilledHandle = Handle<GPURenderPipeline>.Null;
-    Handle<GPURenderPipeline> pipelineOutlinedHandle = Handle<GPURenderPipeline>.Null;
 
     GizmoBuffer bufferFilled = new();
     GizmoBuffer bufferOutlined = new();
@@ -29,26 +27,26 @@ public class Gizmos
     {
         if (bufferFilled.IsSetup is false)
         {
-            pipelineFilledHandle = renderData.SetupPipeline(gpuContext, renderAssets, true);
+            var pipelineFilledHandle = renderData.SetupPipeline(gpuContext, renderAssets, true);
             bufferFilled.Setup(gpuContext, renderAssets, pipelineFilledHandle, renderData.BindGroupHandle);
         }
 
         if (bufferOutlined.IsSetup is false)
         {
-            pipelineOutlinedHandle = renderData.SetupPipeline(gpuContext, renderAssets, false);
+            var pipelineOutlinedHandle = renderData.SetupPipeline(gpuContext, renderAssets, false);
             bufferOutlined.Setup(gpuContext, renderAssets, pipelineOutlinedHandle, renderData.BindGroupHandle);
         }
 
-        bufferFilled.Prepare(gpuContext, renderAssets);
-        bufferOutlined.Prepare(gpuContext, renderAssets);
+        bufferFilled.PrepareFrame(renderAssets);
+        bufferOutlined.PrepareFrame(renderAssets);
     }
 
     public void Dispatch(CommandList commandList)
     {
-        bufferFilled.Dispatch(commandList);
+        bufferFilled.DrawFrame(commandList);
         bufferFilled.Clear();
 
-        bufferOutlined.Dispatch(commandList);
+        bufferOutlined.DrawFrame(commandList);
         bufferOutlined.Clear();
     }
 
@@ -91,171 +89,84 @@ public class Gizmos
         bufferFilled.AddDraw(vertices);
     }
 
-    public void DrawRect(Vec2f center, Vec2f extents, float rotation, Color color, bool filled)
+    public void DrawRect(Vec2f center, Vec2f extents, float rotation, Color color)
     {
         rotation = rotation.Radians();
-        if (filled)
-        {
-            bufferFilled.AddDraw(stackalloc GizmoVertex[] {
-                new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
-                new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
-                new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
-                new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
-            });
-        }
-        else
-        {
-            bufferOutlined.AddDraw(stackalloc GizmoVertex[] {
-                new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
-                new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
-                new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
-                new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
-                new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            });
-        }
-    }
-
-    public void DrawCircle(Vec2f center, float radius, Color color, bool filled, int resolution = 32)
-    {
-        if (filled)
-        {
-            Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution * 3];
-            for (int i = 0; i < resolution; i++)
-            {
-                float angle = MathF.Tau * i / resolution;
-                float angleNext = MathF.Tau * (i + 1) / resolution;
-                vertices[i * 3 + 0] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
-                vertices[i * 3 + 1] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angleNext), UV = new Vec2f(1.0f, 0.0f), Color = color };
-                vertices[i * 3 + 2] = new() { Position = center, UV = new Vec2f(0.5f, 0.5f), Color = color };
-            }
-            bufferFilled.AddDraw(vertices);
-        }
-        else
-        {
-            Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution + 1];
-            for (int i = 0; i < resolution; i++)
-            {
-                float angle = MathF.Tau * i / resolution;
-                float angleNext = MathF.Tau * (i + 1) / resolution;
-                vertices[i] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
-            }
-            vertices[resolution] = vertices[0];
-            bufferOutlined.AddDraw(vertices);
-        }
-    }
-}
-
-class GizmoRenderData
-{
-    static readonly RenderPipelineDescriptor BasePipelineDescriptor = new()
-    {
-        Label = "gizmo::basePipeline",
-        VertexState = new()
-        {
-            EntryPoint = "vs_main",
-            Layouts = [
-                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4])
-            ]
-        },
-        FragmentState = new()
-        {
-            EntryPoint = "fs_main",
-            ColorTargets = [ColorTargetState.Default],
-        },
-        MultisampleState = MultisampleState.Default,
-        PrimitiveState = PrimitiveState.Default,
-    };
-
-    bool isRenderResourcesSetup = false;
-    Handle<GPUPipelineLayout> pipelineLayoutHandle = Handle<GPUPipelineLayout>.Null;
-    public Handle<GPUBindGroup> BindGroupHandle = Handle<GPUBindGroup>.Null;
-
-    public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets)
-    {
-        if (isRenderResourcesSetup is true) return;
-
-        using var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
-        {
-            Label = "gizmo::bindGroupLayout",
-            Entries = [
-                BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex | ShaderStage.Fragment),
-                ]
+        bufferOutlined.AddDraw(stackalloc GizmoVertex[] {
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
         });
-
-        pipelineLayoutHandle = renderAssets.Add(gpuContext.CreatePipelineLayout(new()
-        {
-            Label = "gizmo::pipelineLayout",
-            Layouts = [bindGroupLayout],
-        }));
-
-        var sceneUniformRenderData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<SceneUniform>>(0));
-        var sceneUniformBuffer = renderAssets.Get(sceneUniformRenderData.UniformBuffer);
-        BindGroupHandle = renderAssets.Add(gpuContext.CreateBindGroup(new()
-        {
-            Label = "gizmo::bindGroup",
-            Layout = bindGroupLayout,
-            Entries = [
-                BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer, 0),
-                ]
-        }));
-
-        isRenderResourcesSetup = true;
     }
 
-    public Handle<GPURenderPipeline> SetupPipeline(IWGPUContext gpuContext, RenderAssets renderAssets, bool filled)
+    public void DrawRectFilled(Vec2f center, Vec2f extents, float rotation, Color color)
     {
-        Setup(gpuContext, renderAssets);
-
-        using var gizmoShader = gpuContext.CreateShaderModule(new()
-        {
-            Backend = ShaderBackend.WGSL,
-            Label = "gizmo::shader",
-            Content = GizmoShaders.GIZMO_SHADER,
+        rotation = rotation.Radians();
+        bufferFilled.AddDraw(stackalloc GizmoVertex[] {
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
         });
+    }
 
-        var pipelineLayout = renderAssets.Get(pipelineLayoutHandle);
-
-        var pipelineDescriptor = BasePipelineDescriptor with
+    public void DrawCircle(Vec2f center, float radius, Color color, int resolution = 32)
+    {
+        Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution + 1];
+        for (int i = 0; i < resolution; i++)
         {
-            VertexState = BasePipelineDescriptor.VertexState with
-            {
-                ShaderModule = gizmoShader,
-            },
-            FragmentState = BasePipelineDescriptor.FragmentState with
-            {
-                ShaderModule = gizmoShader,
-                ColorTargets = [ColorTargetState.Default with
-                {
-                    Format = gpuContext.GetSurfaceFormat(),
-                }]
-            },
-            PrimitiveState = PrimitiveState.Default with
-            {
-                FrontFace = FrontFace.Ccw,
-                CullMode = CullMode.None,
-                Topology = PrimitiveTopology.TriangleStrip,
-            },
-            PipelineLayout = pipelineLayout,
-        };
+            float angle = MathF.Tau * i / resolution;
+            float angleNext = MathF.Tau * (i + 1) / resolution;
+            vertices[i] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
+        }
+        vertices[resolution] = vertices[0];
+        bufferOutlined.AddDraw(vertices);
+    }
 
-        return renderAssets.Add(gpuContext.CreateRenderPipeline(pipelineDescriptor with
+    public void DrawCircleFilled(Vec2f center, float radius, Color color, int resolution = 32)
+    {
+        Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution * 3];
+        for (int i = 0; i < resolution; i++)
         {
-            Label = $"gizmo::{(filled ? "filled" : "outlined")}Pipeline",
-            PrimitiveState = filled switch
-            {
-                true => PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.TriangleStrip,
-                },
-                false => PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.LineStrip,
-                },
-            },
-        }));
+            float angle = MathF.Tau * i / resolution;
+            float angleNext = MathF.Tau * (i + 1) / resolution;
+            vertices[i * 3 + 0] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
+            vertices[i * 3 + 1] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angleNext), UV = new Vec2f(1.0f, 0.0f), Color = color };
+            vertices[i * 3 + 2] = new() { Position = center, UV = new Vec2f(0.5f, 0.5f), Color = color };
+        }
+        bufferFilled.AddDraw(vertices);
+    }
+
+    public void DrawTriangle(Vec2f a, Vec2f b, Vec2f c, Color color)
+    {
+        bufferOutlined.AddDraw(stackalloc GizmoVertex[] {
+            new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
+        });
+    }
+
+    public void DrawTriangleFilled(Vec2f a, Vec2f b, Vec2f c, Color color)
+    {
+        bufferFilled.AddDraw(stackalloc GizmoVertex[] {
+            new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
+        });
+    }
+
+    public void DrawArrow(Vec2f start, Vec2f end, Color color, float headSize = 8f)
+    {
+        DrawLine(start, end, color, 1f);
+        var dir = (end - start).Normalized();
+        var normal = new Vec2f(dir.Y, -dir.X).Normalized();
+        DrawTriangleFilled(end, end - dir * headSize + normal * headSize * 0.5f, end - dir * headSize - normal * headSize * 0.5f, color);
+    }
+
+    public void DrawRay(Vec2f origin, Vec2f direction, Color color, float length)
+    {
+        DrawArrow(origin, origin + direction * length, color);
     }
 }

@@ -67,7 +67,7 @@ public class GizmoBuffer
         isSetup = true;
     }
 
-    public void Prepare(IWGPUContext gpuContext, RenderAssets renderAssets)
+    public void PrepareFrame(RenderAssets renderAssets)
     {
         var drawBuffer = renderAssets.Get(drawBufferHandle);
         var vertexBuffer = renderAssets.Get(vertexBufferHandle);
@@ -79,7 +79,7 @@ public class GizmoBuffer
         vertexBuffer.Write<GizmoVertex>(vertices.AsSpan(0, vertexCount));
     }
 
-    public void Dispatch(CommandList commandList)
+    public void DrawFrame(CommandList commandList)
     {
         var commands = RenderCommands.Builder
             .SetPipeline(pipelineHandle)

@@ -86,7 +86,12 @@
 		- [ ] move to builder pattern for better readability and resource handling
 	- [ ] Render target
 		- [x] frame graph color targets
-	- [ ] Gizmos
+	- [-] Gizmos
+		- [x] Drawing API
+			- [ ] DrawTexture
+			- [ ] DrawText
+		- [ ] SDF drawing
+		- [ ] Handles/Interactions
 	- [ ] HDR surface formats
 	- [ ] Compute Shaders
 		- [x] setup and run compute shaders
