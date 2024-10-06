@@ -14,7 +14,7 @@ class GizmoRenderData
         {
             EntryPoint = "vs_main",
             Layouts = [
-                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4])
+                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x3, VertexFormat.Float32x2, VertexFormat.Float32x4])
             ]
         },
         FragmentState = new()

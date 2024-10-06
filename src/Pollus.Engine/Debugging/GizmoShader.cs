@@ -4,7 +4,7 @@ public static class GizmoShaders
 {
     public const string GIZMO_SHADER = """
     struct VertexInput {
-        @location(0) position : vec2f,
+        @location(0) position : vec3f,
         @location(1) uv : vec2f,
         @location(2) color : vec4f,
     };
@@ -27,7 +27,7 @@ public static class GizmoShaders
     fn vs_main(input: VertexInput) -> VertexOutput {
         var output: VertexOutput;
 
-        output.position = scene_uniform.projection * scene_uniform.view * vec4f(input.position, 0.0, 1.0);
+        output.position = scene_uniform.projection * scene_uniform.view * vec4f(input.position, 1.0);
         output.uv = input.uv;
         output.color = input.color;
 

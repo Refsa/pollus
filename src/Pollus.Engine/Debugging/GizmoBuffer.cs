@@ -6,6 +6,11 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
+public struct GizmoDrawData
+{
+    public float SortOrder;
+}
+
 public class GizmoBuffer
 {
     Handle<GPUBuffer> drawBufferHandle = Handle<GPUBuffer>.Null;
@@ -15,6 +20,7 @@ public class GizmoBuffer
 
     int drawCount;
     IndirectBufferData[] draws = new IndirectBufferData[1024];
+    GizmoDrawData[] drawDatas = new GizmoDrawData[1024];
 
     int vertexCount;
     GizmoVertex[] vertices = new GizmoVertex[1024];
@@ -35,18 +41,22 @@ public class GizmoBuffer
         if (vertexCount + drawVertices.Length > this.vertices.Length) Array.Resize(ref this.vertices, vertexCount + drawVertices.Length);
         drawVertices.CopyTo(this.vertices.AsSpan(vertexCount, drawVertices.Length));
         vertexCount += drawVertices.Length;
-        AddDraw(new IndirectBufferData()
-        {
-            InstanceCount = 1,
-            FirstInstance = 0,
-            VertexCount = (uint)drawVertices.Length,
-            FirstVertex = (uint)(vertexCount - drawVertices.Length),
-        });
-    }
 
-    public void AddDraw(in IndirectBufferData draw)
-    {
-        draws[drawCount++] = draw;
+        if (drawCount >= draws.Length)
+        {
+            Array.Resize(ref draws, drawCount * 2);
+            Array.Resize(ref drawDatas, drawCount * 2);
+        }
+
+        int index = drawCount++;
+        ref var drawDataTarget = ref drawDatas[index];
+        drawDataTarget.SortOrder = drawVertices[0].Position.Z;
+
+        ref var drawTarget = ref draws[index];
+        drawTarget.FirstInstance = 0;
+        drawTarget.InstanceCount = 1;
+        drawTarget.FirstVertex = (uint)(vertexCount - drawVertices.Length);
+        drawTarget.VertexCount = (uint)drawVertices.Length;
     }
 
     public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets, Handle<GPURenderPipeline> pipelineHandle, Handle<GPUBindGroup> bindGroupHandle)
@@ -72,6 +82,7 @@ public class GizmoBuffer
         var drawBuffer = renderAssets.Get(drawBufferHandle);
         var vertexBuffer = renderAssets.Get(vertexBufferHandle);
 
+        drawDatas.AsSpan(0, drawCount).Sort(draws.AsSpan(0, drawCount), static (a, b) => a.SortOrder.CompareTo(b.SortOrder));
         drawBuffer.Resize<IndirectBufferData>((uint)drawCount);
         drawBuffer.Write<IndirectBufferData>(draws.AsSpan(0, drawCount));
 

@@ -84,6 +84,8 @@ public class GizmoExample : IExample
                     gizmos.DrawArrow(start, start + dir, Color.RED);
                     gizmos.DrawRay(start + Vec2f.Right * 100f, dir.Normalized(), Color.GREEN, 100f);
                 }
+
+                gizmos.DrawGrid(Rect.FromCenterScale(new Vec2f(800f, 450f), new Vec2f(1600, 900)), Color.GRAY, 64f, -10f);
             }))
             .Build();
         app.Run();
