@@ -18,199 +18,25 @@ public partial struct GizmoVertex
 
 public class Gizmos
 {
-
-    class GizmoBuffer
-    {
-        Handle<GPUBuffer> drawBufferHandle = Handle<GPUBuffer>.Null;
-        Handle<GPUBuffer> vertexBufferHandle = Handle<GPUBuffer>.Null;
-        Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
-        Handle<GPUBindGroup> bindGroupHandle = Handle<GPUBindGroup>.Null;
-
-        int drawCount;
-        IndirectBufferData[] draws = new IndirectBufferData[1024];
-
-        int vertexCount;
-        GizmoVertex[] vertices = new GizmoVertex[1024];
-
-        bool isSetup = false;
-
-        public int VertexCount => vertexCount;
-        public bool IsSetup => isSetup;
-
-        public void AddVertex(in GizmoVertex vertex)
-        {
-            if (vertexCount >= vertices.Length) Array.Resize(ref vertices, vertexCount * 2);
-            vertices[vertexCount++] = vertex;
-        }
-
-        public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices)
-        {
-            if (vertexCount + drawVertices.Length > this.vertices.Length) Array.Resize(ref this.vertices, vertexCount + drawVertices.Length);
-            drawVertices.CopyTo(this.vertices.AsSpan(vertexCount, drawVertices.Length));
-            vertexCount += drawVertices.Length;
-            AddDraw(new IndirectBufferData()
-            {
-                InstanceCount = 1,
-                FirstInstance = 0,
-                VertexCount = (uint)drawVertices.Length,
-                FirstVertex = (uint)(vertexCount - drawVertices.Length),
-            });
-        }
-
-        public void AddDraw(in IndirectBufferData draw)
-        {
-            draws[drawCount++] = draw;
-        }
-
-        public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets, Handle<GPURenderPipeline> pipelineHandle, Handle<GPUBindGroup> bindGroupHandle)
-        {
-            if (isSetup) return;
-
-            this.pipelineHandle = pipelineHandle;
-            this.bindGroupHandle = bindGroupHandle;
-
-            drawBufferHandle = renderAssets.Add(gpuContext.CreateBuffer(
-                BufferDescriptor.Indirect("gizmo::drawBuffer", (uint)drawCount)
-            ));
-
-            vertexBufferHandle = renderAssets.Add(gpuContext.CreateBuffer(
-                BufferDescriptor.Vertex<GizmoVertex>("gizmo::vertexBuffer", (uint)vertexCount)
-            ));
-
-            isSetup = true;
-        }
-
-        public void Prepare(IWGPUContext gpuContext, RenderAssets renderAssets)
-        {
-            var drawBuffer = renderAssets.Get(drawBufferHandle);
-            var vertexBuffer = renderAssets.Get(vertexBufferHandle);
-
-            drawBuffer.Resize<IndirectBufferData>((uint)drawCount);
-            drawBuffer.Write<IndirectBufferData>(draws.AsSpan(0, drawCount));
-
-            vertexBuffer.Resize<GizmoVertex>((uint)vertexCount);
-            vertexBuffer.Write<GizmoVertex>(vertices.AsSpan(0, vertexCount));
-        }
-
-        public void Dispatch(CommandList commandList)
-        {
-            var commands = RenderCommands.Builder
-                .SetPipeline(pipelineHandle)
-                .SetBindGroup(0, bindGroupHandle)
-                .SetVertexBuffer(0, vertexBufferHandle, 0, (uint)vertexCount);
-
-            for (uint i = 0; i < drawCount; i++)
-            {
-                commands = commands.DrawIndirect(drawBufferHandle, i * IndirectBufferData.SizeOf);
-            }
-
-            commandList.Add(commands);
-        }
-
-        public void Clear()
-        {
-            drawCount = 0;
-            vertexCount = 0;
-        }
-    }
-
-    static readonly RenderPipelineDescriptor BasePipelineDescriptor = new()
-    {
-        Label = "gizmo::basePipeline",
-        VertexState = new()
-        {
-            EntryPoint = "vs_main",
-            Layouts = [
-                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4])
-            ]
-        },
-        FragmentState = new()
-        {
-            EntryPoint = "fs_main",
-            ColorTargets = [ColorTargetState.Default],
-        },
-        MultisampleState = MultisampleState.Default,
-        PrimitiveState = PrimitiveState.Default,
-    };
+    GizmoRenderData renderData = new();
+    Handle<GPURenderPipeline> pipelineFilledHandle = Handle<GPURenderPipeline>.Null;
+    Handle<GPURenderPipeline> pipelineOutlinedHandle = Handle<GPURenderPipeline>.Null;
 
     GizmoBuffer bufferFilled = new();
     GizmoBuffer bufferOutlined = new();
 
-    public void Prepare(IWGPUContext gpuContext, RenderAssets renderAssets)
+    public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)
     {
-        if (bufferFilled.IsSetup is false || bufferOutlined.IsSetup is false)
+        if (bufferFilled.IsSetup is false)
         {
-            using var gizmoShader = gpuContext.CreateShaderModule(new()
-            {
-                Backend = ShaderBackend.WGSL,
-                Label = "gizmo::shader",
-                Content = GizmoShaders.GIZMO_SHADER,
-            });
+            pipelineFilledHandle = renderData.SetupPipeline(gpuContext, renderAssets, true);
+            bufferFilled.Setup(gpuContext, renderAssets, pipelineFilledHandle, renderData.BindGroupHandle);
+        }
 
-            using var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
-            {
-                Label = "gizmo::bindGroupLayout",
-                Entries = [
-                    BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex | ShaderStage.Fragment),
-                ]
-            });
-
-            using var pipelineLayout = gpuContext.CreatePipelineLayout(new()
-            {
-                Label = "gizmo::pipelineLayout",
-                Layouts = [bindGroupLayout],
-            });
-
-            var sceneUniformRenderData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<SceneUniform>>(0));
-            var sceneUniformBuffer = renderAssets.Get(sceneUniformRenderData.UniformBuffer);
-            var bindGroup = renderAssets.Add(gpuContext.CreateBindGroup(new()
-            {
-                Label = "gizmo::bindGroup",
-                Layout = bindGroupLayout,
-                Entries = [
-                    BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer, 0),
-                ]
-            }));
-
-            var pipelineDescriptor = BasePipelineDescriptor with
-            {
-                VertexState = BasePipelineDescriptor.VertexState with
-                {
-                    ShaderModule = gizmoShader,
-                },
-                FragmentState = BasePipelineDescriptor.FragmentState with
-                {
-                    ShaderModule = gizmoShader,
-                    ColorTargets = [
-                        ColorTargetState.Default with
-                        {
-                            Format = gpuContext.GetSurfaceFormat(),
-                        }
-                    ]
-                },
-                PrimitiveState = PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.TriangleStrip,
-                },
-                PipelineLayout = pipelineLayout,
-            };
-
-            var filledPipeline = renderAssets.Add(gpuContext.CreateRenderPipeline(pipelineDescriptor));
-            var outlinedPipeline = renderAssets.Add(gpuContext.CreateRenderPipeline(pipelineDescriptor with
-            {
-                Label = "gizmo::outlinedPipeline",
-                PrimitiveState = PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.LineStrip,
-                },
-            }));
-
-            bufferFilled.Setup(gpuContext, renderAssets, filledPipeline, bindGroup);
-            bufferOutlined.Setup(gpuContext, renderAssets, outlinedPipeline, bindGroup);
+        if (bufferOutlined.IsSetup is false)
+        {
+            pipelineOutlinedHandle = renderData.SetupPipeline(gpuContext, renderAssets, false);
+            bufferOutlined.Setup(gpuContext, renderAssets, pipelineOutlinedHandle, renderData.BindGroupHandle);
         }
 
         bufferFilled.Prepare(gpuContext, renderAssets);
@@ -287,5 +113,149 @@ public class Gizmos
                 new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
             });
         }
+    }
+
+    public void DrawCircle(Vec2f center, float radius, Color color, bool filled, int resolution = 32)
+    {
+        if (filled)
+        {
+            Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution * 3];
+            for (int i = 0; i < resolution; i++)
+            {
+                float angle = MathF.Tau * i / resolution;
+                float angleNext = MathF.Tau * (i + 1) / resolution;
+                vertices[i * 3 + 0] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
+                vertices[i * 3 + 1] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angleNext), UV = new Vec2f(1.0f, 0.0f), Color = color };
+                vertices[i * 3 + 2] = new() { Position = center, UV = new Vec2f(0.5f, 0.5f), Color = color };
+            }
+            bufferFilled.AddDraw(vertices);
+        }
+        else
+        {
+            Span<GizmoVertex> vertices = stackalloc GizmoVertex[resolution + 1];
+            for (int i = 0; i < resolution; i++)
+            {
+                float angle = MathF.Tau * i / resolution;
+                float angleNext = MathF.Tau * (i + 1) / resolution;
+                vertices[i] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
+            }
+            vertices[resolution] = vertices[0];
+            bufferOutlined.AddDraw(vertices);
+        }
+    }
+}
+
+class GizmoRenderData
+{
+    static readonly RenderPipelineDescriptor BasePipelineDescriptor = new()
+    {
+        Label = "gizmo::basePipeline",
+        VertexState = new()
+        {
+            EntryPoint = "vs_main",
+            Layouts = [
+                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4])
+            ]
+        },
+        FragmentState = new()
+        {
+            EntryPoint = "fs_main",
+            ColorTargets = [ColorTargetState.Default],
+        },
+        MultisampleState = MultisampleState.Default,
+        PrimitiveState = PrimitiveState.Default,
+    };
+
+    bool isRenderResourcesSetup = false;
+    Handle<GPUPipelineLayout> pipelineLayoutHandle = Handle<GPUPipelineLayout>.Null;
+    public Handle<GPUBindGroup> BindGroupHandle = Handle<GPUBindGroup>.Null;
+
+    public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets)
+    {
+        if (isRenderResourcesSetup is true) return;
+
+        using var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        {
+            Label = "gizmo::bindGroupLayout",
+            Entries = [
+                BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex | ShaderStage.Fragment),
+                ]
+        });
+
+        pipelineLayoutHandle = renderAssets.Add(gpuContext.CreatePipelineLayout(new()
+        {
+            Label = "gizmo::pipelineLayout",
+            Layouts = [bindGroupLayout],
+        }));
+
+        var sceneUniformRenderData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<SceneUniform>>(0));
+        var sceneUniformBuffer = renderAssets.Get(sceneUniformRenderData.UniformBuffer);
+        BindGroupHandle = renderAssets.Add(gpuContext.CreateBindGroup(new()
+        {
+            Label = "gizmo::bindGroup",
+            Layout = bindGroupLayout,
+            Entries = [
+                BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer, 0),
+                ]
+        }));
+
+        isRenderResourcesSetup = true;
+    }
+
+    public Handle<GPURenderPipeline> SetupPipeline(IWGPUContext gpuContext, RenderAssets renderAssets, bool filled)
+    {
+        Setup(gpuContext, renderAssets);
+
+        using var gizmoShader = gpuContext.CreateShaderModule(new()
+        {
+            Backend = ShaderBackend.WGSL,
+            Label = "gizmo::shader",
+            Content = GizmoShaders.GIZMO_SHADER,
+        });
+
+        var pipelineLayout = renderAssets.Get(pipelineLayoutHandle);
+
+        var pipelineDescriptor = BasePipelineDescriptor with
+        {
+            VertexState = BasePipelineDescriptor.VertexState with
+            {
+                ShaderModule = gizmoShader,
+            },
+            FragmentState = BasePipelineDescriptor.FragmentState with
+            {
+                ShaderModule = gizmoShader,
+                ColorTargets = [ColorTargetState.Default with
+                {
+                    Format = gpuContext.GetSurfaceFormat(),
+                }]
+            },
+            PrimitiveState = PrimitiveState.Default with
+            {
+                FrontFace = FrontFace.Ccw,
+                CullMode = CullMode.None,
+                Topology = PrimitiveTopology.TriangleStrip,
+            },
+            PipelineLayout = pipelineLayout,
+        };
+
+        return renderAssets.Add(gpuContext.CreateRenderPipeline(pipelineDescriptor with
+        {
+            Label = $"gizmo::{(filled ? "filled" : "outlined")}Pipeline",
+            PrimitiveState = filled switch
+            {
+                true => PrimitiveState.Default with
+                {
+                    FrontFace = FrontFace.Ccw,
+                    CullMode = CullMode.None,
+                    Topology = PrimitiveTopology.TriangleStrip,
+                },
+                false => PrimitiveState.Default with
+                {
+                    FrontFace = FrontFace.Ccw,
+                    CullMode = CullMode.None,
+                    Topology = PrimitiveTopology.LineStrip,
+                },
+            },
+        }));
     }
 }

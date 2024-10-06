@@ -74,6 +74,9 @@ public class GizmoExample : IExample
                     }
                     gizmos.DrawLineString(points, Color.RED, 1f);
                 }
+
+                gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, false, 16);
+                gizmos.DrawCircle(new Vec2f(1100f, 800f), 32f, Color.RED, true, 16);
             }))
             .Build();
         app.Run();
