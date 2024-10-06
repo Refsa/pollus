@@ -2,11 +2,11 @@
 
 namespace Pollus.Graphics.Imgui;
 
+using System.Runtime.CompilerServices;
+using ImGuiNET;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using ImGuiNET;
 using Pollus.Mathematics;
-using System.Runtime.CompilerServices;
 using Pollus.Utils;
 
 [ShaderType]
@@ -224,7 +224,24 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
             {
                 EntryPoint = """fs_main""",
                 ShaderModule = shader,
-                ColorTargets = [ColorTargetState.Default with { Format = targetFormat }]
+                ColorTargets = [ColorTargetState.Default with {
+                    Format = targetFormat,
+                    Blend = BlendState.Default with
+                    {
+                        Alpha = new()
+                        {
+                            Operation = BlendOperation.Add,
+                            SrcFactor = BlendFactor.SrcAlpha,
+                            DstFactor = BlendFactor.OneMinusSrcAlpha,
+                        },
+                        Color = new()
+                        {
+                            Operation = BlendOperation.Add,
+                            SrcFactor = BlendFactor.SrcAlpha,
+                            DstFactor = BlendFactor.OneMinusSrcAlpha,
+                        },
+                    },
+                }]
             },
             MultisampleState = MultisampleState.Default,
             PrimitiveState = PrimitiveState.Default with

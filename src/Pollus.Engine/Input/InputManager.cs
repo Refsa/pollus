@@ -95,7 +95,7 @@ public class InputManager : IDisposable
 
             mouse.SetAxisState(MouseAxis.ScrollX, @event.Wheel.X);
             mouse.SetAxisState(MouseAxis.ScrollY, @event.Wheel.Y);
-            mouse.SetPosition(@event.Wheel.X, @event.Wheel.Y);
+            mouse.SetPosition(@event.Wheel.MouseX, @event.Wheel.MouseY);
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Mousebuttondown or (int)Silk.NET.SDL.EventType.Mousebuttonup)
         {
