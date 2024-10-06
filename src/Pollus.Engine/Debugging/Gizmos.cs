@@ -240,14 +240,27 @@ public class Gizmos
         });
     }
 
-    public void DrawLineString(ReadOnlySpan<Vec2f> points, Color color)
+    public void DrawLineString(ReadOnlySpan<Vec2f> points, Color color, float thickness = 1.0f)
     {
-        Span<GizmoVertex> vertices = stackalloc GizmoVertex[points.Length * 2];
+        if (points.Length < 2) return;
+
+        Span<GizmoVertex> vertices = stackalloc GizmoVertex[points.Length * 4];
         for (int i = 0; i < points.Length; i++)
         {
             var p = points[i];
-            vertices[i * 2] = new() { Position = p, UV = new Vec2f(0.0f, 0.0f), Color = color };
-            vertices[i * 2 + 1] = new() { Position = p, UV = new Vec2f(1.0f, 0.0f), Color = color };
+            Vec2f dirPrev = i > 0 ? p - points[i - 1] : points[i + 1] - p;
+            Vec2f dirNext = i < points.Length - 1 ? points[i + 1] - p : p - points[i - 1];
+            Vec2f normalPrev = new Vec2f(dirPrev.Y, -dirPrev.X).Normalized();
+            Vec2f normalNext = new Vec2f(dirNext.Y, -dirNext.X).Normalized();
+
+            Vec2f miter = (normalPrev + normalNext).Normalized();
+            float miterLength = thickness * 0.5f / miter.Dot(normalNext);
+            Vec2f offset = miter * miterLength;
+
+            vertices[i * 4 + 0] = new() { Position = p - offset, UV = new Vec2f(0.0f, 0.0f), Color = color };
+            vertices[i * 4 + 1] = new() { Position = p + offset, UV = new Vec2f(0.0f, 1.0f), Color = color };
+            vertices[i * 4 + 2] = new() { Position = p - offset, UV = new Vec2f(1.0f, 1.0f), Color = color };
+            vertices[i * 4 + 3] = new() { Position = p + offset, UV = new Vec2f(1.0f, 0.0f), Color = color };
         }
         bufferFilled.AddDraw(vertices);
     }

@@ -69,6 +69,11 @@ public partial struct Rect
         return Max - Min;
     }
 
+    public Vec2f Extents()
+    {
+        return (Max - Min) / 2f;
+    }
+
     public Rect Move(Vec2f offset)
     {
         return new Rect(Min + offset, Max + offset);
