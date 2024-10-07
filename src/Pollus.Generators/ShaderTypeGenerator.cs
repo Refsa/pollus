@@ -3,6 +3,7 @@ namespace Pollus.Generators;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -32,7 +33,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
     {
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
             fullyQualifiedMetadataName: "Pollus.Graphics.ShaderTypeAttribute",
-            predicate: static (syntaxNode, cancellationToken) => 
+            predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
             transform: static (context, cancellationToken) =>
@@ -153,7 +154,11 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             "UInt64" => true,
             "Single" => true,
             "Double" => true,
-            _ => false,
+            _ => type.TypeKind switch
+            {
+                TypeKind.Enum => true,
+                _ => false,
+            },
         };
     }
 
@@ -172,7 +177,11 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             "UInt64" => 8,
             "Single" => 4,
             "Double" => 8,
-            _ => throw new NotSupportedException(),
+            _ => type.TypeKind switch
+            {
+                TypeKind.Enum => GetPrimitiveSize((type as INamedTypeSymbol)?.EnumUnderlyingType),
+                _ => throw new NotSupportedException(),
+            },
         };
     }
 }
