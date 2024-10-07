@@ -22,6 +22,7 @@ public enum RenderCommandType : ushort
     DrawIndexed,
     DrawIndirect,
     DrawIndexedIndirect,
+    MultiDrawIndirect,
 }
 
 public interface IRenderCommand
@@ -133,6 +134,10 @@ public struct RenderCommands : IDisposable
                 case RenderCommandType.DrawIndexedIndirect:
                     DrawIndexedIndirectCommand drawIndexedIndirectCommand = ReadCommand<DrawIndexedIndirectCommand>(ref offset);
                     drawIndexedIndirectCommand.Apply(renderPassEncoder, renderAssets);
+                    break;
+                case RenderCommandType.MultiDrawIndirect:
+                    MultiDrawIndirectCommand multiDrawIndirectCommand = ReadCommand<MultiDrawIndirectCommand>(ref offset);
+                    multiDrawIndirectCommand.Apply(renderPassEncoder, renderAssets);
                     break;
                 default:
                     throw new NotImplementedException($"Unknown command type: {type}");
@@ -274,6 +279,16 @@ public struct RenderCommands : IDisposable
         {
             IndirectBuffer = indirectBuffer,
             IndirectOffset = indirectOffset,
+        });
+        return this;
+    }
+
+    public RenderCommands MultiDrawIndirect(Handle<GPUBuffer> indirectBuffer, uint count)
+    {
+        WriteCommand(new MultiDrawIndirectCommand
+        {
+            IndirectBuffer = indirectBuffer,
+            Count = count,
         });
         return this;
     }
@@ -463,6 +478,24 @@ public struct RenderCommands : IDisposable
         {
             var buffer = renderAssets.Get(IndirectBuffer);
             renderPassEncoder.DrawIndirect(buffer, IndirectOffset);
+        }
+    }
+
+    public struct MultiDrawIndirectCommand : IRenderCommand
+    {
+        public static readonly int sizeInBytes = Unsafe.SizeOf<MultiDrawIndirectCommand>();
+        public static int SizeInBytes => sizeInBytes;
+
+        public MultiDrawIndirectCommand() { }
+
+        public readonly RenderCommandType Type = RenderCommandType.MultiDrawIndirect;
+        public required Handle<GPUBuffer> IndirectBuffer;
+        public uint Count;
+
+        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        {
+            var buffer = renderAssets.Get(IndirectBuffer);
+            renderPassEncoder.DrawIndirectMulti(buffer, Count);
         }
     }
 

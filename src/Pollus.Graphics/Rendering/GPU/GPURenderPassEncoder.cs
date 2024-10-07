@@ -91,6 +91,14 @@ unsafe public struct GPURenderPassEncoder : IDisposable
         context.wgpu.RenderPassEncoderDrawIndirect(native, (Silk.NET.WebGPU.Buffer*)indirectBuffer.Native, indirectOffset);
     }
 
+    public void DrawIndirectMulti(GPUBuffer indirectBuffer, uint drawCount)
+    {
+        for (uint i = 0; i < drawCount; i++)
+        {
+            context.wgpu.RenderPassEncoderDrawIndirect(native, (Silk.NET.WebGPU.Buffer*)indirectBuffer.Native, i * IndirectBufferData.SizeOf);
+        }
+    }
+
     public void DrawIndexed(uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance)
     {
         context.wgpu.RenderPassEncoderDrawIndexed(native, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
