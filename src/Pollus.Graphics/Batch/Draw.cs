@@ -81,9 +81,9 @@ public record struct Draw
         return this;
     }
 
-    public Draw SetVertexBuffer(int slot, Handle<GPUBuffer> vertexBuffers)
+    public Draw SetVertexBuffer(int slot, Handle<GPUBuffer> vertexBuffer)
     {
-        VertexBuffers[slot] = vertexBuffers;
+        VertexBuffers[slot] = vertexBuffer;
         return this;
     }
 

@@ -8,10 +8,21 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
+public enum GizmoType : uint
+{
+    None = 0,
+    Line,
+    LineString,
+    Rect,
+    Circle,
+    Triangle,
+    Grid,
+}
+
 [ShaderType]
 public partial struct GizmoVertex
 {
-    public Vec3f Position;
+    public Vec2f Position;
     public Vec2f UV;
     public Color Color;
 }
@@ -19,7 +30,6 @@ public partial struct GizmoVertex
 public class Gizmos
 {
     GizmoRenderData renderData = new();
-
     GizmoBuffer bufferFilled = new();
     GizmoBuffer bufferOutlined = new();
 
@@ -43,11 +53,11 @@ public class Gizmos
 
     public void Dispatch(CommandList commandList)
     {
-        bufferOutlined.DrawFrame(commandList);
-        bufferOutlined.Clear();
-
         bufferFilled.DrawFrame(commandList);
         bufferFilled.Clear();
+
+        bufferOutlined.DrawFrame(commandList);
+        bufferOutlined.Clear();
     }
 
     public void DrawLine(Vec2f start, Vec2f end, Color color, float thickness = 1.0f, float z = 0f)
@@ -57,11 +67,11 @@ public class Gizmos
         var offset = normal * (thickness * 0.5f);
 
         bufferFilled.AddDraw(stackalloc GizmoVertex[] {
-            new() { Position = new Vec3f(end - offset, z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(end + offset, z), UV = new Vec2f(0.0f, 1.0f), Color = color },
-            new() { Position = new Vec3f(start - offset, z), UV = new Vec2f(1.0f, 1.0f), Color = color },
-            new() { Position = new Vec3f(start + offset, z), UV = new Vec2f(1.0f, 0.0f), Color = color },
-        });
+            new() { Position = end - offset, UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = end + offset, UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = start - offset, UV = new Vec2f(1.0f, 1.0f), Color = color },
+            new() { Position = start + offset, UV = new Vec2f(1.0f, 0.0f), Color = color },
+        }, GizmoType.Line, z);
     }
 
     public void DrawLineString(ReadOnlySpan<Vec2f> points, Color color, float thickness = 1.0f, float z = 0f)
@@ -81,35 +91,35 @@ public class Gizmos
             float miterLength = thickness * 0.5f / miter.Dot(normalNext);
             Vec2f offset = miter * miterLength;
 
-            vertices[i * 4 + 0] = new() { Position = new Vec3f(p - offset, z), UV = new Vec2f(0.0f, 0.0f), Color = color };
-            vertices[i * 4 + 1] = new() { Position = new Vec3f(p + offset, z), UV = new Vec2f(0.0f, 1.0f), Color = color };
-            vertices[i * 4 + 2] = new() { Position = new Vec3f(p - offset, z), UV = new Vec2f(1.0f, 1.0f), Color = color };
-            vertices[i * 4 + 3] = new() { Position = new Vec3f(p + offset, z), UV = new Vec2f(1.0f, 0.0f), Color = color };
+            vertices[i * 4 + 0] = new() { Position = p - offset, UV = new Vec2f(0.0f, 0.0f), Color = color };
+            vertices[i * 4 + 1] = new() { Position = p + offset, UV = new Vec2f(0.0f, 1.0f), Color = color };
+            vertices[i * 4 + 2] = new() { Position = p - offset, UV = new Vec2f(1.0f, 1.0f), Color = color };
+            vertices[i * 4 + 3] = new() { Position = p + offset, UV = new Vec2f(1.0f, 0.0f), Color = color };
         }
-        bufferFilled.AddDraw(vertices);
+        bufferFilled.AddDraw(vertices, GizmoType.LineString, z);
     }
 
     public void DrawRect(Vec2f center, Vec2f extents, float rotation, Color color, float z = 0f)
     {
         rotation = rotation.Radians();
         bufferOutlined.AddDraw(stackalloc GizmoVertex[] {
-            new() { Position = new Vec3f(center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), z), UV = new Vec2f(1.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(extents.X, extents.Y).Rotate(rotation), z), UV = new Vec2f(1.0f, 1.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), z), UV = new Vec2f(0.0f, 1.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-        });
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+        }, GizmoType.Rect, z);
     }
 
     public void DrawRectFilled(Vec2f center, Vec2f extents, float rotation, Color color, float z = 0f)
     {
         rotation = rotation.Radians();
         bufferFilled.AddDraw(stackalloc GizmoVertex[] {
-            new() { Position = new Vec3f(center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), z), UV = new Vec2f(1.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), z), UV = new Vec2f(0.0f, 1.0f), Color = color },
-            new() { Position = new Vec3f(center + new Vec2f(extents.X, extents.Y).Rotate(rotation), z), UV = new Vec2f(1.0f, 1.0f), Color = color },
-        });
+            new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
+        }, GizmoType.Rect, z);
     }
 
     public void DrawCircle(Vec2f center, float radius, Color color, int resolution = 32, float z = 0f)
@@ -119,10 +129,10 @@ public class Gizmos
         {
             float angle = MathF.Tau * i / resolution;
             float angleNext = MathF.Tau * (i + 1) / resolution;
-            vertices[i] = new() { Position = new Vec3f(center + new Vec2f(radius, 0.0f).Rotate(angle), z), UV = new Vec2f(0.0f, 0.0f), Color = color };
+            vertices[i] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
         }
         vertices[resolution] = vertices[0];
-        bufferOutlined.AddDraw(vertices);
+        bufferOutlined.AddDraw(vertices, GizmoType.Circle, z);
     }
 
     public void DrawCircleFilled(Vec2f center, float radius, Color color, int resolution = 32, float z = 0f)
@@ -132,29 +142,29 @@ public class Gizmos
         {
             float angle = MathF.Tau * i / resolution;
             float angleNext = MathF.Tau * (i + 1) / resolution;
-            vertices[i * 3 + 0] = new() { Position = new Vec3f(center + new Vec2f(radius, 0.0f).Rotate(angle), z), UV = new Vec2f(0.0f, 0.0f), Color = color };
-            vertices[i * 3 + 1] = new() { Position = new Vec3f(center + new Vec2f(radius, 0.0f).Rotate(angleNext), z), UV = new Vec2f(1.0f, 0.0f), Color = color };
-            vertices[i * 3 + 2] = new() { Position = new Vec3f(center, z), UV = new Vec2f(0.5f, 0.5f), Color = color };
+            vertices[i * 3 + 0] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
+            vertices[i * 3 + 1] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angleNext), UV = new Vec2f(1.0f, 0.0f), Color = color };
+            vertices[i * 3 + 2] = new() { Position = center, UV = new Vec2f(0.5f, 0.5f), Color = color };
         }
-        bufferFilled.AddDraw(vertices);
+        bufferFilled.AddDraw(vertices, GizmoType.Circle, z);
     }
 
     public void DrawTriangle(Vec2f a, Vec2f b, Vec2f c, Color color, float z = 0f)
     {
         bufferOutlined.AddDraw(stackalloc GizmoVertex[] {
-            new() { Position = new Vec3f(a, z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(b, z), UV = new Vec2f(1.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(c, z), UV = new Vec2f(0.5f, 1.0f), Color = color },
-        });
+            new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
+        }, GizmoType.Triangle, z);
     }
 
     public void DrawTriangleFilled(Vec2f a, Vec2f b, Vec2f c, Color color, float z = 0f)
     {
         bufferFilled.AddDraw(stackalloc GizmoVertex[] {
-            new() { Position = new Vec3f(a, z), UV = new Vec2f(0.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(b, z), UV = new Vec2f(1.0f, 0.0f), Color = color },
-            new() { Position = new Vec3f(c, z), UV = new Vec2f(0.5f, 1.0f), Color = color },
-        });
+            new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
+        }, GizmoType.Triangle, z);
     }
 
     public void DrawArrow(Vec2f start, Vec2f end, Color color, float headSize = 8f, float z = 0f)

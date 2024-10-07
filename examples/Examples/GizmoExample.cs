@@ -75,15 +75,15 @@ public class GizmoExample : IExample
                     gizmos.DrawLineString(points, Color.RED, 1f);
                 }
 
-                gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, 16);
-                gizmos.DrawCircleFilled(new Vec2f(1100f, 800f), 32f, Color.RED, 16);
-
                 {
                     var start = new Vec2f(1000f, 200f);
                     var dir = (Vec2f.Up * 100f).Rotate(Math.Sin((float)time.SecondsSinceStartup) * MathF.PI);
                     gizmos.DrawArrow(start, start + dir, Color.RED);
                     gizmos.DrawRay(start + Vec2f.Right * 100f, dir.Normalized(), Color.GREEN, 100f);
                 }
+
+                gizmos.DrawCircleFilled(new Vec2f(1100f, 800f), 32f, Color.RED, 16);
+                gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, 16);
 
                 gizmos.DrawGrid(Rect.FromCenterScale(new Vec2f(800f, 450f), new Vec2f(1600, 900)), Color.GRAY, 64f, -10f);
             }))

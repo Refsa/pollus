@@ -14,13 +14,30 @@ class GizmoRenderData
         {
             EntryPoint = "vs_main",
             Layouts = [
-                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x3, VertexFormat.Float32x2, VertexFormat.Float32x4])
+                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4]),
             ]
         },
         FragmentState = new()
         {
             EntryPoint = "fs_main",
-            ColorTargets = [ColorTargetState.Default],
+            ColorTargets = [ColorTargetState.Default with
+            {
+                Blend = BlendState.Default with
+                {
+                    Alpha = new()
+                    {
+                        Operation = BlendOperation.Add,
+                        SrcFactor = BlendFactor.SrcAlpha,
+                        DstFactor = BlendFactor.OneMinusSrcAlpha,
+                    },
+                    Color = new()
+                    {
+                        Operation = BlendOperation.Add,
+                        SrcFactor = BlendFactor.SrcAlpha,
+                        DstFactor = BlendFactor.OneMinusSrcAlpha,
+                    },
+                }
+            }],
         },
         MultisampleState = MultisampleState.Default,
         PrimitiveState = PrimitiveState.Default,
@@ -39,7 +56,7 @@ class GizmoRenderData
             Label = "gizmo::bindGroupLayout",
             Entries = [
                 BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex | ShaderStage.Fragment),
-                ]
+            ]
         });
 
         pipelineLayoutHandle = renderAssets.Add(gpuContext.CreatePipelineLayout(new()
@@ -56,7 +73,7 @@ class GizmoRenderData
             Layout = bindGroupLayout,
             Entries = [
                 BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer, 0),
-                ]
+            ]
         }));
 
         isRenderResourcesSetup = true;

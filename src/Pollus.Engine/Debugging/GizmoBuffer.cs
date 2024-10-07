@@ -1,14 +1,23 @@
 namespace Pollus.Debugging;
 
+using Pollus.Collections;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public struct GizmoDrawData
+record struct SortKey : IComparable<SortKey>
 {
-    public float SortOrder;
+    public required float SortOrder;
+    public required uint DrawIndex;
+
+    public int CompareTo(SortKey other)
+    {
+        var result = SortOrder.CompareTo(other.SortOrder);
+        if (result == 0) result = DrawIndex.CompareTo(other.DrawIndex);
+        return result;
+    }
 }
 
 public class GizmoBuffer
@@ -19,10 +28,10 @@ public class GizmoBuffer
     Handle<GPUBindGroup> bindGroupHandle = Handle<GPUBindGroup>.Null;
 
     int drawCount;
-    IndirectBufferData[] draws = new IndirectBufferData[1024];
-    GizmoDrawData[] drawDatas = new GizmoDrawData[1024];
-
     int vertexCount;
+
+    SortKey[] drawOrder = new SortKey[1024];
+    IndirectBufferData[] draws = new IndirectBufferData[1024];
     GizmoVertex[] vertices = new GizmoVertex[1024];
 
     bool isSetup = false;
@@ -36,7 +45,7 @@ public class GizmoBuffer
         vertices[vertexCount++] = vertex;
     }
 
-    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices)
+    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, float sortOrder)
     {
         if (vertexCount + drawVertices.Length > this.vertices.Length) Array.Resize(ref this.vertices, vertexCount + drawVertices.Length);
         drawVertices.CopyTo(this.vertices.AsSpan(vertexCount, drawVertices.Length));
@@ -45,18 +54,20 @@ public class GizmoBuffer
         if (drawCount >= draws.Length)
         {
             Array.Resize(ref draws, drawCount * 2);
-            Array.Resize(ref drawDatas, drawCount * 2);
+            Array.Resize(ref drawOrder, drawCount * 2);
         }
 
-        int index = drawCount++;
-        ref var drawDataTarget = ref drawDatas[index];
-        drawDataTarget.SortOrder = drawVertices[0].Position.Z;
+        var index = drawCount++;
 
         ref var drawTarget = ref draws[index];
-        drawTarget.FirstInstance = 0;
+        drawTarget.FirstInstance = (uint)index;
         drawTarget.InstanceCount = 1;
         drawTarget.FirstVertex = (uint)(vertexCount - drawVertices.Length);
         drawTarget.VertexCount = (uint)drawVertices.Length;
+
+        ref var drawOrderTarget = ref drawOrder[index];
+        drawOrderTarget.SortOrder = sortOrder;
+        drawOrderTarget.DrawIndex = (uint)index;
     }
 
     public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets, Handle<GPURenderPipeline> pipelineHandle, Handle<GPUBindGroup> bindGroupHandle)
@@ -82,7 +93,13 @@ public class GizmoBuffer
         var drawBuffer = renderAssets.Get(drawBufferHandle);
         var vertexBuffer = renderAssets.Get(vertexBufferHandle);
 
-        drawDatas.AsSpan(0, drawCount).Sort(draws.AsSpan(0, drawCount), static (a, b) => a.SortOrder.CompareTo(b.SortOrder));
+        drawOrder.AsSpan(0, drawCount).Sort(static (a, b) =>
+        {
+            var result = a.SortOrder.CompareTo(b.SortOrder);
+            if (result == 0) result = a.DrawIndex.CompareTo(b.DrawIndex);
+            return result;
+        });
+
         drawBuffer.Resize<IndirectBufferData>((uint)drawCount);
         drawBuffer.Write<IndirectBufferData>(draws.AsSpan(0, drawCount));
 
@@ -99,7 +116,8 @@ public class GizmoBuffer
 
         for (uint i = 0; i < drawCount; i++)
         {
-            commands = commands.DrawIndirect(drawBufferHandle, i * IndirectBufferData.SizeOf);
+            var sortOrder = drawOrder[i];
+            commands.DrawIndirect(drawBufferHandle, sortOrder.DrawIndex * IndirectBufferData.SizeOf);
         }
 
         commandList.Add(commands);
