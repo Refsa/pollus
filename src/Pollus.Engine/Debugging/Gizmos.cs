@@ -35,18 +35,17 @@ public partial struct GizmoVertex
 
 public class Gizmos
 {
-    GizmoRenderData renderData = new();
     GizmoBuffer drawBuffer = new();
 
     public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)
     {
         if (drawBuffer.IsSetup is false)
         {
-            var filledPipelineHandle = renderData.SetupPipeline(gpuContext, renderAssets, true);
-            var outlinedPipelineHandle = renderData.SetupPipeline(gpuContext, renderAssets, false);
-
-            drawBuffer.Setup(gpuContext, renderAssets, outlinedPipelineHandle, filledPipelineHandle, renderData.BindGroupHandle);
+            var filledMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoFilledMaterial>(0));
+            var outlinedMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoOutlinedMaterial>(0));
+            drawBuffer.Setup(gpuContext, renderAssets, outlinedMaterial.Pipeline, filledMaterial.Pipeline, filledMaterial.BindGroups[0]);
         }
+        
         drawBuffer.PrepareFrame(renderAssets);
     }
 

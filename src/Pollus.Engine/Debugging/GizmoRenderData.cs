@@ -2,137 +2,106 @@ namespace Pollus.Debugging;
 
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
-using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-class GizmoRenderData
+class GizmoFilledMaterial : IMaterial
 {
-    static readonly RenderPipelineDescriptor BasePipelineDescriptor = new()
+    public static string Name => "GizmoFilledMaterial";
+
+    public static VertexBufferLayout[] VertexLayouts => [
+        VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4]),
+    ];
+
+    public static RenderPipelineDescriptor PipelineDescriptor => new()
     {
-        Label = "gizmo::basePipeline",
+        Label = "gizmo::filledPipeline",
         VertexState = new()
         {
             EntryPoint = "vs_main",
-            Layouts = [
-                VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4]),
-            ]
+            Layouts = VertexLayouts,
         },
         FragmentState = new()
         {
             EntryPoint = "fs_main",
-            ColorTargets = [ColorTargetState.Default with
-            {
-                Blend = BlendState.Default with
-                {
-                    Alpha = new()
-                    {
-                        Operation = BlendOperation.Add,
-                        SrcFactor = BlendFactor.SrcAlpha,
-                        DstFactor = BlendFactor.OneMinusSrcAlpha,
-                    },
-                    Color = new()
-                    {
-                        Operation = BlendOperation.Add,
-                        SrcFactor = BlendFactor.SrcAlpha,
-                        DstFactor = BlendFactor.OneMinusSrcAlpha,
-                    },
-                }
-            }],
         },
         MultisampleState = MultisampleState.Default,
-        PrimitiveState = PrimitiveState.Default,
+        PrimitiveState = PrimitiveState.Default with
+        {
+            FrontFace = FrontFace.Ccw,
+            CullMode = CullMode.None,
+            Topology = PrimitiveTopology.TriangleStrip,
+        },
     };
 
-    bool isRenderResourcesSetup = false;
-    Handle<GPUPipelineLayout> pipelineLayoutHandle = Handle<GPUPipelineLayout>.Null;
-    public Handle<GPUBindGroup> BindGroupHandle = Handle<GPUBindGroup>.Null;
-
-    public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets)
+    public static BlendState? Blend => BlendState.Default with
     {
-        if (isRenderResourcesSetup is true) return;
-
-        using var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        Alpha = new()
         {
-            Label = "gizmo::bindGroupLayout",
-            Entries = [
-                BindGroupLayoutEntry.Uniform<SceneUniform>(0, ShaderStage.Vertex | ShaderStage.Fragment),
-            ]
-        });
-
-        pipelineLayoutHandle = renderAssets.Add(gpuContext.CreatePipelineLayout(new()
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+        Color = new()
         {
-            Label = "gizmo::pipelineLayout",
-            Layouts = [bindGroupLayout],
-        }));
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+    };
 
-        var sceneUniformRenderData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<SceneUniform>>(0));
-        var sceneUniformBuffer = renderAssets.Get(sceneUniformRenderData.UniformBuffer);
-        BindGroupHandle = renderAssets.Add(gpuContext.CreateBindGroup(new()
-        {
-            Label = "gizmo::bindGroup",
-            Layout = bindGroupLayout,
-            Entries = [
-                BindGroupEntry.BufferEntry<SceneUniform>(0, sceneUniformBuffer, 0),
-            ]
-        }));
+    public Handle<ShaderAsset> ShaderSource { get; set; }
+    public IBinding[][] Bindings => [[
+        new UniformBinding<SceneUniform>(),
+    ]];
+}
 
-        isRenderResourcesSetup = true;
-    }
+class GizmoOutlinedMaterial : IMaterial
+{
+    public static string Name => "GizmoOutlinedMaterial";
 
-    public Handle<GPURenderPipeline> SetupPipeline(IWGPUContext gpuContext, RenderAssets renderAssets, bool filled)
+    public static VertexBufferLayout[] VertexLayouts => [
+        VertexBufferLayout.Vertex(0, [VertexFormat.Float32x2, VertexFormat.Float32x2, VertexFormat.Float32x4]),
+    ];
+
+    public static RenderPipelineDescriptor PipelineDescriptor => new()
     {
-        Setup(gpuContext, renderAssets);
-
-        using var gizmoShader = gpuContext.CreateShaderModule(new()
+        Label = "gizmo::outlinedPipeline",
+        VertexState = new()
         {
-            Backend = ShaderBackend.WGSL,
-            Label = "gizmo::shader",
-            Content = GizmoShaders.GIZMO_SHADER,
-        });
-
-        var pipelineLayout = renderAssets.Get(pipelineLayoutHandle);
-
-        var pipelineDescriptor = BasePipelineDescriptor with
+            EntryPoint = "vs_main",
+            Layouts = VertexLayouts,
+        },
+        FragmentState = new()
         {
-            VertexState = BasePipelineDescriptor.VertexState with
-            {
-                ShaderModule = gizmoShader,
-            },
-            FragmentState = BasePipelineDescriptor.FragmentState with
-            {
-                ShaderModule = gizmoShader,
-                ColorTargets = [ColorTargetState.Default with
-                {
-                    Format = gpuContext.GetSurfaceFormat(),
-                }]
-            },
-            PrimitiveState = PrimitiveState.Default with
-            {
-                FrontFace = FrontFace.Ccw,
-                CullMode = CullMode.None,
-                Topology = PrimitiveTopology.TriangleStrip,
-            },
-            PipelineLayout = pipelineLayout,
-        };
-
-        return renderAssets.Add(gpuContext.CreateRenderPipeline(pipelineDescriptor with
+            EntryPoint = "fs_main",
+        },
+        MultisampleState = MultisampleState.Default,
+        PrimitiveState = PrimitiveState.Default with
         {
-            Label = $"gizmo::{(filled ? "filled" : "outlined")}Pipeline",
-            PrimitiveState = filled switch
-            {
-                true => PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.TriangleStrip,
-                },
-                false => PrimitiveState.Default with
-                {
-                    FrontFace = FrontFace.Ccw,
-                    CullMode = CullMode.None,
-                    Topology = PrimitiveTopology.LineStrip,
-                },
-            },
-        }));
-    }
+            FrontFace = FrontFace.Ccw,
+            CullMode = CullMode.None,
+            Topology = PrimitiveTopology.LineStrip,
+        },
+    };
+
+    public static BlendState? Blend => BlendState.Default with
+    {
+        Alpha = new()
+        {
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+        Color = new()
+        {
+            Operation = BlendOperation.Add,
+            SrcFactor = BlendFactor.SrcAlpha,
+            DstFactor = BlendFactor.OneMinusSrcAlpha,
+        },
+    };
+
+    public Handle<ShaderAsset> ShaderSource { get; set; }
+    public IBinding[][] Bindings => [[
+        new UniformBinding<SceneUniform>(),
+    ]];
 }
