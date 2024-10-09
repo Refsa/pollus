@@ -11,10 +11,13 @@ record struct SortKey : IComparable<SortKey>
 {
     public required float SortOrder;
     public required uint DrawIndex;
+    public required GizmoMode Mode;
+    public required GizmoType Type;
 
     public int CompareTo(SortKey other)
     {
         var result = SortOrder.CompareTo(other.SortOrder);
+        if (result == 0) result = Mode.CompareTo(other.Mode);
         if (result == 0) result = DrawIndex.CompareTo(other.DrawIndex);
         return result;
     }
@@ -24,7 +27,8 @@ public class GizmoBuffer
 {
     Handle<GPUBuffer> drawBufferHandle = Handle<GPUBuffer>.Null;
     Handle<GPUBuffer> vertexBufferHandle = Handle<GPUBuffer>.Null;
-    Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
+    Handle<GPURenderPipeline> outlinedPipelineHandle = Handle<GPURenderPipeline>.Null;
+    Handle<GPURenderPipeline> filledPipelineHandle = Handle<GPURenderPipeline>.Null;
     Handle<GPUBindGroup> bindGroupHandle = Handle<GPUBindGroup>.Null;
 
     int drawCount;
@@ -45,7 +49,7 @@ public class GizmoBuffer
         vertices[vertexCount++] = vertex;
     }
 
-    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, float sortOrder)
+    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, GizmoMode mode, float sortOrder)
     {
         if (vertexCount + drawVertices.Length > this.vertices.Length) Array.Resize(ref this.vertices, vertexCount + drawVertices.Length);
         drawVertices.CopyTo(this.vertices.AsSpan(vertexCount, drawVertices.Length));
@@ -68,13 +72,19 @@ public class GizmoBuffer
         ref var drawOrderTarget = ref drawOrder[index];
         drawOrderTarget.SortOrder = sortOrder;
         drawOrderTarget.DrawIndex = (uint)index;
+        drawOrderTarget.Mode = mode;
+        drawOrderTarget.Type = type;
     }
 
-    public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets, Handle<GPURenderPipeline> pipelineHandle, Handle<GPUBindGroup> bindGroupHandle)
+    public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets,
+        Handle<GPURenderPipeline> outlinedPipelineHandle,
+        Handle<GPURenderPipeline> filledPipelineHandle,
+        Handle<GPUBindGroup> bindGroupHandle)
     {
         if (isSetup) return;
 
-        this.pipelineHandle = pipelineHandle;
+        this.outlinedPipelineHandle = outlinedPipelineHandle;
+        this.filledPipelineHandle = filledPipelineHandle;
         this.bindGroupHandle = bindGroupHandle;
 
         drawBufferHandle = renderAssets.Add(gpuContext.CreateBuffer(
@@ -110,13 +120,19 @@ public class GizmoBuffer
     public void DrawFrame(CommandList commandList)
     {
         var commands = RenderCommands.Builder
-            .SetPipeline(pipelineHandle)
             .SetBindGroup(0, bindGroupHandle)
             .SetVertexBuffer(0, vertexBufferHandle, 0, (uint)vertexCount);
 
+        GizmoMode? prevMode = null;
         for (uint i = 0; i < drawCount; i++)
         {
             var sortOrder = drawOrder[i];
+            var mode = sortOrder.Mode;
+            if (mode != prevMode)
+            {
+                commands.SetPipeline(mode == GizmoMode.Filled ? filledPipelineHandle : outlinedPipelineHandle);
+                prevMode = mode;
+            }
             commands.DrawIndirect(drawBufferHandle, sortOrder.DrawIndex * IndirectBufferData.SizeOf);
         }
 
