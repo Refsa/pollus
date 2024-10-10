@@ -116,11 +116,31 @@ public static partial class Intersect2D
 
         if (distance <= circle.Radius)
         {
-            var normal = direction.Normalized();
+            Vec2f normal;
+            Vec2f pointOnEdge;
+
+            if (distance == 0)
+            {
+                var distanceToMin = circle.Center - bounds.Min;
+                var distanceToMax = bounds.Max - circle.Center;
+
+                if (distanceToMin.X < distanceToMin.Y && distanceToMin.X < distanceToMax.X && distanceToMin.X < distanceToMax.Y) normal = Vec2f.Left;
+                else if (distanceToMax.X < distanceToMin.Y && distanceToMax.X < distanceToMax.Y) normal = Vec2f.Right;
+                else if (distanceToMin.Y < distanceToMax.Y) normal = Vec2f.Down;
+                else normal = Vec2f.Up;
+
+                pointOnEdge = circle.Center + normal * circle.Radius;
+            }
+            else
+            {
+                normal = direction.Normalized();
+                pointOnEdge = closestPoint + normal * (circle.Radius - distance);
+            }
+
             return new()
             {
                 IsIntersecting = true,
-                Point = closestPoint,
+                Point = pointOnEdge,
                 Normal = normal,
                 Distance = circle.Radius - distance,
             };
