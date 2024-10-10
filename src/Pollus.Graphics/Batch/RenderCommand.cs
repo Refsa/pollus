@@ -193,26 +193,26 @@ public struct RenderCommands : IDisposable
         return this;
     }
 
-    public RenderCommands SetVertexBuffer(uint slot, Handle<GPUBuffer> buffer, uint? offset = null, uint? length = null)
+    public RenderCommands SetVertexBuffer(uint slot, Handle<GPUBuffer> buffer, uint? offset = null, uint? size = null)
     {
         WriteCommand(new SetVertexBufferCommand
         {
             Slot = slot,
             Buffer = buffer,
             Offset = offset,
-            Length = length,
+            Size = size,
         });
         return this;
     }
 
-    public RenderCommands SetIndexBuffer(Handle<GPUBuffer> buffer, IndexFormat format, uint? offset = null, uint? length = null)
+    public RenderCommands SetIndexBuffer(Handle<GPUBuffer> buffer, IndexFormat format, uint? offset = null, uint? size = null)
     {
         WriteCommand(new SetIndexBufferCommand
         {
             Buffer = buffer,
             Format = format,
             Offset = offset,
-            Length = length,
+            Size = size,
         });
         return this;
     }
@@ -375,12 +375,12 @@ public struct RenderCommands : IDisposable
         public required uint Slot;
         public required Handle<GPUBuffer> Buffer;
         public uint? Offset;
-        public uint? Length;
+        public uint? Size;
 
         public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(Buffer);
-            renderPassEncoder.SetVertexBuffer(Slot, buffer, Offset, Length);
+            renderPassEncoder.SetVertexBuffer(Slot, buffer, Offset, Size);
         }
     }
 
@@ -395,12 +395,12 @@ public struct RenderCommands : IDisposable
         public required Handle<GPUBuffer> Buffer;
         public required IndexFormat Format;
         public uint? Offset;
-        public uint? Length;
+        public uint? Size;
 
         public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(Buffer);
-            renderPassEncoder.SetIndexBuffer(buffer, Format, Offset, Length);
+            renderPassEncoder.SetIndexBuffer(buffer, Format, Offset, Size);
         }
     }
 

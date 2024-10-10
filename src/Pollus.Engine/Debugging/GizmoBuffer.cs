@@ -41,6 +41,7 @@ public class GizmoBuffer
     bool isSetup = false;
 
     public int VertexCount => vertexCount;
+    public int DrawCount => drawCount;
     public bool IsSetup => isSetup;
 
     public void AddVertex(in GizmoVertex vertex)

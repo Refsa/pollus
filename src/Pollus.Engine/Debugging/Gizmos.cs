@@ -37,6 +37,8 @@ public class Gizmos
 {
     GizmoBuffer drawBuffer = new();
 
+    public bool HasContent => drawBuffer.DrawCount > 0;
+
     public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)
     {
         if (drawBuffer.IsSetup is false)
