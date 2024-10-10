@@ -144,6 +144,13 @@ public static class Math
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Smoothstep<T>(T a, T b, T v)
+        where T : struct, INumber<T>
+    {
+        return a + (b - a) * (v * v * (T.CreateChecked(3) - T.CreateChecked(2) * v));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static T Pow<T>(this T self, T exponent)
         where T : struct, IPowerFunctions<T>
     {

@@ -1,5 +1,6 @@
 namespace Pollus.Examples.Flocking;
 
+using System.Diagnostics.CodeAnalysis;
 using Pollus.Collections;
 using Pollus.Debugging;
 using Pollus.ECS;
@@ -40,6 +41,7 @@ public class FlockingExample : IExample
                 new HierarchyPlugin(),
                 new TransformPlugin<Transform2D>(),
                 new RenderingPlugin(),
+                new GizmoPlugin(),
                 new ShapePlugin(),
                 new InputPlugin(),
                 new ImguiPlugin(),
@@ -78,23 +80,29 @@ class FlockingGame : IPlugin
             Insect = new BoidSettings.Settings()
             {
                 MaxSpeed = 50f,
-                SeparationFactor = 25f,
+                VisionRange = 50f,
+                SeparationFactor = 200f,
                 CohesionFactor = 0.01f,
-                AlignmentFactor = 0.1f,
+                AlignmentFactor = 0.01f,
+                SteeringFactor = 2.0f,
             },
             SmallBird = new BoidSettings.Settings()
             {
                 MaxSpeed = 100f,
-                SeparationFactor = 15f,
-                CohesionFactor = 0.25f,
-                AlignmentFactor = 0.25f,
+                VisionRange = 200f,
+                SeparationFactor = 200f,
+                CohesionFactor = 0.1f,
+                AlignmentFactor = 0.75f,
+                SteeringFactor = 0.8f,
             },
             LargeBird = new BoidSettings.Settings()
             {
                 MaxSpeed = 150f,
-                SeparationFactor = 25f,
-                CohesionFactor = 0.25f,
-                AlignmentFactor = 0.25f,
+                VisionRange = 150f,
+                SeparationFactor = 200f,
+                CohesionFactor = 0.1f,
+                AlignmentFactor = 0.1f,
+                SteeringFactor = 0.6f,
             },
         });
 
@@ -114,7 +122,7 @@ class FlockingGame : IPlugin
                 ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
-            for (int i = 0; i < 0; i++)
+            for (int i = 0; i < 500; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -124,7 +132,7 @@ class FlockingGame : IPlugin
                 );
             }
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 500; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -134,7 +142,7 @@ class FlockingGame : IPlugin
                 );
             }
 
-            for (int i = 0; i < 0; i++)
+            for (int i = 0; i < 25; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -146,15 +154,17 @@ class FlockingGame : IPlugin
 
             // edge avoids
             {
+                var force = 25f;
+
                 // Bottom
                 commands.Spawn(Entity.With(
                     GlobalTransform.Default,
                     Transform2D.Default with
                     {
-                        Position = new Vec2f(window.Size.X / 2f, 32f),
+                        Position = new Vec2f(window.Size.X / 2f, window.Size.Y - 16f),
                     },
-                    new BoidAvoid() { Force = 1000f },
-                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(window.Size.X, 32f))
+                    new AvoidArea() { Force = force, Target = BoidType.All },
+                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(window.Size.X / 2f, 64f))
                 ));
 
                 // Top
@@ -162,10 +172,10 @@ class FlockingGame : IPlugin
                     GlobalTransform.Default,
                     Transform2D.Default with
                     {
-                        Position = new Vec2f(window.Size.X / 2f, window.Size.Y - 32f),
+                        Position = new Vec2f(window.Size.X / 2f, 0f),
                     },
-                    new BoidAvoid() { Force = 1000f },
-                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(window.Size.X, 32f))
+                    new AvoidArea() { Force = force, Target = BoidType.All },
+                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(window.Size.X / 2f, 64f))
                 ));
 
                 // Left
@@ -173,10 +183,10 @@ class FlockingGame : IPlugin
                     GlobalTransform.Default,
                     Transform2D.Default with
                     {
-                        Position = new Vec2f(32f, window.Size.Y / 2f),
+                        Position = new Vec2f(0f, window.Size.Y / 2f),
                     },
-                    new BoidAvoid() { Force = 1000f },
-                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(32f, window.Size.Y))
+                    new AvoidArea() { Force = force, Target = BoidType.All },
+                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(64f, window.Size.Y / 2f))
                 ));
 
                 // Right
@@ -184,10 +194,10 @@ class FlockingGame : IPlugin
                     GlobalTransform.Default,
                     Transform2D.Default with
                     {
-                        Position = new Vec2f(window.Size.X - 32f, window.Size.Y / 2f),
+                        Position = new Vec2f(window.Size.X - 16f, window.Size.Y / 2f),
                     },
-                    new BoidAvoid() { Force = 1000f },
-                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(32f, window.Size.Y))
+                    new AvoidArea() { Force = force, Target = BoidType.All },
+                    CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(64f, window.Size.Y / 2f))
                 ));
             }
 
@@ -195,14 +205,8 @@ class FlockingGame : IPlugin
                 GlobalTransform.Default,
                 Transform2D.Default,
                 new DebugBoid(),
-                new BoidAvoid() { Force = 1000f },
-                CollisionShape.Rectangle(Vec2f.Zero, Vec2f.One * 100f),
-                new ShapeDraw()
-                {
-                    MaterialHandle = commonResources.BoidMaterial,
-                    ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 100f)),
-                    Color = Color.RED.WithAlpha(0.1f),
-                }
+                new AvoidArea() { Force = 10f, Target = BoidType.All },
+                CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(100f, 50f))
             ));
         }));
 
@@ -220,9 +224,6 @@ class FlockingGame : IPlugin
             static (in (SpatialQuery spatialQuery, Query query, float deltaTime, BoidSettings boidSettings) userData,
                 in Entity entity, ref Transform2D transform, ref Velocity velocity, ref Boid boid) =>
             {
-                const float MAX_NEIGHBOR_DIST = 50f;
-                const float MAX_NEIGHBOR_DIST_SQR = MAX_NEIGHBOR_DIST * MAX_NEIGHBOR_DIST;
-
                 var settings = boid.Group switch
                 {
                     BoidType.Insect => userData.boidSettings.Insect,
@@ -237,7 +238,7 @@ class FlockingGame : IPlugin
                 Span<Entity> neighbors = stackalloc Entity[1024];
 
                 {
-                    var count = userData.spatialQuery.Query(transform.Position, MAX_NEIGHBOR_DIST, boid.Group, neighbors);
+                    var count = userData.spatialQuery.Query(transform.Position, settings.VisionRange, boid.Group, neighbors);
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
@@ -245,8 +246,8 @@ class FlockingGame : IPlugin
                         ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
                         ref var otherVelocity = ref userData.query.Get<Velocity>(neighbor);
 
-                        float distance = (otherTransform.Position - transform.Position).LengthSquared();
-                        if (distance < MAX_NEIGHBOR_DIST_SQR)
+                        float distance = (otherTransform.Position - transform.Position).Length();
+                        if (distance < settings.VisionRange)
                         {
                             cohesion.Add(otherTransform.Position);
                             alignment.Add(otherVelocity.Value);
@@ -254,7 +255,7 @@ class FlockingGame : IPlugin
                     }
                 }
                 {
-                    var count = userData.spatialQuery.Query(transform.Position, MAX_NEIGHBOR_DIST / 4f, ~0u, neighbors);
+                    var count = userData.spatialQuery.Query(transform.Position, 25f, ~0u, neighbors);
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
@@ -263,10 +264,8 @@ class FlockingGame : IPlugin
 
                         Vec2f toNeighbor = otherTransform.Position - transform.Position;
                         float distance = toNeighbor.Length();
-                        if (distance < MAX_NEIGHBOR_DIST)
-                        {
-                            separation.Add(-toNeighbor.Normalized() / distance);
-                        }
+                        separation.Add(-toNeighbor.Normalized() / distance);
+                        if (distance < 4f) separation.Add(-toNeighbor.Normalized() / distance * 10f);
                     }
                 }
 
@@ -284,7 +283,7 @@ class FlockingGame : IPlugin
                     steeringForce += alignment.Average * settings.AlignmentFactor;
                 }
 
-                velocity.Value += steeringForce * userData.deltaTime * 1f;
+                velocity.Value += steeringForce * settings.SteeringFactor * userData.deltaTime;
                 velocity.Value = velocity.Value.ClampLength(0, settings.MaxSpeed);
             });
         }));
@@ -292,7 +291,7 @@ class FlockingGame : IPlugin
         world.Schedule.AddSystems(CoreStage.Update, FnSystem.Create(new("Avoid"),
         static (
             Time time, Query query, SpatialQuery spatial,
-            Query<Transform2D, CollisionShape, BoidAvoid> qAvoid,
+            Query<Transform2D, CollisionShape, AvoidArea> qAvoid,
             Query<Transform2D, CollisionShape, Velocity> qBoids
         ) =>
         {
@@ -300,7 +299,7 @@ class FlockingGame : IPlugin
                 (spatial, query, time.DeltaTimeF),
                 static (
                     in (SpatialQuery spatial, Query query, float deltaTime) userData,
-                    in Entity entity, ref Transform2D transform, ref CollisionShape shape, ref BoidAvoid avoid
+                    in Entity entity, ref Transform2D transform, ref CollisionShape shape, ref AvoidArea avoid
                 ) =>
                 {
                     var boundingCircle = shape.GetBoundingCircle(transform);
@@ -318,12 +317,52 @@ class FlockingGame : IPlugin
                         if (intersection.IsIntersecting)
                         {
                             ref var otherVelocity = ref userData.query.Get<Velocity>(neighbor);
-                            otherVelocity.Value += intersection.Normal * intersection.Distance * avoid.Force * userData.deltaTime;
-                            Log.Info($"{intersection}");
+                            var magnitude = otherVelocity.Value.Length();
+                            otherVelocity.Value += intersection.Normal * avoid.Force * intersection.Distance * userData.deltaTime;
                         }
                     }
                 }
             );
+        }));
+
+        world.Schedule.AddSystems(CoreStage.Update, FnSystem.Create(new("AvoidTarget"),
+        static (Time time, Query query, SpatialQuery spatial, Query<Transform2D, Velocity, AvoidTarget> qBoid) =>
+        {
+            qBoid.ForEach((time.DeltaTimeF, query, spatial),
+            static (in (float deltaTime, Query query, SpatialQuery spatial) userData, ref Transform2D transform, ref Velocity velocity, ref AvoidTarget avoidTarget) =>
+            {
+                const float RANGE = 50f;
+                Span<Entity> neighbors = stackalloc Entity[1024];
+
+                var count = userData.spatial.Query(transform.Position, RANGE, avoidTarget.Target, neighbors);
+                foreach (var neighbor in neighbors[..count])
+                {
+                    ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
+                    var direction = otherTransform.Position - transform.Position;
+                    var distance = direction.Length();
+                    direction = direction.Normalized();
+
+                    var force = Math.Smoothstep(0f, avoidTarget.Force, distance / RANGE);
+                    velocity.Value += -direction * force * userData.deltaTime;
+                }
+            });
+        }));
+
+        world.Schedule.AddSystems(CoreStage.Update, FnSystem.Create(new("ScreenBoundsRebound")
+        {
+            RunsAfter = ["ApplyVelocity"]
+        },
+        static (Query<Transform2D, Velocity>.Filter<All<Boid>> qBoids, IWindow window, Time time) =>
+        {
+            const float REBOUND_FORCE = 3f;
+            qBoids.ForEach((window.Size, time.DeltaTimeF),
+            static (in (Vec2<uint> size, float deltaTime) userData, ref Transform2D transform, ref Velocity velocity) =>
+            {
+                if (transform.Position.X > userData.size.X) velocity.Value += Vec2f.Left * velocity.Value.Length() * userData.deltaTime * REBOUND_FORCE;
+                else if (transform.Position.X < 0) velocity.Value += Vec2f.Right * velocity.Value.Length() * userData.deltaTime * REBOUND_FORCE;
+                if (transform.Position.Y > userData.size.Y) velocity.Value += Vec2f.Down * velocity.Value.Length() * userData.deltaTime * REBOUND_FORCE;
+                else if (transform.Position.Y < 0) velocity.Value += Vec2f.Up * velocity.Value.Length() * userData.deltaTime * REBOUND_FORCE;
+            });
         }));
 
         world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("AlignWithVelocity",
@@ -348,21 +387,6 @@ class FlockingGame : IPlugin
             });
         }));
 
-        /* world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create(new("WrapBoids")
-        {
-            RunsAfter = ["ApplyVelocity"]
-        },
-        static (Query<Transform2D> qBoids, IWindow window) =>
-        {
-            qBoids.ForEach(window.Size, static (in Vec2<uint> size, ref Transform2D transform) =>
-            {
-                if (transform.Position.X > size.X) transform.Position.X = 0;
-                else if (transform.Position.X < 0) transform.Position.X = size.X;
-                if (transform.Position.Y > size.Y) transform.Position.Y = 0;
-                else if (transform.Position.Y < 0) transform.Position.Y = size.Y;
-            });
-        })); */
-
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create("UpdateSpatialQuery",
         static (Commands commands, SpatialQuery spatialQuery, Query<Transform2D, CollisionShape, Boid> qBoids) =>
         {
@@ -374,19 +398,45 @@ class FlockingGame : IPlugin
             });
         }));
 
+        world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("DebugDraw",
+        static (Local<bool> active, ButtonInput<Key> keys, Gizmos gizmos,
+            Query<Transform2D, Velocity, CollisionShape>.Filter<All<Boid>> qBoids,
+            Query<Transform2D, AvoidArea, CollisionShape> qAvoids
+        ) =>
+        {
+            if (keys.JustPressed(Key.KeyP)) active.Value = !active.Value;
+            if (!active.Value) return;
+
+            foreach (var boid in qBoids)
+            {
+                gizmos.DrawRay(boid.Component0.Position, boid.Component1.Value.Normalized(), Color.GREEN, 50f);
+                gizmos.DrawCircle(boid.Component0.Position, boid.Component2.GetBoundingCircle(boid.Component0).Radius, Color.RED);
+            }
+
+            foreach (var boid in qAvoids)
+            {
+                if (boid.Component2.Type == CollisionShapeType.Rectangle)
+                {
+                    var bounds = boid.Component2.GetShape<Bounds2D>();
+                    gizmos.DrawRectFilled(boid.Component0.Position + bounds.Center, bounds.Extents, 0f, Color.RED.WithAlpha(0.1f));
+                }
+                else if (boid.Component2.Type == CollisionShapeType.Circle)
+                {
+                    var circle = boid.Component2.GetShape<Circle2D>();
+                    gizmos.DrawCircle(boid.Component0.Position + circle.Center, circle.Radius, Color.RED.WithAlpha(0.1f));
+                }
+            }
+        }));
+
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("DebugBoids")
         {
             RunsAfter = ["UpdateSpatialQuery"],
-            Locals = [
-                Local.From(new ArrayList<Entity>())
-            ]
+            Locals = []
         },
         static (
-            Local<ArrayList<Entity>> neighbors,
             SpatialQuery spatialQuery,
             InputManager input, IWindow window,
-            Query<Transform2D, DebugBoid, CollisionShape> qDebug,
-            Query query, Time time) =>
+            Query<Transform2D, DebugBoid, CollisionShape> qDebug) =>
         {
             if (input.GetDevice<Mouse>("mouse") is not { } mouse) return;
 
@@ -396,33 +446,6 @@ class FlockingGame : IPlugin
                 var mousePos = mouse.Position;
                 var mousePosWorld = new Vec2f(mousePos.X, window.Size.Y - mousePos.Y);
                 debugDraw.Component0.Position = mousePosWorld;
-            }
-
-            foreach (var neighbor in neighbors.Value.AsSpan(neighbors.Value.Count))
-            {
-                ref var otherShapeDraw = ref query.Get<ShapeDraw>(neighbor);
-                otherShapeDraw.Color = Color.GREEN;
-            }
-
-            neighbors.Value.EnsureCapacity(1024);
-            var neighborsSpan = neighbors.Value.AsSpan(1024);
-            var count = spatialQuery.Query(
-                debugDraw.Component0.Position,
-                debugDraw.Component2.GetBoundingCircle(debugDraw.Component0).Radius,
-                BoidType.SmallBird, neighborsSpan);
-
-            neighbors.Value.SetCount(count);
-            foreach (var neighbor in neighborsSpan[..count])
-            {
-                ref var otherShape = ref query.Get<CollisionShape>(neighbor);
-                ref var otherTransform = ref query.Get<Transform2D>(neighbor);
-
-                var intersection = debugDraw.Component2.GetIntersection(debugDraw.Component0, otherShape, otherTransform);
-                if (intersection.IsIntersecting)
-                {
-                    ref var otherShapeDraw = ref query.Get<ShapeDraw>(neighbor);
-                    otherShapeDraw.Color = Color.RED;
-                }
             }
         }));
     }
@@ -445,16 +468,6 @@ class FlockingGame : IPlugin
                 BoidType.LargeBird => 4f,
                 _ => 1f,
             }),
-            new Energy()
-            {
-                Current = 100f,
-                Max = 100f,
-            },
-            new Hunger()
-            {
-                Current = 100f,
-                Max = 100f,
-            },
             new ShapeDraw()
             {
                 MaterialHandle = commonResources.BoidMaterial,
@@ -466,15 +479,37 @@ class FlockingGame : IPlugin
                     _ => commonResources.InsectShape,
                 },
                 Color = color,
+            },
+            new AvoidTarget()
+            {
+                Force = group switch
+                {
+                    BoidType.Insect => 250f,
+                    BoidType.SmallBird => 500f,
+                    _ => 0f,
+                },
+                Target = group switch
+                {
+                    BoidType.Insect => BoidType.SmallBird,
+                    BoidType.SmallBird => BoidType.LargeBird,
+                    _ => BoidType.None,
+                }
             }
         ));
     }
 }
 
 struct DebugBoid : IComponent { }
-struct BoidAvoid : IComponent
+struct AvoidArea : IComponent
 {
     public required float Force;
+    public required BoidType Target;
+}
+
+struct AvoidTarget : IComponent
+{
+    public required float Force;
+    public required BoidType Target;
 }
 
 struct BoidCalc
@@ -497,6 +532,8 @@ struct Velocity : IComponent
 
 enum BoidType : uint
 {
+    None = 0u,
+    All = ~0u,
     Insect = 1u << 0,
     SmallBird = 1u << 1,
     LargeBird = 1u << 2,
@@ -507,26 +544,16 @@ struct Boid : IComponent
     public required BoidType Group;
 }
 
-struct Energy : IComponent
-{
-    public required float Current;
-    public required float Max;
-}
-
-struct Hunger : IComponent
-{
-    public required float Current;
-    public required float Max;
-}
-
 class BoidSettings
 {
     public struct Settings
     {
         public required float MaxSpeed;
+        public required float SteeringFactor;
         public required float SeparationFactor;
         public required float CohesionFactor;
         public required float AlignmentFactor;
+        public required float VisionRange;
     }
 
     public required Settings Insect;
