@@ -62,7 +62,7 @@ public class Schedule : IDisposable
 
     public Schedule AddSystems(StageLabel stageLabel, params ISystem[] systems)
     {
-        var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Label} not found");
+        var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Value} not found");
         foreach (var system in systems)
         {
             stage.AddSystem(system);
@@ -72,7 +72,7 @@ public class Schedule : IDisposable
 
     public Schedule AddSystems(StageLabel stageLabel, params ISystemBuilder[] builders)
     {
-        var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Label} not found");
+        var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Value} not found");
         foreach (var builder in builders)
         {
             var system = builder.Build();

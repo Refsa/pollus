@@ -4,10 +4,10 @@ namespace Pollus.ECS;
 
 public class ExclusiveSystemMarker { }
 
-public record struct SystemLabel(string Label)
+public record struct SystemLabel(string Value)
 {
-    public static implicit operator SystemLabel(string label) => new(label);
-    public override string ToString() => $"System<{Label}>";
+    public static implicit operator SystemLabel(string value) => new(value);
+    public override string ToString() => $"System<{Value}>";
 }
 
 public class SystemDescriptor

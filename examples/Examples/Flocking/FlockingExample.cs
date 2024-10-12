@@ -24,7 +24,6 @@ using Pollus.Utils;
 public class FlockingExample : IExample
 {
     public string Name => "flocking";
-
     IApplication? app;
 
     public void Run()
@@ -48,6 +47,7 @@ public class FlockingExample : IExample
                 new AudioPlugin(),
                 new PerformanceTrackerPlugin(),
                 new RandomPlugin(),
+                SpatialPlugin.Grid(64, 2048 / 64, 1024 / 64),
                 new FlockingGame(),
             ])
             .Build();
@@ -73,7 +73,6 @@ class FlockingGame : IPlugin
 {
     public void Apply(World world)
     {
-        world.Resources.Add(new SpatialQuery(64, 2048 / 64, 1024 / 64));
         world.Resources.Add(new CommonResources());
         world.Resources.Add(new BoidSettings()
         {
@@ -216,9 +215,10 @@ class FlockingGame : IPlugin
         },
         static (
             SpatialQuery spatialQuery,
-            Query<Transform2D, Velocity, Boid> qBoids,
             BoidSettings boidSettings,
-            Query query, IWindow window, Time time) =>
+            Query query, IWindow window, Time time,
+            Query<Transform2D, Velocity, Boid> qBoids
+        ) =>
         {
             qBoids.ForEach((spatialQuery, query, time.DeltaTimeF, boidSettings),
             static (in (SpatialQuery spatialQuery, Query query, float deltaTime, BoidSettings boidSettings) userData,
@@ -246,16 +246,21 @@ class FlockingGame : IPlugin
                         ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
                         ref var otherVelocity = ref userData.query.Get<Velocity>(neighbor);
 
-                        float distance = (otherTransform.Position - transform.Position).Length();
+                        var direction = otherTransform.Position - transform.Position;
+                        float distance = direction.Length();
                         if (distance < settings.VisionRange)
                         {
                             cohesion.Add(otherTransform.Position);
                             alignment.Add(otherVelocity.Value);
                         }
+
+                        direction = direction.Normalized();
+                        if (distance < 25f) separation.Add(-direction / distance);
+                        if (distance < 4f) separation.Add(-direction / distance * 10f);
                     }
                 }
                 {
-                    var count = userData.spatialQuery.Query(transform.Position, 25f, ~0u, neighbors);
+                    var count = userData.spatialQuery.Query(transform.Position, 25f, ~boid.Group, neighbors);
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
@@ -546,7 +551,7 @@ struct Boid : IComponent
 
 class BoidSettings
 {
-    public struct Settings
+    public class Settings
     {
         public required float MaxSpeed;
         public required float SteeringFactor;

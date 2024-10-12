@@ -18,6 +18,14 @@ public interface IFilterChunk : IFilter
     new bool FilterChunk(ArchetypeChunk chunk);
 }
 
+public class Empty : IFilter
+{
+    public object? this[int index] => null;
+    public int Length => 0;
+
+    public bool Filter(Archetype archetype) => true;
+}
+
 public class None<C0> : IFilter
     where C0 : unmanaged, IComponent
 {

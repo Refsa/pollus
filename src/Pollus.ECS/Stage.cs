@@ -1,11 +1,13 @@
 namespace Pollus.ECS;
 
-using Pollus.Debugging;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
+using Pollus.Debugging;
 
-public record struct StageLabel(string Label)
+public record struct StageLabel(string Value)
 {
-    public override string ToString() => $"Stage<{Label}>";
+    public override string ToString() => $"Stage<{Value}>";
 }
 
 public static class CoreStage
@@ -49,6 +51,12 @@ public record class Stage : IDisposable
 
     public void AddSystem(ISystem system)
     {
+        if (Systems.Find(e => e.Descriptor.Label == system.Descriptor.Label) is not null)
+        {
+            Span<byte> result = stackalloc byte[16];
+            MD5.HashData(MemoryMarshal.Cast<char, byte>(system.Descriptor.Label.Value.AsSpan()), result);
+            system.Descriptor.WithLabel($"{system.Descriptor.Label}-{new string(MemoryMarshal.Cast<byte, char>(result))}");
+        }
         Systems.Add(system);
     }
 
@@ -106,7 +114,7 @@ public record class Stage : IDisposable
 
         if (index != Systems.Count)
         {
-            throw new InvalidOperationException($"A cycle was detected in stage {Label.Label}.");
+            throw new InvalidOperationException($"A cycle was detected in stage {Label.Value}.");
         }
     }
 
@@ -125,7 +133,7 @@ public record class Stage : IDisposable
             }
             catch (Exception e)
             {
-                Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Label} in stage {Label.Label}.");
+                Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Value} in stage {Label.Value}.");
                 throw;
             }
         }
@@ -137,13 +145,13 @@ public record class Stage : IDisposable
         sb.AppendLine(Label.ToString());
         foreach (var system in Systems)
         {
-            sb.AppendLine($"\t{system.Descriptor.Label.Label}");
+            sb.AppendLine($"\t{system.Descriptor.Label.Value}");
             // sb.AppendLine($"\t\tParameters: {string.Join(", ", system.Descriptor.Parameters)}");
             // sb.AppendLine($"\t\tDependencies: {string.Join(", ", system.Descriptor.Dependencies)}");
             // if (system.Descriptor.RunsBefore.Count > 0)
-                // sb.AppendLine($"\t\tRuns Before: {string.Join(", ", system.Descriptor.RunsBefore)}");
+            // sb.AppendLine($"\t\tRuns Before: {string.Join(", ", system.Descriptor.RunsBefore)}");
             // if (system.Descriptor.RunsAfter.Count > 0)
-                // sb.AppendLine($"\t\tRuns After: {string.Join(", ", system.Descriptor.RunsAfter)}");
+            // sb.AppendLine($"\t\tRuns After: {string.Join(", ", system.Descriptor.RunsAfter)}");
         }
         return sb.ToString();
     }

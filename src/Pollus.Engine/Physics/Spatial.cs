@@ -1,43 +1,62 @@
 namespace Pollus.Spatial;
 
 using System.Runtime.CompilerServices;
-using Pollus.Collections;
 using Pollus.ECS;
-using Pollus.Mathematics;
+using Pollus.Engine.Physics;
+using Pollus.Engine.Transform;
 
-public class SpatialQuery
+public static class SpatialPlugin
 {
-    SpatialHashGrid<Entity> cache;
-
-    public SpatialQuery(int cellSize, int width, int height)
+    public static SpatialPlugin<SpatialGrid, Empty> Grid(int cellSize, int width, int height)
     {
-        cache = new SpatialHashGrid<Entity>(cellSize, width, height);
+        return new SpatialPlugin<SpatialGrid, Empty>(new SpatialGrid(cellSize, width, height));
     }
 
-    public void Insert(Entity entity, Vec2f position, float radius, uint layer)
+    public static SpatialPlugin<SpatialGrid, TQueryFilters> Grid<TQueryFilters>(int cellSize, int width, int height)
+        where TQueryFilters : ITuple, new()
     {
-        cache.Insert(entity, position, radius, layer);
+        return new SpatialPlugin<SpatialGrid, TQueryFilters>(new SpatialGrid(cellSize, width, height));
+    }
+}
+
+public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
+    where TSpatialQuery : ISpatialQuery
+    where TQueryFilters : ITuple, new()
+{
+    public TSpatialQuery SpatialQuery { get; init; }
+
+    public SpatialPlugin(TSpatialQuery spatialQuery)
+    {
+        SpatialQuery = spatialQuery;
     }
 
-    public void Insert<TLayer>(Entity entity, Vec2f position, float radius, TLayer layer)
-        where TLayer : unmanaged, Enum
+    public void Apply(World world)
     {
-        cache.Insert(entity, position, radius, Unsafe.As<TLayer, uint>(ref layer));
+        if (world.Resources.Has<SpatialQuery>()) 
+        {
+            throw new InvalidOperationException("SpatialQuery already created");
+        }
+
+        world.Resources.Add(new SpatialQuery(SpatialQuery));
+
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create($"SpatialQuery<{typeof(TSpatialQuery).Name}>::Update",
+        static (
+            SpatialQuery spatialQuery,
+            Query<Transform2D, CollisionShape>.Filter<TQueryFilters> qShapes) =>
+        {
+            spatialQuery.Clear();
+            qShapes.ForEach(new UpdateJob() { SpatialQuery = spatialQuery });
+        }));
     }
 
-    public int Query(Vec2f position, float radius, uint layer, Span<Entity> results)
+    readonly struct UpdateJob : IEntityForEach<Transform2D, CollisionShape>
     {
-        return cache.Query(position, radius, layer, results);
-    }
+        public readonly SpatialQuery SpatialQuery { get; init; }
 
-    public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<Entity> results)
-        where TLayer : unmanaged, Enum
-    {
-        return cache.Query(position, radius, Unsafe.As<TLayer, uint>(ref layer), results);
-    }
-
-    public void Clear()
-    {
-        cache.Clear();
+        public readonly void Execute(in Entity entity, ref Transform2D transform, ref CollisionShape shape)
+        {
+            var boundingCircle = shape.GetBoundingCircle(transform);
+            SpatialQuery.Insert(entity, transform.Position, boundingCircle.Radius, ~0u);
+        }
     }
 }
