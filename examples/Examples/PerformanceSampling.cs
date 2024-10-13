@@ -17,7 +17,7 @@ public class PerformanceSampling : IExample
         ResourceFetch<SpatialHashGrid<Entity>>.Register();
 
         app = Application.Builder
-            .AddResource(new SpatialHashGrid<Entity>(64, 2048 / 64, 2048 / 64))
+            .AddResource(new SpatialHashGrid<Entity>(64, 2048, 2048))
             .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
             static (Commands commands) =>
             {

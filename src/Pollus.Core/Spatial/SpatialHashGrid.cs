@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Mathematics;
 
-public class SpatialHashGrid<TData>
+public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 {
     public struct CellEntry
     {
@@ -80,6 +80,18 @@ public class SpatialHashGrid<TData>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Prepare()
+    {
+        Clear();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Insert<TLayer>(TData entity, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
+    {
+        Insert(entity, position, radius, Unsafe.As<TLayer, uint>(ref layer));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var cellIdx = GetCell(position);
@@ -94,6 +106,12 @@ public class SpatialHashGrid<TData>
         int y = (int)((position.Y + offset.Y) / cellSize);
         if (x < 0 || x >= width || y < 0 || y >= height) return -1;
         return x + y * width;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<TData> results) where TLayer : unmanaged, Enum
+    {
+        return Query(position, radius, Unsafe.As<TLayer, uint>(ref layer), results);
     }
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)

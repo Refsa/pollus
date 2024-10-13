@@ -7,20 +7,25 @@ using Pollus.Engine.Transform;
 
 public static class SpatialPlugin
 {
-    public static SpatialPlugin<SpatialGrid, Empty> Grid(int cellSize, int width, int height)
+    public static SpatialPlugin<SpatialHashGrid<Entity>, Empty> Grid(int cellSize, int width, int height)
     {
-        return new SpatialPlugin<SpatialGrid, Empty>(new SpatialGrid(cellSize, width, height));
+        return new SpatialPlugin<SpatialHashGrid<Entity>, Empty>(new SpatialHashGrid<Entity>(cellSize, width, height));
     }
 
-    public static SpatialPlugin<SpatialGrid, TQueryFilters> Grid<TQueryFilters>(int cellSize, int width, int height)
+    public static SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters> Grid<TQueryFilters>(int cellSize, int width, int height)
         where TQueryFilters : ITuple, new()
     {
-        return new SpatialPlugin<SpatialGrid, TQueryFilters>(new SpatialGrid(cellSize, width, height));
+        return new SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters>(new SpatialHashGrid<Entity>(cellSize, width, height));
+    }
+
+    public static SpatialPlugin<SpatialLooseGrid<Entity>, Empty> LooseGrid(int cellSize, int coarseSize, int gridSize)
+    {
+        return new SpatialPlugin<SpatialLooseGrid<Entity>, Empty>(new SpatialLooseGrid<Entity>(cellSize, coarseSize, gridSize));
     }
 }
 
 public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
-    where TSpatialQuery : ISpatialQuery
+    where TSpatialQuery : ISpatialContainer<Entity>
     where TQueryFilters : ITuple, new()
 {
     public TSpatialQuery SpatialQuery { get; init; }
@@ -32,7 +37,7 @@ public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
 
     public void Apply(World world)
     {
-        if (world.Resources.Has<SpatialQuery>()) 
+        if (world.Resources.Has<SpatialQuery>())
         {
             throw new InvalidOperationException("SpatialQuery already created");
         }
@@ -44,7 +49,7 @@ public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
             SpatialQuery spatialQuery,
             Query<Transform2D, CollisionShape>.Filter<TQueryFilters> qShapes) =>
         {
-            spatialQuery.Clear();
+            spatialQuery.Prepare();
             qShapes.ForEach(new UpdateJob() { SpatialQuery = spatialQuery });
         }));
     }

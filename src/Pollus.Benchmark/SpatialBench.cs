@@ -24,8 +24,12 @@ public class SpatialBench
     }
 
     const int ENTITY_COUNT = 32 * 32 * 128;
-    SpatialHashGrid<Entity> spatialGrid = new SpatialHashGrid<Entity>(64, 2048 / 64, 2048 / 64);
-    SpatialHashGrid<Entity> spatialGridInsert = new(64, 2048 / 64, 2048 / 64);
+    SpatialHashGrid<Entity> spatialHashGrid = new(64, 2048 / 64, 2048 / 64);
+    SpatialHashGrid<Entity> spatialHashGridInsert = new(64, 2048 / 64, 2048 / 64);
+
+    SpatialLooseGrid<Entity> spatialLooseGrid = new(64, 256, 512);
+    SpatialLooseGrid<Entity> spatialLooseGridInsert = new(64, 256, 512);
+
     EntityInsertData[] entities = new EntityInsertData[ENTITY_COUNT];
 
     public SpatialBench()
@@ -36,28 +40,49 @@ public class SpatialBench
                 {
                     var entity = new Entity(x + y * 32 + z * 32 * 32);
                     entities[x + y * 32 + z * 32 * 32] = new EntityInsertData(entity, new Vec2f(x, y));
-                    spatialGrid.Insert(entity, new Vec2f(x, y), 4, 1u << 0);
+                    spatialHashGrid.Insert(entity, new Vec2f(x, y), 4, 1u << 0);
+                    spatialLooseGrid.Insert(entity, new Vec2f(x, y), 4, 1u << 0);
                 }
     }
 
     /* [Benchmark]
-    public int SpatialGrid_Query()
+    public int SpatialHashGrid_Query()
     {
         Span<Entity> result = stackalloc Entity[1024];
-        var count = spatialGrid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
+        var count = spatialHashGrid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
         // Guard.IsTrue(count > 0, "Expected to find at least one entity");
         return count;
     } */
 
     [Benchmark]
-    public SpatialHashGrid<Entity> SpatialGrid_Insert()
+    public int SpatialLooseGrid_Query()
     {
-        spatialGridInsert.Clear();
+        Span<Entity> result = stackalloc Entity[1024];
+        var count = spatialLooseGrid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
+        return count;
+    }
+
+    /* [Benchmark]
+    public SpatialHashGrid<Entity> SpatialHashGrid_Insert()
+    {
+        spatialHashGridInsert.Clear();
         var span = entities.AsSpan();
         for (int i = 0; i < span.Length; i++)
         {
-            spatialGridInsert.Insert(span[i].entity, span[i].pos, 4, 1u << 0);
+            spatialHashGridInsert.Insert(span[i].entity, span[i].pos, 4, 1u << 0);
         }
-        return spatialGridInsert;
-    }
+        return spatialHashGridInsert;
+    } */
+
+    /* [Benchmark]
+    public SpatialLooseGrid<Entity> SpatialLooseGrid_Insert()
+    {
+        spatialLooseGridInsert.Clear();
+        var span = entities.AsSpan();
+        for (int i = 0; i < span.Length; i++)
+        {
+            spatialLooseGridInsert.Insert(span[i].entity, span[i].pos, 4, 1u << 0);
+        }
+        return spatialLooseGridInsert;
+    } */
 }
