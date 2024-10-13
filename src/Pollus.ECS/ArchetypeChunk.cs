@@ -72,9 +72,9 @@ public struct ArchetypeChunk : IDisposable
         foreach (var cid in cids)
         {
             var cinfo = Component.GetInfo(cid);
-            components.Add(cid, new(rows * cinfo.SizeInBytes));
+            components.Add(cid.ID, new(rows * cinfo.SizeInBytes));
 
-            changesLookup.Add(cid, idx);
+            changesLookup.Add(cid.ID, idx);
             changes[idx] = new ChunkComponentInfo(idx, version, rows);
             idx++;
         }
@@ -121,7 +121,7 @@ public struct ArchetypeChunk : IDisposable
             {
                 changes.Resize(changes.Length + 1);
                 changes[^1] = new ChunkComponentInfo(changesLookup.Count, version, 0);
-                changesLookup.Add(cid, changes.Length - 1);
+                changesLookup.Add(cid.ID, changes.Length - 1);
             }
             else changes[info].SetFlag(-1, flag, version);
             return;
@@ -208,7 +208,7 @@ public struct ArchetypeChunk : IDisposable
     unsafe public Span<C> GetComponents<C>(ComponentID cid)
             where C : unmanaged, IComponent
     {
-        return new Span<C>(components.Get(cid).Data, count);
+        return new Span<C>(components.Get(cid.ID).Data, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -216,14 +216,14 @@ public struct ArchetypeChunk : IDisposable
             where C : unmanaged, IComponent
     {
         var cid = Component.GetInfo<C>().ID;
-        ref var array = ref components.Get(cid);
+        ref var array = ref components.Get(cid.ID);
         Unsafe.Write(Unsafe.Add<C>(array.Data, row), component);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public void SetComponent(int row, in ComponentID cid, scoped in ReadOnlySpan<byte> component)
     {
-        ref var array = ref components.Get(cid);
+        ref var array = ref components.Get(cid.ID);
         var dst = Unsafe.Add<byte>(array.Data, row * component.Length);
         component.CopyTo(new Span<byte>(dst, component.Length));
     }
@@ -232,22 +232,24 @@ public struct ArchetypeChunk : IDisposable
     unsafe public ref C GetComponent<C>(int row)
             where C : unmanaged, IComponent
     {
-        return ref GetComponent<C>(row, Component.GetInfo<C>().ID);
+        var cinfo = Component.GetInfo<C>();
+        return ref GetComponent<C>(row, cinfo.ID);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public ref C GetComponent<C>(int row, scoped in ComponentID cid)
             where C : unmanaged, IComponent
     {
-        var array = components.Get(cid);
+        var array = components.Get(cid.ID);
         return ref *(C*)Unsafe.Add<C>(array.Data, row);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public Span<byte> GetComponent(int row, in ComponentID cid)
     {
-        var array = components.Get(cid);
-        return new Span<byte>(Unsafe.Add<byte>(array.Data, row * Component.GetInfo(cid).SizeInBytes), Component.GetInfo(cid).SizeInBytes);
+        var cinfo = Component.GetInfo(cid);
+        var array = components.Get(cid.ID);
+        return new Span<byte>(Unsafe.Add<byte>(array.Data, row * cinfo.SizeInBytes), cinfo.SizeInBytes);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -260,12 +262,12 @@ public struct ArchetypeChunk : IDisposable
     public bool HasComponent<C>()
             where C : unmanaged, IComponent
     {
-        return components.Has(Component.GetInfo<C>().ID);
+        return components.Has(Component.GetInfo<C>().ID.ID);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent(ComponentID cid)
     {
-        return components.Has(cid);
+        return components.Has(cid.ID);
     }
 }

@@ -155,6 +155,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if it has component</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly bool Has<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -168,6 +169,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if it was added</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly bool Added<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -181,6 +183,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if was changes</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly bool Changed<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -194,6 +197,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// </summary>
     /// <param name="entity">entity to mark</param>
     /// <typeparam name="C">component to mark</typeparam>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void SetChanged<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -207,12 +211,14 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if component was removed</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public readonly bool Removed<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
         return world.Store.Removed.WasRemoved<C>(entity);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref C Get<C>(in Entity entity)
         where C : unmanaged, IComponent
     {

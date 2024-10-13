@@ -6,8 +6,6 @@ using Pollus.Graphics;
 [ShaderType]
 public partial record struct Vec4f
 {
-    public static int SizeInBytes => Unsafe.SizeOf<float>() * 4;
-
     public static Vec4f Zero => new(0f, 0f, 0f, 0f);
     public static Vec4f UnitX => new(1f, 0f, 0f, 0f);
     public static Vec4f UnitY => new(0f, 1f, 0f, 0f);

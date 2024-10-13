@@ -1,6 +1,6 @@
 namespace Pollus.Spatial;
 
-using System.Numerics;
+using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Mathematics;
 
@@ -13,6 +13,7 @@ public class SpatialHashGrid<TData>
         public float Radius;
         public Vec2f Position;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public bool HasLayer(uint layer) => (Layer & layer) != 0;
     }
 
@@ -34,15 +35,22 @@ public class SpatialHashGrid<TData>
         }
 
         public ref CellEntry this[int index] => ref entries[index];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public ref CellEntry Next()
         {
             if (count == entries.Length) Array.Resize(ref entries, count * 2);
             return ref entries[count++];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void AddLayer(uint layer) => layerMask |= layer;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void RemoveLayer(uint layer) => layerMask &= ~layer;
-        public bool HasLayer(uint layer) => (layerMask & layer) != 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        public readonly bool HasLayer(uint layer) => (layerMask & layer) != 0;
     }
 
     readonly int cellSize;
@@ -64,6 +72,7 @@ public class SpatialHashGrid<TData>
         for (int i = 0; i < cells.Length; i++) cells[i] = new Cell();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Clear()
     {
         entryCount = 0;
@@ -83,6 +92,7 @@ public class SpatialHashGrid<TData>
         entryCount++;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int GetCell(Vec2f position)
     {
         Vec2f offsetPosition = position + offset;

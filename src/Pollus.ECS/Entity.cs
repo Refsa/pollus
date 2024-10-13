@@ -32,6 +32,7 @@ public class Entities
 
     public int AliveCount => Volatile.Read(ref aliveCount);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Create()
     {
         var entityId = freeList.Pop();
@@ -47,6 +48,7 @@ public class Entities
         return entityInfo.Entity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Create(in Span<Entity> target)
     {
         for (int i = 0; i < target.Length; i++)
@@ -56,6 +58,7 @@ public class Entities
         Interlocked.Add(ref aliveCount, target.Length);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Free(in Entity entity)
     {
         ref var entityInfo = ref GetEntityInfo(entity);
@@ -64,16 +67,19 @@ public class Entities
         Interlocked.Decrement(ref aliveCount);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool IsAlive(in Entity entity)
     {
         return Volatile.Read(ref aliveCount) > 0 && entities[entity.ID].IsAlive;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref EntityInfo GetEntityInfo(in Entity entity)
     {
         return ref entities[entity.ID];
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     ref EntityInfo NewEntity()
     {
         var id = Interlocked.Increment(ref counter);

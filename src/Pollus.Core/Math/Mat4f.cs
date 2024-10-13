@@ -7,8 +7,6 @@ using Pollus.Graphics;
 [ShaderType]
 public partial record struct Mat4f
 {
-    public static int SizeInBytes => Unsafe.SizeOf<float>() * 16;
-
     public Vec4f Col0;
     public Vec4f Col1;
     public Vec4f Col2;
