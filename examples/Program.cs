@@ -48,6 +48,7 @@ IExample? example = args[0] switch
     "transform" => new TransformExample(),
     "flocking" => new FlockingExample(),
     "gizmo" => new GizmoExample(),
+    "psample" => new PerformanceSampling(),
     _ => null
 };
 

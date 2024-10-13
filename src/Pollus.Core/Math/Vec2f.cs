@@ -24,62 +24,62 @@ public partial record struct Vec2f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator Vec2f(System.Numerics.Vector2 vector2)
+    public static implicit operator Vec2f(in System.Numerics.Vector2 vector2)
     {
         return new Vec2f(vector2.X, vector2.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator System.Numerics.Vector2(Vec2f vector2)
+    public static implicit operator System.Numerics.Vector2(in Vec2f vector2)
     {
         return new System.Numerics.Vector2(vector2.X, vector2.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static implicit operator Vec2f((float, float) tuple)
+    public static implicit operator Vec2f(in (float, float) tuple)
     {
         return new Vec2f(tuple.Item1, tuple.Item2);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator +(Vec2f left, Vec2f right)
+    public static Vec2f operator +(in Vec2f left, in Vec2f right)
     {
         return new Vec2f(left.X + right.X, left.Y + right.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator -(Vec2f left, Vec2f right)
+    public static Vec2f operator -(in Vec2f left, in Vec2f right)
     {
         return new Vec2f(left.X - right.X, left.Y - right.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator -(Vec2f left)
+    public static Vec2f operator -(in Vec2f left)
     {
         return new Vec2f(-left.X, -left.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator *(Vec2f left, float right)
+    public static Vec2f operator *(in Vec2f left, float right)
     {
         return new Vec2f(left.X * right, left.Y * right);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator *(float left, Vec2f right)
+    public static Vec2f operator *(float left, in Vec2f right)
     {
         return new Vec2f(left * right.X, left * right.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator *(Vec2f left, Vec2f right)
+    public static Vec2f operator *(in Vec2f left, in Vec2f right)
     {
         return new Vec2f(left.X * right.X, left.Y * right.Y);
     }
 
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f operator /(Vec2f left, float right)
+    public static Vec2f operator /(in Vec2f left, float right)
     {
         return new Vec2f(left.X / right, left.Y / right);
     }
@@ -111,7 +111,7 @@ public partial record struct Vec2f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly Vec2f Clamp(Vec2f min, Vec2f max)
+    public readonly Vec2f Clamp(in Vec2f min, in Vec2f max)
     {
         return new Vec2f(float.Clamp(X, min.X, max.X), float.Clamp(Y, min.Y, max.Y));
     }
@@ -125,19 +125,19 @@ public partial record struct Vec2f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly float Dot(Vec2f other)
+    public readonly float Dot(in Vec2f other)
     {
         return X * other.X + Y * other.Y;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly Vec2f Cross(Vec2f other)
+    public readonly Vec2f Cross(in Vec2f other)
     {
         return new Vec2f(X * other.Y - Y * other.X, Y * other.X - X * other.Y);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly Vec2f Reflect(Vec2f normal)
+    public readonly Vec2f Reflect(in Vec2f normal)
     {
         return this - 2f * Dot(normal) * normal;
     }
@@ -151,14 +151,14 @@ public partial record struct Vec2f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public Vec2f Rotate(float angle, Vec2f center)
+    public Vec2f Rotate(float angle, in Vec2f center)
     {
         Vec2f offset = this - center;
         return center + offset.Rotate(angle);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool Approximately(Vec2f other, float tolerance = float.Epsilon)
+    public readonly bool Approximately(in Vec2f other, float tolerance = float.Epsilon)
     {
         return X.Approximately(other.X, tolerance) && Y.Approximately(other.Y, tolerance);
     }
@@ -170,20 +170,32 @@ public partial record struct Vec2f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f Min(Vec2f a, Vec2f b)
+    public static Vec2f Min(in Vec2f a, in Vec2f b)
     {
         return new Vec2f(float.Min(a.X, b.X), float.Min(a.Y, b.Y));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f Max(Vec2f a, Vec2f b)
+    public static Vec2f Max(in Vec2f a, in Vec2f b)
     {
         return new Vec2f(float.Max(a.X, b.X), float.Max(a.Y, b.Y));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public static Vec2f Lerp(Vec2f a, Vec2f b, float t)
+    public static Vec2f Lerp(in Vec2f a, in Vec2f b, float t)
     {
         return new Vec2f(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static float Distance(in Vec2f a, in Vec2f b)
+    {
+        return float.Sqrt(DistanceSquared(a, b));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static float DistanceSquared(in Vec2f a, in Vec2f b)
+    {
+        return (a.X - b.X) * (a.X - b.X) + (a.Y - b.Y) * (a.Y - b.Y);
     }
 }

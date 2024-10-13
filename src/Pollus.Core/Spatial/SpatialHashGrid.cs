@@ -14,7 +14,7 @@ public class SpatialHashGrid<TData>
         public Vec2f Position;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public bool HasLayer(uint layer) => (Layer & layer) != 0;
+        public readonly bool HasLayer(uint layer) => (Layer & layer) != 0;
     }
 
     public struct Cell
@@ -37,17 +37,19 @@ public class SpatialHashGrid<TData>
         public ref CellEntry this[int index] => ref entries[index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public ref CellEntry Next()
+        public void Add(TData data, Vec2f position, uint layer, float radius)
         {
-            if (count == entries.Length) Array.Resize(ref entries, count * 2);
-            return ref entries[count++];
+            layerMask |= layer;
+
+            if (count >= entries.Length) Array.Resize(ref entries, count * 2);
+            entries[count++] = new()
+            {
+                Data = data,
+                Layer = layer,
+                Radius = radius,
+                Position = position
+            };
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void AddLayer(uint layer) => layerMask |= layer;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public void RemoveLayer(uint layer) => layerMask &= ~layer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public readonly bool HasLayer(uint layer) => (layerMask & layer) != 0;
@@ -58,7 +60,6 @@ public class SpatialHashGrid<TData>
     readonly int height;
     readonly Vec2f offset;
 
-    int entryCount;
     Cell[] cells;
 
     public SpatialHashGrid(int cellSize, int width, int height)
@@ -75,61 +76,61 @@ public class SpatialHashGrid<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Clear()
     {
-        entryCount = 0;
         foreach (ref var cell in cells.AsSpan()) cell.Clear();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var cellIdx = GetCell(position);
-        ref var cell = ref cells[cellIdx];
-        ref var cellEntry = ref cell.Next();
-        cell.AddLayer(layer);
-        cellEntry.Data = data;
-        cellEntry.Layer = layer;
-        cellEntry.Radius = radius;
-        cellEntry.Position = position;
-        entryCount++;
+        if (cellIdx == -1) return;
+        cells[cellIdx].Add(data, position, layer, radius);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int GetCell(Vec2f position)
     {
-        Vec2f offsetPosition = position + offset;
-        int x = Math.Clamp((int)(offsetPosition.X / cellSize), 0, width - 1);
-        int y = Math.Clamp((int)(offsetPosition.Y / cellSize), 0, height - 1);
+        int x = (int)((position.X + offset.X) / cellSize);
+        int y = (int)((position.Y + offset.Y) / cellSize);
+        if (x < 0 || x >= width || y < 0 || y >= height) return -1;
         return x + y * width;
     }
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
         var offsetPosition = position + offset;
-        var minX = Math.Clamp((int)((offsetPosition.X - radius) / cellSize), 0, width - 1);
-        var maxX = Math.Clamp((int)((offsetPosition.X + radius) / cellSize), 0, width - 1);
-        var minY = Math.Clamp((int)((offsetPosition.Y - radius) / cellSize), 0, height - 1);
-        var maxY = Math.Clamp((int)((offsetPosition.Y + radius) / cellSize), 0, height - 1);
+        var minX = (int)((offsetPosition.X - radius) / cellSize);
+        var maxX = (int)((offsetPosition.X + radius) / cellSize);
+        var minY = (int)((offsetPosition.Y - radius) / cellSize);
+        var maxY = (int)((offsetPosition.Y + radius) / cellSize);
+        minX = Math.Clamp(minX, 0, width - 1);
+        maxX = Math.Clamp(maxX, 0, width - 1);
+        minY = Math.Clamp(minY, 0, height - 1);
+        maxY = Math.Clamp(maxY, 0, height - 1);
 
         var radiusSquared = radius * radius;
         var resultCursor = 0;
+        var cellsSpan = cells.AsSpan();
 
-        for (int x = minX; x <= maxX; x++)
+        for (int y = minY; y <= maxY; y++)
         {
-            for (int y = minY; y <= maxY; y++)
+            var row = cellsSpan.Slice(y * width + minX, maxX - minX + 1);
+            for (int x = 0; x < row.Length; x++)
             {
-                ref var cell = ref cells[x + y * width];
+                scoped ref var cell = ref row[x];
                 if (cell.Count == 0 || !cell.HasLayer(layer)) continue;
 
-                foreach (ref var cellEntry in cell.Entries)
+                ref var curr = ref cell.Entries[0];
+                for (int i = 0; i < cell.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
-                    if (!cellEntry.HasLayer(layer)) continue;
-                    var relativePosition = cellEntry.Position - position;
-                    if (relativePosition.LengthSquared() > radiusSquared) continue;
-                    result[resultCursor++] = cellEntry.Data;
+                    if (!curr.HasLayer(layer)) continue;
+                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSquared) continue;
+                    result[resultCursor++] = curr.Data;
                     if (resultCursor >= result.Length) return resultCursor;
                 }
             }
         }
-        
+
         return resultCursor;
     }
 }
