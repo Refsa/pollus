@@ -39,6 +39,7 @@ public class FrameGraph2D : IDisposable
     bool frameStarted;
     FrameGraph<FrameGraph2DParam> frameGraph;
     FrameGraph2DParam param;
+    bool isDisposed;
 
     public ref readonly FrameGraph2DParam Param => ref param;
     public ref FrameGraph<FrameGraph2DParam> FrameGraph => ref frameGraph;
@@ -46,6 +47,9 @@ public class FrameGraph2D : IDisposable
 
     public void Dispose()
     {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
         Cleanup();
     }
 
@@ -76,6 +80,7 @@ public class FrameGraph2D : IDisposable
 
     public void Cleanup()
     {
+        if (Unsafe.IsNullRef(ref frameGraph)) return;
         frameGraph.Dispose();
         Unsafe.SkipInit(out frameGraph);
     }

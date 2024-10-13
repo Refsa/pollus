@@ -7,13 +7,14 @@ public class World : IDisposable
 {
     static World()
     {
-        ResourceFetch<World>.Register();
-        ResourceFetch<Resources>.Register();
-        ResourceFetch<Events>.Register();
+        ResourcesFetch.Register();
+        WorldFetch.Register();
         CommandsFetch.Register();
+        ResourceFetch<Events>.Register();
     }
 
     ulong version = 0;
+    bool isDisposed;
 
     readonly HashSet<Type> registeredPlugins;
     readonly Pool<Commands> commandBuffers;
@@ -38,11 +39,22 @@ public class World : IDisposable
 
     public void Dispose()
     {
+        if (isDisposed) return;
         GC.SuppressFinalize(this);
+        isDisposed = true;
 
         Store.Dispose();
         Resources.Dispose();
         Schedule.Dispose();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Prepare()
+    {
+        Resources.Add(this);
+        Resources.Add(Events);
+
+        Schedule.Prepare(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -64,6 +76,7 @@ public class World : IDisposable
         return builder.Spawn(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Despawn(Entity entity)
     {
         Store.DestroyEntity(entity);
@@ -110,6 +123,7 @@ public class World : IDisposable
         return this;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Commands GetCommands()
     {
         var commands = commandBuffers.Rent();
@@ -117,17 +131,6 @@ public class World : IDisposable
         return commands;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Prepare()
-    {
-        Resources.Add(this);
-        Resources.Add(Resources);
-        Resources.Add(Events);
-
-        Schedule.Prepare(this);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Update()
     {
         try
@@ -154,4 +157,10 @@ public class World : IDisposable
             throw;
         }
     }
+}
+
+public class WorldFetch : IFetch<World>
+{
+    public static void Register() => Fetch.Register(new WorldFetch(), []);
+    public World DoFetch(World world, ISystem system) => world;
 }

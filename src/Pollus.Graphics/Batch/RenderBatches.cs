@@ -13,13 +13,18 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
     where TBatch : IRenderBatch
     where TKey : notnull
 {
-    List<TBatch> batches = new();
-    Dictionary<int, int> batchLookup = new();
+    readonly List<TBatch> batches = [];
+    readonly Dictionary<int, int> batchLookup = [];
+    bool isDisposed;
 
     public ListEnumerable<TBatch> Batches => new(batches);
 
     public void Dispose()
     {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
+        
         foreach (var batch in batches)
         {
             (batch as IDisposable)?.Dispose();

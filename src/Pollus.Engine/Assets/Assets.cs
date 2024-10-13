@@ -128,10 +128,15 @@ public class Assets<T> : IDisposable
 
 public class Assets : IDisposable
 {
-    Dictionary<int, object> assets = new();
+    bool isDisposed;
+    readonly Dictionary<int, object> assets = [];
 
     public void Dispose()
     {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
+
         foreach (var asset in assets.Values)
         {
             if (asset is IDisposable disposable)

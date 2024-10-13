@@ -4,12 +4,14 @@ using Pollus.Utils;
 
 public class AssetServer : IDisposable
 {
-    public AssetIO AssetIO { get; }
-    public Assets Assets { get; } = new();
-
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
+
+    bool isDisposed;
+
+    public AssetIO AssetIO { get; }
+    public Assets Assets { get; } = new();
 
     public AssetServer(AssetIO assetIO)
     {
@@ -18,6 +20,9 @@ public class AssetServer : IDisposable
 
     public void Dispose()
     {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
         Assets.Dispose();
     }
 

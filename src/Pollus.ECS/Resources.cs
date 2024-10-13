@@ -4,10 +4,15 @@ using Pollus.Utils;
 
 public class Resources : IDisposable
 {
-    Dictionary<int, object> resources = new();
+    readonly Dictionary<int, object> resources = [];
+    bool isDisposed;
 
     public void Dispose()
     {
+        if (isDisposed) return;
+        isDisposed = true;
+        GC.SuppressFinalize(this);
+
         foreach (var resource in resources.Values)
         {
             if (resource is IDisposable disposable)
@@ -90,4 +95,10 @@ public class ResourceFetch<TResource> : IFetch<TResource>
     {
         return world.Resources.Get<TResource>();
     }
+}
+
+public class ResourcesFetch : IFetch<Resources>
+{
+    public static void Register() => Fetch.Register(new ResourcesFetch(), []);
+    public Resources DoFetch(World world, ISystem system) => world.Resources;
 }
