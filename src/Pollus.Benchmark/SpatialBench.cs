@@ -39,26 +39,26 @@ public class SpatialBench
                 for (int z = 0; z < 128; z++)
                 {
                     var entity = new Entity(x + y * 32 + z * 32 * 32);
-                    entities[x + y * 32 + z * 32 * 32] = new EntityInsertData(entity, new Vec2f(x, y));
-                    spatialHashGrid.Insert(entity, new Vec2f(x, y), 4, 1u << 0);
-                    spatialLooseGrid.Insert(entity, new Vec2f(x, y), 4, 1u << 0);
+                    entities[x + y * 32 + z * 32 * 32] = new EntityInsertData(entity, new Vec2f(x * 64, y * 64));
+                    spatialHashGrid.Insert(entity, new Vec2f(x * 64, y * 64), 4, 1u << 0);
+                    spatialLooseGrid.Insert(entity, new Vec2f(x * 64, y * 64), 4, 1u << 0);
                 }
     }
 
-    /* [Benchmark]
+    [Benchmark]
     public int SpatialHashGrid_Query()
     {
         Span<Entity> result = stackalloc Entity[1024];
-        var count = spatialHashGrid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
+        var count = spatialHashGrid.Query(new Vec2f(0, 0), 128f, 1u << 0, result);
         // Guard.IsTrue(count > 0, "Expected to find at least one entity");
         return count;
-    } */
+    }
 
     [Benchmark]
     public int SpatialLooseGrid_Query()
     {
         Span<Entity> result = stackalloc Entity[1024];
-        var count = spatialLooseGrid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
+        var count = spatialLooseGrid.Query(new Vec2f(0, 0), 128f, 1u << 0, result);
         return count;
     }
 

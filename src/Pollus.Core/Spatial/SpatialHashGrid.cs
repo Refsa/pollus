@@ -67,7 +67,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         this.cellSize = cellSize;
         this.width = width;
         this.height = height;
-        offset = new Vec2f(width / 2, height / 2);
+        offset = new Vec2f(width * cellSize / 2, height * cellSize / 2);
 
         cells = new Cell[width * height];
         for (int i = 0; i < cells.Length; i++) cells[i] = new Cell();
@@ -76,7 +76,12 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Clear()
     {
-        foreach (ref var cell in cells.AsSpan()) cell.Clear();
+        var span = cells.AsSpan();
+        ref var curr = ref span[0];
+        for (int i = 0; i < span.Length; i++, curr = ref Unsafe.Add(ref curr, 1))
+        {
+            curr.Clear();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -86,9 +91,9 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Insert<TLayer>(TData entity, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
+    public void Insert<TLayer>(TData data, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
     {
-        Insert(entity, position, radius, Unsafe.As<TLayer, uint>(ref layer));
+        Insert(data, position, radius, Unsafe.As<TLayer, uint>(ref layer));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -121,12 +126,12 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         var maxX = (int)((offsetPosition.X + radius) / cellSize);
         var minY = (int)((offsetPosition.Y - radius) / cellSize);
         var maxY = (int)((offsetPosition.Y + radius) / cellSize);
-        minX = Math.Clamp(minX, 0, width - 1);
-        maxX = Math.Clamp(maxX, 0, width - 1);
-        minY = Math.Clamp(minY, 0, height - 1);
-        maxY = Math.Clamp(maxY, 0, height - 1);
+        minX = int.Clamp(minX, 0, width - 1);
+        maxX = int.Clamp(maxX, 0, width - 1);
+        minY = int.Clamp(minY, 0, height - 1);
+        maxY = int.Clamp(maxY, 0, height - 1);
 
-        var radiusSquared = radius * radius;
+        var radiusSqr = radius * radius;
         var resultCursor = 0;
         var cellsSpan = cells.AsSpan();
 
@@ -142,7 +147,8 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
                 for (int i = 0; i < cell.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
                     if (!curr.HasLayer(layer)) continue;
-                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSquared) continue;
+                    var contentRadiusSqr = curr.Radius * curr.Radius;
+                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSqr + contentRadiusSqr) continue;
                     result[resultCursor++] = curr.Data;
                     if (resultCursor >= result.Length) return resultCursor;
                 }

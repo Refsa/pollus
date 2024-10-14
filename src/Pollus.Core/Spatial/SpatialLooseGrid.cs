@@ -170,12 +170,12 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
-        var minX = GridLocalToTightCol(position.X - radius);
-        var maxX = GridLocalToTightCol(position.X + radius);
-        var minY = GridLocalToTightRow(position.Y - radius);
-        var maxY = GridLocalToTightRow(position.Y + radius);
+        var minX = PosToTightCol(position.X - radius);
+        var maxX = PosToTightCol(position.X + radius);
+        var minY = PosToTightRow(position.Y - radius);
+        var maxY = PosToTightRow(position.Y + radius);
 
-        var radiusSquared = radius * radius;
+        var radiusSqr = radius * radius;
         var count = 0;
 
         for (int y = minY; y <= maxY; y++)
@@ -197,7 +197,8 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
                     foreach (scoped ref var content in contents)
                     {
                         if ((content.Layer & layer) == 0) continue;
-                        if (Vec2f.DistanceSquared(content.Position, position) > radiusSquared) continue;
+                        var contentRadiusSqr = content.Radius * content.Radius;
+                        if (Vec2f.DistanceSquared(content.Position, position) > radiusSqr + contentRadiusSqr) continue;
 
                         result[count++] = content.Data;
                         if (count >= result.Length) break;
@@ -216,21 +217,21 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Insert<TLayer>(TData entity, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
+    public void Insert<TLayer>(TData data, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
     {
-        Insert(entity, position, radius, Unsafe.As<TLayer, uint>(ref layer));
+        Insert(data, position, radius, Unsafe.As<TLayer, uint>(ref layer));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var content = new Content { Data = data, Layer = layer, Position = position, Radius = radius };
-        int cellRow = GridLocalToCellRow(position.Y - radius);
-        int cellCol = GridLocalToCellCol(position.X - radius);
+        int cellRow = PosToCellRow(position.Y - radius);
+        int cellCol = PosToCellCol(position.X - radius);
         InsertToLoose(content, cellRow, cellCol, layer);
     }
 
-    void InsertToLoose(Content content, int cellRow, int cellCol, uint layer)
+    void InsertToLoose(in Content content, int cellRow, int cellCol, uint layer)
     {
         ref var cell = ref rows[cellRow].Cells[cellCol];
 
@@ -254,10 +255,10 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void InsertToGrid(ref LooseCell cell, int cellRow, int cellCol, uint layer)
     {
-        var minX = GridLocalToTightCol(cell.TopLeft);
-        var maxX = GridLocalToTightCol(cell.BottomRight);
-        var minY = GridLocalToTightRow(cell.BottomLeft);
-        var maxY = GridLocalToTightRow(cell.TopRight);
+        var minX = PosToTightCol(cell.TopLeft);
+        var maxX = PosToTightCol(cell.BottomRight);
+        var minY = PosToTightRow(cell.BottomLeft);
+        var maxY = PosToTightRow(cell.TopRight);
 
         for (int y = minY; y <= maxY; y++)
         {
@@ -270,18 +271,18 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     void ExpandCell(ref LooseCell cell, in Content content, int cellRow, int cellCol, uint layer)
     {
-        var xMin = GridLocalToTightCol(cell.TopLeft);
-        var xMax = GridLocalToTightCol(cell.BottomRight);
-        var yMin = GridLocalToTightRow(cell.BottomLeft);
-        var yMax = GridLocalToTightRow(cell.TopRight);
+        var xMin = PosToTightCol(cell.TopLeft);
+        var xMax = PosToTightCol(cell.BottomRight);
+        var yMin = PosToTightRow(cell.BottomLeft);
+        var yMax = PosToTightRow(cell.TopRight);
 
         cell.BottomLeft = int.Min(cell.BottomLeft, (int)(content.Position.Y - content.Radius));
         cell.TopLeft = int.Min(cell.TopLeft, (int)(content.Position.X - content.Radius));
         cell.BottomRight = int.Max(cell.BottomRight, (int)(content.Position.Y + content.Radius));
         cell.TopRight = int.Max(cell.TopRight, (int)(content.Position.X + content.Radius));
 
-        var yMax2 = GridLocalToTightRow(cell.TopRight);
-        var xMax2 = GridLocalToTightCol(cell.BottomRight);
+        var yMax2 = PosToTightRow(cell.TopRight);
+        var xMax2 = PosToTightCol(cell.BottomRight);
 
         var xDiff = (xMax2 > xMax) ? 1 : 0;
         if (xMax != xMax2 || yMax != yMax2)
@@ -313,28 +314,28 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int GridLocalToTightRow(float y)
+    int PosToTightRow(float y)
     {
         if (y <= 0) return 0;
         return int.Min((int)(y * invTightHeight), tightRowCount - 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int GridLocalToTightCol(float x)
+    int PosToTightCol(float x)
     {
         if (x <= 0) return 0;
         return int.Min((int)(x * invTightWidth), tightColCount - 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int GridLocalToCellRow(float y)
+    int PosToCellRow(float y)
     {
         if (y <= 0) return 0;
         return int.Min((int)(y * invCellHeight), rowCount - 1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    int GridLocalToCellCol(float x)
+    int PosToCellCol(float x)
     {
         if (x <= 0) return 0;
         return int.Min((int)(x * invCellWidth), colCount - 1);

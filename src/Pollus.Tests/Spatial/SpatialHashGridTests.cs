@@ -82,4 +82,17 @@ public class SpatialHashGridTests
         var count = grid.Query(new Vec2f(5f, 5f), 7.1f, 1 << 0, query);
         Assert.Equal(10_000, count);
     }
+
+    [Fact]
+    public void TestQueryOverCellBoundary()
+    {
+        var grid = new SpatialHashGrid<int>(10, 100, 100);
+
+        grid.Insert(1, new Vec2f(50, 5), 100f, 1u << 0);
+
+        Span<int> query = stackalloc int[1024];
+
+        var count = grid.Query(new Vec2f(5, 5), 5f, 1u << 0, query);
+        Assert.Equal(1, count);
+    }
 }

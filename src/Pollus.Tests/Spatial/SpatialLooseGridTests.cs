@@ -99,4 +99,17 @@ public class SpatialLooseGridTests
         var count = grid.Query(new Vec2f(16, 16), 128, 1u << 0, result);
         Assert.Equal(1024, count);
     }
+
+    [Fact]
+    public void TestQueryOverCellBoundary()
+    {
+        var grid = new SpatialLooseGrid<int>(10, 100, 100);
+
+        grid.Insert(1, new Vec2f(50, 5), 100f, 1u << 0);
+
+        Span<int> query = stackalloc int[1024];
+
+        var count = grid.Query(new Vec2f(5, 5), 5f, 1u << 0, query);
+        Assert.Equal(1, count);
+    }
 }
