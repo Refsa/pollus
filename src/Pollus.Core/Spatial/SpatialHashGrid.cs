@@ -4,6 +4,12 @@ using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Mathematics;
 
+/// <summary>
+/// Single layer spatial has grid.
+/// 
+/// Works well for colliders with similar bounds
+/// </summary>
+/// <typeparam name="TData"></typeparam>
 public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 {
     public struct CellEntry
@@ -61,6 +67,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     readonly Vec2f offset;
 
     Cell[] cells;
+    float biggestRadius;
 
     public SpatialHashGrid(int cellSize, int width, int height)
     {
@@ -76,6 +83,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Clear()
     {
+        biggestRadius = 0f;
         var span = cells.AsSpan();
         ref var curr = ref span[0];
         for (int i = 0; i < span.Length; i++, curr = ref Unsafe.Add(ref curr, 1))
@@ -102,6 +110,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         var cellIdx = GetCell(position);
         if (cellIdx == -1) return;
         cells[cellIdx].Add(data, position, layer, radius);
+        biggestRadius = float.Max(biggestRadius, radius);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -121,6 +130,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
+        radius = float.Max(radius, biggestRadius);
         var offsetPosition = position + offset;
         var minX = (int)((offsetPosition.X - radius) / cellSize);
         var maxX = (int)((offsetPosition.X + radius) / cellSize);
@@ -147,8 +157,8 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
                 for (int i = 0; i < cell.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
                     if (!curr.HasLayer(layer)) continue;
-                    var contentRadiusSqr = curr.Radius * curr.Radius;
-                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSqr + contentRadiusSqr) continue;
+                    var currRadiusSqr = curr.Radius * curr.Radius;
+                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSqr + currRadiusSqr) continue;
                     result[resultCursor++] = curr.Data;
                     if (resultCursor >= result.Length) return resultCursor;
                 }

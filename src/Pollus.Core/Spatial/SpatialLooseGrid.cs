@@ -6,6 +6,9 @@ using Pollus.Mathematics;
 
 /// <summary>
 /// Loose/Tight double grid
+/// 
+/// Works well for colliders with vastly different bounds
+/// 
 /// https://stackoverflow.com/a/48384354
 /// </summary>
 public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
