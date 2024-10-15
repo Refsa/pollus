@@ -21,6 +21,7 @@ public class ShapesExample : IExample
     .AddPlugins([
         new AssetPlugin {RootPath = "assets"},
         new RenderingPlugin(),
+        new TransformPlugin<Transform2D>(),
         new ShapePlugin(),
     ])
     .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupShapes",

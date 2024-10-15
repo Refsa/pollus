@@ -28,6 +28,7 @@ public class CollisionExample : IExample
         .AddPlugins([
             new AssetPlugin {RootPath = "assets"},
             new RenderingPlugin(),
+            new TransformPlugin<Transform2D>(),
             new ShapePlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
@@ -42,6 +43,7 @@ public class CollisionExample : IExample
 
             commands.Spawn(Entity.With(
                 Transform2D.Default with { Position = new Vec2f(128f, 128f) },
+                GlobalTransform.Default,
                 new ShapeDraw
                 {
                     MaterialHandle = shapeMaterial,
@@ -53,6 +55,7 @@ public class CollisionExample : IExample
 
             commands.Spawn(Entity.With(
                 Transform2D.Default with { Position = new Vec2f(128f - 96f, 128f - 96f) },
+                GlobalTransform.Default,
                 new ShapeDraw
                 {
                     MaterialHandle = shapeMaterial,
