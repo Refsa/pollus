@@ -15,7 +15,7 @@ public ref struct FrameGraphRunner<TParam>
 
     public void Execute(RenderContext renderContext, TParam param)
     {
-        renderContext.PrepareResources(frameGraph.Resources);
+        renderContext.PrepareResources(ref frameGraph.Resources);
         renderContext.CreateCommandEncoder("""frame-graph-command-encoder""");
         foreach (var passIndex in order)
         {

@@ -1,6 +1,7 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
@@ -69,12 +70,15 @@ public struct BufferResource : IFrameGraphResource
 public struct ResourceContainer<TResource> : IDisposable
     where TResource : struct, IFrameGraphResource
 {
-    TResource[] resources = ArrayPool<TResource>.Shared.Rent(1);
+    TResource[] resources;
     int count;
 
     public ReadOnlySpan<TResource> Resources => resources.AsSpan(0, count);
 
-    public ResourceContainer() { }
+    public ResourceContainer()
+    {
+        resources = ArrayPool<TResource>.Shared.Rent(1);
+    }
 
     public void Dispose()
     {
@@ -112,8 +116,8 @@ public struct ResourceContainers : IDisposable
     Dictionary<string, ResourceHandle> resourceByName;
 
     public IReadOnlyDictionary<string, ResourceHandle> ResourceByName => resourceByName;
-    public ResourceContainer<TextureResource> Textures => textures;
-    public ResourceContainer<BufferResource> Buffers => buffers;
+    public ref ResourceContainer<TextureResource> Textures => ref Unsafe.AsRef(ref textures);
+    public ref ResourceContainer<BufferResource> Buffers => ref Unsafe.AsRef(ref buffers);
 
     public ResourceContainers()
     {

@@ -32,7 +32,7 @@ public class RenderContext
         return true;
     }
 
-    public void PrepareResources(ResourceContainers resourceContainers)
+    public void PrepareResources(ref ResourceContainers resourceContainers)
     {
         foreach (var resource in resourceContainers.Textures.Resources)
         {

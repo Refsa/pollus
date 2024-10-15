@@ -166,7 +166,7 @@ public partial class ComputeExample : IExample
             }))
             .AddSystem(CoreStage.PreRender, FnSystem.Create(new("PrepareRender")
             {
-                RunsAfter = ["FrameGraph2DPlugin.BeginFrame"],
+                RunsAfter = [FrameGraph2DPlugin.BeginFrame],
             },
             static (FrameGraph2D frameGraph, RenderContext renderContext, RenderAssets renderAssets, ComputeData computeData) =>
             {

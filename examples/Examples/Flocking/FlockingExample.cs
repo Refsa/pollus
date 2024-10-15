@@ -48,7 +48,7 @@ public class FlockingExample : IExample
                 new PerformanceTrackerPlugin(),
                 new RandomPlugin(),
                 // SpatialPlugin.Grid(64, 2048 / 64, 2048 / 64),
-                SpatialPlugin.LooseGrid(64, 32, 4096),
+                SpatialPlugin.LooseGrid(16, 64, 4096),
                 new FlockingGame(),
             ])
             .Build();

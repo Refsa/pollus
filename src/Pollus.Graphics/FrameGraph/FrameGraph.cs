@@ -1,7 +1,6 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
@@ -19,7 +18,7 @@ public partial struct FrameGraph<TParam> : IDisposable
     FramePassContainer<TParam> passes;
     ResourceContainers resources;
 
-    public ResourceContainers Resources => resources;
+    public ref ResourceContainers Resources => ref Unsafe.AsRef(ref resources);
 
     public FrameGraph()
     {
