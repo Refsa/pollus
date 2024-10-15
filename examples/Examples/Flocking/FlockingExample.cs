@@ -48,7 +48,7 @@ public class FlockingExample : IExample
                 new PerformanceTrackerPlugin(),
                 new RandomPlugin(),
                 // SpatialPlugin.Grid(64, 2048 / 64, 2048 / 64),
-                SpatialPlugin.LooseGrid(32, 128, 256),
+                SpatialPlugin.LooseGrid(64, 32, 4096),
                 new FlockingGame(),
             ])
             .Build();
@@ -122,7 +122,7 @@ class FlockingGame : IPlugin
                 ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 0; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -132,7 +132,7 @@ class FlockingGame : IPlugin
                 );
             }
 
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -142,7 +142,7 @@ class FlockingGame : IPlugin
                 );
             }
 
-            for (int i = 0; i < 25; i++)
+            for (int i = 0; i < 0; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
@@ -406,30 +406,36 @@ class FlockingGame : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("DebugDraw",
         static (Local<bool> active, ButtonInput<Key> keys, Gizmos gizmos,
+            SpatialQuery spatialQuery,
             Query<Transform2D, Velocity, CollisionShape>.Filter<All<Boid>> qBoids,
             Query<Transform2D, AvoidArea, CollisionShape> qAvoids
         ) =>
         {
-            if (keys.JustPressed(Key.KeyP)) active.Value = !active.Value;
-            if (!active.Value) return;
-
-            foreach (var boid in qBoids)
+            if (keys.Pressed(Key.KeyO))
             {
-                gizmos.DrawRay(boid.Component0.Position, boid.Component1.Value.Normalized(), Color.GREEN, 50f);
-                gizmos.DrawCircle(boid.Component0.Position, boid.Component2.GetBoundingCircle(boid.Component0).Radius, Color.RED);
+                spatialQuery.Visualize(gizmos);
             }
 
-            foreach (var boid in qAvoids)
+            if (keys.Pressed(Key.KeyP))
             {
-                if (boid.Component2.Type == CollisionShapeType.Rectangle)
+                foreach (var boid in qBoids)
                 {
-                    var bounds = boid.Component2.GetShape<Bounds2D>();
-                    gizmos.DrawRectFilled(boid.Component0.Position + bounds.Center, bounds.Extents, 0f, Color.RED.WithAlpha(0.1f));
+                    gizmos.DrawRay(boid.Component0.Position, boid.Component1.Value.Normalized(), Color.GREEN, 50f);
+                    gizmos.DrawCircle(boid.Component0.Position, boid.Component2.GetBoundingCircle(boid.Component0).Radius, Color.RED);
                 }
-                else if (boid.Component2.Type == CollisionShapeType.Circle)
+
+                foreach (var boid in qAvoids)
                 {
-                    var circle = boid.Component2.GetShape<Circle2D>();
-                    gizmos.DrawCircle(boid.Component0.Position + circle.Center, circle.Radius, Color.RED.WithAlpha(0.1f));
+                    if (boid.Component2.Type == CollisionShapeType.Rectangle)
+                    {
+                        var bounds = boid.Component2.GetShape<Bounds2D>();
+                        gizmos.DrawRectFilled(boid.Component0.Position + bounds.Center, bounds.Extents, 0f, Color.RED.WithAlpha(0.1f));
+                    }
+                    else if (boid.Component2.Type == CollisionShapeType.Circle)
+                    {
+                        var circle = boid.Component2.GetShape<Circle2D>();
+                        gizmos.DrawCircle(boid.Component0.Position + circle.Center, circle.Radius, Color.RED.WithAlpha(0.1f));
+                    }
                 }
             }
         }));

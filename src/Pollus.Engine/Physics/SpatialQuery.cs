@@ -1,8 +1,10 @@
 namespace Pollus.Spatial;
 
 using System.Runtime.CompilerServices;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Mathematics;
+using Pollus.Utils;
 
 public class SpatialQuery : ISpatialContainer<Entity>
 {
@@ -46,5 +48,21 @@ public class SpatialQuery : ISpatialContainer<Entity>
     public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<Entity> results) where TLayer : unmanaged, Enum
     {
         return inner.Query(position, radius, layer, results);
+    }
+
+    public void Visualize(Gizmos gizmos)
+    {
+        if (inner is SpatialLooseGrid<Entity> looseGrid)
+        {
+            foreach (var cell in looseGrid.GetLooseBounds())
+            {
+                gizmos.DrawRect(cell.Center(), cell.Extents(), 0f, Color.RED);
+            }
+
+            foreach (var cell in looseGrid.GetTightBounds())
+            {
+                gizmos.DrawRect(cell.Center(), cell.Extents(), 0f, Color.BLUE);
+            }
+        }
     }
 }

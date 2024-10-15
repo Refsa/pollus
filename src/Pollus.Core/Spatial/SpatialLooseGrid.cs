@@ -10,15 +10,16 @@ using Pollus.Mathematics;
 /// Works well for colliders with vastly different bounds
 /// 
 /// https://stackoverflow.com/a/48384354
+/// https://github.com/loosegrid/DragonSpace-Demo/blob/master/Assets/Scripts/DragonSpace/Grids/LooseDoubleGrid.cs
 /// </summary>
 public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 {
     struct LooseCell
     {
-        public int TopLeft;
-        public int TopRight;
-        public int BottomLeft;
-        public int BottomRight;
+        public int TopRightX;
+        public int BottomLeftX;
+        public int TopRightY;
+        public int BottomLeftY;
 
         Content[] contents;
         int count;
@@ -62,13 +63,15 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     struct TightCell
     {
-        public int[] Elements;
+        int[] elements;
         public int Count;
         public uint LayerMask;
 
+        public Span<int> Elements => elements.AsSpan(0, Count);
+
         public TightCell(int count)
         {
-            Elements = new int[count];
+            elements = new int[count];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -81,8 +84,8 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
         public void Insert(int element, uint layer)
         {
-            if (Count == Elements.Length) Array.Resize(ref Elements, Elements.Length * 2);
-            Elements[Count++] = element;
+            if (Count == elements.Length) Array.Resize(ref elements, elements.Length * 2);
+            elements[Count++] = element;
             LayerMask |= layer;
         }
     }
@@ -106,7 +109,10 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         public uint Layer;
     }
 
-    int width; int height;
+    int worldSize;
+    int cellSize;
+    int tightSize;
+
     int rowCount; int colCount;
     int tightRowCount; int tightColCount;
     float invCellWidth; float invCellHeight;
@@ -115,13 +121,15 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     LooseRow[] rows;
     TightGrid grid;
 
-    public SpatialLooseGrid(int cellSize, int tightSize, int looseSize)
+    public SpatialLooseGrid(int cellSize, int tightSize, int worldSize)
     {
-        width = looseSize; height = looseSize;
-        rowCount = height / cellSize + 1;
-        colCount = width / cellSize + 1;
-        tightRowCount = height / tightSize + 1;
-        tightColCount = width / tightSize + 1;
+        this.worldSize = worldSize;
+        this.cellSize = cellSize;
+        this.tightSize = tightSize;
+        rowCount = worldSize / cellSize + 1;
+        colCount = worldSize / cellSize + 1;
+        tightRowCount = worldSize / tightSize + 1;
+        tightColCount = worldSize / tightSize + 1;
 
         invCellWidth = 1f / cellSize; invCellHeight = 1f / cellSize;
         invTightWidth = 1f / tightSize; invTightHeight = 1f / tightSize;
@@ -189,12 +197,12 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
             for (int x = 0; x < tightCells.Length; x++)
             {
-                scoped ref var tightCell = ref tightCells[x];
-                if (tightCell.Count == 0 || (tightCell.LayerMask & layer) == 0) continue;
+                var tightCellContents = tightCells[x].Elements;
+                if (tightCellContents.Length == 0) continue;
 
-                for (int i = 0; i < tightCell.Count; i++)
+                for (int i = 0; i < tightCellContents.Length; i++)
                 {
-                    int looseIndex = tightCell.Elements[i];
+                    int looseIndex = tightCellContents[i];
                     var contents = rows[looseIndex / colCount].Cells[looseIndex % colCount].Contents;
 
                     foreach (scoped ref var content in contents)
@@ -204,7 +212,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
                         if (Vec2f.DistanceSquared(content.Position, position) > radiusSqr + contentRadiusSqr) continue;
 
                         result[count++] = content.Data;
-                        if (count >= result.Length) break;
+                        if (count >= result.Length) return count;
                     }
                 }
             }
@@ -231,20 +239,16 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         var content = new Content { Data = data, Layer = layer, Position = position, Radius = radius };
         int cellRow = PosToCellRow(position.Y - radius);
         int cellCol = PosToCellCol(position.X - radius);
-        InsertToLoose(content, cellRow, cellCol, layer);
-    }
-
-    void InsertToLoose(in Content content, int cellRow, int cellCol, uint layer)
-    {
+        
         ref var cell = ref rows[cellRow].Cells[cellCol];
 
         if (cell.Count == 0)
         {
             cell.Insert(content);
-            cell.BottomLeft = (int)(content.Position.Y - content.Radius);
-            cell.TopLeft = (int)(content.Position.X - content.Radius);
-            cell.BottomRight = (int)(content.Position.Y + content.Radius);
-            cell.TopRight = (int)(content.Position.X + content.Radius);
+            cell.BottomLeftX = (int)(content.Position.X - content.Radius);
+            cell.BottomLeftY = (int)(content.Position.Y - content.Radius);
+            cell.TopRightX = (int)(content.Position.X + content.Radius);
+            cell.TopRightY = (int)(content.Position.Y + content.Radius);
 
             InsertToGrid(ref cell, cellRow, cellCol, layer);
         }
@@ -258,10 +262,10 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void InsertToGrid(ref LooseCell cell, int cellRow, int cellCol, uint layer)
     {
-        var minX = PosToTightCol(cell.TopLeft);
-        var maxX = PosToTightCol(cell.BottomRight);
-        var minY = PosToTightRow(cell.BottomLeft);
-        var maxY = PosToTightRow(cell.TopRight);
+        var minX = PosToTightCol(cell.BottomLeftX);
+        var maxX = PosToTightCol(cell.TopRightX);
+        var minY = PosToTightRow(cell.BottomLeftY);
+        var maxY = PosToTightRow(cell.TopRightY);
 
         for (int y = minY; y <= maxY; y++)
         {
@@ -274,18 +278,18 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     void ExpandCell(ref LooseCell cell, in Content content, int cellRow, int cellCol, uint layer)
     {
-        var xMin = PosToTightCol(cell.TopLeft);
-        var xMax = PosToTightCol(cell.BottomRight);
-        var yMin = PosToTightRow(cell.BottomLeft);
-        var yMax = PosToTightRow(cell.TopRight);
+        var xMin = PosToTightCol(cell.BottomLeftX);
+        var xMax = PosToTightCol(cell.TopRightX);
+        var yMin = PosToTightRow(cell.BottomLeftY);
+        var yMax = PosToTightRow(cell.TopRightY);
 
-        cell.BottomLeft = int.Min(cell.BottomLeft, (int)(content.Position.Y - content.Radius));
-        cell.TopLeft = int.Min(cell.TopLeft, (int)(content.Position.X - content.Radius));
-        cell.BottomRight = int.Max(cell.BottomRight, (int)(content.Position.Y + content.Radius));
-        cell.TopRight = int.Max(cell.TopRight, (int)(content.Position.X + content.Radius));
+        cell.BottomLeftY = int.Min(cell.BottomLeftY, (int)(content.Position.Y - content.Radius));
+        cell.BottomLeftX = int.Min(cell.BottomLeftX, (int)(content.Position.X - content.Radius));
+        cell.TopRightY = int.Max(cell.TopRightY, (int)(content.Position.Y + content.Radius));
+        cell.TopRightX = int.Max(cell.TopRightX, (int)(content.Position.X + content.Radius));
 
-        var yMax2 = PosToTightRow(cell.TopRight);
-        var xMax2 = PosToTightCol(cell.BottomRight);
+        var yMax2 = PosToTightRow(cell.TopRightY);
+        var xMax2 = PosToTightCol(cell.TopRightX);
 
         var xDiff = (xMax2 > xMax) ? 1 : 0;
         if (xMax != xMax2 || yMax != yMax2)
@@ -303,16 +307,16 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     void CompactCell(ref LooseCell cell)
     {
-        cell.BottomLeft = cell.TopLeft = int.MaxValue;
-        cell.BottomRight = cell.TopRight = int.MinValue;
+        cell.BottomLeftY = cell.BottomLeftX = int.MaxValue;
+        cell.TopRightY = cell.TopRightX = int.MinValue;
         if (cell.Count == 0) return;
 
         foreach (ref var content in cell.Contents)
         {
-            cell.BottomLeft = int.Min(cell.BottomLeft, (int)(content.Position.Y - content.Radius));
-            cell.TopLeft = int.Min(cell.TopLeft, (int)(content.Position.X - content.Radius));
-            cell.BottomRight = int.Max(cell.BottomRight, (int)(content.Position.Y + content.Radius));
-            cell.TopRight = int.Max(cell.TopRight, (int)(content.Position.X + content.Radius));
+            cell.BottomLeftY = int.Min(cell.BottomLeftY, (int)(content.Position.Y - content.Radius));
+            cell.BottomLeftX = int.Min(cell.BottomLeftX, (int)(content.Position.X - content.Radius));
+            cell.TopRightY = int.Max(cell.TopRightY, (int)(content.Position.Y + content.Radius));
+            cell.TopRightX = int.Max(cell.TopRightX, (int)(content.Position.X + content.Radius));
         }
     }
 
@@ -342,5 +346,39 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     {
         if (x <= 0) return 0;
         return int.Min((int)(x * invCellWidth), colCount - 1);
+    }
+
+    public IEnumerable<Rect> GetLooseBounds()
+    {
+        for (int y = 0; y < rowCount; y++)
+        {
+            for (int x = 0; x < colCount; x++)
+            {
+                var cell = rows[y].Cells[x];
+                if (cell.Count == 0) continue;
+
+                yield return new Rect(
+                    cell.BottomLeftX, cell.BottomLeftY,
+                    cell.TopRightX, cell.TopRightY
+                );
+            }
+        }
+    }
+
+    public IEnumerable<Rect> GetTightBounds()
+    {
+        for (int y = 0; y < tightRowCount; y++)
+        {
+            for (int x = 0; x < tightColCount; x++)
+            {
+                var cell = grid.Cells[x + y * tightColCount];
+                if (cell.Count == 0) continue;
+
+                yield return new Rect(
+                    x * tightSize, y * tightSize,
+                    x * tightSize + tightSize, y * tightSize + tightSize
+                );
+            }
+        }
     }
 }

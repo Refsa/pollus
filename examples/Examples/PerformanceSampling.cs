@@ -4,6 +4,7 @@ using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
+using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Mathematics;
 using Pollus.Spatial;
@@ -16,11 +17,13 @@ public class PerformanceSampling : IExample
 
     public void Run()
     {
-        ResourceFetch<SpatialHashGrid<Entity>>.Register();
+        ResourceFetch<SpatialLooseGrid<Entity>>.Register();
 
         app = Application.Builder
-            .AddPlugin(new InputPlugin())
-            .AddResource(new SpatialHashGrid<Entity>(64, 64, 64))
+            .AddPlugins([
+                new InputPlugin()
+            ])
+            .AddResource(new SpatialLooseGrid<Entity>(64, 64, 64))
             .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
             static (Commands commands) =>
             {
@@ -38,11 +41,11 @@ public class PerformanceSampling : IExample
             {
                 Locals = [Local.From(256f)]
             },
-            static (Local<float> size, ButtonInput<Key> keys, SpatialHashGrid<Entity> spatialGrid, Query<Transform2D> qTransforms) =>
+            static (Local<float> size, ButtonInput<Key> keys, SpatialLooseGrid<Entity> spatialGrid, Query<Transform2D> qTransforms) =>
             {
                 spatialGrid.Clear();
                 qTransforms.ForEach(spatialGrid,
-                static (in SpatialHashGrid<Entity> spatialGrid, in Entity entity, ref Transform2D transform) =>
+                static (in SpatialLooseGrid<Entity> spatialGrid, in Entity entity, ref Transform2D transform) =>
                 {
                     spatialGrid.Insert(entity, transform.Position, 4f, 1u << 0);
                 });

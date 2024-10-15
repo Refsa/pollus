@@ -18,9 +18,9 @@ public static class SpatialPlugin
         return new SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters>(new SpatialHashGrid<Entity>(cellSize, width, height));
     }
 
-    public static SpatialPlugin<SpatialLooseGrid<Entity>, Empty> LooseGrid(int cellSize, int coarseSize, int gridSize)
+    public static SpatialPlugin<SpatialLooseGrid<Entity>, Empty> LooseGrid(int cellSize, int tightSize, int worldSize)
     {
-        return new SpatialPlugin<SpatialLooseGrid<Entity>, Empty>(new SpatialLooseGrid<Entity>(cellSize, coarseSize, gridSize));
+        return new SpatialPlugin<SpatialLooseGrid<Entity>, Empty>(new SpatialLooseGrid<Entity>(cellSize, tightSize, worldSize));
     }
 }
 
