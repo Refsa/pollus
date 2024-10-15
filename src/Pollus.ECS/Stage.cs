@@ -1,9 +1,8 @@
 namespace Pollus.ECS;
 
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 using Pollus.Debugging;
+using Pollus.Utils;
 
 public record struct StageLabel(string Value)
 {
@@ -53,9 +52,7 @@ public record class Stage : IDisposable
     {
         if (Systems.Find(e => e.Descriptor.Label == system.Descriptor.Label) is not null)
         {
-            Span<byte> result = stackalloc byte[16];
-            MD5.HashData(MemoryMarshal.Cast<char, byte>(system.Descriptor.Label.Value.AsSpan()), result);
-            system.Descriptor.WithLabel($"{system.Descriptor.Label}-{new string(MemoryMarshal.Cast<byte, char>(result))}");
+            system.Descriptor.WithLabel($"{system.Descriptor.Label}-{RandomUtils.RandomString(Random.Shared, 16)}");
         }
         Systems.Add(system);
     }
