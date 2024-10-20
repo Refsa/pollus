@@ -198,11 +198,11 @@ public class BreakoutGame : IExample
         static (Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2D, Brick>> param) =>
         {
             return Routine(param);
-            static IEnumerator<Yield> Routine(Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2D, Brick>> param)
+            static IEnumerable<Yield> Routine(Param<Commands, IWindow, GameState, State<State>, EventReader<Event.RestartGame>, Query<Transform2D, Brick>> param)
             {
                 var (commands, window, gameState, state, eRestartGame, qBricks) = param;
 
-                while (!eRestartGame.HasAny) yield return Yield.Return();
+                while (!eRestartGame.HasAny) yield return Yield.Return;
                 eRestartGame.Consume();
 
                 qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2D brickTransform, ref Brick brick)

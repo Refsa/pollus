@@ -15,6 +15,9 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    <WasmEnableSIMD>true</WasmEnableSIMD>
+    <WasmNativeStrip>true</WasmNativeStrip>
+    <WasmBuildNative>true</WasmBuildNative>
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
     <EmccFlags>--embed-file '.\bin\Release\net8.0-browser\browser-wasm\assets@assets'</EmccFlags>
@@ -23,6 +26,23 @@
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
     <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' and '$(Mode)' == 'NoAOT' ">
+    <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <SelfContained>false</SelfContained>
+    <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+    <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' and '$(Mode)' == 'WithSymbols' ">
+    <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+    <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+    <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+    <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
+    <WasmEmitSourceMap>true</WasmEmitSourceMap>
+    <WasmDebugLevel>1</WasmDebugLevel>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' ">

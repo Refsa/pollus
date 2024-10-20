@@ -22,30 +22,26 @@ public class CoroutineExample : IExample
     public void Run() => (app = Application.Builder
         .AddPlugins([
             new InputPlugin(),
-            new StatePlugin<TestState>(),
+            new StatePlugin<TestState>(TestState.Second),
         ])
         .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
         {
             Locals = [Local.From(1f)],
         },
-        static (Param<Local<float>, Time> param) =>
+        static (EmptyParam param) =>
         {
-            return Routine(param);
-            static IEnumerator<Yield> Routine(Param<Local<float>, Time> param)
+            return Routine();
+            static IEnumerable<Yield> Routine()
             {
-                (var timer, var time) = param;
-                while (timer.Value > 0f)
-                {
-                    timer.Value -= time.DeltaTimeF;
-                    yield return Yield.Return();
-                }
+                yield return Yield.WaitForSeconds(0.5f);
+                Log.Info("Coroutine Tick");
 
-                timer.Value = 1f;
+                /* yield return Yield.WaitForSeconds(1f);
                 Log.Info("Coroutine Tick");
                 yield return Coroutine.WaitForEnterState(TestState.First);
                 Log.Info("Entered First State");
                 yield return Coroutine.WaitForExitState(TestState.First);
-                Log.Info("Exited First State");
+                Log.Info("Exited First State"); */
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>

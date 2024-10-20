@@ -28,13 +28,13 @@ public class SystemBenchmark
         static (Param<Local<float>, Time> param) =>
         {
             return Routine(param);
-            static IEnumerator<Yield> Routine(Param<Local<float>, Time> param)
+            static IEnumerable<Yield> Routine(Param<Local<float>, Time> param)
             {
                 (var timer, var time) = param;
                 if (timer.Value > 0)
                 {
                     timer.Value -= time.DeltaTimeF;
-                    yield return Yield.Return();
+                    yield return Yield.Return;
                 }
                 
                 timer.Value = 0.001f;
