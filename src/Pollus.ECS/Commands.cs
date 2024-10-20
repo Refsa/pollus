@@ -86,8 +86,13 @@ public class Commands
     {
         if (needsSort)
         {
-            commandBuffers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
             needsSort = false;
+            commandBuffers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+            commandBuffersLookup.Clear();
+            for (int i = 0; i < commandBuffers.Count; i++)
+            {
+                commandBuffersLookup[commandBuffers[i].GetType()] = i;
+            }
         }
 
         foreach (var buffer in commandBuffers)
