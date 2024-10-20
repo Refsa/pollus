@@ -1,43 +1,92 @@
 namespace Pollus.ECS;
 
+using System.Runtime.CompilerServices;
 using Pollus.Coroutine;
-using Pollus.Utils;
+using Pollus.Debugging;
 
-public class Coroutine<TSystemParam, TEnumerator> : SystemBase<Time, TSystemParam, Param<World>>
+public class Coroutine<TSystemParam> : SystemBase<Time, TSystemParam, Param<World>>, IDisposable
     where TSystemParam : ISystemParam
-    where TEnumerator : IEnumerator<Yield>
 {
-    Func<TSystemParam, TEnumerator> factory;
-    TEnumerator? routine;
-    Yield current;
+    public delegate IEnumerable<Yield> FactoryDelegate(TSystemParam param);
 
-    public Coroutine(SystemDescriptor descriptor, Func<TSystemParam, TEnumerator> factory) : base(descriptor)
+    readonly CoroutineWrapper<TSystemParam> wrapper;
+
+    public Coroutine(SystemDescriptor descriptor, FactoryDelegate factory) : base(descriptor)
     {
-        this.factory = factory;
+        wrapper = new(factory);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        wrapper.Dispose();
     }
 
     protected override void OnTick(Time time, TSystemParam param, Param<World> worldParam)
     {
-        routine ??= factory(param);
+        try
+        {
+            wrapper.SetParam(param);
+            ref var current = ref wrapper.Current;
 
-        if (current.Instruction == Yield.Type.Return) { }
-        else if (current.Instruction == Yield.Type.WaitForSeconds)
-        {
-            var seconds = current.GetData<float>();
-            current.SetData(seconds - time.DeltaTimeF);
-            if (seconds > 0) return;
+            if (current.Instruction == Yield.Type.Return) { }
+            else if (current.Instruction == Yield.Type.WaitForSeconds)
+            {
+                var seconds = current.GetData<float>();
+                current.SetData(seconds - time.DeltaTimeF);
+                if (seconds > 0) return;
+            }
+            else if (current.Instruction == Yield.Type.Custom)
+            {
+                if (!YieldCustomInstructionHandler<Param<World>>.Handle(in current, worldParam)) return;
+            }
+
+            wrapper.MoveNext();
         }
-        else if (current.Instruction == Yield.Type.Custom)
+        catch (Exception e)
         {
-            if (!YieldCustomInstructionHandler<Param<World>>.Handle(in current, worldParam)) return;
+            Log.Error(e, "Failed to execute coroutine");
+        }
+    }
+}
+
+class CoroutineWrapper<TSystemParam> : IDisposable
+    where TSystemParam : ISystemParam
+{
+    readonly Coroutine<TSystemParam>.FactoryDelegate factory;
+    TSystemParam? param;
+    IEnumerator<Yield>? enumerator;
+    Yield current = Yield.Return;
+
+    public ref Yield Current => ref current;
+
+    public CoroutineWrapper(Coroutine<TSystemParam>.FactoryDelegate factory)
+    {
+        this.factory = factory;
+    }
+
+    public void Dispose()
+    {
+        current.Dispose();
+    }
+
+    public void SetParam(TSystemParam param)
+    {
+        this.param = param;
+    }
+
+    public bool MoveNext()
+    {
+        if (enumerator?.MoveNext() is true)
+        {
+            current.Dispose();
+            current = enumerator.Current;
+            return true;
         }
 
-        if (!routine.MoveNext())
-        {
-            routine = factory(param);
-            routine.MoveNext();
-        }
-        current = routine.Current;
+        Guard.IsNotNull(param, "Coroutine param is not set");
+        enumerator = factory(param).GetEnumerator();
+        return MoveNext();
     }
 }
 
@@ -49,14 +98,24 @@ public static class Coroutine
         YieldCustomInstructionHandler<Param<World>>.AddHandler<TData>(handler, dependencies);
     }
 
-    public static Coroutine<TSystemParam, TEnumerator> Create<TSystemParam, TEnumerator>(
+    public static Coroutine<TSystemParam> Create<TSystemParam>(
         SystemBuilderDescriptor descriptor,
-        Func<TSystemParam, TEnumerator> routineFactory
+        Coroutine<TSystemParam>.FactoryDelegate routineFactory
     )
         where TSystemParam : ISystemParam
-        where TEnumerator : IEnumerator<Yield>
     {
-        var system = new Coroutine<TSystemParam, TEnumerator>(descriptor, routineFactory);
+        var system = new Coroutine<TSystemParam>(descriptor, routineFactory);
+        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+        return system;
+    }
+
+    public static Coroutine<EmptyParam> Create(
+        SystemBuilderDescriptor descriptor,
+        Coroutine<EmptyParam>.FactoryDelegate routineFactory
+    )
+    {
+        var system = new Coroutine<EmptyParam>(descriptor, routineFactory);
         if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
         foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
         return system;

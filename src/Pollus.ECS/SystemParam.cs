@@ -7,6 +7,26 @@ public interface ISystemParam
 
 }
 
+public struct EmptyParam : ISystemParam, IFetch<EmptyParam>
+{
+    public static readonly EmptyParam Default = new();
+
+    static EmptyParam()
+    {
+        Register();
+    }
+
+    public static void Register()
+    {
+        Fetch.Register(new EmptyParam(), []);
+    }
+
+    public EmptyParam DoFetch(World world, ISystem system)
+    {
+        return Default;
+    }
+}
+
 public struct Param<T0> : IFetch<Param<T0>>, ISystemParam
 {
     static readonly HashSet<Type> dependencies;

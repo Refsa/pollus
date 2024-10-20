@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using Pollus.Coroutine;
-using Pollus.Utils;
 
 public struct WaitForStateEnter<TState>
     where TState : unmanaged, Enum
@@ -10,7 +9,7 @@ public struct WaitForStateEnter<TState>
     static WaitForStateEnter()
     {
         Coroutine.RegisterHandler<WaitForStateEnter<TState>>(
-        static (in Yield yield, Param<World> param) =>
+        static (in Yield yield, in Param<World> param) =>
         {
             var handler = yield.GetCustomData<WaitForStateEnter<TState>>();
             return handler.Execute(param);
@@ -23,7 +22,7 @@ public struct WaitForStateEnter<TState>
         State = state;
     }
 
-    public bool Execute(Param<World> param)
+    public bool Execute(in Param<World> param)
     {
         (var world, _) = param;
 
@@ -47,7 +46,7 @@ public struct WaitForStateExit<TState>
     static WaitForStateExit()
     {
         Coroutine.RegisterHandler<WaitForStateExit<TState>>(
-        static (in Yield yield, Param<World> param) =>
+        static (in Yield yield, in Param<World> param) =>
         {
             var handler = yield.GetCustomData<WaitForStateExit<TState>>();
             return handler.Execute(param);
@@ -60,7 +59,7 @@ public struct WaitForStateExit<TState>
         State = state;
     }
 
-    public bool Execute(Param<World> param)
+    public bool Execute(in Param<World> param)
     {
         (var world, _) = param;
 

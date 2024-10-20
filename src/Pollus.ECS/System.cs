@@ -35,7 +35,7 @@ public abstract class SystemBase(SystemDescriptor descriptor) : ISystem, IDispos
 
     protected abstract void OnTick();
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         GC.SuppressFinalize(this);
         Resources.Dispose();

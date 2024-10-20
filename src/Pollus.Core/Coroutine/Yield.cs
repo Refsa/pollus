@@ -1,10 +1,11 @@
 namespace Pollus.Coroutine;
 
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
 
-public struct Yield
+public struct Yield : IDisposable
 {
     public enum Type
     {
@@ -14,46 +15,45 @@ public struct Yield
         Custom,
     }
 
-    [InlineArray(64)]
-    struct InstructionData
-    {
-        byte _first;
-    }
-
     Type instruction;
-    InstructionData instructionData;
+    byte[]? instructionData;
 
     public Type Instruction => instruction;
 
-    public Yield(Type instruction, ReadOnlySpan<byte> data)
+    public Yield(Type instruction, int capacity)
     {
+        if (capacity > 0) instructionData = ArrayPool<byte>.Shared.Rent(capacity);
         this.instruction = instruction;
-        data.CopyTo(instructionData);
+    }
+
+    public void Dispose()
+    {
+        if (instructionData is not null) ArrayPool<byte>.Shared.Return(instructionData);
     }
 
     public T GetData<T>(int offset = 0)
         where T : unmanaged
     {
-        return MemoryMarshal.Read<T>(instructionData[offset..(offset + Unsafe.SizeOf<T>())]);
+        return MemoryMarshal.Read<T>(instructionData.AsSpan()[offset..(offset + Unsafe.SizeOf<T>())]);
     }
 
     public TCustomData GetCustomData<TCustomData>()
         where TCustomData : struct
     {
-        return MemoryMarshal.Read<TCustomData>(instructionData[4..]);
+        return MemoryMarshal.Read<TCustomData>(instructionData.AsSpan()[4..]);
     }
 
     public void SetData<T>(in T value)
         where T : unmanaged
     {
-        MemoryMarshal.Write(instructionData[..Unsafe.SizeOf<T>()], value);
+        MemoryMarshal.Write(instructionData.AsSpan()[..Unsafe.SizeOf<T>()], value);
     }
 
-    public static Yield Return() => new(Type.Return, ReadOnlySpan<byte>.Empty);
+    public static Yield Return => new(Type.Return, 0);
 
     public static Yield WaitForSeconds(float seconds)
     {
-        var yield = new Yield(Type.WaitForSeconds, ReadOnlySpan<byte>.Empty);
+        var yield = new Yield(Type.WaitForSeconds, Unsafe.SizeOf<float>());
         MemoryMarshal.Write(yield.instructionData, seconds);
         return yield;
     }
@@ -61,7 +61,7 @@ public struct Yield
     public static Yield Custom<TCustomData>(in TCustomData data)
         where TCustomData : struct
     {
-        var yield = new Yield(Type.Custom, ReadOnlySpan<byte>.Empty);
+        var yield = new Yield(Type.Custom, Unsafe.SizeOf<YieldCustomData<TCustomData>>());
         MemoryMarshal.Write(yield.instructionData, new YieldCustomData<TCustomData>(data));
         return yield;
     }
@@ -88,8 +88,8 @@ public static class YieldCustomInstructionHandler<TParam>
         public required Type[] Dependencies;
     }
 
-    public delegate bool HandlerDelegate(in Yield yield, TParam param);
-    static Dictionary<int, HandlerData> handlers = new();
+    public delegate bool HandlerDelegate(in Yield yield, in TParam param);
+    static Dictionary<int, HandlerData> handlers = [];
 
     public static void AddHandler<TCustomData>(HandlerDelegate handler, Type[] dependencies)
         where TCustomData : struct
