@@ -4,12 +4,12 @@
 namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Pollus.Graphics.Windowing;
-using Pollus.Graphics.Rendering;
-using Pollus.Mathematics;
-using Pollus.Utils;
 using Pollus.Debugging;
+using Pollus.Graphics.Rendering;
+using Pollus.Graphics.Windowing;
+using Pollus.Mathematics;
 
 unsafe public class WGPUContextDesktop : IWGPUContext
 {
@@ -138,9 +138,9 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             CompatibleSurface = surface
         };
 
-        using var userData = TemporaryPin.Pin(new CreateAdapterData());
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), (void*)userData.Ptr);
-        adapter = ((CreateAdapterData*)userData.Ptr)->Adapter;
+        var userData = new CreateAdapterData();
+        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
+        adapter = userData.Adapter;
     }
 
     static void HandleRequestAdapterCallback(Silk.NET.WebGPU.RequestAdapterStatus status, Silk.NET.WebGPU.Adapter* adapter, byte* message, void* userdata)
@@ -170,17 +170,27 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         {
             Limits = supportedLimits.Limits with
             {
+                MinStorageBufferOffsetAlignment = 256,
+                MinUniformBufferOffsetAlignment = 256,
+                MaxBindGroups = 3,
                 MaxDynamicUniformBuffersPerPipelineLayout = 1,
-            }
+            },
         };
-        using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
+
+        var requiredFeatures = stackalloc Silk.NET.WebGPU.FeatureName[]
+        {
+            Silk.NET.WebGPU.FeatureName.IndirectFirstInstance,
+        };
+
         var deviceDescriptor = new Silk.NET.WebGPU.DeviceDescriptor(
-            requiredLimits: &requiredLimits
+            requiredLimits: &requiredLimits,
+            requiredFeatureCount: (nuint)1,
+            requiredFeatures: requiredFeatures
         );
 
-        using var userData = TemporaryPin.Pin(new CreateDeviceData());
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), (void*)userData.Ptr);
-        device = ((CreateDeviceData*)userData.Ptr)->Device;
+        var userData = new CreateDeviceData();
+        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), Unsafe.AsPointer(ref userData));
+        device = userData.Device;
 
         var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
         wgpu.DeviceGetLimits(device, ref acquiredLimits);

@@ -33,15 +33,12 @@ public class CoroutineExample : IExample
             return Routine();
             static IEnumerable<Yield> Routine()
             {
-                yield return Yield.WaitForSeconds(0.5f);
-                Log.Info("Coroutine Tick");
-
-                /* yield return Yield.WaitForSeconds(1f);
+                yield return Yield.WaitForSeconds(1f);
                 Log.Info("Coroutine Tick");
                 yield return Coroutine.WaitForEnterState(TestState.First);
                 Log.Info("Entered First State");
                 yield return Coroutine.WaitForExitState(TestState.First);
-                Log.Info("Exited First State"); */
+                Log.Info("Exited First State");
             }
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>

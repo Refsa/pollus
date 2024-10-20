@@ -38,6 +38,8 @@ public class GizmoExample : IExample
             },
             static (Local<Queue<float>> frameTimes, Gizmos gizmos, Time time) =>
             {
+                gizmos.DrawGrid(Rect.FromCenterScale(new Vec2f(800f, 450f), new Vec2f(1600, 900)), Color.GRAY, 64f, -10f);
+
                 gizmos.DrawLine(
                     new Vec2f(50f, 300f + Math.Sin((float)time.SecondsSinceStartup * 1f) * 100f),
                     new Vec2f(200f, 300f + Math.Cos((float)time.SecondsSinceStartup * 1f) * 100f),
@@ -72,7 +74,7 @@ public class GizmoExample : IExample
 
                         points[i++] = bounds.Min + new Vec2f(i * bounds.Width / (points.Length - 1), height);
                     }
-                    gizmos.DrawLineString(points, Color.RED, 1f);
+                    // gizmos.DrawLineString(points, Color.RED, 1f);
                 }
 
                 {
@@ -84,8 +86,6 @@ public class GizmoExample : IExample
 
                 gizmos.DrawCircleFilled(new Vec2f(1100f, 800f), 32f, Color.RED, 16);
                 gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, 16);
-
-                gizmos.DrawGrid(Rect.FromCenterScale(new Vec2f(800f, 450f), new Vec2f(1600, 900)), Color.GRAY, 64f, -10f);
             }))
             .Build();
         app.Run();

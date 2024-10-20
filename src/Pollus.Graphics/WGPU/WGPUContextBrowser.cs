@@ -114,14 +114,13 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             },
             Selector = (byte*)selectorPtr.Ptr
         };
-        using var surfaceDescriptorFromCanvasHTMLSelectorPtr = TemporaryPin.Pin(surfaceDescriptorFromCanvasHTMLSelector);
+        var surfaceDescriptorFromCanvasHTMLSelectorPtr = Unsafe.AsPointer(ref surfaceDescriptorFromCanvasHTMLSelector);
 
         Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
         {
-            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr.Ptr
+            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr
         };
-        using var descriptorPtr = TemporaryPin.Pin(descriptor);
-        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)descriptorPtr.Ptr);
+        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
     }
 
     void CreateSwapChain()
@@ -169,16 +168,25 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             MinStorageBufferOffsetAlignment = 256,
             MinUniformBufferOffsetAlignment = 256,
+            MaxBindGroups = 3,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
         };
         var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
         {
             Limits = limits
         };
-        using var requiredLimitsPtr = TemporaryPin.Pin(requiredLimits);
+        var requiredLimitsPtr = Unsafe.AsPointer(ref requiredLimits);
+        
+        var requiredFeatures = stackalloc Silk.NET.WebGPU.FeatureName[]
+        {
+            Silk.NET.WebGPU.FeatureName.IndirectFirstInstance,
+        };
+
         var deviceDescriptor = new Emscripten.WGPUDeviceDescriptor_Browser()
         {
-            RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr.Ptr
+            RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr,
+            RequiredFeatureCount = (nuint)1,
+            RequiredFeatures = requiredFeatures
         };
 
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);

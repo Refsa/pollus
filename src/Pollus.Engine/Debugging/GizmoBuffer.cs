@@ -52,8 +52,8 @@ public class GizmoBuffer
 
     public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, GizmoMode mode, float sortOrder)
     {
-        if (vertexCount + drawVertices.Length > this.vertices.Length) Array.Resize(ref this.vertices, vertexCount + drawVertices.Length);
-        drawVertices.CopyTo(this.vertices.AsSpan(vertexCount, drawVertices.Length));
+        if (vertexCount + drawVertices.Length > vertices.Length) Array.Resize(ref vertices, vertexCount + drawVertices.Length);
+        drawVertices.CopyTo(vertices.AsSpan(vertexCount, drawVertices.Length));
         vertexCount += drawVertices.Length;
 
         if (drawCount >= draws.Length)
@@ -65,7 +65,7 @@ public class GizmoBuffer
         var index = drawCount++;
 
         ref var drawTarget = ref draws[index];
-        drawTarget.FirstInstance = (uint)index;
+        drawTarget.FirstInstance = 0;
         drawTarget.InstanceCount = 1;
         drawTarget.FirstVertex = (uint)(vertexCount - drawVertices.Length);
         drawTarget.VertexCount = (uint)drawVertices.Length;
@@ -127,14 +127,14 @@ public class GizmoBuffer
         GizmoMode? prevMode = null;
         for (uint i = 0; i < drawCount; i++)
         {
-            var sortOrder = drawOrder[i];
-            var mode = sortOrder.Mode;
+            ref var sortKey = ref drawOrder[i];
+            var mode = sortKey.Mode;
             if (mode != prevMode)
             {
                 commands.SetPipeline(mode == GizmoMode.Filled ? filledPipelineHandle : outlinedPipelineHandle);
                 prevMode = mode;
             }
-            commands.DrawIndirect(drawBufferHandle, sortOrder.DrawIndex * IndirectBufferData.SizeOf);
+            commands.DrawIndirect(drawBufferHandle, sortKey.DrawIndex * IndirectBufferData.SizeOf);
         }
 
         commandList.Add(commands);
