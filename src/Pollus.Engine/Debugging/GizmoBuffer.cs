@@ -122,7 +122,7 @@ public class GizmoBuffer
     {
         var commands = RenderCommands.Builder
             .SetBindGroup(0, bindGroupHandle)
-            .SetVertexBuffer(0, vertexBufferHandle, 0, (uint)vertexCount);
+            .SetVertexBuffer(0, vertexBufferHandle, 0, Alignment.AlignedSize<GizmoVertex>((uint)vertexCount));
 
         GizmoMode? prevMode = null;
         for (uint i = 0; i < drawCount; i++)

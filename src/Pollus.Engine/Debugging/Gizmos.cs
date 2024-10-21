@@ -8,7 +8,7 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public enum GizmoType : uint
+public enum GizmoType : byte
 {
     None = 0,
     Line,
@@ -19,7 +19,7 @@ public enum GizmoType : uint
     Grid,
 }
 
-public enum GizmoMode : uint
+public enum GizmoMode : byte
 {
     Outlined = 0,
     Filled = 1,
