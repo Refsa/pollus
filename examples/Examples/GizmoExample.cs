@@ -74,7 +74,7 @@ public class GizmoExample : IExample
 
                         points[i++] = bounds.Min + new Vec2f(i * bounds.Width / (points.Length - 1), height);
                     }
-                    // gizmos.DrawLineString(points, Color.RED, 1f);
+                    gizmos.DrawLineString(points, Color.RED, 1f);
                 }
 
                 {

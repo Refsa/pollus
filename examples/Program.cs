@@ -24,6 +24,7 @@ if (args.Length < 1)
     Console.WriteLine("  transform");
     Console.WriteLine("  flocking");
     Console.WriteLine("  gizmo");
+    Console.WriteLine("  tween");
     return;
 }
 
@@ -49,6 +50,7 @@ IExample? example = args[0] switch
     "flocking" => new FlockingExample(),
     "gizmo" => new GizmoExample(),
     "psample" => new PerformanceSampling(),
+    "tween" => new TweenExample(),
     _ => null
 };
 
