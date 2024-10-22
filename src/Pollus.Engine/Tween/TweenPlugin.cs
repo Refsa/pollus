@@ -1,25 +1,35 @@
 namespace Pollus.Engine.Tween;
 
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
 public class TweenPlugin : IPlugin
 {
-    public void Apply(World world)
+    static TweenPlugin()
     {
         TweenResources.RegisterHandler<float, FloatHandler>();
+        TweenResources.RegisterHandler<Vec2f, Vec2fHandler>();
+    }
 
+    public void Apply(World world)
+    {
         world.Resources.Add(new TweenResources());
-
-        world.Schedule.AddSystems(CoreStage.Update, new TweenSystem<TweenTestComponent, float>());
     }
 }
 
-class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData, Tween<TField>>>
+
+public class TweenablePlugin<TData> : IPlugin
+    where TData : unmanaged, IComponent, ITweenable<TData>
+{
+    public void Apply(World world)
+    {
+        TData.PrepareSystems(world.Schedule);
+    }
+}
+
+public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData, Tween<TField>>>
     where TData : unmanaged, IComponent, ITweenable<TData>
     where TField : unmanaged
 {
@@ -33,22 +43,49 @@ class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData, Tween
     {
         var handler = TweenResources.Handler<TField>.Instance;
 
-        qTweens.ForEach((commands, time, handler!), 
-        static (in (Commands commands, Time time, ITweenHandler<TField> handler) userData, 
+        qTweens.ForEach((commands, time, handler!),
+        static (in (Commands commands, Time time, ITweenHandler<TField> handler) userData,
                 in Entity entity, ref TData data, ref Tween<TField> tween) =>
         {
             var t = tween.Elapsed / tween.Duration;
-
-            if (t >= 1f)
+            t = tween.Easing switch
             {
-                t = 1f;
-                userData.commands.RemoveComponent<Tween<TField>>(entity);
-            }
+                Easing.Linear => t,
+                Easing.Sine => float.Sin(t),
+                Easing.Quadratic => t * t,
+                Easing.Cubic => t * t * t,
+                Easing.Quartic => t * t * t * t,
+                Easing.Quintic => t * t * t * t * t,
+                _ => t,
+            };
+
+            t = t.Clamp(0f, 1f);
+
+            if (tween.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
 
             var value = userData.handler.Lerp(tween.From, tween.To, t);
             data.SetValue(tween.FieldID, value);
 
-            tween.Elapsed += userData.time.DeltaTimeF;
+            if (t >= 1f)
+            {
+                if (tween.Flags.HasFlag(TweenFlag.Loop))
+                {
+                    tween.Elapsed = 0f;
+                }
+                else if (tween.Flags.HasFlag(TweenFlag.PingPong))
+                {
+                    (tween.From, tween.To) = (tween.To, tween.From);
+                    tween.Elapsed = 0f;
+                }
+                else
+                {
+                    userData.commands.RemoveComponent<Tween<TField>>(entity);
+                }
+            }
+            else
+            {
+                tween.Elapsed += userData.time.DeltaTimeF;
+            }
         });
     }
 }
@@ -71,7 +108,6 @@ class TweenResources
         Handler<TType>.Set(new THandler());
     }
 }
-
 
 /* -------------------------------------------------------------------------------------------- */
 
@@ -156,6 +192,12 @@ public struct TweenBuilder<TType>
         return this;
     }
 
+    public TweenBuilder<TType> WithFlags(TweenFlag flags)
+    {
+        tween.Flags = flags;
+        return this;
+    }
+
     public void Append(Commands commands)
     {
         commands.AddComponent(entity, tween);
@@ -168,6 +210,8 @@ public struct Tween<TType> : IComponent
 {
     public Easing Easing;
     public EasingDirection Direction;
+    public TweenFlag Flags;
+
     public byte FieldID;
 
     public float Duration;
@@ -188,6 +232,11 @@ public interface ITweenHandler<TData>
 public struct FloatHandler : ITweenHandler<float>
 {
     public float Lerp(float from, float to, float t) => float.Lerp(from, to, t);
+}
+
+public struct Vec2fHandler : ITweenHandler<Vec2f>
+{
+    public Vec2f Lerp(Vec2f from, Vec2f to, float t) => Vec2f.Lerp(from, to, t);
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -214,48 +263,17 @@ public static class TweenCommandsExt
 
 /* -------------------------------------------------------------------------------------------- */
 
+[AttributeUsage(AttributeTargets.Struct)]
+public sealed class TweenableAttribute : Attribute { }
+
 public interface ITweenable
 {
     void SetValue<T>(byte field, T value);
+    static abstract void PrepareSystems(Schedule schedule);
 }
 
 public interface ITweenable<TData> : ITweenable
     where TData : unmanaged
 {
     static abstract byte GetFieldIndex<TField>(Expression<Func<TData, TField>> property);
-}
-
-public partial struct TweenTestComponent : IComponent, ITweenable<TweenTestComponent>
-{
-    public float Float;
-    public Vec2f Vec2f;
-
-    public enum TweenField : byte
-    {
-        Float,
-        Vec2f,
-    }
-
-    public void SetValue<T>(byte field, T value) => SetValue((TweenField)field, value);
-    public void SetValue<T>(TweenField field, T value)
-    {
-        switch (field)
-        {
-            case TweenField.Float: Float = Unsafe.As<T, float>(ref value); break;
-            case TweenField.Vec2f: Vec2f = Unsafe.As<T, Vec2f>(ref value); break;
-            default: throw new ArgumentException($"Invalid property: {field}", nameof(field));
-        }
-    }
-
-    public static byte GetFieldIndex<TField>(Expression<Func<TweenTestComponent, TField>> property)
-    {
-        string? fieldName = null;
-        if (property.Body is MemberExpression expr)
-        {
-            fieldName = (expr.Member as FieldInfo)?.Name;
-        }
-
-        if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Invalid property expression", nameof(property));
-        return (byte)Enum.Parse<TweenField>(fieldName);
-    }
 }

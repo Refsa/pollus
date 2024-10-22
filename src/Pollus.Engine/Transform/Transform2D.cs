@@ -1,12 +1,14 @@
 namespace Pollus.Engine.Transform;
 
 using Pollus.ECS;
+using Pollus.Engine.Tween;
 using Pollus.Mathematics;
 
-public struct Transform2D : ITransform, IComponent
+[Tweenable]
+public partial struct Transform2D : ITransform, IComponent
 {
     public static EntityBuilder<Transform2D, GlobalTransform> Bundle => new(
-        Transform2D.Default,
+        Default,
         GlobalTransform.Default
     );
 
