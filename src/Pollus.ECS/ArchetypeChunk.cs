@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Pollus.Collections;
 
 struct ChunkComponentInfo : IDisposable
@@ -167,16 +168,11 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    unsafe public Entity SwapRemoveEntity(int row, scoped ref ArchetypeChunk src)
+    unsafe public Entity SwapRemoveEntity(int dstRow, scoped ref ArchetypeChunk src)
     {
-        /*
-        remove entity in row from this chunk
-        move entity in last row from src chunk to this chunk
-        return the moved entity
-        */
-
-        entities[row] = src.entities[--src.count];
-        src.entities[src.count] = Entity.NULL;
+        var srcIndex = --src.count;
+        entities[dstRow] = src.entities[srcIndex];
+        src.entities[srcIndex] = Entity.NULL;
 
         foreach (var cid in components.Keys)
         {
@@ -184,12 +180,14 @@ public struct ArchetypeChunk : IDisposable
 
             var srcArray = src.components.Get(cid);
             var dstArray = components.Get(cid);
-            var srcRow = Unsafe.Add<byte>(srcArray.Data, src.count * size);
-            var dstRow = Unsafe.Add<byte>(dstArray.Data, row * size);
-            Unsafe.CopyBlock(dstRow, srcRow, (uint)size);
+
+            var srcRowData = Unsafe.Add<byte>(srcArray.Data, srcIndex * size);
+            var dstRowData = Unsafe.Add<byte>(dstArray.Data, dstRow * size);
+
+            Unsafe.CopyBlock(dstRowData, srcRowData, (uint)size);
         }
 
-        return entities[row];
+        return entities[dstRow];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

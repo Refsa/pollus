@@ -41,9 +41,19 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             query.ForEach(pred);
         }
 
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, C0> pred)
+        {
+            query.ForEach(userData, pred);
+        }
+
         public void ForEach(ForEachEntityDelegate<C0> pred)
         {
             query.ForEach(pred);
+        }
+
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, C0> pred)
+        {
+            query.ForEach(userData, pred);
         }
 
         public readonly void ForEach<TForEach>(TForEach iter)

@@ -168,22 +168,23 @@ public class ArchetypeStore : IDisposable
             throw new ArgumentException("Entity does not exist");
         }
 
-        var prevEntityInfo = entityHandler.GetEntityInfo(entity);
+        ref var entityInfo = ref entityHandler.GetEntityInfo(entity);
+        var prevEntityInfo = entityInfo;
         var archetype = archetypes[prevEntityInfo.ArchetypeIndex];
         if (archetype.HasComponent<C>()) return;
 
-        Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length + 1];
-        archetype.GetChunkInfo().ComponentIDs.CopyTo(cids);
+        var prevInfo = archetype.GetChunkInfo();
+        Span<ComponentID> cids = stackalloc ComponentID[prevInfo.ComponentIDs.Length + 1];
+        prevInfo.ComponentIDs.CopyTo(cids);
         cids[^1] = Component.GetInfo<C>().ID;
 
         var nextAid = ArchetypeID.Create(cids);
         var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
         var (chunkIndex, rowIndex) = nextArchetype.AddEntity(entity);
 
-        ref var nextInfo = ref entityHandler.GetEntityInfo(entity);
-        nextInfo.ArchetypeIndex = nextArchetypeIndex;
-        nextInfo.ChunkIndex = chunkIndex;
-        nextInfo.RowIndex = rowIndex;
+        entityInfo.ArchetypeIndex = nextArchetypeIndex;
+        entityInfo.ChunkIndex = chunkIndex;
+        entityInfo.RowIndex = rowIndex;
 
         nextArchetype.SetComponent(chunkIndex, rowIndex, component);
 
@@ -191,11 +192,11 @@ public class ArchetypeStore : IDisposable
         if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entityHandler.GetEntityInfo(movedEntity);
-            movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
-            movedEntityInfo.RowIndex = nextInfo.RowIndex;
+            movedEntityInfo.ChunkIndex = prevEntityInfo.ChunkIndex;
+            movedEntityInfo.RowIndex = prevEntityInfo.RowIndex;
         }
 
-        nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(nextInfo.RowIndex, ComponentFlags.Added);
+        nextArchetype.Chunks[entityInfo.ChunkIndex].SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Added);
     }
 
     public void RemoveComponent<C>(in Entity entity)
@@ -212,9 +213,10 @@ public class ArchetypeStore : IDisposable
 
         var component = archetype.GetChunk(prevEntityInfo.ChunkIndex).GetComponent<C>(prevEntityInfo.RowIndex);
 
-        Span<ComponentID> cids = stackalloc ComponentID[archetype.GetChunkInfo().ComponentIDs.Length - 1];
+        var prevInfo = archetype.GetChunkInfo();
+        Span<ComponentID> cids = stackalloc ComponentID[prevInfo.ComponentIDs.Length - 1];
         var index = 0;
-        foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
+        foreach (var cid in prevInfo.ComponentIDs)
         {
             if (cid != Component.GetInfo<C>().ID) cids[index++] = cid;
         }

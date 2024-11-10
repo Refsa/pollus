@@ -96,7 +96,7 @@ public partial class Archetype : IDisposable
         chunks.Dispose();
     }
 
-    public (int ChunkIndex, int RowIndex) AddEntity(in Entity entity)
+    public (int chunkIndex, int rowIndex) AddEntity(in Entity entity)
     {
         entityCount++;
         ref var chunk = ref GetVacantChunk();

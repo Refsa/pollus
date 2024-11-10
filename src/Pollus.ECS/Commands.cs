@@ -11,6 +11,7 @@ public interface ICommand
 public interface ICommandBuffer
 {
     int Priority { get; }
+    int Count { get; }
 
     void Clear();
     void Execute(World world);
@@ -23,6 +24,7 @@ public class CommandBuffer<TCommand> : ICommandBuffer
     int count = 0;
 
     public int Priority => TCommand.Priority;
+    public int Count => count;
 
     public void Clear()
     {
@@ -87,7 +89,7 @@ public class Commands
         if (needsSort)
         {
             needsSort = false;
-            commandBuffers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+            commandBuffers.Sort(static (a, b) => b.Priority.CompareTo(a.Priority));
             commandBuffersLookup.Clear();
             for (int i = 0; i < commandBuffers.Count; i++)
             {
@@ -95,8 +97,10 @@ public class Commands
             }
         }
 
-        foreach (var buffer in commandBuffers)
+        foreach (var buffer in new ListEnumerable<ICommandBuffer>(commandBuffers))
         {
+            if (buffer.Count == 0) continue;
+
             buffer.Execute(world);
             buffer.Clear();
         }
@@ -203,7 +207,7 @@ public struct DespawnEntityCommand : ICommand
 public struct AddComponentCommand<C> : ICommand
     where C : unmanaged, IComponent
 {
-    public static int Priority => 50;
+    public static int Priority => 90;
 
     Entity entity;
     C component;
@@ -226,7 +230,7 @@ public struct AddComponentCommand<C> : ICommand
 public struct RemoveComponentCommand<C> : ICommand
     where C : unmanaged, IComponent
 {
-    public static int Priority => 50;
+    public static int Priority => 90;
 
     Entity entity;
 
@@ -246,7 +250,7 @@ public struct RemoveComponentCommand<C> : ICommand
 
 public struct DelegateCommand : ICommand
 {
-    public static int Priority => 50;
+    public static int Priority => 0;
 
     Action<World> action;
 

@@ -24,6 +24,8 @@ public static class HierarchyCommandsExt
     /// <returns>The commands instance.</returns>
     public static Commands AddChild(this Commands commands, in Entity parent, in Entity child)
     {
+        commands.AddComponent(parent, new Parent { FirstChild = Entity.NULL });
+        commands.AddComponent(child, new Child { Parent = Entity.NULL });
         commands.AddCommand(new AddChildCommand { Child = child, Parent = parent });
         return commands;
     }
@@ -68,19 +70,13 @@ public static class HierarchyCommandsExt
 
 public struct AddChildCommand : ICommand
 {
-    public static int Priority => 80;
+    public static int Priority => 20;
 
     public required Entity Parent;
     public required Entity Child;
 
     public void Execute(World world)
     {
-        if (!world.Store.HasComponent<Parent>(Parent))
-            world.Store.AddComponent(Parent, new Parent());
-
-        if (!world.Store.HasComponent<Child>(Child))
-            world.Store.AddComponent(Child, new Child());
-
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         ref var cChild = ref world.Store.GetComponent<Child>(Child);
 
@@ -98,7 +94,7 @@ public struct AddChildCommand : ICommand
 
 public struct RemoveChildCommand : ICommand
 {
-    public static int Priority => 70;
+    public static int Priority => AddChildCommand.Priority - 1;
 
     public required Entity Parent;
     public required Entity Child;
@@ -144,7 +140,7 @@ public struct RemoveChildCommand : ICommand
 
 public struct RemoveChildrenCommand : ICommand
 {
-    public static int Priority => 70;
+    public static int Priority => AddChildCommand.Priority - 1;
 
     public required Entity Parent;
 
@@ -167,7 +163,7 @@ public struct RemoveChildrenCommand : ICommand
 
 public struct DespawnHierarchyCommand : ICommand
 {
-    public static int Priority => 1;
+    public static int Priority => AddChildCommand.Priority - 1;
 
     public required Entity Root;
 

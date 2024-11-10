@@ -120,7 +120,7 @@ public class ArchetypeTests
         Assert.Equal(2, archetype.Chunks.Length);
         Assert.Equal(1, archetype.Chunks[1].Count);
 
-        archetype.RemoveEntity(entityInfo.ChunkIndex, entityInfo.RowIndex);
+        archetype.RemoveEntity(entityInfo.chunkIndex, entityInfo.rowIndex);
         Assert.Equal(archetype.GetChunkInfo().RowsPerChunk, archetype.Chunks[0].Count);
         Assert.Equal(1, archetype.Chunks.Length);
         Assert.Equal(nextEntity, archetype.Chunks[0].GetEntities()[0]);
@@ -333,6 +333,30 @@ public class ArchetypeTests
 
         Assert.Equal(20, c2.Value);
         Assert.Equal(10, c1.Value);
+    }
+
+    [Fact]
+    public void ArchetypeStore_AddComponent_Many()
+    {
+        using var world = new World();
+        var entities = new List<Entity>();
+        for (int i = 0; i < 1000; i++)
+        {
+            entities.Add(Entity.With(new TestComponent1 { Value = i }).Spawn(world));
+        }
+
+        for (int i = 0; i < 1000; i++)
+        {
+            world.Store.AddComponent(entities[i], new TestComponent2 { Value = (i + 1) * 1000 });
+        }
+
+        for (int i = 0; i < 1000; i++)
+        {
+            var c1 = world.Store.GetComponent<TestComponent1>(entities[i]);
+            var c2 = world.Store.GetComponent<TestComponent2>(entities[i]);
+            Assert.Equal(i, c1.Value);
+            Assert.Equal((i + 1) * 1000, c2.Value);
+        }
     }
 
     [Fact]
