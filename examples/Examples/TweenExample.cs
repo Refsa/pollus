@@ -48,14 +48,13 @@ public partial class TweenExample : IExample
             {
                 ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
-            var shape = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 1f));
 
-            for (int x = 0; x < 500; x++)
+            var scale = 4f;
+            var shape = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * scale));
+
+            for (int x = 0; x < 100; x++)
             {
-                for (int y = 0; y < 500; y++)
-                {
-                    SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * 3f, y * 3f), shapeMaterial, shape);
-                }
+                SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, 0f), shapeMaterial, shape);
             }
         }))
         .Build())
@@ -63,7 +62,7 @@ public partial class TweenExample : IExample
 
     static void SpawnAndTween(Commands commands, Vec2f pos, Handle<ShapeMaterial> shapeMaterial, Handle<Shape> shape)
     {
-        var shapeEntity = commands.Spawn(ShapeDraw.Bundle
+        var parent = commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
                 Position = pos,
@@ -75,11 +74,51 @@ public partial class TweenExample : IExample
                 Color = Color.RED,
             }));
 
-        Tween.Create(2f, pos, pos + Vec2f.Up * 16f)
+        Tween.Create(2f, pos, pos + Vec2f.Up * 64f)
+                .OnEntity(parent)
+                .OnField<Transform2D>(comp => comp.Position)
+                .WithEasing(Easing.Quartic)
+                .WithFlags(TweenFlag.PingPong)
+                .Append(commands);
+
+        var child1 = commands.Spawn(ShapeDraw.Bundle
+            .Set(Transform2D.Default with
+            {
+                Position = Vec2f.Up * 256f,
+            })
+            .Set(new ShapeDraw()
+            {
+                MaterialHandle = shapeMaterial,
+                ShapeHandle = shape,
+                Color = Color.BLUE,
+            }));
+
+        commands.AddChild(parent, child1);
+        Tween.Create(2f, Vec2f.Zero, Vec2f.Right * 30f)
+            .OnEntity(child1)
+            .OnField<Transform2D>(comp => comp.Position)
             .WithEasing(Easing.Quartic)
             .WithFlags(TweenFlag.PingPong)
-            .OnEntity(shapeEntity)
-            .OnField<Transform2D>(comp => comp.Position)
+            .Append(commands);
+
+        var child2 = commands.Spawn(ShapeDraw.Bundle
+            .Set(Transform2D.Default with
+            {
+                Position = Vec2f.Up * 256f,
+            })
+            .Set(new ShapeDraw()
+            {
+                MaterialHandle = shapeMaterial,
+                ShapeHandle = shape,
+                Color = Color.GREEN,
+            }));
+
+        commands.AddChild(child1, child2);
+        Tween.Create(2f, Vec2f.One, Vec2f.One * 2f)
+            .OnEntity(child2)
+            .OnField<Transform2D>(comp => comp.Scale)
+            .WithEasing(Easing.Quartic)
+            .WithFlags(TweenFlag.PingPong)
             .Append(commands);
     }
 

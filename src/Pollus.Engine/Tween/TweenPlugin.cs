@@ -1,7 +1,9 @@
 namespace Pollus.Engine.Tween;
 
 using System.Linq.Expressions;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
@@ -29,7 +31,7 @@ public class TweenablePlugin<TData> : IPlugin
     }
 }
 
-public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData, Tween<TField>>>
+public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, Child>, Query<TData>>
     where TData : unmanaged, IComponent, ITweenable<TData>
     where TField : unmanaged
 {
@@ -39,14 +41,12 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData
     {
     }
 
-    protected override void OnTick(Commands commands, Time time, Query<TData, Tween<TField>> qTweens)
+    protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, Child> qTweens, Query<TData> qData)
     {
-        var handler = TweenResources.Handler<TField>.Instance;
-
-        qTweens.ForEach((commands, time, handler!),
-        static (in (Commands commands, Time time, ITweenHandler<TField> handler) userData,
-                in Entity entity, ref TData data, ref Tween<TField> tween) =>
+        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref Child child) =>
         {
+            var handler = TweenResources.Handler<TField>.Instance;
+
             var t = tween.Elapsed / tween.Duration;
             t = tween.Easing switch
             {
@@ -63,10 +63,15 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData
 
             if (tween.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
 
-            var value = userData.handler.Lerp(tween.From, tween.To, t);
-            data.SetValue(tween.FieldID, value);
+            var value = handler!.Lerp(tween.From, tween.To, t);
 
-            if (t >= 1f)
+            query.Get<TData>(child.Parent).SetValue(tween.FieldID, value);
+        });
+
+        qTweens.ForEach((time.DeltaTimeF, commands),
+        static (in (float deltaTime, Commands commands) userData, in Entity entity, ref Tween<TField> tween, ref Child child) =>
+        {
+            if (tween.Elapsed >= tween.Duration)
             {
                 if (tween.Flags.HasFlag(TweenFlag.Loop))
                 {
@@ -79,12 +84,12 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query<TData
                 }
                 else
                 {
-                    userData.commands.RemoveComponent<Tween<TField>>(entity);
+                    userData.commands.Despawn(entity);
                 }
             }
             else
             {
-                tween.Elapsed += userData.time.DeltaTimeF;
+                tween.Elapsed += userData.deltaTime;
             }
         });
     }
@@ -198,9 +203,11 @@ public struct TweenBuilder<TType>
         return this;
     }
 
-    public void Append(Commands commands)
+    public Entity Append(Commands commands)
     {
-        commands.AddComponent(entity, tween);
+        var child = commands.Spawn(Entity.With(tween));
+        commands.AddChild(entity, child);
+        return child;
     }
 }
 
