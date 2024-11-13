@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net8.0-browser;net9.0;net9.0-browser;</TargetFrameworks>
+    <TargetFrameworks>net8.0-browser;net9.0;net9.0-browser;</TargetFrameworks>
     <LangVersion>latest</LangVersion>
 
     <ImplicitUsings>enable</ImplicitUsings>

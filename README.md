@@ -16,7 +16,7 @@ You can find the Breakout clone example running [here](https://refsa.github.io/p
 - Build to Windows and Browser (WASM)
 - Dear ImGui renderer, which is the only form of UI right now
 
-Currently requires `net8.0` and `net8.0-browser` targets.  
+Currently requires `net9.0` and `net9.0-browser` targets and the `wasm-tools` workload.  
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
 ## WARNING
@@ -27,7 +27,8 @@ There are still a lot of important features missing and most of the WASM and bro
 `Pollus.Engine` is the glue project and contains all the required Plugins and systems to get up and running.  
 
 ### Building WASM for web
-Browser is built with `dotnet publish --framework net8.0-browser -c Release` and can be hosted locally with `dotnet serve -S -p <port>`.  
+Browser is built with `dotnet publish --framework net9.0-browser -c Release` and can be hosted locally with `dotnet serve -S -p <port>`.  
+Install the `wasm-tools` and `wasm-experimental` workloads with `dotnet workload install <tool>`
 **WebGPU is currently only working in Chromium-based browsers.**
 
 ### Example folder

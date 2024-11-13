@@ -8,7 +8,7 @@
             "args": [
                 "build",
                 "${workspaceFolder}/examples/Pollus.Examples.csproj",
-                "/p:TargetFramework=net8.0",
+                "/p:TargetFramework=net9.0",
             ],
         },
         {
