@@ -74,9 +74,7 @@ public abstract class SystemBase<$gen_args$> : SystemBase
 
     static SystemBase()
     {
-#pragma warning disable IL2059
         $run_class_ctor$
-#pragma warning restore IL2059
         $fetch_setups$
         dependencies = [$fetch_dependencies$];
     }

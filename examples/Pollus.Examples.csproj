@@ -16,18 +16,20 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+
     <WasmEnableSIMD>true</WasmEnableSIMD>
-    <WasmNativeStrip>true</WasmNativeStrip>
     <WasmBuildNative>true</WasmBuildNative>
+    <WasmNativeStrip>true</WasmNativeStrip>
+    <WasmNativeWorkload>true</WasmNativeWorkload>
+    <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
+    <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+    <WasmEnableThreads>true</WasmEnableThreads>
+    <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
     <EmccFlags Condition=" '$(TargetFramework)' == 'net8.0-browser' ">--embed-file '.\bin\Release\net8.0-browser\browser-wasm\assets@assets'</EmccFlags>
     <EmccFlags Condition=" '$(TargetFramework)' == 'net9.0-browser' ">--embed-file '.\bin\Release\net9.0-browser\browser-wasm\assets@assets'</EmccFlags>
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
-
-    <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
-    <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
-    <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
   </PropertyGroup>
 
   <PropertyGroup Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser') and '$(Mode)' == 'NoAOT' ">
@@ -45,6 +47,8 @@
     <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
     <WasmEmitSourceMap>true</WasmEmitSourceMap>
     <WasmDebugLevel>1</WasmDebugLevel>
+    <WasmNativeStrip>false</WasmNativeStrip>
+    <WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' ">
@@ -56,7 +60,7 @@
     <NativeFileReference Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
-  <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
+  <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
     <ItemGroup>
       <_WasmPInvokeModules Include="__Internal_emscripten" />
       <_WasmPInvokeModules Include="OpenAL" />
@@ -65,7 +69,7 @@
     </ItemGroup>
   </Target>
 
-  <Target Name="UnfreezeCache" DependsOnTargets="AddBrowserDeps"
+  <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="UnfreezeCache" DependsOnTargets="AddBrowserDeps"
     BeforeTargets="_WasmCompileNativeFiles;_WasmCompileAssemblyBitCodeFilesForAOT;_WasmCalculateInitialHeapSize;_WasmLinkDotNet;_CheckEmccIsExpectedVersion">
     <ItemGroup>
       <EmscriptenEnvVars Remove="EM_FROZEN_CACHE=True" />
