@@ -16,14 +16,15 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
-
-    <WasmEnableSIMD>true</WasmEnableSIMD>
-    <WasmBuildNative>true</WasmBuildNative>
-    <WasmNativeStrip>true</WasmNativeStrip>
-    <WasmNativeWorkload>true</WasmNativeWorkload>
     <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
-    <WasmEnableThreads>true</WasmEnableThreads>
+
+    <WasmEnableSIMD>true</WasmEnableSIMD>
+    <WasmNativeStrip>true</WasmNativeStrip>
+    <WasmBuildNative>true</WasmBuildNative>
+    <WasmNativeWorkload>true</WasmNativeWorkload> 
+    <WasmEnableThreads>false</WasmEnableThreads>
+    
     <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
@@ -57,7 +58,8 @@
     <WasmExtraFilesToDeploy Include="www/*.js" />
     <WasmExtraFilesToDeploy Include="www/*.css" />
 
-    <NativeFileReference Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    <NativeFileReference Condition=" '$(TargetFramework)' == 'net9.0-browser' " Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    <NativeFileReference Condition=" '$(TargetFramework)' == 'net8.0-browser' " Include=".\bin\Release\net8.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
   <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
