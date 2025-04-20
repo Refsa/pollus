@@ -45,7 +45,7 @@ public partial struct FrameGraph<TParam> : IDisposable
     public FrameGraphRunner<TParam> Compile()
     {
         Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
-        passNodes.Nodes.Sort(static (a, b) => b.Pass.PassOrder.CompareTo(a.Pass.PassOrder));
+        passNodes.Nodes.Sort(new PassOrderComparer());
 
         foreach (ref var current in passNodes.Nodes)
         {

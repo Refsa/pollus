@@ -11,6 +11,14 @@ public interface INode
     void Init(int index, string name);
 }
 
+public struct PassOrderComparer : IComparer<PassNode>
+{
+    public readonly int Compare(PassNode x, PassNode y)
+    {
+        return y.Pass.PassOrder.CompareTo(x.Pass.PassOrder);
+    }
+}
+
 public struct PassNode : INode
 {
     BitSet256 reads;
