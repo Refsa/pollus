@@ -170,6 +170,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             MinUniformBufferOffsetAlignment = 256,
             MaxBindGroups = 3,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
+            MaxInterStageShaderComponents = Silk.NET.WebGPU.WebGPU.LimitU32Undefined,
         };
         var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
         {
@@ -186,7 +187,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr,
             RequiredFeatureCount = (nuint)1,
-            RequiredFeatures = requiredFeatures
+            RequiredFeatures = requiredFeatures,
         };
 
         wgpu.AdapterRequestDevice(adapter, deviceDescriptor, &HandleRequestDeviceCallback, (void*)nint.Zero);
