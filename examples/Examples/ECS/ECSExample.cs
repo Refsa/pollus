@@ -1,12 +1,13 @@
 
 namespace Pollus.Examples;
 
+using System.Data;
 using System.Runtime.CompilerServices;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 
-public class ECSExample : IExample
+public partial class ECSExample : IExample
 {
     public string Name => "ecs";
     IApplication? application;
@@ -42,46 +43,110 @@ public class ECSExample : IExample
         ])
         .InitEvent<TestEvent>()
         .AddSystem(CoreStage.PostInit, FnSystem.Create("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
-        static (Commands commands) =>
+        .AddSystemSet<ComponentSystemSet>()
+        .AddSystemSet<EventSystemSet>()
+        .AddSystemSet<StateSystemSet>()
+        .Build())
+        .Run();
+
+    [SystemSet]
+    partial class ComponentSystemSet
+    {
+        [System(nameof(Spawn))]
+        static readonly SystemBuilderDescriptor SpawnEntitiesDescriptor = new()
+        {
+            Stage = CoreStage.PostInit,
+        };
+
+        [System(nameof(Update))]
+        static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+        {
+            Stage = CoreStage.Update,
+        };
+
+        static void Spawn(Commands commands)
         {
             for (int i = 0; i < 100_000; i++)
             {
                 commands.Spawn(Entity.With(new Component1(), new Component2()));
             }
-        }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-        static (Query<Component1, Component2> query) =>
+        }
+
+        static void Update(Query<Component1, Component2> query)
         {
             query.ForEach(static (ref Component1 c1, ref Component2 c2) =>
             {
                 c1.Value += c2.Value;
             });
-        }))
-        .AddSystem(CoreStage.First, FnSystem.Create("ReadEventFirst",
-        static (EventReader<TestEvent> eTestEvent) =>
+        }
+    }
+
+    [SystemSet]
+    partial class EventSystemSet
+    {
+        [System(nameof(ReadEventFirst))]
+        static readonly SystemBuilderDescriptor ReadEventFirstDescriptor = new()
+        {
+            Stage = CoreStage.First,
+        };
+
+        [System(nameof(WriteEventLast))]
+        static readonly SystemBuilderDescriptor WriteEventLastDescriptor = new()
+        {
+            Stage = CoreStage.Last,
+            RunCriteria = new RunFixed(1f),
+        };
+
+        static void ReadEventFirst(EventReader<TestEvent> eTestEvent)
         {
             foreach (var e in eTestEvent.Read())
             {
                 Log.Info($"Event: {e.Value}");
             }
-        }))
-        .AddSystem(CoreStage.Last, FnSystem.Create(new("WriteEventLast")
-        {
-            RunCriteria = new RunFixed(1f)
-        },
-        static (Local<int> counter, EventWriter<TestEvent> eTestEvent) =>
+        }
+
+        static void WriteEventLast(Local<int> counter, EventWriter<TestEvent> eTestEvent)
         {
             eTestEvent.Write(new TestEvent { Value = counter.Value++ });
-        }))
-        .AddSystem(CoreStage.PostUpdate, FnSystem.Create("StateTransition", 
-        static (State<TestState> state, Local<float> timer, Time time) =>
+        }
+    }
+
+    [SystemSet]
+    partial class StateSystemSet
+    {
+        [System(nameof(StateTransition))]
+        static readonly SystemBuilderDescriptor StateTransitionDescriptor = new()
         {
-            timer.Value -= time.DeltaTimeF;
+            Stage = CoreStage.PostUpdate,
+            RunCriteria = new RunFixed(1f),
+        };
+
+        [System(nameof(State1Enter))]
+        static readonly SystemBuilderDescriptor State1EnterDescriptor = new()
+        {
+            Stage = StateEnter.On(TestState.State1),
+        };
+        
+        [System(nameof(State1Exit))]
+        static readonly SystemBuilderDescriptor State1ExitDescriptor = new()
+        {
+            Stage = StateExit.On(TestState.State1),
+        };
+
+        [System(nameof(State1Update))]
+        static readonly SystemBuilderDescriptor State1UpdateDescriptor = new()
+        {
+            Stage = CoreStage.Update,
+            RunCriteria = StateRunCriteria<TestState>.OnCurrent(TestState.State1)
+        };
+
+        static void StateTransition(State<TestState> state, Local<float> timer, Time time)
+        {
+            timer.Value -= 1f;
             if (timer.Value <= 0f)
             {
                 timer.Value = 5f;
-                state.Set(state.Current switch 
+                state.Set(state.Current switch
                 {
                     TestState.State1 => TestState.State2,
                     TestState.State2 => TestState.State3,
@@ -90,14 +155,13 @@ public class ECSExample : IExample
                 });
                 Log.Info($"State: {state.Current} -> {state.Next}");
             }
-        }))
-        .AddSystem(StateEnter.On(TestState.State1), FnSystem.Create("State1Enter", static (World world) => Log.Info("Enter State1")))
-        .AddSystem(StateExit.On(TestState.State1), FnSystem.Create("State1Exit", static (World world) => Log.Info("Exit State1")))
-        .AddSystem(CoreStage.Update, FnSystem.Create(new("State1Update")
-        {
-            RunCriteria = StateRunCriteria<TestState>.OnCurrent(TestState.State1)
-        }, 
-        static (Local<float> timer, Time time) =>
+        }
+
+        static void State1Enter(World world) => Log.Info("Enter State1");
+
+        static void State1Exit(World world) => Log.Info("Exit State1");
+
+        static void State1Update(Local<float> timer, Time time)
         {
             timer.Value -= time.DeltaTimeF;
             if (timer.Value <= 0f)
@@ -105,7 +169,6 @@ public class ECSExample : IExample
                 timer.Value = 1f;
                 Log.Info("State1Update");
             }
-        }))
-        .Build())
-        .Run();
+        }
+    }
 }

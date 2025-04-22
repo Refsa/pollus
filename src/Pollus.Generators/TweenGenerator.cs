@@ -44,7 +44,7 @@ public class TweenGenerator : IIncrementalGenerator
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
             transform: static (context, cancellationToken) =>
             {
-                var attribute = context.Attributes.FirstOrDefault(e => e.AttributeClass.Name == "ShaderTypeAttribute");
+                var attribute = context.Attributes.FirstOrDefault(e => e.AttributeClass.Name == "TweenableAttribute");
                 var data = context.TargetSymbol as ITypeSymbol;
 
                 var fields = new List<Field>();

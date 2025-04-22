@@ -30,7 +30,7 @@ public class QueryFetch<TQuery> : IFetch<TQuery>
 public struct Query : IQuery, IQueryCreate<Query>
 {
     public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
-        where TFilters : ITuple, new()
+        where TFilters : ITuple, IFilter, new()
     {
         public static Component.Info[] Infos => infos;
         static readonly IFilter[] filters;

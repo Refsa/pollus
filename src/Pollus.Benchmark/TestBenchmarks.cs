@@ -41,7 +41,7 @@ public class TestBenchmarks
 
             var entity = new Entity(i + 1);
             var entityInfo = archetype.AddEntity(entity);
-            archetype.SetComponent(entityInfo.ChunkIndex, entityInfo.RowIndex, comp);
+            archetype.SetComponent(entityInfo.chunkIndex, entityInfo.rowIndex, comp);
 
             world.Spawn(Entity.With(new Component1()));
         }

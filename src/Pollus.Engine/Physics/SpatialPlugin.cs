@@ -13,7 +13,7 @@ public static class SpatialPlugin
     }
 
     public static SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters> Grid<TQueryFilters>(int cellSize, int width, int height)
-        where TQueryFilters : ITuple, new()
+        where TQueryFilters : ITuple, IFilter, new()
     {
         return new SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters>(new SpatialHashGrid<Entity>(cellSize, width, height));
     }
@@ -26,7 +26,7 @@ public static class SpatialPlugin
 
 public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
     where TSpatialQuery : ISpatialContainer<Entity>
-    where TQueryFilters : ITuple, new()
+    where TQueryFilters : ITuple, IFilter, new()
 {
     public TSpatialQuery SpatialQuery { get; init; }
 

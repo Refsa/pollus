@@ -92,15 +92,22 @@ public record class Application
         return this;
     }
 
-    public Application AddSystem(StageLabel stage, params ISystem[] system)
+    public Application AddSystem(StageLabel stage, params ISystem[] systems)
     {
-        world.Schedule.AddSystems(stage, system);
+        world.Schedule.AddSystems(stage, systems);
         return this;
     }
 
-    public Application AddSystem(StageLabel stage, params ISystemBuilder[] systems)
+    public Application AddSystem(StageLabel stage, params ISystemBuilder[] builders)
     {
-        world.Schedule.AddSystems(stage, systems);
+        world.Schedule.AddSystems(stage, builders);
+        return this;
+    }
+
+    public Application AddSystemSet<TSystemSet>() 
+        where TSystemSet : ISystemSet, new()
+    {
+        TSystemSet.AddToSchedule(world.Schedule);
         return this;
     }
 
