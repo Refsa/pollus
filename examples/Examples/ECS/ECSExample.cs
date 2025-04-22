@@ -68,15 +68,15 @@ public partial class ECSExample : IExample
         {
             for (int i = 0; i < 100_000; i++)
             {
-                commands.Spawn(Entity.With(new Component1(), new Component2()));
+                commands.Spawn(Entity.With(new Component1 { Value = i }, new Component2 { Value = 1 }));
             }
         }
 
-        static void Update(Query<Component1, Component2> query)
+        static void Update(Query<Component1, Read<Component2>> query)
         {
-            query.ForEach(static (ref Component1 c1, ref Component2 c2) =>
+            query.ForEach(static (ref Component1 c1, ref Read<Component2> c2) =>
             {
-                c1.Value += c2.Value;
+                c1.Value += c2.Component.Value;
             });
         }
     }

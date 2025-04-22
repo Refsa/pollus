@@ -24,6 +24,8 @@ public static class Component
         public required ComponentID ID { get; init; }
         public required int SizeInBytes { get; init; }
         public required Type Type { get; init; }
+        public required bool Read { get; init; }
+        public required bool Write { get; init; }
     }
 
     static class Lookup<C> where C : unmanaged, IComponent
@@ -49,18 +51,17 @@ public static class Component
         {
             ID = new ComponentID(componentIDs.Count),
             SizeInBytes = Unsafe.SizeOf<T>(),
-            Type = type
+            Type = type,
+            Read = true,
+            Write = true,
         };
 
         if (new T() is IComponentWrapper)
         {
-            var wrappedInfo = ComponentWrapper<T>.Info;
-            info = new Info
-            {
-                ID = wrappedInfo.ID,
-                Type = wrappedInfo.Type,
-                SizeInBytes = Unsafe.SizeOf<T>(),
-            };
+            #pragma warning disable IL2059
+            RuntimeHelpers.RunClassConstructor(type.TypeHandle);
+            #pragma warning restore IL2059
+            info = ComponentWrapper<T>.Info;
         }
 
         componentIDs[type] = info;
