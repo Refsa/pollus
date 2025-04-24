@@ -1,6 +1,7 @@
-using Pollus.ECS;
-
+#pragma warning disable CA1416
 namespace Pollus.Tests.ECS;
+
+using Pollus.ECS;
 
 public class CommandsTests
 {
@@ -88,7 +89,7 @@ public class CommandsTests
     }
 
     [Fact]
-    public void Commands_AddComponent_wearfhjfhjuiweauiwoaefhweafi()
+    public void Commands_AddComponent_Many()
     {
         using var world = new World();
 
@@ -121,4 +122,27 @@ public class CommandsTests
             index++;
         }
     }
+
+    [Fact]
+    public void Commands_SetComponent()
+    {
+        using var world = new World();
+        var entity = Entity.NULL;
+
+        {
+            var commands = world.GetCommands();
+            entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 })).Entity;
+            world.Update();
+        }
+
+        {
+            var commands = world.GetCommands();
+            commands.Entity(entity).SetComponent(new TestComponent1 { Value = 10 });
+            world.Update();
+        }
+
+        var component1 = world.Store.GetComponent<TestComponent1>(entity);
+        Assert.Equal(10, component1.Value);
+    }
 }
+#pragma warning restore CA1416

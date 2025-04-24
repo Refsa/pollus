@@ -267,16 +267,15 @@ public class ArchetypeStore : IDisposable
         nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(nextInfo.RowIndex, ComponentFlags.Removed);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void SetComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
-        if (!entityHandler.IsAlive(entity))
-        {
-            throw new ArgumentException("Entity does not exist");
-        }
+        Guard.IsTrue(entityHandler.IsAlive(entity), $"Entity {entity} does not exist");
 
         ref var entityInfo = ref entityHandler.GetEntityInfo(entity);
         var archetype = archetypes[entityInfo.ArchetypeIndex];
+        Guard.IsTrue(archetype.HasComponent<C>(), $"Entity {entity} does not have component {typeof(C)}");
         archetype.SetComponent(entityInfo.ChunkIndex, entityInfo.RowIndex, component);
     }
 

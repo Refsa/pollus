@@ -33,7 +33,7 @@ public class World : IDisposable
         Events = new();
         
         commandBuffers = new(() => new(Store.Entities), 1);
-        registeredPlugins = new();
+        registeredPlugins = [];
         commandBuffersQueue = new();
     }
 

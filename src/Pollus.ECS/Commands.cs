@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using Pollus.Collections;
+using Pollus.Debugging;
 
 public interface ICommand
 {
@@ -147,6 +148,13 @@ public class Commands
         return this;
     }
 
+    public Commands SetComponent<C>(in Entity entity, in C component)
+        where C : unmanaged, IComponent
+    {
+        AddCommand(SetComponentCommand<C>.From(entity, component));
+        return this;
+    }
+
     public EntityCommands Clone(in Entity entity)
     {
         var cloned = entities.Create();
@@ -200,6 +208,13 @@ public struct EntityCommands
         return this;
     }
 
+    public EntityCommands SetComponent<C>(in C component)
+        where C : unmanaged, IComponent
+    {
+        commands.SetComponent(Entity, component);
+        return this;
+    }
+
     public EntityCommands Despawn()
     {
         commands.Despawn(Entity);
@@ -247,6 +262,26 @@ public struct DespawnEntityCommand : ICommand
     public void Execute(World world)
     {
         world.Despawn(entity);
+    }
+}
+
+public struct SetComponentCommand<C> : ICommand
+    where C : unmanaged, IComponent
+{
+    public static int Priority => 70;
+
+    Entity entity;
+    C component;
+
+    public static SetComponentCommand<C> From(in Entity entity, in C component)
+    {
+        return new SetComponentCommand<C>() { entity = entity, component = component };
+    }
+
+    public void Execute(World world)
+    {
+        Guard.IsTrue(world.Store.HasComponent<C>(entity), $"Entity {entity} does not have component {typeof(C)}");
+        world.Store.SetComponent(entity, component);
     }
 }
 

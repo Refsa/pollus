@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 public static class Guard
 {
+    [Conditional("DEBUG")]
     public static void IsTrue(bool condition, string message)
     {
         if (!condition)
@@ -15,6 +16,7 @@ public static class Guard
         }
     }
 
+    [Conditional("DEBUG")]
     public static void IsFalse(bool condition, string message)
     {
         if (condition)
@@ -25,6 +27,7 @@ public static class Guard
         }
     }
 
+    [Conditional("DEBUG")]
     public static void IsNotNull<T>([NotNull] T? obj, string message)
     {
         if (obj is null)
@@ -35,6 +38,7 @@ public static class Guard
         }
     }
 
+    [Conditional("DEBUG")]
     public static void IsNull<T>(T? obj, string message)
     {
         if (obj is not null)
