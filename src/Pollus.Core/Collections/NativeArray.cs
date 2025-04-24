@@ -51,6 +51,12 @@ unsafe public struct NativeArray<T> : IDisposable
         return ref data[index];
     }
 
+    public ref TCast Get<TCast>(int index)
+        where TCast : unmanaged
+    {
+        return ref Unsafe.AsRef<TCast>(Unsafe.Add<T>(data, index));
+    }
+
     public Span<T> AsSpan() => new(data, length);
     public Span<T> Slice(int start) => new(data + start, length - start);
     public Span<T> Slice(int start, int length) => new(data + start, length);

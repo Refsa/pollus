@@ -26,31 +26,15 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         where TFilters : ITuple, IFilter, new()
     {
         public static Component.Info[] Infos => infos;
-        static readonly IFilter[] filters;
-        static FilterArchetypeDelegate filterArchetype = RunArchetypeFilter;
-        static FilterChunkDelegate filterChunk = RunChunkFilter;
-
-        static Filter()
-        {
-            filters = FilterHelpers.UnwrapFilters<TFilters>();
-            QueryFetch<Filter<TFilters>>.Register();
-        }
-
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
-
-        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
-
-        public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter)
-        {
-            return filter.query;
-        }
+        public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter) => filter.query;
+        static Filter() => QueryFetch<Filter<TFilters>>.Register();
 
         Query<$gen_args$> query;
 
         public Filter(World world)
         {
-            query = new Query<$gen_args$>(world, filterArchetype, filterChunk);
+            query = new Query<$gen_args$>(world, QueryFilter<TFilters>.FilterArchetype, QueryFilter<TFilters>.FilterChunk);
         }
 
         public void ForEach(ForEachDelegate<$gen_args$> pred)
@@ -106,14 +90,22 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     readonly World world;
-    readonly FilterArchetypeDelegate? filterArchetype;
-    readonly FilterChunkDelegate? filterChunk;
+    FilterArchetypeDelegate? filterArchetype;
+    FilterChunkDelegate? filterChunk;
 
     public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
         this.filterArchetype = filterArchetype;
         this.filterChunk = filterChunk;
+    }
+
+    public void ForEach<TFilters>(ForEachDelegate<$gen_args$> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(pred);
     }
 
     public readonly void ForEach(ForEachDelegate<$gen_args$> pred)
@@ -130,6 +122,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
     }
 
+    public void ForEach<TUserData, TFilters>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(userData, pred);
+    }
+
     public readonly void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
     {
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -142,6 +142,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 pred(in userData, $comp_args$);
             }
         }
+    }
+
+    public void ForEach<TFilters>(ForEachEntityDelegate<$gen_args$> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(pred);
     }
 
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
@@ -159,6 +167,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
     }
 
+    public void ForEach<TUserData, TFilters>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(userData, pred);
+    }
+
     public readonly void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
     {
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -172,6 +188,15 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 pred(in userData, entities[i], $comp_args$);
             }
         }
+    }
+
+    public void ForEach<TForEach, TFilters>(TForEach iter)
+        where TForEach : struct, IForEachBase<$gen_args$>
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(iter);
     }
 
     public readonly void ForEach<TForEach>(TForEach iter)
@@ -204,6 +229,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
     }
 
+    public int EntityCount<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return EntityCount();
+    }
+
     public int EntityCount()
     {
         int count = 0;
@@ -212,6 +245,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             count += chunk.Count;
         }
         return count;
+    }
+
+    public EntityRow Single<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return Single();
     }
 
     public EntityRow Single()

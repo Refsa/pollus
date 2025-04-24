@@ -18,7 +18,7 @@ public interface IFilterChunk : IFilter
     new bool FilterChunk(ArchetypeChunk chunk);
 }
 
-public class Empty : IFilter
+public class NoFilter : IFilter
 {
     public object? this[int index] => null;
     public int Length => 0;

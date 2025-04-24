@@ -210,6 +210,13 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    unsafe public NativeArray<C> GetComponentsNative<C>(ComponentID cid)
+            where C : unmanaged, IComponent
+    {
+        return Unsafe.As<NativeArray<byte>, NativeArray<C>>(ref components.Get(cid.ID));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     unsafe public void SetComponent<C>(int row, scoped in C component)
             where C : unmanaged, IComponent
     {

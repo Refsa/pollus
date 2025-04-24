@@ -33,47 +33,21 @@ public struct Query : IQuery, IQueryCreate<Query>
         where TFilters : ITuple, IFilter, new()
     {
         public static Component.Info[] Infos => infos;
-        static readonly IFilter[] filters;
-        static FilterArchetypeDelegate filterArchetype = RunArchetypeFilter;
-        static FilterChunkDelegate filterChunk = RunChunkFilter;
-
+        public static Filter<TFilters> Create(World world) => new(world);
         public static implicit operator Query(in Filter<TFilters> filter) => filter.query;
-        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
-        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
-
-        static Filter()
-        {
-            filters = FilterHelpers.UnwrapFilters<TFilters>();
-            QueryFetch<Filter<TFilters>>.Register();
-        }
+        static Filter() => QueryFetch<Filter<TFilters>>.Register();
 
         Query query;
 
         public Filter(World world)
         {
-            query = new Query(world, filterArchetype, filterChunk);
+            query = new Query(world, QueryFilter<TFilters>.FilterArchetype, QueryFilter<TFilters>.FilterChunk);
         }
 
-        public void ForEach(ForEachEntityDelegate pred)
-        {
-            query.ForEach(pred);
-        }
-
-        public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
-        {
-            query.ForEach(userData, pred);
-        }
-
-        public Entity Single()
-        {
-            return query.Single();
-        }
-
-        public int EntityCount()
-        {
-            return query.EntityCount();
-        }
+        public void ForEach(ForEachEntityDelegate pred) => query.ForEach(pred);
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred) => query.ForEach(userData, pred);
+        public Entity Single() => query.Single();
+        public int EntityCount() => query.EntityCount();
 
         public Enumerator GetEnumerator() => new(query);
     }
@@ -92,14 +66,22 @@ public struct Query : IQuery, IQueryCreate<Query>
     }
 
     World world;
-    readonly FilterArchetypeDelegate? filterArchetype;
-    readonly FilterChunkDelegate? filterChunk;
+    FilterArchetypeDelegate? filterArchetype;
+    FilterChunkDelegate? filterChunk;
 
     public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
         this.filterArchetype = filterArchetype;
         this.filterChunk = filterChunk;
+    }
+
+    public void ForEach<TFilters>(ForEachEntityDelegate pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(pred);
     }
 
     public void ForEach(ForEachEntityDelegate pred)
@@ -115,6 +97,14 @@ public struct Query : IQuery, IQueryCreate<Query>
         }
     }
 
+    public void ForEach<TUserData, TFilters>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(userData, pred);
+    }
+
     public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
     {
         scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
@@ -128,6 +118,14 @@ public struct Query : IQuery, IQueryCreate<Query>
         }
     }
 
+    public Entity Single<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return Single();
+    }
+
     public Entity Single()
     {
         scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
@@ -136,6 +134,14 @@ public struct Query : IQuery, IQueryCreate<Query>
             return chunk.GetEntities()[0];
         }
         throw new InvalidOperationException("No entities found");
+    }
+
+    public int EntityCount<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return EntityCount();
     }
 
     public int EntityCount()

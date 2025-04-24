@@ -7,9 +7,9 @@ using Pollus.Engine.Transform;
 
 public static class SpatialPlugin
 {
-    public static SpatialPlugin<SpatialHashGrid<Entity>, Empty> Grid(int cellSize, int width, int height)
+    public static SpatialPlugin<SpatialHashGrid<Entity>, NoFilter> Grid(int cellSize, int width, int height)
     {
-        return new SpatialPlugin<SpatialHashGrid<Entity>, Empty>(new SpatialHashGrid<Entity>(cellSize, width, height));
+        return new SpatialPlugin<SpatialHashGrid<Entity>, NoFilter>(new SpatialHashGrid<Entity>(cellSize, width, height));
     }
 
     public static SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters> Grid<TQueryFilters>(int cellSize, int width, int height)
@@ -18,9 +18,9 @@ public static class SpatialPlugin
         return new SpatialPlugin<SpatialHashGrid<Entity>, TQueryFilters>(new SpatialHashGrid<Entity>(cellSize, width, height));
     }
 
-    public static SpatialPlugin<SpatialLooseGrid<Entity>, Empty> LooseGrid(int cellSize, int tightSize, int worldSize)
+    public static SpatialPlugin<SpatialLooseGrid<Entity>, NoFilter> LooseGrid(int cellSize, int tightSize, int worldSize)
     {
-        return new SpatialPlugin<SpatialLooseGrid<Entity>, Empty>(new SpatialLooseGrid<Entity>(cellSize, tightSize, worldSize));
+        return new SpatialPlugin<SpatialLooseGrid<Entity>, NoFilter>(new SpatialLooseGrid<Entity>(cellSize, tightSize, worldSize));
     }
 }
 

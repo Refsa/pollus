@@ -9,31 +9,15 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         where TFilters : ITuple, new()
     {
         public static Component.Info[] Infos => infos;
-        static readonly IFilter[] filters;
-        static FilterArchetypeDelegate filterDelegate = RunArchetypeFilter;
-        static FilterChunkDelegate filterChunkDelegate = RunChunkFilter;
-
-        static Filter()
-        {
-            filters = FilterHelpers.UnwrapFilters<TFilters>();
-            QueryFetch<Filter<TFilters>>.Register();
-        }
-
         public static Filter<TFilters> Create(World world) => new(world);
-
-        static bool RunArchetypeFilter(Archetype archetype) => FilterHelpers.RunArchetypeFilters(archetype, filters);
-        static bool RunChunkFilter(in ArchetypeChunk chunk) => FilterHelpers.RunChunkFilters(chunk, filters);
-
-        public static implicit operator Query<C0>(in Filter<TFilters> filter)
-        {
-            return filter.query;
-        }
+        public static implicit operator Query<C0>(in Filter<TFilters> filter) => filter.query;
+        static Filter() => QueryFetch<Filter<TFilters>>.Register();
 
         Query<C0> query;
 
         public Filter(World world)
         {
-            query = new Query<C0>(world, filterDelegate, filterChunkDelegate);
+            query = new Query<C0>(world, QueryFilter<TFilters>.FilterArchetype, QueryFilter<TFilters>.FilterChunk);
         }
 
         public void ForEach(ForEachDelegate<C0> pred)
@@ -89,14 +73,22 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     }
 
     readonly World world;
-    readonly FilterArchetypeDelegate? filterArchetype;
-    readonly FilterChunkDelegate? filterChunk;
+    FilterArchetypeDelegate? filterArchetype;
+    FilterChunkDelegate? filterChunk;
 
     public Query(World world, FilterArchetypeDelegate? filterArchetype = null, FilterChunkDelegate? filterChunk = null)
     {
         this.world = world;
         this.filterArchetype = filterArchetype;
         this.filterChunk = filterChunk;
+    }
+
+    public void ForEach<TFilters>(ForEachDelegate<C0> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(pred);
     }
 
     public readonly void ForEach(ForEachDelegate<C0> pred)
@@ -114,6 +106,14 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
     }
 
+    public void ForEach<TUserData, TFilters>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, C0> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(userData, pred);
+    }
+
     public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, C0> pred)
     {
         foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -127,6 +127,13 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
                 curr = ref Unsafe.Add(ref curr, 1);
             }
         }
+    }
+    public void ForEach<TFilters>(ForEachEntityDelegate<C0> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(pred);
     }
 
     public readonly void ForEach(ForEachEntityDelegate<C0> pred)
@@ -146,6 +153,14 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
     }
 
+    public void ForEach<TUserData, TFilters>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, C0> pred)
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(userData, pred);
+    }
+
     public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, C0> pred)
     {
         foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -161,6 +176,15 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
                 curr = ref Unsafe.Add(ref curr, 1);
             }
         }
+    }
+
+    public void ForEach<TForEach, TFilters>(TForEach iter)
+        where TForEach : struct, IForEachBase<C0>
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEach(iter);
     }
 
     public readonly void ForEach<TForEach>(TForEach iter)
@@ -196,6 +220,14 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
     }
 
+    public int EntityCount<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return EntityCount();
+    }
+
     public int EntityCount()
     {
         int count = 0;
@@ -204,6 +236,14 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             count += chunk.Count;
         }
         return count;
+    }
+
+    public EntityRow Single<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return Single();
     }
 
     public EntityRow Single()

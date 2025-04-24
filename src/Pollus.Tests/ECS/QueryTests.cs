@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 using Pollus.ECS;
 
 namespace Pollus.Tests.ECS;
@@ -45,8 +46,8 @@ public class QueryTests
         }
 
         int count = 0;
-        var q1 = new Query<TestComponent1>.Filter<None<TestComponent2>>(world);
-        q1.ForEach((ref TestComponent1 c1) =>
+        var q1 = new Query<TestComponent1>(world);
+        q1.ForEach<None<TestComponent2>>((ref TestComponent1 c1) =>
         {
             c1.Value++;
             count++;
@@ -60,9 +61,9 @@ public class QueryTests
             Assert.Equal(index++, c1.Value);
         });
 
-        var q2 = new Query<TestComponent1>.Filter<All<TestComponent2>>(world);
+        var q2 = new Query<TestComponent1>(world);
         index = 1;
-        q2.ForEach((ref TestComponent1 c1) =>
+        q2.ForEach<All<TestComponent2>>((ref TestComponent1 c1) =>
         {
             Assert.Equal(index++, c1.Value);
         });
@@ -183,3 +184,4 @@ public class QueryTests
         Assert.Equal(0, qTc1.EntityCount());
     }
 }
+#pragma warning restore CA1416
