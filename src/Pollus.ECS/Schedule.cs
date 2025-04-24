@@ -35,7 +35,7 @@ public class Schedule : IDisposable
     }
 
     List<Stage> stages { get; } = new();
-    
+
     public ListEnumerable<Stage> Stages => new(stages);
 
     public void Dispose()
@@ -54,7 +54,7 @@ public class Schedule : IDisposable
             stage.Schedule(world);
         }
     }
-    
+
     public Stage? GetStage(StageLabel label)
     {
         return stages.Find(s => s.Label == label);

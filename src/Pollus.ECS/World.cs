@@ -161,6 +161,6 @@ public class World : IDisposable
 
 public class WorldFetch : IFetch<World>
 {
-    public static void Register() => Fetch.Register(new WorldFetch(), []);
+    public static void Register() => Fetch.Register(new WorldFetch(), [typeof(World)]);
     public World DoFetch(World world, ISystem system) => world;
 }

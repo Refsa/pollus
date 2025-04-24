@@ -130,7 +130,7 @@ namespace Pollus.Generators
         var {{lowerName}} = {{systemModel.DescriptorField.Name}};
         if (string.IsNullOrEmpty({{lowerName}}.Label.Value))
         {
-            {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.ClassName}}::{{systemModel.DescriptorField.Name}}");
+            {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.ClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
         }
         schedule.AddSystems({{lowerName}}.Stage, FnSystem.Create({{lowerName}}, (SystemDelegate<{{string.Join(", ", systemModel.SystemCallbackMethod.Parameters)}}>){{systemModel.SystemCallbackMethod.Name}}));
 

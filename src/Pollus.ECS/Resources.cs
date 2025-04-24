@@ -88,7 +88,7 @@ public class ResourceFetch<TResource> : IFetch<TResource>
 {
     public static void Register()
     {
-        Fetch.Register(new ResourceFetch<TResource>(), []);
+        Fetch.Register(new ResourceFetch<TResource>(), [typeof(TResource)]);
     }
 
     public TResource DoFetch(World world, ISystem system)

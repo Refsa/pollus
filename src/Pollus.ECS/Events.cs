@@ -169,7 +169,7 @@ public class EventWriterFetch<TEvent> : IFetch<EventWriter<TEvent>>
 {
     public static void Register()
     {
-        Fetch.Register(new EventWriterFetch<TEvent>(), []);
+        Fetch.Register(new EventWriterFetch<TEvent>(), [typeof(EventWriter<TEvent>)]);
     }
 
     public EventWriter<TEvent> DoFetch(World world, ISystem system)
