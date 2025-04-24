@@ -83,6 +83,12 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Clone(in Entity toClone, in Entity cloned)
+    {
+        Store.CloneEntity(toClone, cloned);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Preallocate<TBuilder>(in TBuilder _, int count)
         where TBuilder : IEntityBuilder
     {

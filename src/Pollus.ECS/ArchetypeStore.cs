@@ -133,6 +133,31 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityChange CloneEntity(in Entity toClone, in Entity cloned)
+    {
+        ref var entityInfo = ref entityHandler.GetEntityInfo(toClone);
+        var archetype = archetypes[entityInfo.ArchetypeIndex];
+        var (chunkIndex, rowIndex) = archetype.AddEntity(cloned);
+        archetype.Chunks[chunkIndex].SetAllFlags(rowIndex, ComponentFlags.Added);
+
+        ref var clonedInfo = ref entityHandler.GetEntityInfo(cloned);
+        clonedInfo.ArchetypeIndex = entityInfo.ArchetypeIndex;
+        clonedInfo.ChunkIndex = chunkIndex;
+        clonedInfo.RowIndex = rowIndex;
+
+        var chunkInfo = archetype.GetChunkInfo();
+        ref var chunk = ref archetype.GetChunk(entityInfo.ChunkIndex);
+        for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)
+        {
+            var cid = chunkInfo.ComponentIDs[i];
+            var component = chunk.GetComponent(entityInfo.RowIndex, cid);
+            chunk.SetComponent(rowIndex, cid, component);
+        }
+
+        return new(cloned, archetype, chunkIndex, rowIndex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {

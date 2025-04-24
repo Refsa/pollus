@@ -14,8 +14,8 @@ public class HierarchyTests
 
         for (int i = 0; i < 1000; i++)
         {
-            var parentEntity = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform()));
-            var childEntity = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform()));
+            var parentEntity = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+            var childEntity = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
             commands.AddChild(parentEntity, childEntity);
             hierarchies.Add((parentEntity, childEntity));
         }

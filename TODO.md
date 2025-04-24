@@ -26,19 +26,19 @@
 - ECS
 	- [ ] Proper Testing
 	- [x] Systems
-	- [ ] Change Detection
+	- [-] Change Detection
 		- [x] added/removed
 		- [-] changed
-	- [ ] Schedule systems
-		- [ ] ordering
-		- [ ] parallel planner
-		- [ ] per stage/system command dispatchs
+	- [-] Schedule systems
+		- [x] ordering
+		- [-] parallel planner
+		- [x] per stage/system command dispatchs
 	- [ ] Parallel queries
 	- [ ] Relationships
 	- [-] Hierarchies
 	- [x] Events
 	- [x] Commands
-	- [ ] Improve spawn commands
+	- [x] Improve spawn commands
 		- should be able to chain commands that works on entities
 		- i.e. spawn -> set parent and other similar operations
 		- could be implemented on EntityBuilder

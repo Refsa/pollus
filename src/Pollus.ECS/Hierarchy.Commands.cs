@@ -66,6 +66,30 @@ public static class HierarchyCommandsExt
         commands.AddCommand(new DespawnHierarchyCommand { Root = root });
         return commands;
     }
+
+    public static EntityCommands SetParent(this EntityCommands builder, in Entity parent)
+    {
+        builder.Commands.SetParent(builder.Entity, parent);
+        return builder;
+    }
+
+    public static EntityCommands AddChild(this EntityCommands builder, in Entity child)
+    {
+        builder.Commands.AddChild(builder.Entity, child);
+        return builder;
+    }
+
+    public static EntityCommands RemoveChild(this EntityCommands builder, in Entity child)
+    {
+        builder.Commands.RemoveChild(builder.Entity, child);
+        return builder;
+    }
+    
+    public static EntityCommands RemoveChildren(this EntityCommands builder)
+    {
+        builder.Commands.RemoveChildren(builder.Entity);
+        return builder;
+    }
 }
 
 public struct AddChildCommand : ICommand

@@ -22,16 +22,17 @@ public class HierarchyExample : IExample
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (Commands commands) =>
         {
-            var parent = commands.Spawn();
-            commands.AddChild(parent, commands.Spawn());
-            commands.AddChild(parent, commands.Spawn());
-            commands.AddChild(parent, commands.Spawn());
+            var parent = commands.Spawn()
+                .AddChild(commands.Spawn().Entity)
+                .AddChild(commands.Spawn().Entity)
+                .AddChild(commands.Spawn().Entity)
+                .Entity;
 
-            var ent5 = commands.Spawn();
-            commands.AddChild(parent, ent5);
-            commands.AddChild(ent5, commands.Spawn());
-            commands.AddChild(ent5, commands.Spawn());
-            commands.AddChild(ent5, commands.Spawn());
+            var ent5 = commands.Spawn()
+                .AddChild(commands.Spawn().Entity)
+                .AddChild(commands.Spawn().Entity)
+                .AddChild(commands.Spawn().Entity)
+                .Entity;
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Print",
         static (Local<float> logCD, Time time, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
@@ -65,16 +66,18 @@ public class HierarchyExample : IExample
             else
             {
                 Log.Info("Spawning");
-                var parent = commands.Spawn();
-                commands.AddChild(parent, commands.Spawn());
-                commands.AddChild(parent, commands.Spawn());
-                commands.AddChild(parent, commands.Spawn());
+                var parent = commands.Spawn()
+                    .AddChild(commands.Spawn().Entity)
+                    .AddChild(commands.Spawn().Entity)
+                    .AddChild(commands.Spawn().Entity)
+                    .Entity;
 
-                var ent5 = commands.Spawn();
-                commands.AddChild(parent, ent5);
-                commands.AddChild(ent5, commands.Spawn());
-                commands.AddChild(ent5, commands.Spawn());
-                commands.AddChild(ent5, commands.Spawn());
+                var ent5 = commands.Spawn()
+                    .AddChild(commands.Spawn().Entity)
+                    .AddChild(commands.Spawn().Entity)
+                    .AddChild(commands.Spawn().Entity)
+                    .AddChild(commands.Spawn().Entity)
+                    .Entity;
             }
         }))
         .Build())

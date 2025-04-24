@@ -205,8 +205,9 @@ public struct TweenBuilder<TType>
 
     public Entity Append(Commands commands)
     {
-        var child = commands.Spawn(Entity.With(tween));
-        commands.AddChild(entity, child);
+        var child = commands.Spawn(Entity.With(tween))
+            .SetParent(entity)
+            .Entity;
         return child;
     }
 }

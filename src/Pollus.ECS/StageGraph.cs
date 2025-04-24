@@ -136,20 +136,27 @@ public class StageGraph
         var current = First;
         while (current != null)
         {
-            foreach (var system in current.Systems)
+            var systems = current.Systems.Where(s => s.ShouldRun(world));
+
+            // systems.AsParallel().ForAll((system) => TickSystem(world, system));
+            foreach (var system in systems)
             {
-                try
-                {
-                    if (system.ShouldRun(world) is false) continue;
-                    system.Tick(world);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Value} in stage {Label.Value}.");
-                    throw;
-                }
+                TickSystem(world, system);
             }
             current = current.Next;
+        }
+
+        void TickSystem(World world, ISystem system)
+        {
+            try
+            {
+                system.Tick(world);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, $"An error occurred while running system {system.Descriptor.Label.Value} in stage {Label.Value}.");
+                throw;
+            }
         }
     }
 

@@ -11,7 +11,7 @@ public class CommandsTests
         var entity = Entity.NULL;
         {
             var commands = world.GetCommands();
-            entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 }));
+            entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 })).Entity;
             world.Update();
         }
 
@@ -37,7 +37,7 @@ public class CommandsTests
         var commands = world.GetCommands();
         for (int i = 0; i < 1000; i++)
         {
-            entities.Add(commands.Spawn(Entity.With(new TestComponent1 { Value = 5 + i * 1000 })));
+            entities.Add(commands.Spawn(Entity.With(new TestComponent1 { Value = 5 + i * 1000 })).Entity);
         }
         world.Update();
 
@@ -69,7 +69,7 @@ public class CommandsTests
         var commands = world.GetCommands();
         for (int i = 0; i < 1000; i++)
         {
-            var entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 + i * 1000 }));
+            var entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 + i * 1000 })).Entity;
             commands.AddComponent(entity, new TestComponent2 { Value = 10 + i * 1000 });
             entities.Add(entity);
         }
@@ -97,8 +97,8 @@ public class CommandsTests
 
         for (int i = 0; i < 400; i++)
         {
-            var parentEntity = commands.Spawn(Entity.With(new TestComponent1 { Value = i }));
-            var childEntity = commands.Spawn(Entity.With(new TestComponent1 { Value = i }));
+            var parentEntity = commands.Spawn(Entity.With(new TestComponent1 { Value = i })).Entity;
+            var childEntity = commands.Spawn(Entity.With(new TestComponent1 { Value = i })).Entity;
             commands.AddComponent(parentEntity, new TestComponent2 { Value = i * 10 });
             commands.AddComponent(childEntity, new TestComponent2 { Value = i * 100 });
             hierarchies.Add((parentEntity, childEntity));

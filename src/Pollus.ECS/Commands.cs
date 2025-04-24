@@ -1,6 +1,6 @@
-using Pollus.Collections;
-
 namespace Pollus.ECS;
+
+using Pollus.Collections;
 
 public interface ICommand
 {
@@ -31,12 +31,13 @@ public class CommandBuffer<TCommand> : ICommandBuffer
         count = 0;
     }
 
-    public void AddCommand(TCommand command)
+    public ref TCommand AddCommand(in TCommand command)
     {
         if (count == commands.Length)
             Array.Resize(ref commands, commands.Length * 2);
 
         commands[count++] = command;
+        return ref commands[count - 1];
     }
 
     public void Execute(World world)
@@ -65,7 +66,7 @@ public class Commands
         this.entities = entities;
     }
 
-    public void AddCommand<TCommand>(in TCommand command)
+    public ref TCommand AddCommand<TCommand>(in TCommand command)
         where TCommand : ICommand
     {
         ICommandBuffer? buffer;
@@ -81,7 +82,7 @@ public class Commands
             needsSort = true;
         }
 
-        ((CommandBuffer<TCommand>)buffer).AddCommand(command);
+        return ref ((CommandBuffer<TCommand>)buffer).AddCommand(command);
     }
 
     public void Flush(World world)
@@ -106,19 +107,24 @@ public class Commands
         }
     }
 
-    public Entity Spawn<TBuilder>(in TBuilder builder)
+    public EntityCommands Entity(in Entity entity)
+    {
+        return new EntityCommands(this, entity);
+    }
+
+    public EntityCommands Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
         var entity = entities.Create();
         AddCommand(SpawnEntityCommand<TBuilder>.From(builder, entity));
-        return entity;
+        return new EntityCommands(this, entity);
     }
 
-    public Entity Spawn()
+    public EntityCommands Spawn()
     {
         var entity = entities.Create();
         AddCommand(SpawnEntityCommand<EntityBuilder>.From(new EntityBuilder(), entity));
-        return entity;
+        return new EntityCommands(this, entity);
     }
 
     public Commands Despawn(in Entity entity)
@@ -141,6 +147,13 @@ public class Commands
         return this;
     }
 
+    public EntityCommands Clone(in Entity entity)
+    {
+        var cloned = entities.Create();
+        AddCommand(CloneEntityCommand.From(entity, cloned));
+        return new EntityCommands(this, cloned);
+    }
+
     public Commands Defer(Action<World> action)
     {
         AddCommand(DelegateCommand.From(action));
@@ -158,6 +171,39 @@ public class CommandsFetch : IFetch<Commands>
     public Commands DoFetch(World world, ISystem system)
     {
         return world.GetCommands();
+    }
+}
+
+public struct EntityCommands
+{
+    Commands commands;
+    public readonly Entity Entity;
+    public Commands Commands => commands;
+
+    public EntityCommands(Commands commands, Entity entity)
+    {
+        this.commands = commands;
+        Entity = entity;
+    }
+
+    public EntityCommands AddComponent<C>(in C component)
+        where C : unmanaged, IComponent
+    {
+        commands.AddComponent(Entity, component);
+        return this;
+    }
+
+    public EntityCommands RemoveComponent<C>()
+        where C : unmanaged, IComponent
+    {
+        commands.RemoveComponent<C>(Entity);
+        return this;
+    }
+
+    public EntityCommands Despawn()
+    {
+        commands.Despawn(Entity);
+        return this;
     }
 }
 
@@ -265,5 +311,23 @@ public struct DelegateCommand : ICommand
     public void Execute(World world)
     {
         action(world);
+    }
+}
+
+public struct CloneEntityCommand : ICommand
+{
+    public static int Priority => 0;
+
+    Entity entity;
+    Entity cloned;
+
+    public static CloneEntityCommand From(in Entity entity, in Entity cloned)
+    {
+        return new CloneEntityCommand() { entity = entity, cloned = cloned };
+    }
+
+    public void Execute(World world)
+    {
+        world.Clone(entity, cloned);
     }
 }

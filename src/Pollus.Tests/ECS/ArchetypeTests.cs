@@ -1,3 +1,4 @@
+#pragma warning disable CA1416
 namespace Pollus.Tests.ECS;
 
 using Pollus.ECS;
@@ -184,6 +185,25 @@ public class ArchetypeTests
         Assert.Equal(10, c1.Value);
         Assert.Equal(20, c2.Value);
         Assert.Equal(30, c3.Value);
+    }
+
+    [Fact]
+    public void ArchetypeStore_CloneEntity()
+    {
+        using var world = new World();
+        var entity1 = Entity.With(new TestComponent1 { Value = 10 }).Spawn(world);
+        var entity2 = Entity.With(new TestComponent1 { Value = 20 }).Spawn(world);
+
+        var entity3 = world.Spawn();
+        world.Clone(entity2, entity3);
+
+        ref var e2c1 = ref world.Store.GetComponent<TestComponent1>(entity2);
+        ref var e3c1 = ref world.Store.GetComponent<TestComponent1>(entity3);
+        Assert.Equal(20, e3c1.Value);
+
+        e3c1.Value = 30;
+        Assert.Equal(30, e3c1.Value);
+        Assert.Equal(20, e2c1.Value);
     }
 
     [Fact]
@@ -479,3 +499,4 @@ public class ArchetypeTests
         }
     }
 }
+#pragma warning restore CA1416
