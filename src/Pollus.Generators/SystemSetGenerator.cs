@@ -15,6 +15,7 @@ namespace Pollus.Generators
         {
             public string Namespace;
             public string ClassName;
+            public string FullClassName;
             public string FullTypeKind;
             public string Visibility;
         }
@@ -91,10 +92,13 @@ namespace Pollus.Generators
                     {
                         var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
                         if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
+                        var fullName = data.ContainingType.ToString().Replace(data.ContainingType.ContainingNamespace?.ToString() ?? "", "").TrimStart('.');
+
                         containingType = new TypeInfo()
                         {
                             Namespace = data.ContainingNamespace.ToDisplayString(),
-                            ClassName = data.ContainingType.Name,
+                            ClassName = fullName.Replace('<', '_').Replace(',', '_').TrimEnd('>'),
+                            FullClassName = fullName,
                             FullTypeKind = containingTypeKind,
                             Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
                         };
@@ -102,10 +106,13 @@ namespace Pollus.Generators
 
                     var fullTypeKind = data.TypeKind.ToString().ToLower();
                     if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
+
+                    var fullTypeName = data.ToString().Replace(data.ContainingNamespace?.ToString() ?? "_", "").Replace(data.ContainingType?.Name ?? "_", "").TrimStart('.');
                     TypeInfo typeInfo = new()
                     {
                         Namespace = data.ContainingNamespace.ToDisplayString(),
-                        ClassName = data.Name,
+                        ClassName = fullTypeName.Replace('<', '_').Replace(',', '_').TrimEnd('>'),
+                        FullClassName = fullTypeName,
                         FullTypeKind = fullTypeKind,
                         Visibility = data.DeclaredAccessibility.ToString().ToLower(),
                     };
@@ -130,7 +137,7 @@ namespace Pollus.Generators
         var {{lowerName}} = {{systemModel.DescriptorField.Name}};
         if (string.IsNullOrEmpty({{lowerName}}.Label.Value))
         {
-            {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.ClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
+            {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.FullClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
         }
         schedule.AddSystems({{lowerName}}.Stage, FnSystem.Create({{lowerName}}, (SystemDelegate<{{string.Join(", ", systemModel.SystemCallbackMethod.Parameters)}}>){{systemModel.SystemCallbackMethod.Name}}));
 
@@ -139,7 +146,7 @@ namespace Pollus.Generators
                 }
 
                 var classTemplate = $$"""
-public partial class {{model.TypeInfo.ClassName}} : ISystemSet
+public partial class {{model.TypeInfo.FullClassName}} : ISystemSet
 {
     public static void AddToSchedule(Schedule schedule)
     {
