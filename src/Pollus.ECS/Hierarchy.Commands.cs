@@ -11,7 +11,7 @@ public static class HierarchyCommandsExt
     /// <returns>The commands instance.</returns>
     public static Commands SetParent(this Commands commands, in Entity child, in Entity parent)
     {
-        commands.AddCommand(new AddChildCommand { Child = child, Parent = parent });
+        commands.AddChild(parent, child);
         return commands;
     }
 

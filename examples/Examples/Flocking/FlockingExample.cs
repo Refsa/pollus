@@ -507,7 +507,7 @@ class FlockingGame : IPlugin
                     _ => BoidType.None,
                 }
             }
-        ));
+        )).Entity;
     }
 }
 

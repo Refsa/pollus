@@ -85,6 +85,8 @@ public class TweenGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
+            var distinctFieldTypes = new HashSet<string>(model.Fields.Select(e => e.Type));
+
             var partialExt = $$"""
             {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Tween.ITweenable<{{model.TypeInfo.ClassName}}>
             {
@@ -105,7 +107,7 @@ public class TweenGenerator : IIncrementalGenerator
 
                 public static void PrepareSystems(Schedule schedule)
                 {
-            {{string.Join("\n", model.Fields.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.ClassName}, {e.Type}>());"))}}
+            {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.ClassName}, {e}>());"))}}
                 }
 
                 public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.ClassName}}, TField>> property)

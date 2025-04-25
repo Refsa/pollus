@@ -50,73 +50,77 @@ public class TransformExample : IExample
             });
 
             var parent = commands.Spawn(Entity.With(
-                GlobalTransform.Default,
-                Transform2D.Default with
-                {
-                    Position = new Vec2f(300, 300),
-                },
-                new Base(),
-                new ShapeDraw()
-                {
-                    MaterialHandle = shapeMaterial,
-                    ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 32f)),
-                    Color = Color.GREEN,
-                }));
+                    GlobalTransform.Default,
+                    Transform2D.Default with
+                    {
+                        Position = new Vec2f(300, 300),
+                    },
+                    new Base(),
+                    new ShapeDraw()
+                    {
+                        MaterialHandle = shapeMaterial,
+                        ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 32f)),
+                        Color = Color.GREEN,
+                    })
+                )
+                .Entity;
 
-            commands.AddChild(parent, commands.Spawn(Entity.With(
-                GlobalTransform.Default,
-                Transform2D.Default with
-                {
-                    Position = new Vec2f(1, 0) * 128f,
-                },
-                new ShapeDraw()
-                {
-                    MaterialHandle = shapeMaterial,
-                    ShapeHandle = shapes.Add(Shape.EquilateralTriangle(Vec2f.Zero, 32f)),
-                    Color = Color.RED,
-                },
-                new Rotate()
-                {
-                    MinAngle = -180f,
-                    MaxAngle = 180f,
-                    Speed = 180f,
-                }
-            )));
+            commands.Spawn(Entity.With(
+                    GlobalTransform.Default,
+                    Transform2D.Default with
+                    {
+                        Position = new Vec2f(1, 0) * 128f,
+                    },
+                    new ShapeDraw()
+                    {
+                        MaterialHandle = shapeMaterial,
+                        ShapeHandle = shapes.Add(Shape.EquilateralTriangle(Vec2f.Zero, 32f)),
+                        Color = Color.RED,
+                    },
+                    new Rotate()
+                    {
+                        MinAngle = -180f,
+                        MaxAngle = 180f,
+                        Speed = 180f,
+                    }
+                ))
+                .SetParent(parent);
 
             var child2 = commands.Spawn(Entity.With(
-                GlobalTransform.Default,
-                Transform2D.Default with
-                {
-                    Position = new Vec2f(0, 1) * 128f,
-                },
-                new ShapeDraw()
-                {
-                    MaterialHandle = shapeMaterial,
-                    ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 32f)),
-                    Color = Color.RED,
-                },
-                new Rotate()
-                {
-                    MinAngle = -45f,
-                    MaxAngle = 45f,
-                    Speed = 180f,
-                }
-            ));
-            commands.AddChild(parent, child2);
+                    GlobalTransform.Default,
+                    Transform2D.Default with
+                    {
+                        Position = new Vec2f(0, 1) * 128f,
+                    },
+                    new ShapeDraw()
+                    {
+                        MaterialHandle = shapeMaterial,
+                        ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 32f)),
+                        Color = Color.RED,
+                    },
+                    new Rotate()
+                    {
+                        MinAngle = -45f,
+                        MaxAngle = 45f,
+                        Speed = 180f,
+                    }
+                ))
+                .SetParent(parent)
+                .Entity;
 
-            commands.AddChild(child2, commands.Spawn(Entity.With(
-                GlobalTransform.Default,
-                Transform2D.Default with
-                {
-                    Position = new Vec2f(0, 1) * 128f,
-                },
-                new ShapeDraw()
-                {
-                    MaterialHandle = shapeMaterial,
-                    ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 32f)),
-                    Color = Color.BLUE,
-                }
-            )));
+            commands.Spawn(Entity.With(
+                    GlobalTransform.Default,
+                    Transform2D.Default with
+                    {
+                        Position = new Vec2f(0, 1) * 128f,
+                    },
+                    new ShapeDraw()
+                    {
+                        MaterialHandle = shapeMaterial,
+                        ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 32f)),
+                        Color = Color.BLUE,
+                    }
+                )).SetParent(child2);
         }))
         .AddSystem(CoreStage.Update, FnSystem.Create("Move",
         static (Time time, ButtonInput<Key> keys,

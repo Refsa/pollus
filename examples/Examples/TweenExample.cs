@@ -53,8 +53,9 @@ public partial class TweenExample : IExample
             var shape = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * scale));
 
             for (int x = 0; x < 100; x++)
+            for (int y = 0; y < 10; y++)
             {
-                SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, 0f), shapeMaterial, shape);
+                SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, y * scale * 3f), shapeMaterial, shape);
             }
         }))
         .Build())
@@ -72,7 +73,8 @@ public partial class TweenExample : IExample
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shape,
                 Color = Color.RED,
-            }));
+            }))
+            .Entity;
 
         Tween.Create(2f, pos, pos + Vec2f.Up * 64f)
                 .OnEntity(parent)
@@ -91,10 +93,11 @@ public partial class TweenExample : IExample
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shape,
                 Color = Color.BLUE,
-            }));
+            }))
+            .SetParent(parent)
+            .Entity;
 
-        commands.AddChild(parent, child1);
-        Tween.Create(2f, Vec2f.Zero, Vec2f.Right * 30f)
+        Tween.Create(2f, Vec2f.Up * 256f, Vec2f.Up * 256f + Vec2f.Right * 32f)
             .OnEntity(child1)
             .OnField<Transform2D>(comp => comp.Position)
             .WithEasing(Easing.Quartic)
@@ -111,10 +114,11 @@ public partial class TweenExample : IExample
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shape,
                 Color = Color.GREEN,
-            }));
+            }))
+            .SetParent(child1)
+            .Entity;
 
-        commands.AddChild(child1, child2);
-        Tween.Create(2f, Vec2f.One, Vec2f.One * 2f)
+        Tween.Create(2f, Vec2f.One, Vec2f.One * 1.5f)
             .OnEntity(child2)
             .OnField<Transform2D>(comp => comp.Scale)
             .WithEasing(Easing.Quartic)

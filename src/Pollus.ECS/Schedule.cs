@@ -81,6 +81,13 @@ public class Schedule : IDisposable
         return this;
     }
 
+    public Schedule AddSystemSet<TSystemSet>()
+        where TSystemSet : ISystemSet
+    {
+        TSystemSet.AddToSchedule(this);
+        return this;
+    }
+
     public void AddStage(Stage stage, StageLabel? before, StageLabel? after)
     {
         if (before is not null)

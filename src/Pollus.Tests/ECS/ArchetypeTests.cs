@@ -1,6 +1,7 @@
 #pragma warning disable CA1416
 namespace Pollus.Tests.ECS;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 
 public class ArchetypeTests
@@ -461,7 +462,7 @@ public class ArchetypeTests
         var c1 = world.Store.GetComponent<TestComponent1>(entity1);
         Assert.Equal(10, c1.Value);
 
-        Assert.Throws<ArgumentException>(() => world.Store.GetComponent<TestComponent2>(entity1));
+        Assert.Throws<GuardException>(() => world.Store.GetComponent<TestComponent2>(entity1));
     }
 
     [Fact]
@@ -481,7 +482,7 @@ public class ArchetypeTests
         var e2c2 = world.Store.GetComponent<TestComponent2>(entity2);
         Assert.Equal(40, e2c2.Value);
 
-        Assert.Throws<ArgumentException>(() => world.Store.GetComponent<TestComponent2>(entity1));
+        Assert.Throws<GuardException>(() => world.Store.GetComponent<TestComponent2>(entity1));
     }
 
     [Fact]

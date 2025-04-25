@@ -174,14 +174,11 @@ public class ArchetypeStore : IDisposable
     public ref C GetComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
-        if (!entityHandler.IsAlive(entity))
-        {
-            throw new ArgumentException("Entity does not exist");
-        }
+        Guard.IsTrue(entityHandler.IsAlive(entity), $"Entity {entity} does not exist");
 
         ref var entityInfo = ref entityHandler.GetEntityInfo(entity);
         var archetype = archetypes[entityInfo.ArchetypeIndex];
-        if (!archetype.HasComponent<C>()) throw new ArgumentException("Entity does not have component");
+        Guard.IsTrue(archetype.HasComponent<C>(), $"Entity {entity} does not have component {typeof(C)}");
         return ref archetype.GetComponent<C>(entityInfo.ChunkIndex, entityInfo.RowIndex);
     }
 
