@@ -232,6 +232,26 @@ public struct Query : IQuery, IQueryCreate<Query>
         return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
     }
 
+    public ref C Get<C>(in Entities.EntityInfo entityInfo)
+        where C : unmanaged, IComponent
+    {
+        return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool TryGet<C>(in Entity entity, out Entities.EntityInfo entityInfo)
+        where C : unmanaged, IComponent
+    {
+        if (!world.Store.EntityExists(entity))
+        {
+            entityInfo = default;
+            return false;
+        }
+
+        entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+
     public Enumerator GetEnumerator() => new(this);
 
     public ref struct Enumerator

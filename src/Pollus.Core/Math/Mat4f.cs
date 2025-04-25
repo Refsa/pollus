@@ -1,12 +1,22 @@
 namespace Pollus.Mathematics;
 
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using Pollus.Debugging;
 using Pollus.Graphics;
 
 [ShaderType]
 public partial record struct Mat4f
 {
+    static readonly Mat4f identity = new(
+        1f, 0f, 0f, 0f,
+        0f, 1f, 0f, 0f,
+        0f, 0f, 1f, 0f,
+        0f, 0f, 0f, 1f
+    );
+
     public Vec4f Col0;
     public Vec4f Col1;
     public Vec4f Col2;
@@ -39,14 +49,72 @@ public partial record struct Mat4f
         Col3 = new(m30, m31, m32, m33);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Mat4f operator *(in Mat4f left, in Mat4f right)
     {
-        return new(
-            left.Col0 * right.Col0.X + left.Col1 * right.Col0.Y + left.Col2 * right.Col0.Z + left.Col3 * right.Col0.W,
-            left.Col0 * right.Col1.X + left.Col1 * right.Col1.Y + left.Col2 * right.Col1.Z + left.Col3 * right.Col1.W,
-            left.Col0 * right.Col2.X + left.Col1 * right.Col2.Y + left.Col2 * right.Col2.Z + left.Col3 * right.Col2.W,
-            left.Col0 * right.Col3.X + left.Col1 * right.Col3.Y + left.Col2 * right.Col3.Z + left.Col3 * right.Col3.W
+        if (!Sse.IsSupported)
+        {
+            return new(
+                left.Col0 * right.Col0.X + left.Col1 * right.Col0.Y + left.Col2 * right.Col0.Z + left.Col3 * right.Col0.W,
+                left.Col0 * right.Col1.X + left.Col1 * right.Col1.Y + left.Col2 * right.Col1.Z + left.Col3 * right.Col1.W,
+                left.Col0 * right.Col2.X + left.Col1 * right.Col2.Y + left.Col2 * right.Col2.Z + left.Col3 * right.Col2.W,
+                left.Col0 * right.Col3.X + left.Col1 * right.Col3.Y + left.Col2 * right.Col3.Z + left.Col3 * right.Col3.W
+            );
+        }
+
+        var leftCol0 = Unsafe.As<Vec4f, Vector128<float>>(ref Unsafe.AsRef(in left.Col0));
+        var leftCol1 = Unsafe.As<Vec4f, Vector128<float>>(ref Unsafe.AsRef(in left.Col1));
+        var leftCol2 = Unsafe.As<Vec4f, Vector128<float>>(ref Unsafe.AsRef(in left.Col2));
+        var leftCol3 = Unsafe.As<Vec4f, Vector128<float>>(ref Unsafe.AsRef(in left.Col3));
+
+        var col0 = Sse.Add(
+            Sse.Add(
+                Sse.Multiply(leftCol0, Vector128.Create(right.Col0.X)),
+                Sse.Multiply(leftCol1, Vector128.Create(right.Col0.Y))
+            ),
+            Sse.Add(
+                Sse.Multiply(leftCol2, Vector128.Create(right.Col0.Z)),
+                Sse.Multiply(leftCol3, Vector128.Create(right.Col0.W))
+            )
         );
+
+        var col1 = Sse.Add(
+            Sse.Add(
+                Sse.Multiply(leftCol0, Vector128.Create(right.Col1.X)),
+                Sse.Multiply(leftCol1, Vector128.Create(right.Col1.Y))
+            ),
+            Sse.Add(
+                Sse.Multiply(leftCol2, Vector128.Create(right.Col1.Z)),
+                Sse.Multiply(leftCol3, Vector128.Create(right.Col1.W))
+            )
+        );
+
+        var col2 = Sse.Add(
+            Sse.Add(
+                Sse.Multiply(leftCol0, Vector128.Create(right.Col2.X)),
+                Sse.Multiply(leftCol1, Vector128.Create(right.Col2.Y))
+            ),
+            Sse.Add(
+                Sse.Multiply(leftCol2, Vector128.Create(right.Col2.Z)),
+                Sse.Multiply(leftCol3, Vector128.Create(right.Col2.W))
+            )
+        );
+
+        var col3 = Sse.Add(
+            Sse.Add(
+                Sse.Multiply(leftCol0, Vector128.Create(right.Col3.X)),
+                Sse.Multiply(leftCol1, Vector128.Create(right.Col3.Y))
+            ),
+            Sse.Add(
+                Sse.Multiply(leftCol2, Vector128.Create(right.Col3.Z)),
+                Sse.Multiply(leftCol3, Vector128.Create(right.Col3.W))
+            )
+        );
+
+        return new(Unsafe.As<Vector128<float>, Vec4f>(ref col0),
+                   Unsafe.As<Vector128<float>, Vec4f>(ref col1),
+                   Unsafe.As<Vector128<float>, Vec4f>(ref col2),
+                   Unsafe.As<Vector128<float>, Vec4f>(ref col3));
     }
 
     public static Mat4f operator *(in Mat4f left, in Vec4f right)
@@ -80,15 +148,7 @@ public partial record struct Mat4f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Mat4f Identity()
-    {
-        return new(
-            1f, 0f, 0f, 0f,
-            0f, 1f, 0f, 0f,
-            0f, 0f, 1f, 0f,
-            0f, 0f, 0f, 1f
-        );
-    }
+    public static Mat4f Identity() => identity;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f OrthographicRightHanded(float left, float right, float top, float bottom, float near, float far)

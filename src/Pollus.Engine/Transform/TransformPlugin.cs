@@ -37,20 +37,20 @@ public partial class TransformPlugin<TTransform> : IPlugin
 
         static void Propagate(in Entity current, in Query query, in Mat4f parentTransform)
         {
-            if (query.Has<GlobalTransform>(current))
+            if (query.TryGet<GlobalTransform>(current, out var entityInfo))
             {
-                ref var globalTransform = ref query.Get<GlobalTransform>(current);
+                ref var globalTransform = ref query.Get<GlobalTransform>(entityInfo);
                 globalTransform.Value = parentTransform * globalTransform.Value;
 
-                if (query.Has<Parent>(current))
+                if (query.TryGet<Parent>(current, out entityInfo))
                 {
-                    Propagate(query.Get<Parent>(current).FirstChild, query, globalTransform.Value);
+                    Propagate(query.Get<Parent>(entityInfo).FirstChild, query, globalTransform.Value);
                 }
             }
 
-            if (query.Has<Child>(current))
+            if (query.TryGet<Child>(current, out entityInfo))
             {
-                ref var child = ref query.Get<Child>(current);
+                ref var child = ref query.Get<Child>(entityInfo);
                 if (child.NextSibling.IsNull) return;
                 Propagate(child.NextSibling, query, parentTransform);
             }

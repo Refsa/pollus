@@ -1,11 +1,9 @@
 namespace Pollus.Benchmark;
 
-using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
 using Pollus.ECS;
-using Pollus.Mathematics;
 using Pollus.Collections;
 
 

@@ -15,6 +15,7 @@ public static class Program
         // BenchmarkRunner.Run<SpawnBenchmarks>();
         // BenchmarkRunner.Run<QueryBenchmarks>();
         // BenchmarkRunner.Run<SystemBenchmark>();
-        BenchmarkRunner.Run<SpatialBench>();
+        // BenchmarkRunner.Run<SpatialBench>();
+        BenchmarkRunner.Run<MathBenchmarks>();
     }
 }
