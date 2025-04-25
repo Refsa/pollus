@@ -22,10 +22,16 @@ public partial class TransformPlugin<TTransform> : IPlugin
     static void Propagate(
         Query query,
         Query<GlobalTransform, Read<TTransform>, Read<Parent>>.Filter<None<Child>> qRoots,
-        Query<GlobalTransform, Read<TTransform>> qAllTransforms
+        Query<GlobalTransform, Read<TTransform>>.Filter<Any<Parent, Child>> qTreeTransforms,
+        Query<GlobalTransform, Read<TTransform>>.Filter<None<Parent, Child>> qOrphans
     )
     {
-        qAllTransforms.ForEach(static (ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
+        qOrphans.ForEach(static (ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
+        {
+            globalTransform.Value = transform.Component.ToMat4f();
+        });
+
+        qTreeTransforms.ForEach(static (ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
         {
             globalTransform.Value = transform.Component.ToMat4f();
         });
@@ -37,22 +43,29 @@ public partial class TransformPlugin<TTransform> : IPlugin
 
         static void Propagate(in Entity current, in Query query, in Mat4f parentTransform)
         {
-            if (query.TryGet<GlobalTransform>(current, out var entityInfo))
             {
-                ref var globalTransform = ref query.Get<GlobalTransform>(entityInfo);
-                globalTransform.Value = parentTransform * globalTransform.Value;
-
-                if (query.TryGet<Parent>(current, out entityInfo))
+                ref var child = ref query.TryGet<Child>(current, out var hasChild);
+                if (hasChild)
                 {
-                    Propagate(query.Get<Parent>(entityInfo).FirstChild, query, globalTransform.Value);
+                    if (!child.NextSibling.IsNull)
+                    {
+                        Propagate(child.NextSibling, query, parentTransform);
+                    }
                 }
             }
 
-            if (query.TryGet<Child>(current, out entityInfo))
             {
-                ref var child = ref query.Get<Child>(entityInfo);
-                if (child.NextSibling.IsNull) return;
-                Propagate(child.NextSibling, query, parentTransform);
+                ref var globalTransform = ref query.TryGet<GlobalTransform>(current, out var hasGlobalTransform);
+                if (hasGlobalTransform)
+                {
+                    globalTransform.Value = parentTransform * globalTransform.Value;
+
+                    ref var parent = ref query.TryGet<Parent>(current, out var hasParent);
+                    if (hasParent)
+                    {
+                        Propagate(parent.FirstChild, query, globalTransform.Value);
+                    }
+                }
             }
         }
     }

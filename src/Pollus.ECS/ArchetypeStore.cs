@@ -283,9 +283,9 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public Entities.EntityInfo GetEntityInfo(in Entity entity)
+    public ref Entities.EntityInfo GetEntityInfo(in Entity entity)
     {
-        return entityHandler.GetEntityInfo(entity);
+        return ref entityHandler.GetEntityInfo(entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

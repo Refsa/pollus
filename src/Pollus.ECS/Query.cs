@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 
 public interface IQuery
 {
@@ -169,6 +170,14 @@ public struct Query : IQuery, IQueryCreate<Query>
         return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public readonly bool Has<C>(scoped in Entity entity, out Entities.EntityInfo entityInfo)
+        where C : unmanaged, IComponent
+    {
+        entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+
     /// <summary>
     /// Check if a component has been added to an entity
     /// </summary>
@@ -176,7 +185,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if it was added</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool Added<C>(in Entity entity)
+    public readonly bool Added<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
@@ -190,7 +199,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if was changes</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool Changed<C>(in Entity entity)
+    public readonly bool Changed<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
@@ -204,7 +213,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to mark</param>
     /// <typeparam name="C">component to mark</typeparam>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void SetChanged<C>(in Entity entity)
+    public void SetChanged<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
@@ -218,38 +227,37 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if component was removed</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public readonly bool Removed<C>(in Entity entity)
+    public readonly bool Removed<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         return world.Store.Removed.WasRemoved<C>(entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ref C Get<C>(in Entity entity)
+    public ref C Get<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
-        var entityInfo = world.Store.GetEntityInfo(entity);
-        return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
+        return ref Get<C>(world.Store.GetEntityInfo(entity));
     }
 
-    public ref C Get<C>(in Entities.EntityInfo entityInfo)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public ref C Get<C>(scoped in Entities.EntityInfo entityInfo)
         where C : unmanaged, IComponent
     {
         return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public bool TryGet<C>(in Entity entity, out Entities.EntityInfo entityInfo)
+    public ref C TryGet<C>(in Entity entity, out bool exists)
         where C : unmanaged, IComponent
     {
-        if (!world.Store.EntityExists(entity))
+        if (Has<C>(entity, out var entityInfo))
         {
-            entityInfo = default;
-            return false;
+            exists = true;
+            return ref Get<C>(entityInfo);
         }
-
-        entityInfo = world.Store.GetEntityInfo(entity);
-        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+        exists = false;
+        return ref Unsafe.NullRef<C>();
     }
 
     public Enumerator GetEnumerator() => new(this);

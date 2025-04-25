@@ -164,15 +164,19 @@ public partial class Archetype : IDisposable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent<C>()
-            where C : unmanaged, IComponent
+        where C : unmanaged, IComponent
     {
-        return chunkInfo.ComponentIDs.Contains(Component.GetInfo<C>().ID);
+        return HasComponent(Component.GetInfo<C>().ID);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent(in ComponentID cid)
     {
-        return chunkInfo.ComponentIDs.Contains(cid);
+        for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)
+        {
+            if (chunkInfo.ComponentIDs[i].ID == cid.ID) return true;
+        }
+        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

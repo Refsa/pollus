@@ -135,15 +135,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref TValue Get(scoped in TKey key)
     {
-        ref var val = ref GetValue(key, Hash(key, capacity));
-        return ref val;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Set(scoped in TKey key, scoped in TValue value)
-    {
-        ref var val = ref GetValue(key, Hash(key, capacity));
-        val = value;
+        return ref GetValue(key, Hash(key, capacity));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

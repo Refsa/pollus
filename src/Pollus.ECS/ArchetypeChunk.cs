@@ -246,7 +246,7 @@ public struct ArchetypeChunk : IDisposable
             where C : unmanaged, IComponent
     {
         var array = components.Get(cid.ID);
-        return ref *(C*)Unsafe.Add<C>(array.Data, row);
+        return ref Unsafe.AsRef<C>(Unsafe.Add<C>(array.Data, row));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
