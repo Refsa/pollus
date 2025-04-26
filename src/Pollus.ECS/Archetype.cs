@@ -39,12 +39,13 @@ public record struct ArchetypeID(int Hash)
 
 public partial class Archetype : IDisposable
 {
-    const uint MAX_CHUNK_SIZE = 1u << 16;
+    public const int MAX_CHUNK_SIZE = (int)(1u << 16);
 
     public record struct ChunkInfo
     {
-        public int RowsPerChunk { get; init; }
-        public ComponentID[] ComponentIDs { get; init; }
+        public required int ChunkSize { get; init; }
+        public required int RowsPerChunk { get; init; }
+        public required ComponentID[] ComponentIDs { get; init; }
     }
 
     readonly ArchetypeID id;
@@ -67,6 +68,7 @@ public partial class Archetype : IDisposable
     {
         id = aid;
 
+        var chunkSize = MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>();
         var rowStride = 0;
         foreach (var cid in cids)
         {
@@ -75,13 +77,14 @@ public partial class Archetype : IDisposable
         }
         var rowsPerChunk = rowStride switch
         {
-            > 0 => (MAX_CHUNK_SIZE - Unsafe.SizeOf<ArchetypeChunk>()) / (uint)rowStride,
+            > 0 => chunkSize / rowStride,
             _ => 1,
         };
 
         chunkInfo = new ChunkInfo
         {
-            RowsPerChunk = (int)rowsPerChunk,
+            ChunkSize = chunkSize,
+            RowsPerChunk = rowsPerChunk,
             ComponentIDs = [.. cids],
         };
         chunks = new(0);

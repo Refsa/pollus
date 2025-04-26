@@ -62,6 +62,16 @@ unsafe public struct NativeArray<T> : IDisposable
     public Span<T> Slice(int start, int length) => new(data + start, length);
     public Enumerator GetEnumerator() => new(data, length);
 
+    public NativeArray<T> SubArray(int start, int length)
+    {
+        return new()
+        {
+            data = (T*)Unsafe.Add<T>(data, start),
+            length = length,
+            size = length * Unsafe.SizeOf<T>(),
+        };
+    }
+
     public struct Enumerator
     {
         T* data;

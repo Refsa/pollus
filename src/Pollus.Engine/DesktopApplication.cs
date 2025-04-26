@@ -1,6 +1,7 @@
 namespace Pollus.Engine;
 
 using Pollus.Audio;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
@@ -41,6 +42,8 @@ public class DesktopApplication : IApplication, IDisposable
         window.Dispose();
         graphicsContext?.Dispose();
         world.Dispose();
+
+        Log.Info("Application shutdown");
     }
 
     public void Shutdown()

@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.JavaScript;
 using Pollus.Audio;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
@@ -44,6 +45,8 @@ public partial class BrowserApplication : IApplication, IDisposable
         window.Dispose();
         graphicsContext?.Dispose();
         world.Dispose();
+        
+        Log.Info("Application shutdown");
     }
 
     public void Shutdown()

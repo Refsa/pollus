@@ -2,7 +2,7 @@ namespace Pollus.ECS;
 
 using Pollus.Collections;
 
-public enum ComponentFlags
+public enum ComponentFlags : byte
 {
     Added,
     Changed,
