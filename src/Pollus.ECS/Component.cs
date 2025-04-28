@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
 public interface IComponent
@@ -24,6 +25,7 @@ public static class Component
         public required ComponentID ID { get; init; }
         public required int SizeInBytes { get; init; }
         public required Type Type { get; init; }
+        public required string TypeName { get; init; }
         public required bool Read { get; init; }
         public required bool Write { get; init; }
     }
@@ -41,6 +43,21 @@ public static class Component
     static readonly ConcurrentDictionary<Type, Info> componentIDs = new();
     static readonly ConcurrentDictionary<ComponentID, Info> componentInfos = new();
 
+    public static ReadOnlyDictionary<ComponentID, Info> ComponentInfos => new(componentInfos);
+
+    public static Info Register(Info info)
+    {
+        if (componentIDs.TryGetValue(info.Type, out var existing))
+            return existing;
+
+        if (info.ID == -1) info = info with { ID = new ComponentID(componentIDs.Count) };
+
+        componentIDs[info.Type] = info;
+        componentInfos[info.ID] = info;
+
+        return info;
+    }
+
     public static Info Register<T>() where T : unmanaged, IComponent
     {
         var type = typeof(T);
@@ -52,15 +69,16 @@ public static class Component
             ID = new ComponentID(componentIDs.Count),
             SizeInBytes = Unsafe.SizeOf<T>(),
             Type = type,
+            TypeName = type.AssemblyQualifiedName ?? type.FullName ?? throw new InvalidOperationException($"Type {type} has no assembly qualified name"),
             Read = true,
             Write = true,
         };
 
         if (new T() is IComponentWrapper)
         {
-            #pragma warning disable IL2059
+#pragma warning disable IL2059
             RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-            #pragma warning restore IL2059
+#pragma warning restore IL2059
             info = ComponentWrapper<T>.Info;
         }
 

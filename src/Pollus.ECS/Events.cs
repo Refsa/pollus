@@ -203,3 +203,13 @@ public class EventReaderFetch<TEvent> : IFetch<EventReader<TEvent>>
         return reader;
     }
 }
+
+public class EventRunCriteria<TEvent> : IRunCriteria
+    where TEvent : struct
+{
+    public bool ShouldRun(World world)
+    {
+        var events = world.Events.ReadEvents<TEvent>();
+        return events.Length > 0;
+    }
+}
