@@ -46,6 +46,12 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             query.ForEach(iter);
         }
 
+        public void ForEachChunk<TForEach>(TForEach pred)
+            where TForEach : IRawChunkForEach
+        {
+            query.ForEachChunk(pred);
+        }
+
         public EntityRow Single()
         {
             return query.Single();
@@ -217,6 +223,20 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             {
                 iter.Execute(comp1);
             }
+            else if (iter is IChunkEntityForEach<C0>)
+            {
+                scoped var entities = chunk.GetEntities();
+                iter.Execute(entities, comp1);
+            }
+        }
+    }
+
+    public void ForEachChunk<TForEach>(TForEach pred)
+        where TForEach : IRawChunkForEach
+    {
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            pred.Execute(in chunk);
         }
     }
 

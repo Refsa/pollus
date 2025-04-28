@@ -43,6 +43,8 @@ public class None<C0> : IFilter
 public class All<C0> : IFilter
     where C0 : unmanaged, IComponent
 {
+    public static readonly All<C0> Instance = new();
+
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
 
     public object? this[int index] => null;

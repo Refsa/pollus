@@ -226,6 +226,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             {
                 iter.Execute($chunk_args$);
             }
+            else if (iter is IChunkEntityForEach<C0>)
+            {
+                scoped var entities = chunk.GetEntities();
+                iter.Execute(entities, $chunk_args$);
+            }
         }
     }
 
@@ -385,6 +390,7 @@ public interface IForEachBase<$gen_args$>
     void Execute($args$) { }
     void Execute(in Entity entity, $args$) { }
     void Execute($chunk_spans$) { }
+    void Execute(scoped in ReadOnlySpan<Entity> entities, $chunk_spans$) { }
 }
 
 public interface IForEach<$gen_args$> : IForEachBase<$gen_args$>
@@ -406,6 +412,13 @@ public interface IChunkForEach<$gen_args$> : IForEachBase<$gen_args$>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     new void Execute($chunk_spans$);
+}
+
+public interface IChunkEntityForEach<$gen_args$> : IForEachBase<$gen_args$>
+    $gen_constraints$
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    new void Execute(scoped in ReadOnlySpan<Entity> entities, $chunk_spans$);
 }
 ";
 

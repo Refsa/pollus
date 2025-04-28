@@ -1,7 +1,6 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 
 public interface IQuery
 {
@@ -47,6 +46,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
         public void ForEach(ForEachEntityDelegate pred) => query.ForEach(pred);
         public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred) => query.ForEach(userData, pred);
+        public void ForEachChunk<TForEach>(TForEach pred) where TForEach : IRawChunkForEach => query.ForEachChunk(pred);
         public Entity Single() => query.Single();
         public int EntityCount() => query.EntityCount();
 
@@ -116,6 +116,16 @@ public struct Query : IQuery, IQueryCreate<Query>
             {
                 pred(userData, entities[i]);
             }
+        }
+    }
+
+    public void ForEachChunk<TForEach>(TForEach pred)
+        where TForEach : IRawChunkForEach
+    {
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            pred.Execute(in chunk);
         }
     }
 

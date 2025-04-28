@@ -20,6 +20,7 @@ public interface IForEachBase<C0>
     void Execute(scoped ref C0 c0) { }
     void Execute(scoped in Entity entity, scoped ref C0 c0) { }
     void Execute(scoped in Span<C0> chunk0) { }
+    void Execute(scoped in ReadOnlySpan<Entity> entities, scoped in Span<C0> chunk0) { }
 }
 
 public interface IForEach<C0> : IForEachBase<C0>
@@ -38,4 +39,15 @@ public interface IChunkForEach<C0> : IForEachBase<C0>
     where C0 : unmanaged, IComponent
 {
     new void Execute(scoped in Span<C0> chunk0);
+}
+
+public interface IChunkEntityForEach<C0> : IForEachBase<C0>
+    where C0 : unmanaged, IComponent
+{
+    new void Execute(scoped in ReadOnlySpan<Entity> entities, scoped in Span<C0> chunk0);
+}
+
+public interface IRawChunkForEach
+{
+    void Execute(scoped in ArchetypeChunk chunk);
 }
