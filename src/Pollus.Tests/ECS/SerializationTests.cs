@@ -19,9 +19,10 @@ public class SerializationTests
             serializeWorld.AddPlugin<SnapshotSerializationPlugin>();
             serializeWorld.Prepare();
 
-            for (int i = 0; i < 1_000; i++)
+            for (int i = 0; i < 10_000; i++)
             {
                 Entity.With(new TestComponent1 { Value = i + 1 }, new SerializeTag()).Spawn(serializeWorld);
+                Entity.With(new TestComponent2()).Spawn(serializeWorld);    
             }
 
             serializeWorld.Events.GetWriter<SnapshotSerializeEvent>().Write(new SnapshotSerializeEvent { Path = "snapshots/test.bin" });
@@ -47,11 +48,12 @@ public class SerializationTests
 
             var index = 0;
             var q = new Query<TestComponent1>.Filter<All<SerializeTag>>(deserializeWorld);
-            Assert.Equal(1_000, q.EntityCount());
+            Assert.Equal(10_000, q.EntityCount());
             foreach (var entity in q)
             {
-                Assert.Equal(index++, entity.Entity.ID);
-                Assert.Equal(index, entity.Component0.Value);
+                Assert.Equal(index, entity.Entity.ID);
+                Assert.Equal(index / 2 + 1, entity.Component0.Value);
+                index += 2;
             }
         }
     }

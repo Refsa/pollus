@@ -2,6 +2,7 @@ namespace Pollus.Engine.Serialization;
 
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
@@ -76,8 +77,8 @@ public partial class SnapshotSerializationPlugin : IPlugin
         // Resources
 
         // Archetypes and Component data
-        var archetypes = world.Store.Archetypes.Where(a => FilterHelpers.RunArchetypeFilters(a, [All<SerializeTag>.Instance])).ToList();
-        ser.Writer.Write(archetypes.Count);
+        var archetypes = world.Store.Archetypes.Where(a => FilterHelpers.RunArchetypeFilters(a, [All<SerializeTag>.Instance]));
+        ser.Writer.Write(archetypes.Count());
         foreach (var archetype in archetypes)
         {
             var chunkInfo = archetype.GetChunkInfo();
@@ -151,7 +152,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
             for (int j = 0; j < chunkCount; j++)
             {
                 var chunkIndex = -1;
-                var chunkEntityCount = deser.Reader.Read<int>() / Unsafe.SizeOf<Entity>();
+                var chunkEntityCount = deser.Reader.Read<int>();
                 for (int k = 0; k < chunkEntityCount; k++)
                 {
                     var entity = deser.Reader.Read<Entity>();
@@ -166,8 +167,9 @@ public partial class SnapshotSerializationPlugin : IPlugin
                     });
                 }
 
+                Guard.IsTrue(chunkIndex != -1, "Chunk index is -1");
                 ref var chunk = ref archetypeInfo.Archetype.GetChunk(chunkIndex);
-                for (int k = 0; k < componentCount; k++)
+                for (int k = 0; k < componentIDs.Length; k++)
                 {
                     var componentData = deser.Reader.ReadArray<byte>();
                     componentData.CopyTo(chunk.GetComponentsNative(componentIDs[k]));

@@ -47,7 +47,7 @@ public struct Param<T0> : IFetch<Param<T0>>, ISystemParam
 
     public static void Register()
     {
-        Fetch.Register<Param<T0>>(new Param<T0>(), [.. dependencies]);
+        Fetch.Register(new Param<T0>(), [.. dependencies]);
     }
 
     public Param<T0> DoFetch(World world, ISystem system)

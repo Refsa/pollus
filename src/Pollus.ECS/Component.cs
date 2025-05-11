@@ -20,7 +20,7 @@ public record struct ComponentID(int ID)
 
 public static class Component
 {
-    public readonly struct Info
+    public record Info
     {
         public required ComponentID ID { get; init; }
         public required int SizeInBytes { get; init; }

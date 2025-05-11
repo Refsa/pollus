@@ -21,7 +21,7 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new UniformRenderDataLoader<TUniform>());
 
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(
-            new($"{typeof(TUniform).Name}UpdateSystem")
+            new($"{typeof(TUniform).Name}::UpdateSystem")
             {
                 Locals = [Local.From(Extract)]
             },
@@ -34,7 +34,7 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
-            $"{typeof(TUniform).Name}PrepareSystem",
+            $"{typeof(TUniform).Name}::PrepareSystem",
             static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<Uniform<TUniform>> uniformAssets) =>
             {
                 var handle = new Handle<Uniform<TUniform>>(0);

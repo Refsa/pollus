@@ -87,7 +87,11 @@ public class BinaryWriter : IWriter, IDisposable
 
     public void Write<T>(ReadOnlySpan<T> data) where T : unmanaged
     {
-        Write(MemoryMarshal.Cast<T, byte>(data));
+        var sizeInBytes = data.Length * Unsafe.SizeOf<T>();
+        Resize<byte>(sizeof(int) + sizeInBytes);
+        Write(data.Length);
+        data.CopyTo(MemoryMarshal.Cast<byte, T>(buffer.AsSpan(cursor)));
+        cursor += sizeInBytes;
     }
 
     public void Write<T>(T value) where T : unmanaged
@@ -99,7 +103,7 @@ public class BinaryWriter : IWriter, IDisposable
 
     public void Write<T>(T[] values) where T : unmanaged
     {
-        Write(MemoryMarshal.Cast<T, byte>(values.AsSpan()));
+        Write<T>(values.AsSpan());
     }
 
     public void Write(string value)
@@ -126,7 +130,8 @@ public class BinaryReader : IReader
     public ReadOnlySpan<T> ReadSpan<T>() where T : unmanaged
     {
         Guard.IsNotNull(buffer, "buffer was null");
-        var bytes = Read<int>();
+        var length = Read<int>();
+        var bytes = length * Unsafe.SizeOf<T>();
         var span = buffer.AsSpan(cursor, bytes);
         cursor += bytes;
         return MemoryMarshal.Cast<byte, T>(span);

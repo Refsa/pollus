@@ -48,7 +48,10 @@ public class RenderingPlugin : IPlugin
                     var (time, qCamera) = param;
 
                     uniform.Time = (float)time.DeltaTime;
-                    Guard.IsTrue(qCamera.EntityCount() > 0, "No camera entity found");
+                    if (qCamera.EntityCount() == 0)
+                    {
+                        return;
+                    }
 
                     var camera = qCamera.Single();
                     uniform.Projection = camera.Component0.GetProjection();
