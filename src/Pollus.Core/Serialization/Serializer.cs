@@ -1,6 +1,6 @@
 namespace Pollus.Core.Serialization;
 
-public interface ISerializer
+public interface IWriter
 {
     public ReadOnlySpan<byte> Buffer { get; }
 
@@ -12,9 +12,9 @@ public interface ISerializer
     void Write(string value);
 }
 
-public interface IDeserializer
+public interface IReader
 {
-    void Init(byte[] data);
+    void Init(byte[]? data);
     string ReadString();
     T Read<T>() where T : unmanaged;
     T[] ReadArray<T>() where T : unmanaged;

@@ -27,8 +27,8 @@ public class Pool<T>
 
     public T Rent()
     {
-        if (open.Count == 0) open.Push(factory());
-        return open.Pop();
+        if (open.TryPop(out var item)) return item;
+        return factory();
     }
 
     public void Return(T item)

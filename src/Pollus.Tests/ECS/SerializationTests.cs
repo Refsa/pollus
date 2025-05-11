@@ -15,7 +15,8 @@ public class SerializationTests
         {
             using var serializeWorld = new World();
             serializeWorld.AddPlugin(new AssetPlugin { RootPath = "assets", });
-            serializeWorld.AddPlugin<SerializationPlugin<BinarySerializer, BinaryDeserializer>>();
+            serializeWorld.AddPlugin<SerializationPlugin<BinarySerialization>>();
+            serializeWorld.AddPlugin<SnapshotSerializationPlugin>();
             serializeWorld.Prepare();
 
             for (int i = 0; i < 1_000; i++)
@@ -23,10 +24,10 @@ public class SerializationTests
                 Entity.With(new TestComponent1 { Value = i + 1 }, new SerializeTag()).Spawn(serializeWorld);
             }
 
-            serializeWorld.Events.GetWriter<SerializeEvent>().Write(new SerializeEvent { Path = "snapshots/test.bin" });
+            serializeWorld.Events.GetWriter<SnapshotSerializeEvent>().Write(new SnapshotSerializeEvent { Path = "snapshots/test.bin" });
             serializeWorld.Update();
 
-            var serializedResult = serializeWorld.Events.GetReader<SerializeResultEvent>()?.Read()[0];
+            var serializedResult = serializeWorld.Events.GetReader<SnapshotSerializeResultEvent>()?.Read()[0];
             Assert.NotNull(serializedResult);
 
             worldSnapshot = serializeWorld.Resources.Get<AssetServer>().GetAssets<WorldSnapshot>().Get(serializedResult.Value.SnapshotHandle);
@@ -35,12 +36,13 @@ public class SerializationTests
 
         {
             using var deserializeWorld = new World();
-            deserializeWorld.AddPlugin<SerializationPlugin<BinarySerializer, BinaryDeserializer>>();
+            deserializeWorld.AddPlugin<SerializationPlugin<BinarySerialization>>();
+            deserializeWorld.AddPlugin<SnapshotSerializationPlugin>();
             deserializeWorld.AddPlugin(new AssetPlugin { RootPath = "assets", });
             deserializeWorld.Prepare();
 
             var worldSnapshotHandle = deserializeWorld.Resources.Get<AssetServer>().Assets.Add(worldSnapshot, "snapshots/test.bin");
-            deserializeWorld.Events.GetWriter<DeserializeEvent>().Write(new DeserializeEvent { Snapshot = worldSnapshotHandle });
+            deserializeWorld.Events.GetWriter<SnapshotDeserializeEvent>().Write(new() { Snapshot = worldSnapshotHandle });
             deserializeWorld.Update();
 
             var index = 0;

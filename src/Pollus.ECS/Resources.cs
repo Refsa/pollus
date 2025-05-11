@@ -78,6 +78,12 @@ public class Resources : IDisposable
     {
         return resources.ContainsKey(TypeLookup.ID<TResource>());
     }
+
+    public IEnumerable<TResource> OfType<TResource>()
+        where TResource : notnull
+    {
+        return resources.Values.OfType<TResource>();
+    }
 }
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]

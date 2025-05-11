@@ -56,7 +56,7 @@
 		- [x] event lifetimes
 		- [x] change filter lifetimes
 		- [x] entity id recycling
-	- [ ] Serialization
+	- [-] Serialization
 		- world snapshot, scene serialization later
 		- binary format
 - Scene
