@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
+using Pollus.Core.Serialization;
 using Pollus.Debugging;
 
 public class ArchetypeStore : IDisposable
@@ -20,7 +21,7 @@ public class ArchetypeStore : IDisposable
     public int EntityCount => entityHandler.AliveCount;
     public RemovedTracker Removed => removedTracker;
 
-    internal Entities Entities => entityHandler;
+    public Entities Entities => entityHandler;
 
     public ArchetypeStore()
     {

@@ -2,6 +2,7 @@ namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
+using Pollus.Core.Serialization;
 
 public partial record struct Entity(int ID, int Version = 0)
 {
@@ -58,7 +59,6 @@ public class Entities
         Interlocked.Add(ref aliveCount, target.Length);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Free(in Entity entity)
     {
         ref var entityInfo = ref GetEntityInfo(entity);
@@ -79,7 +79,6 @@ public class Entities
         return ref entities[entity.ID];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     ref EntityInfo NewEntity()
     {
         var id = Interlocked.Increment(ref counter);
@@ -90,5 +89,39 @@ public class Entities
         entityInfo.Entity.Version = -1;
 
         return ref entityInfo;
+    }
+
+    public void Append(ReadOnlySpan<EntityInfo> insert)
+    {
+        if (insert.Length == 0) return;
+
+        for (int i = 0; i < insert.Length; i++)
+        {
+            var entity = insert[i];
+            if (entity.Entity.ID >= entities.Length) Array.Resize(ref entities, entity.Entity.ID * 2);
+            entities[entity.Entity.ID] = entity;
+        }
+    }
+
+    public void Append(scoped in EntityInfo insert)
+    {
+        if (insert.Entity.ID >= entities.Length) Array.Resize(ref entities, insert.Entity.ID * 2);
+        entities[insert.Entity.ID] = insert;
+    }
+
+    /// <summary>
+    /// Repopulate free list and ensure ID is set on all entities
+    /// </summary>
+    public void Recalcuate()
+    {
+        freeList.Clear();
+        for (int i = 0; i < entities.Length; i++)
+        {
+            entities[i].Entity.ID = i;
+            if (!entities[i].IsAlive)
+            {
+                freeList.Push(i);
+            }
+        }
     }
 }

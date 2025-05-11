@@ -111,4 +111,9 @@ public class MinHeap
         }
         heap[index] = topEntity;
     }
+
+    public void Clear()
+    {
+        Volatile.Write(ref size, 0);
+    }
 }

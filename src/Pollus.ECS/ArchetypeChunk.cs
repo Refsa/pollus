@@ -3,6 +3,7 @@ namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Collections;
+using Pollus.Core.Serialization;
 
 struct ChunkComponentInfo : IDisposable
 {
@@ -51,6 +52,7 @@ public struct ArchetypeChunk : IDisposable
     internal NativeArray<Entity> entities;
 
     ulong version;
+    // ComponentID -> Index
     NativeMap<int, int> componentsLookup;
     NativeArray<ChunkComponentInfo> changes;
 
@@ -80,11 +82,11 @@ public struct ArchetypeChunk : IDisposable
         }
     }
 
-    public ArchetypeChunk(scoped in Span<ComponentID> cids, scoped in Span<NativeArray<byte>> componentMemory, int rows = 0)
+    public ArchetypeChunk(scoped in Span<ComponentID> cids, scoped in NativeArray<Entity> entityMemory, scoped in Span<NativeArray<byte>> componentMemory, int rows = 0)
     {
         length = rows;
-        count = 0;
-        entities = new(rows);
+        count = entityMemory.Length;
+        entities = entityMemory;
         components = new(cids.Length);
         componentsLookup = new(cids.Length);
         changes = new(cids.Length);
@@ -227,6 +229,12 @@ public struct ArchetypeChunk : IDisposable
     {
         var idx = componentsLookup.Get(cid.ID);
         return new Span<C>(components[idx].Data, count);
+    }
+
+    unsafe public Span<byte> GetComponentsNative(ComponentID cid)
+    {
+        var idx = componentsLookup.Get(cid.ID);
+        return new Span<byte>(components[idx].Data, count * Component.GetInfo(cid).SizeInBytes);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

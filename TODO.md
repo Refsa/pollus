@@ -20,6 +20,8 @@
 	- [ ] dependency / hierarchy
 		- an asset might require one or more other assets to complete its loading
 		- f.ex. shader imports, scene files, etc.
+	- [ ] multiple AssetIO in AssetServer
+		- supply prefix handling for 'asset://', 'userdata://', etc.
 - Plugins
 	- [ ] Defer applying plugins
 	- [ ] Plugin dependency graph
@@ -55,6 +57,16 @@
 		- [x] change filter lifetimes
 		- [x] entity id recycling
 	- [ ] Serialization
+		- world snapshot, scene serialization later
+		- binary format
+- Scene
+	- [ ] Scene Layout
+		- entities
+		- resources
+		- asset prefetch
+		- reproduce hierarchy layout?
+	- [ ] Serialization
+		- Human readable format
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches
