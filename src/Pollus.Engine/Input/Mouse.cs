@@ -23,6 +23,8 @@ public enum MouseAxis
     None = 1,
     X,
     Y,
+    DeltaX,
+    DeltaY,
     ScrollX,
     ScrollY,
 }
@@ -51,6 +53,7 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
     public Guid Id => id;
     public InputType Type => InputType.Mouse;
     public Vec2<int> Position => position;
+    public Vec2<int> Delta => delta;
 
     public Mouse(nint externalId)
     {
@@ -61,6 +64,17 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
     public void Dispose()
     {
 
+    }
+
+    public void PreUpdate()
+    {
+        delta = Vec2<int>.Zero;
+        SetAxisState(MouseAxis.DeltaX, 0, false);
+        SetAxisState(MouseAxis.DeltaY, 0, false);
+        SetAxisState(MouseAxis.ScrollX, 0, false);
+        SetAxisState(MouseAxis.ScrollY, 0, false);
+        SetAxisState(MouseAxis.X, 0, false);
+        SetAxisState(MouseAxis.Y, 0, false);
     }
 
     public void Update(Events events)
@@ -123,6 +137,8 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
         positionChanged = position.X != x || position.Y != y;
         var next = new Vec2<int>(x, y);
         delta = positionChanged ? next - position : Vec2<int>.Zero;
+        SetAxisState(MouseAxis.DeltaX, delta.X);
+        SetAxisState(MouseAxis.DeltaY, delta.Y);
         position = next;
     }
 
@@ -154,10 +170,10 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
         return buttons.TryGetValue(button, out var state) ? state : ButtonState.None;
     }
 
-    public void SetAxisState(MouseAxis axis, float value)
+    public void SetAxisState(MouseAxis axis, float value, bool flagChanged = true)
     {
         axes[axis] = value;
-        changedAxes.Add(axis);
+        if (flagChanged) changedAxes.Add(axis);
     }
 
     public float GetAxis(MouseAxis axis)

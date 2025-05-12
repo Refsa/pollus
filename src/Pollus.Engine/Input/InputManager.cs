@@ -6,7 +6,6 @@ using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Engine.Platform;
-using Silk.NET.OpenAL;
 
 public enum InputType
 {
@@ -51,6 +50,11 @@ public class InputManager : IDisposable
 
     public void Update(PlatformEvents platform, Events events)
     {
+        foreach (var device in devices)
+        {
+            device.PreUpdate();
+        }
+
         foreach (var @event in platform.Events)
         {
             HandleKeyboardEvent(@event);

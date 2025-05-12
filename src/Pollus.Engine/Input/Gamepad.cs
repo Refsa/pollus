@@ -104,6 +104,11 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
         externalDevice = nint.Zero;
     }
 
+    public void PreUpdate()
+    {
+        
+    }
+
     public void Update(Events events)
     {
         foreach (var key in buttons.Keys)

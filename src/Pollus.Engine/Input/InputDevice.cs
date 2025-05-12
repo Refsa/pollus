@@ -9,6 +9,7 @@ public interface IInputDevice : IDisposable
     nint ExternalId { get; }
     InputType Type { get; }
 
+    void PreUpdate();
     void Update(Events events);
 }
 

@@ -150,6 +150,11 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
         changed.Add(key);
     }
 
+    public void PreUpdate()
+    {
+        
+    }
+
     public void Update(Events events)
     {
         foreach (var key in buttons.Keys)
