@@ -62,4 +62,14 @@ public partial record struct Vec4<T>
     {
         return new Vec4<T>(left.X * right, left.Y * right, left.Z * right, left.W * right);
     }
+
+    public static Vec4<T> operator *(T left, Vec4<T> right)
+    {
+        return new Vec4<T>(left * right.X, left * right.Y, left * right.Z, left * right.W);
+    }
+
+    public static Vec4<T> operator *(Vec4<T> left, Vec4<T> right)
+    {
+        return new Vec4<T>(left.X * right.X, left.Y * right.Y, left.Z * right.Z, left.W * right.W);
+    }
 }

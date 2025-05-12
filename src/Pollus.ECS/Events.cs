@@ -207,6 +207,8 @@ public class EventReaderFetch<TEvent> : IFetch<EventReader<TEvent>>
 public class EventRunCriteria<TEvent> : IRunCriteria
     where TEvent : struct
 {
+    public static EventRunCriteria<TEvent> Create => new();
+
     public bool ShouldRun(World world)
     {
         var events = world.Events.ReadEvents<TEvent>();

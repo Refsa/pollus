@@ -86,6 +86,12 @@ public partial record struct Vec3f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static Vec3f operator *(in Vec3f left, in Vec3f right)
+    {
+        return new Vec3f(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public float Length()
     {
         return float.Sqrt(X * X + Y * Y + Z * Z);

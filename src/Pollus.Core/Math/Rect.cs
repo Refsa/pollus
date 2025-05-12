@@ -39,6 +39,12 @@ public partial struct Rect
         Max *= scale;
     }
 
+    public void Move(Vec2f offset)
+    {
+        Min += offset;
+        Max += offset;
+    }
+
     public Vec2f Center()
     {
         return (Min + Max) / 2;
@@ -72,11 +78,6 @@ public partial struct Rect
     public Vec2f Extents()
     {
         return (Max - Min) / 2f;
-    }
-
-    public Rect Move(Vec2f offset)
-    {
-        return new Rect(Min + offset, Max + offset);
     }
 
     public bool Contains(Vec2f point)

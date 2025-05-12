@@ -47,6 +47,53 @@ public class Random
     public Vec3<int> NextInt3() => new(NextInt(), NextInt(), NextInt());
     public Vec4<int> NextInt4() => new(NextInt(), NextInt(), NextInt(), NextInt());
     public uint NextUInt() => Hashes.ToUInt(Source.Next());
+
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public float Range(float min, float max) => min + (max - min) * NextFloat();
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec2f Range(Vec2f min, Vec2f max) => min + (max - min) * NextVec2f();
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec3f Range(Vec3f min, Vec3f max) => min + (max - min) * NextVec3f();
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec4f Range(Vec4f min, Vec4f max) => min + (max - min) * NextVec4f();
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public int Range(int min, int max) => Source.Next(min, max);
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec2<int> Range(Vec2<int> min, Vec2<int> max) => new(
+        Range(min.X, max.X),
+        Range(min.Y, max.Y)
+    );
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec3<int> Range(Vec3<int> min, Vec3<int> max) => new(
+        Range(min.X, max.X),
+        Range(min.Y, max.Y),
+        Range(min.Z, max.Z)
+    );
+    /// <summary>
+    /// [min,max)
+    /// </summary>
+    public Vec4<int> Range(Vec4<int> min, Vec4<int> max) => new(
+        Range(min.X, max.X),
+        Range(min.Y, max.Y),
+        Range(min.Z, max.Z),
+        Range(min.W, max.W)
+    );
+
+
 }
 
 public class RandomFetch : IFetch<Random>

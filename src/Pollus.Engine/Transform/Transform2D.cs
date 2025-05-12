@@ -19,6 +19,16 @@ public partial struct Transform2D : ITransform, IComponent
         Rotation = 0f
     };
 
+    public static Transform2D Create(Vec2f position, Vec2f scale, float rotation)
+    {
+        return new()
+        {
+            Position = position,
+            Scale = scale,
+            Rotation = rotation
+        };
+    }
+
     public Vec2f Position;
     public Vec2f Scale;
     public float Rotation;
