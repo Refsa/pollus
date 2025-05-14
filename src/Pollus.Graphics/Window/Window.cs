@@ -29,6 +29,8 @@ public interface IWindow : IDisposable, INativeWindowSource
 
     public void Run(Action loop);
 
+    public void SetTitle(string title);
+
     public void Close();
 }
 

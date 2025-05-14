@@ -41,4 +41,9 @@ public class DesktopWindow : IWindow, INativeWindowSource
             loop();
         }
     }
+
+    unsafe public void SetTitle(string title)
+    {
+        SDLWrapper.Instance.SetWindowTitle((Silk.NET.SDL.Window*)native.Sdl!, title);
+    }
 }

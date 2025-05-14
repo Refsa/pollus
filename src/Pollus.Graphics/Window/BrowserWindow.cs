@@ -61,6 +61,11 @@ public partial class BrowserWindow : IWindow
         emOnFrame = loop;
         Emscripten.SetMainLoop(&emOnFrameCallback, 0, false);
     }
+
+    public void SetTitle(string title)
+    {
+        
+    }
 }
 
 #pragma warning restore CS8618
