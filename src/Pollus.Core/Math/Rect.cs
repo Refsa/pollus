@@ -28,6 +28,11 @@ public partial struct Rect
         return new Rect(center - scale / 2, center + scale / 2);
     }
 
+    public static Rect FromOriginSize(Vec2f origin, Vec2f size)
+    {
+        return new Rect(origin, origin + size);
+    }
+
     public static implicit operator Vec4f(in Rect rect)
     {
         return new Vec4f(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y);
@@ -37,6 +42,13 @@ public partial struct Rect
     {
         Min *= scale;
         Max *= scale;
+    }
+
+    public void ScaleCentered(Vec2f scale)
+    {
+        var center = Center();
+        Min = center - (Max - Min) * scale / 2;
+        Max = center + (Max - Min) * scale / 2;
     }
 
     public void Move(Vec2f offset)

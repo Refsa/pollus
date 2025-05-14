@@ -4,6 +4,7 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
+using Pollus.Mathematics;
 
 class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query<Transform2D, Sprite>>
 {
@@ -15,17 +16,18 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
         {
             var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material));
             var matrix = transform.ToMat4f().Transpose();
+            var extents = sprite.Slice.Size();
             batch.Write(new SpriteBatch.InstanceData
             {
                 Model_0 = matrix.Col0,
                 Model_1 = matrix.Col1,
                 Model_2 = matrix.Col2,
-                Slice = sprite.Slice,
+                Slice = new Vec4f(sprite.Slice.Min.X, sprite.Slice.Min.Y, extents.X, extents.Y),
                 Color = sprite.Color,
             });
         }
     }
-    
+
     protected override void Extract(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, SpriteBatches batches,
