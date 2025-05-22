@@ -13,6 +13,7 @@ using Pollus.Mathematics;
 /// https://github.com/loosegrid/DragonSpace-Demo/blob/master/Assets/Scripts/DragonSpace/Grids/LooseDoubleGrid.cs
 /// </summary>
 public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
+    where TData : unmanaged
 {
     struct LooseCell
     {
@@ -189,6 +190,8 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         var radiusSqr = radius * radius;
         var count = 0;
 
+        Span<QueryResult<TData>> results = stackalloc QueryResult<TData>[result.Length];
+
         for (int y = minY; y <= maxY; y++)
         {
             var tightCells = grid.Cells.AsSpan(
@@ -209,13 +212,17 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
                     {
                         if ((content.Layer & layer) == 0) continue;
                         var contentRadiusSqr = content.Radius * content.Radius;
-                        if (Vec2f.DistanceSquared(content.Position, position) > radiusSqr + contentRadiusSqr) continue;
-
-                        result[count++] = content.Data;
-                        if (count >= result.Length) return count;
+                        var distanceSqr = Vec2f.DistanceSquared(content.Position, position);
+                        if (distanceSqr > radiusSqr + contentRadiusSqr) continue;
+                        SpatialQueryUtils.TryInsert(results, ref count, content.Data, distanceSqr);
                     }
                 }
             }
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            result[i] = results[i].Data;
         }
 
         return count;
@@ -239,7 +246,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         var content = new Content { Data = data, Layer = layer, Position = position, Radius = radius };
         int cellRow = PosToCellRow(position.Y - radius);
         int cellCol = PosToCellCol(position.X - radius);
-        
+
         ref var cell = ref rows[cellRow].Cells[cellCol];
 
         if (cell.Count == 0)

@@ -47,21 +47,21 @@ public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create($"SpatialQuery<{typeof(TSpatialQuery).Name}>::Update",
         static (
             SpatialQuery spatialQuery,
-            Query<Transform2D, CollisionShape>.Filter<TQueryFilters> qShapes) =>
+            Query<Read<Transform2D>, Read<CollisionShape>>.Filter<TQueryFilters> qShapes) =>
         {
             spatialQuery.Prepare();
             qShapes.ForEach(new UpdateJob() { SpatialQuery = spatialQuery });
         }));
     }
 
-    readonly struct UpdateJob : IEntityForEach<Transform2D, CollisionShape>
+    readonly struct UpdateJob : IEntityForEach<Read<Transform2D>, Read<CollisionShape>>
     {
         public readonly SpatialQuery SpatialQuery { get; init; }
 
-        public readonly void Execute(in Entity entity, ref Transform2D transform, ref CollisionShape shape)
+        public readonly void Execute(in Entity entity, ref Read<Transform2D> transform, ref Read<CollisionShape> shape)
         {
-            var boundingCircle = shape.GetBoundingCircle(transform);
-            SpatialQuery.Insert(entity, transform.Position, boundingCircle.Radius, ~0u);
+            var boundingCircle = shape.Component.GetBoundingCircle(transform.Component);
+            SpatialQuery.Insert(entity, transform.Component.Position, boundingCircle.Radius, ~0u);
         }
     }
 }

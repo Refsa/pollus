@@ -11,6 +11,7 @@ using Pollus.Mathematics;
 /// </summary>
 /// <typeparam name="TData"></typeparam>
 public class SpatialHashGrid<TData> : ISpatialContainer<TData>
+    where TData : unmanaged
 {
     public struct CellEntry
     {
@@ -145,6 +146,8 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         var resultCursor = 0;
         var cellsSpan = cells.AsSpan();
 
+        Span<QueryResult<TData>> results = stackalloc QueryResult<TData>[result.Length];
+
         for (int y = minY; y <= maxY; y++)
         {
             var row = cellsSpan.Slice(y * width + minX, maxX - minX + 1);
@@ -153,16 +156,21 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
                 scoped ref var cell = ref row[x];
                 if (cell.Count == 0 || !cell.HasLayer(layer)) continue;
 
-                ref var curr = ref cell.Entries[0];
+                scoped ref var curr = ref cell.Entries[0];
                 for (int i = 0; i < cell.Count; i++, curr = ref Unsafe.Add(ref curr, 1))
                 {
                     if (!curr.HasLayer(layer)) continue;
                     var currRadiusSqr = curr.Radius * curr.Radius;
-                    if (Vec2f.DistanceSquared(curr.Position, position) > radiusSqr + currRadiusSqr) continue;
-                    result[resultCursor++] = curr.Data;
-                    if (resultCursor >= result.Length) return resultCursor;
+                    var distanceSqr = Vec2f.DistanceSquared(curr.Position, position);
+                    if (distanceSqr > radiusSqr + currRadiusSqr) continue;
+                    SpatialQueryUtils.TryInsert(results, ref resultCursor, curr.Data, distanceSqr);
                 }
             }
+        }
+
+        for (int i = 0; i < resultCursor; i++)
+        {
+            result[i] = results[i].Data;
         }
 
         return resultCursor;
