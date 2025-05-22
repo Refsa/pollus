@@ -1,5 +1,6 @@
 namespace Pollus.Spatial;
 
+using System;
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Mathematics;
@@ -110,7 +111,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     {
         var cellIdx = GetCell(position);
         if (cellIdx == -1) return;
-        cells[cellIdx].Add(data, position, layer, radius);
+        cells[cellIdx].Add(data, position + offset, layer, radius);
         biggestRadius = float.Max(biggestRadius, radius);
     }
 
@@ -131,19 +132,19 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
-        radius = float.Max(radius, biggestRadius);
-        var offsetPosition = position + offset;
-        var minX = (int)((offsetPosition.X - radius) / cellSize);
-        var maxX = (int)((offsetPosition.X + radius) / cellSize);
-        var minY = (int)((offsetPosition.Y - radius) / cellSize);
-        var maxY = (int)((offsetPosition.Y + radius) / cellSize);
+        var queryPos = position + offset;
+        var expandedRadius = radius + biggestRadius;
+        var minX = (int)System.Math.Floor((queryPos.X - expandedRadius) / cellSize);
+        var maxX = (int)System.Math.Ceiling((queryPos.X + expandedRadius) / cellSize);
+        var minY = (int)System.Math.Floor((queryPos.Y - expandedRadius) / cellSize);
+        var maxY = (int)System.Math.Ceiling((queryPos.Y + expandedRadius) / cellSize);
         minX = int.Clamp(minX, 0, width - 1);
         maxX = int.Clamp(maxX, 0, width - 1);
         minY = int.Clamp(minY, 0, height - 1);
         maxY = int.Clamp(maxY, 0, height - 1);
 
         var radiusSqr = radius * radius;
-        var resultCursor = 0;
+        var count = 0;
         var cellsSpan = cells.AsSpan();
 
         Span<QueryResult<TData>> results = stackalloc QueryResult<TData>[result.Length];
@@ -161,18 +162,19 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
                 {
                     if (!curr.HasLayer(layer)) continue;
                     var currRadiusSqr = curr.Radius * curr.Radius;
-                    var distanceSqr = Vec2f.DistanceSquared(curr.Position, position);
-                    if (distanceSqr > radiusSqr + currRadiusSqr) continue;
-                    SpatialQueryUtils.TryInsert(results, ref resultCursor, curr.Data, distanceSqr);
+                    var distanceSqr = Vec2f.DistanceSquared(curr.Position, queryPos);
+                    var sumRadiusSqr = (radius + curr.Radius) * (radius + curr.Radius);
+                    if (distanceSqr >= sumRadiusSqr) continue;
+                    SpatialQueryUtils.TryInsert(results, ref count, curr.Data, distanceSqr);
                 }
             }
         }
 
-        for (int i = 0; i < resultCursor; i++)
+        for (int i = 0; i < count; i++)
         {
             result[i] = results[i].Data;
         }
 
-        return resultCursor;
+        return count;
     }
 }
