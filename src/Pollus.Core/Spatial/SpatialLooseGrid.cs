@@ -113,6 +113,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     int worldSize;
     int cellSize;
     int tightSize;
+    Vec2f offset;
 
     int rowCount; int colCount;
     int tightRowCount; int tightColCount;
@@ -127,6 +128,8 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         this.worldSize = worldSize;
         this.cellSize = cellSize;
         this.tightSize = tightSize;
+        offset = new Vec2f(worldSize * cellSize / 2, worldSize * cellSize / 2);
+        
         rowCount = worldSize / cellSize + 1;
         colCount = worldSize / cellSize + 1;
         tightRowCount = worldSize / tightSize + 1;
@@ -182,10 +185,11 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
-        var minX = PosToTightCol(position.X - radius);
-        var maxX = PosToTightCol(position.X + radius);
-        var minY = PosToTightRow(position.Y - radius);
-        var maxY = PosToTightRow(position.Y + radius);
+        var queryPos = position + offset;
+        var minX = PosToTightCol(queryPos.X - radius);
+        var maxX = PosToTightCol(queryPos.X + radius);
+        var minY = PosToTightRow(queryPos.Y - radius);
+        var maxY = PosToTightRow(queryPos.Y + radius);
 
         var radiusSqr = radius * radius;
         var count = 0;
@@ -212,8 +216,9 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
                     {
                         if ((content.Layer & layer) == 0) continue;
                         var contentRadiusSqr = content.Radius * content.Radius;
-                        var distanceSqr = Vec2f.DistanceSquared(content.Position, position);
-                        if (distanceSqr > radiusSqr + contentRadiusSqr) continue;
+                        var distanceSqr = Vec2f.DistanceSquared(content.Position, queryPos);
+                        var sumRadius = radius + content.Radius;
+                        if (distanceSqr >= sumRadius * sumRadius) continue;
                         SpatialQueryUtils.TryInsert(results, ref count, content.Data, distanceSqr);
                     }
                 }
@@ -243,6 +248,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
+        position += offset;
         var content = new Content { Data = data, Layer = layer, Position = position, Radius = radius };
         int cellRow = PosToCellRow(position.Y - radius);
         int cellCol = PosToCellCol(position.X - radius);

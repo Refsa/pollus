@@ -112,4 +112,20 @@ public class SpatialLooseGridTests
         var count = grid.Query(new Vec2f(5, 5), 5f, 1u << 0, query);
         Assert.Equal(1, count);
     }
+
+    [Fact]
+    public void TestQuery_SmallRadius()
+    {
+        var grid = new SpatialLooseGrid<int>(10, 100, 100);
+        for (int x = 0; x < 100; x++)
+            for (int y = 0; y < 100; y++)
+            {
+                grid.Insert(x + y * 100, new Vec2f(x, y), 1f, 1 << 0);
+            }
+
+        Span<int> query = stackalloc int[4];
+        Assert.Equal(1, grid.Query(new Vec2f(5, 5), 0f, 1 << 0, query));
+        Assert.Equal(1, grid.Query(new Vec2f(6f, 5f), 0f, 1 << 0, query));
+        Assert.Equal(4, grid.Query(new Vec2f(5f, 5f), 2f, 1 << 0, query));
+    }
 }
