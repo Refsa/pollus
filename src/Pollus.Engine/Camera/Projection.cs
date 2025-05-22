@@ -3,6 +3,7 @@ namespace Pollus.Engine.Camera;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.ECS;
+using Pollus.Engine.Transform;
 using Pollus.Mathematics;
 
 public enum ProjectionType
@@ -106,13 +107,47 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         };
 
         area = new Rect(0f, projHeight, projWidth, 0f);
-        area.Scale(new Vec2f(Scale, Scale));
+        area.ScaleCentered(new Vec2f(Scale, Scale));
     }
 
     public Mat4f GetProjection()
     {
         return Mat4f.OrthographicRightHanded(
             Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y, NearClip, FarClip
+        );
+    }
+
+    public Vec2f ScreenToWorld(in Transform2D cameraTransform, Vec2<int> screenPos)
+    {
+        var normalizedScreen = new Vec2f(
+            (screenPos.X - Size.X / 2f) / (Size.X / 2f),
+            -(screenPos.Y - Size.Y / 2f) / (Size.Y / 2f)
+        );
+
+        var projectionMatrix = GetProjection();
+        var cameraMatrix = cameraTransform.ToMat4f();
+        var viewProjectionMatrix = projectionMatrix * cameraMatrix;
+        var inverseViewProjection = viewProjectionMatrix.Inverse();
+        
+        var clipSpace = new Vec4f(normalizedScreen.X, normalizedScreen.Y, 0f, 1f);
+        var worldPoint = inverseViewProjection * clipSpace;
+        return new Vec2f(worldPoint.X / worldPoint.W, worldPoint.Y / worldPoint.W);
+    }
+
+    public Vec2<int> WorldToScreen(in Transform2D cameraTransform, Vec2f worldPos)
+    {
+        var cameraMatrix = cameraTransform.ToMat4f();
+        var worldPoint = new Vec4f(worldPos.X, worldPos.Y, 0f, 1f);
+        var transformedPoint = cameraMatrix * worldPoint;
+        
+        var normalizedScreen = new Vec2f(
+            transformedPoint.X / (Area.Width / 2f),
+            -transformedPoint.Y / (Area.Height / 2f)
+        );
+
+        return new Vec2<int>(
+            (int)(normalizedScreen.X * (Size.X / 2f) + Size.X / 2f),
+            (int)(normalizedScreen.Y * (Size.Y / 2f) + Size.Y / 2f)
         );
     }
 }

@@ -29,6 +29,10 @@ public partial record struct Mat4f
     public Vec3f Forward => new(Col2.X, Col2.Y, Col2.Z);
     public Vec3f Back => new(Col2.X, Col2.Y, Col2.Z);
 
+    public Vec3f Translation => new(Col3.X, Col3.Y, Col3.Z);
+    public Quat Rotation => Quat.FromMat4(this);
+    public Vec3f Scale => new(Col0.Length(), Col1.Length(), Col2.Length());
+
 
     public Mat4f(Vec4f row0, Vec4f row1, Vec4f row2, Vec4f row3)
     {
@@ -117,23 +121,13 @@ public partial record struct Mat4f
                    Unsafe.As<Vector128<float>, Vec4f>(ref col3));
     }
 
-    public static Mat4f operator *(in Mat4f left, in Vec4f right)
+    public static Vec4f operator *(in Mat4f left, in Vec4f right)
     {
         return new(
-            left.Col0 * right.X,
-            left.Col1 * right.Y,
-            left.Col2 * right.Z,
-            left.Col3 * right.W
-        );
-    }
-
-    public static Mat4f operator *(in Vec4f left, in Mat4f right)
-    {
-        return new(
-            left.X * right.Col0,
-            left.Y * right.Col1,
-            left.Z * right.Col2,
-            left.W * right.Col3
+            left.Col0.X * right.X + left.Col1.X * right.Y + left.Col2.X * right.Z + left.Col3.X * right.W,
+            left.Col0.Y * right.X + left.Col1.Y * right.Y + left.Col2.Y * right.Z + left.Col3.Y * right.W,
+            left.Col0.Z * right.X + left.Col1.Z * right.Y + left.Col2.Z * right.Z + left.Col3.Z * right.W,
+            left.Col0.W * right.X + left.Col1.W * right.Y + left.Col2.W * right.Z + left.Col3.W * right.W
         );
     }
 
