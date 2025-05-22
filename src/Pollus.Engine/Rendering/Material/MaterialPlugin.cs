@@ -20,7 +20,7 @@ public class ExtractMaterialSystem<TMaterial> : SystemBase<RenderAssets, AssetSe
     where TMaterial : IMaterial
 {
     public ExtractMaterialSystem()
-        : base(new SystemDescriptor(nameof(ExtractMaterialSystem<TMaterial>)))
+        : base(new SystemDescriptor($"ExtractMaterialSystem::<{typeof(TMaterial).Name}>"))
     { }
 
     protected override void OnTick(

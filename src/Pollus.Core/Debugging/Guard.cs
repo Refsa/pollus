@@ -17,6 +17,17 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
+    public static void IsTrue(bool condition, FormattableString message)
+    {
+        if (!condition)
+        {
+            var fmessage = message.ToString();
+            Log.Error(fmessage);
+            throw new GuardException(fmessage, new StackTrace(new StackTrace(1, true).GetFrames().TakeWhile(e => e.HasSource())).ToString());
+        }
+    }
+
+    [Conditional("DEBUG")]
     public static void IsFalse(bool condition, string message)
     {
         if (condition)

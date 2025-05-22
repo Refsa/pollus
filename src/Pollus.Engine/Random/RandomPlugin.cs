@@ -64,10 +64,11 @@ public class Random
     /// [min,max)
     /// </summary>
     public Vec4f Range(Vec4f min, Vec4f max) => min + (max - min) * NextVec4f();
+    public int Range(int min, int max) => Source.Next(min, max);
     /// <summary>
     /// [min,max)
     /// </summary>
-    public int Range(int min, int max) => Source.Next(min, max);
+    public int Range(Range range) => Source.Next(range.Start.Value, range.End.Value);
     /// <summary>
     /// [min,max)
     /// </summary>
