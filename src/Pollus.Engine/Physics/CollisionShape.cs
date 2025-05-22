@@ -51,6 +51,16 @@ public struct CollisionShape : IComponent
         };
     }
 
+    public bool IsPointInside(in Transform2D transform, in Vec2f point)
+    {
+        return Type switch
+        {
+            CollisionShapeType.Circle => circle.Translate(transform.Position).Inside(point),
+            CollisionShapeType.Rectangle => rectangle.Translate(transform.Position).Inside(point),
+            _ => throw new NotImplementedException(),
+        };
+    }
+
     public TShape GetShape<TShape>() where TShape : struct, IShape2D
     {
         return Type switch
