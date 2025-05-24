@@ -39,6 +39,7 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
 {
     Guid id;
     nint externalId;
+    bool isActive;
 
     Vec2<int> position;
     Vec2<int> delta;
@@ -54,6 +55,7 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
     public InputType Type => InputType.Mouse;
     public Vec2<int> Position => position;
     public Vec2<int> Delta => delta;
+    public bool IsActive => true;
 
     public Mouse(nint externalId)
     {
@@ -127,6 +129,7 @@ public class Mouse : IInputDevice, IAxisInputDevice<MouseAxis>, IButtonInputDevi
             events.GetWriter<MouseMovedEvent>().Write(movedEvent);
         }
 
+        isActive = changedButtons.Count > 0 || changedAxes.Count > 0 || positionChanged;
         positionChanged = false;
         changedButtons.Clear();
         changedAxes.Clear();

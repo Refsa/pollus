@@ -123,9 +123,11 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
     public nint ExternalId { get; }
     public Guid Id { get; } = new();
     public InputType Type => InputType.Keyboard;
+    public bool IsActive => true;
 
     Dictionary<Key, ButtonState> buttons = new();
     HashSet<Key> changed = new();
+    bool isActive;
 
     public void SetKeyState(Key key, bool isPressed)
     {
@@ -189,6 +191,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
             });
         }
 
+        isActive = changed.Count > 0;
         changed.Clear();
     }
 

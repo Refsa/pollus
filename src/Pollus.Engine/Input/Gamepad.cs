@@ -48,6 +48,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
     nint externalDevice;
     string? deviceName;
     Guid id;
+    bool isActive;
 
     Dictionary<GamepadButton, ButtonState> buttons = [];
     Dictionary<GamepadAxis, float> axes = [];
@@ -58,6 +59,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
     public nint ExternalId => externalId;
     public Guid Id => id;
     public InputType Type => InputType.Gamepad;
+    public bool IsActive => true;
 
     public Gamepad(nint externalId)
     {
@@ -154,6 +156,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
             });
         }
 
+        isActive = changedButtons.Count > 0 || changedAxes.Count > 0;
         changedButtons.Clear();
         changedAxes.Clear();
     }
