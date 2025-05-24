@@ -66,7 +66,6 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     readonly int cellSize;
     readonly int width;
     readonly int height;
-    readonly Vec2f offset;
 
     Cell[] cells;
     float biggestRadius;
@@ -76,7 +75,6 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         this.cellSize = cellSize;
         this.width = width;
         this.height = height;
-        offset = new Vec2f(width * cellSize / 2, height * cellSize / 2);
 
         cells = new Cell[width * height];
         for (int i = 0; i < cells.Length; i++) cells[i] = new Cell();
@@ -111,15 +109,15 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
     {
         var cellIdx = GetCell(position);
         if (cellIdx == -1) return;
-        cells[cellIdx].Add(data, position + offset, layer, radius);
+        cells[cellIdx].Add(data, position, layer, radius);
         biggestRadius = float.Max(biggestRadius, radius);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     int GetCell(Vec2f position)
     {
-        int x = (int)((position.X + offset.X) / cellSize);
-        int y = (int)((position.Y + offset.Y) / cellSize);
+        int x = (int)(position.X / cellSize);
+        int y = (int)(position.Y / cellSize);
         if (x < 0 || x >= width || y < 0 || y >= height) return -1;
         return x + y * width;
     }
@@ -132,7 +130,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 
     public int Query(Vec2f position, float radius, uint layer, Span<TData> result)
     {
-        var queryPos = position + offset;
+        var queryPos = position;
         var expandedRadius = radius + biggestRadius;
         var minX = (int)System.Math.Floor((queryPos.X - expandedRadius) / cellSize);
         var maxX = (int)System.Math.Ceiling((queryPos.X + expandedRadius) / cellSize);
