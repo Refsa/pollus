@@ -1,9 +1,11 @@
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Vec4: {X}, {Y}, {Z}, {W}")]
 public partial record struct Vec4<T>
     where T : struct, System.Numerics.INumber<T>
 {

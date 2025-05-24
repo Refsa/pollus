@@ -1,5 +1,6 @@
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
@@ -8,6 +9,7 @@ using Pollus.Debugging;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Mat4f: {Col0}, {Col1}, {Col2}, {Col3}")]
 public partial record struct Mat4f
 {
     static readonly Mat4f identity = new(

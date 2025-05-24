@@ -1,8 +1,10 @@
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Mat3f: {Col0}, {Col1}, {Col2}")]
 public partial record struct Mat3f
 {
     public Vec3f Col0;

@@ -1,8 +1,10 @@
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Rect: {Min} {Max}")]
 public partial struct Rect
 {
     public Vec2f Min;
@@ -155,5 +157,10 @@ public partial struct Rect
         {
             return dy < 0 ? Vec2f.Down : Vec2f.Up; // Bottom or Top side
         }
+    }
+
+    public override string ToString()
+    {
+        return $"Rect {{Min: {Min}, Max: {Max}}}";
     }
 }

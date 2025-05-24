@@ -22,11 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Silk.NET.WebGPU" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.WebGPU.Native.WGPU" Version="2.20.0" />
+    <PackageReference Include="Silk.NET.WebGPU" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.WebGPU.Native.WGPU" Version="2.21.0" />
     <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
-    <PackageReference Include="ImGui.NET" Version="1.91.0.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
+    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
   </ItemGroup>
 
   <ItemGroup>

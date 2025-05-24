@@ -132,7 +132,7 @@ class FlockingGame : IPlugin
                 );
             }
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 100; i++)
             {
                 var entity = SpawnBoid(commands, commonResources,
                     position: new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),

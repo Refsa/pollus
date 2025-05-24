@@ -1,9 +1,11 @@
 namespace Pollus.Mathematics;
 
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Vec2f: {X}, {Y}")]
 public partial record struct Vec2f
 {
     public static Vec2f Zero => new(0f, 0f);

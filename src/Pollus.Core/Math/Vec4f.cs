@@ -1,8 +1,10 @@
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
 using Pollus.Graphics;
 
 [ShaderType]
+[DebuggerDisplay("Vec4f: {X}, {Y}, {Z}, {W}")]
 public partial record struct Vec4f
 {
     public static Vec4f Zero => Splat(0f);

@@ -1,14 +1,20 @@
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Pollus.Mathematics;
 
+[DebuggerDisplay("Quat: {EulerAngleX}, {EulerAngleY}, {EulerAngleZ}")]
 public record struct Quat
 {
     public float X;
     public float Y;
     public float Z;
     public float W;
+
+    public float EulerAngleX => Math.Radians(X).Degrees() * 2f;
+    public float EulerAngleY => Math.Radians(Y).Degrees() * 2f;
+    public float EulerAngleZ => Math.Radians(Z).Degrees() * 2f;
 
     public Quat(float x, float y, float z, float w)
     {
@@ -104,6 +110,14 @@ public record struct Quat
         );
     }
 
+    public static Vec3f ToEuler(Quat q)
+    {
+        return new(
+            q.EulerAngleX,
+            q.EulerAngleY,
+            q.EulerAngleZ
+        );
+    }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Quat Identity()
     {
