@@ -3,6 +3,7 @@ namespace Pollus.Graphics.Windowing;
 using Silk.NET.Core.Contexts;
 using Pollus.Mathematics;
 using Pollus.Graphics.SDL;
+using Silk.NET.SDL;
 
 public class DesktopWindow : IWindow, INativeWindowSource
 {
@@ -45,5 +46,15 @@ public class DesktopWindow : IWindow, INativeWindowSource
     unsafe public void SetTitle(string title)
     {
         SDLWrapper.Instance.SetWindowTitle((Silk.NET.SDL.Window*)native.Sdl!, title);
+    }
+
+    unsafe public void HideCursor()
+    {
+        SDLWrapper.Instance.ShowCursor(0);
+    }
+
+    unsafe public void ShowCursor()
+    {
+        SDLWrapper.Instance.ShowCursor(1);
     }
 }

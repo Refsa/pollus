@@ -7,6 +7,7 @@ using Pollus.Emscripten;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using Silk.NET.Core.Contexts;
+using Pollus.Debugging;
 
 public partial class BrowserWindow : IWindow
 {
@@ -64,7 +65,17 @@ public partial class BrowserWindow : IWindow
 
     public void SetTitle(string title)
     {
-        
+        Log.Error("SetTitle not implemented for browser");
+    }
+
+    unsafe public void HideCursor()
+    {
+        Log.Error("HideCursor not implemented for browser");
+    }
+
+    unsafe public void ShowCursor()
+    {
+        Log.Error("ShowCursor not implemented for browser");
     }
 }
 
