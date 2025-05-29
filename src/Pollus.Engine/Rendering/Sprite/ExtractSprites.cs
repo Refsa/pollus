@@ -11,11 +11,12 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
     struct ExtractJob : IForEach<Transform2D, Sprite>
     {
         public required SpriteBatches Batches { get; init; }
+        public required bool IsStatic { get; init; }
 
         public void Execute(ref Transform2D transform, ref Sprite sprite)
         {
-            var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material));
-            var matrix = transform.ToMat4f_Col();
+            var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material, IsStatic));
+            var matrix = transform.ToMat4f_Row();
             var extents = sprite.Slice.Size();
             batch.Write(new SpriteBatch.InstanceData
             {
@@ -33,9 +34,19 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
         IWGPUContext gpuContext, SpriteBatches batches,
         Query<Transform2D, Sprite> query)
     {
-        query.ForEach(new ExtractJob
+        query.ForEach<ExtractJob, None<Static>>(new ExtractJob
         {
             Batches = batches,
+            IsStatic = false,
+        });
+
+        var hasStaticChanged = query.EntityCount<Added<StaticCalculated>>();
+        if (hasStaticChanged > 0) batches.Reset(true);
+
+        query.ForEach<ExtractJob, Added<StaticCalculated>>(new ExtractJob
+        {
+            Batches = batches,
+            IsStatic = true,
         });
     }
 }

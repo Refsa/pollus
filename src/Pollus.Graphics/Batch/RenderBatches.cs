@@ -6,7 +6,7 @@ public interface IRenderBatches<TBatch>
     where TBatch : IRenderBatch
 {
     ListEnumerable<TBatch> Batches { get; }
-    void Reset();
+    void Reset(bool all = false);
 }
 
 public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDisposable
@@ -54,10 +54,11 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
         return batch;
     }
 
-    public void Reset()
+    public void Reset(bool all = false)
     {
         foreach (var batch in batches)
         {
+            if (!all && batch.IsStatic) continue;
             batch.Reset();
         }
     }

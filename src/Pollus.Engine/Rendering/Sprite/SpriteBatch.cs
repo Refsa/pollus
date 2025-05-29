@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public record struct SpriteBatchKey(Handle Material);
+public readonly record struct SpriteBatchKey(Handle Material, bool IsStatic);
 
 public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
 {
@@ -24,6 +24,7 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     {
         Key = key.GetHashCode();
         Material = key.Material;
+        IsStatic = key.IsStatic;
     }
 }
 

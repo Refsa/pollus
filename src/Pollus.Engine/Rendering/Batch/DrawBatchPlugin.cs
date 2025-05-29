@@ -42,7 +42,7 @@ public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, Ass
     {
         foreach (var batch in batches.Batches)
         {
-            if (batch.IsEmpty) continue;
+            if (batch.IsEmpty || !batch.IsDirty) continue;
 
             GPUBuffer? instanceBuffer;
             if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null)
@@ -57,6 +57,7 @@ public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, Ass
             }
 
             instanceBuffer.Write(batch.GetBytes(), 0);
+            batch.IsDirty = false;
         }
     }
 }

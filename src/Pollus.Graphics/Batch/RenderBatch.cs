@@ -11,6 +11,8 @@ public interface IRenderBatch
     int Count { get; }
     bool IsEmpty { get; }
     bool IsFull { get; }
+    bool IsStatic { get; }
+    bool IsDirty { get; set; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; }
 
     void Reset();
@@ -33,6 +35,9 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public bool IsEmpty => count == 0;
     public bool IsFull => count == scratch.Length;
 
+    public bool IsDirty { get; set; }
+    public bool IsStatic { get; init; }
+
     public RenderBatch()
     {
         scratch = new TInstanceData[16];
@@ -46,6 +51,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public void Reset()
     {
         count = 0;
+        IsDirty = true;
     }
 
     public void Write(in TInstanceData data)
@@ -53,6 +59,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
         if (count == scratch.Length) Resize(count * 2);
 
         scratch[count++] = data;
+        IsDirty = true;
     }
 
     public void Write(ReadOnlySpan<TInstanceData> data)
@@ -61,6 +68,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
 
         data.CopyTo(scratch.AsSpan()[count..]);
         count += data.Length;
+        IsDirty = true;
     }
 
     public ReadOnlySpan<TInstanceData> GetData()
