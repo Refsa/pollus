@@ -73,6 +73,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public static Component.Info[] Infos => infos;
 
     static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new(world);
+
     static Query()
     {
         QueryFetch<Query<C0>>.Register();
@@ -134,6 +135,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             }
         }
     }
+
     public void ForEach<TFilters>(ForEachEntityDelegate<C0> pred)
         where TFilters : ITuple, new()
     {
@@ -255,6 +257,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         {
             count += chunk.Count;
         }
+
         return count;
     }
 
@@ -276,6 +279,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
                 Component0 = ref chunk.GetComponents<C0>(cids[0])[0],
             };
         }
+
         throw new InvalidOperationException("No entities found");
     }
 
