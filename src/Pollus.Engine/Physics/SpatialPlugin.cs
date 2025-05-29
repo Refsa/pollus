@@ -25,12 +25,13 @@ public static class SpatialPlugin
     }
 }
 
-public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
+public record SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
     where TSpatialQuery : ISpatialContainer<Entity>
     where TQueryFilters : ITuple, IFilter, new()
 {
     public TSpatialQuery SpatialQuery { get; init; }
     public Vec2f Offset { get; init; }
+    public bool IsStatic { get; init; }
 
     public SpatialPlugin(TSpatialQuery spatialQuery, Vec2f offset)
     {
@@ -49,15 +50,19 @@ public class SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new($"SpatialQuery<{typeof(TSpatialQuery).Name}>::Update")
         {
-            Locals = [Local.From(Offset)],
+            Locals = [Local.From(Offset), Local.From((IsStatic, false))],
         },
         static (
             Local<Vec2f> offset,
+            Local<(bool isStatic, bool isCalculated)> staticInfo,
             SpatialQuery spatialQuery,
             Query<Read<Transform2D>, Read<CollisionShape>>.Filter<TQueryFilters> qShapes) =>
         {
+            if (staticInfo.Value.isStatic && staticInfo.Value.isCalculated) return;
+
             spatialQuery.Prepare();
             qShapes.ForEach(new UpdateJob() { SpatialQuery = spatialQuery, Offset = offset.Value });
+            staticInfo.Value = (staticInfo.Value.isStatic, true);
         }));
     }
 
