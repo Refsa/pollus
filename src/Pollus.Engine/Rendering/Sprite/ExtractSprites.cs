@@ -34,19 +34,20 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
         IWGPUContext gpuContext, SpriteBatches batches,
         Query<Transform2D, Sprite> query)
     {
+        if (query.Any<Added<StaticCalculated>>())
+        {
+            batches.Reset(true);
+            query.ForEach<ExtractJob, Added<StaticCalculated>>(new ExtractJob
+            {
+                Batches = batches,
+                IsStatic = true,
+            });
+        }
+
         query.ForEach<ExtractJob, None<Static>>(new ExtractJob
         {
             Batches = batches,
             IsStatic = false,
-        });
-
-        var hasStaticChanged = query.EntityCount<Added<StaticCalculated>>();
-        if (hasStaticChanged > 0) batches.Reset(true);
-
-        query.ForEach<ExtractJob, Added<StaticCalculated>>(new ExtractJob
-        {
-            Batches = batches,
-            IsStatic = true,
         });
     }
 }

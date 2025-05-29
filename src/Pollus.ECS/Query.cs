@@ -166,6 +166,24 @@ public struct Query : IQuery, IQueryCreate<Query>
         return count;
     }
 
+    public bool Any<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return Any();
+    }
+
+    public bool Any()
+    {
+        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            if (chunk.Count > 0) return true;
+        }
+        return false;
+    }
+
     /// <summary>
     /// Check if entity has component
     /// </summary>

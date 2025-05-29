@@ -252,6 +252,23 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         return count;
     }
 
+    public bool Any<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return Any();
+    }
+
+    public bool Any()
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            if (chunk.Count > 0) return true;
+        }
+        return false;
+    }
+
     public EntityRow Single<TFilters>()
         where TFilters : ITuple, new()
     {
