@@ -24,6 +24,7 @@ public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatc
         IWGPUContext gpuContext, MeshRenderBatches batches,
         Query<Transform2D, MeshDraw<TMaterial>> query)
     {
+        batches.Reset();
         query.ForEach(new ExtractJob
         {
             Batches = batches,

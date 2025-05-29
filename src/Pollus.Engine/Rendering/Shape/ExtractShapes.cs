@@ -26,6 +26,7 @@ public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch
         {
             renderAssets.Prepare(gpuContext, assetServer, shape.Handle);
         }
+        batches.Reset();
 
         query.ForEach(new Job
         {

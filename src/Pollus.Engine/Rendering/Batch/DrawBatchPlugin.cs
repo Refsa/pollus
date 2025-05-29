@@ -21,7 +21,6 @@ public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : Syste
         IWGPUContext gpuContext, TBatches batches,
         TExtractQuery query)
     {
-        batches.Reset();
         Extract(renderAssets, assetServer, gpuContext, batches, query);
     }
 
