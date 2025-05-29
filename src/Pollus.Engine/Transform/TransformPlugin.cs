@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Transform;
 
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
@@ -14,7 +15,7 @@ public partial class TransformPlugin<TTransform> : IPlugin
     where TTransform : unmanaged, ITransform, IComponent
 {
     [System(nameof(Propagate))]
-    static readonly SystemBuilderDescriptor PropagateSystemDescriptor = new()
+        static readonly SystemBuilderDescriptor PropagateSystemDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
     };

@@ -179,8 +179,8 @@ public partial record struct Mat4f
     {
         var (sin, cos) = Math.SinCos(rotation);
         return new(
-            new Vec4f(cos * scale.X, -sin * scale.X, 0f, 0f),
-            new Vec4f(sin * scale.Y, cos * scale.Y, 0f, 0f),
+            new Vec4f(cos * scale.X, sin * scale.X, 0f, 0f),
+            new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, 0f),
             new Vec4f(0f, 0f, 1f, 0f),
             new Vec4f(translation.X, translation.Y, 0f, 1f)
         );

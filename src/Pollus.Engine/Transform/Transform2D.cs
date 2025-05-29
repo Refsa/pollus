@@ -43,7 +43,7 @@ public partial struct Transform2D : ITransform, IComponent
         return Mat4f.FromTRS(Position, Rotation.Radians(), Scale);
     }
 
-    public Mat4f ToMat4f_Col()
+    public Mat4f ToMat4f_Row()
     {
         return Mat4f.FromTRS_Row(Position, Rotation.Radians(), Scale);
     }
