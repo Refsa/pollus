@@ -35,6 +35,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
     {
         Stage = CoreStage.Last,
         RunCriteria = new EventRunCriteria<SnapshotSerializeEvent>(),
+        Dependencies = [typeof(ExclusiveSystemMarker)],
     };
 
     [System(nameof(Deserialize))]
@@ -42,6 +43,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
     {
         Stage = CoreStage.Last,
         RunCriteria = new EventRunCriteria<SnapshotDeserializeEvent>(),
+        Dependencies = [typeof(ExclusiveSystemMarker)],
     };
 
     public void Apply(World world)
