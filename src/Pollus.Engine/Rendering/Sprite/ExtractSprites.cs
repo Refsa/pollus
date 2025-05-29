@@ -15,7 +15,7 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
         public void Execute(ref Transform2D transform, ref Sprite sprite)
         {
             var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material));
-            var matrix = transform.ToMat4f().Transpose();
+            var matrix = transform.ToMat4f_Col();
             var extents = sprite.Slice.Size();
             batch.Write(new SpriteBatch.InstanceData
             {

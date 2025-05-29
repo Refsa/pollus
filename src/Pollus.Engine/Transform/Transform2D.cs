@@ -40,11 +40,12 @@ public partial struct Transform2D : ITransform, IComponent
 
     public Mat4f ToMat4f()
     {
-        return Mat4f.FromTRS(
-            new(Position, 0f),
-            Quat.AxisAngle(Vec3f.Forward, Rotation.Radians()),
-            new(Scale, 1f)
-        );
+        return Mat4f.FromTRS(Position, Rotation.Radians(), Scale);
+    }
+
+    public Mat4f ToMat4f_Col()
+    {
+        return Mat4f.FromTRS_Row(Position, Rotation.Radians(), Scale);
     }
 
     public GlobalTransform ToGlobalTransform(Mat4f parentTransform)
