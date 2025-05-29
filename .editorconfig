@@ -1,0 +1,21 @@
+root = true
+
+[*.cs]
+dotnet_naming_rule.instance_fields_should_be_camel_case.severity = suggestion
+dotnet_naming_rule.instance_fields_should_be_camel_case.symbols = instance_fields
+dotnet_naming_rule.instance_fields_should_be_camel_case.style = instance_field_style
+
+dotnet_naming_symbols.instance_fields.applicable_kinds = field
+dotnet_naming_symbols.instance_fields.applicable_accessibilities = private, internal
+dotnet_naming_symbols.instance_fields.required_modifiers = 
+
+dotnet_naming_style.instance_field_style.capitalization = camel_case
+dotnet_naming_style.instance_field_style.required_prefix = 
+dotnet_naming_style.instance_field_style.required_suffix = 
+
+# Allow omitting private modifier
+dotnet_style_require_accessibility_modifiers = never:suggestion
+dotnet_style_readonly_field = true:suggestion
+
+# set max line length to 240
+max_line_length = 240
