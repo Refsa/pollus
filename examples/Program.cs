@@ -25,6 +25,7 @@ if (args.Length < 1)
     Console.WriteLine("  flocking");
     Console.WriteLine("  gizmo");
     Console.WriteLine("  tween");
+    Console.WriteLine("  ecs-iter");
     return;
 }
 
@@ -51,6 +52,7 @@ IExample? example = args[0] switch
     "gizmo" => new GizmoExample(),
     "psample" => new PerformanceSampling(),
     "tween" => new TweenExample(),
+    "ecs-iter" => new ECSIter(),
     _ => null
 };
 
