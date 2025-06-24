@@ -73,7 +73,7 @@ public class DesktopApplication : IApplication, IDisposable
             }
             catch
             {
-                Shutdown();
+                Dispose();
                 throw;
             }
         }
