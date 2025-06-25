@@ -82,6 +82,8 @@ public struct ResourceContainer<TResource> : IDisposable
 
     public void Dispose()
     {
+        if (resources is null) return;
+
         Array.Fill(resources, default, 0, count);
         ArrayPool<TResource>.Shared.Return(resources);
     }

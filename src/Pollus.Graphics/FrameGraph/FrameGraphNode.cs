@@ -96,6 +96,8 @@ public struct GraphData<TNode> : IDisposable
 
     public void Dispose()
     {
+        if (nodes is null) return;
+
         Clear();
         ArrayPool<TNode>.Shared.Return(nodes);
     }
