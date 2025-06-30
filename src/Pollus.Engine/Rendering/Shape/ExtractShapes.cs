@@ -16,7 +16,7 @@ public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch
         {
             var batch = Batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle));
 
-            batch.Write(transform.Value, shape.Color);
+            batch.Write(transform.Value.Translated(shape.Offset.XYZ()), shape.Color);
         }
     }
 

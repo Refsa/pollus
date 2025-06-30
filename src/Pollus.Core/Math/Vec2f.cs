@@ -171,6 +171,11 @@ public partial record struct Vec2f
         return new Vec2f(float.Abs(X), float.Abs(Y));
     }
 
+    public readonly Vec3f XYZ(float z = 0f)
+    {
+        return new Vec3f(X, Y, z);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static Vec2f Min(in Vec2f a, in Vec2f b)
     {

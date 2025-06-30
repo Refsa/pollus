@@ -184,6 +184,11 @@ public partial struct Color
         return new(hsv, A);
     }
 
+    public override string ToString()
+    {
+        return $"Color {{ {R}, {G}, {B}, {A} }}";
+    }
+
     public struct Hex
     {
         public static readonly Hex Black = new(0x00000000);

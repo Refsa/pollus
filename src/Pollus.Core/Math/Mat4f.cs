@@ -290,6 +290,13 @@ public partial record struct Mat4f
         Col3 += new Vec4f(translation, 0f);
     }
 
+    public Mat4f Translated(Vec3f translation)
+    {
+        var copy = this;
+        copy.Translate(translation);
+        return copy;
+    }
+
     public Vec3f GetTranslation()
     {
         return new Vec3f(Col3.X, Col3.Y, Col3.Z);

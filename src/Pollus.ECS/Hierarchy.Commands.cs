@@ -79,6 +79,15 @@ public static class HierarchyCommandsExt
         return builder;
     }
 
+    public static EntityCommands AddChildren(this EntityCommands builder, params Span<Entity> children)
+    {
+        for (int i = 0; i < children.Length; i++)
+        {
+            builder.AddChild(children[i]);
+        }
+        return builder;
+    }
+
     public static EntityCommands RemoveChild(this EntityCommands builder, in Entity child)
     {
         builder.Commands.RemoveChild(builder.Entity, child);

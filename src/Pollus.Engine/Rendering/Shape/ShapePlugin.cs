@@ -4,6 +4,7 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
+using Pollus.Mathematics;
 using Pollus.Utils;
 
 public class ShapePlugin : IPlugin
@@ -52,6 +53,7 @@ public struct ShapeDraw : IComponent
             MaterialHandle = Handle<ShapeMaterial>.Null,
             ShapeHandle = Handle<Shape>.Null,
             Color = Color.WHITE,
+            Offset = Vec2f.Zero,
         },
         Transform2D.Default,
         GlobalTransform.Default
@@ -60,4 +62,5 @@ public struct ShapeDraw : IComponent
     public required Handle<ShapeMaterial> MaterialHandle;
     public required Handle<Shape> ShapeHandle;
     public required Color Color;
+    public Vec2f Offset;
 }
