@@ -65,17 +65,17 @@ public partial class BrowserWindow : IWindow
 
     public void SetTitle(string title)
     {
-        Log.Error("SetTitle not implemented for browser");
+        EmscriptenSDL.SetWindowTitle(nativeWindow, title);
     }
 
     unsafe public void HideCursor()
     {
-        Log.Error("HideCursor not implemented for browser");
+        EmscriptenSDL.SetShowCursor(false);
     }
 
     unsafe public void ShowCursor()
     {
-        Log.Error("ShowCursor not implemented for browser");
+        EmscriptenSDL.SetShowCursor(true);
     }
 }
 

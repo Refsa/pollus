@@ -28,6 +28,12 @@ public partial class EmscriptenSDL
     private static partial void SDL_DestroyWindow(nint window);
 
     [LibraryImport("SDL")]
+    private unsafe static partial void SDL_SetWindowTitle(nint window, byte* title);
+
+    [LibraryImport("SDL")]
+    private static partial void SDL_SetShowCursor(int show);
+
+    [LibraryImport("SDL")]
     private static partial void SDL_PumpEvents();
 
     [LibraryImport("SDL")]
@@ -121,6 +127,17 @@ public partial class EmscriptenSDL
     public static void DestroyWindow(nint window)
     {
         SDL_DestroyWindow(window);
+    }
+
+    unsafe public static void SetWindowTitle(nint window, string title)
+    {
+        var titlePtr = TemporaryPin.PinString(title);
+        SDL_SetWindowTitle(window, (byte*)titlePtr.Ptr);
+    }
+
+    public static void SetShowCursor(bool show)
+    {
+        SDL_SetShowCursor(show ? 1 : 0);
     }
 
     public static void PumpEvents()

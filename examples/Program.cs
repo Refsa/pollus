@@ -64,4 +64,4 @@ if (example is null)
 }
 
 Log.Info("Running example: " + args[0]);
-example?.Run();
+example.Run();

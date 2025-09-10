@@ -75,12 +75,18 @@ public struct FramePassContainer<TParam> : IDisposable
 
     public void Dispose()
     {
-        for (int i = 0; i < containers.Count; i++) containers[i].Clear();
-        containers.Clear();
-        containerLookup.Clear();
+        if (containers != null)
+        {
+            for (int i = 0; i < containers.Count; i++) containers[i].Clear();
+            containers.Clear();
+            Pool<List<IFramePassContainer<TParam>>>.Shared.Return(containers);
+        }
 
-        Pool<List<IFramePassContainer<TParam>>>.Shared.Return(containers);
-        Pool<Dictionary<Type, int>>.Shared.Return(containerLookup);
+        if (containerLookup != null)
+        {
+            containerLookup.Clear();
+            Pool<Dictionary<Type, int>>.Shared.Return(containerLookup);
+        }
     }
 
     public FramePassHandle AddPass<TData>(in TData data, int order, FrameGraph<TParam>.ExecuteDelegate<TData> execute)
