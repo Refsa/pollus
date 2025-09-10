@@ -60,7 +60,7 @@ public partial class BrowserWindow : IWindow
     unsafe public void Run(Action loop)
     {
         emOnFrame = loop;
-        Emscripten.SetMainLoop(&emOnFrameCallback, 0, false);
+        Emscripten.SetMainLoop(&emOnFrameCallback, 0, true);
     }
 
     public void SetTitle(string title)

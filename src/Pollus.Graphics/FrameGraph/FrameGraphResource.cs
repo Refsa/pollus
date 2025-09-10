@@ -133,7 +133,7 @@ public struct ResourceContainers : IDisposable
         count = 0;
         textures.Dispose();
         buffers.Dispose();
-        resourceByName.Clear();
+        resourceByName?.Clear();
         Pool<Dictionary<string, ResourceHandle>>.Shared.Return(resourceByName);
     }
 

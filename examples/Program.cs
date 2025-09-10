@@ -1,31 +1,32 @@
-﻿using Pollus.Examples;
+﻿using Pollus.Debugging;
+using Pollus.Examples;
 using Pollus.Examples.Flocking;
 
 if (args.Length < 1)
 {
-    Console.WriteLine("Usage: <example>");
-    Console.WriteLine("Examples:");
-    Console.WriteLine("  shapes");
-    Console.WriteLine("  ecs");
-    Console.WriteLine("  input");
-    Console.WriteLine("  audio");
-    Console.WriteLine("  imgui");
-    Console.WriteLine("  breakout");
-    Console.WriteLine("  draw-triangle");
-    Console.WriteLine("  collision");
-    Console.WriteLine("  frame-graph");
-    Console.WriteLine("  sprite-benchmark");
-    Console.WriteLine("  compute");
-    Console.WriteLine("  mesh-rendering");
-    Console.WriteLine("  coroutine");
-    Console.WriteLine("  change-tracking");
-    Console.WriteLine("  ecs-spawn");
-    Console.WriteLine("  hierarchy");
-    Console.WriteLine("  transform");
-    Console.WriteLine("  flocking");
-    Console.WriteLine("  gizmo");
-    Console.WriteLine("  tween");
-    Console.WriteLine("  ecs-iter");
+    Log.Info("Usage: <example>");
+    Log.Info("Examples:");
+    Log.Info("  shapes");
+    Log.Info("  ecs");
+    Log.Info("  input");
+    Log.Info("  audio");
+    Log.Info("  imgui");
+    Log.Info("  breakout");
+    Log.Info("  draw-triangle");
+    Log.Info("  collision");
+    Log.Info("  frame-graph");
+    Log.Info("  sprite-benchmark");
+    Log.Info("  compute");
+    Log.Info("  mesh-rendering");
+    Log.Info("  coroutine");
+    Log.Info("  change-tracking");
+    Log.Info("  ecs-spawn");
+    Log.Info("  hierarchy");
+    Log.Info("  transform");
+    Log.Info("  flocking");
+    Log.Info("  gizmo");
+    Log.Info("  tween");
+    Log.Info("  ecs-iter");
     return;
 }
 
@@ -58,8 +59,9 @@ IExample? example = args[0] switch
 
 if (example is null)
 {
-    Console.WriteLine("Unknown example: " + args[0]);
+    Log.Info("Unknown example: " + args[0]);
     return;
 }
 
+Log.Info("Running example: " + args[0]);
 example?.Run();

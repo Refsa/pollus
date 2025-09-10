@@ -157,7 +157,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         }
         else
         {
-            Log.Info("WGPU: Adapter not acquired");
+            Log.Warn("WGPU: Adapter not acquired");
         }
     }
 
@@ -170,7 +170,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             MinUniformBufferOffsetAlignment = 256,
             MaxBindGroups = 3,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
-            MaxInterStageShaderComponents = Silk.NET.WebGPU.WebGPU.LimitU32Undefined,
+            MaxInterStageShaderComponents = uint.MaxValue,
         };
         var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
         {
@@ -178,9 +178,9 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         };
         var requiredLimitsPtr = Unsafe.AsPointer(ref requiredLimits);
         
-        var requiredFeatures = stackalloc Silk.NET.WebGPU.FeatureName[]
+        var requiredFeatures = stackalloc Emscripten.WGPUFeatureName_Browser[]
         {
-            Silk.NET.WebGPU.FeatureName.IndirectFirstInstance,
+            Emscripten.WGPUFeatureName_Browser.IndirectFirstInstance,
         };
 
         var deviceDescriptor = new Emscripten.WGPUDeviceDescriptor_Browser()
@@ -205,7 +205,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         else
         {
             var msg = Marshal.PtrToStringAnsi((IntPtr)message);
-            Log.Info($"WGPU: Device not acquired: {status}, {msg}");
+            Log.Warn($"WGPU: Device not acquired: {status}, {msg}");
         }
     }
 

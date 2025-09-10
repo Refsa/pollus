@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0-browser;net9.0;net9.0-browser;</TargetFrameworks>
+    <TargetFrameworks>net8.0-browser;net9.0;net9.0-browser;net10.0;net10.0-browser</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <PropertyGroup
-    Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' ">
+    Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
     <RunAOTCompilation>true</RunAOTCompilation>
     <SelfContained>true</SelfContained>
@@ -26,20 +26,14 @@
     <WasmNativeWorkload>true</WasmNativeWorkload>
     <WasmEnableThreads>false</WasmEnableThreads>
 
-    <WasmCachePath>
-      $([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
+    <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
-    <EmccFlags Condition=" '$(TargetFramework)' == 'net8.0-browser' ">--embed-file
-      '.\bin\Release\net8.0-browser\browser-wasm\assets@assets'</EmccFlags>
-    <EmccFlags Condition=" '$(TargetFramework)' == 'net9.0-browser' ">--embed-file
-      '.\bin\Release\net9.0-browser\browser-wasm\assets@assets'</EmccFlags>
-    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal
-      -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
+    <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
+    <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
   </PropertyGroup>
 
-  <PropertyGroup
-    Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser') and '$(Mode)' == 'NoAOT' ">
+  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'NoAOT' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <RunAOTCompilation>false</RunAOTCompilation>
     <SelfContained>false</SelfContained>
@@ -48,7 +42,7 @@
   </PropertyGroup>
 
   <PropertyGroup
-    Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser') and '$(Mode)' == 'WithSymbols' ">
+    Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'WithSymbols' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
     <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
@@ -59,17 +53,15 @@
     <WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
   </PropertyGroup>
 
-  <ItemGroup
-    Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
     <WasmExtraFilesToDeploy Include="www/index.html" />
     <WasmExtraFilesToDeploy Include="www/main.js" />
     <WasmExtraFilesToDeploy Include="www/*.js" />
     <WasmExtraFilesToDeploy Include="www/*.css" />
 
-    <NativeFileReference Condition=" '$(TargetFramework)' == 'net9.0-browser' "
-      Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
-    <NativeFileReference Condition=" '$(TargetFramework)' == 'net8.0-browser' "
-      Include=".\bin\Release\net8.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    <NativeFileReference Condition=" '$(TargetFramework)' == 'net9.0-browser' " Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    <NativeFileReference Condition=" '$(TargetFramework)' == 'net8.0-browser' " Include=".\bin\Release\net8.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    <NativeFileReference Condition=" '$(TargetFramework)' == 'net10.0-browser' " Include=".\bin\Release\net10.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
   <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="AddBrowserDeps"
@@ -101,8 +93,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Pollus.Engine\Pollus.Engine.csproj" />
-    <ProjectReference Include="..\src\Pollus.Generators\Pollus.Generators.csproj"
-      OutputItemType="Analyzer"
-      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\src\Pollus.Generators\Pollus.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
