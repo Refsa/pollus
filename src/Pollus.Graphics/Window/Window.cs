@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Windowing;
 
+using Pollus.Debugging;
 using Pollus.Mathematics;
 using Silk.NET.Core.Contexts;
 using System.Runtime.InteropServices;

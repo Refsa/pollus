@@ -16,7 +16,7 @@ public partial class BrowserApplication : IApplication, IDisposable
 {
     IWindow window;
     GraphicsContext? graphicsContext;
-    IWGPUContext? windowContext;
+    IWGPUContext? gpuContext;
 
     World world;
 
@@ -24,7 +24,7 @@ public partial class BrowserApplication : IApplication, IDisposable
     bool isSetup;
 
     public bool IsRunning => window.IsOpen;
-    public IWGPUContext GPUContext => windowContext!;
+    public IWGPUContext GPUContext => gpuContext!;
     public World World => world;
     public IWindow Window => window;
 
@@ -74,7 +74,7 @@ public partial class BrowserApplication : IApplication, IDisposable
         {
             if (!GraphicsSetup()) return;
 
-            world.Resources.Add(windowContext!);
+            world.Resources.Add(gpuContext!);
             isSetup = true;
             return;
         }
@@ -84,10 +84,10 @@ public partial class BrowserApplication : IApplication, IDisposable
 
     bool GraphicsSetup()
     {
-        windowContext ??= graphicsContext!.CreateContext("main", window);
-        if (!windowContext.IsReady)
+        gpuContext ??= graphicsContext!.CreateContext("main", window);
+        if (!gpuContext.IsReady)
         {
-            windowContext.Setup();
+            gpuContext.Setup();
             return false;
         }
         return true;
