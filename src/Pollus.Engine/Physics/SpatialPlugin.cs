@@ -56,7 +56,7 @@ public record SpatialPlugin<TSpatialQuery, TQueryFilters> : IPlugin
             Local<Vec2f> offset,
             Local<(bool isStatic, bool isCalculated)> staticInfo,
             SpatialQuery spatialQuery,
-            Query<Read<Transform2D>, Read<CollisionShape>>.Filter<(TQueryFilters, None<Layer>)> qShapes,
+            Query<Read<Transform2D>, Read<CollisionShape>>.Filter<Multi<TQueryFilters, None<Layer>>> qShapes,
             Query<Read<Transform2D>, Read<CollisionShape>, Read<Layer>>.Filter<TQueryFilters> qShapesWithLayer
         ) =>
         {

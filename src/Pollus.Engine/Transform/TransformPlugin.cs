@@ -30,7 +30,7 @@ public partial class TransformPlugin<TTransform> : IPlugin
         Commands commands,
         Query query,
         Query<GlobalTransform, Read<TTransform>, Read<Parent>>.Filter<None<Child, Static>> qRoots,
-        Query<GlobalTransform, Read<TTransform>>.Filter<(Any<Parent, Child>, None<Static>)> qTreeTransforms,
+        Query<GlobalTransform, Read<TTransform>>.Filter<Multi<Any<Parent, Child>, None<Static>>> qTreeTransforms,
         Query<GlobalTransform, Read<TTransform>>.Filter<None<Parent, Child, Static>> qOrphans
     )
     {

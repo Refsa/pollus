@@ -9,8 +9,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
-  <PropertyGroup
-    Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
     <RunAOTCompilation>true</RunAOTCompilation>
     <SelfContained>true</SelfContained>
@@ -41,8 +40,7 @@
     <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
   </PropertyGroup>
 
-  <PropertyGroup
-    Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'WithSymbols' ">
+  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'WithSymbols' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
     <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>

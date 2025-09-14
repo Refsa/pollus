@@ -148,6 +148,12 @@ public partial class Archetype : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public bool HasComponent(int cid)
+    {
+        return HasComponent(cid);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent(in ComponentID cid)
     {
         for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)

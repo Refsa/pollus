@@ -2,7 +2,6 @@ namespace Pollus.ECS;
 
 using System.Runtime.InteropServices;
 
-[StructLayout(LayoutKind.Explicit)]
 public readonly struct Read<C0> : ComponentWrapper<Read<C0>>.Target<C0>
     where C0 : unmanaged, IComponent
 {
@@ -15,6 +14,5 @@ public readonly struct Read<C0> : ComponentWrapper<Read<C0>>.Target<C0>
         });
     }
 
-    [FieldOffset(0)]
     public readonly C0 Component;
 }
