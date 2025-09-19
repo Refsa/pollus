@@ -150,6 +150,8 @@ public class DrawGroups<TGroup>
         };
         drawGroups.Add(group, drawGroup);
     }
+    public bool Has(TGroup group) => drawGroups.ContainsKey(group);
+    public bool TryGet(TGroup group, out DrawGroup<TGroup> drawGroup) => drawGroups.TryGetValue(group, out drawGroup);
     public DrawGroup<TGroup> Get(TGroup group) => drawGroups[group];
     public DrawList GetDrawList(TGroup group) => drawGroups[group].DrawLists;
     public CommandList GetCommandList(TGroup group) => drawGroups[group].CommandLists;

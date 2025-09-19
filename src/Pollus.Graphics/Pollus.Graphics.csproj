@@ -26,7 +26,7 @@
     <PackageReference Include="Silk.NET.WebGPU.Native.WGPU" Version="2.21.0" />
     <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+    <PackageReference Include="ImGui.NET" Version="1.91.0.1" />
   </ItemGroup>
 
   <ItemGroup>

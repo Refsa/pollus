@@ -21,3 +21,9 @@ public record struct Handle<T>(int ID)
         return HashCode.Combine(typeId, ID);
     }
 }
+
+public static class HandleExtensions
+{
+    public static bool IsNull<T>(this Handle<T> handle) => handle == Handle<T>.Null;
+    public static bool IsNull(this Handle handle) => handle == Handle.Null;
+}

@@ -4,6 +4,7 @@ namespace Pollus.Graphics.Imgui;
 
 using System.Runtime.CompilerServices;
 using ImGuiNET;
+using Pollus.Debugging;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
@@ -315,6 +316,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return GetOrCreateImguiBinding(view);
     }
 
+    public bool TryGetImguiBinding(nint imguiBindingId, out (nint imguiBindingId, Handle<GPUBindGroup> bindGroup) binding)
+    {
+        return viewsById.TryGetValue(imguiBindingId, out binding);
+    }
+
     public (nint imguiBindingId, Handle<GPUBindGroup> bindGroup) GetImguiBinding(nint imguiBindingId)
     {
         return viewsById[imguiBindingId];
@@ -476,13 +482,19 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
                 if (pcmd.TextureId != nint.Zero)
                 {
-                    commands.SetBindGroup(
-                        1, pcmd.TextureId switch
+                    if (pcmd.TextureId == fontAtlasId)
+                    {
+                        commands.SetBindGroup(1, fontTextureBindGroup);
+                    }
+                    else
+                    {
+                        if (!TryGetImguiBinding(pcmd.TextureId, out var binding) || binding.bindGroup.IsNull())
                         {
-                            var id when id == fontAtlasId => fontTextureBindGroup,
-                            var id => GetImguiBinding(id).bindGroup
+                            Log.Info($"ImGui Texture Bind Group for texture {pcmd.TextureId} not found");
+                            continue;
                         }
-                    );
+                        commands.SetBindGroup(1, binding.bindGroup);
+                    }
                 }
 
                 commands.SetScissorRect(

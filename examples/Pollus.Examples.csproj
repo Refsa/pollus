@@ -5,7 +5,7 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RunWorkingDirectory>./bin/$(Configuration)/net9.0/</RunWorkingDirectory>
+    <RunWorkingDirectory>./bin/$(Configuration)/$(TargetFramework)/</RunWorkingDirectory>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 

@@ -2,6 +2,7 @@ namespace Pollus.Engine.Imgui;
 
 using System.Text;
 using ImGuiNET;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Engine.Platform;
@@ -115,10 +116,16 @@ public class ImguiPlugin : IPlugin
             static (ImguiRenderer imguiRenderer, RenderContext context, DrawGroups2D renderSteps) =>
             {
                 if (context.SurfaceTextureView is null) return;
+                if (!renderSteps.TryGet(RenderStep2D.UI, out var drawGroup))
+                {
+                    Log.Info("RenderStep2D.UI is missing from DrawGroups2D");
+                    return;
+                }
+
                 var commands = new RenderCommands();
                 imguiRenderer.Render(ref commands);
                 if (commands.Count > 0)
-                    renderSteps.GetCommandList(RenderStep2D.UI).Add(commands);
+                    drawGroup.CommandLists.Add(commands);
                 else
                     commands.Dispose();
             }
