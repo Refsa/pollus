@@ -6,11 +6,11 @@ public class WGPUBrowser : IDisposable
 {
     public void Dispose() { }
 
-    public unsafe Instance* CreateInstance(InstanceDescriptor* descriptor)
+    public unsafe Instance* CreateInstance(WGPUInstanceDescriptor_Browser* descriptor)
     {
         return WGPUBrowserNative.CreateInstance(descriptor);
     }
-    public unsafe Instance* CreateInstance(in InstanceDescriptor descriptor)
+    public unsafe Instance* CreateInstance(in WGPUInstanceDescriptor_Browser descriptor)
     {
         return WGPUBrowserNative.CreateInstance(descriptor);
     }

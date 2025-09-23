@@ -6,10 +6,12 @@ const { getAssemblyExports, getConfig } = await dotnet
     .create();
 let exports = await getAssemblyExports(getConfig().mainAssemblyName);
 
-const canvas = document.getElementById('canvas');
-while (canvas === null) {
+let canvas = document.getElementById('canvas');
+while (!canvas) {
     await new Promise(r => setTimeout(r, 100));
+    canvas = document.getElementById('canvas');
 }
+
 canvas.addEventListener('click', (e) => e.preventDefault());
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 

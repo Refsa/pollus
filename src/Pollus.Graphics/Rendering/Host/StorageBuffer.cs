@@ -41,7 +41,7 @@ public class StorageBuffer : IBufferData
     public Span<TElement> AsSpan<TElement>()
         where TElement : unmanaged, IShaderType
     {
-        return MemoryMarshal.Cast<byte, TElement>(data);
+        return MemoryMarshal.Cast<byte, TElement>(data.AsSpan());
     }
 
     public void Write<TElement>(int index, TElement element)

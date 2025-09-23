@@ -1,6 +1,6 @@
-using System.Runtime.InteropServices;
-
 namespace Pollus.Emscripten;
+
+using System.Runtime.InteropServices;
 
 [StructLayout(LayoutKind.Sequential, Pack = 8)]
 public struct WGPULimits_Browser

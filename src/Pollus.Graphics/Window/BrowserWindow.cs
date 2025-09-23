@@ -15,7 +15,7 @@ public partial class BrowserWindow : IWindow
     static Action emOnFrame;
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void emOnFrameCallback()
+    public static void emOnFrameCallback()
     {
         emOnFrame();
     }
@@ -60,7 +60,10 @@ public partial class BrowserWindow : IWindow
     unsafe public void Run(Action loop)
     {
         emOnFrame = loop;
+        // Emscripten.RequestAnimationFrameLoop(&emCallback, null);
+        // Emscripten.SetMainLoop(&emOnFrameCallback, null, 0, false);
         Emscripten.SetMainLoop(&emOnFrameCallback, 0, true);
+        // Emscripten.ResumeMainLoop();
     }
 
     public void SetTitle(string title)

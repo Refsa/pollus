@@ -158,7 +158,7 @@ public class Multi<T0, T1>() : IFilter
 
 public static class FilterHelpers
 {
-    public static IFilter[] UnwrapFilters<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)] TFilters>()
+    public static IFilter[] UnwrapFilters<TFilters>()
         where TFilters : ITuple, new()
     {
         if (typeof(TFilters).Name.StartsWith("ValueTuple") is false)

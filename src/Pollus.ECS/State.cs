@@ -131,7 +131,7 @@ public class StatePlugin<T> : IPlugin
         world.Events.InitEvent<StateEvent<T>>();
         world.Resources.Add(new State<T>(defaultState));
 
-        foreach (var state in Enum.GetValues<T>().Reverse())
+        foreach (var state in Enum.GetValues<T>())
         {
             var enterStage = new Stage(StateEnter.On<T>(state))
             {

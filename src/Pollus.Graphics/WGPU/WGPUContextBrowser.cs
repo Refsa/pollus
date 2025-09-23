@@ -111,21 +111,21 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     [MemberNotNull(nameof(surface))]
     void CreateSurface()
     {
-        using var selectorPtr = TemporaryPin.PinString("#canvas");
+        // using var selectorPtr = TemporaryPin.PinString("#canvas");
+        var selectorPtr = stackalloc byte[] { (byte)'#', (byte)'c', (byte)'a', (byte)'n', (byte)'v', (byte)'a', (byte)'s', (byte)'\0' };
         Silk.NET.WebGPU.SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
             Chain = new Silk.NET.WebGPU.ChainedStruct
             {
                 Next = null,
-                SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector
+                SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector,
             },
-            Selector = (byte*)selectorPtr.Ptr
+            Selector = selectorPtr
         };
-        var surfaceDescriptorFromCanvasHTMLSelectorPtr = Unsafe.AsPointer(ref surfaceDescriptorFromCanvasHTMLSelector);
 
         Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
         {
-            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)surfaceDescriptorFromCanvasHTMLSelectorPtr
+            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
         };
         surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
     }

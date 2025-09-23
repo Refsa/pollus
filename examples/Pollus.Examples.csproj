@@ -32,6 +32,10 @@
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
+    <WasmEnableThreads>true</WasmEnableThreads>
+  </PropertyGroup>
+
   <PropertyGroup Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'NoAOT' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <RunAOTCompilation>false</RunAOTCompilation>
@@ -62,8 +66,7 @@
     <NativeFileReference Condition=" '$(TargetFramework)' == 'net10.0-browser' " Include=".\bin\Release\net10.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
-  <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="AddBrowserDeps"
-    BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
+  <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="AddBrowserDeps_Net8" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="_PrepareForWasmBuildNative">
     <ItemGroup>
       <_WasmPInvokeModules Include="__Internal_emscripten" />
       <_WasmPInvokeModules Include="OpenAL" />
@@ -72,8 +75,17 @@
     </ItemGroup>
   </Target>
 
+  <Target Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' " Name="AddBrowserDeps_Net10" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
+    <ItemGroup>
+      <_WasmPInvokeModules Include="__Internal_emscripten" />
+      <!-- <_WasmPInvokeModules Include="OpenAL" /> -->
+      <_WasmPInvokeModules Include="SDL" />
+      <_WasmPInvokeModules Include="cimgui" />
+    </ItemGroup>
+  </Target>
+
   <Target Condition=" '$(TargetFramework)' == 'net8.0-browser' " Name="UnfreezeCache"
-    DependsOnTargets="AddBrowserDeps"
+    DependsOnTargets="AddBrowserDeps_Net8"
     BeforeTargets="_WasmCompileNativeFiles;_WasmCompileAssemblyBitCodeFilesForAOT;_WasmCalculateInitialHeapSize;_WasmLinkDotNet;_CheckEmccIsExpectedVersion">
     <ItemGroup>
       <EmscriptenEnvVars Remove="EM_FROZEN_CACHE=True" />
