@@ -29,11 +29,12 @@
 
     <!-- also usable, but wont include transient assets <EmccFlags>__embed-file assets</EmccFlags> -->
     <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
+    <!-- -sRUNTIME_DEBUG=1 -->
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
-    <WasmEnableThreads>true</WasmEnableThreads>
+    <WasmEnableThreads>false</WasmEnableThreads>
   </PropertyGroup>
 
   <PropertyGroup Condition=" ('$(TargetFramework)' == 'net8.0-browser' or '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'NoAOT' ">
@@ -78,7 +79,7 @@
   <Target Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' " Name="AddBrowserDeps_Net10" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
     <ItemGroup>
       <_WasmPInvokeModules Include="__Internal_emscripten" />
-      <!-- <_WasmPInvokeModules Include="OpenAL" /> -->
+      <_WasmPInvokeModules Include="OpenAL" />
       <_WasmPInvokeModules Include="SDL" />
       <_WasmPInvokeModules Include="cimgui" />
     </ItemGroup>
