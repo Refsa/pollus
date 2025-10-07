@@ -68,14 +68,11 @@ public partial class BrowserApplication : IApplication, IDisposable
 
     void RunInternal()
     {
-        Log.Info("RunInternal 1");
         if (!IsRunning) return;
-        Log.Info("RunInternal 2");
 
         if (!isSetup)
         {
             if (!GraphicsSetup()) return;
-            Log.Info("Graphics setup");
 
             world.Resources.Add(gpuContext!);
             isSetup = true;

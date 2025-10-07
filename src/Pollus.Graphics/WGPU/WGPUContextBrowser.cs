@@ -9,6 +9,7 @@ using Pollus.Utils;
 using Pollus.Graphics.Windowing;
 using Pollus.Graphics.Rendering;
 using Pollus.Debugging;
+using System.Runtime.InteropServices.JavaScript;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
@@ -111,8 +112,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     [MemberNotNull(nameof(surface))]
     void CreateSurface()
     {
-        // using var selectorPtr = TemporaryPin.PinString("#canvas");
-        var selectorPtr = stackalloc byte[] { (byte)'#', (byte)'c', (byte)'a', (byte)'n', (byte)'v', (byte)'a', (byte)'s', (byte)'\0' };
+        using var selectorPtr = TemporaryPin.PinString("#canvas");
         Silk.NET.WebGPU.SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
             Chain = new Silk.NET.WebGPU.ChainedStruct
@@ -120,7 +120,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
                 Next = null,
                 SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector,
             },
-            Selector = selectorPtr
+            Selector = (byte*)selectorPtr.Ptr
         };
 
         Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
@@ -141,6 +141,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             Width = (uint)window.Size.X
         };
         swapChain = wgpu.DeviceCreateSwapChain(device, surface, descriptor);
+        if (swapChain == null) throw new ApplicationException("Failed to create swap chain");
     }
 
     [MemberNotNull(nameof(adapter))]
@@ -178,7 +179,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             MinUniformBufferOffsetAlignment = 256,
             MaxBindGroups = 3,
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
-            MaxInterStageShaderComponents = uint.MaxValue,
+            MaxInterStageShaderComponents = 4294967295U,
         };
         var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
         {

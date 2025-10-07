@@ -1,13 +1,14 @@
 namespace Pollus.Emscripten;
 
 using Pollus.Mathematics;
-using Silk.NET.WebGPU;
 
-unsafe public struct WGPURenderPassColorAttachment_Browser
+unsafe public struct WGPURenderPassColorAttachment_Browser()
 {
-    public TextureView* View; // nullable
-    public TextureView* ResolveTarget; // nullable
-    public LoadOp LoadOp;
-    public StoreOp StoreOp;
+    public Silk.NET.WebGPU.ChainedStruct* NextInChain;
+    public Silk.NET.WebGPU.TextureView* View; // nullable
+    public uint DepthSlice = uint.MaxValue;
+    public Silk.NET.WebGPU.TextureView* ResolveTarget; // nullable
+    public Silk.NET.WebGPU.LoadOp LoadOp;
+    public Silk.NET.WebGPU.StoreOp StoreOp;
     public Vec4<double> ClearValue;
 }

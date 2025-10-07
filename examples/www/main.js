@@ -1,7 +1,7 @@
 import { dotnet } from './_framework/dotnet.js'
 import * as Examples from './examples.js';
 
-const { getAssemblyExports, getConfig } = await dotnet
+const { getAssemblyExports, getConfig, runMain, setModuleImports } = await dotnet
     .withApplicationArguments(window.location.search.substring(1))
     .create();
 let exports = await getAssemblyExports(getConfig().mainAssemblyName);
@@ -16,4 +16,5 @@ canvas.addEventListener('click', (e) => e.preventDefault());
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 Examples.setupExampleButtons();
-await dotnet.run();
+// await dotnet.run();
+await runMain();

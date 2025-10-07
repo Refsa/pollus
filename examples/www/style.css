@@ -12,7 +12,7 @@ body {
     height: auto;
 }
 
-#canvas {
+canvas {
     object-fit: cover;
     background-color: #666;
 }

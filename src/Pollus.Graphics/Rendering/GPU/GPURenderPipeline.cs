@@ -50,7 +50,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
                     var vertexBufferLayout = vertexBufferLayouts[i];
                     layouts[i] = new(
                         arrayStride: vertexBufferLayout.Stride,
-                        stepMode: vertexBufferLayout.StepMode,
+                        stepMode: (Silk.NET.WebGPU.VertexStepMode)vertexBufferLayout.StepMode,
                         attributes: (Silk.NET.WebGPU.VertexAttribute*)pins.Pin(vertexBufferLayout.Attributes).AddrOfPinnedObject(),
                         attributeCount: (uint)vertexBufferLayout.Attributes.Length
                     );
