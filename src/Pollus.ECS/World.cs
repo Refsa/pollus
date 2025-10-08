@@ -121,6 +121,13 @@ public class World : IDisposable
     {
         foreach (var plugin in plugins)
         {
+            foreach (var (type, factory) in plugin.Dependencies)
+            {
+                if (registeredPlugins.Contains(type)) continue;
+                registeredPlugins.Add(type);
+                factory().Apply(this);
+            }
+
             if (registeredPlugins.Contains(plugin.GetType())) continue;
             registeredPlugins.Add(plugin.GetType());
 

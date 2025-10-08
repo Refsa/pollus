@@ -2,7 +2,7 @@ The cimgui projects needs to be built with emsdk toolchain to be used with the l
 
 #### Building the cimgui.a file from source
 1. Setup [emscripten](https://emscripten.org/docs/getting_started/downloads.html), make sure to install the version that the dotnet workloads are using.  
-As of writing this it is `3.1.34`
+As of writing this it is `3.1.56`
 
 2. Clone `cimgui` project with `git clone https://github.com/cimgui/cimgui.git`  
 Make sure to init submodules with `git submodule update --init --recursive`
