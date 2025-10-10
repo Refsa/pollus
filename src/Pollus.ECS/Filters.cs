@@ -4,17 +4,13 @@
 namespace Pollus.ECS;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Pollus.Debugging;
 
 public delegate bool FilterArchetypeDelegate(Archetype archetype);
 public delegate bool FilterChunkDelegate(in ArchetypeChunk chunk);
 
 public interface IFilter : ITuple
 {
-    static IFilter Instance { get; } = new NoFilter();
-
     bool Filter(Archetype archetype);
     bool FilterChunk(ArchetypeChunk chunk) => true;
 }
@@ -28,7 +24,7 @@ public class NoFilter() : IFilter
 {
     static readonly NoFilter instance = new();
     public static IFilter Instance => instance;
-    static NoFilter() => FilterLookup.Register<NoFilter>();
+    static NoFilter() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 0;
@@ -42,7 +38,7 @@ public class None<C0>() : IFilter
     static readonly None<C0> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
-    static None() => FilterLookup.Register<None<C0>>();
+    static None() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -60,7 +56,7 @@ public class All<C0>() : IFilter
     static readonly All<C0> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
-    static All() => FilterLookup.Register<All<C0>>();
+    static All() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -79,7 +75,7 @@ public class Any<C0, C1>() : IFilter
     static readonly Any<C0, C1> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID, Component.Register<C1>().ID];
-    static Any() => FilterLookup.Register<Any<C0, C1>>();
+    static Any() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 2;
@@ -97,7 +93,7 @@ public class Added<C0>() : IFilterChunk
     static readonly Added<C0> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
-    static Added() => FilterLookup.Register<Added<C0>>();
+    static Added() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -119,7 +115,7 @@ public class Removed<C0>() : IFilterChunk
     static readonly Removed<C0> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
-    static Removed() => FilterLookup.Register<Removed<C0>>();
+    static Removed() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -141,7 +137,7 @@ public class Changed<C0>() : IFilterChunk
     static readonly Changed<C0> instance = new();
     public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
-    static Changed() => FilterLookup.Register<Changed<C0>>();
+    static Changed() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -163,7 +159,7 @@ public class Combine<T0, T1>() : IFilter
 {
     static readonly Combine<T0, T1> instance = new();
     public static IFilter Instance => instance;
-    static Combine() => FilterLookup.Register<Combine<T0, T1>>();
+    static Combine() => FilterLookup.Register(instance);
 
     T0 t0 = new();
     T1 t1 = new();
@@ -179,20 +175,20 @@ public class Combine<T0, T1>() : IFilter
 
 public static class FilterLookup
 {
-    static class Lookup<T> where T : IFilter, new()
+    static class Lookup<T> where T : IFilter
     {
-        public static IFilter Instance = new T();
+        public static IFilter? Instance;
     }
 
     static readonly ConcurrentDictionary<Type, IFilter> lookup = new();
 
-    public static void Register<T>() where T : IFilter, new()
+    public static void Register<T>(T filter) where T : IFilter
     {
-        Lookup<T>.Instance = new T();
+        Lookup<T>.Instance = filter;
         lookup.TryAdd(typeof(T), Lookup<T>.Instance);
     }
 
-    public static IFilter Get<T>() where T : IFilter, new()
+    public static IFilter? Get<T>() where T : IFilter
     {
         return Lookup<T>.Instance;
     }

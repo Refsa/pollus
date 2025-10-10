@@ -3,6 +3,7 @@ body {
     display: flex;
     flex-direction: column;
     background-color: #333;
+    color: #fff;
 }
 
 .canvas-container {

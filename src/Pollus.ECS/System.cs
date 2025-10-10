@@ -2,9 +2,7 @@
 
 namespace Pollus.ECS;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Pollus.Debugging;
 
 public delegate void SystemDelegate();
 public delegate void SystemDelegate<T0>(T0 arg1);

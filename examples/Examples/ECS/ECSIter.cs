@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;

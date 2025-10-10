@@ -27,6 +27,7 @@ public class QueryFilterExample : IExample
     {
         app = Application.Builder
             .AddPlugins([
+                new TimePlugin(),
                 new PerformanceTrackerPlugin(),
             ])
             .AddSystem(CoreStage.PostInit, FnSystem.Create(new("Spawn"),
@@ -38,9 +39,12 @@ public class QueryFilterExample : IExample
                 commands.Spawn(Entity.With(new Component1 { Value = 0 }, new Component2 { Value = 0 }));
             }))
             .AddSystem(CoreStage.Update, FnSystem.Create(new("Filter"),
-            static (Query<Component1>.Filter<None<Component2>> query) =>
+            static (Local<float> logCD, Time time, Query<Component1> query, Query<Component1>.Filter<None<Component2>> queryFiltered) =>
             {
-                Log.Info($"Filter: {query.EntityCount()}");
+                logCD.Value -= time.DeltaTimeF;
+                if (logCD.Value > 0f) return;
+                logCD.Value = 1f;
+                Log.Info($"Total: {query.EntityCount()} | Filter: {queryFiltered.EntityCount()}");
             }))
             .Build();
         app.Run();

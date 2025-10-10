@@ -16,5 +16,4 @@ canvas.addEventListener('click', (e) => e.preventDefault());
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 Examples.setupExampleButtons();
-// await dotnet.run();
 await runMain();
