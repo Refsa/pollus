@@ -1,7 +1,9 @@
 #pragma warning disable IL2062
+#pragma warning disable IL2059
 
 namespace Pollus.ECS;
 
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Pollus.Debugging;
@@ -11,6 +13,8 @@ public delegate bool FilterChunkDelegate(in ArchetypeChunk chunk);
 
 public interface IFilter : ITuple
 {
+    static IFilter Instance { get; } = new NoFilter();
+
     bool Filter(Archetype archetype);
     bool FilterChunk(ArchetypeChunk chunk) => true;
 }
@@ -22,7 +26,9 @@ public interface IFilterChunk : IFilter
 
 public class NoFilter() : IFilter
 {
-    public static readonly NoFilter Instance = new();
+    static readonly NoFilter instance = new();
+    public static IFilter Instance => instance;
+    static NoFilter() => FilterLookup.Register<NoFilter>();
 
     public object? this[int index] => null;
     public int Length => 0;
@@ -33,8 +39,10 @@ public class NoFilter() : IFilter
 public class None<C0>() : IFilter
     where C0 : unmanaged, IComponent
 {
-    public static readonly None<C0> Instance = new();
+    static readonly None<C0> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
+    static None() => FilterLookup.Register<None<C0>>();
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -49,8 +57,10 @@ public class None<C0>() : IFilter
 public class All<C0>() : IFilter
     where C0 : unmanaged, IComponent
 {
-    public static readonly All<C0> Instance = new();
+    static readonly All<C0> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
+    static All() => FilterLookup.Register<All<C0>>();
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -66,7 +76,10 @@ public class Any<C0, C1>() : IFilter
     where C0 : unmanaged, IComponent
     where C1 : unmanaged, IComponent
 {
+    static readonly Any<C0, C1> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID, Component.Register<C1>().ID];
+    static Any() => FilterLookup.Register<Any<C0, C1>>();
 
     public object? this[int index] => null;
     public int Length => 2;
@@ -81,8 +94,10 @@ public class Any<C0, C1>() : IFilter
 public class Added<C0>() : IFilterChunk
     where C0 : unmanaged, IComponent
 {
-    public static readonly Added<C0> Instance = new();
+    static readonly Added<C0> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
+    static Added() => FilterLookup.Register<Added<C0>>();
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -101,8 +116,10 @@ public class Added<C0>() : IFilterChunk
 public class Removed<C0>() : IFilterChunk
     where C0 : unmanaged, IComponent
 {
-    public static readonly Removed<C0> Instance = new();
+    static readonly Removed<C0> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
+    static Removed() => FilterLookup.Register<Removed<C0>>();
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -121,8 +138,10 @@ public class Removed<C0>() : IFilterChunk
 public class Changed<C0>() : IFilterChunk
     where C0 : unmanaged, IComponent
 {
-    public static readonly Changed<C0> Instance = new();
+    static readonly Changed<C0> instance = new();
+    public static IFilter Instance => instance;
     static ComponentID[] componentIDs = [Component.Register<C0>().ID];
+    static Changed() => FilterLookup.Register<Changed<C0>>();
 
     public object? this[int index] => null;
     public int Length => 1;
@@ -138,11 +157,13 @@ public class Changed<C0>() : IFilterChunk
     }
 }
 
-public class Multi<T0, T1>() : IFilter
+public class Combine<T0, T1>() : IFilter
     where T0 : IFilter, new()
     where T1 : IFilter, new()
 {
-    public static readonly Multi<T0, T1> Instance = new();
+    static readonly Combine<T0, T1> instance = new();
+    public static IFilter Instance => instance;
+    static Combine() => FilterLookup.Register<Combine<T0, T1>>();
 
     T0 t0 = new();
     T1 t1 = new();
@@ -153,6 +174,37 @@ public class Multi<T0, T1>() : IFilter
     public bool Filter(Archetype archetype)
     {
         return t0.Filter(archetype) && t1.Filter(archetype);
+    }
+}
+
+public static class FilterLookup
+{
+    static class Lookup<T> where T : IFilter, new()
+    {
+        public static IFilter Instance = new T();
+    }
+
+    static readonly ConcurrentDictionary<Type, IFilter> lookup = new();
+
+    public static void Register<T>() where T : IFilter, new()
+    {
+        Lookup<T>.Instance = new T();
+        lookup.TryAdd(typeof(T), Lookup<T>.Instance);
+    }
+
+    public static IFilter Get<T>() where T : IFilter, new()
+    {
+        return Lookup<T>.Instance;
+    }
+
+    public static IFilter? Get(Type type)
+    {
+        if (lookup.TryGetValue(type, out var instance))
+        {
+            return instance;
+        }
+
+        return null;
     }
 }
 
@@ -168,8 +220,8 @@ public static class FilterHelpers
                 throw new ArgumentException("Type must implement IFilter");
             }
 
-            var filter = (IFilter)Activator.CreateInstance<TFilters>()!;
-            return [filter];
+            RuntimeHelpers.RunClassConstructor(typeof(TFilters).TypeHandle);
+            return [FilterLookup.Get(typeof(TFilters))!];
         }
 
         var types = typeof(TFilters).GetGenericArguments();
@@ -182,9 +234,8 @@ public static class FilterHelpers
                 throw new ArgumentException("Type must implement IFilter");
             }
 
-#pragma warning disable IL2062
-            filters[i] = (IFilter)Activator.CreateInstance(types[i])!;
-#pragma warning restore IL2062
+            RuntimeHelpers.RunClassConstructor(types[i].TypeHandle);
+            filters[i] = FilterLookup.Get(types[i])!;
         }
         return filters;
     }
@@ -212,3 +263,4 @@ public static class FilterHelpers
 }
 
 #pragma warning restore IL2062
+#pragma warning restore IL2059

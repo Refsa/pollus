@@ -29,13 +29,13 @@ public class TransformExample : IExample
 
     public void Run() => (app = Application.Builder
         .AddPlugins([
-            new TimePlugin(),
             new AssetPlugin() { RootPath = "assets" },
-            new HierarchyPlugin(),
-            new TransformPlugin<Transform2D>(),
+            new TimePlugin(),
+            new InputPlugin(),
             new RenderingPlugin(),
             new ShapePlugin(),
-            new InputPlugin(),
+            new HierarchyPlugin(),
+            new TransformPlugin<Transform2D>(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (

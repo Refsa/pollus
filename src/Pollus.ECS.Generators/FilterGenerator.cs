@@ -29,7 +29,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly None<$gen_args$> Instance = new();
+    static readonly None<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static None() => FilterLookup.Register<None<$gen_args$>>();
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -46,7 +48,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly All<$gen_args$> Instance = new();
+    static readonly All<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static All() => FilterLookup.Register<All<$gen_args$>>();
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -63,7 +67,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly Any<$gen_args$> Instance = new();
+    static readonly Any<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static Any() => FilterLookup.Register<Any<$gen_args$>>();
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -79,7 +85,9 @@ $multi$
 @"public class Multi<$gen_args$> : IFilter
     $filter_gen_constraints$
 {
-    public static readonly Multi<$gen_args$> Instance = new();
+    static readonly Multi<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static Multi() => FilterLookup.Register<Multi<$gen_args$>>();
 
     $filter_fields$
 

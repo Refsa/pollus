@@ -2,7 +2,9 @@
 
 namespace Pollus.ECS;
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Pollus.Debugging;
 
 public delegate void SystemDelegate();
 public delegate void SystemDelegate<T0>(T0 arg1);
@@ -66,7 +68,6 @@ public abstract class SystemBase<T0> : SystemBase
     public override void Tick(World world)
     {
         var t0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, this);
-
         OnTick(t0);
     }
 

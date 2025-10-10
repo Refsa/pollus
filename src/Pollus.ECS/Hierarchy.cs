@@ -1,7 +1,5 @@
 namespace Pollus.ECS;
 
-using System.Runtime.CompilerServices;
-
 public record struct Parent : IComponent
 {
     public Entity FirstChild = Entity.NULL;

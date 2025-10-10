@@ -16,9 +16,9 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>full</TrimMode>
     <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+    
     <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
     <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
-
     <WasmEnableSIMD>true</WasmEnableSIMD>
     <WasmNativeStrip>true</WasmNativeStrip>
     <WasmBuildNative>true</WasmBuildNative>

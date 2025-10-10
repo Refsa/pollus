@@ -5,13 +5,13 @@ using System.Runtime.CompilerServices;
 public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     where C0 : unmanaged, IComponent
 {
-    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
+    public class Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
         where TFilters : ITuple, new()
     {
         public static Component.Info[] Infos => infos;
         public static Filter<TFilters> Create(World world) => new(world);
         public static implicit operator Query<C0>(in Filter<TFilters> filter) => filter.query;
-        static Filter() => QueryFetch<Filter<TFilters>>.Register();
+        static Filter() => QueryFilterFetch<Filter<TFilters>>.Register();
 
         Query<C0> query;
 
@@ -40,7 +40,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             query.ForEach(userData, pred);
         }
 
-        public readonly void ForEach<TForEach>(TForEach iter)
+        public void ForEach<TForEach>(TForEach iter)
             where TForEach : struct, IForEachBase<C0>
         {
             query.ForEach(iter);
