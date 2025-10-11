@@ -27,6 +27,7 @@ if (args.Length < 1)
     Log.Info("  gizmo");
     Log.Info("  tween");
     Log.Info("  ecs-iter");
+    Log.Info("  query-filter");
     return;
 }
 
@@ -54,6 +55,7 @@ IExample? example = args[0] switch
     "psample" => new PerformanceSampling(),
     "tween" => new TweenExample(),
     "ecs-iter" => new ECSIter(),
+    "query-filter" => new QueryFilterExample(),
     _ => null
 };
 

@@ -1,3 +1,5 @@
+using Pollus.Debugging;
+
 namespace Pollus.Graphics.WGPU;
 
 unsafe public class WGPUInstance : IDisposable
@@ -17,12 +19,13 @@ unsafe public class WGPUInstance : IDisposable
     {
 #if BROWSER
         wgpu = new Emscripten.WGPUBrowser();
+        instance = wgpu.CreateInstance(null);
 #else
         wgpu = Silk.NET.WebGPU.WebGPU.GetApi();
-#endif
-
         var instanceDescriptor = new Silk.NET.WebGPU.InstanceDescriptor();
         instance = wgpu.CreateInstance(instanceDescriptor);
+#endif
+
     }
 
     ~WGPUInstance() => Dispose();

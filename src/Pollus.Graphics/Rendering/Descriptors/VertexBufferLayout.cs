@@ -3,10 +3,10 @@ namespace Pollus.Graphics.Rendering;
 public struct VertexBufferLayout
 {
     public ulong Stride;
-    public Silk.NET.WebGPU.VertexStepMode StepMode;
+    public VertexStepMode StepMode;
     public VertexAttribute[] Attributes;
 
-    public VertexBufferLayout(Silk.NET.WebGPU.VertexStepMode stepMode, uint startShaderLocation, Span<VertexFormat> formats)
+    public VertexBufferLayout(VertexStepMode stepMode, uint startShaderLocation, Span<VertexFormat> formats)
     {
         Stride = 0;
         var expandedFormatCounts = 0;
@@ -33,11 +33,11 @@ public struct VertexBufferLayout
 
     public static VertexBufferLayout Vertex(uint startShaderLocation, Span<VertexFormat> formats)
     {
-        return new VertexBufferLayout(Silk.NET.WebGPU.VertexStepMode.Vertex, startShaderLocation, formats);
+        return new VertexBufferLayout(VertexStepMode.Vertex, startShaderLocation, formats);
     }
 
     public static VertexBufferLayout Instance(uint startShaderLocation, Span<VertexFormat> formats)
     {
-        return new VertexBufferLayout(Silk.NET.WebGPU.VertexStepMode.Instance, startShaderLocation, formats);
+        return new VertexBufferLayout(VertexStepMode.Instance, startShaderLocation, formats);
     }
 }

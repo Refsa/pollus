@@ -20,13 +20,13 @@ public class ImguiPlugin : IPlugin
     public const string BeginFrameSystem = "ImGui::BeginFrame";
     private const string RenderSystem = "ImGui::Render";
 
+    public PluginDependency[] Dependencies => [
+        (typeof(RenderingPlugin), () => new RenderingPlugin()),
+        (typeof(InputPlugin), () => new InputPlugin()),
+    ];
+
     public void Apply(World world)
     {
-        world.AddPlugins([
-            new RenderingPlugin(),
-            new InputPlugin(),
-        ]);
-
         world.Resources.Init<ImguiRenderer>();
 
         world.Schedule.AddSystems(CoreStage.Init, FnSystem.Create(

@@ -5,16 +5,17 @@ using System.Runtime.CompilerServices;
 public interface IQuery
 {
     static abstract Component.Info[] Infos { get; }
+    int EntityCount();
 }
 
 public interface IQueryCreate<TQuery>
-    where TQuery : struct, IQuery
+    where TQuery : IQuery
 {
     static abstract TQuery Create(World world);
 }
 
 public class QueryFetch<TQuery> : IFetch<TQuery>
-    where TQuery : struct, IQuery, IQueryCreate<TQuery>
+    where TQuery : IQuery, IQueryCreate<TQuery>
 {
     public static void Register()
     {
@@ -27,15 +28,34 @@ public class QueryFetch<TQuery> : IFetch<TQuery>
     }
 }
 
+public class QueryFilterFetch<TFilterQuery> : IFetch<TFilterQuery>
+	where TFilterQuery : IQuery, IQueryCreate<TFilterQuery>
+{
+	public static void Register()
+	{
+		Fetch.Register(new QueryFilterFetch<TFilterQuery>(), [typeof(TFilterQuery)]);
+	}
+
+	public TFilterQuery DoFetch(World world, ISystem system)
+	{
+		if (!system.Resources.TryGet<TFilterQuery>(out var query))
+		{
+			query = TFilterQuery.Create(world);
+			system.Resources.Add(query);
+		}
+		return query;
+	}
+}
+
 public struct Query : IQuery, IQueryCreate<Query>
 {
-    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
+    public class Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
         where TFilters : ITuple, IFilter, new()
     {
         public static Component.Info[] Infos => infos;
         public static Filter<TFilters> Create(World world) => new(world);
         public static implicit operator Query(in Filter<TFilters> filter) => filter.query;
-        static Filter() => QueryFetch<Filter<TFilters>>.Register();
+        static Filter() => QueryFilterFetch<Filter<TFilters>>.Register();
 
         Query query;
 

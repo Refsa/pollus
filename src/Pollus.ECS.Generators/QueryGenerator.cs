@@ -22,13 +22,13 @@ using System.Runtime.CompilerServices;
 public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     $gen_constraints$
 {
-    public struct Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
+    public class Filter<TFilters> : IQuery, IQueryCreate<Filter<TFilters>>
         where TFilters : ITuple, new()
     {
         public static Component.Info[] Infos => infos;
         public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
         public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter) => filter.query;
-        static Filter() => QueryFetch<Filter<TFilters>>.Register();
+        static Filter() => QueryFilterFetch<Filter<TFilters>>.Register();
 
         Query<$gen_args$> query;
 
@@ -57,7 +57,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             query.ForEach(userData, pred);
         }
 
-        public readonly void ForEach<TForEach>(TForEach iter)
+        public void ForEach<TForEach>(TForEach iter)
             where TForEach : struct, IForEachBase<$gen_args$>
         {
             query.ForEach(iter);

@@ -6,9 +6,9 @@ using Silk.NET.WebGPU;
 public static class WGPUBrowserNative
 {
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCreateInstance")]
-    extern public static unsafe Instance* CreateInstance(InstanceDescriptor* descriptor);
+    extern public static unsafe Instance* CreateInstance(WGPUInstanceDescriptor_Browser* descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCreateInstance")]
-    extern public static unsafe Instance* CreateInstance(in InstanceDescriptor descriptor);
+    extern public static unsafe Instance* CreateInstance(in WGPUInstanceDescriptor_Browser descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuGetProcAddress")]
     extern public static unsafe PfnProc GetProcAddress(Device* device, byte* procName);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuGetProcAddress")]

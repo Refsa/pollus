@@ -66,7 +66,6 @@ public abstract class SystemBase<T0> : SystemBase
     public override void Tick(World world)
     {
         var t0 = ((IFetch<T0>)t0Fetch.Fetch).DoFetch(world, this);
-
         OnTick(t0);
     }
 

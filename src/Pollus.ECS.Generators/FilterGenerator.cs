@@ -29,7 +29,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly None<$gen_args$> Instance = new();
+    static readonly None<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static None() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -46,7 +48,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly All<$gen_args$> Instance = new();
+    static readonly All<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static All() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -63,7 +67,9 @@ $multi$
     $gen_constraints$
 {
     static ComponentID[] componentIDs = [$infos$];
-    public static readonly Any<$gen_args$> Instance = new();
+    static readonly Any<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static Any() => FilterLookup.Register(instance);
 
     public object? this[int index] => null;
     public int Length => $length$;
@@ -76,10 +82,12 @@ $multi$
 }";
 
             const string MULTI_TEMPLATE =
-@"public class Multi<$gen_args$> : IFilter
+@"public class Combine<$gen_args$> : IFilter
     $filter_gen_constraints$
 {
-    public static readonly Multi<$gen_args$> Instance = new();
+    static readonly Combine<$gen_args$> instance = new();
+    public static IFilter Instance => instance;
+    static Combine() => FilterLookup.Register(instance);
 
     $filter_fields$
 

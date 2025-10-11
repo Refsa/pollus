@@ -79,9 +79,6 @@ static partial class EmscriptenOpenALNative
     public unsafe static partial void alSourcei(uint source, SourceInteger param, int value);
 
     [LibraryImport("OpenAL")]
-    public unsafe static partial void alSourcei(uint source, SourceInteger param, uint value);
-
-    [LibraryImport("OpenAL")]
     public unsafe static partial void alSourcei(uint source, SourceBoolean param, [MarshalAs(UnmanagedType.I4)] bool value);
 
     [LibraryImport("OpenAL")]
@@ -278,6 +275,6 @@ public class AL
 
     unsafe public void SetSourceProperty(uint source, SourceInteger param, uint value)
     {
-        EmscriptenOpenALNative.alSourcei(source, param, value);
+        EmscriptenOpenALNative.alSourcei(source, param, (int)value);
     }
 }

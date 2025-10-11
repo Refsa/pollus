@@ -357,7 +357,7 @@ public class BreakoutGame : IExample
                         Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
-                            Normal = nextPos.X < 8f ? Vec2f.Left : Vec2f.Right,
+                            Normal = nextPos.X < 8f ? Vec2f.Right : Vec2f.Left,
                         }
                     });
                 }
@@ -370,7 +370,7 @@ public class BreakoutGame : IExample
                         Intersection = new Intersection2D
                         {
                             IsIntersecting = true,
-                            Normal = nextPos.Y < 8f ? Vec2f.Down : Vec2f.Up,
+                            Normal = nextPos.Y < 8f ? Vec2f.Up : Vec2f.Down,
                         }
                     });
                 }
@@ -382,7 +382,7 @@ public class BreakoutGame : IExample
         },
         static (Commands commands, EventReader<Event.Collision> eCollision,
                 EventWriter<Event.BrickDestroyed> eBrickDestroyed,
-                Query query, Query<Transform2D, Velocity> qBodies
+                Query query, Query<Transform2D, Velocity, CollisionShape> qBodies
         ) =>
         {
             var collisions = eCollision.Read();
@@ -391,6 +391,7 @@ public class BreakoutGame : IExample
             {
                 ref var transform = ref body.Component0;
                 ref var velocity = ref body.Component1;
+                ref var shape = ref body.Component2;
 
                 var reflect = Vec2f.Zero;
                 var correctedPos = transform.Position;
@@ -399,7 +400,7 @@ public class BreakoutGame : IExample
                     if (coll.EntityA == body.Entity || coll.EntityB == body.Entity)
                     {
                         reflect += coll.Intersection.Normal;
-                        correctedPos += coll.Intersection.Normal * coll.Intersection.Distance;
+                        correctedPos += coll.Intersection.Normal * (coll.Intersection.Distance + shape.GetBoundingCircle(transform).Radius);
                     }
                 }
 

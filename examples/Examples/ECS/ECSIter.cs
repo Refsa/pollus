@@ -1,8 +1,8 @@
 namespace Pollus.Examples;
 
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
+using Pollus.Engine.Debug;
 
 public partial class ECSIter : IExample
 {
@@ -17,6 +17,7 @@ public partial class ECSIter : IExample
     public void Run() => (application = Application.Builder
         .AddPlugins([
             new TimePlugin(),
+            new PerformanceTrackerPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", static (Commands commands) =>
         {

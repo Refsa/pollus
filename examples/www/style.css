@@ -2,6 +2,8 @@ body {
     margin: 0;
     display: flex;
     flex-direction: column;
+    background-color: #333;
+    color: #fff;
 }
 
 .canvas-container {
@@ -11,8 +13,9 @@ body {
     height: auto;
 }
 
-#canvas {
+canvas {
     object-fit: cover;
+    background-color: #666;
 }
 
 .buttons {
