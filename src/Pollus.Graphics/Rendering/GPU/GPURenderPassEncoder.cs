@@ -19,7 +19,7 @@ unsafe public struct GPURenderPassEncoder : IDisposable
     public GPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Silk.NET.WebGPU.RenderPassDescriptor descriptor)
     {
         this.context = context;
-        native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
+        native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, in descriptor);
     }
 #endif
 
@@ -53,7 +53,7 @@ unsafe public struct GPURenderPassEncoder : IDisposable
             B = color.Z,
             A = color.W
         };
-        context.wgpu.RenderPassEncoderSetBlendConstant(native, c);
+        context.wgpu.RenderPassEncoderSetBlendConstant(native, in c);
     }
 
     public void SetBindGroup(uint groupIndex, GPUBindGroup bindGroup, uint dynamicOffsetCount = 0, uint dynamicOffsets = 0)

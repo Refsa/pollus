@@ -155,7 +155,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
             nativeDescriptor.Layout = (Silk.NET.WebGPU.PipelineLayout*)pipelineLayout.Native;
         }
 
-        native = context.wgpu.DeviceCreateRenderPipeline(context.Device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateRenderPipeline(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()

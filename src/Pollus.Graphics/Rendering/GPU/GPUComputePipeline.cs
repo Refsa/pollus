@@ -14,7 +14,7 @@ unsafe public class GPUComputePipeline : GPUResourceWrapper
     {
         using var label = new NativeUtf8(descriptor.Label);
         using var entryPoint = new NativeUtf8(descriptor.Compute.EntryPoint);
-        native = context.wgpu.DeviceCreateComputePipeline(context.Device, new Silk.NET.WebGPU.ComputePipelineDescriptor(
+        var nativeDescriptor = new Silk.NET.WebGPU.ComputePipelineDescriptor(
             label: label.Pointer,
             layout: descriptor.Layout == null ? null : (Silk.NET.WebGPU.PipelineLayout*)descriptor.Layout.Native,
             compute: new(
@@ -23,7 +23,8 @@ unsafe public class GPUComputePipeline : GPUResourceWrapper
                 constantCount: (nuint)descriptor.Compute.Constants.Length,
                 constants: descriptor.Compute.Constants.Length == 0 ? null : (Silk.NET.WebGPU.ConstantEntry*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Compute.Constants))
             )
-        ));
+        );
+        native = context.wgpu.DeviceCreateComputePipeline(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()

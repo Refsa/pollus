@@ -127,7 +127,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
         };
-        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
+        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(in descriptor));
     }
 
     void CreateSwapChain()

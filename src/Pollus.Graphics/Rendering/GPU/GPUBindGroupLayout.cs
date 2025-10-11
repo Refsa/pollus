@@ -52,7 +52,7 @@ unsafe public class GPUBindGroupLayout : GPUResourceWrapper
                 entries: entriesPtr
             );
 
-            native = context.wgpu.DeviceCreateBindGroupLayout(context.Device, nativeDescriptor);
+            native = context.wgpu.DeviceCreateBindGroupLayout(context.Device, in nativeDescriptor);
         }
     }
 

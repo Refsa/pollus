@@ -25,7 +25,7 @@ unsafe public class GPUSampler : GPUResourceWrapper
             lodMaxClamp: descriptor.LodMaxClamp,
             maxAnisotropy: descriptor.MaxAnisotropy
         );
-        native = context.wgpu.DeviceCreateSampler(context.Device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateSampler(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()

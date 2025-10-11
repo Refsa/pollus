@@ -23,7 +23,7 @@ unsafe public class WGPUInstance : IDisposable
 #else
         wgpu = Silk.NET.WebGPU.WebGPU.GetApi();
         var instanceDescriptor = new Silk.NET.WebGPU.InstanceDescriptor();
-        instance = wgpu.CreateInstance(instanceDescriptor);
+        instance = wgpu.CreateInstance(ref instanceDescriptor);
 #endif
 
     }

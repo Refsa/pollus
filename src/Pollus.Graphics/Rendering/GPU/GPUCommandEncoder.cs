@@ -22,7 +22,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
         this.context = context;
         var descriptor = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: labelData.Pointer);
-        native = context.wgpu.DeviceCreateCommandEncoder(context.Device, descriptor);
+        native = context.wgpu.DeviceCreateCommandEncoder(context.Device, in descriptor);
     }
 
     public void Dispose()
@@ -35,7 +35,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
         using var labelData = new NativeUtf8(label);
 
         var descriptor = new Silk.NET.WebGPU.CommandBufferDescriptor(label: labelData.Pointer);
-        var commandBuffer = context.wgpu.CommandEncoderFinish(native, descriptor);
+        var commandBuffer = context.wgpu.CommandEncoderFinish(native, in descriptor);
         return new GPUCommandBuffer(context, commandBuffer);
     }
 
@@ -88,6 +88,6 @@ unsafe public struct GPUCommandEncoder : IDisposable
             texture: (Silk.NET.WebGPU.Texture*)dstTex.Native
         );
 
-        context.wgpu.CommandEncoderCopyTextureToTexture(native, src, dst, silkExtents);
+        context.wgpu.CommandEncoderCopyTextureToTexture(native, in src, in dst, in silkExtents);
     }
 }

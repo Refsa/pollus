@@ -1,10 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
 unsafe public class GPUBindGroup : GPUResourceWrapper
 {
@@ -56,12 +53,12 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
             fixed (Silk.NET.WebGPU.BindGroupEntry* entriesPtr = entriesSpan)
             {
                 nativeDescriptor.Entries = entriesPtr;
-                native = context.wgpu.DeviceCreateBindGroup(context.Device, nativeDescriptor);
+                native = context.wgpu.DeviceCreateBindGroup(context.Device, in nativeDescriptor);
                 return;
             }
         }
 
-        native = context.wgpu.DeviceCreateBindGroup(context.Device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateBindGroup(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()

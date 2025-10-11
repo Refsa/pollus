@@ -40,7 +40,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
         nativeDescriptor.ViewFormats = viewFormats;
 
         this.descriptor = descriptor;
-        texture = context.wgpu.DeviceCreateTexture(context.Device, nativeDescriptor);
+        texture = context.wgpu.DeviceCreateTexture(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()
@@ -93,10 +93,12 @@ unsafe public class GPUTexture : GPUResourceWrapper
             _ => descriptor.Size,
         };
 
+#pragma warning disable CS9192
         context.wgpu.QueueWriteTexture(context.Queue, destination,
             Unsafe.AsPointer(ref MemoryMarshal.GetReference(data)),
             (nuint)data.Length,
             layout, writeSize
         );
+#pragma warning restore CS9192
     }
 }

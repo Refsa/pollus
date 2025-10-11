@@ -28,7 +28,7 @@ unsafe public class GPUPipelineLayout : GPUResourceWrapper
             bindGroupLayoutCount: (uint)descriptor.Layouts.Length,
             bindGroupLayouts: layouts
         );
-        native = context.wgpu.DeviceCreatePipelineLayout(context.Device, nativeDescriptor);
+        native = context.wgpu.DeviceCreatePipelineLayout(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()

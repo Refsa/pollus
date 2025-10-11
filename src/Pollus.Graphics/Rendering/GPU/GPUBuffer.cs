@@ -26,7 +26,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
             mappedAtCreation: descriptor.MappedAtCreation
         );
 
-        native = context.wgpu.DeviceCreateBuffer(context.Device, nativeDescriptor);
+        native = context.wgpu.DeviceCreateBuffer(context.Device, in nativeDescriptor);
     }
 
     protected override void Free()
@@ -83,12 +83,14 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         if (newSize == 0 || newSize <= size) return;
         size = newSize;
 
-        var newBuffer = context.wgpu.DeviceCreateBuffer(context.Device, new Silk.NET.WebGPU.BufferDescriptor
+        var bufferDescriptor = new Silk.NET.WebGPU.BufferDescriptor
         {
             Label = label.Pointer,
             Size = size,
             Usage = (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
-        });
+        };
+
+        var newBuffer = context.wgpu.DeviceCreateBuffer(context.Device, in bufferDescriptor);
 
         context.wgpu.BufferDestroy(native);
         context.wgpu.BufferRelease(native);

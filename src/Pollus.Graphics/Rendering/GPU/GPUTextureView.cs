@@ -64,7 +64,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
         );
 
         this.texture = texture;
-        textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, nativeDescriptor);
+        textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, in nativeDescriptor);
     }
 
     public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.TextureView* textureView, TextureViewDescriptor descriptor)

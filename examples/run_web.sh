@@ -1,7 +1,5 @@
-if [ $1 == "net8" ]; then
-    set -- "net8"
-elif [ $1 == "net10" ]; then
-    set -- "net10"
+if [ $1 == "net9" ]; then
+    set -- "net9"
 fi
 
 if [ "$2" == "skip-build" ]; then

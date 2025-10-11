@@ -122,7 +122,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             height: (uint)Window.Size.Y
         );
 
-        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
+        wgpu.SurfaceConfigure(surface, ref surfaceConfiguration);
     }
 
     struct CreateAdapterData
@@ -139,7 +139,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         };
 
         var userData = new CreateAdapterData();
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
+        wgpu.InstanceRequestAdapter(instance.instance, ref requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
         adapter = userData.Adapter;
     }
 
@@ -189,7 +189,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         );
 
         var userData = new CreateDeviceData();
-        wgpu.AdapterRequestDevice(adapter, deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), Unsafe.AsPointer(ref userData));
+        wgpu.AdapterRequestDevice(adapter, ref deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), Unsafe.AsPointer(ref userData));
         device = userData.Device;
 
         var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
@@ -244,7 +244,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     {
         surfaceConfiguration.Width = size.X;
         surfaceConfiguration.Height = size.Y;
-        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
+        wgpu.SurfaceConfigure(surface, ref surfaceConfiguration);
     }
 }
 

@@ -14,13 +14,16 @@ unsafe public struct GPUComputePassEncoder : IDisposable
     {
         using var labelPtr = new NativeUtf8(label);
 
+        var descriptor = new Silk.NET.WebGPU.ComputePassDescriptor
+        {
+            Label = labelPtr.Pointer,
+        };
+
         this.context = context;
         this.native = context.wgpu.CommandEncoderBeginComputePass(
             (Silk.NET.WebGPU.CommandEncoder*)commandEncoder.Native,
-            new Silk.NET.WebGPU.ComputePassDescriptor
-            {
-                Label = labelPtr.Pointer,
-            });
+            in descriptor
+        );
     }
 
     public void Dispose()
