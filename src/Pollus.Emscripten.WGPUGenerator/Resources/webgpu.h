@@ -64,8 +64,15 @@
 #define WGPU_NULLABLE
 #endif
 
-#include <stdint.h>
-#include <stddef.h>
+// #include <stdint.h>
+// #include <stddef.h>
+
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef int int32_t;
+typedef unsigned long long uint64_t;
+typedef unsigned long long size_t;
 
 #define WGPU_ARRAY_LAYER_COUNT_UNDEFINED UINT32_MAX
 #define WGPU_COPY_STRIDE_UNDEFINED UINT32_MAX
