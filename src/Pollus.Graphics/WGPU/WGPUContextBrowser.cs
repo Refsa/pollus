@@ -34,7 +34,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     Silk.NET.WebGPU.Adapter* adapter;
     Silk.NET.WebGPU.Device* device;
     Silk.NET.WebGPU.Queue* queue;
-    Emscripten.WGPUSwapChain_Browser* swapChain;
+    Emscripten.WGPU.WGPUSwapChain* swapChain;
 
     TextureFormat preferredFormat;
 
@@ -51,7 +51,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     public Silk.NET.WebGPU.Adapter* Adapter => adapter;
     public Silk.NET.WebGPU.Device* Device => device;
     public Silk.NET.WebGPU.Queue* Queue => queue;
-    public Emscripten.WGPUSwapChain_Browser* SwapChain => swapChain;
+    public Emscripten.WGPU.WGPUSwapChain* SwapChain => swapChain;
 
     public WGPUContextBrowser(IWindow window, WGPUInstance instance)
     {
@@ -132,11 +132,11 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     void CreateSwapChain()
     {
-        var descriptor = new Emscripten.WGPUSwapChainDescriptor_Browser()
+        var descriptor = new Emscripten.WGPU.WGPUSwapChainDescriptor()
         {
-            Format = (Silk.NET.WebGPU.TextureFormat)preferredFormat,
-            PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
-            Usage = (Silk.NET.WebGPU.TextureUsage)TextureUsage.RenderAttachment,
+            Format = (Emscripten.WGPU.WGPUTextureFormat)preferredFormat,
+            PresentMode = Emscripten.WGPU.WGPUPresentMode.Fifo,
+            Usage = (Emscripten.WGPU.WGPUTextureUsage)TextureUsage.RenderAttachment,
             Height = (uint)window.Size.Y,
             Width = (uint)window.Size.X
         };
@@ -173,7 +173,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
-        var limits = new Emscripten.WGPULimits_Browser()
+        var limits = new Emscripten.WGPU.WGPULimits()
         {
             MinStorageBufferOffsetAlignment = 256,
             MinUniformBufferOffsetAlignment = 256,
@@ -181,20 +181,20 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
             MaxInterStageShaderComponents = 4294967295U,
         };
-        var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
+        var requiredLimits = new Emscripten.WGPU.WGPURequiredLimits()
         {
             Limits = limits
         };
         var requiredLimitsPtr = Unsafe.AsPointer(ref requiredLimits);
 
-        var requiredFeatures = stackalloc Emscripten.WGPUFeatureName_Browser[]
+        var requiredFeatures = stackalloc Emscripten.WGPU.WGPUFeatureName[]
         {
-            Emscripten.WGPUFeatureName_Browser.IndirectFirstInstance,
+            Emscripten.WGPU.WGPUFeatureName.IndirectFirstInstance,
         };
 
-        var deviceDescriptor = new Emscripten.WGPUDeviceDescriptor_Browser()
+        var deviceDescriptor = new Emscripten.WGPU.WGPUDeviceDescriptor()
         {
-            RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr,
+            RequiredLimits = (Emscripten.WGPU.WGPURequiredLimits*)requiredLimitsPtr,
             RequiredFeatureCount = (nuint)1,
             RequiredFeatures = requiredFeatures,
         };

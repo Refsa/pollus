@@ -1,8 +1,8 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURequestAdapterCallbackInfo
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUCallbackMode mode;
-    public WGPURequestAdapterCallback callback;
-    public void* userdata;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUCallbackMode Mode;
+    public WGPURequestAdapterCallback Callback;
+    public void* Userdata;
 }

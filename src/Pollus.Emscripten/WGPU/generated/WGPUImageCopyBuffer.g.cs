@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUImageCopyBuffer
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUTextureDataLayout layout;
-    public WGPUBuffer buffer;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUTextureDataLayout Layout;
+    public WGPUBuffer Buffer;
 }

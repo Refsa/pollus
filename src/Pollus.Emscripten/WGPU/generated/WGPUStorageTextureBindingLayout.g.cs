@@ -1,8 +1,8 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUStorageTextureBindingLayout
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUStorageTextureAccess access;
-    public WGPUTextureFormat format;
-    public WGPUTextureViewDimension viewDimension;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUStorageTextureAccess Access;
+    public WGPUTextureFormat Format;
+    public WGPUTextureViewDimension ViewDimension;
 }

@@ -6,9 +6,9 @@ using Silk.NET.WebGPU;
 public static class WGPUBrowserNative
 {
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCreateInstance")]
-    extern public static unsafe Instance* CreateInstance(WGPUInstanceDescriptor_Browser* descriptor);
+    extern public static unsafe Instance* CreateInstance(WGPU.WGPUInstanceDescriptor* descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCreateInstance")]
-    extern public static unsafe Instance* CreateInstance(in WGPUInstanceDescriptor_Browser descriptor);
+    extern public static unsafe Instance* CreateInstance(in WGPU.WGPUInstanceDescriptor descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuGetProcAddress")]
     extern public static unsafe PfnProc GetProcAddress(Device* device, byte* procName);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuGetProcAddress")]
@@ -31,9 +31,9 @@ public static class WGPUBrowserNative
     extern public static unsafe bool AdapterHasFeature(Adapter* adapter, FeatureName feature);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor_Browser* descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, WGPU.WGPUDeviceDescriptor* descriptor, nint callback, void* userdata);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterRequestDevice")]
-    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor_Browser descriptor, nint callback, void* userdata);
+    extern public static unsafe void AdapterRequestDevice(Adapter* adapter, in WGPU.WGPUDeviceDescriptor descriptor, nint callback, void* userdata);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuAdapterReference")]
     extern public static unsafe void AdapterReference(Adapter* adapter);
@@ -100,9 +100,9 @@ public static class WGPUBrowserNative
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginComputePass")]
     extern public static unsafe ComputePassEncoder* CommandEncoderBeginComputePass(CommandEncoder* commandEncoder, in ComputePassDescriptor descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginRenderPass")]
-    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPURenderPassDescriptor_Browser* descriptor);
+    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPU.WGPURenderPassDescriptor* descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderBeginRenderPass")]
-    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPURenderPassDescriptor_Browser descriptor);
+    extern public static unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPU.WGPURenderPassDescriptor descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderClearBuffer")]
     extern public static unsafe void CommandEncoderClearBuffer(CommandEncoder* commandEncoder, Buffer* buffer, ulong offset, ulong size);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuCommandEncoderCopyBufferToBuffer")]
@@ -625,7 +625,7 @@ public static class WGPUBrowserNative
     extern public static unsafe void TextureViewRelease(TextureView* textureView);
 
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuDeviceCreateSwapChain")]
-    extern public static unsafe WGPUSwapChain_Browser* DeviceCreateSwapChain(Device* device, Surface* surface, in WGPUSwapChainDescriptor_Browser descriptor);
+    extern public static unsafe WGPU.WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, in WGPU.WGPUSwapChainDescriptor descriptor);
     [DllImport("__Internal_emscripten", EntryPoint = "wgpuSwapChainGetCurrentTextureView")]
-    extern public static unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain_Browser* swapChain);
+    extern public static unsafe TextureView* SwapChainGetCurrentTextureView(WGPU.WGPUSwapChain* swapChain);
 }

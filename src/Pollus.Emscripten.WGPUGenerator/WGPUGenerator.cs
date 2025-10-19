@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
 using CppAst;
 
 public class WGPUGenerator
@@ -110,8 +109,15 @@ public class WGPUGenerator
             "size_t" => "nuint",
             "WGPUBool" => "bool",
             "uint32_t const *" => "uint",
+            "char" => "byte",
+            "char const *" => "byte*",
             _ => type.FullName,
         }).Replace(" ", "").Replace("const", "").Replace("Flags", "");
+    }
+
+    string ToCamelCase(string name)
+    {
+        return $"{char.ToUpper(name[0])}{name[1..]}";
     }
 
     string GenerateClass(CppCompilation ast, CppClass @struct)
@@ -124,7 +130,7 @@ public class WGPUGenerator
         foreach (var field in @struct.Fields)
         {
             var type = TranslateType(field.Type);
-            sb.AppendLine($"    public {type} {field.Name};");
+            sb.AppendLine($"    public {type} {ToCamelCase(field.Name)};");
         }
         sb.AppendLine("}");
 

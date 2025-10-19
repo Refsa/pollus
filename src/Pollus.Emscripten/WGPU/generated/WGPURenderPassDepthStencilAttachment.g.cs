@@ -1,13 +1,13 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURenderPassDepthStencilAttachment
 {
-    public WGPUTextureView view;
-    public WGPULoadOp depthLoadOp;
-    public WGPUStoreOp depthStoreOp;
-    public float depthClearValue;
-    public bool depthReadOnly;
-    public WGPULoadOp stencilLoadOp;
-    public WGPUStoreOp stencilStoreOp;
-    public uint stencilClearValue;
-    public bool stencilReadOnly;
+    public WGPUTextureView View;
+    public WGPULoadOp DepthLoadOp;
+    public WGPUStoreOp DepthStoreOp;
+    public float DepthClearValue;
+    public bool DepthReadOnly;
+    public WGPULoadOp StencilLoadOp;
+    public WGPUStoreOp StencilStoreOp;
+    public uint StencilClearValue;
+    public bool StencilReadOnly;
 }

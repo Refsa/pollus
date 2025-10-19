@@ -1,9 +1,9 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUImageCopyTexture
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUTexture texture;
-    public uint mipLevel;
-    public WGPUOrigin3D origin;
-    public WGPUTextureAspect aspect;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUTexture Texture;
+    public uint MipLevel;
+    public WGPUOrigin3D Origin;
+    public WGPUTextureAspect Aspect;
 }

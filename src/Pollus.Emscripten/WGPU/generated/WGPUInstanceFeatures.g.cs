@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUInstanceFeatures
 {
-    public WGPUChainedStruct* nextInChain;
-    public bool timedWaitAnyEnable;
-    public nuint timedWaitAnyMaxCount;
+    public WGPUChainedStruct* NextInChain;
+    public bool TimedWaitAnyEnable;
+    public nuint TimedWaitAnyMaxCount;
 }

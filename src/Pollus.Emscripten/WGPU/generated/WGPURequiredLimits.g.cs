@@ -1,6 +1,6 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURequiredLimits
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPULimits limits;
+    public WGPUChainedStruct* NextInChain;
+    public WGPULimits Limits;
 }

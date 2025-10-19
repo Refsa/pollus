@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUComputePassDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public WGPUComputePassTimestampWrites* timestampWrites;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public WGPUComputePassTimestampWrites* TimestampWrites;
 }

@@ -1,6 +1,6 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUSamplerBindingLayout
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUSamplerBindingType type;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUSamplerBindingType Type;
 }

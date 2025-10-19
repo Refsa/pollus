@@ -1,8 +1,8 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUVertexBufferLayout
 {
-    public ulong arrayStride;
-    public WGPUVertexStepMode stepMode;
-    public nuint attributeCount;
-    public WGPUVertexAttribute* attributes;
+    public ulong ArrayStride;
+    public WGPUVertexStepMode StepMode;
+    public nuint AttributeCount;
+    public WGPUVertexAttribute* Attributes;
 }

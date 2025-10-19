@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUOrigin3D
 {
-    public uint x;
-    public uint y;
-    public uint z;
+    public uint X;
+    public uint Y;
+    public uint Z;
 }

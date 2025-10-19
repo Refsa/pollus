@@ -1,14 +1,14 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUAdapterProperties
 {
-    public WGPUChainedStructOut* nextInChain;
-    public uint vendorID;
-    public char* vendorName;
-    public char* architecture;
-    public uint deviceID;
-    public char* name;
-    public char* driverDescription;
-    public WGPUAdapterType adapterType;
-    public WGPUBackendType backendType;
-    public bool compatibilityMode;
+    public WGPUChainedStructOut* NextInChain;
+    public uint VendorID;
+    public byte* VendorName;
+    public byte* Architecture;
+    public uint DeviceID;
+    public byte* Name;
+    public byte* DriverDescription;
+    public WGPUAdapterType AdapterType;
+    public WGPUBackendType BackendType;
+    public bool CompatibilityMode;
 }

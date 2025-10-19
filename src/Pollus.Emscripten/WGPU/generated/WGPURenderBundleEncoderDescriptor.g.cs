@@ -1,12 +1,12 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURenderBundleEncoderDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public nuint colorFormatCount;
-    public WGPUTextureFormat* colorFormats;
-    public WGPUTextureFormat depthStencilFormat;
-    public uint sampleCount;
-    public bool depthReadOnly;
-    public bool stencilReadOnly;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public nuint ColorFormatCount;
+    public WGPUTextureFormat* ColorFormats;
+    public WGPUTextureFormat DepthStencilFormat;
+    public uint SampleCount;
+    public bool DepthReadOnly;
+    public bool StencilReadOnly;
 }

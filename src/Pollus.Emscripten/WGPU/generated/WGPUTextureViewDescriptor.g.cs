@@ -1,13 +1,13 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUTextureViewDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public WGPUTextureFormat format;
-    public WGPUTextureViewDimension dimension;
-    public uint baseMipLevel;
-    public uint mipLevelCount;
-    public uint baseArrayLayer;
-    public uint arrayLayerCount;
-    public WGPUTextureAspect aspect;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public WGPUTextureFormat Format;
+    public WGPUTextureViewDimension Dimension;
+    public uint BaseMipLevel;
+    public uint MipLevelCount;
+    public uint BaseArrayLayer;
+    public uint ArrayLayerCount;
+    public WGPUTextureAspect Aspect;
 }

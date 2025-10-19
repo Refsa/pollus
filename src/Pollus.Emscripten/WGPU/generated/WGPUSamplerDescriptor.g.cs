@@ -1,16 +1,16 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUSamplerDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public WGPUAddressMode addressModeU;
-    public WGPUAddressMode addressModeV;
-    public WGPUAddressMode addressModeW;
-    public WGPUFilterMode magFilter;
-    public WGPUFilterMode minFilter;
-    public WGPUMipmapFilterMode mipmapFilter;
-    public float lodMinClamp;
-    public float lodMaxClamp;
-    public WGPUCompareFunction compare;
-    public ushort maxAnisotropy;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public WGPUAddressMode AddressModeU;
+    public WGPUAddressMode AddressModeV;
+    public WGPUAddressMode AddressModeW;
+    public WGPUFilterMode MagFilter;
+    public WGPUFilterMode MinFilter;
+    public WGPUMipmapFilterMode MipmapFilter;
+    public float LodMinClamp;
+    public float LodMaxClamp;
+    public WGPUCompareFunction Compare;
+    public ushort MaxAnisotropy;
 }

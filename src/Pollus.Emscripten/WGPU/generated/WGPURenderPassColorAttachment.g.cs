@@ -1,11 +1,11 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURenderPassColorAttachment
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUTextureView view;
-    public uint depthSlice;
-    public WGPUTextureView resolveTarget;
-    public WGPULoadOp loadOp;
-    public WGPUStoreOp storeOp;
-    public WGPUColor clearValue;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUTextureView* View;
+    public uint DepthSlice;
+    public WGPUTextureView* ResolveTarget;
+    public WGPULoadOp LoadOp;
+    public WGPUStoreOp StoreOp;
+    public WGPUColor ClearValue;
 }

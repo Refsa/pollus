@@ -1,5 +1,5 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUFuture
 {
-    public ulong id;
+    public ulong Id;
 }

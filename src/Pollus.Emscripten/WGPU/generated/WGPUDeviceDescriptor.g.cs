@@ -1,12 +1,12 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUDeviceDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public nuint requiredFeatureCount;
-    public WGPUFeatureName* requiredFeatures;
-    public WGPURequiredLimits* requiredLimits;
-    public WGPUQueueDescriptor defaultQueue;
-    public WGPUDeviceLostCallback deviceLostCallback;
-    public void* deviceLostUserdata;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public nuint RequiredFeatureCount;
+    public WGPUFeatureName* RequiredFeatures;
+    public WGPURequiredLimits* RequiredLimits;
+    public WGPUQueueDescriptor DefaultQueue;
+    public WGPUDeviceLostCallback DeviceLostCallback;
+    public void* DeviceLostUserdata;
 }

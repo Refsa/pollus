@@ -1,12 +1,12 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURenderPipelineDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public WGPUPipelineLayout layout;
-    public WGPUVertexState vertex;
-    public WGPUPrimitiveState primitive;
-    public WGPUDepthStencilState* depthStencil;
-    public WGPUMultisampleState multisample;
-    public WGPUFragmentState* fragment;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public WGPUPipelineLayout Layout;
+    public WGPUVertexState Vertex;
+    public WGPUPrimitiveState Primitive;
+    public WGPUDepthStencilState* DepthStencil;
+    public WGPUMultisampleState Multisample;
+    public WGPUFragmentState* Fragment;
 }

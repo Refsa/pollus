@@ -6,11 +6,11 @@ public class WGPUBrowser : IDisposable
 {
     public void Dispose() { }
 
-    public unsafe Instance* CreateInstance(WGPUInstanceDescriptor_Browser* descriptor)
+    public unsafe Instance* CreateInstance(WGPU.WGPUInstanceDescriptor* descriptor)
     {
         return WGPUBrowserNative.CreateInstance(descriptor);
     }
-    public unsafe Instance* CreateInstance(in WGPUInstanceDescriptor_Browser descriptor)
+    public unsafe Instance* CreateInstance(in WGPU.WGPUInstanceDescriptor descriptor)
     {
         return WGPUBrowserNative.CreateInstance(descriptor);
     }
@@ -55,11 +55,11 @@ public class WGPUBrowser : IDisposable
         return WGPUBrowserNative.AdapterHasFeature(adapter, feature);
     }
 
-    public unsafe void AdapterRequestDevice(Adapter* adapter, WGPUDeviceDescriptor_Browser* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, WGPU.WGPUDeviceDescriptor* descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }
-    public unsafe void AdapterRequestDevice(Adapter* adapter, in WGPUDeviceDescriptor_Browser descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
+    public unsafe void AdapterRequestDevice(Adapter* adapter, in WGPU.WGPUDeviceDescriptor descriptor, delegate* unmanaged[Cdecl]<RequestDeviceStatus, Device*, byte*, void*, void> callback, void* userdata)
     {
         WGPUBrowserNative.AdapterRequestDevice(adapter, descriptor, (nint)callback, userdata);
     }
@@ -192,11 +192,11 @@ public class WGPUBrowser : IDisposable
     {
         return WGPUBrowserNative.CommandEncoderBeginComputePass(commandEncoder, descriptor);
     }
-    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPURenderPassDescriptor_Browser* descriptor)
+    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, WGPU.WGPURenderPassDescriptor* descriptor)
     {
         return WGPUBrowserNative.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
-    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPURenderPassDescriptor_Browser descriptor)
+    public unsafe RenderPassEncoder* CommandEncoderBeginRenderPass(CommandEncoder* commandEncoder, in WGPU.WGPURenderPassDescriptor descriptor)
     {
         return WGPUBrowserNative.CommandEncoderBeginRenderPass(commandEncoder, descriptor);
     }
@@ -1239,11 +1239,11 @@ public class WGPUBrowser : IDisposable
         WGPUBrowserNative.TextureViewRelease(textureView);
     }
 
-    public unsafe WGPUSwapChain_Browser* DeviceCreateSwapChain(Device* device, Surface* surface, WGPUSwapChainDescriptor_Browser descriptor)
+    public unsafe WGPU.WGPUSwapChain* DeviceCreateSwapChain(Device* device, Surface* surface, WGPU.WGPUSwapChainDescriptor descriptor)
     {
         return WGPUBrowserNative.DeviceCreateSwapChain(device, surface, in descriptor);
     }
-    public unsafe TextureView* SwapChainGetCurrentTextureView(WGPUSwapChain_Browser* swapChain)
+    public unsafe TextureView* SwapChainGetCurrentTextureView(WGPU.WGPUSwapChain* swapChain)
     {
         return WGPUBrowserNative.SwapChainGetCurrentTextureView(swapChain);
     }

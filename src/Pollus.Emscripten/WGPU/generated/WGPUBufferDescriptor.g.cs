@@ -1,9 +1,9 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUBufferDescriptor
 {
-    public WGPUChainedStruct* nextInChain;
-    public char* label;
-    public WGPUBufferUsage usage;
-    public ulong size;
-    public bool mappedAtCreation;
+    public WGPUChainedStruct* NextInChain;
+    public byte* Label;
+    public WGPUBufferUsage Usage;
+    public ulong Size;
+    public bool MappedAtCreation;
 }

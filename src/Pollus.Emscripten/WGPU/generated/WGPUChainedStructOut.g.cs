@@ -1,6 +1,6 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUChainedStructOut
 {
-    public WGPUChainedStructOut* next;
-    public WGPUSType sType;
+    public WGPUChainedStructOut* Next;
+    public WGPUSType SType;
 }

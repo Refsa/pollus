@@ -1,8 +1,8 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUColor
 {
-    public double r;
-    public double g;
-    public double b;
-    public double a;
+    public double R;
+    public double G;
+    public double B;
+    public double A;
 }

@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUCompilationInfo
 {
-    public WGPUChainedStruct* nextInChain;
-    public nuint messageCount;
-    public WGPUCompilationMessage* messages;
+    public WGPUChainedStruct* NextInChain;
+    public nuint MessageCount;
+    public WGPUCompilationMessage* Messages;
 }

@@ -10,7 +10,7 @@ unsafe public struct GPURenderPassEncoder : IDisposable
     public nint Native => (nint)native;
 
 #if BROWSER
-    public GPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Emscripten.WGPURenderPassDescriptor_Browser descriptor)
+    public GPURenderPassEncoder(IWGPUContext context, Silk.NET.WebGPU.CommandEncoder* commandEncoder, Emscripten.WGPU.WGPURenderPassDescriptor descriptor)
     {
         this.context = context;
         native = context.wgpu.CommandEncoderBeginRenderPass(commandEncoder, descriptor);

@@ -1,9 +1,9 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUPrimitiveState
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUPrimitiveTopology topology;
-    public WGPUIndexFormat stripIndexFormat;
-    public WGPUFrontFace frontFace;
-    public WGPUCullMode cullMode;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUPrimitiveTopology Topology;
+    public WGPUIndexFormat StripIndexFormat;
+    public WGPUFrontFace FrontFace;
+    public WGPUCullMode CullMode;
 }

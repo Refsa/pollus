@@ -1,11 +1,11 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public delegate void WGPUBufferMapCallback(WGPUBufferMapAsyncStatus status, void* userdata);
 unsafe public delegate void WGPUCompilationInfoCallback(WGPUCompilationInfoRequestStatus status, WGPUCompilationInfo* compilationInfo, void* userdata);
-unsafe public delegate void WGPUCreateComputePipelineAsyncCallback(WGPUCreatePipelineAsyncStatus status, WGPUComputePipeline pipeline, char* message, void* userdata);
-unsafe public delegate void WGPUCreateRenderPipelineAsyncCallback(WGPUCreatePipelineAsyncStatus status, WGPURenderPipeline pipeline, char* message, void* userdata);
-unsafe public delegate void WGPUDeviceLostCallback(WGPUDeviceLostReason reason, char* message, void* userdata);
-unsafe public delegate void WGPUErrorCallback(WGPUErrorType type, char* message, void* userdata);
+unsafe public delegate void WGPUCreateComputePipelineAsyncCallback(WGPUCreatePipelineAsyncStatus status, WGPUComputePipeline pipeline, byte* message, void* userdata);
+unsafe public delegate void WGPUCreateRenderPipelineAsyncCallback(WGPUCreatePipelineAsyncStatus status, WGPURenderPipeline pipeline, byte* message, void* userdata);
+unsafe public delegate void WGPUDeviceLostCallback(WGPUDeviceLostReason reason, byte* message, void* userdata);
+unsafe public delegate void WGPUErrorCallback(WGPUErrorType type, byte* message, void* userdata);
 unsafe public delegate void WGPUProc();
 unsafe public delegate void WGPUQueueWorkDoneCallback(WGPUQueueWorkDoneStatus status, void* userdata);
-unsafe public delegate void WGPURequestAdapterCallback(WGPURequestAdapterStatus status, WGPUAdapter adapter, char* message, void* userdata);
-unsafe public delegate void WGPURequestDeviceCallback(WGPURequestDeviceStatus status, WGPUDevice device, char* message, void* userdata);
+unsafe public delegate void WGPURequestAdapterCallback(WGPURequestAdapterStatus status, WGPUAdapter adapter, byte* message, void* userdata);
+unsafe public delegate void WGPURequestDeviceCallback(WGPURequestDeviceStatus status, WGPUDevice device, byte* message, void* userdata);

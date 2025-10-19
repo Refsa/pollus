@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
+using Pollus.Mathematics;
 
 unsafe public struct GPUCommandEncoder : IDisposable
 {
@@ -41,34 +42,35 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
     public GPURenderPassEncoder BeginRenderPass(RenderPassDescriptor descriptor)
     {
-#if BROWSER
-        Emscripten.WGPURenderPassColorAttachment_Browser* colorAttachments = 
-            stackalloc Emscripten.WGPURenderPassColorAttachment_Browser[descriptor.ColorAttachments.Length];
+        #if BROWSER
+        Emscripten.WGPU.WGPURenderPassColorAttachment* colorAttachments =
+            stackalloc Emscripten.WGPU.WGPURenderPassColorAttachment[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
         {
-            colorAttachments[i] = new Emscripten.WGPURenderPassColorAttachment_Browser
+            var clearValue = descriptor.ColorAttachments[i].ClearValue;
+            colorAttachments[i] = new Emscripten.WGPU.WGPURenderPassColorAttachment
             {
-                View = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].View,
-                ResolveTarget = (Silk.NET.WebGPU.TextureView*)descriptor.ColorAttachments[i].ResolveTarget,
-                LoadOp = (Silk.NET.WebGPU.LoadOp)descriptor.ColorAttachments[i].LoadOp,
-                StoreOp = (Silk.NET.WebGPU.StoreOp)descriptor.ColorAttachments[i].StoreOp,
-                ClearValue = descriptor.ColorAttachments[i].ClearValue,
+                View = (Emscripten.WGPU.WGPUTextureView*)descriptor.ColorAttachments[i].View,
+                ResolveTarget = (Emscripten.WGPU.WGPUTextureView*)descriptor.ColorAttachments[i].ResolveTarget,
+                LoadOp = (Emscripten.WGPU.WGPULoadOp)descriptor.ColorAttachments[i].LoadOp,
+                StoreOp = (Emscripten.WGPU.WGPUStoreOp)descriptor.ColorAttachments[i].StoreOp,
+                ClearValue = Unsafe.As<Vec4<double>, Emscripten.WGPU.WGPUColor>(ref clearValue),
             };
         }
-        var wgpuDescriptor = new Emscripten.WGPURenderPassDescriptor_Browser
+        var wgpuDescriptor = new Emscripten.WGPU.WGPURenderPassDescriptor
         {
             Label = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
             ColorAttachments = colorAttachments
         };
-#else
-        var wgpuDescriptor = new Silk.NET.WebGPU.RenderPassDescriptor
-        {
-            Label = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
-            ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
-            ColorAttachments = (Silk.NET.WebGPU.RenderPassColorAttachment*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ColorAttachments))
-        };
-#endif
+        #else
+                var wgpuDescriptor = new Silk.NET.WebGPU.RenderPassDescriptor
+                {
+                    Label = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+                    ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
+                    ColorAttachments = (Silk.NET.WebGPU.RenderPassColorAttachment*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ColorAttachments))
+                };
+        #endif
 
         return new GPURenderPassEncoder(context, native, wgpuDescriptor);
     }

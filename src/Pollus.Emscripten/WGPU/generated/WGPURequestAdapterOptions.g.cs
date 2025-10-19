@@ -1,10 +1,10 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURequestAdapterOptions
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUSurface compatibleSurface;
-    public WGPUPowerPreference powerPreference;
-    public WGPUBackendType backendType;
-    public bool forceFallbackAdapter;
-    public bool compatibilityMode;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUSurface CompatibleSurface;
+    public WGPUPowerPreference PowerPreference;
+    public WGPUBackendType BackendType;
+    public bool ForceFallbackAdapter;
+    public bool CompatibilityMode;
 }

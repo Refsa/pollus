@@ -1,8 +1,8 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUBufferMapCallbackInfo
 {
-    public WGPUChainedStruct* nextInChain;
-    public WGPUCallbackMode mode;
-    public WGPUBufferMapCallback callback;
-    public void* userdata;
+    public WGPUChainedStruct* NextInChain;
+    public WGPUCallbackMode Mode;
+    public WGPUBufferMapCallback Callback;
+    public void* Userdata;
 }

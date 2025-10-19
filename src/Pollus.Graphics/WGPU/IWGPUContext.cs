@@ -15,7 +15,7 @@ unsafe public interface IWGPUContext : IDisposable
     Silk.NET.WebGPU.Adapter* Adapter { get; }
     Silk.NET.WebGPU.Device* Device { get; }
     Silk.NET.WebGPU.Queue* Queue { get; }
-    Emscripten.WGPUSwapChain_Browser* SwapChain { get; }
+    Emscripten.WGPU.WGPUSwapChain* SwapChain { get; }
 
     public bool IsReady { get; }
     void Setup();

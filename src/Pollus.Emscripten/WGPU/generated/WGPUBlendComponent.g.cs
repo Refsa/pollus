@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPUBlendComponent
 {
-    public WGPUBlendOperation operation;
-    public WGPUBlendFactor srcFactor;
-    public WGPUBlendFactor dstFactor;
+    public WGPUBlendOperation Operation;
+    public WGPUBlendFactor SrcFactor;
+    public WGPUBlendFactor DstFactor;
 }
