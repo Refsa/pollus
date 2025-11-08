@@ -138,7 +138,7 @@ public class FrameGraph2DPlugin : IPlugin
                 var colorTexture = context.Resources.GetTexture(data.ColorAttachment);
 
                 param.RenderAssets.Get(Blit.Handle).ClearTexture(
-                    context.GPUContext, commandEncoder,
+                    context.GPUContext, param.RenderAssets, commandEncoder,
                     colorTexture.TextureView, new Color(0.1f, 0.1f, 0.1f, 1.0f));
             });
 
@@ -205,7 +205,7 @@ public class FrameGraph2DPlugin : IPlugin
                 var backbufferTexture = context.Resources.GetTexture(data.Backbuffer);
 
                 param.RenderAssets.Get(Blit.Handle).BlitTexture(
-                    context.GPUContext, commandEncoder,
+                    context.GPUContext, param.RenderAssets, commandEncoder,
                     colorTexture.TextureView, backbufferTexture.TextureView, Color.BLACK);
             });
 

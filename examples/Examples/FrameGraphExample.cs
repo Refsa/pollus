@@ -136,10 +136,10 @@ public class FrameGraphExample : IExample
                     var srcTex = context.Resources.GetTexture(data.ColorAttachment);
                     var dstTex = context.Resources.GetTexture(data.Backbuffer);
 
-                    var blit = param.RenderAssets.Get<Blit>(Blit.Handle);
+                    var blit = param.RenderAssets.Get(Blit.Handle);
                     blit.BlitTexture(
-                        context.GPUContext, commandEncoder, 
-                        srcTex.TextureView, dstTex.TextureView, 
+                        context.GPUContext, param.RenderAssets, commandEncoder,
+                        srcTex.TextureView, dstTex.TextureView,
                         clearValue: new(0.1f, 0.1f, 0.1f, 1.0f)
                     );
                 });
