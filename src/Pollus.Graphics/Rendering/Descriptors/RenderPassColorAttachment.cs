@@ -8,6 +8,7 @@ public struct RenderPassColorAttachment
 {
     nint padding1;
     public required nint View;
+    public uint DepthSlice;
     public nint ResolveTarget;
 
     public LoadOp LoadOp;

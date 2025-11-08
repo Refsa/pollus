@@ -42,7 +42,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
 
     public GPURenderPassEncoder BeginRenderPass(RenderPassDescriptor descriptor)
     {
-        #if BROWSER
+#if BROWSER
         Emscripten.WGPU.WGPURenderPassColorAttachment* colorAttachments =
             stackalloc Emscripten.WGPU.WGPURenderPassColorAttachment[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
@@ -63,14 +63,14 @@ unsafe public struct GPUCommandEncoder : IDisposable
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
             ColorAttachments = colorAttachments
         };
-        #else
-                var wgpuDescriptor = new Silk.NET.WebGPU.RenderPassDescriptor
-                {
-                    Label = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
-                    ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
-                    ColorAttachments = (Silk.NET.WebGPU.RenderPassColorAttachment*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ColorAttachments))
-                };
-        #endif
+#else
+        var wgpuDescriptor = new Silk.NET.WebGPU.RenderPassDescriptor
+        {
+            Label = (byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Label)),
+            ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
+            ColorAttachments = (Silk.NET.WebGPU.RenderPassColorAttachment*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.ColorAttachments))
+        };
+#endif
 
         return new GPURenderPassEncoder(context, native, wgpuDescriptor);
     }

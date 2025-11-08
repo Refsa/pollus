@@ -1,5 +1,7 @@
 if [ $1 == "net9" ]; then
     set -- "net9"
+else
+    set -- "net10"
 fi
 
 if [ "$2" == "skip-build" ]; then
