@@ -21,6 +21,32 @@ public class WGPUGenerator
         "WGPURequestDeviceCallback",
     ];
 
+    static readonly string[] pointers = [
+        "WGPUAdapter",
+        "WGPUBindGroup",
+        "WGPUBindGroupLayout",
+        "WGPUBuffer",
+        "WGPUCommandBuffer",
+        "WGPUCommandEncoder",
+        "WGPUComputePassEncoder",
+        "WGPUComputePipeline",
+        "WGPUDevice",
+        "WGPUInstance",
+        "WGPUPipelineLayout",
+        "WGPUQuerySet",
+        "WGPUQueue",
+        "WGPURenderBundle",
+        "WGPURenderBundleEncoder",
+        "WGPURenderPassEncoder",
+        "WGPURenderPipeline",
+        "WGPUSampler",
+        "WGPUShaderModule",
+        "WGPUSurface",
+        "WGPUSwapChain",
+        "WGPUTexture",
+        "WGPUTextureView",
+    ];
+
     public void GenerateWGPU()
     {
         var source = File.ReadAllText("Resources/webgpu.h", Encoding.UTF8);
@@ -111,6 +137,7 @@ public class WGPUGenerator
             "uint32_t const *" => "uint",
             "char" => "byte",
             "char const *" => "byte*",
+            _ when pointers.Contains(type.FullName) => $"{type.FullName}*",
             _ => type.FullName,
         }).Replace(" ", "").Replace("const", "").Replace("Flags", "");
     }
