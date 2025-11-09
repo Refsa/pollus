@@ -74,6 +74,10 @@ typedef int int32_t;
 typedef unsigned long long uint64_t;
 typedef unsigned long long size_t;
 
+#define UINT32_MAX (0xffffffffu)
+#define UINT64_MAX (0xffffffffffffffffu)
+#define SIZE_MAX UINT64_MAX
+
 #define WGPU_ARRAY_LAYER_COUNT_UNDEFINED UINT32_MAX
 #define WGPU_COPY_STRIDE_UNDEFINED UINT32_MAX
 #define WGPU_DEPTH_SLICE_UNDEFINED UINT32_MAX

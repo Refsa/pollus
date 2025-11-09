@@ -6,10 +6,11 @@ unsafe public class WGPUInstance : IDisposable
 {
 #if BROWSER
     internal Emscripten.WGPUBrowser wgpu;
+    internal Emscripten.WGPU.WGPUInstance* instance;
 #else
     internal Silk.NET.WebGPU.WebGPU wgpu;
-#endif
     internal Silk.NET.WebGPU.Instance* instance;
+#endif
 
     bool isDisposed;
 

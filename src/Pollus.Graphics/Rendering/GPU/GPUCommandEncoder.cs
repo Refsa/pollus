@@ -50,7 +50,9 @@ unsafe public struct GPUCommandEncoder : IDisposable
             var clearValue = descriptor.ColorAttachments[i].ClearValue;
             colorAttachments[i] = new Emscripten.WGPU.WGPURenderPassColorAttachment
             {
+                NextInChain = null,
                 View = (Emscripten.WGPU.WGPUTextureView*)descriptor.ColorAttachments[i].View,
+                DepthSlice = Emscripten.WGPU.WGPUBrowser.WGPU_DEPTH_SLICE_UNDEFINED,
                 ResolveTarget = (Emscripten.WGPU.WGPUTextureView*)descriptor.ColorAttachments[i].ResolveTarget,
                 LoadOp = (Emscripten.WGPU.WGPULoadOp)descriptor.ColorAttachments[i].LoadOp,
                 StoreOp = (Emscripten.WGPU.WGPUStoreOp)descriptor.ColorAttachments[i].StoreOp,

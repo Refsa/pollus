@@ -7,15 +7,19 @@ unsafe public interface IWGPUContext : IDisposable
 {
 #if BROWSER
     Emscripten.WGPUBrowser wgpu { get; }
+    Emscripten.WGPU.WGPUSwapChain* SwapChain { get; }
+    Emscripten.WGPU.WGPUSurface* Surface { get; }
+    Emscripten.WGPU.WGPUAdapter* Adapter { get; }
+    Emscripten.WGPU.WGPUDevice* Device { get; }
+    Emscripten.WGPU.WGPUQueue* Queue { get; }
 #else
     Silk.NET.WebGPU.WebGPU wgpu { get; }
-#endif
-
     Silk.NET.WebGPU.Surface* Surface { get; }
     Silk.NET.WebGPU.Adapter* Adapter { get; }
     Silk.NET.WebGPU.Device* Device { get; }
     Silk.NET.WebGPU.Queue* Queue { get; }
-    Emscripten.WGPU.WGPUSwapChain* SwapChain { get; }
+#endif
+
 
     public bool IsReady { get; }
     void Setup();

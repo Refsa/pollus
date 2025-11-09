@@ -30,10 +30,10 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     IWindow window;
     WGPUInstance instance;
 
-    Silk.NET.WebGPU.Surface* surface;
-    Silk.NET.WebGPU.Adapter* adapter;
-    Silk.NET.WebGPU.Device* device;
-    Silk.NET.WebGPU.Queue* queue;
+    Emscripten.WGPU.WGPUSurface* surface;
+    Emscripten.WGPU.WGPUAdapter* adapter;
+    Emscripten.WGPU.WGPUDevice* device;
+    Emscripten.WGPU.WGPUQueue* queue;
     Emscripten.WGPU.WGPUSwapChain* swapChain;
 
     TextureFormat preferredFormat;
@@ -47,10 +47,10 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     public Emscripten.WGPUBrowser wgpu => instance.wgpu;
     public bool IsReady => state is SetupState.Ready;
 
-    public Silk.NET.WebGPU.Surface* Surface => surface;
-    public Silk.NET.WebGPU.Adapter* Adapter => adapter;
-    public Silk.NET.WebGPU.Device* Device => device;
-    public Silk.NET.WebGPU.Queue* Queue => queue;
+    public Emscripten.WGPU.WGPUSurface* Surface => surface;
+    public Emscripten.WGPU.WGPUAdapter* Adapter => adapter;
+    public Emscripten.WGPU.WGPUDevice* Device => device;
+    public Emscripten.WGPU.WGPUQueue* Queue => queue;
     public Emscripten.WGPU.WGPUSwapChain* SwapChain => swapChain;
 
     public WGPUContextBrowser(IWindow window, WGPUInstance instance)
@@ -113,21 +113,21 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     void CreateSurface()
     {
         using var selectorPtr = TemporaryPin.PinString("#canvas");
-        Silk.NET.WebGPU.SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
+        Emscripten.WGPU.WGPUSurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
-            Chain = new Silk.NET.WebGPU.ChainedStruct
+            Chain = new Emscripten.WGPU.WGPUChainedStruct
             {
                 Next = null,
-                SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector,
+                SType = Emscripten.WGPU.WGPUSType.SurfaceDescriptorFromCanvasHTMLSelector,
             },
             Selector = (byte*)selectorPtr.Ptr
         };
 
-        Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
+        Emscripten.WGPU.WGPUSurfaceDescriptor descriptor = new()
         {
-            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
+            NextInChain = (Emscripten.WGPU.WGPUChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
         };
-        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
+        surface = wgpu.InstanceCreateSurface(instance.instance, (Emscripten.WGPU.WGPUSurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
     }
 
     void CreateSwapChain()
@@ -147,7 +147,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     [MemberNotNull(nameof(adapter))]
     void CreateAdapter()
     {
-        var requestAdapterOptions = new Silk.NET.WebGPU.RequestAdapterOptions
+        var requestAdapterOptions = new Emscripten.WGPU.WGPURequestAdapterOptions
         {
             CompatibleSurface = surface
         };
@@ -155,9 +155,9 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void HandleRequestAdapterCallback(Silk.NET.WebGPU.RequestAdapterStatus status, Silk.NET.WebGPU.Adapter* adapter, byte* message, void* userdata)
+    static void HandleRequestAdapterCallback(Emscripten.WGPU.WGPURequestAdapterStatus status, Emscripten.WGPU.WGPUAdapter* adapter, byte* message, void* userdata)
     {
-        if (status == Silk.NET.WebGPU.RequestAdapterStatus.Success)
+        if (status == Emscripten.WGPU.WGPURequestAdapterStatus.Success)
         {
             Log.Info("WGPU: Adapter acquired");
             _instance.adapter = adapter;
@@ -203,9 +203,9 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void HandleRequestDeviceCallback(Silk.NET.WebGPU.RequestDeviceStatus status, Silk.NET.WebGPU.Device* device, byte* message, void* userdata)
+    static void HandleRequestDeviceCallback(Emscripten.WGPU.WGPURequestDeviceStatus status, Emscripten.WGPU.WGPUDevice* device, byte* message, void* userdata)
     {
-        if (status == Silk.NET.WebGPU.RequestDeviceStatus.Success)
+        if (status == Emscripten.WGPU.WGPURequestDeviceStatus.Success)
         {
             Log.Info("WGPU: Device acquired");
             _instance.device = device;
