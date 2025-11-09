@@ -340,7 +340,7 @@ public record struct BitSet : IDisposable
         {
             if (bitIdx == lastIdx)
             {
-                while (++blockIdx < bitset.data.Length && bitset.data[blockIdx] == 0);
+                while (++blockIdx < bitset.data.Length && bitset.data[blockIdx] == 0) ;
                 if (blockIdx >= bitset.data.Length) return false;
                 lastIdx = LastSetBit(bitset.data[blockIdx]);
                 bitIdx = FirstSetBit(bitset.data[blockIdx]) - 1;

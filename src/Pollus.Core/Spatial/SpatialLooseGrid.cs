@@ -127,7 +127,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         this.worldSize = worldSize;
         this.cellSize = cellSize;
         this.tightSize = tightSize;
-        
+
         rowCount = worldSize / cellSize + 1;
         colCount = worldSize / cellSize + 1;
         tightRowCount = worldSize / tightSize + 1;

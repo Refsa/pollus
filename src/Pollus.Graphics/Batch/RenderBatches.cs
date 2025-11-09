@@ -24,7 +24,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
         if (isDisposed) return;
         isDisposed = true;
         GC.SuppressFinalize(this);
-        
+
         foreach (var batch in batches)
         {
             (batch as IDisposable)?.Dispose();

@@ -1,4 +1,3 @@
-#if !BROWSER
 #pragma warning disable CS8774
 
 namespace Pollus.Graphics.WGPU;
@@ -10,11 +9,17 @@ using Pollus.Debugging;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
+using Pollus.Graphics.Platform;
+using Pollus.Graphics.Platform.SilkNetWgpu;
 
 unsafe public class WGPUContextDesktop : IWGPUContext
 {
+    bool isDisposed;
+
     IWindow window;
     WGPUInstance instance;
+    IWgpuBackend backend;
+    List<IGPUResourceWrapper> resources = new();
 
     internal Silk.NET.WebGPU.Surface* surface;
     internal Silk.NET.WebGPU.Adapter* adapter;
@@ -26,24 +31,19 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     Silk.NET.WebGPU.SurfaceConfiguration surfaceConfiguration;
     Silk.NET.WebGPU.SurfaceCapabilities surfaceCapabilities;
 
-    bool isDisposed;
-
-    List<IGPUResourceWrapper> resources = new();
-
     public IWindow Window => window;
     public bool IsReady => surface != null && adapter != null && device != null && queue != null;
 
-    public Silk.NET.WebGPU.WebGPU wgpu => instance.wgpu;
-    public Silk.NET.WebGPU.Surface* Surface => surface;
-    public Silk.NET.WebGPU.Adapter* Adapter => adapter;
-    public Silk.NET.WebGPU.Device* Device => device;
-    public Silk.NET.WebGPU.Queue* Queue => queue;
-    public Emscripten.WGPU.WGPUSwapChain* SwapChain => null;
+    public Silk.NET.WebGPU.WebGPU wgpu => (backend as SilkWgpuBackend)!.wgpu;
+    public IWgpuBackend Backend => backend;
+    public NativeHandle<DeviceTag> DeviceHandle => new((nint)device);
+    public NativeHandle<QueueTag> QueueHandle => new((nint)queue);
 
     public WGPUContextDesktop(IWindow window, WGPUInstance instance)
     {
         this.window = window;
         this.instance = instance;
+        backend = WgpuBackendProvider.Get();
     }
 
     ~WGPUContextDesktop() => Dispose();
@@ -86,7 +86,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     [MemberNotNull(nameof(surface))]
     void CreateSurface()
     {
-        surface = Silk.NET.WebGPU.WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.instance);
+        surface = Silk.NET.WebGPU.WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.Instance.As<Silk.NET.WebGPU.Instance>());
     }
 
     void ConfigureSurface()
@@ -139,7 +139,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         };
 
         var userData = new CreateAdapterData();
-        wgpu.InstanceRequestAdapter(instance.instance, ref requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
+        wgpu.InstanceRequestAdapter(instance.Instance.As<Silk.NET.WebGPU.Instance>(), ref requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
         adapter = userData.Adapter;
     }
 
@@ -152,7 +152,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         }
         else
         {
-            Log.Info("WGPU: Adapter not acquired");
+            Log.Info($"WGPU: Adapter not acquired: {status} | {Marshal.PtrToStringAnsi((IntPtr)message)}");
         }
     }
 
@@ -246,7 +246,18 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         surfaceConfiguration.Height = size.Y;
         wgpu.SurfaceConfigure(surface, ref surfaceConfiguration);
     }
+    public bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor)
+    {
+        var st = new Silk.NET.WebGPU.SurfaceTexture();
+        wgpu.SurfaceGetCurrentTexture(surface, ref st);
+        if (st.Status != Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Success)
+        {
+            textureView = default;
+            return false;
+        }
+        textureView = new GPUTextureView(this, st.Texture, descriptor);
+        return true;
+    }
 }
 
 #pragma warning restore CS8774
-#endif

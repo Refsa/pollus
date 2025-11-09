@@ -2,14 +2,15 @@
 
 namespace Pollus.Graphics.Rendering;
 
+using Pollus.Graphics.Platform;
 using Pollus.Mathematics;
 
 public struct RenderPassColorAttachment
 {
     nint padding1;
-    public required nint View;
-    public uint DepthSlice;
-    public nint ResolveTarget;
+    public required NativeHandle<TextureViewTag> View;
+    public uint? DepthSlice;
+    public NativeHandle<TextureViewTag>? ResolveTarget;
 
     public LoadOp LoadOp;
     public StoreOp StoreOp;

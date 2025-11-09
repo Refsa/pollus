@@ -3,5 +3,5 @@ unsafe public struct WGPUImageCopyBuffer
 {
     public WGPUChainedStruct* NextInChain;
     public WGPUTextureDataLayout Layout;
-    public WGPUBuffer Buffer;
+    public WGPUBuffer* Buffer;
 }

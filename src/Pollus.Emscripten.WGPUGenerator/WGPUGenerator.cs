@@ -94,7 +94,8 @@ public class WGPUGenerator
             foreach (var typedef in ast.Typedefs)
             {
                 if (!callbacks.Contains(typedef.Name)) continue;
-                if (typedef.ElementType is CppPointerType pointerType && pointerType.ElementType is CppFunctionType @function) {
+                if (typedef.ElementType is CppPointerType pointerType && pointerType.ElementType is CppFunctionType @function)
+                {
                     var args = string.Join(", ", @function.Parameters.Select(p => $"{TranslateType(p.Type)} {p.Name}"));
                     sb.AppendLine($"unsafe public delegate {TranslateType(@function.ReturnType)} {@typedef.Name}({args});");
                 }

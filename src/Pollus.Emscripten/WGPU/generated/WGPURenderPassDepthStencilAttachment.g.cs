@@ -1,7 +1,7 @@
 namespace Pollus.Emscripten.WGPU;
 unsafe public struct WGPURenderPassDepthStencilAttachment
 {
-    public WGPUTextureView View;
+    public WGPUTextureView* View;
     public WGPULoadOp DepthLoadOp;
     public WGPUStoreOp DepthStoreOp;
     public float DepthClearValue;

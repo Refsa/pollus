@@ -9,7 +9,7 @@ public static partial class Emscripten
 {
     [LibraryImport("__Internal_emscripten")]
     private static partial void emscripten_set_main_loop(nint action, int fps, [MarshalAs(UnmanagedType.I1)] bool simulateInfiniteLoop);
-    
+
     [LibraryImport("__Internal_emscripten")]
     private static partial void emscripten_set_main_loop_arg(nint action, nint args, int fps, [MarshalAs(UnmanagedType.I1)] bool simulateInfiniteLoop);
 

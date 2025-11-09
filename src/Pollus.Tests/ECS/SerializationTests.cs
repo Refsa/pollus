@@ -22,7 +22,7 @@ public class SerializationTests
             for (int i = 0; i < 10_000; i++)
             {
                 Entity.With(new TestComponent1 { Value = i + 1 }, new SerializeTag()).Spawn(serializeWorld);
-                Entity.With(new TestComponent2()).Spawn(serializeWorld);    
+                Entity.With(new TestComponent2()).Spawn(serializeWorld);
             }
 
             serializeWorld.Events.GetWriter<SnapshotSerializeEvent>().Write(new SnapshotSerializeEvent { Path = "snapshots/test.bin" });

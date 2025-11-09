@@ -32,7 +32,7 @@ public class QueryFilterExample : IExample
             ])
             .AddSystem(CoreStage.PostInit, FnSystem.Create(new("Spawn"),
             static (World world, Commands commands) =>
-            {   
+            {
                 Log.Info(world.Schedule.ToString());
 
                 commands.Spawn(Entity.With(new Component1 { Value = 0 }));

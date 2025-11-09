@@ -1,39 +1,24 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Text;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Platform;
 
 unsafe public class GPUShader : GPUResourceWrapper
 {
-    Silk.NET.WebGPU.ShaderModule* native;
+    NativeHandle<ShaderModuleTag> native;
 
-    public nint Native => (nint)native;
+    public NativeHandle<ShaderModuleTag> Native => native;
 
     public GPUShader(IWGPUContext context, ShaderModuleDescriptor descriptor) : base(context)
     {
         using var labelData = new NativeUtf8(descriptor.Label);
         using var contentData = new NativeUtf8(descriptor.Content);
-        
-        var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(
-            label: labelData.Pointer
-        );
-
-        var shaderModuleDescriptor = descriptor.Backend switch
-        {
-            ShaderBackend.WGSL => new Silk.NET.WebGPU.ShaderModuleWGSLDescriptor(
-                chain: new Silk.NET.WebGPU.ChainedStruct(sType: Silk.NET.WebGPU.SType.ShaderModuleWgslDescriptor),
-                code: contentData.Pointer
-            ),
-            _ => throw new NotImplementedException(),
-        };
-
-        nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&shaderModuleDescriptor;
-        native = context.wgpu.DeviceCreateShaderModule(context.Device, &nativeDescriptor);
+        native = context.Backend.DeviceCreateShaderModule(context.DeviceHandle, descriptor.Backend, new Utf8Name((nint)labelData.Pointer), new Utf8Name((nint)contentData.Pointer));
     }
 
     protected override void Free()
     {
-        context.wgpu.ShaderModuleRelease(native);
+        context.Backend.ShaderModuleRelease(native);
     }
 }

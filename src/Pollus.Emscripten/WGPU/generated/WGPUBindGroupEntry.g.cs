@@ -3,9 +3,9 @@ unsafe public struct WGPUBindGroupEntry
 {
     public WGPUChainedStruct* NextInChain;
     public uint Binding;
-    public WGPUBuffer Buffer;
+    public WGPUBuffer* Buffer;
     public ulong Offset;
     public ulong Size;
-    public WGPUSampler Sampler;
-    public WGPUTextureView TextureView;
+    public WGPUSampler* Sampler;
+    public WGPUTextureView* TextureView;
 }

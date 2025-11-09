@@ -2,41 +2,6 @@ namespace Pollus.Graphics.Rendering;
 
 public enum VertexFormat
 {
-#if BROWSER
-    Undefined = 0x00000000,
-    Uint8x2 = 0x00000001,
-    Uint8x4 = 0x00000002,
-    Sint8x2 = 0x00000003,
-    Sint8x4 = 0x00000004,
-    Unorm8x2 = 0x00000005,
-    Unorm8x4 = 0x00000006,
-    Snorm8x2 = 0x00000007,
-    Snorm8x4 = 0x00000008,
-    Uint16x2 = 0x00000009,
-    Uint16x4 = 0x0000000A,
-    Sint16x2 = 0x0000000B,
-    Sint16x4 = 0x0000000C,
-    Unorm16x2 = 0x0000000D,
-    Unorm16x4 = 0x0000000E,
-    Snorm16x2 = 0x0000000F,
-    Snorm16x4 = 0x00000010,
-    Float16x2 = 0x00000011,
-    Float16x4 = 0x00000012,
-    Float32 = 0x00000013,
-    Float32x2 = 0x00000014,
-    Float32x3 = 0x00000015,
-    Float32x4 = 0x00000016,
-    Uint32 = 0x00000017,
-    Uint32x2 = 0x00000018,
-    Uint32x3 = 0x00000019,
-    Uint32x4 = 0x0000001A,
-    Sint32 = 0x0000001B,
-    Sint32x2 = 0x0000001C,
-    Sint32x3 = 0x0000001D,
-    Sint32x4 = 0x0000001E,
-    Unorm10_10_10_2 = 0x0000001F,
-    Force32 = 0x7FFFFFFF,
-#else
     Undefined = 0,
     Uint8x2 = 1,
     Uint8x4 = 2,
@@ -68,7 +33,6 @@ public enum VertexFormat
     Sint32x2 = 28,
     Sint32x3 = 29,
     Sint32x4 = 30,
-#endif
 
     /// <summary>
     /// Not supported by rendering backend, is transformed to 3 x Float32x4

@@ -1,4 +1,3 @@
-#if BROWSER
 namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +8,8 @@ using Pollus.Utils;
 using Pollus.Graphics.Windowing;
 using Pollus.Graphics.Rendering;
 using Pollus.Debugging;
-using System.Runtime.InteropServices.JavaScript;
+using Pollus.Graphics.Platform;
+using Pollus.Graphics.Platform.Emscripten;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
@@ -25,7 +25,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         Failed
     }
 
-    static WGPUContextBrowser _instance;
+    static WGPUContextBrowser? _instance;
 
     IWindow window;
     WGPUInstance instance;
@@ -44,20 +44,21 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     List<IGPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
-    public Emscripten.WGPUBrowser wgpu => instance.wgpu;
     public bool IsReady => state is SetupState.Ready;
 
-    public Emscripten.WGPU.WGPUSurface* Surface => surface;
-    public Emscripten.WGPU.WGPUAdapter* Adapter => adapter;
-    public Emscripten.WGPU.WGPUDevice* Device => device;
-    public Emscripten.WGPU.WGPUQueue* Queue => queue;
-    public Emscripten.WGPU.WGPUSwapChain* SwapChain => swapChain;
+    public IWgpuBackend Backend => backend;
+    public NativeHandle<DeviceTag> DeviceHandle => new((nint)device);
+    public NativeHandle<QueueTag> QueueHandle => new((nint)queue);
+
+    IWgpuBackend backend;
+    Emscripten.WGPUBrowser wgpu => (backend as EmscriptenWgpuBackend)!.wgpu;
 
     public WGPUContextBrowser(IWindow window, WGPUInstance instance)
     {
         this.window = window;
         this.instance = instance;
         _instance = this;
+        backend = WgpuBackendProvider.Get();
     }
 
     ~WGPUContextBrowser() => Dispose();
@@ -127,7 +128,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             NextInChain = (Emscripten.WGPU.WGPUChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
         };
-        surface = wgpu.InstanceCreateSurface(instance.instance, (Emscripten.WGPU.WGPUSurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
+        surface = wgpu.InstanceCreateSurface(instance.Instance.As<Emscripten.WGPU.WGPUInstance>(), (Emscripten.WGPU.WGPUSurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
     }
 
     void CreateSwapChain()
@@ -144,14 +145,13 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         if (swapChain == null) throw new ApplicationException("Failed to create swap chain");
     }
 
-    [MemberNotNull(nameof(adapter))]
     void CreateAdapter()
     {
         var requestAdapterOptions = new Emscripten.WGPU.WGPURequestAdapterOptions
         {
             CompatibleSurface = surface
         };
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
+        wgpu.InstanceRequestAdapter(instance.Instance.As<Emscripten.WGPU.WGPUInstance>(), requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
@@ -159,9 +159,11 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
         if (status == Emscripten.WGPU.WGPURequestAdapterStatus.Success)
         {
+            var instA = _instance;
+            if (instA == null) return;
             Log.Info("WGPU: Adapter acquired");
-            _instance.adapter = adapter;
-            _instance.state = SetupState.AdapterReady;
+            instA!.adapter = adapter;
+            instA!.state = SetupState.AdapterReady;
         }
         else
         {
@@ -170,7 +172,6 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         }
     }
 
-    [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
         var limits = new Emscripten.WGPU.WGPULimits()
@@ -207,9 +208,11 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
         if (status == Emscripten.WGPU.WGPURequestDeviceStatus.Success)
         {
+            var instD = _instance;
+            if (instD == null) return;
             Log.Info("WGPU: Device acquired");
-            _instance.device = device;
-            _instance.state = SetupState.DeviceReady;
+            instD!.device = device;
+            instD!.state = SetupState.DeviceReady;
         }
         else
         {
@@ -251,5 +254,16 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
 
     }
+
+    public bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor)
+    {
+        var native = wgpu.SwapChainGetCurrentTextureView(swapChain);
+        if (native == null)
+        {
+            textureView = default;
+            return false;
+        }
+        textureView = new GPUTextureView(this, (nint)native, descriptor);
+        return true;
+    }
 }
-#endif

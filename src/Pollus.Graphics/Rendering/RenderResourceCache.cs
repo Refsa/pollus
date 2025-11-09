@@ -70,7 +70,7 @@ public class RenderResourceCache
         {
             textures.Add(resource);
             resource.Handle = handle;
-            
+
             lookup[handle] = new()
             {
                 Label = resource.Descriptor.Label,

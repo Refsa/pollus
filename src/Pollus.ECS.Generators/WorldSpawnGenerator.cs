@@ -22,7 +22,7 @@ public static class WorldSpawnExtensions
 {
     $methods$
 }";
-    
+
             const string METHOD_TEMPLATE =
 @"
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

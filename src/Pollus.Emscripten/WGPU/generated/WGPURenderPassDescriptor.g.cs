@@ -6,6 +6,6 @@ unsafe public struct WGPURenderPassDescriptor
     public nuint ColorAttachmentCount;
     public WGPURenderPassColorAttachment* ColorAttachments;
     public WGPURenderPassDepthStencilAttachment* DepthStencilAttachment;
-    public WGPUQuerySet OcclusionQuerySet;
+    public WGPUQuerySet* OcclusionQuerySet;
     public WGPURenderPassTimestampWrites* TimestampWrites;
 }

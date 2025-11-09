@@ -1,15 +1,16 @@
 namespace Pollus.Graphics.Rendering;
 
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Platform;
 
 unsafe public struct GPUCommandBuffer : IDisposable
 {
     IWGPUContext context;
-    Silk.NET.WebGPU.CommandBuffer* native;
+    NativeHandle<CommandBufferTag> native;
 
-    public nint Native => (nint)native;
+    public NativeHandle<CommandBufferTag> Native => native;
 
-    public GPUCommandBuffer(IWGPUContext context, Silk.NET.WebGPU.CommandBuffer* buffer)
+    public GPUCommandBuffer(IWGPUContext context, NativeHandle<CommandBufferTag> buffer)
     {
         this.context = context;
         native = buffer;
@@ -17,11 +18,13 @@ unsafe public struct GPUCommandBuffer : IDisposable
 
     public void Dispose()
     {
-        context.wgpu.CommandBufferRelease(native);
+        context.Backend.CommandBufferRelease(native);
     }
 
     public void Submit()
     {
-        context.wgpu.QueueSubmit(context.Queue, 1, ref native);
+        Span<NativeHandle<CommandBufferTag>> one = stackalloc NativeHandle<CommandBufferTag>[1];
+        one[0] = native;
+        context.Backend.QueueSubmit(context.QueueHandle, one);
     }
 }

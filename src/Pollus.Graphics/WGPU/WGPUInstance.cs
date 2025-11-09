@@ -2,31 +2,22 @@ using Pollus.Debugging;
 
 namespace Pollus.Graphics.WGPU;
 
-unsafe public class WGPUInstance : IDisposable
-{
-#if BROWSER
-    internal Emscripten.WGPUBrowser wgpu;
-    internal Emscripten.WGPU.WGPUInstance* instance;
-#else
-    internal Silk.NET.WebGPU.WebGPU wgpu;
-    internal Silk.NET.WebGPU.Instance* instance;
-#endif
+using Pollus.Graphics.Platform;
 
+unsafe public partial class WGPUInstance : IDisposable
+{
+    IWgpuBackend backend;
+    NativeHandle<InstanceTag> instance;
     bool isDisposed;
 
-    public bool IsReady => instance != null;
+    public bool IsReady => !instance.IsNull;
+    public IWgpuBackend Backend => backend;
+    public NativeHandle<InstanceTag> Instance => instance;
 
     public WGPUInstance()
     {
-#if BROWSER
-        wgpu = new Emscripten.WGPUBrowser();
-        instance = wgpu.CreateInstance(null);
-#else
-        wgpu = Silk.NET.WebGPU.WebGPU.GetApi();
-        var instanceDescriptor = new Silk.NET.WebGPU.InstanceDescriptor();
-        instance = wgpu.CreateInstance(ref instanceDescriptor);
-#endif
-
+        backend = WgpuBackendProvider.Get();
+        instance = backend.CreateInstance();
     }
 
     ~WGPUInstance() => Dispose();
@@ -37,7 +28,6 @@ unsafe public class WGPUInstance : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
 
-        wgpu.InstanceRelease(instance);
-        wgpu.Dispose();
+        instance = new NativeHandle<InstanceTag>(0);
     }
 }

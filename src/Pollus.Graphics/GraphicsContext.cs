@@ -33,11 +33,9 @@ unsafe public class GraphicsContext : IDisposable
 
     public IWGPUContext CreateContext(string name, IWindow window)
     {
-#if BROWSER
-        var context = new WGPUContextBrowser(window, instance);
-#else
-        var context = new WGPUContextDesktop(window, instance);
-#endif
+        IWGPUContext context = OperatingSystem.IsBrowser()
+            ? new WGPUContextBrowser(window, instance)
+            : new WGPUContextDesktop(window, instance);
         contexts.Add(name, context);
         return context;
     }

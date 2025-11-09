@@ -19,7 +19,7 @@ public struct AxisEvent<TAxis>
     where TAxis : Enum
 {
     public required Guid DeviceId { get; init; }
-    
+
     public required TAxis Axis { get; init; }
     public required float Value { get; init; }
 

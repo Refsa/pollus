@@ -89,7 +89,7 @@ public class DrawTriangleExample : IExample
                         new()
                         {
                             View = surfaceTexture.TextureView.Native,
-                            ResolveTarget = nint.Zero,
+                            ResolveTarget = null,
                             ClearValue = new(0.2f, 0.1f, 0.01f, 1.0f),
                             LoadOp = LoadOp.Clear,
                             StoreOp = StoreOp.Store

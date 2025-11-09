@@ -7,6 +7,6 @@ unsafe public struct WGPUDeviceDescriptor
     public WGPUFeatureName* RequiredFeatures;
     public WGPURequiredLimits* RequiredLimits;
     public WGPUQueueDescriptor DefaultQueue;
-    public delegate* unmanaged[Cdecl]<WGPUDeviceLostReason, byte*, void*, void> DeviceLostCallback;
+    public WGPUDeviceLostCallback DeviceLostCallback;
     public void* DeviceLostUserdata;
 }

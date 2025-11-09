@@ -215,7 +215,7 @@ public class Blit
                 new()
                 {
                     View = msaaResolve.HasValue ? msaaResolve.Value.Native : dest.Native,
-                    ResolveTarget = msaaResolve.HasValue ? dest.Native : nint.Zero,
+                    ResolveTarget = msaaResolve.HasValue ? dest.Native : null,
                     LoadOp = clearValue is null ? LoadOp.Load : LoadOp.Clear,
                     StoreOp = StoreOp.Store,
                     ClearValue = clearValue ?? new(0.1f, 0.1f, 0.1f, 1.0f),

@@ -54,7 +54,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
     Dictionary<GamepadAxis, float> axes = [];
     HashSet<GamepadButton> changedButtons = [];
     HashSet<GamepadAxis> changedAxes = [];
-    
+
     public string DeviceName => deviceName ?? "Unknown Gamepad Device Name";
     public nint ExternalId => externalId;
     public Guid Id => id;
@@ -78,13 +78,16 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 
         unsafe
         {
-#if BROWSER
-            externalDevice = EmscriptenSDL.JoystickOpen((int)externalId);
-            deviceName = EmscriptenSDL.JoystickName((int)externalId);
-#else
-            externalDevice = (nint)SDLWrapper.Instance.GameControllerOpen((int)externalId);
-            deviceName = SDLWrapper.Instance.GameControllerNameS((Silk.NET.SDL.GameController*)externalDevice);
-#endif
+            if (OperatingSystem.IsBrowser())
+            {
+                externalDevice = EmscriptenSDL.JoystickOpen((int)externalId);
+                deviceName = EmscriptenSDL.JoystickName((int)externalId);
+            }
+            else
+            {
+                externalDevice = (nint)SDLWrapper.Instance.GameControllerOpen((int)externalId);
+                deviceName = SDLWrapper.Instance.GameControllerNameS((Silk.NET.SDL.GameController*)externalDevice);
+            }
         }
 
         Guard.IsNotNull(externalDevice, "Failed to open gamepad device");
@@ -96,11 +99,14 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 
         unsafe
         {
-#if BROWSER
-            EmscriptenSDL.JoystickClose((int)externalId);
-#else
-            SDLWrapper.Instance.GameControllerClose((Silk.NET.SDL.GameController*)externalDevice);
-#endif
+            if (OperatingSystem.IsBrowser())
+            {
+                EmscriptenSDL.JoystickClose((int)externalId);
+            }
+            else
+            {
+                SDLWrapper.Instance.GameControllerClose((Silk.NET.SDL.GameController*)externalDevice);
+            }
         }
 
         externalDevice = nint.Zero;
@@ -108,7 +114,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 
     public void PreUpdate()
     {
-        
+
     }
 
     public void Update(Events events)
@@ -234,10 +240,7 @@ public class Gamepad : IInputDevice, IAxisInputDevice<GamepadAxis>, IButtonInput
 
     public static bool IsGamepad(int index)
     {
-#if BROWSER
-        return EmscriptenSDL.IsGameController(index);
-#else
+        if (OperatingSystem.IsBrowser()) return EmscriptenSDL.IsGameController(index);
         return SDLWrapper.Instance.IsGameController(index) != 0;
-#endif
     }
 }

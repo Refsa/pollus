@@ -1,4 +1,5 @@
 namespace Pollus.Engine.Rendering;
+
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 

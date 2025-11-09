@@ -3,47 +3,38 @@ namespace Pollus.Graphics.Rendering;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
+using Pollus.Graphics.Platform;
 
 unsafe public struct GPUComputePassEncoder : IDisposable
 {
     IWGPUContext context;
-    Silk.NET.WebGPU.ComputePassEncoder* native;
-    public nint Native => (nint)native;
+    NativeHandle<ComputePassEncoderTag> native;
+    public NativeHandle<ComputePassEncoderTag> Native => native;
 
     public GPUComputePassEncoder(IWGPUContext context, GPUCommandEncoder commandEncoder, string label)
     {
-        using var labelPtr = new NativeUtf8(label);
-
-        var descriptor = new Silk.NET.WebGPU.ComputePassDescriptor
-        {
-            Label = labelPtr.Pointer,
-        };
-
         this.context = context;
-        this.native = context.wgpu.CommandEncoderBeginComputePass(
-            (Silk.NET.WebGPU.CommandEncoder*)commandEncoder.Native,
-            in descriptor
-        );
+        using var labelPtr = new NativeUtf8(label);
+        native = context.Backend.CommandEncoderBeginComputePass(commandEncoder.Native, new Utf8Name((nint)labelPtr.Pointer));
     }
 
     public void Dispose()
     {
-        context.wgpu.ComputePassEncoderEnd(native);
-        context.wgpu.ComputePassEncoderRelease(native);
+        context.Backend.ComputePassEncoderEnd(native);
     }
 
     public void Dispatch(uint x, uint y, uint z)
     {
-        context.wgpu.ComputePassEncoderDispatchWorkgroups(native, x, y, z);
+        context.Backend.ComputePassEncoderDispatchWorkgroups(native, x, y, z);
     }
 
     public void SetPipeline(GPUComputePipeline pipeline)
     {
-        context.wgpu.ComputePassEncoderSetPipeline(native, (Silk.NET.WebGPU.ComputePipeline*)pipeline.Native);
+        context.Backend.ComputePassEncoderSetPipeline(native, pipeline.Native);
     }
 
     public void SetBindGroup(uint group, GPUBindGroup bindGroup)
     {
-        context.wgpu.ComputePassEncoderSetBindGroup(native, group, (Silk.NET.WebGPU.BindGroup*)bindGroup.Native, 0, null);
+        context.Backend.ComputePassEncoderSetBindGroup(native, group, bindGroup.Native, 0, null);
     }
 }
