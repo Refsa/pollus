@@ -154,16 +154,14 @@ static class SDLMapping
 
     public static GamepadButton MapJoystickButton(byte button, string deviceName)
     {
-#if BROWSER
-        return MapEmscriptenJoystickButton(button, deviceName);
-#else
+        if (OperatingSystem.IsBrowser()) return MapEmscriptenJoystickButton(button, deviceName);
         return MapGamepadButton((Silk.NET.SDL.GameControllerButton)button);
-#endif
     }
 
     public static GamepadButton MapEmscriptenJoystickButton(byte button, string deviceName)
     {
-        return button switch {
+        return button switch
+        {
             0 => GamepadButton.South,
             1 => GamepadButton.East,
             2 => GamepadButton.West,
@@ -187,16 +185,14 @@ static class SDLMapping
 
     public static GamepadAxis MapJoystickAxis(byte axis, string deviceName)
     {
-#if BROWSER
-        return MapEmscriptenJoystickAxis(axis, deviceName);
-#else
+        if (OperatingSystem.IsBrowser()) return MapEmscriptenJoystickAxis(axis, deviceName);
         return MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)axis);
-#endif
     }
 
     public static GamepadAxis MapEmscriptenJoystickAxis(byte axis, string deviceName)
     {
-        return axis switch {
+        return axis switch
+        {
             0 => GamepadAxis.LeftX,
             1 => GamepadAxis.LeftY,
             2 => GamepadAxis.RightX,

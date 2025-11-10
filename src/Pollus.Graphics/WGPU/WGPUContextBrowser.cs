@@ -1,4 +1,3 @@
-#if BROWSER
 namespace Pollus.Graphics.WGPU;
 
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +8,8 @@ using Pollus.Utils;
 using Pollus.Graphics.Windowing;
 using Pollus.Graphics.Rendering;
 using Pollus.Debugging;
-using System.Runtime.InteropServices.JavaScript;
+using Pollus.Graphics.Platform;
+using Pollus.Graphics.Platform.Emscripten;
 
 unsafe public class WGPUContextBrowser : IWGPUContext
 {
@@ -25,16 +25,16 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         Failed
     }
 
-    static WGPUContextBrowser _instance;
+    static WGPUContextBrowser? _instance;
 
     IWindow window;
     WGPUInstance instance;
 
-    Silk.NET.WebGPU.Surface* surface;
-    Silk.NET.WebGPU.Adapter* adapter;
-    Silk.NET.WebGPU.Device* device;
-    Silk.NET.WebGPU.Queue* queue;
-    Emscripten.WGPUSwapChain_Browser* swapChain;
+    Emscripten.WGPU.WGPUSurface* surface;
+    Emscripten.WGPU.WGPUAdapter* adapter;
+    Emscripten.WGPU.WGPUDevice* device;
+    Emscripten.WGPU.WGPUQueue* queue;
+    Emscripten.WGPU.WGPUSwapChain* swapChain;
 
     TextureFormat preferredFormat;
 
@@ -44,20 +44,21 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     List<IGPUResourceWrapper> resources = new();
 
     public IWindow Window => window;
-    public Emscripten.WGPUBrowser wgpu => instance.wgpu;
     public bool IsReady => state is SetupState.Ready;
 
-    public Silk.NET.WebGPU.Surface* Surface => surface;
-    public Silk.NET.WebGPU.Adapter* Adapter => adapter;
-    public Silk.NET.WebGPU.Device* Device => device;
-    public Silk.NET.WebGPU.Queue* Queue => queue;
-    public Emscripten.WGPUSwapChain_Browser* SwapChain => swapChain;
+    public IWgpuBackend Backend => backend;
+    public NativeHandle<DeviceTag> DeviceHandle => new((nint)device);
+    public NativeHandle<QueueTag> QueueHandle => new((nint)queue);
+
+    IWgpuBackend backend;
+    Emscripten.WGPUBrowser wgpu => (backend as EmscriptenWgpuBackend)!.wgpu;
 
     public WGPUContextBrowser(IWindow window, WGPUInstance instance)
     {
         this.window = window;
         this.instance = instance;
         _instance = this;
+        backend = WgpuBackendProvider.Get();
     }
 
     ~WGPUContextBrowser() => Dispose();
@@ -113,30 +114,30 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     void CreateSurface()
     {
         using var selectorPtr = TemporaryPin.PinString("#canvas");
-        Silk.NET.WebGPU.SurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
+        Emscripten.WGPU.WGPUSurfaceDescriptorFromCanvasHTMLSelector surfaceDescriptorFromCanvasHTMLSelector = new()
         {
-            Chain = new Silk.NET.WebGPU.ChainedStruct
+            Chain = new Emscripten.WGPU.WGPUChainedStruct
             {
                 Next = null,
-                SType = Silk.NET.WebGPU.SType.SurfaceDescriptorFromCanvasHtmlSelector,
+                SType = Emscripten.WGPU.WGPUSType.SurfaceDescriptorFromCanvasHTMLSelector,
             },
             Selector = (byte*)selectorPtr.Ptr
         };
 
-        Silk.NET.WebGPU.SurfaceDescriptor descriptor = new()
+        Emscripten.WGPU.WGPUSurfaceDescriptor descriptor = new()
         {
-            NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
+            NextInChain = (Emscripten.WGPU.WGPUChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector
         };
-        surface = wgpu.InstanceCreateSurface(instance.instance, (Silk.NET.WebGPU.SurfaceDescriptor*)Unsafe.AsPointer(in descriptor));
+        surface = wgpu.InstanceCreateSurface(instance.Instance.As<Emscripten.WGPU.WGPUInstance>(), (Emscripten.WGPU.WGPUSurfaceDescriptor*)Unsafe.AsPointer(ref descriptor));
     }
 
     void CreateSwapChain()
     {
-        var descriptor = new Emscripten.WGPUSwapChainDescriptor_Browser()
+        var descriptor = new Emscripten.WGPU.WGPUSwapChainDescriptor()
         {
-            Format = (Silk.NET.WebGPU.TextureFormat)preferredFormat,
-            PresentMode = Silk.NET.WebGPU.PresentMode.Fifo,
-            Usage = (Silk.NET.WebGPU.TextureUsage)TextureUsage.RenderAttachment,
+            Format = (Emscripten.WGPU.WGPUTextureFormat)preferredFormat,
+            PresentMode = Emscripten.WGPU.WGPUPresentMode.Fifo,
+            Usage = (Emscripten.WGPU.WGPUTextureUsage)TextureUsage.RenderAttachment,
             Height = (uint)window.Size.Y,
             Width = (uint)window.Size.X
         };
@@ -144,24 +145,25 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         if (swapChain == null) throw new ApplicationException("Failed to create swap chain");
     }
 
-    [MemberNotNull(nameof(adapter))]
     void CreateAdapter()
     {
-        var requestAdapterOptions = new Silk.NET.WebGPU.RequestAdapterOptions
+        var requestAdapterOptions = new Emscripten.WGPU.WGPURequestAdapterOptions
         {
             CompatibleSurface = surface
         };
-        wgpu.InstanceRequestAdapter(instance.instance, requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
+        wgpu.InstanceRequestAdapter(instance.Instance.As<Emscripten.WGPU.WGPUInstance>(), requestAdapterOptions, &HandleRequestAdapterCallback, (void*)nint.Zero);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void HandleRequestAdapterCallback(Silk.NET.WebGPU.RequestAdapterStatus status, Silk.NET.WebGPU.Adapter* adapter, byte* message, void* userdata)
+    static void HandleRequestAdapterCallback(Emscripten.WGPU.WGPURequestAdapterStatus status, Emscripten.WGPU.WGPUAdapter* adapter, byte* message, void* userdata)
     {
-        if (status == Silk.NET.WebGPU.RequestAdapterStatus.Success)
+        if (status == Emscripten.WGPU.WGPURequestAdapterStatus.Success)
         {
+            var instA = _instance;
+            if (instA == null) return;
             Log.Info("WGPU: Adapter acquired");
-            _instance.adapter = adapter;
-            _instance.state = SetupState.AdapterReady;
+            instA!.adapter = adapter;
+            instA!.state = SetupState.AdapterReady;
         }
         else
         {
@@ -170,10 +172,9 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         }
     }
 
-    [MemberNotNull(nameof(device))]
     void CreateDevice()
     {
-        var limits = new Emscripten.WGPULimits_Browser()
+        var limits = new Emscripten.WGPU.WGPULimits()
         {
             MinStorageBufferOffsetAlignment = 256,
             MinUniformBufferOffsetAlignment = 256,
@@ -181,20 +182,20 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             MaxDynamicUniformBuffersPerPipelineLayout = 1,
             MaxInterStageShaderComponents = 4294967295U,
         };
-        var requiredLimits = new Emscripten.WGPURequiredLimits_Browser()
+        var requiredLimits = new Emscripten.WGPU.WGPURequiredLimits()
         {
             Limits = limits
         };
         var requiredLimitsPtr = Unsafe.AsPointer(ref requiredLimits);
 
-        var requiredFeatures = stackalloc Emscripten.WGPUFeatureName_Browser[]
+        var requiredFeatures = stackalloc Emscripten.WGPU.WGPUFeatureName[]
         {
-            Emscripten.WGPUFeatureName_Browser.IndirectFirstInstance,
+            Emscripten.WGPU.WGPUFeatureName.IndirectFirstInstance,
         };
 
-        var deviceDescriptor = new Emscripten.WGPUDeviceDescriptor_Browser()
+        var deviceDescriptor = new Emscripten.WGPU.WGPUDeviceDescriptor()
         {
-            RequiredLimits = (Emscripten.WGPURequiredLimits_Browser*)requiredLimitsPtr,
+            RequiredLimits = (Emscripten.WGPU.WGPURequiredLimits*)requiredLimitsPtr,
             RequiredFeatureCount = (nuint)1,
             RequiredFeatures = requiredFeatures,
         };
@@ -203,13 +204,15 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void HandleRequestDeviceCallback(Silk.NET.WebGPU.RequestDeviceStatus status, Silk.NET.WebGPU.Device* device, byte* message, void* userdata)
+    static void HandleRequestDeviceCallback(Emscripten.WGPU.WGPURequestDeviceStatus status, Emscripten.WGPU.WGPUDevice* device, byte* message, void* userdata)
     {
-        if (status == Silk.NET.WebGPU.RequestDeviceStatus.Success)
+        if (status == Emscripten.WGPU.WGPURequestDeviceStatus.Success)
         {
+            var instD = _instance;
+            if (instD == null) return;
             Log.Info("WGPU: Device acquired");
-            _instance.device = device;
-            _instance.state = SetupState.DeviceReady;
+            instD!.device = device;
+            instD!.state = SetupState.DeviceReady;
         }
         else
         {
@@ -251,5 +254,16 @@ unsafe public class WGPUContextBrowser : IWGPUContext
     {
 
     }
+
+    public bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor)
+    {
+        var native = wgpu.SwapChainGetCurrentTextureView(swapChain);
+        if (native == null)
+        {
+            textureView = default;
+            return false;
+        }
+        textureView = new GPUTextureView(this, (nint)native, descriptor);
+        return true;
+    }
 }
-#endif

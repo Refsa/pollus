@@ -2,15 +2,18 @@ namespace Pollus.Graphics.Rendering;
 
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Platform;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
     NativeUtf8 label;
     BufferDescriptor descriptor;
-    Silk.NET.WebGPU.Buffer* native;
+    NativeHandle<BufferTag> native;
     ulong size;
 
-    public nint Native => (nint)native;
+    public NativeHandle<BufferTag> Native => native;
     public ulong Size => size;
 
     public GPUBuffer(IWGPUContext context, BufferDescriptor descriptor) : base(context)
@@ -19,29 +22,19 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         size = descriptor.Size;
         this.descriptor = descriptor;
 
-        var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
-            label: label.Pointer,
-            usage: (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
-            size: descriptor.Size,
-            mappedAtCreation: descriptor.MappedAtCreation
-        );
-
-        native = context.wgpu.DeviceCreateBuffer(context.Device, in nativeDescriptor);
+        native = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in descriptor, label);
     }
 
     protected override void Free()
     {
-        context.wgpu.BufferDestroy(native);
-        context.wgpu.BufferRelease(native);
+        context.Backend.BufferDestroy(native);
+        context.Backend.BufferRelease(native);
         label.Dispose();
     }
 
     public void Write(ReadOnlySpan<byte> data, int offset)
     {
-        fixed (byte* ptr = data)
-        {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, (nuint)data.Length);
-        }
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, data, (uint)data.Length);
     }
 
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
@@ -54,10 +47,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(ReadOnlySpan<TElement> data, uint alignedSize, int offset = 0)
         where TElement : unmanaged
     {
-        fixed (TElement* ptr = data)
-        {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, alignedSize);
-        }
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(data), alignedSize);
     }
 
     public void Write<TElement>(in TElement element, int offset)
@@ -70,10 +60,8 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(in TElement element, uint alignedSize, int offset)
         where TElement : unmanaged
     {
-        fixed (TElement* ptr = &element)
-        {
-            context.wgpu.QueueWriteBuffer(context.Queue, native, (nuint)offset, ptr, alignedSize);
-        }
+        ReadOnlySpan<TElement> span = stackalloc TElement[] { element };
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(span), alignedSize);
     }
 
     public void Resize<TElement>(uint newCapacity)
@@ -83,17 +71,11 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         if (newSize == 0 || newSize <= size) return;
         size = newSize;
 
-        var bufferDescriptor = new Silk.NET.WebGPU.BufferDescriptor
-        {
-            Label = label.Pointer,
-            Size = size,
-            Usage = (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
-        };
-
-        var newBuffer = context.wgpu.DeviceCreateBuffer(context.Device, in bufferDescriptor);
-
-        context.wgpu.BufferDestroy(native);
-        context.wgpu.BufferRelease(native);
+        var updated = descriptor;
+        updated.Size = size;
+        var newBuffer = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in updated, label);
+        context.Backend.BufferDestroy(native);
+        context.Backend.BufferRelease(native);
         native = newBuffer;
     }
 }

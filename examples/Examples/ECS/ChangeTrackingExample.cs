@@ -33,7 +33,7 @@ public class ChangeTrackingExample : IExample
                 commands.Spawn(Entity.With(new Component1()));
             }
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("ChangeTracking", 
+        .AddSystem(CoreStage.Update, FnSystem.Create("ChangeTracking",
         static (Query<Component1> qComponents, Query query) =>
         {
             foreach (var row in qComponents)

@@ -24,12 +24,12 @@ public class SystemParamTests
 
             }
         ));
-        
+
         world.Prepare();
         world.Update();
 
-        Assert.Equal(1, world.Schedule.GetStage(CoreStage.Update)!.StageGraph.First.Systems.Count);
+        Assert.Single(world.Schedule.GetStage(CoreStage.Update)!.StageGraph.First.Systems);
         Assert.NotNull(world.Schedule.GetStage(CoreStage.Update)!.StageGraph.First.Next);
-        Assert.Equal(1, world.Schedule.GetStage(CoreStage.Update)!.StageGraph.First.Next.Systems.Count);
+        Assert.Single(world.Schedule.GetStage(CoreStage.Update)!.StageGraph.First.Next.Systems);
     }
 }

@@ -40,7 +40,7 @@ public class NativeCollectionsTests
         {
             map.Remove(i);
         }
-        
+
         map.Add(84, 84);
         map.Add(52, 52);
         map.Remove(84);

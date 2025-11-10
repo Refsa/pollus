@@ -9,7 +9,7 @@ public interface IShape2D
 
 public static class Shape2DExt
 {
-    public static TShape Translate<TShape>(this TShape shape, Vec2f translation) 
+    public static TShape Translate<TShape>(this TShape shape, Vec2f translation)
         where TShape : struct, IShape2D
     {
         if (shape is Circle2D)

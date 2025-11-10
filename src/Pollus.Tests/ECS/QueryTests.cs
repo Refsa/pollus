@@ -175,7 +175,7 @@ public class QueryTests
 
         world.Update();
         Assert.Equal(0, qTc1.EntityCount());
-        
+
         world.Store.RemoveComponent<TestComponent1>(e1);
         Assert.Equal(1, qTc1.EntityCount());
         world.Update();

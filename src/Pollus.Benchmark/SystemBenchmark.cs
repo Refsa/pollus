@@ -36,7 +36,7 @@ public class SystemBenchmark
                     timer.Value -= time.DeltaTimeF;
                     yield return Yield.Return;
                 }
-                
+
                 timer.Value = 0.001f;
             }
         }));

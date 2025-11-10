@@ -104,7 +104,7 @@ public record class Application
         return this;
     }
 
-    public Application AddSystemSet<TSystemSet>() 
+    public Application AddSystemSet<TSystemSet>()
         where TSystemSet : ISystemSet, new()
     {
         TSystemSet.AddToSchedule(world.Schedule);

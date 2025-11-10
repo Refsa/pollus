@@ -22,13 +22,16 @@ public class PlatformEvents
     {
         var @event = new Silk.NET.SDL.Event();
 
-#if BROWSER
-        EmscriptenSDL.PumpEvents();
-        while (EmscriptenSDL.PollEvent(ref @event) == 1) events.Add(@event);
-#else
-        SDLWrapper.Instance.PumpEvents();
-        while (SDLWrapper.Instance.PollEvent(ref @event) == 1) events.Add(@event);
-#endif
+        if (OperatingSystem.IsBrowser())
+        {
+            EmscriptenSDL.PumpEvents();
+            while (EmscriptenSDL.PollEvent(ref @event) == 1) events.Add(@event);
+        }
+        else
+        {
+            SDLWrapper.Instance.PumpEvents();
+            while (SDLWrapper.Instance.PollEvent(ref @event) == 1) events.Add(@event);
+        }
     }
 }
 

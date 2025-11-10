@@ -116,7 +116,7 @@ public class InputManager : IDisposable
     {
         if (@event.Type is (int)Silk.NET.SDL.EventType.Controllerdeviceadded)
         {
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             gamepad.Connect();
@@ -131,7 +131,7 @@ public class InputManager : IDisposable
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Controlleraxismotion)
         {
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             var axis = SDLMapping.MapGamepadAxis((Silk.NET.SDL.GameControllerAxis)@event.Caxis.Axis);
@@ -139,7 +139,7 @@ public class InputManager : IDisposable
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Controllerbuttondown or (int)Silk.NET.SDL.EventType.Controllerbuttonup)
         {
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             var button = SDLMapping.MapGamepadButton((Silk.NET.SDL.GameControllerButton)@event.Cbutton.Button);
@@ -153,7 +153,7 @@ public class InputManager : IDisposable
         {
             if (!isBrowser && Gamepad.IsGamepad(@event.Jdevice.Which)) return;
 
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             gamepad.Connect();
@@ -171,7 +171,7 @@ public class InputManager : IDisposable
         {
             if (!isBrowser && Gamepad.IsGamepad(@event.Jdevice.Which)) return;
 
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             var axis = SDLMapping.MapJoystickAxis(@event.Jaxis.Axis, gamepad.DeviceName);
@@ -181,7 +181,7 @@ public class InputManager : IDisposable
         {
             if (!isBrowser && Gamepad.IsGamepad(@event.Jdevice.Which)) return;
 
-            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which) 
+            var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which)
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             var button = SDLMapping.MapJoystickButton(@event.Jbutton.Button, gamepad.DeviceName);

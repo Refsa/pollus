@@ -97,7 +97,7 @@ public class CollisionExample : IExample
                 qCollisions.ForEach((in Entity oEntity, ref Transform2D oTransform, ref CollisionShape oShape, ref ShapeDraw oDraw) =>
                 {
                     if (_entity == oEntity) return;
-                    
+
                     collision = collision || _shape.GetIntersection(_transform, oShape, oTransform).IsIntersecting;
                 });
 

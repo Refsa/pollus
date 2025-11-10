@@ -20,9 +20,9 @@ public class HierarchyPlugin : IPlugin
     {
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("Hierarchy::Maintenance"),
         static (
-            Commands commands, 
+            Commands commands,
             RemovedTracker<Child> childRemovedTracker,
-            Query.Filter<Removed<Child>> qChildRemoved, 
+            Query.Filter<Removed<Child>> qChildRemoved,
             Query.Filter<Removed<Parent>> qParentRemoved) =>
         {
             foreach (var child in qChildRemoved)

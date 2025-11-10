@@ -41,10 +41,7 @@ public static class Window
 {
     public static IWindow Create(WindowOptions options)
     {
-#if BROWSER
-        return new BrowserWindow(options);
-#else
+        if (OperatingSystem.IsBrowser()) return new BrowserWindow(options);
         return new DesktopWindow(options);
-#endif
     }
 }

@@ -6,6 +6,7 @@ using Silk.NET.OpenAL;
 
 unsafe public class AudioManager : IDisposable
 {
+
 #if BROWSER
     internal Emscripten.ALContext alc;
     internal Emscripten.AL al;
@@ -13,7 +14,6 @@ unsafe public class AudioManager : IDisposable
     internal ALContext alc;
     internal AL al;
 #endif
-
     internal AudioDevice device;
 
     List<AudioSource> sources = new();
@@ -59,7 +59,7 @@ unsafe public class AudioManager : IDisposable
         {
             sources[i].Dispose();
         }
-        
+
         for (int i = buffers.Count - 1; i >= 0; i--)
         {
             buffers[i].Dispose();

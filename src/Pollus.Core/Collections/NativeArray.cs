@@ -6,6 +6,13 @@ using System.Runtime.InteropServices;
 unsafe public struct NativeArray<T> : IDisposable
     where T : unmanaged
 {
+    public static NativeArray<T> Empty => new()
+    {
+        data = null,
+        size = 0,
+        length = 0,
+    };
+
     T* data;
     int size;
     int length;

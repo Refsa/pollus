@@ -10,7 +10,7 @@ public class Log
 
     public static void Warn(string message)
     {
-        using var color = new ColorScope(ConsoleColor.Yellow);        
+        using var color = new ColorScope(ConsoleColor.Yellow);
         Console.WriteLine($"[WARN] {message}");
     }
 
@@ -26,27 +26,29 @@ public class Log
         Console.WriteLine($"[EXCEPTION] {message}\n{exception}");
     }
 
-#if BROWSER
     ref struct ColorScope
     {
-        public ColorScope(ConsoleColor color) { }
-        public void Dispose() { }
-    }
-#else
-    ref struct ColorScope
-    {
-        private readonly ConsoleColor previousColor;
+        readonly bool enabled;
+        readonly ConsoleColor previousColor;
 
         public ColorScope(ConsoleColor color)
         {
-            previousColor = Console.ForegroundColor;
-            Console.ForegroundColor = color;
+            if (OperatingSystem.IsBrowser())
+            {
+                enabled = false;
+                previousColor = default;
+            }
+            else
+            {
+                enabled = true;
+                previousColor = Console.ForegroundColor;
+                Console.ForegroundColor = color;
+            }
         }
 
         public void Dispose()
         {
-            Console.ForegroundColor = previousColor;
+            if (enabled) Console.ForegroundColor = previousColor;
         }
     }
-#endif
 }

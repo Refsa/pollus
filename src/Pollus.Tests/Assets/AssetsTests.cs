@@ -13,7 +13,7 @@ public class AssetsTests
             Path = new AssetPath("test.txt"),
             FileName = "test.txt",
         };
-        
+
         assetLoader.Load(File.ReadAllBytes("Assets/TestFiles/test.txt"), ref loadContext);
         Assert.Equal(AssetStatus.Loaded, loadContext.Status);
         Assert.Equal("this is some text", ((TextAsset)loadContext.Asset!).Content);

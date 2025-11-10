@@ -27,7 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0855686E-7B9
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Generators", "src\Pollus.Generators\Pollus.Generators.csproj", "{274CDF4D-F3B4-497B-AE41-B0C06DBE0CD0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Emscripten.WGPU", "src\Pollus.Emscripten.WGPU\Pollus.Emscripten.WGPU.csproj", "{68520CC3-0CCB-45A7-9289-251B2D13C1FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Emscripten.WGPUGenerator", "src\Pollus.Emscripten.WGPUGenerator\Pollus.Emscripten.WGPUGenerator.csproj", "{68520CC3-0CCB-45A7-9289-251B2D13C1FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

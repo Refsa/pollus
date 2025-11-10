@@ -31,7 +31,7 @@ public class World : IDisposable
         Schedule = Schedule.CreateDefault();
         Resources = new();
         Events = new();
-        
+
         commandBuffers = new(() => new(Store.Entities), 1);
         registeredPlugins = [];
         commandBuffersQueue = new();

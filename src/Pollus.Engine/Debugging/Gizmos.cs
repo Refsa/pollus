@@ -47,7 +47,7 @@ public class Gizmos
             var outlinedMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoOutlinedMaterial>(0));
             drawBuffer.Setup(gpuContext, renderAssets, outlinedMaterial.Pipeline, filledMaterial.Pipeline, filledMaterial.BindGroups[0]);
         }
-        
+
         drawBuffer.PrepareFrame(renderAssets);
     }
 

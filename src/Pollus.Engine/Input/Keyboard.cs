@@ -154,7 +154,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
 
     public void PreUpdate()
     {
-        
+
     }
 
     public void Update(Events events)
@@ -162,7 +162,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
         foreach (var key in buttons.Keys)
         {
             if (changed.Contains(key)) continue;
-            
+
             var prev = buttons[key];
             buttons[key] = buttons[key] switch
             {

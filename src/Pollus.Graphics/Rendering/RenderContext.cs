@@ -2,6 +2,7 @@ namespace Pollus.Graphics.Rendering;
 
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
+using Pollus.Graphics.Platform;
 
 public class RenderContext
 {
@@ -84,14 +85,14 @@ public class RenderContext
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
 
         {
-            var commandBuffers = stackalloc Silk.NET.WebGPU.CommandBuffer*[commandEncoders.Count];
+            Span<NativeHandle<CommandBufferTag>> commandBufferHandles = stackalloc NativeHandle<CommandBufferTag>[commandEncoders.Count];
             for (int i = 0; i < commandEncoders.Count; i++)
             {
                 var commandBuffer = commandEncoders[i].Finish("");
-                this.commandBuffers.Add(commandBuffer);
-                commandBuffers[i] = (Silk.NET.WebGPU.CommandBuffer*)commandBuffer.Native;
+                commandBuffers.Add(commandBuffer);
+                commandBufferHandles[i] = commandBuffer.Native;
             }
-            GPUContext.wgpu.QueueSubmit(GPUContext.Queue, (uint)commandEncoders.Count, commandBuffers);
+            GPUContext.Backend.QueueSubmit(GPUContext.QueueHandle, commandBufferHandles);
         }
 
         GPUContext.Present();

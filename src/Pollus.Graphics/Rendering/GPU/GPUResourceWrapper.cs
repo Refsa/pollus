@@ -4,7 +4,7 @@ using Pollus.Graphics.WGPU;
 
 public interface IGPUResourceWrapper : IDisposable
 {
-    
+
 }
 
 public abstract class GPUResourceWrapper : IGPUResourceWrapper

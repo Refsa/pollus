@@ -29,22 +29,22 @@ public class QueryFetch<TQuery> : IFetch<TQuery>
 }
 
 public class QueryFilterFetch<TFilterQuery> : IFetch<TFilterQuery>
-	where TFilterQuery : IQuery, IQueryCreate<TFilterQuery>
+    where TFilterQuery : IQuery, IQueryCreate<TFilterQuery>
 {
-	public static void Register()
-	{
-		Fetch.Register(new QueryFilterFetch<TFilterQuery>(), [typeof(TFilterQuery)]);
-	}
+    public static void Register()
+    {
+        Fetch.Register(new QueryFilterFetch<TFilterQuery>(), [typeof(TFilterQuery)]);
+    }
 
-	public TFilterQuery DoFetch(World world, ISystem system)
-	{
-		if (!system.Resources.TryGet<TFilterQuery>(out var query))
-		{
-			query = TFilterQuery.Create(world);
-			system.Resources.Add(query);
-		}
-		return query;
-	}
+    public TFilterQuery DoFetch(World world, ISystem system)
+    {
+        if (!system.Resources.TryGet<TFilterQuery>(out var query))
+        {
+            query = TFilterQuery.Create(world);
+            system.Resources.Add(query);
+        }
+        return query;
+    }
 }
 
 public struct Query : IQuery, IQueryCreate<Query>

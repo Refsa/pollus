@@ -1,20 +1,20 @@
 namespace Pollus.Graphics.Rendering;
 
-using ImGuiNET;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
+using Pollus.Graphics.Platform;
 
 unsafe public struct GPUTextureView : IGPUResourceWrapper
 {
     IWGPUContext context;
     GPUTexture? texture;
-    Silk.NET.WebGPU.TextureView* textureView;
+    NativeHandle<TextureViewTag> native;
     TextureViewDescriptor descriptor;
 
     bool isRegistered;
     bool isDisposed;
 
-    public nint Native => (nint)textureView;
+    public NativeHandle<TextureViewTag> Native => native;
     public readonly TextureViewDescriptor Descriptor => descriptor;
     public readonly TextureDescriptor TextureDescriptor => texture?.Descriptor ?? default;
 
@@ -22,7 +22,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
     {
         this.context = context;
         this.descriptor = descriptor;
-        textureView = context.wgpu.TextureCreateView(texture, null);
+        native = context.Backend.TextureCreateView(new NativeHandle<TextureTag>((nint)texture), in descriptor, NativeUtf8.Null);
     }
 
     public GPUTextureView(IWGPUContext context, GPUTexture texture)
@@ -44,7 +44,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
             BaseMipLevel = 0,
             Format = texture.Descriptor.Format,
         };
-        textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, null);
+        native = context.Backend.TextureCreateView(texture.Native, in this.descriptor, NativeUtf8.Null);
     }
 
     public GPUTextureView(IWGPUContext context, GPUTexture texture, TextureViewDescriptor descriptor)
@@ -52,25 +52,21 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
         using var labelData = new NativeUtf8(descriptor.Label);
 
         this.context = context;
-        var nativeDescriptor = new Silk.NET.WebGPU.TextureViewDescriptor(
-            label: labelData.Pointer,
-            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
-            dimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Dimension,
-            baseMipLevel: descriptor.BaseMipLevel,
-            mipLevelCount: descriptor.MipLevelCount,
-            baseArrayLayer: descriptor.BaseArrayLayer,
-            arrayLayerCount: descriptor.ArrayLayerCount,
-            aspect: descriptor.Aspect
-        );
-
         this.texture = texture;
-        textureView = context.wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Native, in nativeDescriptor);
+        native = context.Backend.TextureCreateView(texture.Native, in descriptor, labelData);
     }
 
     public GPUTextureView(IWGPUContext context, Silk.NET.WebGPU.TextureView* textureView, TextureViewDescriptor descriptor)
     {
         this.context = context;
-        this.textureView = textureView;
+        this.native = new NativeHandle<TextureViewTag>((nint)textureView);
+        this.descriptor = descriptor;
+    }
+
+    public GPUTextureView(IWGPUContext context, nint textureView, TextureViewDescriptor descriptor)
+    {
+        this.context = context;
+        this.native = new NativeHandle<TextureViewTag>(textureView);
         this.descriptor = descriptor;
     }
 
@@ -80,7 +76,7 @@ unsafe public struct GPUTextureView : IGPUResourceWrapper
         isDisposed = true;
 
         if (isRegistered) context.ReleaseResource(this);
-        context.wgpu.TextureViewRelease(textureView);
+        context.Backend.TextureViewRelease(native);
     }
 
     public void RegisterResource()

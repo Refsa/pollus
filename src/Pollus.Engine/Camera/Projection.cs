@@ -128,7 +128,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         var cameraMatrix = cameraTransform.ToMat4f();
         var viewProjectionMatrix = projectionMatrix * cameraMatrix;
         var inverseViewProjection = viewProjectionMatrix.Inverse();
-        
+
         var clipSpace = new Vec4f(normalizedScreen.X, normalizedScreen.Y, 0f, 1f);
         var worldPoint = inverseViewProjection * clipSpace;
         return new Vec2f(worldPoint.X / worldPoint.W, worldPoint.Y / worldPoint.W);
@@ -139,7 +139,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         var cameraMatrix = cameraTransform.ToMat4f();
         var worldPoint = new Vec4f(worldPos.X, worldPos.Y, 0f, 1f);
         var transformedPoint = cameraMatrix * worldPoint;
-        
+
         var normalizedScreen = new Vec2f(
             transformedPoint.X / (Area.Width / 2f),
             -transformedPoint.Y / (Area.Height / 2f)

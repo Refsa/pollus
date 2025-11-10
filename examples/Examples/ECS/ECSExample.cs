@@ -126,7 +126,7 @@ public partial class ECSExample : IExample
         {
             Stage = StateEnter.On(TestState.State1),
         };
-        
+
         [System(nameof(State1Exit))]
         static readonly SystemBuilderDescriptor State1ExitDescriptor = new()
         {

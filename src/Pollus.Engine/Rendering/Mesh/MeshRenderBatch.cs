@@ -22,7 +22,7 @@ public record struct MeshBatchKey
 
 public class MeshRenderBatches : RenderBatches<MeshRenderBatch, MeshBatchKey>
 {
-    protected override MeshRenderBatch CreateBatch( in MeshBatchKey key)
+    protected override MeshRenderBatch CreateBatch(in MeshBatchKey key)
     {
         return new MeshRenderBatch(key);
     }

@@ -53,10 +53,10 @@ public partial class TweenExample : IExample
             var shape = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * scale));
 
             for (int x = 0; x < 100; x++)
-            for (int y = 0; y < 10; y++)
-            {
-                SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, y * scale * 3f), shapeMaterial, shape);
-            }
+                for (int y = 0; y < 10; y++)
+                {
+                    SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, y * scale * 3f), shapeMaterial, shape);
+                }
         }))
         .Build())
         .Run();

@@ -93,7 +93,7 @@ public static class HierarchyCommandsExt
         builder.Commands.RemoveChild(builder.Entity, child);
         return builder;
     }
-    
+
     public static EntityCommands RemoveChildren(this EntityCommands builder)
     {
         builder.Commands.RemoveChildren(builder.Entity);
