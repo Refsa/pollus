@@ -23,98 +23,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         return new NativeHandle<InstanceTag>((nint)instance);
     }
 
-    public NativeHandle<SurfaceTag> CreateSurface(NativeHandle<InstanceTag> instance, SurfaceSource source)
-    {
-        return new NativeHandle<SurfaceTag>(source.Handle);
-    }
-
-    public void RequestAdapter(NativeHandle<InstanceTag> instance, in AdapterOptions options, Action<AdapterResult> callback)
-    {
-        var req = new Silk.NET.WebGPU.RequestAdapterOptions
-        {
-            CompatibleSurface = (Silk.NET.WebGPU.Surface*)options.CompatibleSurface.Ptr
-        };
-        var handle = GCHandle.Alloc(callback, GCHandleType.Normal);
-        wgpu.InstanceRequestAdapter((Silk.NET.WebGPU.Instance*)instance.Ptr, ref req, new Silk.NET.WebGPU.PfnRequestAdapterCallback(OnRequestAdapter), (void*)GCHandle.ToIntPtr(handle));
-    }
-
-    public void RequestDevice(NativeHandle<AdapterTag> adapter, in DeviceOptions options, Action<DeviceResult> callback)
-    {
-        var limits = new Silk.NET.WebGPU.SupportedLimits();
-        wgpu.AdapterGetLimits((Silk.NET.WebGPU.Adapter*)adapter.Ptr, ref limits);
-        var requiredLimits = new Silk.NET.WebGPU.RequiredLimits
-        {
-            Limits = limits.Limits with
-            {
-                MinStorageBufferOffsetAlignment = options.MinStorageBufferOffsetAlignment,
-                MinUniformBufferOffsetAlignment = options.MinUniformBufferOffsetAlignment,
-                MaxBindGroups = options.MaxBindGroups
-            }
-        };
-        var desc = new Silk.NET.WebGPU.DeviceDescriptor(requiredLimits: &requiredLimits, requiredFeatureCount: 0, requiredFeatures: null);
-        var handle = GCHandle.Alloc(callback, GCHandleType.Normal);
-        wgpu.AdapterRequestDevice((Silk.NET.WebGPU.Adapter*)adapter.Ptr, ref desc, new Silk.NET.WebGPU.PfnRequestDeviceCallback(OnRequestDevice), (void*)GCHandle.ToIntPtr(handle));
-    }
-
-    static void OnRequestAdapter(Silk.NET.WebGPU.RequestAdapterStatus status, Silk.NET.WebGPU.Adapter* adapter, byte* message, void* userdata)
-    {
-        var gch = GCHandle.FromIntPtr((nint)userdata);
-        try
-        {
-            var cb = (Action<AdapterResult>)gch.Target!;
-            var ok = status == Silk.NET.WebGPU.RequestAdapterStatus.Success;
-            var msg = message != null ? Marshal.PtrToStringAnsi((nint)message) ?? string.Empty : string.Empty;
-            cb(new AdapterResult(ok, new NativeHandle<AdapterTag>((nint)adapter), msg));
-        }
-        finally
-        {
-            gch.Free();
-        }
-    }
-
-    static void OnRequestDevice(Silk.NET.WebGPU.RequestDeviceStatus status, Silk.NET.WebGPU.Device* device, byte* message, void* userdata)
-    {
-        var gch = GCHandle.FromIntPtr((nint)userdata);
-        try
-        {
-            var cb = (Action<DeviceResult>)gch.Target!;
-            var ok = status == Silk.NET.WebGPU.RequestDeviceStatus.Success;
-            var msg = message != null ? Marshal.PtrToStringAnsi((nint)message) ?? string.Empty : string.Empty;
-            cb(new DeviceResult(ok, new NativeHandle<DeviceTag>((nint)device), msg));
-        }
-        finally
-        {
-            gch.Free();
-        }
-    }
-
-    public NativeHandle<QueueTag> GetQueue(NativeHandle<DeviceTag> device)
-    {
-        var queue = wgpu.DeviceGetQueue((Silk.NET.WebGPU.Device*)device.Ptr);
-        return new NativeHandle<QueueTag>((nint)queue);
-    }
-
-    public NativeHandle<SwapChainTag> CreateSwapChain(NativeHandle<DeviceTag> device, NativeHandle<SurfaceTag> surface, in SwapChainOptions descriptor)
-    {
-        var cfg = new Silk.NET.WebGPU.SurfaceConfiguration(
-            device: (Silk.NET.WebGPU.Device*)device.Ptr,
-            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
-            alphaMode: Silk.NET.WebGPU.CompositeAlphaMode.Premultiplied,
-            usage: (Silk.NET.WebGPU.TextureUsage)descriptor.Usage,
-            presentMode: descriptor.PresentMode switch
-            {
-                PlatformPresentMode.Fifo => Silk.NET.WebGPU.PresentMode.Fifo,
-                PlatformPresentMode.Mailbox => Silk.NET.WebGPU.PresentMode.Mailbox,
-                _ => Silk.NET.WebGPU.PresentMode.Immediate
-            },
-            width: descriptor.Width,
-            height: descriptor.Height
-        );
-        wgpu.SurfaceConfigure((Silk.NET.WebGPU.Surface*)surface.Ptr, ref cfg);
-        return new NativeHandle<SwapChainTag>(0);
-    }
-
-    public NativeHandle<BufferTag> DeviceCreateBuffer(NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
             label: (byte*)label.Pointer,
@@ -122,29 +31,29 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             size: descriptor.Size,
             mappedAtCreation: descriptor.MappedAtCreation
         );
-        var buffer = wgpu.DeviceCreateBuffer((Silk.NET.WebGPU.Device*)device.Ptr, in nativeDescriptor);
+        var buffer = wgpu.DeviceCreateBuffer(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<BufferTag>((nint)buffer);
     }
 
-    public void BufferDestroy(NativeHandle<BufferTag> buffer)
+    public void BufferDestroy(in NativeHandle<BufferTag> buffer)
     {
-        wgpu.BufferDestroy((Silk.NET.WebGPU.Buffer*)buffer.Ptr);
+        wgpu.BufferDestroy(buffer.As<Silk.NET.WebGPU.Buffer>());
     }
 
-    public void BufferRelease(NativeHandle<BufferTag> buffer)
+    public void BufferRelease(in NativeHandle<BufferTag> buffer)
     {
-        wgpu.BufferRelease((Silk.NET.WebGPU.Buffer*)buffer.Ptr);
+        wgpu.BufferRelease(buffer.As<Silk.NET.WebGPU.Buffer>());
     }
 
-    public void QueueWriteBuffer(NativeHandle<QueueTag> queue, NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
+    public void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
     {
         fixed (byte* p = data)
         {
-            wgpu.QueueWriteBuffer((Silk.NET.WebGPU.Queue*)queue.Ptr, (Silk.NET.WebGPU.Buffer*)buffer.Ptr, offset, p, (nuint)alignedSize);
+            wgpu.QueueWriteBuffer(queue.As<Silk.NET.WebGPU.Queue>(), buffer.As<Silk.NET.WebGPU.Buffer>(), offset, p, (nuint)alignedSize);
         }
     }
 
-    public NativeHandle<TextureTag> DeviceCreateTexture(NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<TextureTag> DeviceCreateTexture(in NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, in NativeUtf8 label)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.TextureDescriptor(
             label: (byte*)label.Pointer,
@@ -165,24 +74,24 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = (Silk.NET.WebGPU.TextureFormat)descriptor.ViewFormats[i];
         nativeDescriptor.ViewFormatCount = (nuint)viewFormatCount;
         nativeDescriptor.ViewFormats = viewFormats;
-        var texture = wgpu.DeviceCreateTexture((Silk.NET.WebGPU.Device*)device.Ptr, in nativeDescriptor);
+        var texture = wgpu.DeviceCreateTexture(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<TextureTag>((nint)texture);
     }
 
-    public void TextureDestroy(NativeHandle<TextureTag> texture)
+    public void TextureDestroy(in NativeHandle<TextureTag> texture)
     {
-        wgpu.TextureDestroy((Silk.NET.WebGPU.Texture*)texture.Ptr);
+        wgpu.TextureDestroy(texture.As<Silk.NET.WebGPU.Texture>());
     }
 
-    public void TextureRelease(NativeHandle<TextureTag> texture)
+    public void TextureRelease(in NativeHandle<TextureTag> texture)
     {
-        wgpu.TextureRelease((Silk.NET.WebGPU.Texture*)texture.Ptr);
+        wgpu.TextureRelease(texture.As<Silk.NET.WebGPU.Texture>());
     }
 
-    public void QueueWriteTexture(NativeHandle<QueueTag> queue, NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
+    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
     {
         var destination = new Silk.NET.WebGPU.ImageCopyTexture(
-            texture: (Silk.NET.WebGPU.Texture*)texture.Ptr,
+            texture: texture.As<Silk.NET.WebGPU.Texture>(),
             mipLevel: mipLevel,
             origin: new Silk.NET.WebGPU.Origin3D(originX, originY, originZ)
         );
@@ -191,7 +100,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
         fixed (byte* p = data)
         {
-            wgpu.QueueWriteTexture((Silk.NET.WebGPU.Queue*)queue.Ptr, in destination, p, (nuint)data.Length, in layout, in writeSize);
+            wgpu.QueueWriteTexture(queue.As<Silk.NET.WebGPU.Queue>(), in destination, p, (nuint)data.Length, in layout, in writeSize);
         }
     }
 
@@ -200,7 +109,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         wgpu.Dispose();
     }
 
-    public NativeHandle<SamplerTag> DeviceCreateSampler(NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<SamplerTag> DeviceCreateSampler(in NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.SamplerDescriptor(
             label: (byte*)label.Pointer,
@@ -214,16 +123,16 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             lodMaxClamp: descriptor.LodMaxClamp,
             maxAnisotropy: descriptor.MaxAnisotropy
         );
-        var sampler = wgpu.DeviceCreateSampler((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+        var sampler = wgpu.DeviceCreateSampler(device.As<Silk.NET.WebGPU.Device>(), in native);
         return new NativeHandle<SamplerTag>((nint)sampler);
     }
 
-    public void SamplerRelease(NativeHandle<SamplerTag> sampler)
+    public void SamplerRelease(in NativeHandle<SamplerTag> sampler)
     {
-        wgpu.SamplerRelease((Silk.NET.WebGPU.Sampler*)sampler.Ptr);
+        wgpu.SamplerRelease(sampler.As<Silk.NET.WebGPU.Sampler>());
     }
 
-    public NativeHandle<BindGroupLayoutTag> DeviceCreateBindGroupLayout(NativeHandle<DeviceTag> device, in BindGroupLayoutDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BindGroupLayoutTag> DeviceCreateBindGroupLayout(in NativeHandle<DeviceTag> device, in BindGroupLayoutDescriptor descriptor, in NativeUtf8 label)
     {
         var entries = new Silk.NET.WebGPU.BindGroupLayoutEntry[descriptor.Entries.Length];
         for (int i = 0; i < descriptor.Entries.Length; i++)
@@ -259,21 +168,21 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 entryCount: (uint)entries.Length,
                 entries: entriesPtr
             );
-            var handle = wgpu.DeviceCreateBindGroupLayout((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+            var handle = wgpu.DeviceCreateBindGroupLayout(device.As<Silk.NET.WebGPU.Device>(), in native);
             return new NativeHandle<BindGroupLayoutTag>((nint)handle);
         }
     }
 
-    public void BindGroupLayoutRelease(NativeHandle<BindGroupLayoutTag> layout)
+    public void BindGroupLayoutRelease(in NativeHandle<BindGroupLayoutTag> layout)
     {
-        wgpu.BindGroupLayoutRelease((Silk.NET.WebGPU.BindGroupLayout*)layout.Ptr);
+        wgpu.BindGroupLayoutRelease(layout.As<Silk.NET.WebGPU.BindGroupLayout>());
     }
 
-    public NativeHandle<BindGroupTag> DeviceCreateBindGroup(NativeHandle<DeviceTag> device, in BindGroupDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BindGroupTag> DeviceCreateBindGroup(in NativeHandle<DeviceTag> device, in BindGroupDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.BindGroupDescriptor(
             label: (byte*)label.Pointer,
-            layout: (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layout.Native
+            layout: descriptor.Layout.Native.As<Silk.NET.WebGPU.BindGroupLayout>()
         );
         if (descriptor.Entries is BindGroupEntry[] bindGroupEntries)
         {
@@ -306,53 +215,54 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             fixed (Silk.NET.WebGPU.BindGroupEntry* entriesPtr = entriesSpan)
             {
                 native.Entries = entriesPtr;
-                var handle = wgpu.DeviceCreateBindGroup((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+                var handle = wgpu.DeviceCreateBindGroup(device.As<Silk.NET.WebGPU.Device>(), in native);
                 return new NativeHandle<BindGroupTag>((nint)handle);
             }
         }
-        var defaultHandle = wgpu.DeviceCreateBindGroup((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+
+        var defaultHandle = wgpu.DeviceCreateBindGroup(device.As<Silk.NET.WebGPU.Device>(), in native);
         return new NativeHandle<BindGroupTag>((nint)defaultHandle);
     }
 
-    public void BindGroupRelease(NativeHandle<BindGroupTag> bindGroup)
+    public void BindGroupRelease(in NativeHandle<BindGroupTag> bindGroup)
     {
-        wgpu.BindGroupRelease((Silk.NET.WebGPU.BindGroup*)bindGroup.Ptr);
+        wgpu.BindGroupRelease(bindGroup.As<Silk.NET.WebGPU.BindGroup>());
     }
 
-    public NativeHandle<CommandEncoderTag> DeviceCreateCommandEncoder(NativeHandle<DeviceTag> device, NativeUtf8 label)
+    public NativeHandle<CommandEncoderTag> DeviceCreateCommandEncoder(in NativeHandle<DeviceTag> device, in NativeUtf8 label)
     {
         var desc = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: (byte*)label.Pointer);
-        var enc = wgpu.DeviceCreateCommandEncoder((Silk.NET.WebGPU.Device*)device.Ptr, in desc);
+        var enc = wgpu.DeviceCreateCommandEncoder(device.As<Silk.NET.WebGPU.Device>(), in desc);
         return new NativeHandle<CommandEncoderTag>((nint)enc);
     }
 
-    public void CommandEncoderRelease(NativeHandle<CommandEncoderTag> encoder)
+    public void CommandEncoderRelease(in NativeHandle<CommandEncoderTag> encoder)
     {
-        wgpu.CommandEncoderRelease((Silk.NET.WebGPU.CommandEncoder*)encoder.Ptr);
+        wgpu.CommandEncoderRelease(encoder.As<Silk.NET.WebGPU.CommandEncoder>());
     }
 
-    public NativeHandle<CommandBufferTag> CommandEncoderFinish(NativeHandle<CommandEncoderTag> encoder, NativeUtf8 label)
+    public NativeHandle<CommandBufferTag> CommandEncoderFinish(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
         var desc = new Silk.NET.WebGPU.CommandBufferDescriptor(label: (byte*)label.Pointer);
-        var buffer = wgpu.CommandEncoderFinish((Silk.NET.WebGPU.CommandEncoder*)encoder.Ptr, in desc);
+        var buffer = wgpu.CommandEncoderFinish(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in desc);
         return new NativeHandle<CommandBufferTag>((nint)buffer);
     }
 
-    public void CommandBufferRelease(NativeHandle<CommandBufferTag> buffer)
+    public void CommandBufferRelease(in NativeHandle<CommandBufferTag> buffer)
     {
-        wgpu.CommandBufferRelease((Silk.NET.WebGPU.CommandBuffer*)buffer.Ptr);
+        wgpu.CommandBufferRelease(buffer.As<Silk.NET.WebGPU.CommandBuffer>());
     }
 
-    public void QueueSubmit(NativeHandle<QueueTag> queue, ReadOnlySpan<NativeHandle<CommandBufferTag>> commandBuffers)
+    public void QueueSubmit(in NativeHandle<QueueTag> queue, ReadOnlySpan<NativeHandle<CommandBufferTag>> commandBuffers)
     {
         if (commandBuffers.Length == 0) return;
         var span = commandBuffers;
         var ptrs = stackalloc Silk.NET.WebGPU.CommandBuffer*[span.Length];
-        for (int i = 0; i < span.Length; i++) ptrs[i] = (Silk.NET.WebGPU.CommandBuffer*)span[i].Ptr;
-        wgpu.QueueSubmit((Silk.NET.WebGPU.Queue*)queue.Ptr, (nuint)span.Length, ptrs);
+        for (int i = 0; i < span.Length; i++) ptrs[i] = span[i].As<Silk.NET.WebGPU.CommandBuffer>();
+        wgpu.QueueSubmit(queue.As<Silk.NET.WebGPU.Queue>(), (nuint)span.Length, ptrs);
     }
 
-    public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(NativeHandle<DeviceTag> device, ShaderBackend backend, NativeUtf8 label, NativeUtf8 code)
+    public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(in NativeHandle<DeviceTag> device, ShaderBackend backend, in NativeUtf8 label, in NativeUtf8 code)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(label: (byte*)label.Pointer);
         if (backend == ShaderBackend.WGSL)
@@ -363,37 +273,37 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             );
             nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&wgsl;
         }
-        var handle = wgpu.DeviceCreateShaderModule((Silk.NET.WebGPU.Device*)device.Ptr, &nativeDescriptor);
+        var handle = wgpu.DeviceCreateShaderModule(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<ShaderModuleTag>((nint)handle);
     }
 
-    public void ShaderModuleRelease(NativeHandle<ShaderModuleTag> shaderModule)
+    public void ShaderModuleRelease(in NativeHandle<ShaderModuleTag> shaderModule)
     {
-        wgpu.ShaderModuleRelease((Silk.NET.WebGPU.ShaderModule*)shaderModule.Ptr);
+        wgpu.ShaderModuleRelease(shaderModule.As<Silk.NET.WebGPU.ShaderModule>());
     }
 
-    public NativeHandle<PipelineLayoutTag> DeviceCreatePipelineLayout(NativeHandle<DeviceTag> device, in PipelineLayoutDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<PipelineLayoutTag> DeviceCreatePipelineLayout(in NativeHandle<DeviceTag> device, in PipelineLayoutDescriptor descriptor, in NativeUtf8 label)
     {
         var layouts = stackalloc Silk.NET.WebGPU.BindGroupLayout*[descriptor.Layouts.Length];
-        for (int i = 0; i < descriptor.Layouts.Length; i++) layouts[i] = (Silk.NET.WebGPU.BindGroupLayout*)descriptor.Layouts[i].Native;
+        for (int i = 0; i < descriptor.Layouts.Length; i++) layouts[i] = descriptor.Layouts[i].Native.As<Silk.NET.WebGPU.BindGroupLayout>();
         var native = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
             label: (byte*)label.Pointer,
             bindGroupLayoutCount: (uint)descriptor.Layouts.Length,
             bindGroupLayouts: layouts
         );
-        var handle = wgpu.DeviceCreatePipelineLayout((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+        var handle = wgpu.DeviceCreatePipelineLayout(device.As<Silk.NET.WebGPU.Device>(), in native);
         return new NativeHandle<PipelineLayoutTag>((nint)handle);
     }
 
-    public void PipelineLayoutRelease(NativeHandle<PipelineLayoutTag> layout)
+    public void PipelineLayoutRelease(in NativeHandle<PipelineLayoutTag> layout)
     {
-        wgpu.PipelineLayoutRelease((Silk.NET.WebGPU.PipelineLayout*)layout.Ptr);
+        wgpu.PipelineLayoutRelease(layout.As<Silk.NET.WebGPU.PipelineLayout>());
     }
 
-    public NativeHandle<ComputePipelineTag> DeviceCreateComputePipeline(NativeHandle<DeviceTag> device, in ComputePipelineDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<ComputePipelineTag> DeviceCreateComputePipeline(in NativeHandle<DeviceTag> device, in ComputePipelineDescriptor descriptor, in NativeUtf8 label)
     {
         var entryPoint = descriptor.Compute.EntryPoint;
-        using var entry = new Pollus.Collections.NativeUtf8(entryPoint);
+        using var entry = new NativeUtf8(entryPoint);
         var native = new Silk.NET.WebGPU.ComputePipelineDescriptor(
             label: (byte*)label.Pointer,
             layout: descriptor.Layout == null ? null : descriptor.Layout.Native.As<Silk.NET.WebGPU.PipelineLayout>(),
@@ -404,16 +314,16 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 constants: descriptor.Compute.Constants.Length == 0 ? null : (Silk.NET.WebGPU.ConstantEntry*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Compute.Constants))
             )
         );
-        var handle = wgpu.DeviceCreateComputePipeline((Silk.NET.WebGPU.Device*)device.Ptr, in native);
+        var handle = wgpu.DeviceCreateComputePipeline(device.As<Silk.NET.WebGPU.Device>(), in native);
         return new NativeHandle<ComputePipelineTag>((nint)handle);
     }
 
-    public void ComputePipelineRelease(NativeHandle<ComputePipelineTag> pipeline)
+    public void ComputePipelineRelease(in NativeHandle<ComputePipelineTag> pipeline)
     {
-        wgpu.ComputePipelineRelease((Silk.NET.WebGPU.ComputePipeline*)pipeline.Ptr);
+        wgpu.ComputePipelineRelease(pipeline.As<Silk.NET.WebGPU.ComputePipeline>());
     }
 
-    public NativeHandle<TextureViewTag> TextureCreateView(NativeHandle<TextureTag> texture, in TextureViewDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<TextureViewTag> TextureCreateView(in NativeHandle<TextureTag> texture, in TextureViewDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.TextureViewDescriptor(
             label: (byte*)label.Pointer,
@@ -425,16 +335,16 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             arrayLayerCount: descriptor.ArrayLayerCount,
             aspect: descriptor.Aspect
         );
-        var view = wgpu.TextureCreateView((Silk.NET.WebGPU.Texture*)texture.Ptr, in native);
+        var view = wgpu.TextureCreateView(texture.As<Silk.NET.WebGPU.Texture>(), in native);
         return new NativeHandle<TextureViewTag>((nint)view);
     }
 
-    public void TextureViewRelease(NativeHandle<TextureViewTag> view)
+    public void TextureViewRelease(in NativeHandle<TextureViewTag> view)
     {
-        wgpu.TextureViewRelease((Silk.NET.WebGPU.TextureView*)view.Ptr);
+        wgpu.TextureViewRelease(view.As<Silk.NET.WebGPU.TextureView>());
     }
 
-    public NativeHandle<RenderPipelineTag> DeviceCreateRenderPipeline(NativeHandle<DeviceTag> device, in RenderPipelineDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<RenderPipelineTag> DeviceCreateRenderPipeline(in NativeHandle<DeviceTag> device, in RenderPipelineDescriptor descriptor, in NativeUtf8 label)
     {
         using var pins = new Pollus.Utils.TemporaryPins();
         var nativeDescriptor = new Silk.NET.WebGPU.RenderPipelineDescriptor(label: (byte*)label.Pointer);
@@ -563,16 +473,16 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         {
             nativeDescriptor.Layout = pipelineLayout.Native.As<Silk.NET.WebGPU.PipelineLayout>();
         }
-        var pipeline = wgpu.DeviceCreateRenderPipeline((Silk.NET.WebGPU.Device*)device.Ptr, in nativeDescriptor);
+        var pipeline = wgpu.DeviceCreateRenderPipeline(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<RenderPipelineTag>((nint)pipeline);
     }
 
-    public void RenderPipelineRelease(NativeHandle<RenderPipelineTag> pipeline)
+    public void RenderPipelineRelease(in NativeHandle<RenderPipelineTag> pipeline)
     {
-        wgpu.RenderPipelineRelease((Silk.NET.WebGPU.RenderPipeline*)pipeline.Ptr);
+        wgpu.RenderPipelineRelease(pipeline.As<Silk.NET.WebGPU.RenderPipeline>());
     }
 
-    public NativeHandle<RenderPassEncoderTag> CommandEncoderBeginRenderPass(NativeHandle<CommandEncoderTag> encoder, in RenderPassDescriptor descriptor)
+    public NativeHandle<RenderPassEncoderTag> CommandEncoderBeginRenderPass(in NativeHandle<CommandEncoderTag> encoder, in RenderPassDescriptor descriptor)
     {
         var colorAttachments = stackalloc Silk.NET.WebGPU.RenderPassColorAttachment[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
@@ -593,126 +503,126 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
             ColorAttachments = colorAttachments
         };
-        var handle = wgpu.CommandEncoderBeginRenderPass((Silk.NET.WebGPU.CommandEncoder*)encoder.Ptr, in rp);
+        var handle = wgpu.CommandEncoderBeginRenderPass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in rp);
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
 
-    public void RenderPassEncoderEnd(NativeHandle<RenderPassEncoderTag> pass)
+    public void RenderPassEncoderEnd(in NativeHandle<RenderPassEncoderTag> pass)
     {
-        wgpu.RenderPassEncoderEnd((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr);
-        wgpu.RenderPassEncoderRelease((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr);
+        wgpu.RenderPassEncoderEnd(pass.As<Silk.NET.WebGPU.RenderPassEncoder>());
+        wgpu.RenderPassEncoderRelease(pass.As<Silk.NET.WebGPU.RenderPassEncoder>());
     }
 
-    public void RenderPassEncoderSetPipeline(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<RenderPipelineTag> pipeline)
+    public void RenderPassEncoderSetPipeline(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<RenderPipelineTag> pipeline)
     {
-        wgpu.RenderPassEncoderSetPipeline((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, (Silk.NET.WebGPU.RenderPipeline*)pipeline.Ptr);
+        wgpu.RenderPassEncoderSetPipeline(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), pipeline.As<Silk.NET.WebGPU.RenderPipeline>());
     }
 
-    public void RenderPassEncoderSetViewport(NativeHandle<RenderPassEncoderTag> pass, float x, float y, float width, float height, float minDepth, float maxDepth)
+    public void RenderPassEncoderSetViewport(in NativeHandle<RenderPassEncoderTag> pass, float x, float y, float width, float height, float minDepth, float maxDepth)
     {
-        wgpu.RenderPassEncoderSetViewport((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, x, y, width, height, minDepth, maxDepth);
+        wgpu.RenderPassEncoderSetViewport(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), x, y, width, height, minDepth, maxDepth);
     }
 
-    public void RenderPassEncoderSetScissorRect(NativeHandle<RenderPassEncoderTag> pass, uint x, uint y, uint width, uint height)
+    public void RenderPassEncoderSetScissorRect(in NativeHandle<RenderPassEncoderTag> pass, uint x, uint y, uint width, uint height)
     {
-        wgpu.RenderPassEncoderSetScissorRect((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, x, y, width, height);
+        wgpu.RenderPassEncoderSetScissorRect(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), x, y, width, height);
     }
 
-    public void RenderPassEncoderSetBlendConstant(NativeHandle<RenderPassEncoderTag> pass, double r, double g, double b, double a)
+    public void RenderPassEncoderSetBlendConstant(in NativeHandle<RenderPassEncoderTag> pass, double r, double g, double b, double a)
     {
         var c = new Silk.NET.WebGPU.Color { R = r, G = g, B = b, A = a };
-        wgpu.RenderPassEncoderSetBlendConstant((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, in c);
+        wgpu.RenderPassEncoderSetBlendConstant(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), in c);
     }
 
-    public void RenderPassEncoderSetBindGroup(NativeHandle<RenderPassEncoderTag> pass, uint groupIndex, NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
+    public void RenderPassEncoderSetBindGroup(in NativeHandle<RenderPassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
     {
         if (dynamicOffsets.Length > 0)
         {
             fixed (uint* p = dynamicOffsets)
             {
-                wgpu.RenderPassEncoderSetBindGroup((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, groupIndex, (Silk.NET.WebGPU.BindGroup*)bindGroup.Ptr, (nuint)dynamicOffsets.Length, p);
+                wgpu.RenderPassEncoderSetBindGroup(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), groupIndex, bindGroup.As<Silk.NET.WebGPU.BindGroup>(), (nuint)dynamicOffsets.Length, p);
             }
         }
         else
         {
-            wgpu.RenderPassEncoderSetBindGroup((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, groupIndex, (Silk.NET.WebGPU.BindGroup*)bindGroup.Ptr, 0, null);
+            wgpu.RenderPassEncoderSetBindGroup(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), groupIndex, bindGroup.As<Silk.NET.WebGPU.BindGroup>(), 0, null);
         }
     }
 
-    public void RenderPassEncoderSetVertexBuffer(NativeHandle<RenderPassEncoderTag> pass, uint slot, NativeHandle<BufferTag> buffer, ulong offset, ulong size)
+    public void RenderPassEncoderSetVertexBuffer(in NativeHandle<RenderPassEncoderTag> pass, uint slot, in NativeHandle<BufferTag> buffer, ulong offset, ulong size)
     {
-        wgpu.RenderPassEncoderSetVertexBuffer((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, slot, (Silk.NET.WebGPU.Buffer*)buffer.Ptr, offset, size);
+        wgpu.RenderPassEncoderSetVertexBuffer(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), slot, buffer.As<Silk.NET.WebGPU.Buffer>(), offset, size);
     }
 
-    public void RenderPassEncoderSetIndexBuffer(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, IndexFormat format, ulong offset, ulong size)
+    public void RenderPassEncoderSetIndexBuffer(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, IndexFormat format, ulong offset, ulong size)
     {
-        wgpu.RenderPassEncoderSetIndexBuffer((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, (Silk.NET.WebGPU.Buffer*)buffer.Ptr, (Silk.NET.WebGPU.IndexFormat)format, offset, size);
+        wgpu.RenderPassEncoderSetIndexBuffer(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), buffer.As<Silk.NET.WebGPU.Buffer>(), (Silk.NET.WebGPU.IndexFormat)format, offset, size);
     }
 
-    public void RenderPassEncoderDraw(NativeHandle<RenderPassEncoderTag> pass, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance)
+    public void RenderPassEncoderDraw(in NativeHandle<RenderPassEncoderTag> pass, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance)
     {
-        wgpu.RenderPassEncoderDraw((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, vertexCount, instanceCount, firstVertex, firstInstance);
+        wgpu.RenderPassEncoderDraw(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    public void RenderPassEncoderDrawIndirect(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, uint offset)
+    public void RenderPassEncoderDrawIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset)
     {
-        wgpu.RenderPassEncoderDrawIndirect((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, (Silk.NET.WebGPU.Buffer*)buffer.Ptr, offset);
+        wgpu.RenderPassEncoderDrawIndirect(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), buffer.As<Silk.NET.WebGPU.Buffer>(), offset);
     }
 
-    public void RenderPassEncoderDrawIndexed(NativeHandle<RenderPassEncoderTag> pass, uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance)
+    public void RenderPassEncoderDrawIndexed(in NativeHandle<RenderPassEncoderTag> pass, uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance)
     {
-        wgpu.RenderPassEncoderDrawIndexed((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
+        wgpu.RenderPassEncoderDrawIndexed(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
     }
 
-    public void RenderPassEncoderDrawIndexedIndirect(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, uint offset)
+    public void RenderPassEncoderDrawIndexedIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset)
     {
-        wgpu.RenderPassEncoderDrawIndexedIndirect((Silk.NET.WebGPU.RenderPassEncoder*)pass.Ptr, (Silk.NET.WebGPU.Buffer*)buffer.Ptr, offset);
+        wgpu.RenderPassEncoderDrawIndexedIndirect(pass.As<Silk.NET.WebGPU.RenderPassEncoder>(), buffer.As<Silk.NET.WebGPU.Buffer>(), offset);
     }
 
-    public void CommandEncoderCopyTextureToTexture(NativeHandle<CommandEncoderTag> encoder, NativeHandle<TextureTag> srcTexture, NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers)
+    public void CommandEncoderCopyTextureToTexture(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<TextureTag> srcTexture, in NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers)
     {
         var size = new Silk.NET.WebGPU.Extent3D(width, height, depthOrArrayLayers);
-        var src = new Silk.NET.WebGPU.ImageCopyTexture(texture: (Silk.NET.WebGPU.Texture*)srcTexture.Ptr);
-        var dst = new Silk.NET.WebGPU.ImageCopyTexture(texture: (Silk.NET.WebGPU.Texture*)dstTexture.Ptr);
-        wgpu.CommandEncoderCopyTextureToTexture((Silk.NET.WebGPU.CommandEncoder*)encoder.Ptr, in src, in dst, in size);
+        var src = new Silk.NET.WebGPU.ImageCopyTexture(texture: srcTexture.As<Silk.NET.WebGPU.Texture>());
+        var dst = new Silk.NET.WebGPU.ImageCopyTexture(texture: dstTexture.As<Silk.NET.WebGPU.Texture>());
+        wgpu.CommandEncoderCopyTextureToTexture(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in src, in dst, in size);
     }
 
-    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(NativeHandle<CommandEncoderTag> encoder, NativeUtf8 label)
+    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
         var desc = new Silk.NET.WebGPU.ComputePassDescriptor(label: (byte*)label.Pointer);
-        var enc = wgpu.CommandEncoderBeginComputePass((Silk.NET.WebGPU.CommandEncoder*)encoder.Ptr, in desc);
+        var enc = wgpu.CommandEncoderBeginComputePass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in desc);
         return new NativeHandle<ComputePassEncoderTag>((nint)enc);
     }
 
-    public void ComputePassEncoderEnd(NativeHandle<ComputePassEncoderTag> pass)
+    public void ComputePassEncoderEnd(in NativeHandle<ComputePassEncoderTag> pass)
     {
-        wgpu.ComputePassEncoderEnd((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr);
-        wgpu.ComputePassEncoderRelease((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr);
+        wgpu.ComputePassEncoderEnd(pass.As<Silk.NET.WebGPU.ComputePassEncoder>());
+        wgpu.ComputePassEncoderRelease(pass.As<Silk.NET.WebGPU.ComputePassEncoder>());
     }
 
-    public void ComputePassEncoderSetPipeline(NativeHandle<ComputePassEncoderTag> pass, NativeHandle<ComputePipelineTag> pipeline)
+    public void ComputePassEncoderSetPipeline(in NativeHandle<ComputePassEncoderTag> pass, in NativeHandle<ComputePipelineTag> pipeline)
     {
-        wgpu.ComputePassEncoderSetPipeline((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr, (Silk.NET.WebGPU.ComputePipeline*)pipeline.Ptr);
+        wgpu.ComputePassEncoderSetPipeline(pass.As<Silk.NET.WebGPU.ComputePassEncoder>(), pipeline.As<Silk.NET.WebGPU.ComputePipeline>());
     }
 
-    public void ComputePassEncoderSetBindGroup(NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
+    public void ComputePassEncoderSetBindGroup(in NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
     {
         if (dynamicOffsets.Length > 0)
         {
             fixed (uint* p = dynamicOffsets)
             {
-                wgpu.ComputePassEncoderSetBindGroup((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr, groupIndex, (Silk.NET.WebGPU.BindGroup*)bindGroup.Ptr, (nuint)dynamicOffsets.Length, p);
+                wgpu.ComputePassEncoderSetBindGroup(pass.As<Silk.NET.WebGPU.ComputePassEncoder>(), groupIndex, bindGroup.As<Silk.NET.WebGPU.BindGroup>(), (nuint)dynamicOffsets.Length, p);
             }
         }
         else
         {
-            wgpu.ComputePassEncoderSetBindGroup((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr, groupIndex, (Silk.NET.WebGPU.BindGroup*)bindGroup.Ptr, 0, null);
+            wgpu.ComputePassEncoderSetBindGroup(pass.As<Silk.NET.WebGPU.ComputePassEncoder>(), groupIndex, bindGroup.As<Silk.NET.WebGPU.BindGroup>(), 0, null);
         }
     }
 
-    public void ComputePassEncoderDispatchWorkgroups(NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z)
+    public void ComputePassEncoderDispatchWorkgroups(in NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z)
     {
-        wgpu.ComputePassEncoderDispatchWorkgroups((Silk.NET.WebGPU.ComputePassEncoder*)pass.Ptr, x, y, z);
+        wgpu.ComputePassEncoderDispatchWorkgroups(pass.As<Silk.NET.WebGPU.ComputePassEncoder>(), x, y, z);
     }
 }
 

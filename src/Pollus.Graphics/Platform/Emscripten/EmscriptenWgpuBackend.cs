@@ -118,117 +118,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<InstanceTag>((nint)instance);
     }
 
-    public NativeHandle<SurfaceTag> CreateSurface(NativeHandle<InstanceTag> instance, SurfaceSource source)
-    {
-        if (source.Kind == SurfaceSourceKind.CanvasSelector)
-        {
-            using var selector = new NativeUtf8(source.Selector);
-            var fromCanvas = new Pollus.Emscripten.WGPU.WGPUSurfaceDescriptorFromCanvasHTMLSelector
-            {
-                Chain = new Pollus.Emscripten.WGPU.WGPUChainedStruct
-                {
-                    Next = null,
-                    SType = Pollus.Emscripten.WGPU.WGPUSType.SurfaceDescriptorFromCanvasHTMLSelector
-                },
-                Selector = (byte*)selector.Pointer
-            };
-            var surfaceDesc = new Pollus.Emscripten.WGPU.WGPUSurfaceDescriptor
-            {
-                NextInChain = (Pollus.Emscripten.WGPU.WGPUChainedStruct*)&fromCanvas
-            };
-            var surface = wgpu.InstanceCreateSurface((Pollus.Emscripten.WGPU.WGPUInstance*)instance.Ptr, (Pollus.Emscripten.WGPU.WGPUSurfaceDescriptor*)Unsafe.AsPointer(ref surfaceDesc));
-            return new NativeHandle<SurfaceTag>((nint)surface);
-        }
-        throw new NotSupportedException();
-    }
-
-    public void RequestAdapter(NativeHandle<InstanceTag> instance, in AdapterOptions options, Action<AdapterResult> callback)
-    {
-        var req = new Pollus.Emscripten.WGPU.WGPURequestAdapterOptions
-        {
-            CompatibleSurface = options.CompatibleSurface.IsNull ? null : (Pollus.Emscripten.WGPU.WGPUSurface*)options.CompatibleSurface.Ptr
-        };
-        var handle = GCHandle.Alloc(callback, GCHandleType.Normal);
-        wgpu.InstanceRequestAdapter((Pollus.Emscripten.WGPU.WGPUInstance*)instance.Ptr, req, &OnRequestAdapter, (void*)GCHandle.ToIntPtr(handle));
-    }
-
-    public void RequestDevice(NativeHandle<AdapterTag> adapter, in DeviceOptions options, Action<DeviceResult> callback)
-    {
-        var limits = new Pollus.Emscripten.WGPU.WGPULimits
-        {
-            MinStorageBufferOffsetAlignment = options.MinStorageBufferOffsetAlignment,
-            MinUniformBufferOffsetAlignment = options.MinUniformBufferOffsetAlignment,
-            MaxBindGroups = options.MaxBindGroups
-        };
-        var requiredLimits = new Pollus.Emscripten.WGPU.WGPURequiredLimits
-        {
-            Limits = limits
-        };
-        var desc = new Pollus.Emscripten.WGPU.WGPUDeviceDescriptor
-        {
-            RequiredLimits = &requiredLimits,
-            RequiredFeatureCount = 0,
-            RequiredFeatures = null
-        };
-        var handle = GCHandle.Alloc(callback, GCHandleType.Normal);
-        wgpu.AdapterRequestDevice((Pollus.Emscripten.WGPU.WGPUAdapter*)adapter.Ptr, desc, &OnRequestDevice, (void*)GCHandle.ToIntPtr(handle));
-    }
-
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void OnRequestAdapter(Pollus.Emscripten.WGPU.WGPURequestAdapterStatus status, Pollus.Emscripten.WGPU.WGPUAdapter* adapter, byte* message, void* userdata)
-    {
-        var gch = GCHandle.FromIntPtr((nint)userdata);
-        try
-        {
-            var cb = (Action<AdapterResult>)gch.Target!;
-            var ok = status == Pollus.Emscripten.WGPU.WGPURequestAdapterStatus.Success;
-            var msg = message != null ? Marshal.PtrToStringAnsi((nint)message) ?? string.Empty : string.Empty;
-            cb(new AdapterResult(ok, new NativeHandle<AdapterTag>((nint)adapter), msg));
-        }
-        finally
-        {
-            gch.Free();
-        }
-    }
-
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    static void OnRequestDevice(Pollus.Emscripten.WGPU.WGPURequestDeviceStatus status, Pollus.Emscripten.WGPU.WGPUDevice* device, byte* message, void* userdata)
-    {
-        var gch = GCHandle.FromIntPtr((nint)userdata);
-        try
-        {
-            var cb = (Action<DeviceResult>)gch.Target!;
-            var ok = status == Pollus.Emscripten.WGPU.WGPURequestDeviceStatus.Success;
-            var msg = message != null ? Marshal.PtrToStringAnsi((nint)message) ?? string.Empty : string.Empty;
-            cb(new DeviceResult(ok, new NativeHandle<DeviceTag>((nint)device), msg));
-        }
-        finally
-        {
-            gch.Free();
-        }
-    }
-
-    public NativeHandle<QueueTag> GetQueue(NativeHandle<DeviceTag> device)
-    {
-        var queue = wgpu.DeviceGetQueue((Pollus.Emscripten.WGPU.WGPUDevice*)device.Ptr);
-        return new NativeHandle<QueueTag>((nint)queue);
-    }
-
-    public NativeHandle<SwapChainTag> CreateSwapChain(NativeHandle<DeviceTag> device, NativeHandle<SurfaceTag> surface, in SwapChainOptions descriptor)
-    {
-        var desc = new Pollus.Emscripten.WGPU.WGPUSwapChainDescriptor
-        {
-            Format = Map(descriptor.Format),
-            PresentMode = Pollus.Emscripten.WGPU.WGPUPresentMode.Fifo,
-            Usage = Map(descriptor.Usage),
-            Width = descriptor.Width,
-            Height = descriptor.Height
-        };
-        var swap = wgpu.DeviceCreateSwapChain((Pollus.Emscripten.WGPU.WGPUDevice*)device.Ptr, (Pollus.Emscripten.WGPU.WGPUSurface*)surface.Ptr, desc);
-        return new NativeHandle<SwapChainTag>((nint)swap);
-    }
-
-    public NativeHandle<BufferTag> DeviceCreateBuffer(NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUBufferDescriptor
         {
@@ -237,29 +127,29 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             Size = descriptor.Size,
             MappedAtCreation = descriptor.MappedAtCreation
         };
-        var buffer = wgpu.DeviceCreateBuffer((Pollus.Emscripten.WGPU.WGPUDevice*)device.Ptr, in native);
+        var buffer = wgpu.DeviceCreateBuffer(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), in native);
         return new NativeHandle<BufferTag>((nint)buffer);
     }
 
-    public void BufferDestroy(NativeHandle<BufferTag> buffer)
+    public void BufferDestroy(in NativeHandle<BufferTag> buffer)
     {
-        wgpu.BufferDestroy((Pollus.Emscripten.WGPU.WGPUBuffer*)buffer.Ptr);
+        wgpu.BufferDestroy(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>());
     }
 
-    public void BufferRelease(NativeHandle<BufferTag> buffer)
+    public void BufferRelease(in NativeHandle<BufferTag> buffer)
     {
-        wgpu.BufferRelease((Pollus.Emscripten.WGPU.WGPUBuffer*)buffer.Ptr);
+        wgpu.BufferRelease(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>());
     }
 
-    public void QueueWriteBuffer(NativeHandle<QueueTag> queue, NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
+    public void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
     {
         fixed (byte* p = data)
         {
-            wgpu.QueueWriteBuffer((Pollus.Emscripten.WGPU.WGPUQueue*)queue.Ptr, (Pollus.Emscripten.WGPU.WGPUBuffer*)buffer.Ptr, offset, p, (nuint)alignedSize);
+            wgpu.QueueWriteBuffer(queue.As<Pollus.Emscripten.WGPU.WGPUQueue>(), buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), offset, p, (nuint)alignedSize);
         }
     }
 
-    public NativeHandle<TextureTag> DeviceCreateTexture(NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<TextureTag> DeviceCreateTexture(in NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUTextureDescriptor
         {
@@ -278,21 +168,21 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             ViewFormatCount = 0,
             ViewFormats = null
         };
-        var texture = wgpu.DeviceCreateTexture((Pollus.Emscripten.WGPU.WGPUDevice*)device.Ptr, in native);
+        var texture = wgpu.DeviceCreateTexture(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), in native);
         return new NativeHandle<TextureTag>((nint)texture);
     }
 
-    public void TextureDestroy(NativeHandle<TextureTag> texture)
+    public void TextureDestroy(in NativeHandle<TextureTag> texture)
     {
-        wgpu.TextureDestroy((Pollus.Emscripten.WGPU.WGPUTexture*)texture.Ptr);
+        wgpu.TextureDestroy(texture.As<Pollus.Emscripten.WGPU.WGPUTexture>());
     }
 
-    public void TextureRelease(NativeHandle<TextureTag> texture)
+    public void TextureRelease(in NativeHandle<TextureTag> texture)
     {
-        wgpu.TextureRelease((Pollus.Emscripten.WGPU.WGPUTexture*)texture.Ptr);
+        wgpu.TextureRelease(texture.As<Pollus.Emscripten.WGPU.WGPUTexture>());
     }
 
-    public void QueueWriteTexture(NativeHandle<QueueTag> queue, NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
+    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
     {
         var dst = new Pollus.Emscripten.WGPU.WGPUImageCopyTexture
         {
@@ -317,7 +207,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
     {
     }
 
-    public NativeHandle<SamplerTag> DeviceCreateSampler(NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<SamplerTag> DeviceCreateSampler(in NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUSamplerDescriptor
         {
@@ -337,12 +227,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<SamplerTag>((nint)handle);
     }
 
-    public void SamplerRelease(NativeHandle<SamplerTag> sampler)
+    public void SamplerRelease(in NativeHandle<SamplerTag> sampler)
     {
         wgpu.SamplerRelease(sampler.As<Pollus.Emscripten.WGPU.WGPUSampler>());
     }
 
-    public NativeHandle<BindGroupLayoutTag> DeviceCreateBindGroupLayout(NativeHandle<DeviceTag> device, in BindGroupLayoutDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BindGroupLayoutTag> DeviceCreateBindGroupLayout(in NativeHandle<DeviceTag> device, in BindGroupLayoutDescriptor descriptor, in NativeUtf8 label)
     {
         var entriesArr = new Pollus.Emscripten.WGPU.WGPUBindGroupLayoutEntry[descriptor.Entries.Length];
         for (int i = 0; i < descriptor.Entries.Length; i++)
@@ -389,17 +279,17 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         }
     }
 
-    public void BindGroupLayoutRelease(NativeHandle<BindGroupLayoutTag> layout)
+    public void BindGroupLayoutRelease(in NativeHandle<BindGroupLayoutTag> layout)
     {
         wgpu.BindGroupLayoutRelease(layout.As<Pollus.Emscripten.WGPU.WGPUBindGroupLayout>());
     }
 
-    public NativeHandle<BindGroupTag> DeviceCreateBindGroup(NativeHandle<DeviceTag> device, in BindGroupDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<BindGroupTag> DeviceCreateBindGroup(in NativeHandle<DeviceTag> device, in BindGroupDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUBindGroupDescriptor
         {
             Label = (byte*)label.Pointer,
-            Layout = (Pollus.Emscripten.WGPU.WGPUBindGroupLayout*)descriptor.Layout.Native
+            Layout = descriptor.Layout.Native.As<Pollus.Emscripten.WGPU.WGPUBindGroupLayout>()
         };
         if (descriptor.Entries is BindGroupEntry[] bindGroupEntries)
         {
@@ -436,16 +326,17 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 return new NativeHandle<BindGroupTag>((nint)handle);
             }
         }
+
         var defaultHandle = wgpu.DeviceCreateBindGroup(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), in native);
         return new NativeHandle<BindGroupTag>((nint)defaultHandle);
     }
 
-    public void BindGroupRelease(NativeHandle<BindGroupTag> bindGroup)
+    public void BindGroupRelease(in NativeHandle<BindGroupTag> bindGroup)
     {
         wgpu.BindGroupRelease(bindGroup.As<Pollus.Emscripten.WGPU.WGPUBindGroup>());
     }
 
-    public NativeHandle<CommandEncoderTag> DeviceCreateCommandEncoder(NativeHandle<DeviceTag> device, NativeUtf8 label)
+    public NativeHandle<CommandEncoderTag> DeviceCreateCommandEncoder(in NativeHandle<DeviceTag> device, in NativeUtf8 label)
     {
         var desc = new Pollus.Emscripten.WGPU.WGPUCommandEncoderDescriptor
         {
@@ -455,12 +346,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<CommandEncoderTag>((nint)enc);
     }
 
-    public void CommandEncoderRelease(NativeHandle<CommandEncoderTag> encoder)
+    public void CommandEncoderRelease(in NativeHandle<CommandEncoderTag> encoder)
     {
         wgpu.CommandEncoderRelease(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>());
     }
 
-    public NativeHandle<CommandBufferTag> CommandEncoderFinish(NativeHandle<CommandEncoderTag> encoder, NativeUtf8 label)
+    public NativeHandle<CommandBufferTag> CommandEncoderFinish(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
         var desc = new Pollus.Emscripten.WGPU.WGPUCommandBufferDescriptor
         {
@@ -470,12 +361,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<CommandBufferTag>((nint)buf);
     }
 
-    public void CommandBufferRelease(NativeHandle<CommandBufferTag> buffer)
+    public void CommandBufferRelease(in NativeHandle<CommandBufferTag> buffer)
     {
         wgpu.CommandBufferRelease(buffer.As<Pollus.Emscripten.WGPU.WGPUCommandBuffer>());
     }
 
-    public void QueueSubmit(NativeHandle<QueueTag> queue, ReadOnlySpan<NativeHandle<CommandBufferTag>> commandBuffers)
+    public void QueueSubmit(in NativeHandle<QueueTag> queue, ReadOnlySpan<NativeHandle<CommandBufferTag>> commandBuffers)
     {
         if (commandBuffers.Length == 0) return;
         if (commandBuffers.Length == 1)
@@ -489,7 +380,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         wgpu.QueueSubmit(queue.As<Pollus.Emscripten.WGPU.WGPUQueue>(), (nuint)commandBuffers.Length, ptrs);
     }
 
-    public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(NativeHandle<DeviceTag> device, ShaderBackend backend, NativeUtf8 label, NativeUtf8 code)
+    public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(in NativeHandle<DeviceTag> device, ShaderBackend backend, in NativeUtf8 label, in NativeUtf8 code)
     {
         var descriptor = new Pollus.Emscripten.WGPU.WGPUShaderModuleDescriptor
         {
@@ -512,15 +403,15 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<ShaderModuleTag>((nint)handle);
     }
 
-    public void ShaderModuleRelease(NativeHandle<ShaderModuleTag> shaderModule)
+    public void ShaderModuleRelease(in NativeHandle<ShaderModuleTag> shaderModule)
     {
         wgpu.ShaderModuleRelease(shaderModule.As<Pollus.Emscripten.WGPU.WGPUShaderModule>());
     }
 
-    public NativeHandle<PipelineLayoutTag> DeviceCreatePipelineLayout(NativeHandle<DeviceTag> device, in PipelineLayoutDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<PipelineLayoutTag> DeviceCreatePipelineLayout(in NativeHandle<DeviceTag> device, in PipelineLayoutDescriptor descriptor, in NativeUtf8 label)
     {
         var layoutPtrs = stackalloc nint[descriptor.Layouts.Length];
-        for (int i = 0; i < descriptor.Layouts.Length; i++) layoutPtrs[i] = descriptor.Layouts[i].Native;
+        for (int i = 0; i < descriptor.Layouts.Length; i++) layoutPtrs[i] = descriptor.Layouts[i].Native.Ptr;
         var native = new Pollus.Emscripten.WGPU.WGPUPipelineLayoutDescriptor
         {
             Label = (byte*)label.Pointer,
@@ -531,12 +422,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<PipelineLayoutTag>((nint)handle);
     }
 
-    public void PipelineLayoutRelease(NativeHandle<PipelineLayoutTag> layout)
+    public void PipelineLayoutRelease(in NativeHandle<PipelineLayoutTag> layout)
     {
         wgpu.PipelineLayoutRelease(layout.As<Pollus.Emscripten.WGPU.WGPUPipelineLayout>());
     }
 
-    public NativeHandle<ComputePipelineTag> DeviceCreateComputePipeline(NativeHandle<DeviceTag> device, in ComputePipelineDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<ComputePipelineTag> DeviceCreateComputePipeline(in NativeHandle<DeviceTag> device, in ComputePipelineDescriptor descriptor, in NativeUtf8 label)
     {
         using var entry = new NativeUtf8(descriptor.Compute.EntryPoint);
         var stage = new Pollus.Emscripten.WGPU.WGPUProgrammableStageDescriptor
@@ -556,12 +447,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<ComputePipelineTag>((nint)handle);
     }
 
-    public void ComputePipelineRelease(NativeHandle<ComputePipelineTag> pipeline)
+    public void ComputePipelineRelease(in NativeHandle<ComputePipelineTag> pipeline)
     {
         wgpu.ComputePipelineRelease(pipeline.As<Pollus.Emscripten.WGPU.WGPUComputePipeline>());
     }
 
-    public NativeHandle<TextureViewTag> TextureCreateView(NativeHandle<TextureTag> texture, in TextureViewDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<TextureViewTag> TextureCreateView(in NativeHandle<TextureTag> texture, in TextureViewDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUTextureViewDescriptor
         {
@@ -578,12 +469,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<TextureViewTag>((nint)view);
     }
 
-    public void TextureViewRelease(NativeHandle<TextureViewTag> view)
+    public void TextureViewRelease(in NativeHandle<TextureViewTag> view)
     {
         wgpu.TextureViewRelease(view.As<Pollus.Emscripten.WGPU.WGPUTextureView>());
     }
 
-    public NativeHandle<RenderPipelineTag> DeviceCreateRenderPipeline(NativeHandle<DeviceTag> device, in RenderPipelineDescriptor descriptor, NativeUtf8 label)
+    public NativeHandle<RenderPipelineTag> DeviceCreateRenderPipeline(in NativeHandle<DeviceTag> device, in RenderPipelineDescriptor descriptor, in NativeUtf8 label)
     {
         using var pins = new TemporaryPins();
         var native = new Pollus.Emscripten.WGPU.WGPURenderPipelineDescriptor
@@ -764,12 +655,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<RenderPipelineTag>((nint)handle);
     }
 
-    public void RenderPipelineRelease(NativeHandle<RenderPipelineTag> pipeline)
+    public void RenderPipelineRelease(in NativeHandle<RenderPipelineTag> pipeline)
     {
         wgpu.RenderPipelineRelease(pipeline.As<Pollus.Emscripten.WGPU.WGPURenderPipeline>());
     }
 
-    public NativeHandle<RenderPassEncoderTag> CommandEncoderBeginRenderPass(NativeHandle<CommandEncoderTag> encoder, in RenderPassDescriptor descriptor)
+    public NativeHandle<RenderPassEncoderTag> CommandEncoderBeginRenderPass(in NativeHandle<CommandEncoderTag> encoder, in RenderPassDescriptor descriptor)
     {
         var colorAttachments = stackalloc Pollus.Emscripten.WGPU.WGPURenderPassColorAttachment[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
@@ -814,34 +705,34 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
 
-    public void RenderPassEncoderEnd(NativeHandle<RenderPassEncoderTag> pass)
+    public void RenderPassEncoderEnd(in NativeHandle<RenderPassEncoderTag> pass)
     {
         wgpu.RenderPassEncoderEnd(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>());
         wgpu.RenderPassEncoderRelease(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>());
     }
 
-    public void RenderPassEncoderSetPipeline(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<RenderPipelineTag> pipeline)
+    public void RenderPassEncoderSetPipeline(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<RenderPipelineTag> pipeline)
     {
         wgpu.RenderPassEncoderSetPipeline(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), pipeline.As<Pollus.Emscripten.WGPU.WGPURenderPipeline>());
     }
 
-    public void RenderPassEncoderSetViewport(NativeHandle<RenderPassEncoderTag> pass, float x, float y, float width, float height, float minDepth, float maxDepth)
+    public void RenderPassEncoderSetViewport(in NativeHandle<RenderPassEncoderTag> pass, float x, float y, float width, float height, float minDepth, float maxDepth)
     {
         wgpu.RenderPassEncoderSetViewport(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), x, y, width, height, minDepth, maxDepth);
     }
 
-    public void RenderPassEncoderSetScissorRect(NativeHandle<RenderPassEncoderTag> pass, uint x, uint y, uint width, uint height)
+    public void RenderPassEncoderSetScissorRect(in NativeHandle<RenderPassEncoderTag> pass, uint x, uint y, uint width, uint height)
     {
         wgpu.RenderPassEncoderSetScissorRect(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), x, y, width, height);
     }
 
-    public void RenderPassEncoderSetBlendConstant(NativeHandle<RenderPassEncoderTag> pass, double r, double g, double b, double a)
+    public void RenderPassEncoderSetBlendConstant(in NativeHandle<RenderPassEncoderTag> pass, double r, double g, double b, double a)
     {
         var c = new Pollus.Emscripten.WGPU.WGPUColor { R = r, G = g, B = b, A = a };
         wgpu.RenderPassEncoderSetBlendConstant(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), in c);
     }
 
-    public void RenderPassEncoderSetBindGroup(NativeHandle<RenderPassEncoderTag> pass, uint groupIndex, NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
+    public void RenderPassEncoderSetBindGroup(in NativeHandle<RenderPassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
     {
         if (dynamicOffsets.Length > 0)
         {
@@ -856,37 +747,37 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         }
     }
 
-    public void RenderPassEncoderSetVertexBuffer(NativeHandle<RenderPassEncoderTag> pass, uint slot, NativeHandle<BufferTag> buffer, ulong offset, ulong size)
+    public void RenderPassEncoderSetVertexBuffer(in NativeHandle<RenderPassEncoderTag> pass, uint slot, in NativeHandle<BufferTag> buffer, ulong offset, ulong size)
     {
         wgpu.RenderPassEncoderSetVertexBuffer(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), slot, buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), offset, size);
     }
 
-    public void RenderPassEncoderSetIndexBuffer(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, IndexFormat format, ulong offset, ulong size)
+    public void RenderPassEncoderSetIndexBuffer(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, IndexFormat format, ulong offset, ulong size)
     {
         wgpu.RenderPassEncoderSetIndexBuffer(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), (Pollus.Emscripten.WGPU.WGPUIndexFormat)format, offset, size);
     }
 
-    public void RenderPassEncoderDraw(NativeHandle<RenderPassEncoderTag> pass, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance)
+    public void RenderPassEncoderDraw(in NativeHandle<RenderPassEncoderTag> pass, uint vertexCount, uint instanceCount, uint firstVertex, uint firstInstance)
     {
         wgpu.RenderPassEncoderDraw(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), vertexCount, instanceCount, firstVertex, firstInstance);
     }
 
-    public void RenderPassEncoderDrawIndirect(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, uint offset)
+    public void RenderPassEncoderDrawIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset)
     {
         wgpu.RenderPassEncoderDrawIndirect(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), offset);
     }
 
-    public void RenderPassEncoderDrawIndexed(NativeHandle<RenderPassEncoderTag> pass, uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance)
+    public void RenderPassEncoderDrawIndexed(in NativeHandle<RenderPassEncoderTag> pass, uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance)
     {
         wgpu.RenderPassEncoderDrawIndexed(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
     }
 
-    public void RenderPassEncoderDrawIndexedIndirect(NativeHandle<RenderPassEncoderTag> pass, NativeHandle<BufferTag> buffer, uint offset)
+    public void RenderPassEncoderDrawIndexedIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset)
     {
         wgpu.RenderPassEncoderDrawIndexedIndirect(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), offset);
     }
 
-    public void CommandEncoderCopyTextureToTexture(NativeHandle<CommandEncoderTag> encoder, NativeHandle<TextureTag> srcTexture, NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers)
+    public void CommandEncoderCopyTextureToTexture(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<TextureTag> srcTexture, in NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers)
     {
         var size = new Pollus.Emscripten.WGPU.WGPUExtent3D { Width = width, Height = height, DepthOrArrayLayers = depthOrArrayLayers };
         var src = new Pollus.Emscripten.WGPU.WGPUImageCopyTexture { Texture = srcTexture.As<Pollus.Emscripten.WGPU.WGPUTexture>() };
@@ -894,7 +785,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         wgpu.CommandEncoderCopyTextureToTexture(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), in src, in dst, in size);
     }
 
-    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(NativeHandle<CommandEncoderTag> encoder, NativeUtf8 label)
+    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
         var desc = new Pollus.Emscripten.WGPU.WGPUComputePassDescriptor
         {
@@ -904,18 +795,18 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<ComputePassEncoderTag>((nint)enc);
     }
 
-    public void ComputePassEncoderEnd(NativeHandle<ComputePassEncoderTag> pass)
+    public void ComputePassEncoderEnd(in NativeHandle<ComputePassEncoderTag> pass)
     {
         wgpu.ComputePassEncoderEnd(pass.As<Pollus.Emscripten.WGPU.WGPUComputePassEncoder>());
         wgpu.ComputePassEncoderRelease(pass.As<Pollus.Emscripten.WGPU.WGPUComputePassEncoder>());
     }
 
-    public void ComputePassEncoderSetPipeline(NativeHandle<ComputePassEncoderTag> pass, NativeHandle<ComputePipelineTag> pipeline)
+    public void ComputePassEncoderSetPipeline(in NativeHandle<ComputePassEncoderTag> pass, in NativeHandle<ComputePipelineTag> pipeline)
     {
         wgpu.ComputePassEncoderSetPipeline(pass.As<Pollus.Emscripten.WGPU.WGPUComputePassEncoder>(), pipeline.As<Pollus.Emscripten.WGPU.WGPUComputePipeline>());
     }
 
-    public void ComputePassEncoderSetBindGroup(NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
+    public void ComputePassEncoderSetBindGroup(in NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets)
     {
         if (dynamicOffsets.Length > 0)
         {
@@ -930,7 +821,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         }
     }
 
-    public void ComputePassEncoderDispatchWorkgroups(NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z)
+    public void ComputePassEncoderDispatchWorkgroups(in NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z)
     {
         wgpu.ComputePassEncoderDispatchWorkgroups(pass.As<Pollus.Emscripten.WGPU.WGPUComputePassEncoder>(), x, y, z);
     }
