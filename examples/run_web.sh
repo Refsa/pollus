@@ -1,4 +1,4 @@
-if [ $1 == "net9" ]; then
+if [ "$1" == "net9" ]; then
     set -- "net9"
 else
     set -- "net10"
