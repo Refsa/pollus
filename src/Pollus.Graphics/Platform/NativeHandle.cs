@@ -1,8 +1,5 @@
 namespace Pollus.Graphics.Platform;
 
-using System;
-using System.Runtime.CompilerServices;
-
 public readonly struct NativeHandle<TTag>
 {
     public readonly nint Ptr;
@@ -16,4 +13,6 @@ public readonly struct NativeHandle<TTag>
     {
         return (T*)Ptr;
     }
+
+    public static NativeHandle<TTag> Null => new(nint.Zero);
 }

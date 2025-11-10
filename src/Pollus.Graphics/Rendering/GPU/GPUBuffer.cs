@@ -3,6 +3,8 @@ namespace Pollus.Graphics.Rendering;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
@@ -20,7 +22,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         size = descriptor.Size;
         this.descriptor = descriptor;
 
-        native = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in descriptor, new Utf8Name((nint)label.Pointer));
+        native = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in descriptor, label);
     }
 
     protected override void Free()
@@ -32,10 +34,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
     public void Write(ReadOnlySpan<byte> data, int offset)
     {
-        fixed (byte* ptr = data)
-        {
-            context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, ptr, (nuint)data.Length);
-        }
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, data, (uint)data.Length);
     }
 
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
@@ -48,10 +47,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(ReadOnlySpan<TElement> data, uint alignedSize, int offset = 0)
         where TElement : unmanaged
     {
-        fixed (TElement* ptr = data)
-        {
-            context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, ptr, alignedSize);
-        }
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(data), alignedSize);
     }
 
     public void Write<TElement>(in TElement element, int offset)
@@ -64,10 +60,8 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(in TElement element, uint alignedSize, int offset)
         where TElement : unmanaged
     {
-        fixed (TElement* ptr = &element)
-        {
-            context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, ptr, alignedSize);
-        }
+        ReadOnlySpan<TElement> span = stackalloc TElement[] { element };
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(span), alignedSize);
     }
 
     public void Resize<TElement>(uint newCapacity)
@@ -79,7 +73,7 @@ unsafe public class GPUBuffer : GPUResourceWrapper
 
         var updated = descriptor;
         updated.Size = size;
-        var newBuffer = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in updated, new Utf8Name((nint)label.Pointer));
+        var newBuffer = context.Backend.DeviceCreateBuffer(context.DeviceHandle, in updated, label);
         context.Backend.BufferDestroy(native);
         context.Backend.BufferRelease(native);
         native = newBuffer;

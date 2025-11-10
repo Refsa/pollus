@@ -45,11 +45,12 @@ unsafe public struct GPURenderPassEncoder : IDisposable
     {
         if (dynamicOffsetCount > 0)
         {
-            context.Backend.RenderPassEncoderSetBindGroup(native, groupIndex, bindGroup.Native, dynamicOffsetCount, &dynamicOffsets);
+            var dynamicOffsetsSpan = new ReadOnlySpan<uint>(&dynamicOffsets, (int)dynamicOffsetCount);
+            context.Backend.RenderPassEncoderSetBindGroup(native, groupIndex, bindGroup.Native, dynamicOffsetsSpan);
         }
         else
         {
-            context.Backend.RenderPassEncoderSetBindGroup(native, groupIndex, bindGroup.Native, 0, null);
+            context.Backend.RenderPassEncoderSetBindGroup(native, groupIndex, bindGroup.Native, ReadOnlySpan<uint>.Empty);
         }
     }
 

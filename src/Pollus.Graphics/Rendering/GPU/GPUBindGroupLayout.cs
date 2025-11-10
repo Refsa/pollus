@@ -13,7 +13,7 @@ unsafe public class GPUBindGroupLayout : GPUResourceWrapper
     public GPUBindGroupLayout(IWGPUContext context, BindGroupLayoutDescriptor descriptor) : base(context)
     {
         using var labelData = new NativeUtf8(descriptor.Label);
-        var handle = context.Backend.DeviceCreateBindGroupLayout(context.DeviceHandle, in descriptor, new Utf8Name((nint)labelData.Pointer));
+        var handle = context.Backend.DeviceCreateBindGroupLayout(context.DeviceHandle, in descriptor, labelData);
         native = handle.Ptr;
     }
 

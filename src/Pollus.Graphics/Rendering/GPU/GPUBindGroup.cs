@@ -14,7 +14,7 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
     {
         using var labelData = new NativeUtf8(descriptor.Label);
 
-        native = context.Backend.DeviceCreateBindGroup(context.DeviceHandle, in descriptor, new Utf8Name((nint)labelData.Pointer));
+        native = context.Backend.DeviceCreateBindGroup(context.DeviceHandle, in descriptor, labelData);
     }
 
     protected override void Free()

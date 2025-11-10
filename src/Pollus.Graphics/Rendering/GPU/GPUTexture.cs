@@ -19,7 +19,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
     {
         using var labelData = new NativeUtf8(descriptor.Label);
         this.descriptor = descriptor;
-        native = context.Backend.DeviceCreateTexture(context.DeviceHandle, in descriptor, new Utf8Name((nint)labelData.Pointer));
+        native = context.Backend.DeviceCreateTexture(context.DeviceHandle, in descriptor, labelData);
     }
 
     protected override void Free()
@@ -56,8 +56,7 @@ unsafe public class GPUTexture : GPUResourceWrapper
             native,
             mipLevel,
             origin.X, origin.Y, origin.Z,
-            Unsafe.AsPointer(ref MemoryMarshal.GetReference(data)),
-            (nuint)data.Length,
+            data,
             bytesPerRow,
             rowsPerImage,
             writeWidth, writeHeight, writeDepth

@@ -12,7 +12,7 @@ unsafe public class GPUComputePipeline : GPUResourceWrapper
     public GPUComputePipeline(IWGPUContext context, ComputePipelineDescriptor descriptor) : base(context)
     {
         using var label = new NativeUtf8(descriptor.Label);
-        native = context.Backend.DeviceCreateComputePipeline(context.DeviceHandle, in descriptor, new Utf8Name((nint)label.Pointer));
+        native = context.Backend.DeviceCreateComputePipeline(context.DeviceHandle, in descriptor, label);
     }
 
     protected override void Free()

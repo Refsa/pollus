@@ -13,7 +13,7 @@ unsafe public class GPURenderPipeline : GPUResourceWrapper
     public GPURenderPipeline(IWGPUContext context, RenderPipelineDescriptor descriptor) : base(context)
     {
         using var labelUtf8 = new NativeUtf8(descriptor.Label);
-        native = context.Backend.DeviceCreateRenderPipeline(context.DeviceHandle, in descriptor, new Utf8Name((nint)labelUtf8.Pointer));
+        native = context.Backend.DeviceCreateRenderPipeline(context.DeviceHandle, in descriptor, labelUtf8);
     }
 
     protected override void Free()

@@ -1,12 +1,8 @@
 namespace Pollus.Graphics.Rendering;
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
-using Pollus.Mathematics;
 
 unsafe public struct GPUCommandEncoder : IDisposable
 {
@@ -22,7 +18,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
         this.label = label;
         this.context = context;
         using var labelData = new NativeUtf8(label);
-        native = context.Backend.DeviceCreateCommandEncoder(context.DeviceHandle, new Utf8Name((nint)labelData.Pointer));
+        native = context.Backend.DeviceCreateCommandEncoder(context.DeviceHandle, labelData);
     }
 
     public void Dispose()
@@ -33,7 +29,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
     public GPUCommandBuffer Finish(ReadOnlySpan<char> label)
     {
         using var labelData = new NativeUtf8(label);
-        var buffer = context.Backend.CommandEncoderFinish(native, new Utf8Name((nint)labelData.Pointer));
+        var buffer = context.Backend.CommandEncoderFinish(native, labelData);
         return new GPUCommandBuffer(context, buffer);
     }
 

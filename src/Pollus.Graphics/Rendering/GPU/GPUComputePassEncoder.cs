@@ -2,7 +2,6 @@ namespace Pollus.Graphics.Rendering;
 
 using Pollus.Collections;
 using Pollus.Graphics.WGPU;
-using Pollus.Mathematics;
 using Pollus.Graphics.Platform;
 
 unsafe public struct GPUComputePassEncoder : IDisposable
@@ -15,7 +14,7 @@ unsafe public struct GPUComputePassEncoder : IDisposable
     {
         this.context = context;
         using var labelPtr = new NativeUtf8(label);
-        native = context.Backend.CommandEncoderBeginComputePass(commandEncoder.Native, new Utf8Name((nint)labelPtr.Pointer));
+        native = context.Backend.CommandEncoderBeginComputePass(commandEncoder.Native, labelPtr);
     }
 
     public void Dispose()
@@ -35,6 +34,6 @@ unsafe public struct GPUComputePassEncoder : IDisposable
 
     public void SetBindGroup(uint group, GPUBindGroup bindGroup)
     {
-        context.Backend.ComputePassEncoderSetBindGroup(native, group, bindGroup.Native, 0, null);
+        context.Backend.ComputePassEncoderSetBindGroup(native, group, bindGroup.Native, ReadOnlySpan<uint>.Empty);
     }
 }

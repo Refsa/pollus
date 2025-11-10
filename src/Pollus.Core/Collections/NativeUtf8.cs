@@ -4,6 +4,11 @@ namespace Pollus.Collections;
 
 unsafe public struct NativeUtf8 : IDisposable
 {
+    public static NativeUtf8 Null => new()
+    {
+        data = NativeArray<byte>.Empty,
+    };
+
     NativeArray<byte> data;
 
     public byte* Pointer => (byte*)data.Data;

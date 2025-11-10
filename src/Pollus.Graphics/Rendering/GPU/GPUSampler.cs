@@ -13,7 +13,7 @@ unsafe public class GPUSampler : GPUResourceWrapper
     public GPUSampler(IWGPUContext context, SamplerDescriptor descriptor) : base(context)
     {
         using var labelData = new NativeUtf8(descriptor.Label);
-        native = context.Backend.DeviceCreateSampler(context.DeviceHandle, in descriptor, new Utf8Name((nint)labelData.Pointer));
+        native = context.Backend.DeviceCreateSampler(context.DeviceHandle, in descriptor, labelData);
     }
 
     protected override void Free()

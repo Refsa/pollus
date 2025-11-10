@@ -14,7 +14,7 @@ unsafe public class GPUShader : GPUResourceWrapper
     {
         using var labelData = new NativeUtf8(descriptor.Label);
         using var contentData = new NativeUtf8(descriptor.Content);
-        native = context.Backend.DeviceCreateShaderModule(context.DeviceHandle, descriptor.Backend, new Utf8Name((nint)labelData.Pointer), new Utf8Name((nint)contentData.Pointer));
+        native = context.Backend.DeviceCreateShaderModule(context.DeviceHandle, descriptor.Backend, labelData, contentData);
     }
 
     protected override void Free()
