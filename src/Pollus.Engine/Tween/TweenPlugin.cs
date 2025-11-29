@@ -1,6 +1,5 @@
 namespace Pollus.Engine.Tween;
 
-using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using Pollus.Debugging;
 using Pollus.ECS;
@@ -24,6 +23,45 @@ public class TweenPlugin : IPlugin
         {
             plugin.Apply(world);
         }
+
+        world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("TweenTick",
+        static (Commands commands, Time time, Query<TweenData>.Filter<None<TweenDisabled>> qTweens) =>
+        {
+            qTweens.ForEach((time.DeltaTimeF, commands),
+            static (in (float deltaTime, Commands commands) userData, in Entity entity, ref TweenData tween) =>
+            {
+                if (tween.Elapsed < tween.Duration)
+                {
+                    tween.Elapsed = (tween.Elapsed + userData.deltaTime).Clamp(0f, tween.Duration);
+
+                    var t = tween.Elapsed / tween.Duration;
+                    tween.Progress = tween.Easing switch
+                    {
+                        Easing.Linear => t,
+                        Easing.Sine => float.Sin(t),
+                        Easing.Quadratic => t * t,
+                        Easing.Cubic => t * t * t,
+                        Easing.Quartic => t * t * t * t,
+                        Easing.Quintic => t * t * t * t * t,
+                        _ => t,
+                    };
+                    return;
+                }
+
+                tween.Elapsed = 0f;
+                tween.Progress = 0f;
+
+                if (tween.Flags.HasFlag(TweenFlag.OneShot))
+                {
+                    userData.commands.Despawn(entity);
+                }
+                else if (!tween.Flags.HasFlag(TweenFlag.Loop) && !tween.Flags.HasFlag(TweenFlag.PingPong))
+                {
+                    userData.commands.SetComponent(entity, new TweenDisabled());
+                }
+            });
+
+        }));
     }
 
     public TweenPlugin Register<TData>()
@@ -43,7 +81,7 @@ public class TweenablePlugin<TData> : IPlugin
     }
 }
 
-public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, Child>, Query<TData>>
+public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, TweenData, Child>.Filter<None<TweenDisabled>>, Query<TData>>
     where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
     where TField : unmanaged
 {
@@ -53,55 +91,24 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
     {
     }
 
-    protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, Child> qTweens, Query<TData> qData)
+    protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, TweenData, Child>.Filter<None<TweenDisabled>> qTweens, Query<TData> qData)
     {
         Guard.IsNotNull(TweenResources.Handler<TField>.Instance, $"Tween handler not registered");
 
-        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref Child child) =>
+        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref TweenData data, ref Child child) =>
         {
-            var t = tween.Elapsed / tween.Duration;
-            t = tween.Easing switch
-            {
-                Easing.Linear => t,
-                Easing.Sine => float.Sin(t),
-                Easing.Quadratic => t * t,
-                Easing.Cubic => t * t * t,
-                Easing.Quartic => t * t * t * t,
-                Easing.Quintic => t * t * t * t * t,
-                _ => t,
-            };
-
-            t = t.Clamp(0f, 1f);
-
-            if (tween.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
+            var t = data.Progress;
+            if (data.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
 
             var value = TweenResources.Handler<TField>.Instance!.Lerp(tween.From, tween.To, t);
-
             query.Get<TData>(child.Parent).SetValue(tween.FieldID, value);
-        });
 
-        qTweens.ForEach((time.DeltaTimeF, commands),
-        static (in (float deltaTime, Commands commands) userData, in Entity entity, ref Tween<TField> tween, ref Child child) =>
-        {
-            if (tween.Elapsed >= tween.Duration)
+            if (data.Progress == 1f)
             {
-                if (tween.Flags.HasFlag(TweenFlag.Loop))
-                {
-                    tween.Elapsed = 0f;
-                }
-                else if (tween.Flags.HasFlag(TweenFlag.PingPong))
+                if (data.Flags.HasFlag(TweenFlag.PingPong))
                 {
                     (tween.From, tween.To) = (tween.To, tween.From);
-                    tween.Elapsed = 0f;
                 }
-                else
-                {
-                    userData.commands.Despawn(entity);
-                }
-            }
-            else
-            {
-                tween.Elapsed += userData.deltaTime;
             }
         });
     }
@@ -153,6 +160,7 @@ public enum TweenFlag
     PingPong = 1 << 1,
     Reverse = 1 << 2,
     Delayed = 1 << 3,
+    OneShot = 1 << 4,
 }
 
 /* -------------------------------------------------------------------------------------------- */
@@ -161,83 +169,25 @@ public enum TweenFlag
 public struct Tween<TType> : IComponent
     where TType : unmanaged
 {
-    public Easing Easing;
-    public EasingDirection Direction;
-    public TweenFlag Flags;
-
     public byte FieldID;
-
-    public float Duration;
-    public float Elapsed;
-
     public TType From;
     public TType To;
 }
 
-public static class Tween
+public struct TweenData : IComponent
 {
-    public static TweenBuilder<TType, TField> Create<TType, TField>(Entity entity, Expression<Func<TType, TField>> property)
-        where TType : unmanaged, IReflect<TType>, ITweenable
-        where TField : unmanaged
-    {
-        return new TweenBuilder<TType, TField>(entity, property);
-    }
+    public Easing Easing;
+    public EasingDirection Direction;
+    public TweenFlag Flags;
+    public float Duration;
+
+    public float Elapsed;
+    public float Progress;
 }
 
-public struct TweenBuilder<TType, TField>
-    where TType : unmanaged, IReflect<TType>, ITweenable
-    where TField : unmanaged
+public struct TweenDisabled : IComponent
 {
-    Tween<TField> tween;
-    Entity entity;
 
-    public TweenBuilder(Entity entity, Expression<Func<TType, TField>> property)
-    {
-        this.entity = entity;
-        this.tween = new()
-        {
-            FieldID = TType.GetFieldIndex(property),
-        };
-    }
-
-    public TweenBuilder<TType, TField> WithFromTo(TField from, TField to)
-    {
-        tween.From = from;
-        tween.To = to;
-        return this;
-    }
-
-    public TweenBuilder<TType, TField> WithDuration(float duration)
-    {
-        tween.Duration = duration;
-        return this;
-    }
-
-    public TweenBuilder<TType, TField> WithEasing(Easing easing)
-    {
-        tween.Easing = easing;
-        return this;
-    }
-
-    public TweenBuilder<TType, TField> WithDirection(EasingDirection direction)
-    {
-        tween.Direction = direction;
-        return this;
-    }
-
-    public TweenBuilder<TType, TField> WithFlags(TweenFlag flags)
-    {
-        tween.Flags = flags;
-        return this;
-    }
-
-    public Entity Append(Commands commands)
-    {
-        var child = commands.Spawn(Entity.With(tween))
-            .SetParent(entity)
-            .Entity;
-        return child;
-    }
 }
 
 /* -------------------------------------------------------------------------------------------- */

@@ -92,7 +92,10 @@ public class ReflectGenerator : IIncrementalGenerator
             {{string.Join("\n", model.Fields.Select(e => $"        {e.Name},"))}}
                 }
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 public void SetValue<T>(byte field, T value) => SetValue((ReflectField)field, value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 public void SetValue<T>(ReflectField field, T value)
                 {
                     switch (field)
@@ -102,6 +105,7 @@ public class ReflectGenerator : IIncrementalGenerator
                     }
                 }
 
+                [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.ClassName}}, TField>> property)
                 {
                     string? fieldName = null;
