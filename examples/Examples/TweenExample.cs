@@ -34,9 +34,9 @@ public partial class TweenExample : IExample
             new TransformPlugin<Transform2D>(),
             new ShapePlugin(),
             new InputPlugin(),
-            new TweenPlugin(),
-            new TweenablePlugin<Test>(),
-            new TweenablePlugin<Transform2D>(),
+            new TweenPlugin()
+                .Register<Test>()
+                .Register<Transform2D>(),
             new PerformanceTrackerPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
@@ -76,12 +76,12 @@ public partial class TweenExample : IExample
             }))
             .Entity;
 
-        Tween.Create(2f, pos, pos + Vec2f.Up * 64f)
-                .OnEntity(parent)
-                .OnField<Transform2D>(comp => comp.Position)
-                .WithEasing(Easing.Quartic)
-                .WithFlags(TweenFlag.PingPong)
-                .Append(commands);
+        Tween.Create(parent, (Transform2D comp) => comp.Position)
+            .WithFromTo(pos, pos + Vec2f.Up * 64f)
+            .WithDuration(2f)
+            .WithEasing(Easing.Quartic)
+            .WithFlags(TweenFlag.PingPong)
+            .Append(commands);
 
         var child1 = commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
@@ -97,9 +97,9 @@ public partial class TweenExample : IExample
             .SetParent(parent)
             .Entity;
 
-        Tween.Create(2f, Vec2f.Up * 256f, Vec2f.Up * 256f + Vec2f.Right * 32f)
-            .OnEntity(child1)
-            .OnField<Transform2D>(comp => comp.Position)
+        Tween.Create(child1, (Transform2D comp) => comp.Position)
+            .WithFromTo(Vec2f.Up * 256f, Vec2f.Up * 256f + Vec2f.Right * 32f)
+            .WithDuration(2f)
             .WithEasing(Easing.Quartic)
             .WithFlags(TweenFlag.PingPong)
             .Append(commands);
@@ -118,9 +118,9 @@ public partial class TweenExample : IExample
             .SetParent(child1)
             .Entity;
 
-        Tween.Create(2f, Vec2f.One, Vec2f.One * 1.5f)
-            .OnEntity(child2)
-            .OnField<Transform2D>(comp => comp.Scale)
+        Tween.Create(child2, (Transform2D comp) => comp.Scale)
+            .WithFromTo(Vec2f.One, Vec2f.One * 1.5f)
+            .WithDuration(2f)
             .WithEasing(Easing.Quartic)
             .WithFlags(TweenFlag.PingPong)
             .Append(commands);

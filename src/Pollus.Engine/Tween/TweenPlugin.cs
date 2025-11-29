@@ -2,6 +2,7 @@ namespace Pollus.Engine.Tween;
 
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Reflect;
 using Pollus.Mathematics;
@@ -14,12 +15,24 @@ public class TweenPlugin : IPlugin
         TweenResources.RegisterHandler<Vec2f, Vec2fHandler>();
     }
 
+    List<IPlugin> plugins = [];
+
     public void Apply(World world)
     {
         world.Resources.Add(new TweenResources());
+        foreach (var plugin in plugins)
+        {
+            plugin.Apply(world);
+        }
+    }
+
+    public TweenPlugin Register<TData>()
+        where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
+    {
+        plugins.Add(new TweenablePlugin<TData>());
+        return this;
     }
 }
-
 
 public class TweenablePlugin<TData> : IPlugin
     where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
@@ -42,10 +55,10 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
 
     protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, Child> qTweens, Query<TData> qData)
     {
+        Guard.IsNotNull(TweenResources.Handler<TField>.Instance, $"Tween handler not registered");
+
         qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref Child child) =>
         {
-            var handler = TweenResources.Handler<TField>.Instance;
-
             var t = tween.Elapsed / tween.Duration;
             t = tween.Easing switch
             {
@@ -62,7 +75,7 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
 
             if (tween.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
 
-            var value = handler!.Lerp(tween.From, tween.To, t);
+            var value = TweenResources.Handler<TField>.Instance!.Lerp(tween.From, tween.To, t);
 
             query.Get<TData>(child.Parent).SetValue(tween.FieldID, value);
         });
@@ -132,8 +145,6 @@ public enum EasingDirection : byte
     Out,
 }
 
-/* -------------------------------------------------------------------------------------------- */
-
 [Flags]
 public enum TweenFlag
 {
@@ -144,72 +155,7 @@ public enum TweenFlag
     Delayed = 1 << 3,
 }
 
-public static class Tween
-{
-    public static TweenBuilder<TType> Create<TType>(float duration, TType from, TType to)
-        where TType : unmanaged
-    {
-        return new TweenBuilder<TType>(from, to, duration);
-    }
-}
-
-public struct TweenBuilder<TType>
-    where TType : unmanaged
-{
-    Tween<TType> tween;
-    Entity entity;
-
-    public TweenBuilder(TType from, TType to, float duration)
-    {
-        tween = new Tween<TType>()
-        {
-            From = from,
-            To = to,
-            Duration = duration,
-            Easing = Easing.Linear,
-            Direction = EasingDirection.InOut,
-        };
-    }
-
-    public TweenBuilder<TType> WithEasing(Easing easing)
-    {
-        tween.Easing = easing;
-        return this;
-    }
-
-    public TweenBuilder<TType> WithDirection(EasingDirection direction)
-    {
-        tween.Direction = direction;
-        return this;
-    }
-
-    public TweenBuilder<TType> OnField<TData>(Expression<Func<TData, TType>> property)
-        where TData : unmanaged, ITweenable, IReflect<TData>
-    {
-        tween.FieldID = TData.GetFieldIndex(property);
-        return this;
-    }
-
-    public TweenBuilder<TType> OnEntity(Entity entity)
-    {
-        this.entity = entity;
-        return this;
-    }
-
-    public TweenBuilder<TType> WithFlags(TweenFlag flags)
-    {
-        tween.Flags = flags;
-        return this;
-    }
-
-    public Entity Append(Commands commands)
-    {
-        var child = commands.Spawn(Entity.With(tween))
-            .SetParent(entity)
-            .Entity;
-        return child;
-    }
-}
+/* -------------------------------------------------------------------------------------------- */
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public struct Tween<TType> : IComponent
@@ -228,50 +174,73 @@ public struct Tween<TType> : IComponent
     public TType To;
 }
 
-/* -------------------------------------------------------------------------------------------- */
-
-public interface ITweenHandler<TData>
-    where TData : unmanaged
+public static class Tween
 {
-    TData Lerp(TData from, TData to, float t);
-}
-
-public struct FloatHandler : ITweenHandler<float>
-{
-    public float Lerp(float from, float to, float t) => float.Lerp(from, to, t);
-}
-
-public struct Vec2fHandler : ITweenHandler<Vec2f>
-{
-    public Vec2f Lerp(Vec2f from, Vec2f to, float t) => Vec2f.Lerp(from, to, t);
-}
-
-/* -------------------------------------------------------------------------------------------- */
-
-public struct TweenCommand : ICommand
-{
-    public static int Priority => 99;
-
-    public Entity Entity;
-
-    public void Execute(World world)
+    public static TweenBuilder<TType, TField> Create<TType, TField>(Entity entity, Expression<Func<TType, TField>> property)
+        where TType : unmanaged, IReflect<TType>, ITweenable
+        where TField : unmanaged
     {
-
+        return new TweenBuilder<TType, TField>(entity, property);
     }
 }
 
-public static class TweenCommandsExt
+public struct TweenBuilder<TType, TField>
+    where TType : unmanaged, IReflect<TType>, ITweenable
+    where TField : unmanaged
 {
-    public static Commands Tween(this Commands commands, Entity entity)
+    Tween<TField> tween;
+    Entity entity;
+
+    public TweenBuilder(Entity entity, Expression<Func<TType, TField>> property)
     {
-        return commands;
+        this.entity = entity;
+        this.tween = new()
+        {
+            FieldID = TType.GetFieldIndex(property),
+        };
+    }
+
+    public TweenBuilder<TType, TField> WithFromTo(TField from, TField to)
+    {
+        tween.From = from;
+        tween.To = to;
+        return this;
+    }
+
+    public TweenBuilder<TType, TField> WithDuration(float duration)
+    {
+        tween.Duration = duration;
+        return this;
+    }
+
+    public TweenBuilder<TType, TField> WithEasing(Easing easing)
+    {
+        tween.Easing = easing;
+        return this;
+    }
+
+    public TweenBuilder<TType, TField> WithDirection(EasingDirection direction)
+    {
+        tween.Direction = direction;
+        return this;
+    }
+
+    public TweenBuilder<TType, TField> WithFlags(TweenFlag flags)
+    {
+        tween.Flags = flags;
+        return this;
+    }
+
+    public Entity Append(Commands commands)
+    {
+        var child = commands.Spawn(Entity.With(tween))
+            .SetParent(entity)
+            .Entity;
+        return child;
     }
 }
 
 /* -------------------------------------------------------------------------------------------- */
-
-[AttributeUsage(AttributeTargets.Struct)]
-public sealed class TweenableAttribute : Attribute { }
 
 public interface ITweenable
 {
