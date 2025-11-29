@@ -1,10 +1,7 @@
 namespace Pollus.Generators;
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -12,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 [Generator(LanguageNames.CSharp)]
-public class TweenGenerator : IIncrementalGenerator
+public class ReflectGenerator : IIncrementalGenerator
 {
     class TypeInfo
     {
@@ -88,11 +85,33 @@ public class TweenGenerator : IIncrementalGenerator
             var distinctFieldTypes = new HashSet<string>(model.Fields.Select(e => e.Type));
 
             var partialExt = $$"""
-            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Tween.ITweenable
+            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.ClassName}}>
             {
-                public static void PrepareTweenSystems(Schedule schedule)
+                public enum ReflectField : byte
                 {
-            {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.ClassName}, {e}>());"))}}
+            {{string.Join("\n", model.Fields.Select(e => $"        {e.Name},"))}}
+                }
+
+                public void SetValue<T>(byte field, T value) => SetValue((ReflectField)field, value);
+                public void SetValue<T>(ReflectField field, T value)
+                {
+                    switch (field)
+                    {
+            {{string.Join("\n", model.Fields.Select(e => $"            case ReflectField.{e.Name}: {e.Name} = Unsafe.As<T, {e.Type}>(ref value); break;"))}}
+                        default: throw new ArgumentException($"Invalid property: {field}", nameof(field));
+                    }
+                }
+
+                public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.ClassName}}, TField>> property)
+                {
+                    string? fieldName = null;
+                    if (property.Body is MemberExpression expr)
+                    {
+                        fieldName = (expr.Member as FieldInfo)?.Name;
+                    }
+
+                    if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Invalid property expression", nameof(property));
+                    return (byte)Enum.Parse<ReflectField>(fieldName);
                 }
             } 
             """;
@@ -112,13 +131,11 @@ public class TweenGenerator : IIncrementalGenerator
             using System.Runtime.CompilerServices;
             using System.Linq.Expressions;
             using System.Reflection;
-            using Pollus.Engine.Tween;
-            using Pollus.ECS;
 
             {{partialExt}}
             """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Tweenable.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Reflect.gen.cs", source);
         });
     }
 

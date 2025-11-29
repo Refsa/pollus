@@ -7,6 +7,7 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Input;
+using Pollus.Engine.Reflect;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Engine.Tween;
@@ -20,8 +21,7 @@ public partial class TweenExample : IExample
 
     IApplication? app;
 
-
-    [Tweenable]
+    [Reflect]
     partial struct Test : IComponent
     {
         public float Float;

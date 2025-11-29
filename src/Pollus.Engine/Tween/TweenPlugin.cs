@@ -3,6 +3,7 @@ namespace Pollus.Engine.Tween;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using Pollus.ECS;
+using Pollus.Engine.Reflect;
 using Pollus.Mathematics;
 
 public class TweenPlugin : IPlugin
@@ -21,16 +22,16 @@ public class TweenPlugin : IPlugin
 
 
 public class TweenablePlugin<TData> : IPlugin
-    where TData : unmanaged, IComponent, ITweenable<TData>
+    where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
 {
     public void Apply(World world)
     {
-        TData.PrepareSystems(world.Schedule);
+        TData.PrepareTweenSystems(world.Schedule);
     }
 }
 
 public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, Child>, Query<TData>>
-    where TData : unmanaged, IComponent, ITweenable<TData>
+    where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
     where TField : unmanaged
 {
     public delegate void ApplyDelegate(TData data, TField value);
@@ -183,7 +184,7 @@ public struct TweenBuilder<TType>
     }
 
     public TweenBuilder<TType> OnField<TData>(Expression<Func<TData, TType>> property)
-        where TData : unmanaged, ITweenable<TData>
+        where TData : unmanaged, ITweenable, IReflect<TData>
     {
         tween.FieldID = TData.GetFieldIndex(property);
         return this;
@@ -274,12 +275,5 @@ public sealed class TweenableAttribute : Attribute { }
 
 public interface ITweenable
 {
-    void SetValue<T>(byte field, T value);
-    static abstract void PrepareSystems(Schedule schedule);
-}
-
-public interface ITweenable<TData> : ITweenable
-    where TData : unmanaged
-{
-    static abstract byte GetFieldIndex<TField>(Expression<Func<TData, TField>> property);
+    static abstract void PrepareTweenSystems(Schedule schedule);
 }
