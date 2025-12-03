@@ -133,7 +133,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ref TValue Get(scoped in TKey key)
+    public readonly ref TValue Get(scoped in TKey key)
     {
         return ref GetValue(key, Hash(key, capacity));
     }
@@ -163,7 +163,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    ref TValue GetValue(scoped in TKey key, int hash)
+    readonly ref TValue GetValue(scoped in TKey key, int hash)
     {
         var keySpan = keys.AsSpan();
         for (int i = 0; i < keySpan.Length; i++)

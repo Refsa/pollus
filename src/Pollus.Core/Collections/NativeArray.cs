@@ -64,9 +64,9 @@ unsafe public struct NativeArray<T> : IDisposable
         return ref Unsafe.AsRef<TCast>(Unsafe.Add<T>(data, index));
     }
 
-    public Span<T> AsSpan() => new(data, length);
-    public Span<T> Slice(int start) => new(data + start, length - start);
-    public Span<T> Slice(int start, int length) => new(data + start, length);
+    public readonly Span<T> AsSpan() => new(data, length);
+    public readonly Span<T> Slice(int start) => new(data + start, length - start);
+    public readonly Span<T> Slice(int start, int length) => new(data + start, length);
     public Enumerator GetEnumerator() => new(data, length);
 
     public NativeArray<T> SubArray(int start, int length)
