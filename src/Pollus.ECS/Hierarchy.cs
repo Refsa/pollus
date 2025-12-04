@@ -3,6 +3,7 @@ namespace Pollus.ECS;
 public record struct Parent : IComponent
 {
     public Entity FirstChild = Entity.NULL;
+    public Entity LastChild = Entity.NULL;
     public Parent() { }
 }
 

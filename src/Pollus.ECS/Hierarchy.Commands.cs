@@ -24,8 +24,6 @@ public static class HierarchyCommandsExt
     /// <returns>The commands instance.</returns>
     public static Commands AddChild(this Commands commands, in Entity parent, in Entity child)
     {
-        commands.AddComponent(parent, new Parent { FirstChild = Entity.NULL });
-        commands.AddComponent(child, new Child { Parent = Entity.NULL });
         commands.AddCommand(new AddChildCommand { Child = child, Parent = parent });
         return commands;
     }
@@ -85,6 +83,7 @@ public static class HierarchyCommandsExt
         {
             builder.AddChild(children[i]);
         }
+
         return builder;
     }
 
@@ -110,18 +109,35 @@ public struct AddChildCommand : ICommand
 
     public void Execute(World world)
     {
+        if (!world.Store.HasComponent<Parent>(Parent))
+        {
+            world.Store.AddComponent(Parent, new Parent { FirstChild = Entity.NULL, LastChild = Entity.NULL });
+        }
+
+        if (!world.Store.HasComponent<Child>(Child))
+        {
+            world.Store.AddComponent(Child, new Child { Parent = Entity.NULL });
+        }
+
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         ref var cChild = ref world.Store.GetComponent<Child>(Child);
 
         cChild.Parent = Parent;
+        cChild.NextSibling = Entity.NULL;
+        cChild.PreviousSibling = Entity.NULL;
 
-        if (!cParent.FirstChild.IsNull)
+        if (cParent.FirstChild.IsNull)
         {
-            cChild.NextSibling = cParent.FirstChild;
-            world.Store.GetComponent<Child>(cParent.FirstChild).PreviousSibling = Child;
+            cParent.FirstChild = Child;
+            cParent.LastChild = Child;
         }
-
-        cParent.FirstChild = Child;
+        else
+        {
+            var lastChild = cParent.LastChild;
+            cChild.PreviousSibling = lastChild;
+            world.Store.GetComponent<Child>(lastChild).NextSibling = Child;
+            cParent.LastChild = Child;
+        }
     }
 }
 
@@ -143,27 +159,34 @@ public struct RemoveChildCommand : ICommand
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         ref var cChild = ref world.Store.GetComponent<Child>(Child);
 
+        if (cChild.Parent != Parent) return;
+
         if (cParent.FirstChild == Child)
         {
             cParent.FirstChild = cChild.NextSibling;
-
-            if (!cChild.NextSibling.IsNull)
+            if (cChild.NextSibling.IsNull)
+            {
+                cParent.LastChild = Entity.NULL;
+            }
+            else
             {
                 world.Store.GetComponent<Child>(cChild.NextSibling).PreviousSibling = Entity.NULL;
             }
         }
         else
         {
-            var current = cParent.FirstChild;
-            while (current != Child)
+            if (!cChild.PreviousSibling.IsNull)
             {
-                var next = world.Store.GetComponent<Child>(current).NextSibling;
-                if (next == Child)
-                {
-                    world.Store.GetComponent<Child>(current).NextSibling = cChild.NextSibling;
-                    world.Store.GetComponent<Child>(cChild.NextSibling).PreviousSibling = current;
-                }
-                current = next;
+                world.Store.GetComponent<Child>(cChild.PreviousSibling).NextSibling = cChild.NextSibling;
+            }
+
+            if (!cChild.NextSibling.IsNull)
+            {
+                world.Store.GetComponent<Child>(cChild.NextSibling).PreviousSibling = cChild.PreviousSibling;
+            }
+            else
+            {
+                cParent.LastChild = cChild.PreviousSibling;
             }
         }
 

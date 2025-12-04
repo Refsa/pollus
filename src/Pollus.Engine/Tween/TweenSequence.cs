@@ -74,7 +74,7 @@ public partial class TweenSequenceSystemSet
             if (current.Progress < 1f) return;
 
             ref var child = ref userData.query.Get<Child>(sequence.Current);
-            if (child.PreviousSibling == Entity.NULL)
+            if (child.NextSibling == Entity.NULL)
             {
                 if (sequence.Flags.HasFlag(TweenFlag.OneShot))
                 {
@@ -93,7 +93,7 @@ public partial class TweenSequenceSystemSet
                 return;
             }
 
-            sequence.Current = child.PreviousSibling;
+            sequence.Current = child.NextSibling;
             userData.commands.RemoveComponent<TweenDisabled>(sequence.Current);
         });
     }

@@ -61,13 +61,56 @@ public class HierarchyTests
         Assert.Equal(root, child1_child.Parent);
         Assert.Equal(root, child2_child.Parent);
 
-        Assert.Equal(child2, root_parent.FirstChild);
-        Assert.Equal(child2, child1_child.PreviousSibling);
+        Assert.Equal(child1, root_parent.FirstChild);
+        Assert.Equal(child2, child1_child.NextSibling);
+        Assert.Equal(Entity.NULL, child1_child.PreviousSibling);
 
-        Assert.Equal(child1, child2_child.NextSibling);
+        Assert.Equal(child2, root_parent.LastChild);
+        Assert.Equal(child1, child2_child.PreviousSibling);
+        Assert.Equal(Entity.NULL, child2_child.NextSibling);
+
         Assert.Equal(child1, child1_1_child.Parent);
-
         Assert.Equal(child1_1, child1_parent.FirstChild);
+        Assert.Equal(child1_1, child1_parent.LastChild);
+        Assert.Equal(Entity.NULL, child1_1_child.NextSibling);
+        Assert.Equal(Entity.NULL, child1_1_child.PreviousSibling);
+    }
+
+    [Fact]
+    public void Hierarchy_Commands_MultipleChildren()
+    {
+        using var world = new World();
+        var commands = world.GetCommands();
+
+        var child1 = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var child2 = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var child3 = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var child4 = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var root = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).AddChildren([
+            child1, child2, child3, child4
+        ]).Entity;
+
+        world.Update();
+
+        var root_parent = world.Store.GetComponent<Parent>(root);
+        Assert.Equal(child1, root_parent.FirstChild);
+        Assert.Equal(child4, root_parent.LastChild);
+
+        var child1_child = world.Store.GetComponent<Child>(child1);
+        Assert.Equal(child2, child1_child.NextSibling);
+        Assert.Equal(Entity.NULL, child1_child.PreviousSibling);
+
+        var child2_child = world.Store.GetComponent<Child>(child2);
+        Assert.Equal(child3, child2_child.NextSibling);
+        Assert.Equal(child1, child2_child.PreviousSibling);
+
+        var child3_child = world.Store.GetComponent<Child>(child3);
+        Assert.Equal(child4, child3_child.NextSibling);
+        Assert.Equal(child2, child3_child.PreviousSibling);
+
+        var child4_child = world.Store.GetComponent<Child>(child4);
+        Assert.Equal(Entity.NULL, child4_child.NextSibling);
+        Assert.Equal(child3, child4_child.PreviousSibling);
     }
 }
 #pragma warning restore CA1416
