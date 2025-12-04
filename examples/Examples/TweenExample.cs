@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using System.Text;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -52,14 +53,97 @@ public partial class TweenExample : IExample
             var scale = 4f;
             var shape = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * scale));
 
+            SpawnAndSequence(commands, Vec2f.Right * 1400f + Vec2f.Up * 50f, shapeMaterial, shape);
+
             for (int x = 0; x < 100; x++)
                 for (int y = 0; y < 10; y++)
                 {
                     SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, y * scale * 3f), shapeMaterial, shape);
                 }
         }))
+        .AddSystem(CoreStage.Update, FnSystem.Create(new()
+        {
+            Label = "Print",
+            Locals = [
+                Local.From(new StringBuilder())
+            ]
+        },
+        static (Local<float> logCD, Local<StringBuilder> sb, Time time, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
+        {
+            logCD.Value -= time.DeltaTimeF;
+            if (logCD.Value > 0) return;
+            logCD.Value = 1;
+
+            /* Log.Info("########################");
+            query.ForEach((query, sb.Value), static (in userdata, in entity) =>
+            {
+                userdata.Value.Clear();
+                userdata.Value.AppendFormat("Entity: {0}\n", entity);
+                foreach (var cid in userdata.query.GetComponents(entity))
+                {
+                    var cinfo = Component.GetInfo(cid);
+                    userdata.Value.AppendFormat("\t{0}\n", cinfo.TypeName);
+                }
+                Log.Info(userdata.Value.ToString());
+            }); */
+
+            /* foreach (var root in qRoots)
+            {
+                Log.Info($"{root.Entity}");
+                foreach (var child in query.HierarchyDFS(root.Entity))
+                {
+                    Log.Info($"{new string(' ', child.Depth * 2)}{child.Entity}");
+                }
+            }
+            Log.Info(""); */
+        }))
         .Build())
         .Run();
+
+    static void SpawnAndSequence(Commands commands, Vec2f pos, Handle<ShapeMaterial> shapeMaterial, Handle<Shape> shape)
+    {
+        var entity = commands.Spawn(ShapeDraw.Bundle
+            .Set(Transform2D.Default with
+            {
+                Position = pos,
+                Scale = Vec2f.One * 4,
+            })
+            .Set(new ShapeDraw()
+            {
+                MaterialHandle = shapeMaterial,
+                ShapeHandle = shape,
+                Color = Color.ORANGE,
+            }))
+            .Entity;
+
+        Tween.Sequence(commands)
+            .WithFlags(TweenFlag.Loop)
+            .Then(Tween.Create(entity, (Transform2D comp) => comp.Position)
+                .WithFromTo(pos, pos + Vec2f.Up * 64f)
+                .WithDuration(2f)
+                .WithFlags(TweenFlag.None)
+                .WithEasing(Easing.Quartic)
+            )
+            .Then(Tween.Create(entity, (Transform2D comp) => comp.Scale)
+                .WithFromTo(Vec2f.One * 4, Vec2f.One * 8)
+                .WithDuration(1f)
+                .WithFlags(TweenFlag.None)
+                .WithEasing(Easing.Quartic)
+            )
+            .Then(Tween.Create(entity, (Transform2D comp) => comp.Scale)
+                .WithFromTo(Vec2f.One * 8, Vec2f.One * 4)
+                .WithDuration(1f)
+                .WithFlags(TweenFlag.None)
+                .WithEasing(Easing.Quartic)
+            )
+            .Then(Tween.Create(entity, (Transform2D comp) => comp.Position)
+                .WithFromTo(pos + Vec2f.Up * 64f, pos)
+                .WithDuration(2f)
+                .WithFlags(TweenFlag.None)
+                .WithEasing(Easing.Quartic)
+            )
+            .Append();
+    }
 
     static void SpawnAndTween(Commands commands, Vec2f pos, Handle<ShapeMaterial> shapeMaterial, Handle<Shape> shape)
     {

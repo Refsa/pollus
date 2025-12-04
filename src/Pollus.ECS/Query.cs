@@ -8,7 +8,7 @@ public interface IQuery
     int EntityCount();
 }
 
-public interface IQueryCreate<TQuery>
+public interface IQueryCreate<out TQuery>
     where TQuery : IQuery
 {
     static abstract TQuery Create(World world);
@@ -282,14 +282,14 @@ public struct Query : IQuery, IQueryCreate<Query>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ref C Get<C>(scoped in Entity entity)
+    public readonly ref C Get<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         return ref Get<C>(world.Store.GetEntityInfo(entity));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ref C Get<C>(scoped in Entities.EntityInfo entityInfo)
+    public readonly ref C Get<C>(scoped in Entities.EntityInfo entityInfo)
         where C : unmanaged, IComponent
     {
         return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
@@ -308,11 +308,17 @@ public struct Query : IQuery, IQueryCreate<Query>
         return ref Unsafe.NullRef<C>();
     }
 
+    public ComponentID[] GetComponents(in Entity entity)
+    {
+        ref var entityInfo = ref world.Store.GetEntityInfo(entity);
+        var archetype = world.Store.GetArchetype(entityInfo.ArchetypeIndex);
+        return archetype.GetChunkInfo().ComponentIDs;
+    }
+
     public Enumerator GetEnumerator() => new(this);
 
     public ref struct Enumerator
     {
-        ArchetypeChunkEnumerable chunks;
         ArchetypeChunkEnumerable.ChunkEnumerator chunksEnumerator;
         ref Entity currentEntity;
         ref Entity endEntity;
@@ -320,7 +326,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
         public Enumerator(scoped in Query query)
         {
-            chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, [], query.filterArchetype, query.filterChunk);
+            var chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, [], query.filterArchetype, query.filterChunk);
             chunksEnumerator = chunks.GetEnumerator();
         }
 

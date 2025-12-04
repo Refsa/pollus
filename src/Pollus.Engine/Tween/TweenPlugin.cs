@@ -24,6 +24,8 @@ public class TweenPlugin : IPlugin
             plugin.Apply(world);
         }
 
+        world.Schedule.AddSystemSet<TweenSequenceSystemSet>();
+
         world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("TweenTick",
         static (Commands commands, Time time, Query<TweenData>.Filter<None<TweenDisabled>> qTweens) =>
         {
@@ -57,7 +59,7 @@ public class TweenPlugin : IPlugin
                 }
                 else if (!tween.Flags.HasFlag(TweenFlag.Loop) && !tween.Flags.HasFlag(TweenFlag.PingPong))
                 {
-                    userData.commands.SetComponent(entity, new TweenDisabled());
+                    userData.commands.AddComponent(entity, new TweenDisabled());
                 }
             });
 
@@ -81,7 +83,7 @@ public class TweenablePlugin<TData> : IPlugin
     }
 }
 
-public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, TweenData, Child>.Filter<None<TweenDisabled>>, Query<TData>>
+public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Query<Tween<TField>, TweenData, TweenTarget>.Filter<None<TweenDisabled>>, Query<TData>>
     where TData : unmanaged, IComponent, ITweenable, IReflect<TData>
     where TField : unmanaged
 {
@@ -91,17 +93,17 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
     {
     }
 
-    protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, TweenData, Child>.Filter<None<TweenDisabled>> qTweens, Query<TData> qData)
+    protected override void OnTick(Commands commands, Time time, Query query, Query<Tween<TField>, TweenData, TweenTarget>.Filter<None<TweenDisabled>> qTweens, Query<TData> qData)
     {
         Guard.IsNotNull(TweenResources.Handler<TField>.Instance, $"Tween handler not registered");
 
-        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref TweenData data, ref Child child) =>
+        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref TweenData data, ref TweenTarget target) =>
         {
             var t = data.Progress;
             if (data.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
 
-            var value = TweenResources.Handler<TField>.Instance!.Lerp(tween.From, tween.To, t);
-            query.Get<TData>(child.Parent).SetValue(tween.FieldID, value);
+            var value = TweenResources.Handler<TField>.Instance.Lerp(tween.From, tween.To, t);
+            query.Get<TData>(target.Entity).SetValue(tween.FieldID, value);
 
             if (data.Progress == 1f)
             {
@@ -183,6 +185,11 @@ public struct TweenData : IComponent
 
     public float Elapsed;
     public float Progress;
+}
+
+public struct TweenTarget : IComponent
+{
+    public Entity Entity;
 }
 
 public struct TweenDisabled : IComponent

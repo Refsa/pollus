@@ -12,6 +12,11 @@ public static class Tween
     {
         return new TweenBuilder<TType, TField>(entity, property);
     }
+
+    public static TweenSequenceBuilder Sequence(Commands commands)
+    {
+        return new TweenSequenceBuilder(commands);
+    }
 }
 
 public struct TweenBuilder<TType, TField>
@@ -62,13 +67,17 @@ public struct TweenBuilder<TType, TField>
         return this;
     }
 
-    public Entity Append(Commands commands)
+    public Entity Append(Commands commands, bool setParent = true)
     {
-        var child = commands.Spawn(
-                Entity.With(tween).With(data)
-            )
-            .SetParent(entity)
-            .Entity;
-        return child;
+        var childCommands = commands.Spawn(
+            Entity.With(tween).With(data).With(new TweenTarget() { Entity = entity })
+        );
+
+        if (setParent)
+        {
+            childCommands = childCommands.SetParent(entity);
+        }
+
+        return childCommands.Entity;
     }
 }
