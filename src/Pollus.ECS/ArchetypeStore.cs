@@ -257,8 +257,8 @@ public class ArchetypeStore : IDisposable
         if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entityHandler.GetEntityInfo(movedEntity);
-            movedEntityInfo.ChunkIndex = nextInfo.ChunkIndex;
-            movedEntityInfo.RowIndex = nextInfo.RowIndex;
+            movedEntityInfo.ChunkIndex = prevEntityInfo.ChunkIndex;
+            movedEntityInfo.RowIndex = prevEntityInfo.RowIndex;
         }
 
         removedTracker.SetRemoved(entity, in component);

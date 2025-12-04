@@ -205,7 +205,6 @@ public struct ArchetypeChunk : IDisposable
         foreach (var cid in componentsLookup.Keys)
         {
             var idx = componentsLookup.Get(cid);
-
             var size = Component.GetInfo(cid).SizeInBytes;
 
             ref var swapFromArray = ref swapFrom.components[idx];

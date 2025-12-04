@@ -94,6 +94,38 @@ public class ArchetypeTests
     }
 
     [Fact]
+    public void ArchetypeChunk_SwapRemoveMany()
+    {
+        var chunk1 = new ArchetypeChunk([
+            Component.GetInfo<TestComponent1>().ID,
+        ], 500);
+
+        var chunk2 = new ArchetypeChunk([
+            Component.GetInfo<TestComponent1>().ID,
+        ], 500);
+
+        for (int i = 0; i < 500; i++)
+        {
+            chunk1.AddEntity(new Entity(i + 1));
+            chunk1.SetComponent(i, new TestComponent1 { Value = i });
+
+            chunk2.AddEntity(new Entity(i + 500 + 1));
+            chunk2.SetComponent(i, new TestComponent1 { Value = i + 500 });
+        }
+
+        for (int i = 0; i < 100; i++)
+        {
+            var movedEntity = chunk1.SwapRemoveEntity(0, ref chunk2);
+            Assert.Equal(chunk1.entities[0].ID, movedEntity.ID);
+            var tc1 = chunk1.GetComponent<TestComponent1>(0);
+            Assert.Equal(1000 - i - 1, tc1.Value);
+        }
+
+        chunk1.Dispose();
+        chunk2.Dispose();
+    }
+
+    [Fact]
     public void Archetype_AddRemove_Entity()
     {
         Span<ComponentID> cids = [
@@ -481,6 +513,8 @@ public class ArchetypeTests
         Assert.Equal(30, e2c1.Value);
         var e2c2 = world.Store.GetComponent<TestComponent2>(entity2);
         Assert.Equal(40, e2c2.Value);
+
+        Assert.Equal(0, world.Store.GetEntityInfo(entity2).RowIndex);
 
         Assert.Throws<GuardException>(() => world.Store.GetComponent<TestComponent2>(entity1));
     }
