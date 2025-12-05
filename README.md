@@ -16,7 +16,7 @@ You can find the Breakout clone example running [here](https://refsa.github.io/p
 - Build to Windows and Browser (WASM)
 - Dear ImGui renderer, which is the only form of UI right now
 
-Currently requires `net9.0` or `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.  
+Currently requires `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.  
 Status of the different areas of the project is currently tracked in [TODO](TODO.md).
 
 ## WIP

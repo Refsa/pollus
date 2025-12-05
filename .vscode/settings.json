@@ -1,4 +1,4 @@
 {
     "dotnet-test-explorer.testProjectPath": "./src/Pollus.Tests/Pollus.Tests.csproj",
-    "dotnet-test-explorer.testArguments": "--framework net9.0"
+    "dotnet-test-explorer.testArguments": "--framework net10.0"
 }

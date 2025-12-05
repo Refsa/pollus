@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net9.0;net9.0-browser;net10.0;net10.0-browser</TargetFrameworks>
+    <TargetFrameworks>net10.0;net10.0-browser</TargetFrameworks>
     <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -9,7 +9,7 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net10.0-browser' ">
     <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
     <RunAOTCompilation>true</RunAOTCompilation>
     <SelfContained>true</SelfContained>
@@ -33,7 +33,7 @@
     <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'NoAOT' ">
+  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'NoAOT' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <RunAOTCompilation>false</RunAOTCompilation>
     <SelfContained>false</SelfContained>
@@ -41,7 +41,7 @@
     <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'WithSymbols' ">
+  <PropertyGroup Condition=" ('$(TargetFramework)' == 'net10.0-browser') and '$(Mode)' == 'WithSymbols' ">
     <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
     <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
     <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
@@ -52,17 +52,16 @@
     <WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0-browser' ">
     <WasmExtraFilesToDeploy Include="www/index.html" />
     <WasmExtraFilesToDeploy Include="www/main.js" />
     <WasmExtraFilesToDeploy Include="www/*.js" />
     <WasmExtraFilesToDeploy Include="www/*.css" />
 
-    <NativeFileReference Condition=" '$(TargetFramework)' == 'net9.0-browser' " Include=".\bin\Release\net9.0-browser\browser-wasm\native\imgui\cimgui.a" />
     <NativeFileReference Condition=" '$(TargetFramework)' == 'net10.0-browser' " Include=".\bin\Release\net10.0-browser\browser-wasm\native\imgui\cimgui.a" />
   </ItemGroup>
 
-  <Target Condition=" '$(TargetFramework)' == 'net9.0-browser' or '$(TargetFramework)' == 'net10.0-browser' " Name="AddBrowserDeps_Net10" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
+  <Target Condition=" '$(TargetFramework)' == 'net10.0-browser' " Name="AddBrowserDeps_Net10" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
     <ItemGroup>
       <_WasmPInvokeModules Include="__Internal_emscripten" />
       <_WasmPInvokeModules Include="OpenAL" />

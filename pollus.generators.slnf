@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "pollus.sln",
+    "projects": [
+      "src\\Pollus.ECS.Generators\\Pollus.ECS.Generators.csproj",
+      "src\\Pollus.Generators\\Pollus.Generators.csproj",
+    ]
+  }
+}

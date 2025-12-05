@@ -8,7 +8,7 @@ using Pollus.ECS;
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]
-// [SimpleJob(RuntimeMoniker.Net90)]
+// [SimpleJob(RuntimeMoniker.[SimpleJob(RuntimeMoniker.Net10_0)]0)]
 // [SimpleJob(RuntimeMoniker.Net80)]
 // [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
 public class QueryBenchmarks

@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "pollus.sln",
+    "projects": [
+      "src\\Pollus.Audio\\Pollus.Audio.csproj",
+      "src\\Pollus.Benchmark\\Pollus.Benchmark.csproj",
+      "src\\Pollus.Core\\Pollus.Core.csproj",
+      "src\\Pollus.ECS\\Pollus.ECS.csproj",
+      "src\\Pollus.Emscripten\\Pollus.Emscripten.csproj",
+      "src\\Pollus.Engine\\Pollus.Engine.csproj",
+      "src\\Pollus.Graphics\\Pollus.Graphics.csproj",
+      "src\\Pollus.Tests\\Pollus.Tests.csproj",
+      "examples\\Pollus.Examples.csproj",
+    ]
+  }
+}

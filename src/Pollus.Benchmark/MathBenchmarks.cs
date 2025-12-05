@@ -6,7 +6,7 @@ using BenchmarkDotNet.Jobs;
 using Pollus.Mathematics;
 
 [MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 // [HardwareCounters(HardwareCounter.BranchMispredictions, HardwareCounter.CacheMisses)]
 public class MathBenchmarks
 {
