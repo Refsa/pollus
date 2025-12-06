@@ -110,14 +110,14 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         area.ScaleCentered(new Vec2f(Scale, Scale));
     }
 
-    public Mat4f GetProjection()
+    public readonly Mat4f GetProjection()
     {
         return Mat4f.OrthographicRightHanded(
             Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y, NearClip, FarClip
         );
     }
 
-    public Vec2f ScreenToWorld(in Transform2D cameraTransform, Vec2<int> screenPos)
+    public readonly Vec2f ScreenToWorld(in Transform2D cameraTransform, Vec2<int> screenPos)
     {
         var normalizedScreen = new Vec2f(
             (screenPos.X - Size.X / 2f) / (Size.X / 2f),
@@ -134,7 +134,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
         return new Vec2f(worldPoint.X / worldPoint.W, worldPoint.Y / worldPoint.W);
     }
 
-    public Vec2<int> WorldToScreen(in Transform2D cameraTransform, Vec2f worldPos)
+    public readonly Vec2<int> WorldToScreen(in Transform2D cameraTransform, Vec2f worldPos)
     {
         var cameraMatrix = cameraTransform.ToMat4f();
         var worldPoint = new Vec4f(worldPos.X, worldPos.Y, 0f, 1f);

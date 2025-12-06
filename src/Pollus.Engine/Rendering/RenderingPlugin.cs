@@ -43,7 +43,7 @@ public class RenderingPlugin : IPlugin
             new FrameGraph2DPlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2D>>>()
             {
-                Extract = static (in Param<Time, Query<Projection, Transform2D>> param, ref SceneUniform uniform) =>
+                Extract = static (in param, ref uniform) =>
                 {
                     var (time, qCamera) = param;
 
@@ -75,18 +75,12 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
-            static (RenderContext context) =>
-            {
-                context.PrepareFrame();
-            }
+            static (RenderContext context) => { context.PrepareFrame(); }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
             EndFrameSystem,
-            static (RenderContext context) =>
-            {
-                context.EndFrame();
-            }
+            static (RenderContext context) => { context.EndFrame(); }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(

@@ -6,6 +6,7 @@ using Pollus.Mathematics;
 [ShaderType]
 public partial struct Color
 {
+    public static readonly Color TRANSPARENT = new(0f, 0f, 0f, 0f);
     public static readonly Color BLACK = new(0f, 0f, 0f, 1f);
     public static readonly Color WHITE = new(1f, 1f, 1f, 1f);
     public static readonly Color AMARANTH = new(229f / 255f, 43f / 255f, 80f / 255f);
@@ -168,7 +169,7 @@ public partial struct Color
         return (Vec4<float>)this * (1f + by);
     }
 
-    public Color WithAlpha(float a)
+    public readonly Color WithAlpha(float a)
     {
         var copy = this;
         copy.A = a;

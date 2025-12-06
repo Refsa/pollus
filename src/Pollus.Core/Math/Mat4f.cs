@@ -290,6 +290,11 @@ public partial record struct Mat4f
         Col3 += new Vec4f(translation, 0f);
     }
 
+    public void SetTranslation(Vec3f translation)
+    {
+        Col3 = new Vec4f(translation, Col3.W);
+    }
+
     public Mat4f Translated(Vec3f translation)
     {
         var copy = this;
@@ -310,6 +315,13 @@ public partial record struct Mat4f
     public Vec3f GetScale()
     {
         return new Vec3f(Col0.Length(), Col1.Length(), Col2.Length());
+    }
+
+    public void SetScale(Vec3f scale)
+    {
+        Col0 = new Vec4f(scale.X, 0f, 0f, 0f);
+        Col1 = new Vec4f(0f, scale.Y, 0f, 0f);
+        Col2 = new Vec4f(0f, 0f, scale.Z, 0f);
     }
 
     public float GetRotationX()

@@ -39,17 +39,17 @@ public partial struct Transform2D : ITransform, IComponent
     public Vec2f Up => new(MathF.Cos(Rotation), MathF.Sin(Rotation));
     public Vec2f Down => new(MathF.Cos(Rotation + MathF.PI), MathF.Sin(Rotation + MathF.PI));
 
-    public Mat4f ToMat4f()
+    public readonly Mat4f ToMat4f()
     {
         return Mat4f.FromTRS(Position, Rotation.Radians(), Scale);
     }
 
-    public Mat4f ToMat4f_Row()
+    public readonly Mat4f ToMat4f_Row()
     {
         return Mat4f.FromTRS_Row(Position, Rotation.Radians(), Scale);
     }
 
-    public GlobalTransform ToGlobalTransform(Mat4f parentTransform)
+    public readonly GlobalTransform ToGlobalTransform(Mat4f parentTransform)
     {
         return new GlobalTransform
         {
