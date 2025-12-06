@@ -2,8 +2,8 @@
 
 if [ "$1" = "release" ]; then
     shift
-    dotnet run -c Release --framework net10.0 -- $@
+    dotnet run --project Desktop/Pollus.Examples.Desktop.csproj -c Release -- $@
     exit 0
 fi
 
-dotnet run --framework net10.0 -- $@
+dotnet run --project Desktop/Pollus.Examples.Desktop.csproj -- $@

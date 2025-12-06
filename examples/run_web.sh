@@ -10,4 +10,5 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-(cd "bin/Release/$1.0-browser/browser-wasm/AppBundle" && dotnet serve -S -p 50000 -h "Cross-Origin-Embedder-Policy:require-corp" -h "Cross-Origin-Opener-Policy:same-origin")
+# Change directory to the new output location inside the Browser folder
+(cd "Browser/bin/Release/net10.0-browser/browser-wasm/AppBundle" && dotnet serve -S -p 50000 -h "Cross-Origin-Embedder-Policy:require-corp" -h "Cross-Origin-Opener-Policy:same-origin")

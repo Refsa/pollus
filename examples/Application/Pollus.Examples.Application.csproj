@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFrameworks>$(TargetFrameworkBaseVersion);$(TargetFrameworkBaseVersion)-browser</TargetFrameworks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="assets\**">
+            <Link>assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+</Project>

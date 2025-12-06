@@ -1,0 +1,15 @@
+<Project>
+    <PropertyGroup>
+        <TargetFrameworkBaseVersion>net10.0</TargetFrameworkBaseVersion>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Engine\Pollus.Engine.csproj" />
+        <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Generators\Pollus.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+</Project>

@@ -1,1 +1,1 @@
-dotnet publish --framework net10.0-browser -c Release
+dotnet publish Browser/Pollus.Examples.Browser.csproj -c Release

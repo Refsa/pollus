@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>$(TargetFrameworkBaseVersion)-browser</TargetFramework>
+        <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <SelfContained>true</SelfContained>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+
+        <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
+        <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+        <WasmEnableSIMD>true</WasmEnableSIMD>
+        <WasmNativeStrip>true</WasmNativeStrip>
+        <WasmBuildNative>true</WasmBuildNative>
+        <WasmNativeWorkload>true</WasmNativeWorkload>
+        <WasmEnableThreads>false</WasmEnableThreads>
+
+        <WasmCachePath>$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)/$(TargetFramework)/wasm-cache'))</WasmCachePath>
+
+        <!-- Embed assets from the output directory -->
+        <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
+
+        <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Mode)' == 'NoAOT' ">
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <SelfContained>false</SelfContained>
+        <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+        <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Mode)' == 'WithSymbols' ">
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+        <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+        <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
+        <WasmEmitSourceMap>true</WasmEmitSourceMap>
+        <WasmDebugLevel>1</WasmDebugLevel>
+        <WasmNativeStrip>false</WasmNativeStrip>
+        <WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Pollus.Examples.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <WasmExtraFilesToDeploy Include="www/index.html" />
+        <WasmExtraFilesToDeploy Include="www/main.js" />
+        <WasmExtraFilesToDeploy Include="www/*.js" />
+        <WasmExtraFilesToDeploy Include="www/*.css" />
+
+        <NativeFileReference Include="bin\Release\net10.0-browser\browser-wasm\native\imgui\cimgui.a" />
+    </ItemGroup>
+
+    <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
+        <ItemGroup>
+            <_WasmPInvokeModules Include="__Internal_emscripten" />
+            <_WasmPInvokeModules Include="OpenAL" />
+            <_WasmPInvokeModules Include="SDL" />
+            <_WasmPInvokeModules Include="cimgui" />
+        </ItemGroup>
+    </Target>
+</Project>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>$(TargetFrameworkBaseVersion)</TargetFramework>
+        <RunWorkingDirectory>./bin/$(Configuration)/$(TargetFramework)/</RunWorkingDirectory>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Pollus.Examples.Application.csproj" />
+    </ItemGroup>
+</Project>
