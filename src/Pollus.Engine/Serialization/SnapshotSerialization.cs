@@ -30,16 +30,14 @@ public struct SnapshotDeserializeEvent
 [SystemSet]
 public partial class SnapshotSerializationPlugin : IPlugin
 {
-    [System(nameof(Serialize))]
-    static readonly SystemBuilderDescriptor SerializeDescriptor = new()
+    [System(nameof(Serialize))] static readonly SystemBuilderDescriptor SerializeDescriptor = new()
     {
         Stage = CoreStage.Last,
         RunCriteria = new EventRunCriteria<SnapshotSerializeEvent>(),
         Dependencies = [typeof(ExclusiveSystemMarker)],
     };
 
-    [System(nameof(Deserialize))]
-    static readonly SystemBuilderDescriptor DeserializeDescriptor = new()
+    [System(nameof(Deserialize))] static readonly SystemBuilderDescriptor DeserializeDescriptor = new()
     {
         Stage = CoreStage.Last,
         RunCriteria = new EventRunCriteria<SnapshotDeserializeEvent>(),
@@ -126,6 +124,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
             var typeName = deser.Reader.ReadString();
 
             var type = Type.GetType(typeName) ?? throw new InvalidOperationException($"Type {typeName} not found");
+
             var info = Component.Register(new Component.Info()
             {
                 ID = -1,

@@ -14,14 +14,12 @@ public interface ITransform
 public partial class TransformPlugin<TTransform> : IPlugin
     where TTransform : unmanaged, ITransform, IComponent
 {
-    [System(nameof(HandleDynamic))]
-    static readonly SystemBuilderDescriptor HandleDynamicSystemDescriptor = new()
+    [System(nameof(HandleDynamic))] static readonly SystemBuilderDescriptor HandleDynamicSystemDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
     };
 
-    [System(nameof(HandleStatic))]
-    static readonly SystemBuilderDescriptor HandleStaticSystemDescriptor = new()
+    [System(nameof(HandleStatic))] static readonly SystemBuilderDescriptor HandleStaticSystemDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
     };
@@ -34,20 +32,11 @@ public partial class TransformPlugin<TTransform> : IPlugin
         Query<GlobalTransform, Read<TTransform>>.Filter<None<Parent, Child, Static>> qOrphans
     )
     {
-        qOrphans.ForEach(static (ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
-        {
-            globalTransform.Value = transform.Component.ToMat4f();
-        });
+        qOrphans.ForEach(static (ref globalTransform, ref transform) => { globalTransform.Value = transform.Component.ToMat4f(); });
 
-        qTreeTransforms.ForEach(static (ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
-        {
-            globalTransform.Value = transform.Component.ToMat4f();
-        });
+        qTreeTransforms.ForEach(static (ref globalTransform, ref transform) => { globalTransform.Value = transform.Component.ToMat4f(); });
 
-        qRoots.ForEach(query, static (in Query query, in Entity root, ref GlobalTransform globalTransform, ref Read<TTransform> transform, ref Read<Parent> parent) =>
-        {
-            Propagate(root, query, Mat4f.Identity());
-        });
+        qRoots.ForEach(query, static (in query, in root, ref globalTransform, ref transform, ref parent) => { Propagate(root, query, Mat4f.Identity()); });
     }
 
     static void HandleStatic(
@@ -58,22 +47,19 @@ public partial class TransformPlugin<TTransform> : IPlugin
         Query<GlobalTransform, Read<TTransform>>.Filter<(All<Static>, None<Parent, Child, StaticCalculated>)> qOrphans
     )
     {
-        qOrphans.ForEach((query, commands), static (in (Query query, Commands commands) data, in Entity entity, ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
+        qOrphans.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
             globalTransform.Value = transform.Component.ToMat4f();
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 
-        qTreeTransforms.ForEach((query, commands), static (in (Query query, Commands commands) data, in Entity entity, ref GlobalTransform globalTransform, ref Read<TTransform> transform) =>
+        qTreeTransforms.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
             globalTransform.Value = transform.Component.ToMat4f();
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 
-        qRoots.ForEach(query, static (in Query query, in Entity root, ref GlobalTransform globalTransform, ref Read<TTransform> transform, ref Read<Parent> parent) =>
-        {
-            Propagate(root, query, Mat4f.Identity());
-        });
+        qRoots.ForEach(query, static (in query, in root, ref globalTransform, ref transform, ref parent) => { Propagate(root, query, Mat4f.Identity()); });
     }
 
     static void Propagate(in Entity current, in Query query, in Mat4f parentTransform)

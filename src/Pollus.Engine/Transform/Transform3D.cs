@@ -18,19 +18,19 @@ public struct Transform3D : ITransform, IComponent
     public Vec3f Scale;
     public Quat Rotation;
 
-    public Vec3f Forward => Rotation * Vec3f.Forward;
-    public Vec3f Back => Rotation * Vec3f.Backward;
-    public Vec3f Left => Rotation * Vec3f.Left;
-    public Vec3f Right => Rotation * Vec3f.Right;
-    public Vec3f Up => Rotation * Vec3f.Up;
-    public Vec3f Down => Rotation * Vec3f.Down;
+    public readonly Vec3f Forward => Rotation * Vec3f.Forward;
+    public readonly Vec3f Back => Rotation * Vec3f.Backward;
+    public readonly Vec3f Left => Rotation * Vec3f.Left;
+    public readonly Vec3f Right => Rotation * Vec3f.Right;
+    public readonly Vec3f Up => Rotation * Vec3f.Up;
+    public readonly Vec3f Down => Rotation * Vec3f.Down;
 
-    public Mat4f ToMat4f()
+    public readonly Mat4f ToMat4f()
     {
         return Mat4f.FromTRS(Position, Rotation, Scale);
     }
 
-    public GlobalTransform ToGlobalTransform(Mat4f parentTransform)
+    public readonly GlobalTransform ToGlobalTransform(Mat4f parentTransform)
     {
         return new GlobalTransform
         {

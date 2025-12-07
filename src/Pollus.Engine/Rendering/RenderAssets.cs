@@ -26,6 +26,7 @@ public class RenderAssets : IRenderAssets, IDisposable
         {
             if (data is IDisposable disposable) disposable.Dispose();
         }
+
         renderData.Clear();
     }
 
@@ -71,7 +72,7 @@ public class RenderAssets : IRenderAssets, IDisposable
 
     public RenderAssets AddLoader<TLoader>(TLoader loader) where TLoader : IRenderDataLoader
     {
-        loaders.Add(loader.TargetType, loader);
+        loaders.TryAdd(loader.TargetType, loader);
         return this;
     }
 

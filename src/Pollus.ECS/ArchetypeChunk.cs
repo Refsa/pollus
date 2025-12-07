@@ -53,6 +53,7 @@ public struct ArchetypeChunk : IDisposable
 
     // ComponentID -> Index
     NativeMap<int, int> componentsLookup;
+
     NativeMap<int, int> changesComponentLookup;
     NativeArray<ChunkComponentInfo> changes;
 

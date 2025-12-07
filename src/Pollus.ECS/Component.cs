@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 
 public interface IComponent
 {
-
 }
 
 public record struct ComponentID(int ID)
@@ -28,6 +27,8 @@ public static class Component
         public required string TypeName { get; init; }
         public required bool Read { get; init; }
         public required bool Write { get; init; }
+
+        public Action<RemovedTracker>? RegisterTracker { get; internal set; }
     }
 
     static class Lookup<C> where C : unmanaged, IComponent
@@ -62,7 +63,10 @@ public static class Component
     {
         var type = typeof(T);
         if (componentIDs.TryGetValue(type, out var info))
+        {
+            info.RegisterTracker ??= static (removedTracker) => removedTracker.Register<T>();
             return info;
+        }
 
         info = new Info
         {
@@ -72,6 +76,7 @@ public static class Component
             TypeName = type.AssemblyQualifiedName ?? type.FullName ?? throw new InvalidOperationException($"Type {type} has no assembly qualified name"),
             Read = true,
             Write = true,
+            RegisterTracker = static (removedTracker) => removedTracker.Register<T>(),
         };
 
         if (new T() is IComponentWrapper)

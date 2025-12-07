@@ -296,7 +296,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ref C TryGet<C>(in Entity entity, out bool exists)
+    public readonly ref C TryGet<C>(in Entity entity, out bool exists)
         where C : unmanaged, IComponent
     {
         if (Has<C>(entity, out var entityInfo))

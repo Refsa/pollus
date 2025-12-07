@@ -34,10 +34,10 @@ public partial struct Transform2D : ITransform, IComponent
     public Vec2f Scale;
     public float Rotation;
 
-    public Vec2f Left => new(MathF.Cos(Rotation - MathF.PI * 0.5f), MathF.Sin(Rotation - MathF.PI * 0.5f));
-    public Vec2f Right => new(MathF.Cos(Rotation + MathF.PI * 0.5f), MathF.Sin(Rotation + MathF.PI * 0.5f));
-    public Vec2f Up => new(MathF.Cos(Rotation), MathF.Sin(Rotation));
-    public Vec2f Down => new(MathF.Cos(Rotation + MathF.PI), MathF.Sin(Rotation + MathF.PI));
+    public readonly Vec2f Left => new(MathF.Cos(Rotation - MathF.PI * 0.5f), MathF.Sin(Rotation - MathF.PI * 0.5f));
+    public readonly Vec2f Right => new(MathF.Cos(Rotation + MathF.PI * 0.5f), MathF.Sin(Rotation + MathF.PI * 0.5f));
+    public readonly Vec2f Up => new(MathF.Cos(Rotation), MathF.Sin(Rotation));
+    public readonly Vec2f Down => new(MathF.Cos(Rotation + MathF.PI), MathF.Sin(Rotation + MathF.PI));
 
     public readonly Mat4f ToMat4f()
     {

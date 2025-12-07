@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Pollus.ECS;
 
 using Pollus.Collections;
@@ -24,6 +26,17 @@ public class RemovedTracker
         }
     }
 
+    public void Register<C>()
+        where C : unmanaged, IComponent
+    {
+        var cid = Component.GetInfo<C>().ID;
+        if (trackerLookup.ContainsKey(cid)) return;
+        var tracker = new RemovedTracker<C>();
+        trackerLookup.Add(cid, trackers.Count);
+        trackers.Add(tracker);
+        tracker.Tick(version);
+    }
+
     public RemovedTracker<C> GetTracker<C>()
         where C : unmanaged, IComponent
     {
@@ -37,6 +50,16 @@ public class RemovedTracker
         }
 
         return (RemovedTracker<C>)trackers[index];
+    }
+
+    public IRemovedTracker GetTracker(ComponentID cid)
+    {
+        if (!trackerLookup.TryGetValue(cid.ID, out var index))
+        {
+            throw new ArgumentException($"Tracker for component {cid} not found");
+        }
+
+        return trackers[index];
     }
 
     public void SetRemoved<C>(Entity entity, in C component)
@@ -62,6 +85,7 @@ public interface IRemovedTracker
 {
     void Tick(ulong version);
     bool WasRemoved(Entity entity);
+    void SetRemoved(Entity entity, ReadOnlySpan<byte> component);
 }
 
 public class RemovedTracker<C> : IRemovedTracker
@@ -69,7 +93,7 @@ public class RemovedTracker<C> : IRemovedTracker
 {
     static RemovedTracker() => RemoveTrackerFetch<C>.Register();
 
-    struct Removed
+    public struct Removed
     {
         public int Entity;
         public C Component;
@@ -87,6 +111,14 @@ public class RemovedTracker<C> : IRemovedTracker
             if (version - removed.Version <= 1) continue;
             tracker.Remove(removed.Entity);
         }
+    }
+
+    public SparseSet<Removed>.Enumerator GetEnumerator() => tracker.GetEnumerator();
+
+    public void SetRemoved(Entity entity, ReadOnlySpan<byte> componentBytes)
+    {
+        var component = MemoryMarshal.AsRef<C>(componentBytes);
+        SetRemoved(entity, in component);
     }
 
     public void SetRemoved(Entity entity, in C component)

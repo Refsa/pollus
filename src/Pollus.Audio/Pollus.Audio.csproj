@@ -13,9 +13,7 @@
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
     <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
   </ItemGroup>
-
-
-
+  
   <ItemGroup>
     <PackageReference Include="Silk.NET.OpenAL" Version="2.21.0" />
     <PackageReference Include="Silk.NET.OpenAL.Extensions.Soft" Version="2.21.0" />

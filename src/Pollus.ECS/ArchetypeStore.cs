@@ -8,6 +8,7 @@ using Pollus.Debugging;
 public class ArchetypeStore : IDisposable
 {
     public record struct EntityChange(Entity Entity, Archetype Archetype, int ChunkIndex, int RowIndex);
+
     public record struct ArchetypeInfo(Archetype Archetype, int Index);
 
     ulong version = 0;
@@ -43,6 +44,7 @@ public class ArchetypeStore : IDisposable
         {
             archetype.Dispose();
         }
+
         archetypeLookup.Dispose();
     }
 
@@ -53,6 +55,7 @@ public class ArchetypeStore : IDisposable
         {
             return (archetypes[index], index);
         }
+
         return null;
     }
 
@@ -67,6 +70,13 @@ public class ArchetypeStore : IDisposable
     {
         if (archetypeLookup.TryGetValue(aid, out var index))
             return new(archetypes[index], index);
+
+        foreach (var cid in cids)
+        {
+            var cinfo = Component.GetInfo(cid);
+            Guard.IsNotNull(cinfo.RegisterTracker, "No register tracker for component found");
+            cinfo.RegisterTracker(removedTracker);
+        }
 
         var archetype = new Archetype(aid, cids);
         archetype.Tick(version);
@@ -121,8 +131,15 @@ public class ArchetypeStore : IDisposable
         entityHandler.Free(entity);
 
         var archetype = archetypes[entityInfo.ArchetypeIndex];
-        var movedEntity = archetype.RemoveEntity(entityInfo.ChunkIndex, entityInfo.RowIndex);
+        ref var chunk = ref archetype.GetChunk(entityInfo.ChunkIndex);
 
+        foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
+        {
+            var tracker = removedTracker.GetTracker(cid);
+            tracker.SetRemoved(entity, chunk.GetComponent(entityInfo.RowIndex, cid));
+        }
+
+        var movedEntity = archetype.RemoveEntity(entityInfo.ChunkIndex, entityInfo.RowIndex);
         if (!movedEntity.IsNull)
         {
             ref var movedEntityInfo = ref entityHandler.GetEntityInfo(movedEntity);

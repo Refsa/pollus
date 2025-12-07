@@ -112,5 +112,47 @@ public class HierarchyTests
         Assert.Equal(Entity.NULL, child4_child.NextSibling);
         Assert.Equal(child3, child4_child.PreviousSibling);
     }
+
+    [Fact]
+    public void Hierarchy_ChildRemoved_When_ParentEntityDestroyed()
+    {
+        using var world = new World();
+        world.AddPlugin(new HierarchyPlugin());
+        world.Prepare();
+
+        var commands = world.GetCommands();
+        var parent = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var child = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        commands.AddChild(parent, child);
+        world.Update();
+        commands = world.GetCommands();
+        commands.Despawn(parent);
+        world.Update();
+
+        Assert.False(world.Store.HasComponent<Child>(child));
+    }
+
+    [Fact]
+    public void Hierarchy_ParentChildCountDecremented_When_ChildDestroyed()
+    {
+        using var world = new World();
+        world.AddPlugin(new HierarchyPlugin());
+        world.Prepare();
+
+        var commands = world.GetCommands();
+        var parent = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        var child = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
+        commands.AddChild(parent, child);
+        world.Update();
+        
+        ref var cParent = ref world.Store.GetComponent<Parent>(parent);
+        Assert.Equal(1, cParent.ChildCount);
+
+        commands = world.GetCommands();
+        commands.Despawn(child);
+        world.Update();
+
+        Assert.Equal(0, cParent.ChildCount);
+    }
 }
 #pragma warning restore CA1416
