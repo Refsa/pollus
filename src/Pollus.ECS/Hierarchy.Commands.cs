@@ -122,6 +122,7 @@ public struct AddChildCommand : ICommand
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
         ref var cChild = ref world.Store.GetComponent<Child>(Child);
 
+        cParent.ChildCount++;
         cChild.Parent = Parent;
         cChild.NextSibling = Entity.NULL;
         cChild.PreviousSibling = Entity.NULL;
@@ -161,6 +162,7 @@ public struct RemoveChildCommand : ICommand
 
         if (cChild.Parent != Parent) return;
 
+        cParent.ChildCount--;
         if (cParent.FirstChild == Child)
         {
             cParent.FirstChild = cChild.NextSibling;
@@ -206,6 +208,8 @@ public struct RemoveChildrenCommand : ICommand
             return;
 
         ref var cParent = ref world.Store.GetComponent<Parent>(Parent);
+        cParent.ChildCount = 0;
+
         var current = cParent.FirstChild;
         while (!current.IsNull)
         {

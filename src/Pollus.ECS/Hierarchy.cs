@@ -4,7 +4,11 @@ public record struct Parent : IComponent
 {
     public Entity FirstChild = Entity.NULL;
     public Entity LastChild = Entity.NULL;
-    public Parent() { }
+    public int ChildCount = 0;
+
+    public Parent()
+    {
+    }
 }
 
 public record struct Child : IComponent
@@ -12,34 +16,44 @@ public record struct Child : IComponent
     public Entity Parent = Entity.NULL;
     public Entity NextSibling = Entity.NULL;
     public Entity PreviousSibling = Entity.NULL;
-    public Child() { }
+
+    public Child()
+    {
+    }
 }
 
 public class HierarchyPlugin : IPlugin
 {
     public void Apply(World world)
     {
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("Hierarchy::Maintenance"),
-        static (
-            Commands commands,
-            RemovedTracker<Child> childRemovedTracker,
-            Query.Filter<Removed<Child>> qChildRemoved,
-            Query.Filter<Removed<Parent>> qParentRemoved) =>
-        {
-            foreach (var child in qChildRemoved)
-            {
-                if (childRemovedTracker.WasRemoved(child))
-                {
-                    var parent = childRemovedTracker.GetRemoved(child).Parent;
-                    commands.RemoveChild(parent, child);
-                }
-            }
+        Component.Register<Parent>();
+        Component.Register<Child>();
 
-            foreach (var parent in qParentRemoved)
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("Hierarchy::Maintenance"),
+            static (
+                Commands commands,
+                Query query,
+                RemovedTracker<Parent> parentRemovedTracker,
+                RemovedTracker<Child> childRemovedTracker,
+                Query.Filter<Removed<Child>> qChildRemoved,
+                Query.Filter<Removed<Parent>> qParentRemoved) =>
             {
-                commands.RemoveChildren(parent);
-            }
-        }));
+                foreach (var child in childRemovedTracker)
+                {
+                    ref var parent = ref query.Get<Parent>(child.Component.Parent);
+                    parent.ChildCount--;
+                }
+
+                foreach (var parent in parentRemovedTracker)
+                {
+                    var childEntity = parent.Component.FirstChild;
+                    while (childEntity.IsNull is false)
+                    {
+                        commands.RemoveComponent<Child>(childEntity);
+                        childEntity = query.Get<Child>(childEntity).NextSibling;
+                    }
+                }
+            }));
     }
 }
 
