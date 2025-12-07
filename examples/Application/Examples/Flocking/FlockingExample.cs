@@ -243,9 +243,10 @@ class FlockingGame : IPlugin
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
+                        var otherEntity = userData.query.GetEntity(neighbor);
 
-                        ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
-                        ref var otherVelocity = ref userData.query.Get<Velocity>(neighbor);
+                        ref var otherTransform = ref otherEntity.Get<Transform2D>();
+                        ref var otherVelocity = ref otherEntity.Get<Velocity>();
 
                         var direction = otherTransform.Position - transform.Position;
                         float distance = direction.Length();
@@ -265,8 +266,9 @@ class FlockingGame : IPlugin
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
+                        var otherEntity = userData.query.GetEntity(neighbor);
 
-                        ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
+                        ref var otherTransform = ref otherEntity.Get<Transform2D>();
 
                         Vec2f toNeighbor = otherTransform.Position - transform.Position;
                         float distance = toNeighbor.Length();
@@ -316,13 +318,15 @@ class FlockingGame : IPlugin
                     foreach (var neighbor in neighbors[..count])
                     {
                         if (neighbor == entity) continue;
-                        ref var boidCollider = ref userData.query.Get<CollisionShape>(neighbor);
-                        ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
+                        var otherEntity = userData.query.GetEntity(neighbor);
+
+                        ref var boidCollider = ref otherEntity.Get<CollisionShape>();
+                        ref var otherTransform = ref otherEntity.Get<Transform2D>();
 
                         var intersection = shape.GetIntersection(transform, boidCollider, otherTransform);
                         if (intersection.IsIntersecting)
                         {
-                            ref var otherVelocity = ref userData.query.Get<Velocity>(neighbor);
+                            ref var otherVelocity = ref otherEntity.Get<Velocity>();
                             var magnitude = otherVelocity.Value.Length();
                             otherVelocity.Value += intersection.Normal * avoid.Force * intersection.Distance * userData.deltaTime;
                         }
@@ -343,7 +347,8 @@ class FlockingGame : IPlugin
                 var count = userData.spatial.Query(transform.Position, RANGE, avoidTarget.Target, neighbors);
                 foreach (var neighbor in neighbors[..count])
                 {
-                    ref var otherTransform = ref userData.query.Get<Transform2D>(neighbor);
+                    var otherEntity = userData.query.GetEntity(neighbor);
+                    ref var otherTransform = ref otherEntity.Get<Transform2D>();
                     var direction = otherTransform.Position - transform.Position;
                     var distance = direction.Length();
                     direction = direction.Normalized();

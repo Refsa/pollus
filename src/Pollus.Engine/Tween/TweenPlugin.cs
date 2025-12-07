@@ -27,43 +27,42 @@ public class TweenPlugin : IPlugin
         world.Schedule.AddSystemSet<TweenSequenceSystemSet>();
 
         world.Schedule.AddSystems(CoreStage.PostUpdate, FnSystem.Create("TweenTick",
-        static (Commands commands, Time time, Query<TweenData>.Filter<None<TweenDisabled>> qTweens) =>
-        {
-            qTweens.ForEach((time.DeltaTimeF, commands),
-            static (in (float deltaTime, Commands commands) userData, in Entity entity, ref TweenData tween) =>
+            static (Commands commands, Time time, Query<TweenData>.Filter<None<TweenDisabled>> qTweens) =>
             {
-                if (tween.Elapsed < tween.Duration)
-                {
-                    tween.Elapsed = (tween.Elapsed + userData.deltaTime).Clamp(0f, tween.Duration);
-
-                    var t = tween.Elapsed / tween.Duration;
-                    tween.Progress = tween.Easing switch
+                qTweens.ForEach((time.DeltaTimeF, commands),
+                    static (in (float deltaTime, Commands commands) userData, in Entity entity, ref TweenData tween) =>
                     {
-                        Easing.Linear => t,
-                        Easing.Sine => float.Sin(t),
-                        Easing.Quadratic => t * t,
-                        Easing.Cubic => t * t * t,
-                        Easing.Quartic => t * t * t * t,
-                        Easing.Quintic => t * t * t * t * t,
-                        _ => t,
-                    };
-                    return;
-                }
+                        if (tween.Elapsed < tween.Duration)
+                        {
+                            tween.Elapsed = (tween.Elapsed + userData.deltaTime).Clamp(0f, tween.Duration);
 
-                tween.Elapsed = 0f;
-                tween.Progress = 0f;
+                            var t = tween.Elapsed / tween.Duration;
+                            tween.Progress = tween.Easing switch
+                            {
+                                Easing.Linear => t,
+                                Easing.Sine => float.Sin(t),
+                                Easing.Quadratic => t * t,
+                                Easing.Cubic => t * t * t,
+                                Easing.Quartic => t * t * t * t,
+                                Easing.Quintic => t * t * t * t * t,
+                                _ => t,
+                            };
+                            return;
+                        }
 
-                if (tween.Flags.HasFlag(TweenFlag.OneShot))
-                {
-                    userData.commands.Despawn(entity);
-                }
-                else if (!tween.Flags.HasFlag(TweenFlag.Loop) && !tween.Flags.HasFlag(TweenFlag.PingPong))
-                {
-                    userData.commands.AddComponent(entity, new TweenDisabled());
-                }
-            });
+                        tween.Elapsed = 0f;
+                        tween.Progress = 0f;
 
-        }));
+                        if (tween.Flags.HasFlag(TweenFlag.OneShot))
+                        {
+                            userData.commands.Despawn(entity);
+                        }
+                        else if (!tween.Flags.HasFlag(TweenFlag.Loop) && !tween.Flags.HasFlag(TweenFlag.PingPong))
+                        {
+                            userData.commands.AddComponent(entity, new TweenDisabled());
+                        }
+                    });
+            }));
     }
 
     public TweenPlugin Register<TData>()
@@ -97,7 +96,7 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
     {
         Guard.IsNotNull(TweenResources.Handler<TField>.Instance, $"Tween handler not registered");
 
-        qTweens.ForEach(query, static (in Query query, ref Tween<TField> tween, ref TweenData data, ref TweenTarget target) =>
+        qTweens.ForEach(query, static (in query, ref tween, ref data, ref target) =>
         {
             var t = data.Progress;
             if (data.Flags.HasFlag(TweenFlag.Reverse)) t = 1f - t;
@@ -105,7 +104,7 @@ public class TweenSystem<TData, TField> : SystemBase<Commands, Time, Query, Quer
             var value = TweenResources.Handler<TField>.Instance.Lerp(tween.From, tween.To, t);
             query.Get<TData>(target.Entity).SetValue(tween.FieldID, value);
 
-            if (data.Progress == 1f)
+            if (data.Progress >= 1f)
             {
                 if (data.Flags.HasFlag(TweenFlag.PingPong))
                 {
@@ -194,7 +193,6 @@ public struct TweenTarget : IComponent
 
 public struct TweenDisabled : IComponent
 {
-
 }
 
 /* -------------------------------------------------------------------------------------------- */

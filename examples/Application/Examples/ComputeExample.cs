@@ -104,7 +104,7 @@ public partial class ComputeExample : IExample
                 new PerformanceTrackerPlugin(),
                 new UniformPlugin<SceneData, Param<Time, IWindow>>()
                 {
-                    Extract = static (in Param<Time, IWindow> param, ref SceneData sceneData) =>
+                    Extract = static (in param, ref sceneData) =>
                     {
                         var (time, window) = param;
                         sceneData.Time = (float)time.SecondsSinceStartup;
@@ -168,7 +168,7 @@ public partial class ComputeExample : IExample
             {
                 RunsAfter = [FrameGraph2DPlugin.BeginFrame],
             },
-            static (FrameGraph2D frameGraph, RenderContext renderContext, RenderAssets renderAssets, ComputeData computeData) =>
+            static (FrameGraph2D frameGraph) =>
             {
                 frameGraph.FrameGraph.AddBuffer(BufferDescriptor.Storage<Particle>("particles_buffer", 1_000_000));
 

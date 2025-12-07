@@ -60,15 +60,16 @@ public ref struct HierarchyEnumerator
     public bool MoveNext()
     {
         if (currentEntity.Entity == Entity.NULL) return false;
+        var entityRef = query.GetEntity(currentEntity.Entity);
 
-        if (query.Has<Parent>(currentEntity.Entity))
+        if (entityRef.Has<Parent>())
         {
-            currentEntity.Entity = query.Get<Parent>(currentEntity.Entity).FirstChild;
+            currentEntity.Entity = entityRef.Get<Parent>().FirstChild;
             currentEntity.Depth++;
             return true;
         }
 
-        ref var cChild = ref query.Get<Child>(currentEntity.Entity);
+        ref var cChild = ref entityRef.Get<Child>();
         if (cChild.NextSibling != Entity.NULL)
         {
             currentEntity.Entity = cChild.NextSibling;

@@ -1,7 +1,3 @@
-using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.Text;
-
 namespace Pollus.Audio;
 
 public enum AudioFormat
@@ -24,13 +20,13 @@ public abstract class Decoder : IDisposable
     public long Size { get; protected set; }
     public abstract AudioFormat Format { get; }
 
-    public Decoder(string path)
+    protected Decoder(string path)
     {
         stream = File.OpenRead(path);
         Info = ReadInfo();
     }
 
-    public Decoder(Stream stream)
+    protected Decoder(Stream stream)
     {
         this.stream = stream;
         Info = ReadInfo();

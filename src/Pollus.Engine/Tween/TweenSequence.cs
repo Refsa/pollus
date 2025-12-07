@@ -60,8 +60,7 @@ public struct TweenSequenceBuilder
 [SystemSet]
 public partial class TweenSequenceSystemSet
 {
-    [System(nameof(SequenceSystem))]
-    static readonly SystemBuilderDescriptor SequenceSystemDescriptor = new()
+    [System(nameof(SequenceSystem))] static readonly SystemBuilderDescriptor SequenceSystemDescriptor = new()
     {
         Stage = CoreStage.Last,
     };
@@ -70,10 +69,10 @@ public partial class TweenSequenceSystemSet
     {
         qSequences.ForEach((commands, query), static (in userData, in entity, ref sequence, ref parent) =>
         {
-            ref var current = ref userData.query.Get<TweenData>(sequence.Current);
-            if (current.Progress < 1f) return;
+            var entityRef = userData.query.GetEntity(sequence.Current);
+            if (entityRef.Get<TweenData>().Progress < 1f) return;
 
-            ref var child = ref userData.query.Get<Child>(sequence.Current);
+            ref var child = ref entityRef.Get<Child>();
             if (child.NextSibling == Entity.NULL)
             {
                 if (sequence.Flags.HasFlag(TweenFlag.OneShot))

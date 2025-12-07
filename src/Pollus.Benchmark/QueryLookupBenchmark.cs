@@ -42,9 +42,10 @@ public class QueryLookupBenchmark
         var query = new Query(oneComponentWorld);
         query.ForEach(query, static (in Query query, in Entity entity) =>
         {
-            if (query.Has<Component1>(entity))
+            var entityRef = query.GetEntity(entity);
+            if (entityRef.Has<Component1>())
             {
-                ref var component1 = ref query.Get<Component1>(entity);
+                ref var component1 = ref entityRef.Get<Component1>();
                 component1.First++;
             }
         });
@@ -56,9 +57,10 @@ public class QueryLookupBenchmark
         var query = new Query(oneComponentWorld);
         query.ForEach(query, static (in Query query, in Entity entity) =>
         {
-            if (query.Has<Component1>(entity, out var entityInfo))
+            var entityRef = query.GetEntity(entity);
+            if (entityRef.Has<Component1>())
             {
-                ref var component1 = ref query.Get<Component1>(entityInfo);
+                ref var component1 = ref entityRef.Get<Component1>();
                 component1.First++;
             }
         });
