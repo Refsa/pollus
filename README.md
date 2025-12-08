@@ -74,8 +74,9 @@ The aim is to have as few dependencies as possible. This will allow the project 
 
 - [Silk.NET.SDL](https://github.com/dotnet/Silk.NET) (for SDL bindings)
 - [Silk.NET.WebGPU](https://github.com/dotnet/Silk.NET) (for native WebGPU bindings)
+- [WebGPU native](https://github.com/emscripten-core/emscripten/blob/3.1.56/system/include/webgpu/webgpu.h) (for browser WebGPU bindings)
 - [Silk.NET.OpenAL](https://github.com/dotnet/Silk.NET) (for native OpenAL bindings)
-- [SixLabors.ImageSharp](https://github.com/SixLabors/ImageSharp/) (image assets)
+- [StbImageSharp](https://github.com/StbSharp/StbImageSharp/) (image assets)
 - [ImGui.NET](https://github.com/ImGuiNET/ImGui.NET) (Dear ImGui bindings)
 - [cimgui/imgui](https://github.com/cimgui/cimgui) (for wasm builds)
 

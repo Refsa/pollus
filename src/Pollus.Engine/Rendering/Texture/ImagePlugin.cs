@@ -14,6 +14,6 @@ public class ImagePlugin : IPlugin
     public void Apply(World world)
     {
         var assetServer = world.Resources.Get<AssetServer>();
-        assetServer.AddLoader<ImageSharpAssetLoader>();
+        assetServer.AddLoader<ImageAssetLoader>();
     }
 }
