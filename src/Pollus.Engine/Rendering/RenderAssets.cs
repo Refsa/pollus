@@ -70,20 +70,39 @@ public class RenderAssets : IRenderAssets, IDisposable
         return (TRenderData)renderData[handle];
     }
 
+    public bool TryGet<TRenderData>(Handle handle, out TRenderData data) where TRenderData : notnull
+    {
+        if (renderData.TryGetValue(handle, out var value))
+        {
+            data = (TRenderData)value;
+            return true;
+        }
+
+        data = default!;
+        return false;
+    }
+
     public RenderAssets AddLoader<TLoader>(TLoader loader) where TLoader : IRenderDataLoader
     {
         loaders.TryAdd(loader.TargetType, loader);
         return this;
     }
 
-    public void Prepare(IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
+    public RenderAssets AddLoader<TLoader>() where TLoader : IRenderDataLoader, new()
+    {
+        var loader = new TLoader();
+        loaders.TryAdd(loader.TargetType, loader);
+        return this;
+    }
+
+    public void Prepare(IWGPUContext gpuContext, AssetServer assetServer, Handle handle, bool reload = false)
     {
         if (!loaders.TryGetValue(handle.Type, out var loader))
         {
             throw new InvalidOperationException($"No loader found for type {TypeLookup.GetType(handle.Type)}");
         }
 
-        if (renderData.ContainsKey(handle)) return;
+        if (renderData.ContainsKey(handle) && !reload) return;
         loader.Prepare(this, gpuContext, assetServer, handle);
     }
 

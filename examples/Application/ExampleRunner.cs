@@ -33,6 +33,7 @@ public static class ExampleRunner
             Log.Info("  tween");
             Log.Info("  ecs-iter");
             Log.Info("  query-filter");
+            Log.Info("  font");
             return;
         }
 
@@ -61,6 +62,7 @@ public static class ExampleRunner
             "tween" => new TweenExample(),
             "ecs-iter" => new ECSIter(),
             "query-filter" => new QueryFilterExample(),
+            "font" => new FontExample(),
             _ => null
         };
 

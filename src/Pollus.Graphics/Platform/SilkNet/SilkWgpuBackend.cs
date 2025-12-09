@@ -309,7 +309,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             layout: descriptor.Layout == null ? null : descriptor.Layout.Native.As<Silk.NET.WebGPU.PipelineLayout>(),
             compute: new(
                 module: descriptor.Compute.Shader.Native.As<Silk.NET.WebGPU.ShaderModule>(),
-                entryPoint: entry.Pointer,
+                entryPoint: (byte*)entry.Pointer,
                 constantCount: (nuint)descriptor.Compute.Constants.Length,
                 constants: descriptor.Compute.Constants.Length == 0 ? null : (Silk.NET.WebGPU.ConstantEntry*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(descriptor.Compute.Constants))
             )

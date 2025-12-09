@@ -68,6 +68,11 @@ unsafe public class GPUBuffer : GPUResourceWrapper
         where TElement : unmanaged, IShaderType
     {
         var newSize = Alignment.AlignedSize<TElement>(newCapacity);
+        Resize(newSize);
+    }
+
+    public void Resize(uint newSize)
+    {
         if (newSize == 0 || newSize <= size) return;
         size = newSize;
 

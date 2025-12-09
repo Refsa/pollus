@@ -12,7 +12,7 @@ public class PerformanceTrackerPlugin : IPlugin
         float frameTime;
 
         public float FrameTime => frameTime;
-        public float AverageFrameTime => frameTimes.Average();
+        public float AverageFrameTime => frameTimes.DefaultIfEmpty(1f).Average();
         public float AverageFPS => 1f / AverageFrameTime;
 
         public void AddFrameTime(float frameTime)

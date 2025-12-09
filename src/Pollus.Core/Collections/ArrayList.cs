@@ -14,6 +14,8 @@ public class ArrayList<T>
 
     public Span<T> AsSpan(int count) => items.AsSpan(0, count);
 
+    public Span<T> AsSpan() => items.AsSpan(0, count);
+
     public void SetCount(int count)
     {
         this.count = count;

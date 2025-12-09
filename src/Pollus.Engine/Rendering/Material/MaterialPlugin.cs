@@ -14,6 +14,11 @@ public class MaterialPlugin<TMaterial> : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
         world.Schedule.AddSystems(CoreStage.PreRender, new ExtractMaterialSystem<TMaterial>());
     }
+
+    public static MaterialPlugin<TMaterial> Create()
+    {
+        return new MaterialPlugin<TMaterial>();
+    }
 }
 
 public class ExtractMaterialSystem<TMaterial> : SystemBase<RenderAssets, AssetServer, IWGPUContext, Assets<TMaterial>>

@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "--framework net10.0",
+                "${workspaceFolder}/examples/Desktop/Pollus.Examples.Desktop.csproj"
             ],
         },
         {

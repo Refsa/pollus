@@ -15,18 +15,18 @@ public enum MeshAttributeType
 
 public class Mesh
 {
-    Silk.NET.WebGPU.PrimitiveTopology primitiveTopology;
+    PrimitiveTopology primitiveTopology;
     Vec3f[] positions;
     Vec3f[]? normals;
     Vec2f[]? uv0s;
     IMeshIndices? indices;
 
-    public Silk.NET.WebGPU.PrimitiveTopology PrimitiveTopology => primitiveTopology;
+    public PrimitiveTopology PrimitiveTopology => primitiveTopology;
 
     public Mesh(
         Vec3f[] positions, Vec3f[]? normals, Vec2f[]? uv0s,
         IMeshIndices? indices,
-        Silk.NET.WebGPU.PrimitiveTopology primitiveTopology = Silk.NET.WebGPU.PrimitiveTopology.TriangleList)
+        PrimitiveTopology primitiveTopology = PrimitiveTopology.TriangleList)
     {
         this.primitiveTopology = primitiveTopology;
         this.positions = positions;
