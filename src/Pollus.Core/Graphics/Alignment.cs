@@ -66,4 +66,36 @@ public static class Alignment
             return self;
         }
     }
+
+    public static uint PreviousPowerOfTwo(this uint self)
+    {
+        if (self.IsPowerOfTwo()) return self;
+
+        if (Lzcnt.IsSupported)
+        {
+            return 1u << (31 - (int)Lzcnt.LeadingZeroCount(self));
+        }
+        else
+        {
+            self |= self >> 1;
+            self |= self >> 2;
+            self |= self >> 4;
+            self |= self >> 8;
+            self |= self >> 16;
+            return self - (self >> 1);
+        }
+    }
+
+    public static uint ClosestPowerOfTwo(this uint self)
+    {
+        var next = self.NextPowerOfTwo();
+        var prev = self.PreviousPowerOfTwo();
+
+        if (next - self < self - prev)
+        {
+            return next;
+        }
+
+        return prev;
+    }
 }

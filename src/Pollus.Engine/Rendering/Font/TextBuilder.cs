@@ -23,11 +23,12 @@ public partial class TextBuilder
         ArrayList<TextVertex> vertices,
         ArrayList<uint> indices)
     {
-        float scale = size / (float)font.GlyphSize * 1.5f;
         float cursorX = startPos.X;
         float cursorY = startPos.Y;
         float texWidth = font.AtlasWidth;
         float texHeight = font.AtlasHeight;
+        uint sizePow = ((uint)size * 2u).ClosestPowerOfTwo().Clamp(8u, 128u);
+        float scale = size / sizePow * 1.5f;
 
         uint indexOffset = (uint)vertices.Count;
 
@@ -36,11 +37,13 @@ public partial class TextBuilder
             if (c == '\n')
             {
                 cursorX = startPos.X;
-                cursorY -= font.LineHeight * scale;
+                // cursorY -= font.LineHeight * glyphs['A'].Scale;
+                cursorY -= size;
                 continue;
             }
 
-            if (!font.Glyphs.TryGetValue(c, out Glyph glyph))
+            var glyphKey = new GlyphKey(font.Handle, sizePow, c);
+            if (!font.Glyphs.TryGetValue(glyphKey, out var glyph))
             {
                 continue;
             }

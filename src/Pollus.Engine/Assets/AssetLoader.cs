@@ -6,6 +6,7 @@ public struct LoadContext
 {
     public required AssetPath Path { get; init; }
     public required string FileName { get; init; }
+    public required Handle Handle { get; init; }
 
     public AssetStatus Status { get; set; }
     public object? Asset { get; private set; }
@@ -32,6 +33,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         ref LoadContext context;
         public readonly AssetPath Path => context.Path;
         public readonly string FileName => context.FileName;
+        public readonly Handle Handle => context.Handle;
 
         public LoadContext(ref LoadContext context)
         {

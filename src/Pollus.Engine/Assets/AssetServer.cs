@@ -77,7 +77,8 @@ public class AssetServer : IDisposable
         var loadContext = new LoadContext()
         {
             Path = path,
-            FileName = Path.GetFileNameWithoutExtension(path.Path)
+            FileName = Path.GetFileNameWithoutExtension(path.Path),
+            Handle = Assets.GetHandle<TAsset>(path),
         };
 
         AssetIO.LoadPath(path, out var data);

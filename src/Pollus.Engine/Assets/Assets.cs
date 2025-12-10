@@ -28,6 +28,7 @@ public class Assets<T> : IDisposable
     static int _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
     static int NextID => counter++;
+
     static Assets()
     {
         AssetsFetch<T>.Register();
@@ -35,6 +36,7 @@ public class Assets<T> : IDisposable
 
     List<AssetInfo<T>> assets = new();
     Dictionary<Handle, int> assetLookup = new();
+    Dictionary<AssetPath, Handle> pathLookup = new();
 
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
 
@@ -47,12 +49,19 @@ public class Assets<T> : IDisposable
                 disposable.Dispose();
             }
         }
+
         assets.Clear();
     }
 
     public Handle Initialize(AssetPath? path)
     {
-        var handle = new Handle(_assetTypeId, NextID);
+        if (path.HasValue && pathLookup.TryGetValue(path.Value, out var handle))
+        {
+            return handle;
+        }
+
+        handle = new Handle(_assetTypeId, NextID);
+        if (path.HasValue) pathLookup.Add(path.Value, handle);
         assetLookup.Add(handle, assets.Count);
         assets.Add(new AssetInfo<T>
         {
@@ -65,7 +74,13 @@ public class Assets<T> : IDisposable
 
     public Handle<T> Add(T asset, AssetPath? path = null)
     {
-        var handle = new Handle<T>(NextID);
+        if (path.HasValue && pathLookup.TryGetValue(path.Value, out var handle))
+        {
+            return handle;
+        }
+
+        handle = new Handle<T>(NextID);
+        if (path.HasValue) pathLookup.Add(path.Value, handle);
         assetLookup.Add(handle, assets.Count);
         assets.Add(new AssetInfo<T>
         {
@@ -107,6 +122,7 @@ public class Assets<T> : IDisposable
             {
                 disposable.Dispose();
             }
+
             assetInfo.Asset = default;
         }
     }
@@ -120,8 +136,10 @@ public class Assets<T> : IDisposable
             {
                 disposable.Dispose();
             }
+
             assets.RemoveAt(index);
             assetLookup.Remove(handle);
+            if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
         }
     }
 }
@@ -144,6 +162,7 @@ public class Assets : IDisposable
                 disposable.Dispose();
             }
         }
+
         assets.Clear();
     }
 
@@ -155,6 +174,7 @@ public class Assets : IDisposable
             container = (Assets<T>)containerObject;
             return true;
         }
+
         container = null!;
         return false;
     }
@@ -168,6 +188,7 @@ public class Assets : IDisposable
             container = new Assets<T>();
             assets.Add(id, container);
         }
+
         return container;
     }
 
@@ -175,6 +196,12 @@ public class Assets : IDisposable
         where T : notnull
     {
         return GetAssets<T>().Add(asset, path);
+    }
+
+    public Handle<T> GetHandle<T>(AssetPath path)
+        where T : notnull
+    {
+        return GetAssets<T>().Initialize(path);
     }
 
     public T? Get<T>(Handle<T> handle)
@@ -195,6 +222,7 @@ public class Assets : IDisposable
         {
             return container.GetStatus(handle);
         }
+
         return AssetStatus.Unknown;
     }
 }
