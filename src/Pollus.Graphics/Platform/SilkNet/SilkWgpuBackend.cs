@@ -333,7 +333,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             mipLevelCount: descriptor.MipLevelCount,
             baseArrayLayer: descriptor.BaseArrayLayer,
             arrayLayerCount: descriptor.ArrayLayerCount,
-            aspect: descriptor.Aspect
+            aspect: (Silk.NET.WebGPU.TextureAspect?)descriptor.Aspect
         );
         var view = wgpu.TextureCreateView(texture.As<Silk.NET.WebGPU.Texture>(), in native);
         return new NativeHandle<TextureViewTag>((nint)view);
@@ -510,6 +510,11 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public void RenderPassEncoderEnd(in NativeHandle<RenderPassEncoderTag> pass)
     {
         wgpu.RenderPassEncoderEnd(pass.As<Silk.NET.WebGPU.RenderPassEncoder>());
+        wgpu.RenderPassEncoderRelease(pass.As<Silk.NET.WebGPU.RenderPassEncoder>());
+    }
+
+    public void RenderPassEncoderRelease(in NativeHandle<RenderPassEncoderTag> pass)
+    {
         wgpu.RenderPassEncoderRelease(pass.As<Silk.NET.WebGPU.RenderPassEncoder>());
     }
 

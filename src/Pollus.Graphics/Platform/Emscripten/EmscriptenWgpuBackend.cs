@@ -711,6 +711,11 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         wgpu.RenderPassEncoderRelease(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>());
     }
 
+    public void RenderPassEncoderRelease(in NativeHandle<RenderPassEncoderTag> pass)
+    {
+        wgpu.RenderPassEncoderRelease(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>());
+    }
+
     public void RenderPassEncoderSetPipeline(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<RenderPipelineTag> pipeline)
     {
         wgpu.RenderPassEncoderSetPipeline(pass.As<Pollus.Emscripten.WGPU.WGPURenderPassEncoder>(), pipeline.As<Pollus.Emscripten.WGPU.WGPURenderPipeline>());

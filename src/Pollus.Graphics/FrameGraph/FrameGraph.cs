@@ -7,9 +7,10 @@ using Pollus.Graphics.Rendering;
 
 public partial struct FrameGraph<TParam> : IDisposable
 {
-    public delegate void BuilderDelegate<TData>(ref Builder builder, TParam param, ref TData data)
+    public delegate void BuilderDelegate<TData>(ref Builder builder, in TParam param, ref TData data)
         where TData : struct;
-    public delegate void ExecuteDelegate<TData>(RenderContext context, TParam param, TData data)
+
+    public delegate void ExecuteDelegate<TData>(RenderContext context, in TParam param, in TData data)
         where TData : struct;
 
     int[]? executionOrder;
@@ -45,7 +46,7 @@ public partial struct FrameGraph<TParam> : IDisposable
     public FrameGraphRunner<TParam> Compile()
     {
         Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
-        passNodes.Nodes.Sort(new PassOrderComparer());
+        passNodes.Nodes.Sort();
 
         foreach (ref var current in passNodes.Nodes)
         {
@@ -67,7 +68,6 @@ public partial struct FrameGraph<TParam> : IDisposable
         Span<bool> onStack = stackalloc bool[passNodes.Count];
         foreach (var node in passNodes.Nodes)
         {
-            var adj = adjacencyMatrix[node.Index];
             if (!visited[node.Index])
             {
                 if (!DFS(node.Index, ref visited, ref onStack, adjacencyMatrix, executionOrderSpan, ref orderIndex))
@@ -78,7 +78,7 @@ public partial struct FrameGraph<TParam> : IDisposable
         }
 
         executionOrderSpan.Reverse();
-        return new FrameGraphRunner<TParam>(this, executionOrderSpan);
+        return new FrameGraphRunner<TParam>(ref Unsafe.AsRef(in this), executionOrder.AsSpan(0, passNodes.Count));
 
         static bool DFS(int node, ref Span<bool> visited, ref Span<bool> onStack, in Span<BitSet256> adjacencyMatrix, in Span<int> order, ref int orderIndex)
         {
@@ -100,7 +100,7 @@ public partial struct FrameGraph<TParam> : IDisposable
         }
     }
 
-    public void AddPass<TData, TOrder>(TOrder order, TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
+    public void AddPass<TData, TOrder>(TOrder order, in TParam param, BuilderDelegate<TData> build, ExecuteDelegate<TData> execute)
         where TData : struct
         where TOrder : unmanaged, Enum
     {
@@ -114,12 +114,12 @@ public partial struct FrameGraph<TParam> : IDisposable
         build(ref builder, param, ref pass.Get().Data);
     }
 
-    public void ExecutePass(int passIndex, RenderContext renderContext, TParam param)
+    public readonly void ExecutePass(int passIndex, RenderContext renderContext, in TParam param)
     {
         passes.ExecutePass(new(passIndex, 0), renderContext, param);
     }
 
-    public ResourceHandle<TResource> AddResource<TResource>(TResource resource)
+    public ResourceHandle<TResource> AddResource<TResource>(in TResource resource)
         where TResource : struct, IFrameGraphResource
     {
         if (resource is TextureResource texture)
@@ -132,15 +132,16 @@ public partial struct FrameGraph<TParam> : IDisposable
             var handle = resources.AddBuffer(buffer);
             return Unsafe.As<ResourceHandle<BufferResource>, ResourceHandle<TResource>>(ref handle);
         }
+
         throw new Exception("Unknown resource type");
     }
 
-    public ResourceHandle<TextureResource> AddTexture(TextureResource texture)
+    public ResourceHandle<TextureResource> AddTexture(in TextureResource texture)
     {
         return resources.AddTexture(texture);
     }
 
-    public ResourceHandle<BufferResource> AddBuffer(BufferResource buffer)
+    public ResourceHandle<BufferResource> AddBuffer(in BufferResource buffer)
     {
         return resources.AddBuffer(buffer);
     }

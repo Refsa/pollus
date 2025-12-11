@@ -1,7 +1,7 @@
+namespace Pollus.Graphics;
+
 using System.Buffers;
 using Pollus.Collections;
-
-namespace Pollus.Graphics;
 
 public interface INode
 {
@@ -11,15 +11,7 @@ public interface INode
     void Init(int index, string name);
 }
 
-public struct PassOrderComparer : IComparer<PassNode>
-{
-    public readonly int Compare(PassNode x, PassNode y)
-    {
-        return y.Pass.PassOrder.CompareTo(x.Pass.PassOrder);
-    }
-}
-
-public struct PassNode : INode
+public struct PassNode : INode, IComparable<PassNode>
 {
     BitSet256 reads;
     BitSet256 writes;
@@ -61,6 +53,11 @@ public struct PassNode : INode
         creates.Set(resource.Id);
         SetWrite(resource);
     }
+
+    public int CompareTo(PassNode other)
+    {
+        return other.Pass.PassOrder.CompareTo(Pass.PassOrder);
+    }
 }
 
 public struct ResourceNode : INode
@@ -92,7 +89,9 @@ public struct GraphData<TNode> : IDisposable
     public Span<TNode> Nodes => nodes.AsSpan(0, count);
     public int Count => count;
 
-    public GraphData() { }
+    public GraphData()
+    {
+    }
 
     public void Dispose()
     {

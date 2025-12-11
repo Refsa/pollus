@@ -53,7 +53,7 @@ public class FrameGraph2D : IDisposable
         Cleanup();
     }
 
-    public void BeginFrame(FrameGraph<FrameGraph2DParam> frameGraph, FrameGraph2DParam param)
+    public void BeginFrame(ref FrameGraph<FrameGraph2DParam> frameGraph, ref FrameGraph2DParam param)
     {
         frameStarted = true;
         this.frameGraph = frameGraph;
@@ -88,8 +88,8 @@ public class FrameGraph2D : IDisposable
 
 public class FrameGraph2DPlugin : IPlugin
 {
-    public const string BeginFrame = "RenderPipeline::BeginFrame";
-    public const string Render = "RenderPipeline::Render";
+    public const string BeginFrame = "FrameGraph2D::BeginFrame";
+    public const string Render = "FrameGraph2D::Render";
 
     public void Apply(World world)
     {
@@ -123,7 +123,7 @@ public class FrameGraph2DPlugin : IPlugin
             renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
             frameGraph.AddPass(RenderStep2D.First, param,
-            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref PrepareTexturesPass data) =>
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref PrepareTexturesPass data) =>
             {
                 data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
                     FrameGraph2D.Textures.ColorTarget,
@@ -132,10 +132,10 @@ public class FrameGraph2DPlugin : IPlugin
                     param.BackbufferSize
                 ));
             },
-            static (context, param, data) =>
+            static (context, in param, in data) =>
             {
-                var commandEncoder = context.GetCurrentCommandEncoder();
-                var colorTexture = context.Resources.GetTexture(data.ColorAttachment);
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
 
                 param.RenderAssets.Get(Blit.Handle).ClearTexture(
                     context.GPUContext, param.RenderAssets, commandEncoder,
@@ -143,13 +143,13 @@ public class FrameGraph2DPlugin : IPlugin
             });
 
             frameGraph.AddPass(RenderStep2D.Main, param,
-            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref MainPass data) =>
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref MainPass data) =>
             {
-                data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
+                data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget);
             },
-            static (context, param, data) =>
+            static (context, in param, in data) =>
             {
-                var commandEncoder = context.GetCurrentCommandEncoder();
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
                 using var passEncoder = commandEncoder.BeginRenderPass(new()
                 {
                     ColorAttachments = stackalloc RenderPassColorAttachment[]
@@ -168,13 +168,13 @@ public class FrameGraph2DPlugin : IPlugin
             });
 
             frameGraph.AddPass(RenderStep2D.UI, param,
-            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref UIPass data) =>
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref UIPass data) =>
             {
-                data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
+                data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget);
             },
-            static (context, param, data) =>
+            static (context, in param, in data) =>
             {
-                var commandEncoder = context.GetCurrentCommandEncoder();
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
                 using var passEncoder = commandEncoder.BeginRenderPass(new()
                 {
                     ColorAttachments = stackalloc RenderPassColorAttachment[]
@@ -193,23 +193,23 @@ public class FrameGraph2DPlugin : IPlugin
             });
 
             frameGraph.AddPass(RenderStep2D.Last, param,
-            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, FrameGraph2DParam param, ref FinalBlitPass data) =>
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref FinalBlitPass data) =>
             {
                 data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
-                data.Backbuffer = builder.Reads<TextureResource>(FrameGraph2D.Textures.Backbuffer);
+                data.Backbuffer = builder.Writes<TextureResource>(FrameGraph2D.Textures.Backbuffer);
             },
-            static (context, param, data) =>
+            static (context, in param, in data) =>
             {
-                var commandEncoder = context.GetCurrentCommandEncoder();
-                var colorTexture = context.Resources.GetTexture(data.ColorAttachment);
-                var backbufferTexture = context.Resources.GetTexture(data.Backbuffer);
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
+                ref var backbufferTexture = ref context.Resources.GetTexture(data.Backbuffer);
 
                 param.RenderAssets.Get(Blit.Handle).BlitTexture(
                     context.GPUContext, param.RenderAssets, commandEncoder,
                     colorTexture.TextureView, backbufferTexture.TextureView, Color.BLACK);
             });
 
-            renderGraph.BeginFrame(frameGraph, param);
+            renderGraph.BeginFrame(ref frameGraph, ref param);
         }));
 
         world.Schedule.AddSystems(CoreStage.Render, FnSystem.Create(Render,

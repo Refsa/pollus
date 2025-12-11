@@ -13,6 +13,7 @@ public enum ResourceType
 }
 
 public readonly record struct ResourceHandle(int Id, int Index, int Hash, ResourceType Type);
+
 public readonly record struct ResourceHandle<TResource>(int Id, int Index, int Hash)
     where TResource : struct, IFrameGraphResource
 {
@@ -88,12 +89,14 @@ public struct ResourceContainer<TResource> : IDisposable
         ArrayPool<TResource>.Shared.Return(resources);
     }
 
-    public ResourceHandle<TResource> Add(int id, TResource resource)
+    public ResourceHandle<TResource> Add(int id, in TResource resource)
     {
         if (count == resources.Length) Resize();
-        resource.Handle = new ResourceHandle<TResource>(id, count, resource.Hash);
         resources[count++] = resource;
-        return resource.Handle;
+
+        ref var res = ref resources[count - 1];
+        res.Handle = new ResourceHandle<TResource>(id, count, resource.Hash);
+        return res.Handle;
     }
 
     public ref TResource Get(ResourceHandle<TResource> handle)
@@ -145,14 +148,14 @@ public struct ResourceContainers : IDisposable
         return resourceByName[label];
     }
 
-    public ResourceHandle<TextureResource> AddTexture(TextureResource texture)
+    public ResourceHandle<TextureResource> AddTexture(in TextureResource texture)
     {
         var handle = textures.Add(count++, texture);
         resourceByName.Add(texture.Label, handle);
         return handle;
     }
 
-    public ResourceHandle<BufferResource> AddBuffer(BufferResource buffer)
+    public ResourceHandle<BufferResource> AddBuffer(in BufferResource buffer)
     {
         var handle = buffers.Add(count++, buffer);
         resourceByName.Add(buffer.Label, handle);

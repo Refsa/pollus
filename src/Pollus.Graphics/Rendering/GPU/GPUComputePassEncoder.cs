@@ -10,7 +10,7 @@ unsafe public struct GPUComputePassEncoder : IDisposable
     NativeHandle<ComputePassEncoderTag> native;
     public NativeHandle<ComputePassEncoderTag> Native => native;
 
-    public GPUComputePassEncoder(IWGPUContext context, GPUCommandEncoder commandEncoder, string label)
+    public GPUComputePassEncoder(IWGPUContext context, in GPUCommandEncoder commandEncoder, string label)
     {
         this.context = context;
         using var labelPtr = new NativeUtf8(label);

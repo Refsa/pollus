@@ -94,7 +94,7 @@ public class FrameGraphExample : IExample
                 renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
                 frameGraph.AddPass(RenderStep2D.Main, param,
-                static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref SpritesPassData data) =>
+                static (ref FrameGraph<FrameGraphParam>.Builder builder, in FrameGraphParam param, ref SpritesPassData data) =>
                 {
                     data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
                         "color-attachment",
@@ -103,7 +103,7 @@ public class FrameGraphExample : IExample
                         param.BackbufferSize
                     ));
                 },
-                static (context, param, data) =>
+                static (context, in param, in data) =>
                 {
                     var commandEncoder = context.GetCurrentCommandEncoder();
                     using var passEncoder = commandEncoder.BeginRenderPass(new()
@@ -124,12 +124,12 @@ public class FrameGraphExample : IExample
                 });
 
                 frameGraph.AddPass(RenderStep2D.Last, param,
-                static (ref FrameGraph<FrameGraphParam>.Builder builder, FrameGraphParam param, ref BlitPassData data) =>
+                static (ref FrameGraph<FrameGraphParam>.Builder builder, in FrameGraphParam param, ref BlitPassData data) =>
                 {
                     data.ColorAttachment = builder.Reads<TextureResource>("color-attachment");
                     data.Backbuffer = builder.Writes<TextureResource>("backbuffer");
                 },
-                static (context, param, data) =>
+                static (context, in param, in data) =>
                 {
                     var commandEncoder = context.GetCurrentCommandEncoder();
 

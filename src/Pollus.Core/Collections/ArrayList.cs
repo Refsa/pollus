@@ -1,6 +1,10 @@
 namespace Pollus.Collections;
 
-public class ArrayList<T>
+using System.Collections;
+using System;
+using System.Collections.Generic;
+
+public class ArrayList<T> : IEnumerable<T>
 {
     private T[] items;
     private int count;
@@ -38,6 +42,14 @@ public class ArrayList<T>
         return ref items[index];
     }
 
+    public void RemoveAt(int index)
+    {
+        if (index < 0 || index >= count) throw new IndexOutOfRangeException();
+        var span = items.AsSpan(index + 1, count - index - 1);
+        span.CopyTo(items.AsSpan()[index..]);
+        count--;
+    }
+
     public void EnsureCapacity(int capacity)
     {
         if (items.Length < capacity) Array.Resize(ref items, capacity);
@@ -47,5 +59,15 @@ public class ArrayList<T>
     {
         get => items[index];
         set => items[index] = value;
+    }
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return (IEnumerator<T>)items.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return items.GetEnumerator();
     }
 }

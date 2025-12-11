@@ -1,11 +1,13 @@
 namespace Pollus.Graphics.Rendering;
 
+using Pollus.Graphics.Platform;
 using Pollus.Graphics.WGPU;
 
 unsafe public struct GPUSurfaceTexture : IDisposable
 {
     IWGPUContext context;
 
+    NativeHandle<TextureTag> textureHandle;
     GPUTextureView? textureView;
 
     public GPUTextureView TextureView => textureView ?? throw new ApplicationException("TextureView is null");
@@ -18,6 +20,10 @@ unsafe public struct GPUSurfaceTexture : IDisposable
     public void Dispose()
     {
         textureView?.Dispose();
+        if (!textureHandle.IsNull)
+        {
+            context.Backend.TextureRelease(textureHandle);
+        }
     }
 
     public bool Prepare()
@@ -30,12 +36,19 @@ unsafe public struct GPUSurfaceTexture : IDisposable
             ArrayLayerCount = 1,
         };
 
-        if (context.TryAcquireNextTextureView(out var view, descriptor))
+        if (context.TryAcquireNextTextureView(descriptor, out var view, out var texture))
         {
             textureView?.Dispose();
+            if (!textureHandle.IsNull)
+            {
+                context.Backend.TextureRelease(textureHandle);
+            }
+
+            textureHandle = texture;
             textureView = view;
             return true;
         }
+
         return false;
     }
 }

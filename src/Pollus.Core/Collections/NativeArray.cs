@@ -32,6 +32,7 @@ unsafe public struct NativeArray<T> : IDisposable
 
     public void Dispose()
     {
+        if (data == null) return;
         NativeMemory.Free(data);
     }
 

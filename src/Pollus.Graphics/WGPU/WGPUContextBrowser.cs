@@ -247,22 +247,22 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     public void Present()
     {
-
     }
 
     public void ResizeSurface(Vec2<uint> size)
     {
-
     }
 
-    public bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor)
+    public bool TryAcquireNextTextureView(in TextureViewDescriptor descriptor, out GPUTextureView textureView, out NativeHandle<TextureTag> textureHandle)
     {
+        textureHandle = NativeHandle<TextureTag>.Null;
         var native = wgpu.SwapChainGetCurrentTextureView(swapChain);
         if (native == null)
         {
             textureView = default;
             return false;
         }
+
         textureView = new GPUTextureView(this, (nint)native, descriptor);
         return true;
     }

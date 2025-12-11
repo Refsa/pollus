@@ -5,15 +5,15 @@ using Pollus.Graphics.Rendering;
 public ref struct FrameGraphRunner<TParam>
 {
     internal ReadOnlySpan<int> order;
-    readonly FrameGraph<TParam> frameGraph;
+    readonly ref readonly FrameGraph<TParam> frameGraph;
 
-    public FrameGraphRunner(FrameGraph<TParam> frameGraph, scoped in ReadOnlySpan<int> order)
+    public FrameGraphRunner(ref FrameGraph<TParam> frameGraph, ReadOnlySpan<int> order)
     {
-        this.frameGraph = frameGraph;
+        this.frameGraph = ref frameGraph;
         this.order = order;
     }
 
-    public void Execute(RenderContext renderContext, TParam param)
+    public void Execute(RenderContext renderContext, in TParam param)
     {
         renderContext.PrepareResources(ref frameGraph.Resources);
         renderContext.CreateCommandEncoder("""frame-graph-command-encoder""");

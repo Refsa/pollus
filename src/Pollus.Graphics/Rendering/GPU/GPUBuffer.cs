@@ -4,7 +4,6 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {

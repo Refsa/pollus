@@ -47,30 +47,30 @@ public class FrameGraphTests
         ));
 
         frameGraph.AddPass(PassOrder.Second, param,
-            (ref FrameGraph<object>.Builder builder, object param, ref PassData1 data) =>
+            (ref FrameGraph<object>.Builder builder, in object param, ref PassData1 data) =>
             {
                 data.Texture1 = builder.Reads<TextureResource>("texture1");
                 Assert.Equal(texture1Handle, data.Texture1);
             },
-            (context, renderAssets, data) => { }
+            (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            (ref FrameGraph<object>.Builder builder, object param, ref PassData2 data) =>
+            (ref FrameGraph<object>.Builder builder, in object param, ref PassData2 data) =>
             {
                 data.Texture1 = builder.Writes<TextureResource>("texture1");
                 Assert.Equal(texture1Handle, data.Texture1);
             },
-            (context, renderAssets, data) => { }
+            (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            (ref FrameGraph<object>.Builder builder, object param, ref PassData3 data) =>
+            (ref FrameGraph<object>.Builder builder, in object param, ref PassData3 data) =>
             {
                 data.Texture1 = builder.Writes<TextureResource>("texture1");
                 Assert.Equal(texture1Handle, data.Texture1);
             },
-            (context, renderAssets, data) => { }
+            (context, in renderAssets, in data) => { }
         );
 
         var runner = frameGraph.Compile();
@@ -89,23 +89,23 @@ public class FrameGraphTests
         using var frameGraph = new FrameGraph<object>();
 
         frameGraph.AddPass(PassOrder.Last, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData1 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData1 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.First, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData2 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData2 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData4 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData4 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData3 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData3 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
 
@@ -131,29 +131,29 @@ public class FrameGraphTests
         ));
 
         frameGraph.AddPass(PassOrder.Last, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData1 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData1 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.First, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData2 data) => { },
-            static (context, renderAssets, data) => { }
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData2 data) => { },
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData3 data) =>
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData3 data) =>
             {
                 data.Texture1 = builder.Writes<TextureResource>("texture1");
             },
-            static (context, renderAssets, data) => { }
+            static (context, in renderAssets, in data) => { }
         );
 
         frameGraph.AddPass(PassOrder.Second, param,
-            static (ref FrameGraph<object>.Builder builder, object param, ref PassData4 data) =>
+            static (ref FrameGraph<object>.Builder builder, in object param, ref PassData4 data) =>
             {
                 data.Texture1 = builder.Reads<TextureResource>("texture1");
             },
-            static (context, renderAssets, data) => { }
+            static (context, in renderAssets, in data) => { }
         );
 
         var runner = frameGraph.Compile();

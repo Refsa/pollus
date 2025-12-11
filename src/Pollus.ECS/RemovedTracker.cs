@@ -33,8 +33,8 @@ public class RemovedTracker
         if (trackerLookup.ContainsKey(cid)) return;
         var tracker = new RemovedTracker<C>();
         trackerLookup.Add(cid, trackers.Count);
-        trackers.Add(tracker);
         tracker.Tick(version);
+        trackers.Add(tracker);
     }
 
     public RemovedTracker<C> GetTracker<C>()

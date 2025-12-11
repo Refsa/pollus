@@ -19,6 +19,7 @@ public class DrawList
             commands.CopyTo(newCommands, 0);
             commands = newCommands;
         }
+
         commands[count++] = draw;
     }
 
@@ -44,6 +45,7 @@ public class CommandList
             commands.CopyTo(newCommands, 0);
             commands = newCommands;
         }
+
         commands[count++] = command;
     }
 
@@ -51,7 +53,7 @@ public class CommandList
     {
         foreach (var command in Commands) command.Dispose();
         Unsafe.SkipInit<RenderCommands>(out var def);
-        Array.Fill(commands, def);
+        Array.Fill(commands, def, 0, count);
         count = 0;
     }
 }
@@ -59,8 +61,8 @@ public class CommandList
 public class DrawGroup<TGroup>
     where TGroup : struct, Enum, IConvertible
 {
-    DrawList drawLists = new();
-    CommandList commandLists = new();
+    readonly DrawList drawLists = new();
+    readonly CommandList commandLists = new();
 
     public TGroup Group { get; init; }
     public DrawList DrawLists => drawLists;
@@ -72,7 +74,7 @@ public class DrawGroup<TGroup>
         commandLists.Clear();
     }
 
-    public void Execute(GPURenderPassEncoder encoder, IRenderAssets renderAssets)
+    public void Execute(in GPURenderPassEncoder encoder, IRenderAssets renderAssets)
     {
         Span<Handle<GPUBindGroup>> bindGroupHandles = stackalloc Handle<GPUBindGroup>[Draw.MAX_BIND_GROUPS] { Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null };
         Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[Draw.MAX_VERTEX_BUFFERS] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
@@ -97,6 +99,7 @@ public class DrawGroup<TGroup>
                     bindGroupHandles[(int)idx] = bindGroup;
                     encoder.SetBindGroup(idx, renderAssets.Get(bindGroup));
                 }
+
                 idx++;
             }
 
@@ -109,6 +112,7 @@ public class DrawGroup<TGroup>
                     vertexBufferHandles[(int)idx] = vertexBuffer;
                     encoder.SetVertexBuffer(idx, renderAssets.Get(vertexBuffer));
                 }
+
                 idx++;
             }
 
@@ -150,6 +154,7 @@ public class DrawGroups<TGroup>
         };
         drawGroups.Add(group, drawGroup);
     }
+
     public bool Has(TGroup group) => drawGroups.ContainsKey(group);
     public bool TryGet(TGroup group, out DrawGroup<TGroup> drawGroup) => drawGroups.TryGetValue(group, out drawGroup!);
     public DrawGroup<TGroup> Get(TGroup group) => drawGroups[group];

@@ -22,16 +22,16 @@ unsafe public interface IWGPUContext : IDisposable
 
     GPUSurfaceTexture CreateSurfaceTexture() => new(this);
     GPUCommandEncoder CreateCommandEncoder(string label) => new(this, label);
-    GPURenderPipeline CreateRenderPipeline(RenderPipelineDescriptor descriptor) => new(this, descriptor);
-    GPUPipelineLayout CreatePipelineLayout(PipelineLayoutDescriptor descriptor) => new(this, descriptor);
-    GPUShader CreateShaderModule(ShaderModuleDescriptor descriptor) => new(this, descriptor);
-    GPUBuffer CreateBuffer(BufferDescriptor descriptor) => new(this, descriptor);
-    GPUTexture CreateTexture(TextureDescriptor descriptor) => new(this, descriptor);
-    GPUTextureView CreateTextureView(GPUTexture texture, TextureViewDescriptor descriptor) => new(this, texture, descriptor);
-    GPUSampler CreateSampler(SamplerDescriptor descriptor) => new(this, descriptor);
-    GPUBindGroupLayout CreateBindGroupLayout(BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
-    GPUBindGroup CreateBindGroup(BindGroupDescriptor descriptor) => new(this, descriptor);
-    GPUComputePipeline CreateComputePipeline(ComputePipelineDescriptor descriptor) => new(this, descriptor);
+    GPURenderPipeline CreateRenderPipeline(in RenderPipelineDescriptor descriptor) => new(this, descriptor);
+    GPUPipelineLayout CreatePipelineLayout(in PipelineLayoutDescriptor descriptor) => new(this, descriptor);
+    GPUShader CreateShaderModule(in ShaderModuleDescriptor descriptor) => new(this, descriptor);
+    GPUBuffer CreateBuffer(in BufferDescriptor descriptor) => new(this, descriptor);
+    GPUTexture CreateTexture(in TextureDescriptor descriptor) => new(this, descriptor);
+    GPUTextureView CreateTextureView(GPUTexture texture, in TextureViewDescriptor descriptor) => new(this, texture, descriptor);
+    GPUSampler CreateSampler(in SamplerDescriptor descriptor) => new(this, descriptor);
+    GPUBindGroupLayout CreateBindGroupLayout(in BindGroupLayoutDescriptor descriptor) => new(this, descriptor);
+    GPUBindGroup CreateBindGroup(in BindGroupDescriptor descriptor) => new(this, descriptor);
+    GPUComputePipeline CreateComputePipeline(in ComputePipelineDescriptor descriptor) => new(this, descriptor);
 
-    bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor);
+    bool TryAcquireNextTextureView(in TextureViewDescriptor descriptor, out GPUTextureView textureView, out NativeHandle<TextureTag> textureHandle);
 }

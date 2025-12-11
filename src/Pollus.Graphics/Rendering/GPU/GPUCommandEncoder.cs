@@ -4,11 +4,11 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 
-unsafe public struct GPUCommandEncoder : IDisposable
+unsafe public readonly struct GPUCommandEncoder : IDisposable
 {
-    string label;
-    IWGPUContext context;
-    NativeHandle<CommandEncoderTag> native;
+    readonly string label;
+    readonly IWGPUContext context;
+    readonly NativeHandle<CommandEncoderTag> native;
 
     public NativeHandle<CommandEncoderTag> Native => native;
     public string Label => label;
@@ -33,7 +33,7 @@ unsafe public struct GPUCommandEncoder : IDisposable
         return new GPUCommandBuffer(context, buffer);
     }
 
-    public GPURenderPassEncoder BeginRenderPass(RenderPassDescriptor descriptor)
+    public readonly GPURenderPassEncoder BeginRenderPass(in RenderPassDescriptor descriptor)
     {
         return new GPURenderPassEncoder(context, this, descriptor);
     }

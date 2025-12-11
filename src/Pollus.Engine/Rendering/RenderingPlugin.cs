@@ -18,8 +18,8 @@ public class RenderingPlugin : IPlugin
 
     public void Apply(World world)
     {
-        world.Resources.Add(new MeshRenderBatches());
         world.Resources.Init<RenderContext>();
+        world.Resources.Add(new MeshRenderBatches());
         world.Resources.Add(new DrawGroups2D());
         world.Resources.Add(new RenderAssets()
             .AddLoader(new TextureRenderDataLoader<Texture2D>())
@@ -38,7 +38,6 @@ public class RenderingPlugin : IPlugin
             new ImagePlugin(),
             new CameraPlugin(),
             new ComputePlugin<ComputeShader>(),
-            new MeshPlugin(),
             new SpritePlugin(),
             new FrameGraph2DPlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2D>>>()
@@ -75,12 +74,18 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
-            static (RenderContext context) => { context.PrepareFrame(); }
+            static (RenderContext context) =>
+            {
+                context.PrepareFrame();
+            }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
             EndFrameSystem,
-            static (RenderContext context) => { context.EndFrame(); }
+            static (RenderContext context) =>
+            {
+                context.EndFrame();
+            }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(

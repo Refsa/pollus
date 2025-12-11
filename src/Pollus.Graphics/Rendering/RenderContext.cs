@@ -1,14 +1,15 @@
 namespace Pollus.Graphics.Rendering;
 
+using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
 using Pollus.Graphics.Platform;
 
 public class RenderContext
 {
-    List<GPUCommandEncoder> commandEncoders = new();
-    List<GPUCommandBuffer> commandBuffers = new();
-    RenderResourceCache resources = new();
+    readonly ArrayList<GPUCommandEncoder> commandEncoders = new();
+    readonly ArrayList<GPUCommandBuffer> commandBuffers = new();
+    readonly RenderResourceCache resources = new();
 
     GPUSurfaceTexture? surfaceTexture;
     public GPUTextureView? SurfaceTextureView;
@@ -35,7 +36,7 @@ public class RenderContext
 
     public void PrepareResources(ref ResourceContainers resourceContainers)
     {
-        foreach (var resource in resourceContainers.Textures.Resources)
+        foreach (scoped ref readonly var resource in resourceContainers.Textures.Resources)
         {
             if (resources.Has(resource.Handle)) continue;
 
@@ -57,7 +58,7 @@ public class RenderContext
             resources.SetTexture(resource.Handle, new TextureGPUResource(texture, textureView, resource.Descriptor));
         }
 
-        foreach (var resource in resourceContainers.Buffers.Resources)
+        foreach (scoped ref readonly var resource in resourceContainers.Buffers.Resources)
         {
             if (resources.Has(resource.Handle)) continue;
 
@@ -68,9 +69,8 @@ public class RenderContext
 
     public void CleanupFrame()
     {
-        foreach (var buffer in commandBuffers) buffer.Dispose();
-        foreach (var encoder in commandEncoders) encoder.Dispose();
-
+        foreach (scoped ref var buffer in commandBuffers.AsSpan()) buffer.Dispose();
+        foreach (scoped ref var encoder in commandEncoders.AsSpan()) encoder.Dispose();
         surfaceTexture?.Dispose();
 
         commandEncoders.Clear();
@@ -92,33 +92,35 @@ public class RenderContext
                 commandBuffers.Add(commandBuffer);
                 commandBufferHandles[i] = commandBuffer.Native;
             }
+
             GPUContext.Backend.QueueSubmit(GPUContext.QueueHandle, commandBufferHandles);
         }
 
         GPUContext.Present();
     }
 
-    public GPUCommandEncoder CreateCommandEncoder(string label)
+    public ref GPUCommandEncoder CreateCommandEncoder(string label)
     {
         var encoder = GPUContext.CreateCommandEncoder(label);
         commandEncoders.Add(encoder);
-        return encoder;
+        return ref commandEncoders.Get(commandEncoders.Count - 1);
     }
 
-    public GPUCommandEncoder GetCommandEncoder(string label)
+    public ref GPUCommandEncoder GetCommandEncoder(string label)
     {
         for (int i = 0; i < commandEncoders.Count; i++)
         {
             if (commandEncoders[i].Label == label)
             {
-                return commandEncoders[i];
+                return ref commandEncoders.Get(i);
             }
         }
-        return CreateCommandEncoder(label);
+
+        return ref CreateCommandEncoder(label);
     }
 
-    public GPUCommandEncoder GetCurrentCommandEncoder()
+    public ref GPUCommandEncoder GetCurrentCommandEncoder()
     {
-        return commandEncoders[^1];
+        return ref commandEncoders.Get(commandEncoders.Count - 1);
     }
 }

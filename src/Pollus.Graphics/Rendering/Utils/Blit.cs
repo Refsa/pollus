@@ -1,3 +1,5 @@
+using Pollus.Debugging;
+
 namespace Pollus.Graphics.Rendering;
 
 using System.Diagnostics.CodeAnalysis;
@@ -9,45 +11,45 @@ public class Blit
     public static readonly Handle<Blit> Handle = new();
 
     const string BLIT_SHADER = """
-    struct VertexOutput {
-        @builtin(position) position : vec4f,
-        @location(0) uv : vec2f,
-    }
+                               struct VertexOutput {
+                                   @builtin(position) position : vec4f,
+                                   @location(0) uv : vec2f,
+                               }
 
-    @vertex
-    fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
-        var out: VertexOutput;
-        
-        out.uv = vec2f(
-            f32((vertex_index << 1u) & 2u),
-            f32(vertex_index & 2u)
-        );
+                               @vertex
+                               fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+                                   var out: VertexOutput;
+                                   
+                                   out.uv = vec2f(
+                                       f32((vertex_index << 1u) & 2u),
+                                       f32(vertex_index & 2u)
+                                   );
 
-        out.position = vec4f(out.uv * 2.0 - 1.0, 0.0, 1.0);
-        out.uv.y = 1.0 - out.uv.y;
+                                   out.position = vec4f(out.uv * 2.0 - 1.0, 0.0, 1.0);
+                                   out.uv.y = 1.0 - out.uv.y;
 
-        return out;
-    }
+                                   return out;
+                               }
 
-    @group(0) @binding(0) var srcTexture: texture_2d<f32>;
-    @group(0) @binding(1) var srcSampler: sampler;
+                               @group(0) @binding(0) var srcTexture: texture_2d<f32>;
+                               @group(0) @binding(1) var srcSampler: sampler;
 
-    @fragment
-    fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-        return textureSample(srcTexture, srcSampler, in.uv);
-    }
-    """;
+                               @fragment
+                               fn fs_main(in: VertexOutput) -> @location(0) vec4f {
+                                   return textureSample(srcTexture, srcSampler, in.uv);
+                               }
+                               """;
 
     const string CLEAR_SHADER = """
-    @vertex
-    fn vs_main() -> @builtin(position) vec4f {
-        return vec4f(0.0, 0.0, 0.0, 0.0);
-    }
-    @fragment
-    fn fs_main() -> @location(0) vec4f {
-        return vec4f(0.0, 0.0, 0.0, 0.0);
-    }
-    """;
+                                @vertex
+                                fn vs_main() -> @builtin(position) vec4f {
+                                    return vec4f(0.0, 0.0, 0.0, 0.0);
+                                }
+                                @fragment
+                                fn fs_main() -> @location(0) vec4f {
+                                    return vec4f(0.0, 0.0, 0.0, 0.0);
+                                }
+                                """;
 
     Handle<GPUSampler>? samplerHandle;
     Handle<GPUBindGroupLayout>? bindGroupLayoutHandle;
@@ -71,10 +73,11 @@ public class Blit
         {
             var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
             {
-                Entries = [
+                Entries =
+                [
                     BindGroupLayoutEntry.TextureEntry(0, ShaderStage.Fragment, TextureSampleType.Float, TextureViewDimension.Dimension2D),
-                BindGroupLayoutEntry.SamplerEntry(1, ShaderStage.Fragment, SamplerBindingType.Filtering),
-            ]
+                    BindGroupLayoutEntry.SamplerEntry(1, ShaderStage.Fragment, SamplerBindingType.Filtering),
+                ]
             });
             bindGroupLayoutHandle = renderAssets.Add(bindGroupLayout);
         }
@@ -102,7 +105,7 @@ public class Blit
         }
     }
 
-    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, IRenderAssets renderAssets, GPUTextureView dest, GPUTextureView? msaaResolve = null)
+    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView dest, in GPUTextureView? msaaResolve = null)
     {
         var pipelineHash = HashCode.Combine(dest.TextureDescriptor.GetHashCode(), msaaResolve.HasValue ? msaaResolve.Value.TextureDescriptor.GetHashCode() : 0);
         if (pipelines.TryGetValue(pipelineHash, out var pipelineHandle)) return renderAssets.Get(pipelineHandle);
@@ -123,7 +126,8 @@ public class Blit
             {
                 ShaderModule = blitShaderModule,
                 EntryPoint = """fs_main""",
-                ColorTargets = [
+                ColorTargets =
+                [
                     ColorTargetState.Default with
                     {
                         Format = dest.Descriptor.Format,
@@ -183,9 +187,9 @@ public class Blit
         return pipeline;
     }
 
-    GPUBindGroup GetBindGroup(IWGPUContext gpuContext, IRenderAssets renderAssets, GPUTextureView source)
+    GPUBindGroup GetBindGroup(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView source)
     {
-        var bindGroupHash = source.Native.GetHashCode();
+        var bindGroupHash = source.Descriptor.GetHashCode();
         if (bindGroups.TryGetValue(bindGroupHash, out var bindGroupHandle)) return renderAssets.Get(bindGroupHandle);
 
         CreateSharedResources(gpuContext, renderAssets);
@@ -203,7 +207,7 @@ public class Blit
         return bindGroup;
     }
 
-    public void BlitTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, GPUCommandEncoder encoder, GPUTextureView source, GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null)
+    public void BlitTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUCommandEncoder encoder, in GPUTextureView source, in GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null)
     {
         var pipeline = GetRenderPipeline(gpuContext, renderAssets, dest, msaaResolve);
         var bindGroup = GetBindGroup(gpuContext, renderAssets, source);
@@ -214,7 +218,7 @@ public class Blit
             {
                 new()
                 {
-                    View = msaaResolve.HasValue ? msaaResolve.Value.Native : dest.Native,
+                    View = msaaResolve?.Native ?? dest.Native,
                     ResolveTarget = msaaResolve.HasValue ? dest.Native : null,
                     LoadOp = clearValue is null ? LoadOp.Load : LoadOp.Clear,
                     StoreOp = StoreOp.Store,
@@ -228,7 +232,7 @@ public class Blit
         pass.Draw(4, 1, 0, 0);
     }
 
-    public void ClearTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, GPUCommandEncoder encoder, GPUTextureView dest, Color clearValue)
+    public void ClearTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUCommandEncoder encoder, in GPUTextureView dest, Color clearValue)
     {
         var pipeline = GetClearRenderPipeline(gpuContext, renderAssets, dest.TextureDescriptor.Format);
 

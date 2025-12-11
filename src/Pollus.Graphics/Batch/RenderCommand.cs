@@ -29,7 +29,7 @@ public interface IRenderCommand
 {
     static abstract int SizeInBytes { get; }
 
-    void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets);
+    void Apply(in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets);
 }
 
 public struct RenderCommands : IDisposable
@@ -83,7 +83,7 @@ public struct RenderCommands : IDisposable
         count++;
     }
 
-    public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+    public void Apply(in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
     {
         int offset = 0;
         while (offset < cursor)
@@ -145,7 +145,7 @@ public struct RenderCommands : IDisposable
         }
     }
 
-    public void ApplyAndDispose(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+    public void ApplyAndDispose(in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
     {
         Apply(renderPassEncoder, renderAssets);
         Dispose();
@@ -306,7 +306,7 @@ public struct RenderCommands : IDisposable
         public required float MinDepth;
         public required float MaxDepth;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             renderPassEncoder.SetViewport(Origin, Size, MinDepth, MaxDepth);
         }
@@ -325,7 +325,7 @@ public struct RenderCommands : IDisposable
         public required uint Width;
         public required uint Height;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             renderPassEncoder.SetScissorRect(X, Y, Width, Height);
         }
@@ -341,7 +341,7 @@ public struct RenderCommands : IDisposable
         public readonly RenderCommandType Type = RenderCommandType.SetBlendConstant;
         public required Vec4<double> BlendConstant;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             renderPassEncoder.SetBlendConstant(BlendConstant);
         }
@@ -357,7 +357,7 @@ public struct RenderCommands : IDisposable
         public readonly RenderCommandType Type = RenderCommandType.SetPipeline;
         public required Handle<GPURenderPipeline> Pipeline;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var pipeline = renderAssets.Get(Pipeline);
             renderPassEncoder.SetPipeline(pipeline);
@@ -377,7 +377,7 @@ public struct RenderCommands : IDisposable
         public uint? Offset;
         public uint? Size;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(Buffer);
             renderPassEncoder.SetVertexBuffer(Slot, buffer, Offset, Size);
@@ -397,7 +397,7 @@ public struct RenderCommands : IDisposable
         public uint? Offset;
         public uint? Size;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(Buffer);
             renderPassEncoder.SetIndexBuffer(buffer, Format, Offset, Size);
@@ -417,7 +417,7 @@ public struct RenderCommands : IDisposable
         public uint DynamicOffsetCount;
         public uint DynamicOffsets;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var bindGroup = renderAssets.Get(BindGroup);
             renderPassEncoder.SetBindGroup(GroupIndex, bindGroup, DynamicOffsetCount, DynamicOffsets);
@@ -437,7 +437,7 @@ public struct RenderCommands : IDisposable
         public uint VertexOffset;
         public uint InstanceOffset;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             renderPassEncoder.Draw(VertexCount, InstanceCount, VertexOffset, InstanceOffset);
         }
@@ -457,7 +457,7 @@ public struct RenderCommands : IDisposable
         public int BaseVertex;
         public uint FirstInstance;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             renderPassEncoder.DrawIndexed(IndexCount, InstanceCount, FirstIndex, BaseVertex, FirstInstance);
         }
@@ -474,7 +474,7 @@ public struct RenderCommands : IDisposable
         public required Handle<GPUBuffer> IndirectBuffer;
         public uint IndirectOffset;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(IndirectBuffer);
             renderPassEncoder.DrawIndirect(buffer, IndirectOffset);
@@ -492,7 +492,7 @@ public struct RenderCommands : IDisposable
         public required Handle<GPUBuffer> IndirectBuffer;
         public uint Count;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(IndirectBuffer);
             renderPassEncoder.DrawIndirectMulti(buffer, Count);
@@ -510,7 +510,7 @@ public struct RenderCommands : IDisposable
         public required Handle<GPUBuffer> IndirectBuffer;
         public uint IndirectOffset;
 
-        public void Apply(GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
+        public void Apply(scoped in GPURenderPassEncoder renderPassEncoder, IRenderAssets renderAssets)
         {
             var buffer = renderAssets.Get(IndirectBuffer);
             renderPassEncoder.DrawIndexedIndirect(buffer, IndirectOffset);

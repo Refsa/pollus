@@ -9,7 +9,7 @@ public struct TextureViewDescriptor
     public uint MipLevelCount;
     public uint BaseArrayLayer;
     public uint ArrayLayerCount;
-    public Silk.NET.WebGPU.TextureAspect Aspect;
+    public TextureAspect Aspect;
 
     public static TextureViewDescriptor D2 => new()
     {
@@ -18,6 +18,11 @@ public struct TextureViewDescriptor
         MipLevelCount = 1,
         BaseArrayLayer = 0,
         ArrayLayerCount = 1,
-        Aspect = Silk.NET.WebGPU.TextureAspect.All
+        Aspect = TextureAspect.All
     };
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Label, Format, Dimension, BaseMipLevel, MipLevelCount, BaseArrayLayer, ArrayLayerCount, Aspect);
+    }
 }

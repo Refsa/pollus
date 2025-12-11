@@ -100,11 +100,13 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             {
                 Log.Info("\t\tFormat: " + surfaceCapabilities.Formats[i]);
             }
+
             Log.Info("\tAlpha Modes");
             for (uint i = 0; i < surfaceCapabilities.AlphaModeCount; i++)
             {
                 Log.Info("\t\tAlpha Mode: " + surfaceCapabilities.AlphaModes[i]);
             }
+
             Log.Info("\tPresent Modes");
             for (uint i = 0; i < surfaceCapabilities.PresentModeCount; i++)
             {
@@ -244,18 +246,22 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     {
         surfaceConfiguration.Width = size.X;
         surfaceConfiguration.Height = size.Y;
-        wgpu.SurfaceConfigure(surface, ref surfaceConfiguration);
+        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
     }
-    public bool TryAcquireNextTextureView(out GPUTextureView textureView, TextureViewDescriptor descriptor)
+
+    public bool TryAcquireNextTextureView(in TextureViewDescriptor descriptor, out GPUTextureView textureView, out NativeHandle<TextureTag> textureHandle)
     {
         var st = new Silk.NET.WebGPU.SurfaceTexture();
         wgpu.SurfaceGetCurrentTexture(surface, ref st);
         if (st.Status != Silk.NET.WebGPU.SurfaceGetCurrentTextureStatus.Success)
         {
+            textureHandle = NativeHandle<TextureTag>.Null;
             textureView = default;
             return false;
         }
-        textureView = new GPUTextureView(this, st.Texture, descriptor);
+
+        textureHandle = new NativeHandle<TextureTag>((nint)st.Texture);
+        textureView = new GPUTextureView(this, textureHandle, descriptor);
         return true;
     }
 }

@@ -1,11 +1,11 @@
+namespace Pollus.Examples;
+
 using Pollus.Engine.Transform;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Mathematics;
 using Pollus.Utils;
-
-namespace Pollus.Examples;
-
+using Utf8StringInterpolation;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
@@ -69,7 +69,7 @@ public class FontExample : IExample
                 {
                     foreach (var entity in query)
                     {
-                        entity.Component0.Text = $"Seconds since startup: {time.SecondsSinceStartup:F2}s";
+                        entity.Component0.Text = Utf8String.Format($"Seconds since startup: {time.SecondsSinceStartup:F2}s");
                     }
                 }))
             .Build();

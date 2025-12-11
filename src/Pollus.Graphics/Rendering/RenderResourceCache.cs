@@ -1,5 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
+using Pollus.Collections;
+
 public interface IGPUResource<TResource, TDescriptor>
     where TResource : notnull
     where TDescriptor : struct
@@ -53,8 +55,8 @@ public record struct ResourceMeta
 
 public class RenderResourceCache
 {
-    List<TextureGPUResource> textures = [];
-    List<BufferGPUResource> buffers = [];
+    ArrayList<TextureGPUResource> textures = [];
+    ArrayList<BufferGPUResource> buffers = [];
 
     Dictionary<ResourceHandle, ResourceMeta> lookup = [];
 
@@ -104,18 +106,18 @@ public class RenderResourceCache
         return handle;
     }
 
-    public TextureGPUResource GetTexture(ResourceHandle handle)
+    public ref TextureGPUResource GetTexture(ResourceHandle handle)
     {
         if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
         if (meta.Handle.Type != ResourceType.Texture) throw new Exception("Resource type mismatch");
-        return textures[meta.Index];
+        return ref textures.Get(meta.Index);
     }
 
-    public BufferGPUResource GetBuffer(ResourceHandle handle)
+    public ref BufferGPUResource GetBuffer(ResourceHandle handle)
     {
         if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
         if (meta.Handle.Type != ResourceType.Buffer) throw new Exception("Resource type mismatch");
-        return buffers[meta.Index];
+        return ref buffers.Get(meta.Index);
     }
 
     public TextureGPUResource RemoveTexture(ResourceHandle resourceHandle)

@@ -9,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Utf8StringInterpolation" Version="1.3.2" />
+
         <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Engine\Pollus.Engine.csproj" />
         <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Generators\Pollus.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>

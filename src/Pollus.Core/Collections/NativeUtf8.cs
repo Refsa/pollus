@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+
 namespace Pollus.Collections;
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Text;
 
@@ -12,37 +15,42 @@ unsafe public record struct NativeUtf8 : IDisposable
     };
 
     NativeArray<byte> data;
+    int count = 0;
 
     public byte* Pointer => (byte*)data.Data;
 
-    public NativeUtf8(string str)
-    {
-        data = new NativeArray<byte>(Encoding.UTF8.GetByteCount(str) + 1);
-        int actualBytes = Encoding.UTF8.GetBytes(str, data.AsSpan());
-        data[actualBytes] = 0;
-    }
-
     public NativeUtf8(ReadOnlySpan<char> str)
     {
-        data = new NativeArray<byte>(Encoding.UTF8.GetByteCount(str));
+        count = Encoding.UTF8.GetByteCount(str) + 1;
+        data = new NativeArray<byte>(count);
         Encoding.UTF8.GetBytes(str, data.AsSpan());
+        data[^1] = 0;
+    }
+
+    public NativeUtf8(ReadOnlySpan<byte> data)
+    {
+        count = data.Length;
+        this.data = new NativeArray<byte>(count);
+        data.CopyTo(this.data.AsSpan());
+        this.data[^1] = 0;
     }
 
     public void Dispose()
     {
-        if (data.Length == 0) return;
         data.Dispose();
     }
 
-    public static implicit operator NativeUtf8(string str) => new(str);
+    public static implicit operator NativeUtf8(ReadOnlySpan<char> str) => new(str);
 
-    public Enumerator GetEnumerator() => new((byte*)Pointer, data.Length);
+    public static implicit operator NativeUtf8(ReadOnlySpan<byte> utf8) => new(utf8);
 
-    public ReadOnlySpan<byte> AsSpan() => new(Pointer, data.Length);
+    public Enumerator GetEnumerator() => new(Pointer, count);
+
+    public ReadOnlySpan<byte> AsSpan() => new(Pointer, count);
 
     public override string ToString()
     {
-        return Encoding.UTF8.GetString(data.AsSpan());
+        return Encoding.UTF8.GetString(data.Slice(0, count));
     }
 
     public ref struct Enumerator

@@ -38,6 +38,7 @@ public interface IWgpuBackend : IDisposable
     void RenderPipelineRelease(in NativeHandle<RenderPipelineTag> pipeline);
     NativeHandle<RenderPassEncoderTag> CommandEncoderBeginRenderPass(in NativeHandle<CommandEncoderTag> encoder, in RenderPassDescriptor descriptor);
     void RenderPassEncoderEnd(in NativeHandle<RenderPassEncoderTag> pass);
+    void RenderPassEncoderRelease(in NativeHandle<RenderPassEncoderTag> pass);
     void RenderPassEncoderSetPipeline(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<RenderPipelineTag> pipeline);
     void RenderPassEncoderSetViewport(in NativeHandle<RenderPassEncoderTag> pass, float x, float y, float width, float height, float minDepth, float maxDepth);
     void RenderPassEncoderSetScissorRect(in NativeHandle<RenderPassEncoderTag> pass, uint x, uint y, uint width, uint height);

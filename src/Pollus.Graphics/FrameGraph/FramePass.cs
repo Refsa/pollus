@@ -32,7 +32,7 @@ public struct FramePass<TParam, TData> : IFramePass
 public interface IFramePassContainer<TParam>
 {
     void Clear();
-    void Execute(RenderContext context, TParam renderAssets);
+    void Execute(RenderContext context, in TParam renderAssets);
 }
 
 public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExecuteParam>
@@ -56,7 +56,7 @@ public class FramePassContainer<TExecuteParam, TData> : IFramePassContainer<TExe
         Pool<FramePassContainer<TExecuteParam, TData>>.Shared.Return(this);
     }
 
-    public void Execute(RenderContext context, TExecuteParam renderAssets)
+    public void Execute(RenderContext context, in TExecuteParam renderAssets)
     {
         pass.Execute(context, renderAssets, pass.Data);
     }
@@ -107,7 +107,7 @@ public struct FramePassContainer<TParam> : IDisposable
         return handle;
     }
 
-    public void ExecutePass(FramePassHandle handle, RenderContext renderContext, TParam param)
+    public readonly void ExecutePass(FramePassHandle handle, RenderContext renderContext, in TParam param)
     {
         containers[handle.PassIndex].Execute(renderContext, param);
     }

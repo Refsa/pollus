@@ -4,13 +4,13 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Graphics.Platform;
 
-unsafe public struct GPURenderPassEncoder : IDisposable
+unsafe public readonly struct GPURenderPassEncoder : IDisposable
 {
-    IWGPUContext context;
-    NativeHandle<RenderPassEncoderTag> native;
+    readonly IWGPUContext context;
+    readonly NativeHandle<RenderPassEncoderTag> native;
     public NativeHandle<RenderPassEncoderTag> Native => native;
 
-    public GPURenderPassEncoder(IWGPUContext context, GPUCommandEncoder encoder, RenderPassDescriptor descriptor)
+    public GPURenderPassEncoder(IWGPUContext context, in GPUCommandEncoder encoder, in RenderPassDescriptor descriptor)
     {
         this.context = context;
         native = context.Backend.CommandEncoderBeginRenderPass(encoder.Native, in descriptor);
