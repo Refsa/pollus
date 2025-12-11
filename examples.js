@@ -24,6 +24,7 @@ export function setupExampleButtons() {
         "tween",
         "ecs-iter",
         "query-filter",
+        "font",
     ];
 
     for (const example of examples) {
