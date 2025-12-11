@@ -14,6 +14,8 @@ public class StageGraph
     Dictionary<ISystem, int> inDegree = [];
 
     HashSet<ISystem> seenSystems = [];
+    HashSet<SystemLabel> seenLabels = [];
+
     List<StageGraphNode> nodes = [];
     Pool<StageGraphNode> nodePool = new(() => new StageGraphNode(), 4);
 
@@ -26,6 +28,7 @@ public class StageGraph
             node.Next = null;
             nodePool.Return(node);
         }
+
         nodes.Clear();
     }
 
@@ -39,11 +42,13 @@ public class StageGraph
 
         foreach (var system in systems)
         {
-            if (seenSystems.Contains(system)) continue;
-            seenSystems.Add(system);
+            if (!seenSystems.Add(system)) continue;
+            seenLabels.Add(system.Descriptor.Label);
 
-            var compatibleSystems = systems.Where(e => !seenSystems.Contains(e) &&
-                !e.Descriptor.Dependencies.Overlaps(system.Descriptor.Dependencies));
+            var compatibleSystems = systems.Where(e =>
+                !seenSystems.Contains(e) &&
+                !e.Descriptor.Dependencies.Overlaps(system.Descriptor.Dependencies) &&
+                e.Descriptor.RunsAfter.All(dep => seenLabels.Contains(dep)));
 
             if (!compatibleSystems.Any())
             {
@@ -55,6 +60,7 @@ public class StageGraph
                     prev.Next = current;
                 }
             }
+
             current.Systems.Add(system);
 
             foreach (var compatibleSystem in compatibleSystems)
@@ -66,10 +72,12 @@ public class StageGraph
 
                 current.Systems.Add(compatibleSystem);
                 seenSystems.Add(compatibleSystem);
+                seenLabels.Add(compatibleSystem.Descriptor.Label);
             }
         }
 
         seenSystems.Clear();
+        seenLabels.Clear();
     }
 
     public void TopologicalSort(List<ISystem> systems)
@@ -122,6 +130,7 @@ public class StageGraph
             system.Value.Clear();
             dependencyPool.Return(system.Value);
         }
+
         dependencies.Clear();
         inDegree.Clear();
 
@@ -150,6 +159,7 @@ public class StageGraph
                     throw;
                 }
             }
+
             current = current.Next;
         }
     }
@@ -165,6 +175,7 @@ public class StageGraph
             sb.AppendLine(new string(' ', 7) + "> " + string.Join(", ", current.Systems.Select(e => e.Descriptor.Label.Value)));
             current = current.Next;
         }
+
         return sb.ToString();
     }
 }

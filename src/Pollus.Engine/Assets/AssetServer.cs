@@ -86,8 +86,8 @@ public class AssetServer : IDisposable
         if (loadContext.Status == AssetStatus.Loaded)
         {
             var asset = (TAsset)loadContext.Asset!;
-            handle = Assets.Add(asset);
-            assetLookup.Add(path, handle);
+            handle = Assets.Add(asset, path);
+            assetLookup.TryAdd(path, handle);
             return handle;
         }
 

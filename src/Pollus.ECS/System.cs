@@ -2,6 +2,7 @@
 
 namespace Pollus.ECS;
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 public delegate void SystemDelegate();
@@ -19,6 +20,7 @@ public interface ISystem
     void Tick(World world) { }
 }
 
+[DebuggerDisplay("{Descriptor.Label.Value}")]
 public abstract class SystemBase(SystemDescriptor descriptor) : ISystem, IDisposable
 {
     public static HashSet<Type> Dependencies => [];

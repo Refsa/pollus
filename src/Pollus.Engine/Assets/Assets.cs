@@ -76,6 +76,12 @@ public class Assets<T> : IDisposable
     {
         if (path.HasValue && pathLookup.TryGetValue(path.Value, out var handle))
         {
+            if (assetLookup.TryGetValue(handle, out var index))
+            {
+                var info = assets[index];
+                info.Asset = asset;
+                info.Status = AssetStatus.Loaded;
+            }
             return handle;
         }
 

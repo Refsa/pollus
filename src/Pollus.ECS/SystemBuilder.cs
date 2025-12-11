@@ -39,19 +39,12 @@ public struct SystemBuilderDescriptor
 
     public static implicit operator SystemDescriptor(SystemBuilderDescriptor builder)
     {
-        var descriptor = new SystemDescriptor(builder.Label);
-        if (builder.RunsBefore != null)
+        var descriptor = new SystemDescriptor(builder.Label)
         {
-            descriptor.Before(builder.RunsBefore);
-        }
-        if (builder.RunsAfter != null)
-        {
-            descriptor.After(builder.RunsAfter);
-        }
-        if (builder.Dependencies != null)
-        {
-            descriptor.DependsOn(builder.Dependencies);
-        }
+            RunsAfter = builder.RunsAfter,
+            RunsBefore = builder.RunsBefore,
+            Dependencies = builder.Dependencies,
+        };
         return descriptor;
     }
 

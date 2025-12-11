@@ -13,10 +13,10 @@ public record struct SystemLabel(string Value)
 public class SystemDescriptor
 {
     public SystemLabel Label { get; private set; }
-    public HashSet<SystemLabel> RunsBefore { get; }
-    public HashSet<SystemLabel> RunsAfter { get; }
-    public HashSet<Type> Parameters { get; }
-    public HashSet<Type> Dependencies { get; }
+    public HashSet<SystemLabel> RunsBefore { get; init; }
+    public HashSet<SystemLabel> RunsAfter { get; init; }
+    public HashSet<Type> Parameters { get; init; }
+    public HashSet<Type> Dependencies { get; init; }
 
     public SystemDescriptor()
     {
