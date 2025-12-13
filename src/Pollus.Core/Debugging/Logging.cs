@@ -5,25 +5,25 @@ public class Log
     public static void Info(string message)
     {
         using var color = new ColorScope(ConsoleColor.Cyan);
-        Console.WriteLine($"[INFO] {message}");
+        Console.WriteLine(FormattableString.Invariant($"[{DateTime.Now:HH:mm:ss.fff}][INFO] {message}"));
     }
 
     public static void Warn(string message)
     {
         using var color = new ColorScope(ConsoleColor.Yellow);
-        Console.WriteLine($"[WARN] {message}");
+        Console.WriteLine(FormattableString.Invariant($"[{DateTime.Now:HH:mm:ss.fff}][WARN] {message}"));
     }
 
     public static void Error(string message)
     {
         using var color = new ColorScope(ConsoleColor.Red);
-        Console.WriteLine($"[ERROR] {message}");
+        Console.WriteLine(FormattableString.Invariant($"[{DateTime.Now:HH:mm:ss.fff}][ERROR] {message}"));
     }
 
     public static void Error(Exception exception, string message)
     {
         using var color = new ColorScope(ConsoleColor.DarkMagenta);
-        Console.WriteLine($"[EXCEPTION] {message}\n{exception}");
+        Console.WriteLine(FormattableString.Invariant($"[{DateTime.Now:HH:mm:ss.fff}][EXCEPTION] {message}\n{exception}"));
     }
 
     ref struct ColorScope
