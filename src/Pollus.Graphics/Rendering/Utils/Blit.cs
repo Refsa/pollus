@@ -189,7 +189,7 @@ public class Blit
 
     GPUBindGroup GetBindGroup(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView source)
     {
-        var bindGroupHash = source.Descriptor.GetHashCode();
+        var bindGroupHash = source.Native.GetHashCode();
         if (bindGroups.TryGetValue(bindGroupHash, out var bindGroupHandle)) return renderAssets.Get(bindGroupHandle);
 
         CreateSharedResources(gpuContext, renderAssets);

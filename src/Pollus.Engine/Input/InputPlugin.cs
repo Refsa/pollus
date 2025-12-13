@@ -34,63 +34,66 @@ public class InputPlugin : IPlugin
         world.Resources.Add(new CurrentDevice<Keyboard>());
 
         world.Schedule.AddSystems(CoreStage.PostInit, FnSystem.Create(PostInitSystem,
-        (InputManager input, CurrentDevice<Mouse> currentMouse, CurrentDevice<Gamepad> currentGamepad, CurrentDevice<Keyboard> currentKeyboard) =>
-        {
-            foreach (var device in input.Devices)
+            (InputManager input, CurrentDevice<Mouse> currentMouse, CurrentDevice<Gamepad> currentGamepad, CurrentDevice<Keyboard> currentKeyboard) =>
             {
-                if (device is Mouse mouse) currentMouse.Value = mouse;
-                else if (device is Gamepad gamepad) currentGamepad.Value = gamepad;
-                else if (device is Keyboard keyboard) currentKeyboard.Value = keyboard;
-            }
-        }));
+                foreach (var device in input.Devices)
+                {
+                    if (device is Mouse mouse) currentMouse.Value = mouse;
+                    else if (device is Gamepad gamepad) currentGamepad.Value = gamepad;
+                    else if (device is Keyboard keyboard) currentKeyboard.Value = keyboard;
+                }
+            }));
 
-        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,
-        (InputManager input, PlatformEvents platform, Events events,
-         ButtonInput<MouseButton> mButtons, AxisInput<MouseAxis> mAxes,
-         ButtonInput<GamepadButton> gButtons, AxisInput<GamepadAxis> gAxes,
-         ButtonInput<Key> kButtons
-        ) =>
-        {
-            input.Update(platform, events);
-
-            foreach (var device in input.Devices)
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(new(UpdateSystem)
             {
-                if (device is Mouse mouse)
+                RunsAfter = [PlatformEventsPlugin.PollEventsSystem],
+            },
+            (InputManager input, PlatformEvents platform, Events events,
+                ButtonInput<MouseButton> mButtons, AxisInput<MouseAxis> mAxes,
+                ButtonInput<GamepadButton> gButtons, AxisInput<GamepadAxis> gAxes,
+                ButtonInput<Key> kButtons
+            ) =>
+            {
+                input.Update(platform, events);
+
+                foreach (var device in input.Devices)
                 {
-                    mButtons.AddDevice(device.Id, mouse);
-                    mAxes.AddDevice(device.Id, mouse);
+                    if (device is Mouse mouse)
+                    {
+                        mButtons.AddDevice(device.Id, mouse);
+                        mAxes.AddDevice(device.Id, mouse);
+                    }
+                    else if (device is Gamepad gamepad)
+                    {
+                        gButtons.AddDevice(device.Id, gamepad);
+                        gAxes.AddDevice(device.Id, gamepad);
+                    }
+                    else if (device is Keyboard keyboard)
+                    {
+                        kButtons.AddDevice(device.Id, keyboard);
+                    }
                 }
-                else if (device is Gamepad gamepad)
-                {
-                    gButtons.AddDevice(device.Id, gamepad);
-                    gAxes.AddDevice(device.Id, gamepad);
-                }
-                else if (device is Keyboard keyboard)
-                {
-                    kButtons.AddDevice(device.Id, keyboard);
-                }
-            }
-        }));
+            }));
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateCurrentDeviceSystem,
-        (InputManager input, CurrentDevice<Mouse> currentMouse, CurrentDevice<Gamepad> currentGamepad, CurrentDevice<Keyboard> currentKeyboard) =>
-        {
-            foreach (var device in input.Devices)
+            (InputManager input, CurrentDevice<Mouse> currentMouse, CurrentDevice<Gamepad> currentGamepad, CurrentDevice<Keyboard> currentKeyboard) =>
             {
-                if (device is Mouse mouse)
+                foreach (var device in input.Devices)
                 {
-                    if (mouse.IsActive) currentMouse.Value = mouse;
+                    if (device is Mouse mouse)
+                    {
+                        if (mouse.IsActive) currentMouse.Value = mouse;
+                    }
+                    else if (device is Gamepad gamepad)
+                    {
+                        if (gamepad.IsActive) currentGamepad.Value = gamepad;
+                    }
+                    else if (device is Keyboard keyboard)
+                    {
+                        if (keyboard.IsActive) currentKeyboard.Value = keyboard;
+                    }
                 }
-                else if (device is Gamepad gamepad)
-                {
-                    if (gamepad.IsActive) currentGamepad.Value = gamepad;
-                }
-                else if (device is Keyboard keyboard)
-                {
-                    if (keyboard.IsActive) currentKeyboard.Value = keyboard;
-                }
-            }
-        }));
+            }));
     }
 
     [Conditional("BROWSER")]

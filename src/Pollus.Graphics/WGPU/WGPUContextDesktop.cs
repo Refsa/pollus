@@ -114,17 +114,20 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             }
         }
 
+        var formats = new Span<Silk.NET.WebGPU.TextureFormat>(surfaceCapabilities.Formats, (int)surfaceCapabilities.FormatCount);
+        var targetFormat = formats[0];
+
         surfaceConfiguration = new(
             device: device,
-            format: surfaceCapabilities.Formats[0],
+            format: targetFormat,
             alphaMode: surfaceCapabilities.AlphaModes[0],
             usage: Silk.NET.WebGPU.TextureUsage.RenderAttachment,
             presentMode: Silk.NET.WebGPU.PresentMode.Immediate,
-            width: (uint)Window.Size.X,
-            height: (uint)Window.Size.Y
+            width: Window.Size.X,
+            height: Window.Size.Y
         );
 
-        wgpu.SurfaceConfigure(surface, ref surfaceConfiguration);
+        wgpu.SurfaceConfigure(surface, in surfaceConfiguration);
     }
 
     struct CreateAdapterData
@@ -141,7 +144,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         };
 
         var userData = new CreateAdapterData();
-        wgpu.InstanceRequestAdapter(instance.Instance.As<Silk.NET.WebGPU.Instance>(), ref requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
+        wgpu.InstanceRequestAdapter(instance.Instance.As<Silk.NET.WebGPU.Instance>(), in requestAdapterOptions, new Silk.NET.WebGPU.PfnRequestAdapterCallback(HandleRequestAdapterCallback), Unsafe.AsPointer(ref userData));
         adapter = userData.Adapter;
     }
 

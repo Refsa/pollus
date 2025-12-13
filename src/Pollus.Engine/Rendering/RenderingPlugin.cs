@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Engine.Window;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
@@ -15,6 +16,7 @@ public class RenderingPlugin : IPlugin
     public const string BeginFrameSystem = "Rendering::BeginFrame";
     public const string EndFrameSystem = "Rendering::EndFrame";
     public const string RenderStepsCleanupSystem = "Rendering::RenderStepsCleanup";
+    public const string WindowResizedSystem = "Rendering::WindowResized";
 
     public void Apply(World world)
     {
@@ -74,18 +76,12 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
-            static (RenderContext context) =>
-            {
-                context.PrepareFrame();
-            }
+            static (RenderContext context) => { context.PrepareFrame(); }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
             EndFrameSystem,
-            static (RenderContext context) =>
-            {
-                context.EndFrame();
-            }
+            static (RenderContext context) => { context.EndFrame(); }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
@@ -100,5 +96,18 @@ public class RenderingPlugin : IPlugin
                 renderSteps.Cleanup();
             }
         ));
+
+        world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(new(WindowResizedSystem)
+            {
+                RunsAfter = [RenderStepsCleanupSystem],
+            },
+            static (EventReader<WindowEvent.Resized> eWindowResized, IWGPUContext gpuContext) =>
+            {
+                if (eWindowResized.HasAny)
+                {
+                    var events = eWindowResized.Read();
+                    gpuContext.ResizeSurface(events[^1].Size);
+                }
+            }));
     }
 }

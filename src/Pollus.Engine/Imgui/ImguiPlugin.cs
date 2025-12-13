@@ -39,7 +39,10 @@ public class ImguiPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(
-            UpdateSystem,
+            new(UpdateSystem)
+            {
+                RunsAfter = [PlatformEventsPlugin.PollEventsSystem],
+            },
             static (
                 PlatformEvents platformEvents,
                 EventReader<ButtonEvent<Key>> eKeys,
