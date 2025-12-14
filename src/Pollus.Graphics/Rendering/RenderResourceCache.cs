@@ -62,6 +62,39 @@ public class RenderResourceCache
 
     public bool Has(ResourceHandle handle) => lookup.ContainsKey(handle);
 
+    public void Cleanup()
+    {
+        foreach (scoped ref var texture in textures.AsSpan())
+        {
+            texture.Resource?.Dispose();
+        }
+        foreach (scoped ref var buffer in buffers.AsSpan())
+        {
+            buffer.Resource?.Dispose();
+        }
+        textures.Clear();
+        buffers.Clear();
+        lookup.Clear();
+    }
+
+    public void ReleaseTexture(ResourceHandle handle)
+    {
+        if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
+
+        textures[meta.Index].Resource?.Dispose();
+        textures.RemoveAt(meta.Index);
+        lookup.Remove(handle);
+    }
+
+    public void ReleaseBuffer(ResourceHandle handle)
+    {
+        if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
+
+        buffers[meta.Index].Resource?.Dispose();
+        buffers.RemoveAt(meta.Index);
+        lookup.Remove(handle);
+    }
+
     public ResourceHandle SetTexture(ResourceHandle handle, TextureGPUResource resource)
     {
         if (lookup.TryGetValue(handle, out var meta))
@@ -70,8 +103,8 @@ public class RenderResourceCache
         }
         else
         {
-            textures.Add(resource);
             resource.Handle = handle;
+            textures.Add(resource);
 
             lookup[handle] = new()
             {

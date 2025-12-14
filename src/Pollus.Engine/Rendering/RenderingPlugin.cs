@@ -89,23 +89,29 @@ public class RenderingPlugin : IPlugin
             {
                 RunsAfter = [EndFrameSystem],
             },
-            static (RenderContext context, DrawGroups2D renderSteps, FrameGraph2D frameGraph) =>
+            static (RenderContext context, DrawGroups2D renderSteps) =>
             {
                 context.CleanupFrame();
-                frameGraph.Cleanup();
                 renderSteps.Cleanup();
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(new(WindowResizedSystem)
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new(WindowResizedSystem)
             {
                 RunsAfter = [RenderStepsCleanupSystem],
             },
-            static (EventReader<WindowEvent.Resized> eWindowResized, IWGPUContext gpuContext) =>
+            static (EventReader<WindowEvent.Resized> eWindowResized, RenderContext renderContext, RenderAssets renderAssets, IWGPUContext gpuContext) =>
             {
                 if (eWindowResized.HasAny)
                 {
                     var events = eWindowResized.Read();
+
+                    renderContext.Resources.Cleanup();
+                    if (renderAssets.TryGet(Blit.Handle, out Blit blit))
+                    {
+                        blit.CleanupBindGroups(renderAssets);
+                    }
+
                     gpuContext.ResizeSurface(events[^1].Size);
                 }
             }));

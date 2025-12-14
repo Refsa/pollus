@@ -12,7 +12,7 @@ public class RenderContext
     readonly RenderResourceCache resources = new();
 
     GPUSurfaceTexture? surfaceTexture;
-    public GPUTextureView? SurfaceTextureView;
+    public GPUTextureView? SurfaceTextureView => surfaceTexture?.TextureView;
 
     public required IWGPUContext GPUContext { get; init; }
     public RenderResourceCache Resources => resources;
@@ -20,17 +20,16 @@ public class RenderContext
 
     public bool PrepareFrame()
     {
-        var surfaceTexture = GPUContext.CreateSurfaceTexture();
-        if (!surfaceTexture.Prepare())
+        var nextSurfaceTexture = GPUContext.CreateSurfaceTexture();
+        if (!nextSurfaceTexture.Prepare())
         {
             Log.Error("Failed to prepare surface texture");
-            surfaceTexture.Dispose();
+            nextSurfaceTexture.Dispose();
             SkipFrame = true;
             return false;
         }
 
-        this.surfaceTexture = surfaceTexture;
-        SurfaceTextureView = surfaceTexture.TextureView;
+        surfaceTexture = nextSurfaceTexture;
         return true;
     }
 
@@ -76,7 +75,6 @@ public class RenderContext
         commandEncoders.Clear();
         commandBuffers.Clear();
         surfaceTexture = null;
-        SurfaceTextureView = null;
     }
 
     unsafe public void EndFrame()

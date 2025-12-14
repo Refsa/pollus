@@ -59,7 +59,6 @@ public class Blit
     Dictionary<int, Handle<GPUBindGroup>> bindGroups = new();
     Dictionary<int, Handle<GPURenderPipeline>> pipelines = new();
 
-
     [MemberNotNull(nameof(samplerHandle), nameof(bindGroupLayoutHandle), nameof(blitShaderModuleHandle), nameof(clearShaderModuleHandle))]
     void CreateSharedResources(IWGPUContext gpuContext, IRenderAssets renderAssets)
     {
@@ -252,5 +251,15 @@ public class Blit
 
         pass.SetPipeline(pipeline);
         pass.Draw(0, 1, 0, 0);
+    }
+
+    public void CleanupBindGroups(IRenderAssets renderAssets)
+    {
+        foreach (var bindGroup in bindGroups)
+        {
+            renderAssets.Unload(bindGroup.Value);
+        }
+
+        bindGroups.Clear();
     }
 }

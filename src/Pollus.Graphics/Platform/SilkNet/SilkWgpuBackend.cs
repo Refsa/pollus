@@ -19,14 +19,14 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<InstanceTag> CreateInstance()
     {
         var desc = new Silk.NET.WebGPU.InstanceDescriptor();
-        var instance = wgpu.CreateInstance(ref desc);
+        var instance = wgpu.CreateInstance(in desc);
         return new NativeHandle<InstanceTag>((nint)instance);
     }
 
     public NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             usage: (Silk.NET.WebGPU.BufferUsage)descriptor.Usage,
             size: descriptor.Size,
             mappedAtCreation: descriptor.MappedAtCreation
@@ -56,7 +56,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<TextureTag> DeviceCreateTexture(in NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, in NativeUtf8 label)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.TextureDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             usage: (Silk.NET.WebGPU.TextureUsage)descriptor.Usage,
             dimension: (Silk.NET.WebGPU.TextureDimension)descriptor.Dimension,
             size: descriptor.Size,
@@ -112,7 +112,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<SamplerTag> DeviceCreateSampler(in NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.SamplerDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             addressModeU: descriptor.AddressModeU,
             addressModeV: descriptor.AddressModeV,
             addressModeW: descriptor.AddressModeW,
@@ -164,7 +164,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         fixed (Silk.NET.WebGPU.BindGroupLayoutEntry* entriesPtr = entriesSpan)
         {
             var native = new Silk.NET.WebGPU.BindGroupLayoutDescriptor(
-                label: (byte*)label.Pointer,
+                label: label.Pointer,
                 entryCount: (uint)entries.Length,
                 entries: entriesPtr
             );
@@ -181,7 +181,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<BindGroupTag> DeviceCreateBindGroup(in NativeHandle<DeviceTag> device, in BindGroupDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.BindGroupDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             layout: descriptor.Layout.Native.As<Silk.NET.WebGPU.BindGroupLayout>()
         );
         if (descriptor.Entries is BindGroupEntry[] bindGroupEntries)
@@ -231,7 +231,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
     public NativeHandle<CommandEncoderTag> DeviceCreateCommandEncoder(in NativeHandle<DeviceTag> device, in NativeUtf8 label)
     {
-        var desc = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: (byte*)label.Pointer);
+        var desc = new Silk.NET.WebGPU.CommandEncoderDescriptor(label: label.Pointer);
         var enc = wgpu.DeviceCreateCommandEncoder(device.As<Silk.NET.WebGPU.Device>(), in desc);
         return new NativeHandle<CommandEncoderTag>((nint)enc);
     }
@@ -243,7 +243,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
     public NativeHandle<CommandBufferTag> CommandEncoderFinish(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
-        var desc = new Silk.NET.WebGPU.CommandBufferDescriptor(label: (byte*)label.Pointer);
+        var desc = new Silk.NET.WebGPU.CommandBufferDescriptor(label: label.Pointer);
         var buffer = wgpu.CommandEncoderFinish(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in desc);
         return new NativeHandle<CommandBufferTag>((nint)buffer);
     }
@@ -264,7 +264,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
     public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(in NativeHandle<DeviceTag> device, ShaderBackend backend, in NativeUtf8 label, in NativeUtf8 code)
     {
-        var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(label: (byte*)label.Pointer);
+        var nativeDescriptor = new Silk.NET.WebGPU.ShaderModuleDescriptor(label: label.Pointer);
         if (backend == ShaderBackend.WGSL)
         {
             var wgsl = new Silk.NET.WebGPU.ShaderModuleWGSLDescriptor(
@@ -287,7 +287,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         var layouts = stackalloc Silk.NET.WebGPU.BindGroupLayout*[descriptor.Layouts.Length];
         for (int i = 0; i < descriptor.Layouts.Length; i++) layouts[i] = descriptor.Layouts[i].Native.As<Silk.NET.WebGPU.BindGroupLayout>();
         var native = new Silk.NET.WebGPU.PipelineLayoutDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             bindGroupLayoutCount: (uint)descriptor.Layouts.Length,
             bindGroupLayouts: layouts
         );
@@ -305,7 +305,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         var entryPoint = descriptor.Compute.EntryPoint;
         using var entry = new NativeUtf8(entryPoint);
         var native = new Silk.NET.WebGPU.ComputePipelineDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             layout: descriptor.Layout == null ? null : descriptor.Layout.Native.As<Silk.NET.WebGPU.PipelineLayout>(),
             compute: new(
                 module: descriptor.Compute.Shader.Native.As<Silk.NET.WebGPU.ShaderModule>(),
@@ -326,7 +326,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<TextureViewTag> TextureCreateView(in NativeHandle<TextureTag> texture, in TextureViewDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Silk.NET.WebGPU.TextureViewDescriptor(
-            label: (byte*)label.Pointer,
+            label: label.Pointer,
             format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
             dimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Dimension,
             baseMipLevel: descriptor.BaseMipLevel,
@@ -347,7 +347,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public NativeHandle<RenderPipelineTag> DeviceCreateRenderPipeline(in NativeHandle<DeviceTag> device, in RenderPipelineDescriptor descriptor, in NativeUtf8 label)
     {
         using var pins = new Pollus.Utils.TemporaryPins();
-        var nativeDescriptor = new Silk.NET.WebGPU.RenderPipelineDescriptor(label: (byte*)label.Pointer);
+        var nativeDescriptor = new Silk.NET.WebGPU.RenderPipelineDescriptor(label: label.Pointer);
         if (descriptor.VertexState is VertexState vertexState)
         {
             pins.Pin(vertexState.EntryPoint);
@@ -594,7 +594,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
     public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
     {
-        var desc = new Silk.NET.WebGPU.ComputePassDescriptor(label: (byte*)label.Pointer);
+        var desc = new Silk.NET.WebGPU.ComputePassDescriptor(label: label.Pointer);
         var enc = wgpu.CommandEncoderBeginComputePass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in desc);
         return new NativeHandle<ComputePassEncoderTag>((nint)enc);
     }

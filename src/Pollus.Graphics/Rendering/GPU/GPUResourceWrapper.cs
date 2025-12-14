@@ -4,7 +4,6 @@ using Pollus.Graphics.WGPU;
 
 public interface IGPUResourceWrapper : IDisposable
 {
-
 }
 
 public abstract class GPUResourceWrapper : IGPUResourceWrapper
@@ -14,7 +13,7 @@ public abstract class GPUResourceWrapper : IGPUResourceWrapper
     bool isDisposed;
     public bool Disposed => isDisposed;
 
-    public GPUResourceWrapper(IWGPUContext context)
+    protected GPUResourceWrapper(IWGPUContext context)
     {
         context.RegisterResource(this);
         this.context = context;

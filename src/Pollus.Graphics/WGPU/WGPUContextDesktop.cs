@@ -6,11 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Debugging;
+using Pollus.Graphics.Platform;
+using Pollus.Graphics.Platform.SilkNetWgpu;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
-using Pollus.Graphics.Platform;
-using Pollus.Graphics.Platform.SilkNetWgpu;
 
 unsafe public class WGPUContextDesktop : IWGPUContext
 {
@@ -194,7 +194,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
         );
 
         var userData = new CreateDeviceData();
-        wgpu.AdapterRequestDevice(adapter, ref deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), Unsafe.AsPointer(ref userData));
+        wgpu.AdapterRequestDevice(adapter, in deviceDescriptor, new Silk.NET.WebGPU.PfnRequestDeviceCallback(HandleRequestDeviceCallback), Unsafe.AsPointer(ref userData));
         device = userData.Device;
 
         var acquiredLimits = new Silk.NET.WebGPU.SupportedLimits();
@@ -247,9 +247,15 @@ unsafe public class WGPUContextDesktop : IWGPUContext
 
     public void ResizeSurface(Vec2<uint> size)
     {
+        if (size.X == 0 || size.Y == 0) return;
+        if (size.X == surfaceConfiguration.Width && size.Y == surfaceConfiguration.Height) return;
+
+        wgpu.SurfaceRelease(surface);
+        surface = Silk.NET.WebGPU.WebGPUSurface.CreateWebGPUSurface(window, wgpu, instance.Instance.As<Silk.NET.WebGPU.Instance>());
+
         surfaceConfiguration.Width = size.X;
         surfaceConfiguration.Height = size.Y;
-        wgpu.SurfaceConfigure(surface, surfaceConfiguration);
+        wgpu.SurfaceConfigure(surface, in surfaceConfiguration);
     }
 
     public bool TryAcquireNextTextureView(in TextureViewDescriptor descriptor, out GPUTextureView textureView, out NativeHandle<TextureTag> textureHandle)

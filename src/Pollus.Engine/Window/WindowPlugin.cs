@@ -5,6 +5,7 @@ using Pollus.ECS;
 using Pollus.Engine.Platform;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
+using Pollus.Debugging;
 
 public static class WindowEvent
 {
@@ -69,7 +70,7 @@ public class WindowPlugin : IPlugin
                     {
                         case Silk.NET.SDL.EventType.Windowevent:
                             var windowEvent = @event.Window;
-                            if (windowEvent.Event is (int)Silk.NET.SDL.WindowEventID.Resized)
+                            if (windowEvent.Event is (int)Silk.NET.SDL.WindowEventID.Resized or (int)Silk.NET.SDL.WindowEventID.SizeChanged)
                             {
                                 window.Size = new((uint)windowEvent.Data1, (uint)windowEvent.Data2);
                                 eWindowResized.Write(new() { Size = window.Size });

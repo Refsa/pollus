@@ -4,7 +4,7 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 
-unsafe public class GPUBindGroup : GPUResourceWrapper
+public class GPUBindGroup : GPUResourceWrapper
 {
     NativeHandle<BindGroupTag> native;
 
@@ -20,5 +20,6 @@ unsafe public class GPUBindGroup : GPUResourceWrapper
     protected override void Free()
     {
         context.Backend.BindGroupRelease(native);
+        native = NativeHandle<BindGroupTag>.Null;
     }
 }

@@ -1,8 +1,7 @@
-using Pollus.Debugging;
-
 namespace Pollus.Engine.Platform;
 
 using Pollus.Collections;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
@@ -10,7 +9,6 @@ using Pollus.Graphics.SDL;
 public class PlatformEvents
 {
     ArrayList<Silk.NET.SDL.Event> events { get; } = new();
-
     public ReadOnlySpan<Silk.NET.SDL.Event> Events => events.AsSpan();
 
     public void ClearEvents()
@@ -41,7 +39,8 @@ public class PlatformEventsPlugin : IPlugin
 
     public void Apply(World world)
     {
-        world.Resources.Add(new PlatformEvents());
+        var platformEvents = new PlatformEvents();
+        world.Resources.Add(platformEvents);
 
         world.Schedule.AddSystems(CoreStage.First,
             FnSystem.Create(PollEventsSystem, static (PlatformEvents events) =>

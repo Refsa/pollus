@@ -1,7 +1,7 @@
 namespace Pollus.Collections;
 
-using System.Collections;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 public class ArrayList<T> : IEnumerable<T>
@@ -10,6 +10,12 @@ public class ArrayList<T> : IEnumerable<T>
     private int count;
 
     public int Count => count;
+
+    public T this[int index]
+    {
+        get => items[index];
+        set => items[index] = value;
+    }
 
     public ArrayList(int capacity = 10)
     {
@@ -55,10 +61,11 @@ public class ArrayList<T> : IEnumerable<T>
         if (items.Length < capacity) Array.Resize(ref items, capacity);
     }
 
-    public T this[int index]
+    public void CopyTo(ArrayList<T> other)
     {
-        get => items[index];
-        set => items[index] = value;
+        other.EnsureCapacity(count);
+        AsSpan().CopyTo(other.items.AsSpan(0, count));
+        other.count = count;
     }
 
     public IEnumerator<T> GetEnumerator()
