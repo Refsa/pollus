@@ -88,7 +88,7 @@ public class FontMaterial : IMaterial
     public static VertexBufferLayout[] VertexLayouts =>
     [
         VertexBufferLayout.Vertex(0, [
-            VertexFormat.Float32x3,
+            VertexFormat.Float32x2,
             VertexFormat.Float32x2,
             VertexFormat.Float32x4,
         ]),

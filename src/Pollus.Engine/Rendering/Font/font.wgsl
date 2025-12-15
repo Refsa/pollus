@@ -1,5 +1,5 @@
 struct VertexInput {
-    @location(0) vertex: vec3f,
+    @location(0) vertex: vec2f,
     @location(1) uv: vec2f,
     @location(2) color: vec4f,
 };
@@ -40,7 +40,7 @@ fn vs_main(
     vs_setup(model_input);
 
     var out: VertexOutput;
-    out.pos = scene_uniform.projection * scene_uniform.view * model * vec4f(input.vertex, 1.0);
+    out.pos = scene_uniform.projection * scene_uniform.view * model * vec4f(input.vertex, 0.0, 1.0);
     out.uv = input.uv;
     out.color = model_input.color;
     return out;

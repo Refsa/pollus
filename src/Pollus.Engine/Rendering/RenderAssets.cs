@@ -14,7 +14,7 @@ public interface IRenderDataLoader
 public class RenderAssets : IRenderAssets, IDisposable
 {
     static volatile int counter;
-    static int NextID => counter++;
+    static int NextID => Interlocked.Increment(ref counter);
 
     readonly Dictionary<int, IRenderDataLoader> loaders = [];
     readonly Dictionary<Handle, object> renderData = [];

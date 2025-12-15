@@ -22,6 +22,8 @@ public class ArrayList<T> : IEnumerable<T>
         items = new T[capacity];
     }
 
+    public Span<T> AsSpan(int start, int count) => items.AsSpan(start, count);
+
     public Span<T> AsSpan(int count) => items.AsSpan(0, count);
 
     public Span<T> AsSpan() => items.AsSpan(0, count);
@@ -54,6 +56,13 @@ public class ArrayList<T> : IEnumerable<T>
         var span = items.AsSpan(index + 1, count - index - 1);
         span.CopyTo(items.AsSpan()[index..]);
         count--;
+    }
+
+    public void AddRange(ReadOnlySpan<T> items)
+    {
+        EnsureCapacity(count + items.Length);
+        items.CopyTo(AsSpan(count, items.Length));
+        count += items.Length;
     }
 
     public void EnsureCapacity(int capacity)

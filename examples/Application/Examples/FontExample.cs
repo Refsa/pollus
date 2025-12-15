@@ -42,7 +42,7 @@ public class FontExample : IExample
                         {
                             Font = spaceMono,
                             Size = 32f,
-                            Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nThe Quick Brown Fox Jumps Over The Lazy Dog",
+                            Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\nThe Quick Brown Fox Jumps Over The Lazy Dog",
                             Color = Color.WHITE,
                         })
                         .Set(Transform2D.Default with

@@ -27,7 +27,7 @@ unsafe public record struct NativeUtf8 : IDisposable
 
     public NativeUtf8(ReadOnlySpan<byte> data)
     {
-        count = data.Length;
+        count = data.Length + 1;
         this.data = new NativeArray<byte>(count);
         data.CopyTo(this.data.AsSpan());
         this.data[^1] = 0;
@@ -72,7 +72,7 @@ unsafe public record struct NativeUtf8 : IDisposable
             if (index >= length) return false;
 
             var b = data[index];
-            if (b == 0) return false;
+            if (b == '\0') return false;
 
             if ((b & 0x80) == 0)
             {
