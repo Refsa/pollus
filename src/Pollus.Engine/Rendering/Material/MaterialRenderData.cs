@@ -73,7 +73,7 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         renderAssets.Add(handle, new MaterialRenderData
         {
             Pipeline = renderAssets.Add(pipeline),
-            BindGroups = bindGroups.Select(e => renderAssets.Add(e)).ToArray(),
+            BindGroups = bindGroups.Select(renderAssets.Add).ToArray(),
         });
 
         foreach (var bindGroupLayout in bindGroupLayouts)

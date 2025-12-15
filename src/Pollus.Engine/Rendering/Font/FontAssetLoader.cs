@@ -84,7 +84,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
         {
             Handle = context.Handle,
             Name = context.FileName,
-            Atlas = texture,
+            Atlas = context.Assets.Add(texture, context.Path + ":atlas.png"),
             AtlasWidth = (uint)atlasWidth,
             AtlasHeight = (uint)atlasHeight,
             Glyphs = glyphs,

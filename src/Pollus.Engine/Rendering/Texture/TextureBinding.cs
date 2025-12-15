@@ -7,6 +7,8 @@ using Pollus.Utils;
 
 public class TextureBinding : IBinding
 {
+    public static TextureBinding Default => new() { Image = Handle<Texture2D>.Null };
+    
     public BindingType Type => BindingType.Texture;
 
     public required Handle<Texture2D> Image { get; set; }

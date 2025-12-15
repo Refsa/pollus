@@ -1,5 +1,6 @@
 namespace Pollus.Debugging;
 
+using Pollus.Graphics.Rendering;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Rendering;
@@ -11,17 +12,25 @@ public class GizmoPlugin : IPlugin
     {
         world.Resources.Add(new Gizmos());
         world.AddPlugins([
+            new FontPlugin(),
             new MaterialPlugin<GizmoFilledMaterial>(),
             new MaterialPlugin<GizmoOutlinedMaterial>(),
         ]);
 
         world.Schedule.AddSystems(CoreStage.PostInit, FnSystem.Create(new("Gizmos::Setup"),
         static (
+            Gizmos gizmos,
+            AssetServer assetServer,
             Assets<ShaderAsset> shaders,
             Assets<GizmoFilledMaterial> filledMaterials,
             Assets<GizmoOutlinedMaterial> outlinedMaterials
         ) =>
         {
+            var fontHandle = assetServer.Load<FontAsset>("builtin/fonts/SmoochSans-Light.ttf");
+            var font = assetServer.GetAssets<FontAsset>().Get(fontHandle);
+            Guard.IsNotNull(font, "GizmoPlugin::Setup: Font not found");
+            gizmos.SetFont(font);
+
             var shader = shaders.Add(new ShaderAsset()
             {
                 Name = "gizmo",

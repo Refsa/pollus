@@ -56,9 +56,7 @@ fn fs_main(
 ) -> FragmentOutput {
     var out: FragmentOutput;
 
-    let uv = input.uv;
-
-    var sample = textureSample(atlas_texture, atlas_texture_sampler, uv).r;
+    var sample = textureSample(atlas_texture, atlas_texture_sampler, input.uv).r;
     out.color = vec4f(1.0, 1.0, 1.0, sample) * input.color;
     
     if (out.color.a == 0.0) {

@@ -79,6 +79,7 @@ public class AssetServer : IDisposable
             Path = path,
             FileName = Path.GetFileNameWithoutExtension(path.Path),
             Handle = Assets.GetHandle<TAsset>(path),
+            AssetServer = this,
         };
 
         AssetIO.LoadPath(path, out var data);

@@ -7,6 +7,8 @@ using Pollus.Utils;
 
 public class SamplerBinding : IBinding
 {
+    public static SamplerBinding Default => new() { Sampler = Handle<SamplerAsset>.Null };
+    
     public BindingType Type => BindingType.Sampler;
 
     public required Handle<SamplerAsset> Sampler { get; set; }

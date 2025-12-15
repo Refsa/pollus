@@ -10,7 +10,7 @@ public class FontAsset
     public required string Name { get; init; }
 
     public Handle<FontMaterial> Material { get; set; } = Handle<FontMaterial>.Null;
-    public required Texture2D Atlas { get; init; }
+    public required Handle<Texture2D> Atlas { get; init; }
     public required uint AtlasWidth { get; init; }
     public required uint AtlasHeight { get; init; }
 

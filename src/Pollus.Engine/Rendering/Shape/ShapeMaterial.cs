@@ -7,19 +7,18 @@ public class ShapeMaterial : IMaterial
 {
     public static string Name => "shape";
 
-    public static readonly VertexFormat[] InstanceFormats = [
-        VertexFormat.Float32x4, // Model
-        VertexFormat.Float32x4, // Model
-        VertexFormat.Float32x4, // Model
-        VertexFormat.Float32x4, // Color
-    ];
-
-    public static VertexBufferLayout[] VertexLayouts => [
+    public static VertexBufferLayout[] VertexLayouts =>
+    [
         VertexBufferLayout.Vertex(0, [
             VertexFormat.Float32x2,
             VertexFormat.Float32x2,
         ]),
-        VertexBufferLayout.Instance(2, InstanceFormats),
+        VertexBufferLayout.Instance(2, [
+            VertexFormat.Float32x4, // Model
+            VertexFormat.Float32x4, // Model
+            VertexFormat.Float32x4, // Model
+            VertexFormat.Float32x4, // Color
+        ]),
     ];
 
     public static RenderPipelineDescriptor PipelineDescriptor => new()
@@ -43,7 +42,8 @@ public class ShapeMaterial : IMaterial
         },
     };
 
-    public IBinding[][] Bindings => [
+    public IBinding[][] Bindings =>
+    [
         [new UniformBinding<SceneUniform>()]
     ];
 

@@ -86,6 +86,9 @@ public class GizmoExample : IExample
 
                 gizmos.DrawCircleFilled(new Vec2f(1100f, 800f), 32f, Color.RED, 16);
                 gizmos.DrawCircle(new Vec2f(1000f, 800f), 32f, Color.RED, 16);
+
+                gizmos.DrawText("This is text drawn by gizmos", new Vec2f(1000f, 600f), Color.WHITE, 12f);
+                gizmos.DrawText("This text is larger", new Vec2f(1000f, 500f), Color.WHITE, 24f);
             }))
             .Build();
         app.Run();

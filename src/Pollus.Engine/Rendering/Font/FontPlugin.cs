@@ -142,7 +142,7 @@ public partial class FontSystemSet
             {
                 ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/font.wgsl"),
                 Sampler = samplers.Add(SamplerDescriptor.Default),
-                Texture = textures.Add(font.Asset.Atlas),
+                Texture = font.Asset.Atlas,
             });
         }
     }

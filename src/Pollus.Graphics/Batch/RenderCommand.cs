@@ -1,7 +1,6 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
-using System.Net.Security;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
@@ -314,7 +313,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetScissorRectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetScissorRectCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetScissorRectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetScissorRectCommand() { }
@@ -333,7 +332,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetBlendConstantCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBlendConstantCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetBlendConstantCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetBlendConstantCommand() { }
@@ -349,7 +348,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetPipelineCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetPipelineCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetPipelineCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetPipelineCommand() { }
@@ -366,7 +365,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetVertexBufferCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetVertexBufferCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetVertexBufferCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetVertexBufferCommand() { }
@@ -386,7 +385,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetIndexBufferCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetIndexBufferCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetIndexBufferCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetIndexBufferCommand() { }
@@ -406,7 +405,7 @@ public struct RenderCommands : IDisposable
 
     public struct SetBindGroupCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<SetBindGroupCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<SetBindGroupCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public SetBindGroupCommand() { }
@@ -426,7 +425,7 @@ public struct RenderCommands : IDisposable
 
     public struct DrawCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<DrawCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public DrawCommand() { }
@@ -445,7 +444,7 @@ public struct RenderCommands : IDisposable
 
     public struct DrawIndexedCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public DrawIndexedCommand() { }
@@ -465,7 +464,7 @@ public struct RenderCommands : IDisposable
 
     public struct DrawIndirectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndirectCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndirectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public DrawIndirectCommand() { }
@@ -483,7 +482,7 @@ public struct RenderCommands : IDisposable
 
     public struct MultiDrawIndirectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<MultiDrawIndirectCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<MultiDrawIndirectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public MultiDrawIndirectCommand() { }
@@ -501,7 +500,7 @@ public struct RenderCommands : IDisposable
 
     public struct DrawIndexedIndirectCommand : IRenderCommand
     {
-        public static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedIndirectCommand>();
+        static readonly int sizeInBytes = Unsafe.SizeOf<DrawIndexedIndirectCommand>();
         public static int SizeInBytes => sizeInBytes;
 
         public DrawIndexedIndirectCommand() { }

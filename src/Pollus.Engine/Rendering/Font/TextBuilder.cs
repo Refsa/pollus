@@ -51,6 +51,8 @@ public partial class TextBuilder
         /// </summary>
         public Index Indices;
 
+        public uint IndexOffset;
+
         [InlineArray(4)]
         public struct Vertex
         {
@@ -180,6 +182,8 @@ public partial class TextBuilder
                 current.Indices[3] = indexOffset + 1;
                 current.Indices[4] = indexOffset + 3;
                 current.Indices[5] = indexOffset + 2;
+
+                current.IndexOffset = indexOffset;
 
                 cursorX += glyph.Advance * scale;
                 indexOffset += 4;

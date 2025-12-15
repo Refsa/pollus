@@ -26,5 +26,10 @@
       <Link>assets/shaders/builtin/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+
+    <Content Include="./**/assets/**/*.ttf">
+      <Link>assets/builtin/fonts/%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

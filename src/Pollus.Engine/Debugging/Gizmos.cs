@@ -8,7 +8,7 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public enum GizmoType : byte
+public enum GizmoType : uint
 {
     None = 0,
     Line,
@@ -17,12 +17,16 @@ public enum GizmoType : byte
     Circle,
     Triangle,
     Grid,
+    Text,
+    Texture,
 }
 
-public enum GizmoMode : byte
+public enum GizmoMode : uint
 {
     Outlined = 0,
     Filled = 1,
+    Textured = 2,
+    Text = 3,
 }
 
 [ShaderType]
@@ -37,18 +41,23 @@ public class Gizmos
 {
     GizmoBuffer drawBuffer = new();
 
+    FontAsset? font;
+
     public bool HasContent => drawBuffer.DrawCount > 0;
+
+    public void SetFont(FontAsset font)
+    {
+        this.font = font;
+    }
 
     public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)
     {
         if (drawBuffer.IsSetup is false)
         {
-            var filledMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoFilledMaterial>(0));
-            var outlinedMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoOutlinedMaterial>(0));
-            drawBuffer.Setup(gpuContext, renderAssets, outlinedMaterial.Pipeline, filledMaterial.Pipeline, filledMaterial.BindGroups[0]);
+            drawBuffer.Setup(gpuContext, renderAssets);
         }
 
-        drawBuffer.PrepareFrame(renderAssets);
+        drawBuffer.PrepareFrame(gpuContext, renderAssets);
     }
 
     public void Dispatch(CommandList commandList)
@@ -63,7 +72,8 @@ public class Gizmos
         var normal = new Vec2f(dir.Y, -dir.X).Normalized();
         var offset = normal * (thickness * 0.5f);
 
-        drawBuffer.AddDraw(stackalloc GizmoVertex[] {
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
             new() { Position = end - offset, UV = new Vec2f(0.0f, 0.0f), Color = color },
             new() { Position = end + offset, UV = new Vec2f(0.0f, 1.0f), Color = color },
             new() { Position = start - offset, UV = new Vec2f(1.0f, 1.0f), Color = color },
@@ -93,13 +103,15 @@ public class Gizmos
             vertices[i * 4 + 2] = new() { Position = p - offset, UV = new Vec2f(1.0f, 1.0f), Color = color };
             vertices[i * 4 + 3] = new() { Position = p + offset, UV = new Vec2f(1.0f, 0.0f), Color = color };
         }
+
         drawBuffer.AddDraw(vertices, GizmoType.LineString, GizmoMode.Filled, z);
     }
 
     public void DrawRect(Vec2f center, Vec2f extents, float rotation, Color color, float z = 0f)
     {
         rotation = rotation.Radians();
-        drawBuffer.AddDraw(stackalloc GizmoVertex[] {
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
             new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
             new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
             new() { Position = center + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
@@ -111,7 +123,8 @@ public class Gizmos
     public void DrawRectFilled(Vec2f center, Vec2f extents, float rotation, Color color, float z = 0f)
     {
         rotation = rotation.Radians();
-        drawBuffer.AddDraw(stackalloc GizmoVertex[] {
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
             new() { Position = center + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
             new() { Position = center + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
             new() { Position = center + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
@@ -128,6 +141,7 @@ public class Gizmos
             float angleNext = MathF.Tau * (i + 1) / resolution;
             vertices[i] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angle), UV = new Vec2f(0.0f, 0.0f), Color = color };
         }
+
         vertices[resolution] = vertices[0];
         drawBuffer.AddDraw(vertices, GizmoType.Circle, GizmoMode.Outlined, z);
     }
@@ -143,12 +157,14 @@ public class Gizmos
             vertices[i * 3 + 1] = new() { Position = center + new Vec2f(radius, 0.0f).Rotate(angleNext), UV = new Vec2f(1.0f, 0.0f), Color = color };
             vertices[i * 3 + 2] = new() { Position = center, UV = new Vec2f(0.5f, 0.5f), Color = color };
         }
+
         drawBuffer.AddDraw(vertices, GizmoType.Circle, GizmoMode.Filled, z);
     }
 
     public void DrawTriangle(Vec2f a, Vec2f b, Vec2f c, Color color, float z = 0f)
     {
-        drawBuffer.AddDraw(stackalloc GizmoVertex[] {
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
             new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
             new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
             new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
@@ -157,7 +173,8 @@ public class Gizmos
 
     public void DrawTriangleFilled(Vec2f a, Vec2f b, Vec2f c, Color color, float z = 0f)
     {
-        drawBuffer.AddDraw(stackalloc GizmoVertex[] {
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
             new() { Position = a, UV = new Vec2f(0.0f, 0.0f), Color = color },
             new() { Position = b, UV = new Vec2f(1.0f, 0.0f), Color = color },
             new() { Position = c, UV = new Vec2f(0.5f, 1.0f), Color = color },
@@ -185,9 +202,32 @@ public class Gizmos
         {
             DrawLine(new Vec2f(x, min.Y), new Vec2f(x, max.Y), color, 1f, z);
         }
+
         for (float y = MathF.Ceiling(min.Y / cellSize) * cellSize; y < max.Y; y += cellSize)
         {
             DrawLine(new Vec2f(min.X, y), new Vec2f(max.X, y), color, 1f, z);
+        }
+    }
+
+    public void DrawText(ReadOnlySpan<char> text, Vec2f position, Color color, float size = 12f, float z = 0f)
+    {
+        Guard.IsNotNull(font, "Gizmos::DrawText: Font is not set");
+
+        Span<GizmoVertex> vertices = stackalloc GizmoVertex[6];
+        foreach (scoped ref readonly var quad in TextBuilder.BuildMesh(text, font, position, color, size))
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                scoped ref readonly var vertex = ref quad.Vertices[(int)(quad.Indices[i] - quad.IndexOffset)];
+                vertices[i] = new()
+                {
+                    Position = vertex.Position,
+                    UV = vertex.UV,
+                    Color = new Color(vertex.Color.X, vertex.Color.Y, vertex.Color.Z, vertex.Color.W)
+                };
+            }
+
+            drawBuffer.AddDraw(vertices, GizmoType.Text, GizmoMode.Text, z, font.Atlas);
         }
     }
 }
