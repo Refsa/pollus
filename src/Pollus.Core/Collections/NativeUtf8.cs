@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 namespace Pollus.Collections;
 
 using System.Buffers;

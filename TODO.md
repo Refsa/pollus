@@ -73,7 +73,7 @@
 		- [x] Implement as Render Pass
 	- [ ] dunno some custom UI stuff
 - Rendering
-	- [ ] Text/Font
+	- [-] Text/Font
 	- [ ] 2D Pipeline
 		- [x] Sprites
 		- [ ] Animated Sprites
@@ -81,6 +81,7 @@
 		- [-] Post Processing
 		- [x] Polygons/Shapes
 		- [-] 2D Frame Graph Passes
+		- [-] Sorting
 	- [x] Extract rendering data
 	- [x] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph
@@ -123,4 +124,4 @@
 		- [ ] Polygon
 - General
 	- [x] Seeded random
-	- [ ] Tweens
+	- [x] Tweens

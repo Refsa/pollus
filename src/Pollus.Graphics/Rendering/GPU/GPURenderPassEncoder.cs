@@ -4,7 +4,7 @@ using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Graphics.Platform;
 
-unsafe public readonly struct GPURenderPassEncoder : IDisposable
+public readonly struct GPURenderPassEncoder : IDisposable
 {
     readonly IWGPUContext context;
     readonly NativeHandle<RenderPassEncoderTag> native;
@@ -45,8 +45,7 @@ unsafe public readonly struct GPURenderPassEncoder : IDisposable
     {
         if (dynamicOffsetCount > 0)
         {
-            var dynamicOffsetsSpan = new ReadOnlySpan<uint>(&dynamicOffsets, (int)dynamicOffsetCount);
-            context.Backend.RenderPassEncoderSetBindGroup(native, groupIndex, bindGroup.Native, dynamicOffsetsSpan);
+            throw new NotImplementedException($"Dynamic offsets for BindGroups are not supported yet");
         }
         else
         {

@@ -104,9 +104,9 @@ public class Blit
         }
     }
 
-    GPURenderPipeline GetRenderPipeline(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView dest, in GPUTextureView? msaaResolve = null)
+    GPURenderPipeline GetBlitRenderPipeline(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView dest, in GPUTextureView? msaaResolve = null)
     {
-        var pipelineHash = HashCode.Combine(dest.TextureDescriptor.GetHashCode(), msaaResolve.HasValue ? msaaResolve.Value.TextureDescriptor.GetHashCode() : 0);
+        var pipelineHash = HashCode.Combine(dest.TextureDescriptor.Format, msaaResolve.HasValue ? msaaResolve.Value.TextureDescriptor.SampleCount : 0);
         if (pipelines.TryGetValue(pipelineHash, out var pipelineHandle)) return renderAssets.Get(pipelineHandle);
 
         CreateSharedResources(gpuContext, renderAssets);
@@ -208,7 +208,7 @@ public class Blit
 
     public void BlitTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUCommandEncoder encoder, in GPUTextureView source, in GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null)
     {
-        var pipeline = GetRenderPipeline(gpuContext, renderAssets, dest, msaaResolve);
+        var pipeline = GetBlitRenderPipeline(gpuContext, renderAssets, dest, msaaResolve);
         var bindGroup = GetBindGroup(gpuContext, renderAssets, source);
 
         using var pass = encoder.BeginRenderPass(new()

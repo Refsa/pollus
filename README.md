@@ -31,8 +31,7 @@ Browser is built with `dotnet publish --framework net10.0-browser -c Release` an
 Install the `wasm-tools` and `wasm-experimental` workloads with `dotnet workload install <tool>`
 
 ### Example folder
-The `/examples/` folder in the root directory contains a few different examples for each aspect of the engine.  
-A lot of the contents in `Pollus.Examples.csproj` file is required to build for web and will be templated to be more usable in the future.
+The `/examples/Application` folder in the root directory contains a few different examples for each aspect of the engine.  
 
 ### Minimal example
 ```cs
@@ -49,7 +48,7 @@ Application.Builder
     .AddSystems(CoreStage.Update, FnSystem.Create("UpdateEntities",
     static (Query<Transform2D>.Filter<All<Player>> query, ButtonInput<Key> keys) => 
     {
-        query.ForEach((ref Transform2D transform) =>
+        query.ForEach((ref transform) =>
         {
             if (keys.Pressed(Key.ArrowLeft))
             {
@@ -77,6 +76,7 @@ The aim is to have as few dependencies as possible. This will allow the project 
 - [WebGPU native](https://github.com/emscripten-core/emscripten/blob/3.1.56/system/include/webgpu/webgpu.h) (for browser WebGPU bindings)
 - [Silk.NET.OpenAL](https://github.com/dotnet/Silk.NET) (for native OpenAL bindings)
 - [StbImageSharp](https://github.com/StbSharp/StbImageSharp/) (image assets)
+- [StbTrueTypeSharp](https://github.com/StbSharp/StbTrueTypeSharp) (font loading)
 - [ImGui.NET](https://github.com/ImGuiNET/ImGui.NET) (Dear ImGui bindings)
 - [cimgui/imgui](https://github.com/cimgui/cimgui) (for wasm builds)
 

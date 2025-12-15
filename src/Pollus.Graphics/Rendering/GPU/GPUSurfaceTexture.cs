@@ -36,14 +36,14 @@ unsafe public struct GPUSurfaceTexture : IDisposable
             ArrayLayerCount = 1,
         };
 
+        textureView?.Dispose();
+        if (textureHandle.IsNull is false)
+        {
+            context.Backend.TextureRelease(textureHandle);
+        }
+
         if (context.TryAcquireNextTextureView(descriptor, out var view, out var texture))
         {
-            textureView?.Dispose();
-            if (!textureHandle.IsNull)
-            {
-                context.Backend.TextureRelease(textureHandle);
-            }
-
             textureHandle = texture;
             textureView = view;
             return true;

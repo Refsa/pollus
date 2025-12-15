@@ -77,7 +77,7 @@ public class RenderContext
         surfaceTexture = null;
     }
 
-    unsafe public void EndFrame()
+    public void EndFrame()
     {
         Guard.IsNotNull(surfaceTexture, "SurfaceTexture is null");
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
@@ -102,19 +102,6 @@ public class RenderContext
         var encoder = GPUContext.CreateCommandEncoder(label);
         commandEncoders.Add(encoder);
         return ref commandEncoders.Get(commandEncoders.Count - 1);
-    }
-
-    public ref GPUCommandEncoder GetCommandEncoder(string label)
-    {
-        for (int i = 0; i < commandEncoders.Count; i++)
-        {
-            if (commandEncoders[i].Label == label)
-            {
-                return ref commandEncoders.Get(i);
-            }
-        }
-
-        return ref CreateCommandEncoder(label);
     }
 
     public ref GPUCommandEncoder GetCurrentCommandEncoder()

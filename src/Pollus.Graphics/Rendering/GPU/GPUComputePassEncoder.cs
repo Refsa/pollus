@@ -4,13 +4,13 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 
-unsafe public struct GPUComputePassEncoder : IDisposable
+public readonly struct GPUComputePassEncoder : IDisposable
 {
-    IWGPUContext context;
-    NativeHandle<ComputePassEncoderTag> native;
+    readonly IWGPUContext context;
+    readonly NativeHandle<ComputePassEncoderTag> native;
     public NativeHandle<ComputePassEncoderTag> Native => native;
 
-    public GPUComputePassEncoder(IWGPUContext context, in GPUCommandEncoder commandEncoder, string label)
+    public GPUComputePassEncoder(IWGPUContext context, in GPUCommandEncoder commandEncoder, ReadOnlySpan<char> label)
     {
         this.context = context;
         using var labelPtr = new NativeUtf8(label);

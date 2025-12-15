@@ -4,21 +4,18 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 
-unsafe public readonly struct GPUCommandEncoder : IDisposable
+public readonly struct GPUCommandEncoder : IDisposable
 {
-    readonly string label;
     readonly IWGPUContext context;
     readonly NativeHandle<CommandEncoderTag> native;
 
     public NativeHandle<CommandEncoderTag> Native => native;
-    public string Label => label;
 
-    public GPUCommandEncoder(IWGPUContext context, string label)
+    public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label)
     {
-        this.label = label;
         this.context = context;
-        using var labelData = new NativeUtf8(label);
-        native = context.Backend.DeviceCreateCommandEncoder(context.DeviceHandle, labelData);
+        using var labelPtr = new NativeUtf8(label);
+        native = context.Backend.DeviceCreateCommandEncoder(context.DeviceHandle, labelPtr);
     }
 
     public void Dispose()
@@ -28,17 +25,17 @@ unsafe public readonly struct GPUCommandEncoder : IDisposable
 
     public GPUCommandBuffer Finish(ReadOnlySpan<char> label)
     {
-        using var labelData = new NativeUtf8(label);
-        var buffer = context.Backend.CommandEncoderFinish(native, labelData);
+        using var labelPtr = new NativeUtf8(label);
+        var buffer = context.Backend.CommandEncoderFinish(native, labelPtr);
         return new GPUCommandBuffer(context, buffer);
     }
 
-    public readonly GPURenderPassEncoder BeginRenderPass(in RenderPassDescriptor descriptor)
+    public GPURenderPassEncoder BeginRenderPass(in RenderPassDescriptor descriptor)
     {
         return new GPURenderPassEncoder(context, this, descriptor);
     }
 
-    public GPUComputePassEncoder BeginComputePass(string label)
+    public GPUComputePassEncoder BeginComputePass(ReadOnlySpan<char> label)
     {
         return new GPUComputePassEncoder(context, this, label);
     }
