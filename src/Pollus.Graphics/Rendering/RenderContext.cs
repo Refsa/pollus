@@ -86,7 +86,7 @@ public class RenderContext
             Span<NativeHandle<CommandBufferTag>> commandBufferHandles = stackalloc NativeHandle<CommandBufferTag>[commandEncoders.Count];
             for (int i = 0; i < commandEncoders.Count; i++)
             {
-                var commandBuffer = commandEncoders[i].Finish("");
+                var commandBuffer = commandEncoders.Get(i).Finish("");
                 commandBuffers.Add(commandBuffer);
                 commandBufferHandles[i] = commandBuffer.Native;
             }

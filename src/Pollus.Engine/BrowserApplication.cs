@@ -46,7 +46,7 @@ public partial class BrowserApplication : IApplication, IDisposable
         graphicsContext?.Dispose();
         world.Dispose();
 
-        Log.Info("Application shutdown");
+        Log.Debug("Application shutdown");
     }
 
     public void Shutdown()

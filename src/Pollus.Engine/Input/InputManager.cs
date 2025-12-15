@@ -120,14 +120,14 @@ public class InputManager : IDisposable
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             gamepad.Connect();
-            Log.Info($"Gamepad connected: {gamepad.Id}");
+            Log.Debug($"Gamepad connected: {gamepad.Id}");
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Controllerdeviceremoved)
         {
             var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which);
 
             gamepad?.Disconnect();
-            Log.Info($"Gamepad disconnected: {gamepad?.Id}");
+            Log.Debug($"Gamepad disconnected: {gamepad?.Id}");
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Controlleraxismotion)
         {
@@ -157,7 +157,7 @@ public class InputManager : IDisposable
                 ?? AddDevice(new Gamepad((nint)@event.Cdevice.Which));
 
             gamepad.Connect();
-            Log.Info($"Joydevice connected: {gamepad.Id}");
+            Log.Debug($"Joydevice connected: {gamepad.Id}");
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Joydeviceremoved)
         {
@@ -165,7 +165,7 @@ public class InputManager : IDisposable
 
             var gamepad = FindDeviceByExternalID<Gamepad>((nint)@event.Cdevice.Which);
             gamepad?.Disconnect();
-            Log.Info($"Joydevice disconnected: {gamepad?.Id}");
+            Log.Debug($"Joydevice disconnected: {gamepad?.Id}");
         }
         else if (@event.Type is (int)Silk.NET.SDL.EventType.Joyaxismotion)
         {

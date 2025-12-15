@@ -490,7 +490,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
                     {
                         if (!TryGetImguiBinding(pcmd.TextureId, out var binding) || binding.bindGroup.IsNull())
                         {
-                            Log.Info($"ImGui Texture Bind Group for texture {pcmd.TextureId} not found");
+                            Log.Error($"ImGui Texture Bind Group for texture {pcmd.TextureId} not found");
                             continue;
                         }
                         commands.SetBindGroup(1, binding.bindGroup);

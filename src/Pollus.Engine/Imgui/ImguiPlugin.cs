@@ -121,7 +121,7 @@ public class ImguiPlugin : IPlugin
                 if (context.SurfaceTextureView is null) return;
                 if (!renderSteps.TryGet(RenderStep2D.UI, out var drawGroup))
                 {
-                    Log.Info("RenderStep2D.UI is missing from DrawGroups2D");
+                    Log.Error("RenderStep2D.UI is missing from DrawGroups2D");
                     return;
                 }
 

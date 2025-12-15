@@ -82,7 +82,7 @@ public class DrawGroup<TGroup>
         Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
 
         // TODO: Sort commands by resource usage
-        foreach (var command in drawLists.Commands)
+        foreach (scoped ref readonly var command in drawLists.Commands)
         {
             if (command.Pipeline != pipelineHandle)
             {
@@ -91,7 +91,7 @@ public class DrawGroup<TGroup>
             }
 
             uint idx = 0;
-            foreach (var bindGroup in command.BindGroups)
+            foreach (scoped ref readonly var bindGroup in command.BindGroups)
             {
                 if (bindGroup == Handle<GPUBindGroup>.Null) break;
                 if (bindGroupHandles[(int)idx] != bindGroup)
@@ -104,7 +104,7 @@ public class DrawGroup<TGroup>
             }
 
             idx = 0;
-            foreach (var vertexBuffer in command.VertexBuffers)
+            foreach (scoped ref readonly var vertexBuffer in command.VertexBuffers)
             {
                 if (vertexBuffer == Handle<GPUBuffer>.Null) break;
                 if (vertexBufferHandles[(int)idx] != vertexBuffer)
@@ -132,7 +132,7 @@ public class DrawGroup<TGroup>
             }
         }
 
-        foreach (var command in commandLists.Commands)
+        foreach (scoped ref readonly var command in commandLists.Commands)
         {
             command.Apply(encoder, renderAssets);
         }

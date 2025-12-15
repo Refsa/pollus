@@ -125,7 +125,7 @@ struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
             source.DeviceSource = AudioPools.GetSource();
             if (source.DeviceSource == Handle<Pollus.Audio.AudioSource>.Null)
             {
-                Log.Info("Creating new AudioSource");
+                Log.Debug("Creating new AudioSource");
                 source.DeviceSource = DeviceSources.Add(AudioManager.CreateSource());
             }
         }
@@ -135,7 +135,7 @@ struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
             playback.DeviceBuffer = AudioPools.GetBuffer();
             if (playback.DeviceBuffer == Handle<Pollus.Audio.AudioBuffer>.Null)
             {
-                Log.Info("Creating new AudioBuffer");
+                Log.Debug("Creating new AudioBuffer");
                 playback.DeviceBuffer = DeviceBuffers.Add(AudioManager.CreateBuffer());
             }
         }

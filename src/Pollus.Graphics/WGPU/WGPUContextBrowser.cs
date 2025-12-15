@@ -86,7 +86,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             case SetupState.None:
                 CreateSurface();
-                Log.Info("WGPU: Surface created");
+                Log.Debug("WGPU: Surface created");
                 state = SetupState.RequestingAdapter;
                 CreateAdapter();
                 return;
@@ -96,11 +96,11 @@ unsafe public class WGPUContextBrowser : IWGPUContext
                 return;
             case SetupState.DeviceReady:
                 CreateQueue();
-                Log.Info("WGPU: Queue created");
+                Log.Debug("WGPU: Queue created");
 
                 preferredFormat = TextureFormat.Bgra8Unorm;
                 CreateSwapChain();
-                Log.Info("WGPU: Swap chain created");
+                Log.Debug("WGPU: Swap chain created");
                 state = SetupState.Ready;
                 return;
             case SetupState.Failed:
@@ -161,7 +161,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             var instA = _instance;
             if (instA == null) return;
-            Log.Info("WGPU: Adapter acquired");
+            Log.Debug("WGPU: Adapter acquired");
             instA!.adapter = adapter;
             instA!.state = SetupState.AdapterReady;
         }
@@ -210,7 +210,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         {
             var instD = _instance;
             if (instD == null) return;
-            Log.Info("WGPU: Device acquired");
+            Log.Debug("WGPU: Device acquired");
             instD!.device = device;
             instD!.state = SetupState.DeviceReady;
         }

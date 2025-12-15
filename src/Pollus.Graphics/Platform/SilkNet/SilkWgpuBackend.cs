@@ -70,6 +70,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             if (viewFormat == TextureFormat.Undefined) break;
             viewFormatCount++;
         }
+
         var viewFormats = stackalloc Silk.NET.WebGPU.TextureFormat[viewFormatCount];
         for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = (Silk.NET.WebGPU.TextureFormat)descriptor.ViewFormats[i];
         nativeDescriptor.ViewFormatCount = (nuint)viewFormatCount;
@@ -88,7 +89,8 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         wgpu.TextureRelease(texture.As<Silk.NET.WebGPU.Texture>());
     }
 
-    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
+    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth,
+        uint writeHeight, uint writeDepth)
     {
         var destination = new Silk.NET.WebGPU.ImageCopyTexture(
             texture: texture.As<Silk.NET.WebGPU.Texture>(),
@@ -160,6 +162,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 )
             );
         }
+
         var entriesSpan = entries.AsSpan();
         fixed (Silk.NET.WebGPU.BindGroupLayoutEntry* entriesPtr = entriesSpan)
         {
@@ -201,16 +204,20 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                     silkEntry.Offset = entry.Offset;
                     silkEntry.Size = entry.Size;
                 }
+
                 if (entry.TextureView is GPUTextureView textureView)
                 {
                     silkEntry.TextureView = textureView.Native.As<Silk.NET.WebGPU.TextureView>();
                 }
+
                 if (entry.Sampler is GPUSampler sampler)
                 {
                     silkEntry.Sampler = sampler.Native.As<Silk.NET.WebGPU.Sampler>();
                 }
+
                 entries[i] = silkEntry;
             }
+
             var entriesSpan = entries.AsSpan();
             fixed (Silk.NET.WebGPU.BindGroupEntry* entriesPtr = entriesSpan)
             {
@@ -256,10 +263,9 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     public void QueueSubmit(in NativeHandle<QueueTag> queue, ReadOnlySpan<NativeHandle<CommandBufferTag>> commandBuffers)
     {
         if (commandBuffers.Length == 0) return;
-        var span = commandBuffers;
-        var ptrs = stackalloc Silk.NET.WebGPU.CommandBuffer*[span.Length];
-        for (int i = 0; i < span.Length; i++) ptrs[i] = span[i].As<Silk.NET.WebGPU.CommandBuffer>();
-        wgpu.QueueSubmit(queue.As<Silk.NET.WebGPU.Queue>(), (nuint)span.Length, ptrs);
+        var ptrs = stackalloc Silk.NET.WebGPU.CommandBuffer*[commandBuffers.Length];
+        for (int i = 0; i < commandBuffers.Length; i++) ptrs[i] = commandBuffers[i].As<Silk.NET.WebGPU.CommandBuffer>();
+        wgpu.QueueSubmit(queue.As<Silk.NET.WebGPU.Queue>(), (nuint)commandBuffers.Length, ptrs);
     }
 
     public NativeHandle<ShaderModuleTag> DeviceCreateShaderModule(in NativeHandle<DeviceTag> device, ShaderBackend backend, in NativeUtf8 label, in NativeUtf8 code)
@@ -269,10 +275,11 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         {
             var wgsl = new Silk.NET.WebGPU.ShaderModuleWGSLDescriptor(
                 chain: new Silk.NET.WebGPU.ChainedStruct(sType: Silk.NET.WebGPU.SType.ShaderModuleWgslDescriptor),
-                code: (byte*)code.Pointer
+                code: code.Pointer
             );
             nativeDescriptor.NextInChain = (Silk.NET.WebGPU.ChainedStruct*)&wgsl;
         }
+
         var handle = wgpu.DeviceCreateShaderModule(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<ShaderModuleTag>((nint)handle);
     }
@@ -367,8 +374,10 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                         value: constantEntries[i].Value
                     );
                 }
+
                 nativeDescriptor.Vertex.Constants = (Silk.NET.WebGPU.ConstantEntry*)pins.Pin(constants).AddrOfPinnedObject();
             }
+
             if (vertexState.Layouts is VertexBufferLayout[] vertexBufferLayouts)
             {
                 nativeDescriptor.Vertex.BufferCount = (uint)vertexBufferLayouts.Length;
@@ -383,9 +392,11 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                         attributeCount: (uint)vertexBufferLayout.Attributes.Length
                     );
                 }
+
                 nativeDescriptor.Vertex.Buffers = (Silk.NET.WebGPU.VertexBufferLayout*)pins.Pin(layouts).AddrOfPinnedObject();
             }
         }
+
         if (descriptor.FragmentState is FragmentState fragmentState)
         {
             var fragment = new Silk.NET.WebGPU.FragmentState(
@@ -404,8 +415,10 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                         value: constantEntries[i].Value
                     );
                 }
+
                 fragment.Constants = (Silk.NET.WebGPU.ConstantEntry*)pins.Pin(constants).AddrOfPinnedObject();
             }
+
             if (fragmentState.ColorTargets is ColorTargetState[] colorTargetStates)
             {
                 fragment.TargetCount = (uint)colorTargetStates.Length;
@@ -424,10 +437,13 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                         targets[i].Blend = (Silk.NET.WebGPU.BlendState*)&temp;
                     }
                 }
+
                 fragment.Targets = (Silk.NET.WebGPU.ColorTargetState*)pins.Pin(targets).AddrOfPinnedObject();
             }
+
             nativeDescriptor.Fragment = &fragment;
         }
+
         if (descriptor.DepthStencilState is DepthStencilState depthStencilState)
         {
             var temp = new Silk.NET.WebGPU.DepthStencilState(
@@ -452,6 +468,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             );
             nativeDescriptor.DepthStencil = &temp;
         }
+
         if (descriptor.MultisampleState is MultisampleState multisampleState)
         {
             nativeDescriptor.Multisample = new Silk.NET.WebGPU.MultisampleState(
@@ -460,6 +477,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 alphaToCoverageEnabled: multisampleState.AlphaToCoverageEnabled
             );
         }
+
         if (descriptor.PrimitiveState is PrimitiveState primitiveState)
         {
             nativeDescriptor.Primitive = new Silk.NET.WebGPU.PrimitiveState(
@@ -469,10 +487,12 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 cullMode: (Silk.NET.WebGPU.CullMode)primitiveState.CullMode
             );
         }
+
         if (descriptor.PipelineLayout is GPUPipelineLayout pipelineLayout)
         {
             nativeDescriptor.Layout = pipelineLayout.Native.As<Silk.NET.WebGPU.PipelineLayout>();
         }
+
         var pipeline = wgpu.DeviceCreateRenderPipeline(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
         return new NativeHandle<RenderPipelineTag>((nint)pipeline);
     }
@@ -487,7 +507,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         var colorAttachments = stackalloc Silk.NET.WebGPU.RenderPassColorAttachment[descriptor.ColorAttachments.Length];
         for (int i = 0; i < descriptor.ColorAttachments.Length; i++)
         {
-            var ca = descriptor.ColorAttachments[i];
+            scoped ref readonly var ca = ref descriptor.ColorAttachments[i];
             colorAttachments[i] = new Silk.NET.WebGPU.RenderPassColorAttachment(
                 view: ca.View.As<Silk.NET.WebGPU.TextureView>(),
                 resolveTarget: ca.ResolveTarget.HasValue ? ca.ResolveTarget.Value.As<Silk.NET.WebGPU.TextureView>() : null,

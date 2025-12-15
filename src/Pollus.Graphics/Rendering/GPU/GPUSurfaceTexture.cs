@@ -3,7 +3,7 @@ namespace Pollus.Graphics.Rendering;
 using Pollus.Graphics.Platform;
 using Pollus.Graphics.WGPU;
 
-unsafe public struct GPUSurfaceTexture : IDisposable
+public struct GPUSurfaceTexture : IDisposable
 {
     IWGPUContext context;
 

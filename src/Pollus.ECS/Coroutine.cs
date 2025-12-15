@@ -45,7 +45,7 @@ public class Coroutine<TSystemParam> : SystemBase<Time, TSystemParam, Param<Worl
         }
         catch (Exception e)
         {
-            Log.Error(e, "Failed to execute coroutine");
+            Log.Exception(e, "Failed to execute coroutine");
         }
     }
 }
