@@ -1,6 +1,5 @@
 namespace Pollus.Debugging;
 
-using System.Runtime.InteropServices.Marshalling;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -48,6 +47,11 @@ public class Gizmos
     public void SetFont(FontAsset font)
     {
         this.font = font;
+    }
+
+    public void Cleanup(IRenderAssets renderAssets)
+    {
+        drawBuffer.Cleanup(renderAssets);
     }
 
     public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)

@@ -1,6 +1,5 @@
 namespace Pollus.Debugging;
 
-using Pollus.Collections;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -27,8 +26,15 @@ record struct SortKey : IComparable<SortKey>
 
 record struct GizmoTexture
 {
-    public required GizmoType Type;
-    public required Handle<Texture2D> Texture;
+    public record struct Key
+    {
+        public required GizmoType Type;
+        public required Handle<Texture2D> Texture;
+
+        public int ID => Texture.ID;
+    }
+
+    public required Key TextureKey;
     public Handle<GPUBindGroup>? BindGroup;
 }
 
@@ -36,6 +42,12 @@ class GizmoMaterialData
 {
     public Handle<GPURenderPipeline> PipelineHandle = Handle<GPURenderPipeline>.Null;
     public Handle<GPUBindGroupLayout> BindGroupLayoutHandle = Handle<GPUBindGroupLayout>.Null;
+
+    public void Cleanup(IRenderAssets renderAssets)
+    {
+        if (PipelineHandle != Handle<GPURenderPipeline>.Null) renderAssets.Unload(PipelineHandle);
+        if (BindGroupLayoutHandle != Handle<GPUBindGroupLayout>.Null) renderAssets.Unload(BindGroupLayoutHandle);
+    }
 }
 
 public class GizmoBuffer
@@ -47,7 +59,7 @@ public class GizmoBuffer
     Handle<GPURenderPipeline> filledPipelineHandle = Handle<GPURenderPipeline>.Null;
     Handle<GPUBindGroup> bindGroupHandle = Handle<GPUBindGroup>.Null;
 
-    Dictionary<Handle<Texture2D>, GizmoTexture> textures = new();
+    Dictionary<GizmoTexture.Key, GizmoTexture> textures = new();
     Handle<GPUSampler> samplerHandle = Handle<GPUSampler>.Null;
     GizmoMaterialData fontMaterial = new();
     GizmoMaterialData textureMaterial = new();
@@ -65,47 +77,28 @@ public class GizmoBuffer
     public int DrawCount => drawCount;
     public bool IsSetup => isSetup;
 
-    public void AddVertex(in GizmoVertex vertex)
+    public void Cleanup(IRenderAssets renderAssets)
     {
-        if (vertexCount >= vertices.Length) Array.Resize(ref vertices, vertexCount * 2);
-        vertices[vertexCount++] = vertex;
-    }
+        if (isSetup is false) return;
 
-    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, GizmoMode mode, float sortOrder, Handle<Texture2D>? texture = null)
-    {
-        if (vertexCount + drawVertices.Length > vertices.Length) Array.Resize(ref vertices, vertexCount + drawVertices.Length);
-        drawVertices.CopyTo(vertices.AsSpan(vertexCount, drawVertices.Length));
-        vertexCount += drawVertices.Length;
-
-        if (drawCount >= draws.Length)
+        foreach (var texture in textures.Values)
         {
-            Array.Resize(ref draws, drawCount * 2);
-            Array.Resize(ref drawOrder, drawCount * 2);
+            if (texture.BindGroup.HasValue) renderAssets.Unload(texture.BindGroup.Value);
         }
 
-        var index = drawCount++;
+        textures.Clear();
 
-        ref var drawTarget = ref draws[index];
-        drawTarget.FirstInstance = 0;
-        drawTarget.InstanceCount = 1;
-        drawTarget.FirstVertex = (uint)(vertexCount - drawVertices.Length);
-        drawTarget.VertexCount = (uint)drawVertices.Length;
+        if (samplerHandle != Handle<GPUSampler>.Null) renderAssets.Unload(samplerHandle);
+        if (bindGroupHandle != Handle<GPUBindGroup>.Null) renderAssets.Unload(bindGroupHandle);
+        if (drawBufferHandle != Handle<GPUBuffer>.Null) renderAssets.Unload(drawBufferHandle);
+        if (vertexBufferHandle != Handle<GPUBuffer>.Null) renderAssets.Unload(vertexBufferHandle);
+        if (outlinedPipelineHandle != Handle<GPURenderPipeline>.Null) renderAssets.Unload(outlinedPipelineHandle);
+        if (filledPipelineHandle != Handle<GPURenderPipeline>.Null) renderAssets.Unload(filledPipelineHandle);
 
-        ref var drawOrderTarget = ref drawOrder[index];
-        drawOrderTarget.SortOrder = sortOrder;
-        drawOrderTarget.DrawIndex = (uint)index;
-        drawOrderTarget.Mode = mode;
-        drawOrderTarget.Type = type;
-        drawOrderTarget.Texture = texture;
+        textureMaterial.Cleanup(renderAssets);
+        fontMaterial.Cleanup(renderAssets);
 
-        if (texture.HasValue)
-        {
-            textures.TryAdd(texture.Value, new GizmoTexture
-            {
-                Texture = texture.Value,
-                Type = type,
-            });
-        }
+        isSetup = false;
     }
 
     public void Setup(IWGPUContext gpuContext, RenderAssets renderAssets)
@@ -202,6 +195,46 @@ public class GizmoBuffer
         };
     }
 
+    public void AddVertex(in GizmoVertex vertex)
+    {
+        if (vertexCount >= vertices.Length) Array.Resize(ref vertices, vertexCount * 2);
+        vertices[vertexCount++] = vertex;
+    }
+
+    public void AddDraw(in ReadOnlySpan<GizmoVertex> drawVertices, GizmoType type, GizmoMode mode, float sortOrder, Handle<Texture2D>? texture = null)
+    {
+        if (vertexCount + drawVertices.Length > vertices.Length) Array.Resize(ref vertices, vertexCount + drawVertices.Length);
+        drawVertices.CopyTo(vertices.AsSpan(vertexCount, drawVertices.Length));
+        vertexCount += drawVertices.Length;
+
+        if (drawCount >= draws.Length)
+        {
+            Array.Resize(ref draws, drawCount * 2);
+            Array.Resize(ref drawOrder, drawCount * 2);
+        }
+
+        var index = drawCount++;
+
+        ref var drawTarget = ref draws[index];
+        drawTarget.FirstInstance = 0;
+        drawTarget.InstanceCount = 1;
+        drawTarget.FirstVertex = (uint)(vertexCount - drawVertices.Length);
+        drawTarget.VertexCount = (uint)drawVertices.Length;
+
+        ref var drawOrderTarget = ref drawOrder[index];
+        drawOrderTarget.SortOrder = sortOrder;
+        drawOrderTarget.DrawIndex = (uint)index;
+        drawOrderTarget.Mode = mode;
+        drawOrderTarget.Type = type;
+        drawOrderTarget.Texture = texture;
+
+        if (texture.HasValue)
+        {
+            var key = new GizmoTexture.Key { Type = type, Texture = texture.Value };
+            textures.TryAdd(key, new GizmoTexture { TextureKey = key });
+        }
+    }
+
     public void PrepareFrame(IWGPUContext gpuContext, RenderAssets renderAssets)
     {
         var drawBuffer = renderAssets.Get(drawBufferHandle);
@@ -218,15 +251,15 @@ public class GizmoBuffer
         var sceneUniformRenderData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<SceneUniform>>(0));
         var sceneUniformBuffer = renderAssets.Get(sceneUniformRenderData.UniformBuffer);
 
-        foreach (var texture in textures)
+        foreach (var texture in textures.Values)
         {
-            if (texture.Value.BindGroup.HasValue) continue;
+            if (texture.BindGroup.HasValue) continue;
 
-            var textureRenderData = renderAssets.Get<TextureRenderData>(texture.Value.Texture);
+            var textureRenderData = renderAssets.Get<TextureRenderData>(texture.TextureKey.Texture);
             var textureView = renderAssets.Get(textureRenderData.View);
             var sampler = renderAssets.Get(samplerHandle);
 
-            var bindGroupLayoutHandle = texture.Value.Type switch
+            var bindGroupLayoutHandle = texture.TextureKey.Type switch
             {
                 GizmoType.Text => fontMaterial.BindGroupLayoutHandle,
                 GizmoType.Texture => textureMaterial.BindGroupLayoutHandle,
@@ -235,7 +268,7 @@ public class GizmoBuffer
 
             var bindGroup = gpuContext.CreateBindGroup(new()
             {
-                Label = $"""gizmo::textureBindGroup_{texture.Value.Texture.ID}""",
+                Label = $"""gizmo::textureBindGroup_{texture.TextureKey.ID}""",
                 Layout = renderAssets.Get(bindGroupLayoutHandle),
                 Entries =
                 [
@@ -244,7 +277,7 @@ public class GizmoBuffer
                     BindGroupEntry.SamplerEntry(2, sampler),
                 ],
             });
-            textures[texture.Value.Texture] = textures[texture.Value.Texture] with
+            textures[texture.TextureKey] = textures[texture.TextureKey] with
             {
                 BindGroup = renderAssets.Add(bindGroup),
             };
@@ -279,7 +312,7 @@ public class GizmoBuffer
             if (sortKey.Texture != prevTexture)
             {
                 if (sortKey is { Mode: GizmoMode.Texture or GizmoMode.Font, Texture: { } textureHandle }
-                    && textures[textureHandle] is { BindGroup: { } texturedBindGroupHandle })
+                    && textures[new() { Type = sortKey.Type, Texture = textureHandle }] is { BindGroup: { } texturedBindGroupHandle })
                 {
                     commands.SetBindGroup(0, texturedBindGroupHandle);
                 }
