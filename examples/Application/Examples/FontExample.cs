@@ -37,18 +37,22 @@ public class FontExample : IExample
 
                     var spaceMono = assetServer.Load<FontAsset>("fonts/SpaceMono-Regular.ttf");
 
-                    world.Spawn(TextDraw.Bundle
-                        .Set(TextDraw.Default with
-                        {
-                            Font = spaceMono,
-                            Size = 32f,
-                            Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\nThe Quick Brown Fox Jumps Over The Lazy Dog",
-                            Color = Color.WHITE,
-                        })
-                        .Set(Transform2D.Default with
-                        {
-                            Position = Vec2f.One * 100f + Vec2f.Up * 100f,
-                        }));
+                    for (int i = 8; i <= 64; i += 4)
+                    {
+                        world.Spawn(TextDraw.Bundle
+                            .Set(TextDraw.Default with
+                            {
+                                Font = spaceMono,
+                                Size = i,
+                                Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz\nThe Quick Brown Fox Jumps Over The Lazy Dog",
+                                Color = Color.WHITE,
+                            })
+                            .Set(Transform2D.Default with
+                            {
+                                Position = Vec2f.Right * 32f + Vec2f.Up * (Math.Pow(i, 1.7f) + 16f),
+                            }));
+                    }
+
 
                     world.Spawn(Entity
                         .With(TextDraw.Default with
@@ -61,7 +65,7 @@ public class FontExample : IExample
                         .With(TextMesh.Default)
                         .With(Transform2D.Default with
                         {
-                            Position = Vec2f.One * 100f,
+                            Position = Vec2f.One * 16f,
                         })
                         .With(new Counter())
                     );

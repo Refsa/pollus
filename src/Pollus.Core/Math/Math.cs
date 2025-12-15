@@ -163,4 +163,24 @@ public static class Math
     {
         return newMin + (value - min) * (newMax - newMin) / (max - min);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Round<T>(this T value)
+        where T : struct, IFloatingPoint<T>
+    {
+        return T.Round(value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Snap<T>(this T value, T step)
+        where T : struct, INumber<T>
+    {
+        var rem = value % step;
+        if (rem < T.Zero) rem += step;
+
+        var down = value - rem;
+        var up = down + step;
+
+        return (value - down) < (up - value) ? down : up;
+    }
 }

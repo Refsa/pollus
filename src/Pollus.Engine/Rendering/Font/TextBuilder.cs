@@ -105,12 +105,12 @@ public partial class TextBuilder
         readonly Vec2f startPos;
         readonly float size;
 
+        GlyphKey glyphKey;
         float cursorX;
         float cursorY;
         uint indexOffset;
         readonly float texWidth;
         readonly float texHeight;
-        readonly uint sizePow;
         readonly float scale;
 
         CharQuad current;
@@ -135,9 +135,10 @@ public partial class TextBuilder
             cursorY = startPos.Y;
             texWidth = font.AtlasWidth;
             texHeight = font.AtlasHeight;
-            sizePow = ((uint)size * 2u).ClosestPowerOfTwo().Clamp(8u, 128u);
-            scale = size / sizePow * 1.5f;
+            var sizePow = ((uint)size).Clamp(8u, 128u).Snap(4u);
+            scale = size / sizePow;
 
+            glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
             current = new CharQuad();
         }
 
@@ -149,20 +150,20 @@ public partial class TextBuilder
                 if (c == '\n')
                 {
                     cursorX = startPos.X;
-                    cursorY -= size;
+                    cursorY -= size + 2f;
                     continue;
                 }
 
-                var glyphKey = new GlyphKey(font.Handle, sizePow, c);
+                glyphKey.Character = c;
                 if (!font.Glyphs.TryGetValue(glyphKey, out var glyph))
                 {
                     continue;
                 }
 
-                float x = cursorX + (glyph.BearingX * scale);
-                float y = cursorY + (glyph.BearingY * scale);
-                float w = glyph.Bounds.Width * scale;
-                float h = glyph.Bounds.Height * scale;
+                float x = float.Round(cursorX + (glyph.BearingX * scale));
+                float y = float.Round(cursorY + (glyph.BearingY * scale));
+                float w = float.Round(glyph.Bounds.Width * scale);
+                float h = float.Round(glyph.Bounds.Height * scale);
 
                 var glyphOrigin = glyph.Bounds.TopLeft();
                 float u0 = glyphOrigin.X / texWidth;

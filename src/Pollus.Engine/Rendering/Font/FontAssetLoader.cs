@@ -31,9 +31,9 @@ public class FontAssetLoader : AssetLoader<FontAsset>
 
         fixed (byte* atlasPtr = atlasData)
         {
-            for (uint glyphSize = 8; glyphSize <= 128; glyphSize *= 2)
+            for (uint glyphSize = 8; glyphSize <= 128; glyphSize += 4)
             {
-                var scale = StbTrueType.stbtt_ScaleForPixelHeight(info, glyphSize);
+                var scale = StbTrueType.stbtt_ScaleForMappingEmToPixels(info, glyphSize);
 
                 for (char c = (char)32; c < 256; c++)
                 {
