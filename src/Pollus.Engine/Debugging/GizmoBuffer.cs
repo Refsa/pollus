@@ -50,6 +50,7 @@ public class GizmoBuffer
     Dictionary<Handle<Texture2D>, GizmoTexture> textures = new();
     Handle<GPUSampler> samplerHandle = Handle<GPUSampler>.Null;
     GizmoMaterialData fontMaterial = new();
+    GizmoMaterialData textureMaterial = new();
 
     int drawCount;
     int vertexCount;
@@ -114,12 +115,13 @@ public class GizmoBuffer
         var filledMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoFilledMaterial>(0));
         var outlinedMaterial = renderAssets.Get<MaterialRenderData>(new Handle<GizmoOutlinedMaterial>(0));
 
-        this.outlinedPipelineHandle = outlinedMaterial.Pipeline;
-        this.filledPipelineHandle = filledMaterial.Pipeline;
-        this.bindGroupHandle = filledMaterial.BindGroups[0];
+        outlinedPipelineHandle = outlinedMaterial.Pipeline;
+        filledPipelineHandle = filledMaterial.Pipeline;
+        bindGroupHandle = filledMaterial.BindGroups[0];
 
         samplerHandle = renderAssets.Add(gpuContext.CreateSampler(SamplerDescriptor.Default));
-        this.SetupFont(gpuContext, renderAssets);
+        SetupFont(gpuContext, renderAssets);
+        SetupTexture(gpuContext, renderAssets);
 
         drawBufferHandle = renderAssets.Add(gpuContext.CreateBuffer(
             BufferDescriptor.Indirect("gizmo::drawBuffer", (uint)drawCount)
@@ -136,7 +138,7 @@ public class GizmoBuffer
     {
         var shaderModule = gpuContext.CreateShaderModule(new()
         {
-            Label = """gizmo-texture-shader""",
+            Label = """gizmo-font-shader""",
             Backend = ShaderBackend.WGSL,
             Content = GizmoShaders.GIZMO_FONT_SHADER,
         });
@@ -144,22 +146,56 @@ public class GizmoBuffer
 
         var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
         {
-            Label = """gizmo::texturedBindGroupLayout""",
-            Entries = GizmoFontMaterial.BindGroupLayoutEntries,
+            Label = """gizmo::fontBindGroupLayout""",
+            Entries = GizmoTextureMaterial.BindGroupLayoutEntries,
         });
         var bindGroupLayoutHandle = renderAssets.Add(bindGroupLayout);
 
         var pipelineLayout = gpuContext.CreatePipelineLayout(new()
         {
-            Label = """gizmo::texturedPipelineLayout""",
+            Label = """gizmo::fontPipelineLayout""",
             Layouts = [bindGroupLayout]
         });
         renderAssets.Add(pipelineLayout);
 
-        var texturedPipeline = gpuContext.CreateRenderPipeline(GizmoFontMaterial.PipelineDescriptor(gpuContext, shaderModule, pipelineLayout));
+        var texturedPipeline = gpuContext.CreateRenderPipeline(GizmoTextureMaterial.PipelineDescriptor(gpuContext, shaderModule, pipelineLayout));
         var pipelineHandle = renderAssets.Add(texturedPipeline);
 
         fontMaterial = new()
+        {
+            PipelineHandle = pipelineHandle,
+            BindGroupLayoutHandle = bindGroupLayoutHandle,
+        };
+    }
+
+    private void SetupTexture(IWGPUContext gpuContext, RenderAssets renderAssets)
+    {
+        var shaderModule = gpuContext.CreateShaderModule(new()
+        {
+            Label = """gizmo-texture-shader""",
+            Backend = ShaderBackend.WGSL,
+            Content = GizmoShaders.GIZMO_TEXTURE_SHADER,
+        });
+        renderAssets.Add(shaderModule);
+
+        var bindGroupLayout = gpuContext.CreateBindGroupLayout(new()
+        {
+            Label = """gizmo::textureBindGroupLayout""",
+            Entries = GizmoTextureMaterial.BindGroupLayoutEntries,
+        });
+        var bindGroupLayoutHandle = renderAssets.Add(bindGroupLayout);
+
+        var pipelineLayout = gpuContext.CreatePipelineLayout(new()
+        {
+            Label = """gizmo::texturePipelineLayout""",
+            Layouts = [bindGroupLayout]
+        });
+        renderAssets.Add(pipelineLayout);
+
+        var texturedPipeline = gpuContext.CreateRenderPipeline(GizmoTextureMaterial.PipelineDescriptor(gpuContext, shaderModule, pipelineLayout));
+        var pipelineHandle = renderAssets.Add(texturedPipeline);
+
+        textureMaterial = new()
         {
             PipelineHandle = pipelineHandle,
             BindGroupLayoutHandle = bindGroupLayoutHandle,
@@ -193,12 +229,13 @@ public class GizmoBuffer
             var bindGroupLayoutHandle = texture.Value.Type switch
             {
                 GizmoType.Text => fontMaterial.BindGroupLayoutHandle,
+                GizmoType.Texture => textureMaterial.BindGroupLayoutHandle,
                 _ => throw new InvalidOperationException("Invalid gizmo type"),
             };
 
             var bindGroup = gpuContext.CreateBindGroup(new()
             {
-                Label = $"""gizmo::fontBindGroup_{texture.Value.Texture.ID}""",
+                Label = $"""gizmo::textureBindGroup_{texture.Value.Texture.ID}""",
                 Layout = renderAssets.Get(bindGroupLayoutHandle),
                 Entries =
                 [
@@ -232,7 +269,8 @@ public class GizmoBuffer
                 {
                     GizmoMode.Filled => filledPipelineHandle,
                     GizmoMode.Outlined => outlinedPipelineHandle,
-                    GizmoMode.Text => fontMaterial.PipelineHandle,
+                    GizmoMode.Font => fontMaterial.PipelineHandle,
+                    GizmoMode.Texture => textureMaterial.PipelineHandle,
                     _ => throw new InvalidOperationException("Invalid gizmo mode"),
                 });
                 prevMode = sortKey.Mode;
@@ -240,7 +278,7 @@ public class GizmoBuffer
 
             if (sortKey.Texture != prevTexture)
             {
-                if (sortKey is { Mode: GizmoMode.Textured or GizmoMode.Text, Texture: { } textureHandle }
+                if (sortKey is { Mode: GizmoMode.Texture or GizmoMode.Font, Texture: { } textureHandle }
                     && textures[textureHandle] is { BindGroup: { } texturedBindGroupHandle })
                 {
                     commands.SetBindGroup(0, texturedBindGroupHandle);

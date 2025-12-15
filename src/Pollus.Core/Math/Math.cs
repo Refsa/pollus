@@ -156,4 +156,11 @@ public static class Math
     {
         return T.Pow(self, exponent);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public static T Remap<T>(this T value, T min, T max, T newMin, T newMax)
+        where T : struct, INumber<T>
+    {
+        return newMin + (value - min) * (newMax - newMin) / (max - min);
+    }
 }

@@ -76,7 +76,15 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
-            static (RenderContext context) => { context.PrepareFrame(); }
+            static (RenderContext context, IWGPUContext gpuContext, AssetServer assetServer, Assets<Texture2D> textures, RenderAssets renderAssets) =>
+            {
+                foreach (var texture in textures.AssetInfos)
+                {
+                    renderAssets.Prepare(gpuContext, assetServer, texture.Handle, false);
+                }
+
+                context.PrepareFrame();
+            }
         ));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(

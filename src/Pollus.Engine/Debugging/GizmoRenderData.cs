@@ -117,7 +117,7 @@ class GizmoOutlinedMaterial : IMaterial
     ];
 }
 
-class GizmoFontMaterial
+class GizmoTextureMaterial
 {
     public static readonly BindGroupLayoutEntry[] BindGroupLayoutEntries =
     [

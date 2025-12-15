@@ -25,8 +25,8 @@ public enum GizmoMode : uint
 {
     Outlined = 0,
     Filled = 1,
-    Textured = 2,
-    Text = 3,
+    Texture = 2,
+    Font = 3,
 }
 
 [ShaderType]
@@ -227,7 +227,20 @@ public class Gizmos
                 };
             }
 
-            drawBuffer.AddDraw(vertices, GizmoType.Text, GizmoMode.Text, z, font.Atlas);
+            drawBuffer.AddDraw(vertices, GizmoType.Text, GizmoMode.Font, z, font.Atlas);
         }
+    }
+
+    public void DrawTexture(Handle<Texture2D> texture, Vec2f position, Vec2f size, Color color, float rotation = 0f, float z = 0f)
+    {
+        var extents = size / 2f;
+        drawBuffer.AddDraw(stackalloc GizmoVertex[]
+        {
+            new() { Position = position + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+            new() { Position = position + new Vec2f(extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 0.0f), Color = color },
+            new() { Position = position + new Vec2f(extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(1.0f, 1.0f), Color = color },
+            new() { Position = position + new Vec2f(-extents.X, extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 1.0f), Color = color },
+            new() { Position = position + new Vec2f(-extents.X, -extents.Y).Rotate(rotation), UV = new Vec2f(0.0f, 0.0f), Color = color },
+        }, GizmoType.Texture, GizmoMode.Texture, z, texture);
     }
 }
