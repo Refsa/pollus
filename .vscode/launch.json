@@ -17,7 +17,7 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/examples/Desktop/bin/Debug/net10.0/Pollus.Examples.Desktop.dll",
-            "args": ["transform"],
+            "args": ["input"],
             "cwd": "${workspaceFolder}/examples/Desktop/bin/Debug/net10.0",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",

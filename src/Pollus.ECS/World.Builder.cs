@@ -1,11 +1,12 @@
-using Pollus.Debugging;
-
 namespace Pollus.ECS;
+
+using Pollus.Debugging;
 
 public class WorldBuilder
 {
     World world;
     PluginGraph pluginGraph;
+    List<Action> onBuild;
 
     public static WorldBuilder Default => new();
 
@@ -13,6 +14,7 @@ public class WorldBuilder
     {
         world = new World();
         pluginGraph = new();
+        onBuild = [];
     }
 
     public WorldBuilder AddResource<TResource>(TResource resource)
@@ -36,22 +38,16 @@ public class WorldBuilder
         return this;
     }
 
-    public WorldBuilder AddSystems(StageLabel stage, params ISystem[] systems)
-    {
-        world.Schedule.AddSystems(stage, systems);
-        return this;
-    }
-
     public WorldBuilder AddSystems(StageLabel stage, params ISystemBuilder[] builders)
     {
-        world.Schedule.AddSystems(stage, builders);
+        onBuild.Add(() => world.Schedule.AddSystems(stage, builders));
         return this;
     }
 
     public WorldBuilder AddSystemSet<TSystemSet>()
         where TSystemSet : ISystemSet
     {
-        world.Schedule.AddSystemSet<TSystemSet>();
+        onBuild.Add(() => world.Schedule.AddSystemSet<TSystemSet>());
         return this;
     }
 
@@ -86,6 +82,11 @@ public class WorldBuilder
         {
             Log.Info($"Adding plugin {plugin.GetType().Name}");
             world.AddPlugin(plugin);
+        }
+
+        foreach (var action in onBuild)
+        {
+            action();
         }
 
         world.Prepare();

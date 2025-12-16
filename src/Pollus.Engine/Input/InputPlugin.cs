@@ -106,9 +106,10 @@ public class InputPlugin : IPlugin
             }));
     }
 
-    [Conditional("BROWSER")]
     void SetupBrowser()
     {
+        if (OperatingSystem.IsBrowser() is false) return;
+
         var sdlFlags = SDLInitFlags.InitJoystick;
         if (EmscriptenSDL.WasInit(sdlFlags) is false)
         {

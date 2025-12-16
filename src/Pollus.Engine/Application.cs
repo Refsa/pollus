@@ -22,6 +22,11 @@ public class Application
 {
     public static ApplicationBuilder Builder => CreateDefault();
 
+    static Application()
+    {
+        ResourceFetch<IWGPUContext>.Register();
+    }
+
     static ApplicationBuilder CreateDefault()
     {
         var builder = new ApplicationBuilder();
@@ -84,12 +89,6 @@ public class ApplicationBuilder
         where T : struct
     {
         worldBuilder.InitEvent<T>();
-        return this;
-    }
-
-    public ApplicationBuilder AddSystem(StageLabel stage, params ISystem[] systems)
-    {
-        worldBuilder.AddSystems(stage, systems);
         return this;
     }
 

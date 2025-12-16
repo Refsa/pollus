@@ -37,18 +37,20 @@ $fn_system_methods$
                 gen_args += $", T{i}";
 
                 fn_system_methods.AppendLine(@$"
-    public static FnSystem<$gen_args$> Create<$gen_args$>(SystemBuilderDescriptor descriptor, SystemDelegate<$gen_args$> onTick)
+    public static SystemBuilder Create<$gen_args$>(SystemBuilderDescriptor descriptor, SystemDelegate<$gen_args$> onTick)
     {{
-        var system = new FnSystem<$gen_args$>(descriptor, onTick)
+        return new(() => 
         {{
-            RunCriteria = descriptor.RunCriteria
-        }};
-        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
-        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
-        return system;
+            var system = new FnSystem<$gen_args$>(descriptor, onTick)
+            {{
+                RunCriteria = descriptor.RunCriteria
+            }};
+            if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+            foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+            return system;
+        }});
     }}").Replace("$gen_args$", gen_args);
             }
-
 
             context.AddSource("SystemBuilder.gen.cs", TEMPLATE
                 .Replace("$fn_system_methods$", fn_system_methods.ToString())

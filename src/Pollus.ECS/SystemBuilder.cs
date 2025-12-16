@@ -1,10 +1,23 @@
-using Pollus.Debugging;
-
 namespace Pollus.ECS;
 
 public interface ISystemBuilder
 {
     ISystem Build();
+}
+
+public class SystemBuilder : ISystemBuilder
+{
+    Func<ISystem> buildSystem;
+
+    public SystemBuilder(Func<ISystem> buildSystem)
+    {
+        this.buildSystem = buildSystem;
+    }
+
+    public ISystem Build()
+    {
+        return buildSystem();
+    }
 }
 
 public struct SystemBuilderDescriptor

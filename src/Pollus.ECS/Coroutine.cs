@@ -98,27 +98,33 @@ public static class Coroutine
         YieldCustomInstructionHandler<Param<World>>.AddHandler<TData>(handler, dependencies);
     }
 
-    public static Coroutine<TSystemParam> Create<TSystemParam>(
+    public static SystemBuilder Create<TSystemParam>(
         SystemBuilderDescriptor descriptor,
         Coroutine<TSystemParam>.FactoryDelegate routineFactory
     )
         where TSystemParam : ISystemParam
     {
-        var system = new Coroutine<TSystemParam>(descriptor, routineFactory);
-        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
-        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
-        return system;
+        return new(() =>
+        {
+            var system = new Coroutine<TSystemParam>(descriptor, routineFactory);
+            if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+            foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+            return system;
+        });
     }
 
-    public static Coroutine<EmptyParam> Create(
+    public static SystemBuilder Create(
         SystemBuilderDescriptor descriptor,
         Coroutine<EmptyParam>.FactoryDelegate routineFactory
     )
     {
-        var system = new Coroutine<EmptyParam>(descriptor, routineFactory);
-        if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
-        foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
-        return system;
+        return new(() =>
+        {
+            var system = new Coroutine<EmptyParam>(descriptor, routineFactory);
+            if (descriptor.IsExclusive) system.Descriptor.DependsOn<ExclusiveSystemMarker>();
+            foreach (var local in descriptor.Locals) system.Resources.Add(local, local.TypeID);
+            return system;
+        });
     }
 
     public static Yield WaitForEnterState<TState>(TState state)

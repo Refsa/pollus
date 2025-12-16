@@ -23,8 +23,8 @@
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
 - Plugins
-	- [ ] Defer applying plugins
-	- [ ] Plugin dependency graph
+	- [x] Defer applying plugins
+	- [x] Plugin dependency graph
 - ECS
 	- [ ] Proper Testing
 	- [x] Systems

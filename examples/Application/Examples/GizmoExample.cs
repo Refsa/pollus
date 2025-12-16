@@ -27,9 +27,7 @@ public class GizmoExample : IExample
         app = Application.Builder
             .AddResource(new ExampleData())
             .AddPlugins([
-                new AssetPlugin() { RootPath = "assets" },
                 new TimePlugin(),
-                new RenderingPlugin(),
                 new GizmoPlugin(),
                 new PerformanceTrackerPlugin(),
             ])

@@ -7,12 +7,21 @@ using Pollus.Graphics.WGPU;
 
 public class GizmoPlugin : IPlugin
 {
+    static GizmoPlugin()
+    {
+        ResourceFetch<Gizmos>.Register();
+    }
+
+    public PluginDependency[] Dependencies =>
+    [
+        PluginDependency.From<RenderingPlugin>(),
+        PluginDependency.From<FontPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.Resources.Add(new Gizmos());
         world.AddPlugins([
-            new FontPlugin(),
-            new RenderingPlugin(),
             new MaterialPlugin<GizmoFilledMaterial>(),
             new MaterialPlugin<GizmoOutlinedMaterial>(),
         ]);
