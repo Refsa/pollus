@@ -23,9 +23,8 @@ public class ImguiPlugin : IPlugin
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<TimePlugin>(),
-        PluginDependency.From<RenderingPlugin>(),
         PluginDependency.From<InputPlugin>(),
-        PluginDependency.From<PlatformEventsPlugin>(),
+        PluginDependency.From<RenderingPlugin>(),
     ];
 
     public void Apply(World world)
@@ -44,7 +43,7 @@ public class ImguiPlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(
             new(UpdateSystem)
             {
-                RunsAfter = [PlatformEventsPlugin.PollEventsSystem],
+                RunsAfter = [InputPlugin.UpdateSystem],
             },
             static (
                 PlatformEvents platformEvents,
@@ -110,10 +109,10 @@ public class ImguiPlugin : IPlugin
             {
                 RunsAfter = [UpdateSystem],
             },
-            static (ImguiRenderer imguiRenderer, Time time, IWindow window, PlatformEvents platformEvents) =>
+            static (ImguiRenderer imguiRenderer, Time time, IWindow window) =>
             {
                 imguiRenderer.Resized(window.Size);
-                imguiRenderer.Update((float)time.DeltaTime);
+                imguiRenderer.Update(time.DeltaTimeF);
             }
         ));
 

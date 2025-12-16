@@ -14,6 +14,7 @@ public class AssetsTests
             Path = new AssetPath("test.txt"),
             FileName = "test.txt",
             Handle = new Handle<TextAsset>(1),
+            AssetServer = null!,
         };
 
         assetLoader.Load(File.ReadAllBytes("Assets/TestFiles/test.txt"), ref loadContext);
