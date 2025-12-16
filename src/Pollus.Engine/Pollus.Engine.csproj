@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net10.0;net10.0-browser</TargetFrameworks>
@@ -22,12 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="./Rendering/**/*.wgsl">
+    <Content Include="./Rendering/**/*.wgsl" Exclude="**/bin/**;**/obj/**">
       <Link>assets/shaders/builtin/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
 
-    <Content Include="./**/assets/**/*.ttf">
+    <Content Include="./**/assets/**/*.ttf" Exclude="**/bin/**;**/obj/**">
       <Link>assets/builtin/fonts/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -4,7 +4,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="assets\**">
+        <Content Include="assets\**" Exclude="**/bin/**;**/obj/**">
             <Link>assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>

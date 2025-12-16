@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0-browser' ">
-    <Content Include="./native/imgui/cimgui.a" CopyToOutputDirectory="Always">
+    <Content Include="./native/imgui/cimgui.a" CopyToOutputDirectory="Always" Exclude="**/bin/**;**/obj/**">
       <TargetPath>native/imgui/cimgui.a</TargetPath>
     </Content>
   </ItemGroup>

@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="./Assets/TestFiles/**">
+    <Content Include="./Assets/TestFiles/**" Exclude="**/bin/**;**/obj/**">
       <Link>Assets/TestFiles/%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
