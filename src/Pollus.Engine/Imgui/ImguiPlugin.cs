@@ -20,7 +20,8 @@ public class ImguiPlugin : IPlugin
     public const string BeginFrameSystem = "ImGui::BeginFrame";
     private const string RenderSystem = "ImGui::Render";
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<TimePlugin>(),
         PluginDependency.From<RenderingPlugin>(),
         PluginDependency.From<InputPlugin>(),
@@ -117,7 +118,10 @@ public class ImguiPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
-            RenderSystem,
+            new(RenderSystem)
+            {
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+            },
             static (ImguiRenderer imguiRenderer, RenderContext context, DrawGroups2D renderSteps) =>
             {
                 if (context.SurfaceTextureView is null) return;
