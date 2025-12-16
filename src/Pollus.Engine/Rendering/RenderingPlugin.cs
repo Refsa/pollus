@@ -1,14 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Graphics;
 using Pollus.Engine.Window;
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Utils;
 
 public class RenderingPlugin : IPlugin
 {
@@ -17,6 +16,21 @@ public class RenderingPlugin : IPlugin
     public const string EndFrameSystem = "Rendering::EndFrame";
     public const string RenderStepsCleanupSystem = "Rendering::RenderStepsCleanup";
     public const string WindowResizedSystem = "Rendering::WindowResized";
+
+    static RenderingPlugin()
+    {
+        ResourceFetch<IWGPUContext>.Register();
+        ResourceFetch<GraphicsContext>.Register();
+        ResourceFetch<RenderContext>.Register();
+        ResourceFetch<DrawGroups2D>.Register();
+        ResourceFetch<RenderAssets>.Register();
+    }
+
+    public PluginDependency[] Dependencies =>
+    [
+        PluginDependency.From<WindowPlugin>(),
+        PluginDependency.From(() => AssetPlugin.Default),
+    ];
 
     public void Apply(World world)
     {
@@ -33,15 +47,12 @@ public class RenderingPlugin : IPlugin
         assetServer.AddLoader<WgslShaderSourceLoader>();
 
         world.AddPlugins([
-            new MeshPlugin()
-            {
-                SharedPrimitives = PrimitiveType.All,
-            },
             new ImagePlugin(),
             new CameraPlugin(),
+            new FrameGraph2DPlugin(),
+            new MeshPlugin() { SharedPrimitives = PrimitiveType.All },
             new ComputePlugin<ComputeShader>(),
             new SpritePlugin(),
-            new FrameGraph2DPlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2D>>>()
             {
                 Extract = static (in param, ref uniform) =>
@@ -58,7 +69,7 @@ public class RenderingPlugin : IPlugin
                     uniform.Projection = camera.Component0.GetProjection();
                     uniform.View = camera.Component1.ToMat4f();
                 }
-            }
+            },
         ]);
 
         world.Schedule.AddSystems(CoreStage.Init, FnSystem.Create(

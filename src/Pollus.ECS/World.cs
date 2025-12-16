@@ -1,3 +1,5 @@
+using Pollus.Debugging;
+
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
@@ -99,8 +101,12 @@ public class World : IDisposable
     public World AddPlugin<TPlugin>(TPlugin plugin)
         where TPlugin : IPlugin
     {
-        if (registeredPlugins.Contains(typeof(TPlugin))) return this;
-        registeredPlugins.Add(typeof(TPlugin));
+        var pluginType = plugin.GetType();
+        if (!registeredPlugins.Add(pluginType))
+        {
+            Log.Info($"Plugin {pluginType.Name} already added");
+            return this;
+        }
 
         plugin.Apply(this);
         return this;
@@ -109,30 +115,16 @@ public class World : IDisposable
     public World AddPlugin<TPlugin>()
         where TPlugin : IPlugin, new()
     {
-        if (registeredPlugins.Contains(typeof(TPlugin))) return this;
-        registeredPlugins.Add(typeof(TPlugin));
-
-        var plugin = new TPlugin();
-        plugin.Apply(this);
-        return this;
+        return AddPlugin(new TPlugin());
     }
 
     public World AddPlugins(params IPlugin[] plugins)
     {
         foreach (var plugin in plugins)
         {
-            foreach (var (type, factory) in plugin.Dependencies)
-            {
-                if (registeredPlugins.Contains(type)) continue;
-                registeredPlugins.Add(type);
-                factory().Apply(this);
-            }
-
-            if (registeredPlugins.Contains(plugin.GetType())) continue;
-            registeredPlugins.Add(plugin.GetType());
-
-            plugin.Apply(this);
+            AddPlugin(plugin);
         }
+
         return this;
     }
 

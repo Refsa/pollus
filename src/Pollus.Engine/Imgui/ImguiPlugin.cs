@@ -21,8 +21,8 @@ public class ImguiPlugin : IPlugin
     private const string RenderSystem = "ImGui::Render";
 
     public PluginDependency[] Dependencies => [
-        (typeof(RenderingPlugin), () => new RenderingPlugin()),
-        (typeof(InputPlugin), () => new InputPlugin()),
+        PluginDependency.From<RenderingPlugin>(),
+        PluginDependency.From<InputPlugin>(),
     ];
 
     public void Apply(World world)

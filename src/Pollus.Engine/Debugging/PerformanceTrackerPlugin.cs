@@ -1,11 +1,22 @@
 namespace Pollus.Engine.Debug;
 
+using Pollus.Engine.Window;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;
 
 public class PerformanceTrackerPlugin : IPlugin
 {
+    static PerformanceTrackerPlugin()
+    {
+        ResourceFetch<PerformanceMetrics>.Register();
+    }
+
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<TimePlugin>(),
+        PluginDependency.From<WindowPlugin>(),
+    ];
+
     public class PerformanceMetrics
     {
         readonly Queue<float> frameTimes = new();

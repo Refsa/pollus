@@ -32,6 +32,15 @@ public class WindowPlugin : IPlugin
 {
     public const string WindowUpdateSystem = "Window::WindowUpdate";
 
+    static WindowPlugin()
+    {
+        ResourceFetch<IWindow>.Register();
+    }
+
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<PlatformEventsPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.Events.InitEvent<WindowEvent.Resized>();
@@ -40,10 +49,6 @@ public class WindowPlugin : IPlugin
         world.Events.InitEvent<WindowEvent.Minimized>();
         world.Events.InitEvent<WindowEvent.FocusEntered>();
         world.Events.InitEvent<WindowEvent.FocusLeft>();
-
-        world.AddPlugins([
-            new PlatformEventsPlugin(),
-        ]);
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(new(WindowUpdateSystem)
             {

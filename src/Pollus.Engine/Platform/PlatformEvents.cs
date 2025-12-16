@@ -37,6 +37,11 @@ public class PlatformEventsPlugin : IPlugin
 {
     public const string PollEventsSystem = "PlatformEvents::PollEvents";
 
+    static PlatformEventsPlugin()
+    {
+        ResourceFetch<PlatformEvents>.Register();
+    }
+
     public void Apply(World world)
     {
         var platformEvents = new PlatformEvents();

@@ -1,13 +1,8 @@
 namespace Pollus.Engine;
 
-using Pollus.Audio;
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Input;
-using Pollus.Engine.Platform;
-using Pollus.Engine.Window;
 using Pollus.Graphics;
-using Pollus.Graphics.SDL;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 
@@ -27,10 +22,10 @@ public class DesktopApplication : IApplication, IDisposable
     public World World => world;
     public IWindow Window => window;
 
-    public DesktopApplication(Application builder)
+    public DesktopApplication(ApplicationBuilder builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
-        world = builder.World;
+        world = builder.World.Build();
     }
 
     public void Dispose()

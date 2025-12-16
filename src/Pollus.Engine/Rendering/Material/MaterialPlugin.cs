@@ -7,6 +7,8 @@ using Pollus.Graphics.WGPU;
 public class MaterialPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial
 {
+    public static MaterialPlugin<TMaterial> Default => new MaterialPlugin<TMaterial>();
+
     public MaterialPlugin() { }
 
     public void Apply(World world)

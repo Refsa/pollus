@@ -73,14 +73,21 @@ public class TextMeshAsset
 
 public class FontPlugin : IPlugin
 {
+    public PluginDependency[] Dependencies =>
+    [
+        PluginDependency.From(() => AssetPlugin.Default),
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.Resources.Init<FontAsset>();
         world.Resources.Get<AssetServer>().AddLoader<FontAssetLoader>();
-
-        world.AddPlugin(MaterialPlugin<FontMaterial>.Create());
         world.Resources.Get<RenderAssets>().AddLoader<FontMeshRenderDataLoader>();
         world.Resources.Add(new FontBatches());
+
+        world.AddPlugin(MaterialPlugin<FontMaterial>.Default);
+
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractTextDrawSystem(),
             new WriteBatchesSystem<FontBatches, FontBatch>(),

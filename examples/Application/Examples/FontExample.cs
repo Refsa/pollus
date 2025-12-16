@@ -26,8 +26,6 @@ public class FontExample : IExample
     public void Run()
     {
         application = Application.Builder
-            .AddPlugin(new AssetPlugin { RootPath = "assets" })
-            .AddPlugin<RenderingPlugin>()
             .AddPlugin<FontPlugin>()
             .AddPlugin<PerformanceTrackerPlugin>()
             .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
@@ -52,7 +50,6 @@ public class FontExample : IExample
                                 Position = Vec2f.Right * 32f + Vec2f.Up * (Math.Pow(i, 1.7f) + 16f),
                             }));
                     }
-
 
                     world.Spawn(Entity
                         .With(TextDraw.Default with

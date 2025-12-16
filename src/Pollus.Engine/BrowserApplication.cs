@@ -1,13 +1,7 @@
 namespace Pollus.Engine;
 
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.JavaScript;
-using Pollus.Audio;
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Input;
-using Pollus.Engine.Platform;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
@@ -28,10 +22,10 @@ public partial class BrowserApplication : IApplication, IDisposable
     public World World => world;
     public IWindow Window => window;
 
-    public BrowserApplication(Application builder)
+    public BrowserApplication(ApplicationBuilder builder)
     {
         window = Graphics.Windowing.Window.Create(builder.WindowOptions);
-        world = builder.World;
+        world = builder.World.Build();
     }
 
     ~BrowserApplication() => Dispose();

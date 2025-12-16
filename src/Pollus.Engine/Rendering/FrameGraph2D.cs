@@ -92,6 +92,10 @@ public class FrameGraph2DPlugin : IPlugin
     public const string Render = "FrameGraph2D::Render";
     public const string Cleanup = "FrameGraph2D::Cleanup";
 
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.Resources.Add(new FrameGraph2D());

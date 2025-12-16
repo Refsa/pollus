@@ -11,9 +11,18 @@ public class MeshAsset
     public required Mesh Mesh { get; init; }
 }
 
-
 public class MeshPlugin : IPlugin
 {
+    static MeshPlugin()
+    {
+        ResourceFetch<MeshRenderBatches>.Register();
+    }
+
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From(() => AssetPlugin.Default),
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public PrimitiveType SharedPrimitives { get; init; }
 
     public void Apply(World world)

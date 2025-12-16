@@ -1,12 +1,10 @@
 namespace Pollus.Engine;
 
-using System.Runtime.InteropServices;
+using Pollus.Engine.Platform;
+using Pollus.Engine.Window;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 using Pollus.ECS;
-using Pollus.Graphics;
-using Pollus.Engine.Platform;
-using Pollus.Engine.Window;
 
 public interface IApplication
 {
@@ -20,100 +18,104 @@ public interface IApplication
     void Shutdown();
 }
 
-public record class Application
+public class Application
 {
-    public static Application Builder => new();
-    static Application()
-    {
-        ResourceFetch<IWGPUContext>.Register();
-        ResourceFetch<IWindow>.Register();
-        ResourceFetch<GraphicsContext>.Register();
-    }
+    public static ApplicationBuilder Builder => CreateDefault();
 
-    Func<Application, IApplication> application = RuntimeInformation.IsOSPlatform(OSPlatform.Create("BROWSER")) switch
+    static ApplicationBuilder CreateDefault()
     {
-        true => (builder) => new BrowserApplication(builder),
-        false => (builder) => new DesktopApplication(builder)
-    };
-
-    WindowOptions windowOptions = WindowOptions.Default;
-    World world = new World()
-        .AddPlugins([
+        var builder = new ApplicationBuilder();
+        builder.AddPlugins([
             new TimePlugin(),
             new PlatformEventsPlugin(),
             new WindowPlugin(),
         ]);
+        return builder;
+    }
+}
 
-    public World World => world;
+public class ApplicationBuilder
+{
+    WorldBuilder worldBuilder = new();
+    WindowOptions windowOptions = WindowOptions.Default;
+
+    public WorldBuilder World => worldBuilder;
     public WindowOptions WindowOptions => windowOptions;
 
-    public Application WithWindowOptions(WindowOptions options)
+    public ApplicationBuilder WithWindowOptions(WindowOptions options)
     {
         windowOptions = options;
         return this;
     }
 
-    public Application AddPlugin<TPlugin>() where TPlugin : IPlugin, new()
+    public ApplicationBuilder AddPlugin<TPlugin>() where TPlugin : IPlugin, new()
     {
-        world.AddPlugin<TPlugin>();
+        worldBuilder.AddPlugin<TPlugin>();
         return this;
     }
 
-    public Application AddPlugin<TPlugin>(TPlugin plugin) where TPlugin : IPlugin
+    public ApplicationBuilder AddPlugin<TPlugin>(TPlugin plugin) where TPlugin : IPlugin
     {
-        world.AddPlugin(plugin);
+        worldBuilder.AddPlugin(plugin);
         return this;
     }
 
-    public Application AddPlugins(IPlugin[] plugin)
+    public ApplicationBuilder AddPlugins(IPlugin[] plugin)
     {
-        world.AddPlugins(plugin);
+        worldBuilder.AddPlugins(plugin);
         return this;
     }
 
-    public Application AddResource<T>(T resource)
+    public ApplicationBuilder AddResource<T>(T resource)
         where T : notnull
     {
-        world.Resources.Add(resource);
+        worldBuilder.AddResource(resource);
         return this;
     }
 
-    public Application InitResource<T>()
+    public ApplicationBuilder InitResource<T>()
         where T : notnull
     {
-        world.Resources.Init<T>();
+        worldBuilder.InitResource<T>();
         return this;
     }
 
-    public Application InitEvent<T>()
+    public ApplicationBuilder InitEvent<T>()
         where T : struct
     {
-        world.Events.InitEvent<T>();
+        worldBuilder.InitEvent<T>();
         return this;
     }
 
-    public Application AddSystem(StageLabel stage, params ISystem[] systems)
+    public ApplicationBuilder AddSystem(StageLabel stage, params ISystem[] systems)
     {
-        world.Schedule.AddSystems(stage, systems);
+        worldBuilder.AddSystems(stage, systems);
         return this;
     }
 
-    public Application AddSystem(StageLabel stage, params ISystemBuilder[] builders)
+    public ApplicationBuilder AddSystem(StageLabel stage, params ISystemBuilder[] builders)
     {
-        world.Schedule.AddSystems(stage, builders);
+        worldBuilder.AddSystems(stage, builders);
         return this;
     }
 
-    public Application AddSystemSet<TSystemSet>()
+    public ApplicationBuilder AddSystemSet<TSystemSet>()
         where TSystemSet : ISystemSet, new()
     {
-        TSystemSet.AddToSchedule(world.Schedule);
+        worldBuilder.AddSystemSet<TSystemSet>();
         return this;
     }
 
     public IApplication Build()
     {
-        return application(this);
+        if (OperatingSystem.IsBrowser())
+        {
+            return new BrowserApplication(this);
+        }
+        else
+        {
+            return new DesktopApplication(this);
+        }
     }
 
     public void Run()

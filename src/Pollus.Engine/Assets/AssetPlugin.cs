@@ -3,7 +3,9 @@ namespace Pollus.Engine.Assets;
 using Pollus.ECS;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public sealed class AssetAttribute : Attribute { }
+public sealed class AssetAttribute : Attribute
+{
+}
 
 public class AssetsFetch<T> : IFetch<Assets<T>>
     where T : notnull
@@ -21,6 +23,13 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
 
 public class AssetPlugin : IPlugin
 {
+    static AssetPlugin()
+    {
+        ResourceFetch<AssetServer>.Register();
+    }
+
+    public static AssetPlugin Default => new() { RootPath = "assets" };
+
     public required string RootPath { get; init; }
 
     public void Apply(World world)
