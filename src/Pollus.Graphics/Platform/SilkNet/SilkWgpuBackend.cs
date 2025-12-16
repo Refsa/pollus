@@ -47,7 +47,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
     public void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
     {
-        fixed (byte* p = &data[0])
+        fixed (byte* p = data)
         {
             wgpu.QueueWriteBuffer(queue.As<Silk.NET.WebGPU.Queue>(), buffer.As<Silk.NET.WebGPU.Buffer>(), offset, p, (nuint)alignedSize);
         }
