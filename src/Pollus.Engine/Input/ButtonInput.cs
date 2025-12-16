@@ -1,10 +1,16 @@
 namespace Pollus.Engine.Input;
 
+using Pollus.ECS;
 using Pollus.Mathematics;
 
 public class ButtonInput<TButton>
     where TButton : Enum
 {
+    static ButtonInput()
+    {
+        ResourceFetch<ButtonInput<TButton>>.Register();
+    }
+
     Dictionary<Guid, IButtonInputDevice<TButton>> inputs = [];
     Guid primaryDevice = Guid.Empty;
 

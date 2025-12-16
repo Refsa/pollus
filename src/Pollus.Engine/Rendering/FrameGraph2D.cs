@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Engine.Window;
 using System.Runtime.CompilerServices;
 using Pollus.ECS;
 using Pollus.Graphics;
@@ -93,6 +94,7 @@ public class FrameGraph2DPlugin : IPlugin
     public const string Cleanup = "FrameGraph2D::Cleanup";
 
     public PluginDependency[] Dependencies => [
+        PluginDependency.From<WindowPlugin>(),
         PluginDependency.From<RenderingPlugin>(),
     ];
 

@@ -1,10 +1,16 @@
 namespace Pollus.Engine.Input;
 
+using Pollus.ECS;
 using Pollus.Mathematics;
 
 public class AxisInput<TAxis>
     where TAxis : Enum
 {
+    static AxisInput()
+    {
+        ResourceFetch<AxisInput<TAxis>>.Register();
+    }
+
     Dictionary<Guid, IAxisInputDevice<TAxis>> inputs = [];
     Guid primaryDevice = Guid.Empty;
 

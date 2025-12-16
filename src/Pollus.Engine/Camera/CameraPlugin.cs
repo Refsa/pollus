@@ -1,18 +1,20 @@
 namespace Pollus.Engine.Camera;
 
+using Pollus.Engine.Window;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 
-
 public class CameraPlugin : IPlugin
 {
+    public PluginDependency[] Dependencies =>
+    [
+        PluginDependency.From<WindowPlugin>()
+    ];
+
     public void Apply(World world)
     {
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create("Camera::Update", static (IWindow window, Query<Projection> query) =>
-        {
-            query.ForEach(new CameraProjectionUpdateForEach { WindowSize = window.Size });
-        }));
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create("Camera::Update", static (IWindow window, Query<Projection> query) => { query.ForEach(new CameraProjectionUpdateForEach { WindowSize = window.Size }); }));
     }
 }
 

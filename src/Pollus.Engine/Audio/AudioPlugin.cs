@@ -7,7 +7,6 @@ using Pollus.Engine.Assets;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-
 public struct AudioSource : IComponent
 {
     internal Handle<Pollus.Audio.AudioSource> DeviceSource;
@@ -42,7 +41,6 @@ public enum PlaybackMode
     Loop,
 }
 
-
 class AudioPools
 {
     Stack<Handle<Pollus.Audio.AudioSource>> sources = [];
@@ -54,6 +52,7 @@ class AudioPools
         {
             return sources.Pop();
         }
+
         return Handle<Pollus.Audio.AudioSource>.Null;
     }
 
@@ -68,6 +67,7 @@ class AudioPools
         {
             return buffers.Pop();
         }
+
         return Handle<Pollus.Audio.AudioBuffer>.Null;
     }
 
@@ -79,6 +79,11 @@ class AudioPools
 
 public class AudioPlugin : IPlugin
 {
+    public PluginDependency[] Dependencies =>
+    [
+        PluginDependency.From(() => AssetPlugin.Default),
+    ];
+
     public void Apply(World world)
     {
         world.Resources.Add(new AudioManager());

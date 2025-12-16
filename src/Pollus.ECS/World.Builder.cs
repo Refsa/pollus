@@ -84,6 +84,7 @@ public class WorldBuilder
         var plugins = pluginGraph.GetSortedPlugins();
         foreach (var plugin in plugins)
         {
+            Log.Info($"Adding plugin {plugin.GetType().Name}");
             world.AddPlugin(plugin);
         }
 

@@ -26,6 +26,11 @@ public class ComputePlugin<TCompute> : IPlugin
 {
     public const string SetupSystem = $"ComputePlugin<{nameof(TCompute)}>::Setup";
 
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From(() => AssetPlugin.Default),
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.Resources.Get<RenderAssets>().AddLoader(new ComputeRenderDataLoader<TCompute>());

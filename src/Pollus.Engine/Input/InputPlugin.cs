@@ -11,10 +11,18 @@ public class InputPlugin : IPlugin
     public const string UpdateSystem = "Input::Update";
     public const string UpdateCurrentDeviceSystem = "Input::UpdateCurrentDevice";
 
+    static InputPlugin()
+    {
+        ResourceFetch<InputManager>.Register();
+    }
+
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<PlatformEventsPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         SetupBrowser();
-        world.Resources.Add(new InputManager());
 
         world.Events.InitEvent<ButtonEvent<MouseButton>>();
         world.Events.InitEvent<AxisEvent<MouseAxis>>();
@@ -22,6 +30,8 @@ public class InputPlugin : IPlugin
         world.Events.InitEvent<AxisEvent<GamepadAxis>>();
         world.Events.InitEvent<ButtonEvent<Key>>();
         world.Events.InitEvent<MouseMovedEvent>();
+
+        world.Resources.Add(new InputManager());
 
         world.Resources.Add(new ButtonInput<MouseButton>());
         world.Resources.Add(new AxisInput<MouseAxis>());

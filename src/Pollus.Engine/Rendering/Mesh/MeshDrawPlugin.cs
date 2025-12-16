@@ -59,6 +59,10 @@ public class Material : IMaterial
 public class MeshDrawPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial
 {
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.AddPlugin(new MaterialPlugin<TMaterial>());

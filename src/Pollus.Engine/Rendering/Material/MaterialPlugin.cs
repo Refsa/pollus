@@ -9,6 +9,10 @@ public class MaterialPlugin<TMaterial> : IPlugin
 {
     public static MaterialPlugin<TMaterial> Default => new MaterialPlugin<TMaterial>();
 
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public MaterialPlugin() { }
 
     public void Apply(World world)

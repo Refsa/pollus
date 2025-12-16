@@ -13,6 +13,10 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
 {
     public delegate void ExtractDelegate(in TExtractParam param, ref TUniform uniform);
 
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public required ExtractDelegate Extract { get; init; }
 
     public void Apply(World world)

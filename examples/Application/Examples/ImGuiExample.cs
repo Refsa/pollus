@@ -1,10 +1,7 @@
 namespace Pollus.Examples;
 
-using Pollus.Engine.Input;
 using Pollus.Engine;
 using Pollus.Engine.Imgui;
-using Pollus.Engine.Rendering;
-using Pollus.Engine.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Camera;
 
@@ -17,9 +14,6 @@ public class ImGuiExample : IExample
 
     public void Run() => (application = Application.Builder
         .AddPlugins([
-            new AssetPlugin { RootPath = "assets" },
-            new RenderingPlugin(),
-            new InputPlugin(),
             new ImguiPlugin(),
         ])
         .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", (Commands commands) =>

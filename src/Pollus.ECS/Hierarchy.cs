@@ -24,11 +24,14 @@ public record struct Child : IComponent
 
 public class HierarchyPlugin : IPlugin
 {
-    public void Apply(World world)
+    static HierarchyPlugin()
     {
         Component.Register<Parent>();
         Component.Register<Child>();
+    }
 
+    public void Apply(World world)
+    {
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("Hierarchy::Maintenance"),
             static (
                 Commands commands,

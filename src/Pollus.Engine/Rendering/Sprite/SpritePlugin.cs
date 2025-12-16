@@ -5,6 +5,10 @@ using Pollus.Graphics;
 
 public class SpritePlugin : IPlugin
 {
+    public PluginDependency[] Dependencies => [
+        PluginDependency.From<RenderingPlugin>(),
+    ];
+
     public void Apply(World world)
     {
         world.AddPlugins([
