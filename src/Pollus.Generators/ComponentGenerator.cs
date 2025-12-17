@@ -11,27 +11,6 @@ using Microsoft.CodeAnalysis.Text;
 [Generator(LanguageNames.CSharp)]
 public class ComponentGenerator : IIncrementalGenerator
 {
-    class TypeInfo
-    {
-        public string Namespace;
-        public string ClassName;
-        public string FullTypeKind;
-        public string Visibility;
-    }
-
-    class Model
-    {
-        public TypeInfo TypeInfo;
-        public TypeInfo ContainingType;
-        public List<Field> Fields;
-    }
-
-    class Field
-    {
-        public string Name;
-        public string Type;
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pipeline = context.SyntaxProvider.CreateSyntaxProvider(
@@ -58,7 +37,7 @@ public class ComponentGenerator : IIncrementalGenerator
                     return null;
 
                 var fields = new List<Field>();
-                CollectFields(data, fields);
+                Common.CollectFields(data, fields);
 
                 TypeInfo containingType = null;
                 if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
@@ -71,6 +50,7 @@ public class ComponentGenerator : IIncrementalGenerator
                         ClassName = data.ContainingType.Name,
                         FullTypeKind = containingTypeKind,
                         Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
+                        Attributes = data.ContainingType.GetAttributes().Select(a => a.ToString()).ToArray(),
                     };
                 }
 
@@ -95,45 +75,45 @@ public class ComponentGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
+            var reflectImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Reflect.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
+            var tweenImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
+
+            List<string> interfaces = [];
+            if (reflectImpl != null) interfaces.Add($"Pollus.Engine.Reflect.IReflect<{model.TypeInfo.ClassName}>");
+            if (tweenImpl != null) interfaces.Add("Pollus.Engine.Tween.ITweenable");
+
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.ClassName}}>
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}}
+                    : {{string.Join(", ", interfaces)}}
                   {
-                      
+                      {{reflectImpl}}
+                      {{tweenImpl}}
                   } 
                   """;
 
             if (model.ContainingType != null)
             {
-                partialExt = $$"""
-                               {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
-                               {
-                                   {{partialExt}}
-                               }
-                               """;
+                partialExt =
+                    $$"""
+                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
+                      {
+                          {{partialExt}}
+                      }
+                      """;
             }
 
-            var source = SourceText.From($$"""
-                                           namespace {{model.TypeInfo.Namespace}};
-                                           using System.Runtime.CompilerServices;
-                                           using System.Linq.Expressions;
-                                           using System.Reflection;
+            var source = SourceText.From(
+                $$"""
+                  namespace {{model.TypeInfo.Namespace}};
+                  using System.Runtime.CompilerServices;
+                  using System.Linq.Expressions;
+                  using System.Reflection;
 
-                                           {{partialExt}}
-                                           """, Encoding.UTF8);
+                  {{partialExt}}
+                  """, Encoding.UTF8);
 
             context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Component.gen.cs", source);
         });
-    }
-
-    static void CollectFields(ITypeSymbol type, List<Field> fields)
-    {
-        foreach (var member in type.GetMembers())
-        {
-            if (member is IFieldSymbol field && !field.IsStatic && !field.IsConst && !field.IsAbstract)
-            {
-                fields.Add(new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) });
-            }
-        }
     }
 }

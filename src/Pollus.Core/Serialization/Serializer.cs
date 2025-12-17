@@ -2,6 +2,9 @@ namespace Pollus.Core.Serialization;
 
 using System.Collections.Concurrent;
 
+[AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
+public sealed class SerializeAttribute : Attribute;
+
 public interface IWriter
 {
     public ReadOnlySpan<byte> Buffer { get; }
@@ -20,6 +23,12 @@ public interface IReader
     string ReadString();
     T Read<T>() where T : unmanaged;
     T[] ReadArray<T>() where T : unmanaged;
+}
+
+public interface ISerializable
+{
+    void Serialize<TWriter>(ref TWriter writer) where TWriter : IWriter;
+    void Deserialize<TReader>(ref TReader reader) where TReader : IReader;
 }
 
 public interface ISerializer

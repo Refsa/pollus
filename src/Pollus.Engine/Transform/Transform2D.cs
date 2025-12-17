@@ -5,7 +5,6 @@ using Pollus.Engine.Reflect;
 using Pollus.Engine.Tween;
 using Pollus.Mathematics;
 
-[Reflect]
 public partial struct Transform2D : ITransform, IComponent
 {
     public static EntityBuilder<Transform2D, GlobalTransform> Bundle => new(

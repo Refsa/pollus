@@ -5,6 +5,7 @@
     <LangVersion>14</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
@@ -16,6 +17,10 @@
     <ProjectReference Include="..\Pollus.Audio\Pollus.Audio.csproj" />
     <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+
+    <ProjectReference Include="..\Pollus.Generators\Pollus.Generators.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

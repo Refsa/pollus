@@ -189,7 +189,7 @@ public struct SceneParser : IReader
                 components.Add(new Scene.Component
                 {
                     TypeID = -1,
-                    Data = Deserialize(type),
+                    Data = DeserializeComponent(type),
                 });
             }
             else
@@ -234,7 +234,7 @@ public struct SceneParser : IReader
         }
     }
 
-    byte[] Deserialize(Type type)
+    byte[] DeserializeComponent(Type type)
     {
         var serializer = BlittableSerializerLookup.GetSerializer(type)
                          ?? throw new InvalidOperationException($"No serializer found for type {type.Name}");
@@ -244,7 +244,7 @@ public struct SceneParser : IReader
     T Deserialize<T>()
         where T : unmanaged
     {
-        var serializer = BlittableSerializerLookup.GetSerializer<T>()
+        var serializer = SerializerLookup.GetSerializer<T>()
                          ?? throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
         return serializer.Deserialize(ref this);
     }

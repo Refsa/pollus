@@ -1,36 +1,37 @@
 namespace Pollus.Tests.Scene;
 
 using System.Runtime.InteropServices;
-using Pollus.Engine.Serialization;
 using Pollus.Utils;
 using Xunit;
 using Pollus.Engine;
 using Pollus.ECS;
 using System.Text;
-using System;
-using System.Collections.Generic;
 using Pollus.Core.Serialization;
 
-public struct TestComponent : IComponent
+[Serialize]
+public partial struct TestComponent : IComponent
 {
     public int Value { get; set; }
 }
 
-public struct TestComplexComponent : IComponent
+[Serialize]
+public partial struct TestComplexComponent : IComponent
 {
     public Vec2 Position { get; set; }
 }
 
-public struct Vec2
-{
-    public float X { get; set; }
-    public float Y { get; set; }
-}
-
-public struct TestComponentWithHandle : IComponent
+[Serialize]
+public partial struct TestComponentWithHandle : IComponent
 {
     public int Value { get; set; }
     public Handle<TestAsset> AssetHandle { get; set; }
+}
+
+[Serialize]
+public partial struct Vec2
+{
+    public float X { get; set; }
+    public float Y { get; set; }
 }
 
 public class TestAsset;
@@ -53,91 +54,10 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>>
     }
 }
 
-public class TestComponentSerializer : IBlittableSerializer<TestComponent>
-{
-    public TestComponent Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var c = new TestComponent();
-        c.Value = reader.Read<int>();
-        return c;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref TestComponent value) where TWriter : IWriter
-    {
-    }
-}
-
-public class Vec2Serializer : IBlittableSerializer<Vec2>
-{
-    public Vec2 Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var v = new Vec2();
-        v.X = reader.Read<float>();
-        v.Y = reader.Read<float>();
-        return v;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref Vec2 value) where TWriter : IWriter
-    {
-    }
-}
-
-public class TestComplexComponentSerializer : IBlittableSerializer<TestComplexComponent>
-{
-    public TestComplexComponent Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var c = new TestComplexComponent();
-        c.Position = reader.Read<Vec2>();
-        return c;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref TestComplexComponent value) where TWriter : IWriter
-    {
-    }
-}
-
-public class TestComponentWithHandleSerializer : IBlittableSerializer<TestComponentWithHandle>
-{
-    public TestComponentWithHandle Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var c = new TestComponentWithHandle();
-        c.Value = reader.Read<int>();
-        c.AssetHandle = reader.Read<Handle<TestAsset>>();
-        return c;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref TestComponentWithHandle value) where TWriter : IWriter
-    {
-    }
-}
-
-public class TestAssetHandleSerializer : IBlittableSerializer<Handle<TestAsset>>
-{
-    public Handle<TestAsset> Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var path = reader.ReadString();
-        if (path == "path/to/asset")
-        {
-            return new Handle<TestAsset>(123);
-        }
-
-        return default;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle<TestAsset> value) where TWriter : IWriter
-    {
-    }
-}
-
 public class SceneParserTests
 {
     public SceneParserTests()
     {
-        BlittableSerializerLookup.RegisterSerializer(new TestComponentSerializer());
-        BlittableSerializerLookup.RegisterSerializer(new Vec2Serializer());
-        BlittableSerializerLookup.RegisterSerializer(new TestComplexComponentSerializer());
-        BlittableSerializerLookup.RegisterSerializer(new TestComponentWithHandleSerializer());
-        BlittableSerializerLookup.RegisterSerializer(new TestAssetHandleSerializer());
         BlittableSerializerLookup.RegisterSerializer(new HandleSerializer<TestAsset>());
     }
 
