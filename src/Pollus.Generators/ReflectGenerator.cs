@@ -92,6 +92,8 @@ public class ReflectGenerator : IIncrementalGenerator
                           fieldName = (expr.Member as FieldInfo)?.Name;
                       }
 
+                      if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Invalid property expression", nameof(property));
+
                       return GetFieldIndex(fieldName);
                   }
 

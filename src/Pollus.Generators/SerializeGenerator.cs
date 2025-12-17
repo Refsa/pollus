@@ -31,6 +31,7 @@ public class SerializeGenerator : IIncrementalGenerator
                   } 
 
                   {{GetSerializerImpl(model)}}
+                  {{(model.ContainingType is null ? GetModuleInitializerImpl(model) : "")}}
                   """;
 
             if (model.ContainingType != null)
@@ -40,6 +41,8 @@ public class SerializeGenerator : IIncrementalGenerator
                       {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                       {
                           {{partialExt}}
+
+                          {{GetModuleInitializerImpl(model)}}
                       }
                       """;
             }
@@ -68,13 +71,16 @@ public class SerializeGenerator : IIncrementalGenerator
         if (model.TypeInfo.IsGeneric) return null;
 
         var lookupType = model.TypeInfo.IsUnmanaged ? "BlittableSerializer" : "Serializer";
+        // TODO: find alternative to [ModuleInitializer]
         return
             $$"""
+                #pragma warning disable CA2255
                 [ModuleInitializer]
                 public static void {{model.TypeInfo.ClassName}}Serializer_ModuleInitializer()
                 {
                     {{lookupType}}Lookup.RegisterSerializer(new {{model.TypeInfo.ClassName}}Serializer());
                 }
+                #pragma warning restore CA2255
               """;
     }
 

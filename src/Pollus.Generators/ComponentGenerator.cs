@@ -58,6 +58,7 @@ public class ComponentGenerator : IIncrementalGenerator
                 ? null
                 : $$"""
                     {{SerializeGenerator.GetISerializableImpl(model)}}
+                    {{(model.ContainingType is null ? SerializeGenerator.GetModuleInitializerImpl(model) : "")}}
                     """;
             var serializerImpl = string.IsNullOrEmpty(serializeImpl) ? null : SerializeGenerator.GetSerializerImpl(model);
 
@@ -87,6 +88,8 @@ public class ComponentGenerator : IIncrementalGenerator
                       {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                       {
                           {{partialExt}}
+
+                          {{(!string.IsNullOrEmpty(serializeImpl) ? SerializeGenerator.GetModuleInitializerImpl(model) : "")}}
                       }
                       """;
             }
