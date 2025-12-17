@@ -25,7 +25,7 @@ public class ReflectGenerator : IIncrementalGenerator
         {
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.ClassName}}>
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.FullClassName}}>
                   {
                       {{GetReflectImpl(model)}}
                   } 
@@ -35,7 +35,7 @@ public class ReflectGenerator : IIncrementalGenerator
             {
                 partialExt =
                     $$"""
-                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
+                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                       {
                           {{partialExt}}
                       }
@@ -52,7 +52,7 @@ public class ReflectGenerator : IIncrementalGenerator
                   {{partialExt}}
                   """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Reflect.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.Reflect.gen.cs", source);
         });
     }
 
@@ -84,7 +84,7 @@ public class ReflectGenerator : IIncrementalGenerator
                   }
 
                   [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-                  public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.ClassName}}, TField>> property)
+                  public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.FullClassName}}, TField>> property)
                   {
                       string? fieldName = null;
                       if (property.Body is MemberExpression expr)

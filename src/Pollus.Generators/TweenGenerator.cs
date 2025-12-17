@@ -25,7 +25,7 @@ public class TweenGenerator : IIncrementalGenerator
         {
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Tween.ITweenable
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Engine.Tween.ITweenable
                   {
                       {{GetTweenImpl(model)}}
                   } 
@@ -35,7 +35,7 @@ public class TweenGenerator : IIncrementalGenerator
             {
                 partialExt =
                     $$"""
-                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
+                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                       {
                           {{partialExt}}
                       }
@@ -54,7 +54,7 @@ public class TweenGenerator : IIncrementalGenerator
                   {{partialExt}}
                   """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Tweenable.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.Tweenable.gen.cs", source);
         });
     }
 
@@ -66,7 +66,7 @@ public class TweenGenerator : IIncrementalGenerator
             $$"""
                   public static void PrepareTweenSystems(Schedule schedule)
                   {
-              {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.ClassName}, {e}>());"))}}
+              {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.FullClassName}, {e}>());"))}}
                   }
               """;
     }

@@ -7,12 +7,12 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
 
-public class ChangeTrackingExample : IExample
+public partial class ChangeTrackingExample : IExample
 {
     public string Name => "change-tracking";
     IApplication? application;
 
-    public struct Component1 : IComponent
+    public partial struct Component1 : IComponent
     {
         public int Value;
     }

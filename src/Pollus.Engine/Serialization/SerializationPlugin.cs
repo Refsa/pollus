@@ -3,7 +3,7 @@ namespace Pollus.Engine.Serialization;
 using Pollus.Core.Serialization;
 using Pollus.ECS;
 
-public struct SerializeTag : IComponent
+public partial struct SerializeTag : IComponent
 {
 }
 

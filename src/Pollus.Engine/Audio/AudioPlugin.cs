@@ -7,7 +7,7 @@ using Pollus.Engine.Assets;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public struct AudioSource : IComponent
+public partial struct AudioSource : IComponent
 {
     internal Handle<Pollus.Audio.AudioSource> DeviceSource;
 
@@ -21,7 +21,7 @@ public struct AudioSource : IComponent
     }
 }
 
-public struct AudioPlayback : IComponent
+public partial struct AudioPlayback : IComponent
 {
     internal Handle<Pollus.Audio.AudioBuffer> DeviceBuffer;
     internal long StartTicks;

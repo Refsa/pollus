@@ -9,7 +9,9 @@
       "src\\Pollus.Emscripten\\Pollus.Emscripten.csproj",
       "src\\Pollus.Engine\\Pollus.Engine.csproj",
       "src\\Pollus.Graphics\\Pollus.Graphics.csproj",
-      "src\\Pollus.Tests\\Pollus.Tests.csproj"
+      "src\\Pollus.Tests\\Pollus.Tests.csproj",
+      "examples\\Desktop\\Pollus.Examples.Desktop.csproj",
+      "examples\\Browser\\Pollus.Examples.Browser.csproj"
     ]
   }
 }

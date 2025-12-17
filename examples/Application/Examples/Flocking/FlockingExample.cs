@@ -516,14 +516,14 @@ class FlockingGame : IPlugin
     }
 }
 
-struct DebugBoid : IComponent { }
-struct AvoidArea : IComponent
+partial struct DebugBoid : IComponent { }
+partial struct AvoidArea : IComponent
 {
     public required float Force;
     public required BoidType Target;
 }
 
-struct AvoidTarget : IComponent
+partial struct AvoidTarget : IComponent
 {
     public required float Force;
     public required BoidType Target;
@@ -541,7 +541,7 @@ struct BoidCalc
     }
 }
 
-struct Velocity : IComponent
+partial struct Velocity : IComponent
 {
     public required Vec2f Value;
     public required float MaxSpeed;
@@ -556,7 +556,7 @@ enum BoidType : uint
     LargeBird = 1u << 2,
 }
 
-struct Boid : IComponent
+partial struct Boid : IComponent
 {
     public required BoidType Group;
 }

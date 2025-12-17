@@ -14,7 +14,7 @@ public enum CollisionShapeType
 }
 
 [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 20)]
-public struct CollisionShape : IComponent
+public partial struct CollisionShape : IComponent
 {
     [FieldOffset(0)] public CollisionShapeType Type;
     [FieldOffset(4)] Circle2D circle;

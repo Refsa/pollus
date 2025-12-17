@@ -5,7 +5,7 @@ using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public struct MeshDraw<TMaterial> : IComponent
+public partial struct MeshDraw<TMaterial> : IComponent
     where TMaterial : IMaterial
 {
     public required Handle<MeshAsset> Mesh;

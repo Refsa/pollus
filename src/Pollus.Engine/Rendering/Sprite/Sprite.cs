@@ -6,7 +6,7 @@ using Pollus.Engine.Transform;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public struct Sprite : IComponent
+public partial struct Sprite : IComponent
 {
     public required Handle<SpriteMaterial> Material;
     public required Rect Slice;

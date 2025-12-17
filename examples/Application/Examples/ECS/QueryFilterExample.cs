@@ -5,16 +5,16 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
 
-public class QueryFilterExample : IExample
+public partial class QueryFilterExample : IExample
 {
     public string Name => "query-filter";
 
-    struct Component1 : IComponent
+    partial struct Component1 : IComponent
     {
         public int Value { get; set; }
     }
 
-    struct Component2 : IComponent
+    partial struct Component2 : IComponent
     {
         public int Value { get; set; }
     }

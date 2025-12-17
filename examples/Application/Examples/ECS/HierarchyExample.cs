@@ -5,13 +5,13 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 
-public class HierarchyExample : IExample
+public partial class HierarchyExample : IExample
 {
     public string Name => "hierarchy";
 
     IApplication? app;
 
-    struct Component1 : IComponent { }
+    partial struct Component1 : IComponent { }
 
     public void Run() => (app = Application.Builder
         .AddPlugins([

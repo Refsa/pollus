@@ -11,13 +11,13 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class CollisionExample : IExample
+public partial class CollisionExample : IExample
 {
     public string Name => "collision";
     IApplication? application;
     public void Stop() => application?.Shutdown();
 
-    struct MoveShape : IComponent
+    partial struct MoveShape : IComponent
     {
         public Vec2f Start;
         public Vec2f End;

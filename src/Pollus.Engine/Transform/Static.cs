@@ -2,12 +2,12 @@ namespace Pollus.Engine.Transform;
 
 using Pollus.ECS;
 
-public struct Static : IComponent
+public partial struct Static : IComponent
 {
 
 }
 
-public struct StaticCalculated : IComponent
+public partial struct StaticCalculated : IComponent
 {
 
 }

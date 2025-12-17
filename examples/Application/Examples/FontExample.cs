@@ -13,9 +13,9 @@ using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Rendering;
 
-public class FontExample : IExample
+public partial class FontExample : IExample
 {
-    struct Counter : IComponent
+    partial struct Counter : IComponent
     {
     }
 

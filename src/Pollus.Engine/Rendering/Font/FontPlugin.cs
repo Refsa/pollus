@@ -12,7 +12,7 @@ using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public struct TextDraw : IComponent
+public partial struct TextDraw : IComponent
 {
     public static readonly EntityBuilder<TextDraw, TextMesh, Transform2D> Bundle = Entity.With(
         TextDraw.Default,
@@ -52,7 +52,7 @@ public struct TextDraw : IComponent
     }
 }
 
-public struct TextMesh : IComponent
+public partial struct TextMesh : IComponent
 {
     public static readonly TextMesh Default = new TextMesh()
     {

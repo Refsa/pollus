@@ -1,6 +1,6 @@
 namespace Pollus.ECS;
 
-public record struct Parent : IComponent
+public partial record struct Parent : IComponent
 {
     public Entity FirstChild = Entity.NULL;
     public Entity LastChild = Entity.NULL;
@@ -11,7 +11,7 @@ public record struct Parent : IComponent
     }
 }
 
-public record struct Child : IComponent
+public partial record struct Child : IComponent
 {
     public Entity Parent = Entity.NULL;
     public Entity NextSibling = Entity.NULL;
