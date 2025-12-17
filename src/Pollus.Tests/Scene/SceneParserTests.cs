@@ -10,6 +10,9 @@ using System.Text;
 using Pollus.Core.Serialization;
 
 [Serialize]
+public partial struct TestEmptyComponent : IComponent;
+
+[Serialize]
 public partial struct TestComponent : IComponent
 {
     public int Value { get; set; }
@@ -75,6 +78,27 @@ entities:
         Assert.Single(scene.Entities);
         Assert.Equal("Entity1", scene.Entities[0].Name);
         Assert.Equal(10, scene.Entities[0].EntityID);
+    }
+
+    [Fact]
+    public void Parse_Entity_EmptyComponent()
+    {
+        var parser = new SceneParser();
+        var yaml = $@"
+types:
+  TestEmptyComponent: ""{typeof(TestEmptyComponent).AssemblyQualifiedName}""
+entities:
+  Entity1:
+    components:
+      TestEmptyComponent: {{}}
+";
+        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        Assert.Single(scene.Entities[0].Components);
+        var comp = scene.Entities[0].Components[0];
+        var empty = MemoryMarshal.AsRef<TestEmptyComponent>(comp.Data);
+        Assert.IsType<TestEmptyComponent>(empty);
     }
 
     [Fact]
