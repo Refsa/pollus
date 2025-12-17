@@ -11,12 +11,16 @@ class TypeInfo
 {
     public string Namespace;
     public string ClassName;
+    public string FullClassName;
     public string FullTypeKind;
     public string Visibility;
 
     public bool IsUnmanaged;
+    public bool IsGeneric => GenericArguments is not null && GenericArguments.Length > 0;
 
     public string[] Attributes;
+
+    public TypeInfo[] GenericArguments;
 }
 
 class Model
@@ -38,7 +42,7 @@ internal static class Common
     {
         foreach (var member in type.GetMembers())
         {
-            if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsAbstract: false, IsImplicitlyDeclared: false } field)
+            if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } field)
             {
                 fields.Add(new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) });
             }
@@ -63,32 +67,17 @@ internal static class Common
     public static Model CollectType(ITypeSymbol data)
     {
         var fields = new List<Field>();
-        Common.CollectFields(data, fields);
+        CollectFields(data, fields);
 
         TypeInfo containingType = null;
         if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
         {
             var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
             if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
-            containingType = new TypeInfo()
-            {
-                Namespace = data.ContainingNamespace.ToDisplayString(),
-                ClassName = data.ContainingType.Name,
-                FullTypeKind = containingTypeKind,
-                Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
-            };
+            containingType = CreateTypeInfo(data.ContainingType);
         }
 
-        var fullTypeKind = data.TypeKind.ToString().ToLower();
-        if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
-        TypeInfo typeInfo = new()
-        {
-            Namespace = data.ContainingNamespace.ToDisplayString(),
-            ClassName = data.Name,
-            FullTypeKind = fullTypeKind,
-            Visibility = data.DeclaredAccessibility.ToString().ToLower(),
-            IsUnmanaged = data.IsUnmanagedType,
-        };
+        var typeInfo = CreateTypeInfo(data);
 
         return new Model()
         {
@@ -96,5 +85,31 @@ internal static class Common
             ContainingType = containingType,
             Fields = fields,
         };
+    }
+
+    public static TypeInfo CreateTypeInfo(ITypeSymbol data)
+    {
+        var fullTypeKind = data.TypeKind.ToString().ToLower();
+        if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
+
+        var typeInfo = new TypeInfo()
+        {
+            Namespace = data.ContainingNamespace?.ToDisplayString(),
+            ClassName = data.Name,
+            FullClassName = data.Name,
+            FullTypeKind = fullTypeKind,
+            Visibility = data.DeclaredAccessibility.ToString().ToLower(),
+            IsUnmanaged = data.IsUnmanagedType,
+        };
+
+        if (data is INamedTypeSymbol { IsGenericType: true } namedType)
+        {
+            typeInfo.GenericArguments = namedType.TypeArguments
+                .Select(CreateTypeInfo)
+                .ToArray();
+            typeInfo.FullClassName = $"{typeInfo.ClassName}<{string.Join(", ", typeInfo.GenericArguments.Select(e => e.ClassName))}>";
+        }
+
+        return typeInfo;
     }
 }

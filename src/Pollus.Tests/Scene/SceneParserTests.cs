@@ -1,5 +1,6 @@
 namespace Pollus.Tests.Scene;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
 using Xunit;
@@ -36,29 +37,11 @@ public partial struct Vec2
 
 public class TestAsset;
 
-public class HandleSerializer<T> : IBlittableSerializer<Handle<T>>
-{
-    public Handle<T> Deserialize<TReader>(ref TReader reader) where TReader : IReader
-    {
-        var path = reader.ReadString();
-        if (path == "path/to/asset")
-        {
-            return new Handle<T>(123);
-        }
-
-        return default;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle<T> value) where TWriter : IWriter
-    {
-    }
-}
-
 public class SceneParserTests
 {
-    public SceneParserTests()
+    static SceneParserTests()
     {
-        BlittableSerializerLookup.RegisterSerializer(new HandleSerializer<TestAsset>());
+        RuntimeHelpers.RunClassConstructor(typeof(Handle<TestAsset>).TypeHandle);
     }
 
     [Fact]

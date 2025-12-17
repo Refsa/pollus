@@ -19,3 +19,7 @@ dotnet_style_readonly_field = true:suggestion
 
 # set max line length to 240
 max_line_length = 240
+
+indent_style = space
+indent_size = 4
+

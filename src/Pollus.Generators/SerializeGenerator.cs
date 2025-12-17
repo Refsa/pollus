@@ -23,19 +23,13 @@ public class SerializeGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
-            var lookupType = model.TypeInfo.IsUnmanaged ? "BlittableSerializer" : "Serializer";
-
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Core.Serialization.ISerializable
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Core.Serialization.ISerializable
                   {
                       {{GetISerializableImpl(model)}}
 
-                      [ModuleInitializer]
-                      public static void {{model.TypeInfo.ClassName}}Serializer_ModuleInitializer()
-                      {
-                          {{lookupType}}Lookup.RegisterSerializer(new {{model.TypeInfo.ClassName}}Serializer());
-                      }
+                      {{GetModuleInitializerImpl(model)}}
                   } 
 
                   {{GenerateSerializerImpl(model)}}
@@ -45,7 +39,7 @@ public class SerializeGenerator : IIncrementalGenerator
             {
                 partialExt =
                     $$"""
-                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
+                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                       {
                           {{partialExt}}
                       }
@@ -62,8 +56,24 @@ public class SerializeGenerator : IIncrementalGenerator
                   {{partialExt}}
                   """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Serialize.gen.cs", source);
+            var fullClassName = model.TypeInfo.IsGeneric ? $"{model.TypeInfo.ClassName}_{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.ClassName))}" : model.TypeInfo.ClassName;
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{fullClassName}.Serialize.gen.cs", source);
         });
+    }
+
+    internal static string GetModuleInitializerImpl(Model model)
+    {
+        if (model.TypeInfo.IsGeneric) return null;
+
+        var lookupType = model.TypeInfo.IsUnmanaged ? "BlittableSerializer" : "Serializer";
+        return
+            $$"""
+                [ModuleInitializer]
+                public static void {{model.TypeInfo.ClassName}}Serializer_ModuleInitializer()
+                {
+                    {{lookupType}}Lookup.RegisterSerializer(new {{model.TypeInfo.ClassName}}Serializer());
+                }
+              """;
     }
 
     internal static string GetISerializableImpl(Model model)
@@ -85,18 +95,19 @@ public class SerializeGenerator : IIncrementalGenerator
     internal static string GenerateSerializerImpl(Model model)
     {
         var serializerType = model.TypeInfo.IsUnmanaged ? "IBlittableSerializer" : "ISerializer";
+        var genericArguments = model.TypeInfo.IsGeneric ? $"<{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.ClassName))}>" : "";
 
         return
             $$"""
-              public class {{model.TypeInfo.ClassName}}Serializer : {{serializerType}}<{{model.TypeInfo.ClassName}}>
+              public class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}>
               {
-                  public {{model.TypeInfo.ClassName}} Deserialize<TReader>(ref TReader reader) where TReader : IReader
+                  public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader) where TReader : IReader
                   {
-                      var c = new {{model.TypeInfo.ClassName}}();
+                      var c = new {{model.TypeInfo.FullClassName}}();
                       c.Deserialize(ref reader);
                       return c;
                   }  
-                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.ClassName}} value) where TWriter : IWriter
+                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value) where TWriter : IWriter
                   {
                       value.Serialize(ref writer);
                   }
