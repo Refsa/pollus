@@ -14,7 +14,7 @@ public class TweenGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
-            fullyQualifiedMetadataName: "Pollus.Engine.Reflect.ReflectAttribute",
+            fullyQualifiedMetadataName: "Pollus.Engine.Tween.TweenAttribute",
             predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),

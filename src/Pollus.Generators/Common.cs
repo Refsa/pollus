@@ -1,5 +1,3 @@
-using System.Collections.Immutable;
-
 namespace Pollus.Generators;
 
 using System.Threading;
@@ -12,6 +10,7 @@ class TypeInfo
     public string Namespace;
     public string ClassName;
     public string FullClassName;
+    public string FileName;
     public string FullTypeKind;
     public string Visibility;
 
@@ -49,7 +48,7 @@ internal static class Common
             {
                 data = new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
             }
-            else if (member is IPropertySymbol { IsStatic: false, IsAbstract: false, IsImplicitlyDeclared: false } property)
+            else if (member is IPropertySymbol { IsStatic: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } property)
             {
                 data = new Field() { Name = property.Name, Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
             }
@@ -108,6 +107,7 @@ internal static class Common
             FullTypeKind = fullTypeKind,
             Visibility = data.DeclaredAccessibility.ToString().ToLower(),
             IsUnmanaged = data.IsUnmanagedType,
+            Attributes = data.GetAttributes().Select(a => a.ToString()).ToArray(),
         };
 
         if (data is INamedTypeSymbol { IsGenericType: true } namedType)
@@ -117,6 +117,8 @@ internal static class Common
                 .ToArray();
             typeInfo.FullClassName = $"{typeInfo.ClassName}<{string.Join(", ", typeInfo.GenericArguments.Select(e => e.ClassName))}>";
         }
+
+        typeInfo.FileName = typeInfo.FullClassName.Replace('<', '_').Replace(',', '_').Replace(">", "");
 
         return typeInfo;
     }

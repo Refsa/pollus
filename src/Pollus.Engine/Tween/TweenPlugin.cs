@@ -6,6 +6,9 @@ using Pollus.ECS;
 using Pollus.Engine.Reflect;
 using Pollus.Mathematics;
 
+[AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
+public sealed class TweenAttribute : Attribute;
+
 public class TweenPlugin : IPlugin
 {
     static TweenPlugin()

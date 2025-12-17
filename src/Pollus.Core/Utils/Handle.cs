@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace Pollus.Utils;
 
 using Pollus.Core.Serialization;
