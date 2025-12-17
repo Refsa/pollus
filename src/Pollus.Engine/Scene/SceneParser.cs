@@ -238,17 +238,31 @@ public struct SceneParser : IReader
 
     byte[] DeserializeComponent(Type type)
     {
-        var serializer = BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type)
-                         ?? throw new InvalidOperationException($"No serializer found for type {type.Name}");
-        return serializer.DeserializeBytes(ref this, in context);
+        if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type) is { } serializer)
+        {
+            return serializer.DeserializeBytes(ref this, in context);
+        }
+        else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer(type) is { } defaultSerializer)
+        {
+            return defaultSerializer.DeserializeBytes(ref this, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {type.Name}");
     }
 
     T Deserialize<T>()
         where T : unmanaged
     {
-        var serializer = SerializerLookup<WorldSerializationContext>.GetSerializer<T>()
-                         ?? throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
-        return serializer.Deserialize(ref this, in context);
+        if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            return serializer.Deserialize(ref this, in context);
+        }
+        else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
+        {
+            return defaultSerializer.Deserialize(ref this, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
     }
 
     int GetCurrentIndent()

@@ -1,5 +1,8 @@
 namespace Pollus.Tests.Scene;
 
+using Pollus.Tests.Utils;
+using Pollus.Engine.Assets;
+using Pollus.Engine.Serialization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
@@ -24,7 +27,7 @@ public partial struct TestComplexComponent : IComponent
 public partial struct TestComponentWithHandle : IComponent
 {
     public int Value { get; set; }
-    public Handle<TestAsset> AssetHandle { get; set; }
+    public Handle<TextAsset> AssetHandle { get; set; }
 }
 
 [Serialize]
@@ -35,13 +38,20 @@ public partial struct Vec2
     [SerializeIgnore] public int Ignore { get; set; }
 }
 
-public class TestAsset;
-
 public class SceneParserTests
 {
     static SceneParserTests()
     {
-        RuntimeHelpers.RunClassConstructor(typeof(Handle<TestAsset>).TypeHandle);
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TextAsset>());
+    }
+
+    WorldSerializationContext CreateContext(TestAssetIO? assetIO = null)
+    {
+        return new WorldSerializationContext
+        {
+            Resources = new Resources(),
+            AssetServer = new AssetServer(assetIO ?? new TestAssetIO("assets")),
+        };
     }
 
     [Fact]
@@ -53,7 +63,9 @@ types:
   TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
   TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Equal(2, scene.Types.Length);
         Assert.Equal("TestComponent", scene.Types[0].Name);
@@ -69,7 +81,9 @@ entities:
   Entity1:
     id: 10
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         Assert.Equal("Entity1", scene.Entities[0].Name);
@@ -88,7 +102,8 @@ entities:
     components:
       TestEmptyComponent: {{}}
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         Assert.Single(scene.Entities[0].Components);
@@ -110,7 +125,8 @@ entities:
       TestComponent:
         Value: 42
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         Assert.Single(scene.Entities[0].Components);
@@ -134,7 +150,8 @@ entities:
         Position: {{ X: 10.5, Y: 20.5, Ignore: 42 }}
         Name: ""Test""
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
@@ -158,7 +175,8 @@ entities:
         children:
           GrandChild:
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         var parent = scene.Entities[0];
@@ -173,7 +191,7 @@ entities:
     }
 
     [Fact]
-    public void Parse_WithHandle()
+    public void Parse_WithTypedHandle()
     {
         var parser = new SceneParser();
 
@@ -185,15 +203,20 @@ entities:
     components:
       TestComponentWithHandle:
         Value: 10
-        AssetHandle: ""path/to/asset""
+        AssetHandle: ""path/to/asset.txt""
 ";
-        var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
+        var assetIO = new TestAssetIO("assets");
+        assetIO.AddFile("path/to/asset.txt", "this is some asset"u8.ToArray());
+        var context = CreateContext(assetIO);
+        context.AssetServer.AddLoader<TextAssetLoader>();
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
         var value = MemoryMarshal.AsRef<TestComponentWithHandle>(comp.Data);
 
         Assert.Equal(10, value.Value);
-        Assert.Equal(123, value.AssetHandle.ID);
+        Assert.NotEqual(Handle<TextAsset>.Null, value.AssetHandle);
     }
 }
