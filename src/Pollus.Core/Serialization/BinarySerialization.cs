@@ -1,10 +1,9 @@
-namespace Pollus.Engine.Serialization;
+namespace Pollus.Core.Serialization;
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Pollus.Core.Serialization;
 using Pollus.Debugging;
 using Pollus.Utils;
 
@@ -135,12 +134,6 @@ public class BinaryReader : IReader
         var span = buffer.AsSpan(cursor, bytes);
         cursor += bytes;
         return MemoryMarshal.Cast<byte, T>(span);
-    }
-
-    public void ReadTo<T>(Span<T> target) where T : unmanaged
-    {
-        var span = ReadSpan<T>();
-        span.CopyTo(target);
     }
 
     public T Read<T>() where T : unmanaged

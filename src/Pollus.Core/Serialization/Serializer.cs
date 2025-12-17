@@ -1,5 +1,7 @@
 namespace Pollus.Core.Serialization;
 
+using System.Collections.Concurrent;
+
 public interface IWriter
 {
     public ReadOnlySpan<byte> Buffer { get; }
@@ -18,5 +20,52 @@ public interface IReader
     string ReadString();
     T Read<T>() where T : unmanaged;
     T[] ReadArray<T>() where T : unmanaged;
-    void ReadTo<T>(Span<T> target) where T : unmanaged;
+}
+
+public interface ISerializer
+{
+    public object? DeserializeBoxed<TReader>(ref TReader reader) where TReader : IReader;
+}
+
+public interface ISerializer<T> : ISerializer
+{
+    public T Deserialize<TReader>(ref TReader reader) where TReader : IReader;
+    public void Serialize<TWriter>(ref TWriter reader, ref T value) where TWriter : IWriter;
+
+    object? ISerializer.DeserializeBoxed<TReader>(ref TReader reader)
+    {
+        return Deserialize(ref reader);
+    }
+}
+
+public static class SerializerLookup
+{
+    static readonly ConcurrentDictionary<Type, ISerializer> serializers = new();
+
+    public static void RegisterSerializer<T>(ISerializer<T> serializer)
+        where T : unmanaged
+    {
+        serializers.TryAdd(typeof(T), serializer);
+    }
+
+    public static ISerializer<T>? GetSerializer<T>()
+        where T : unmanaged
+    {
+        if (serializers.TryGetValue(typeof(T), out var serializer))
+        {
+            return (ISerializer<T>)serializer;
+        }
+
+        return null;
+    }
+
+    public static ISerializer? GetSerializer(Type type)
+    {
+        if (serializers.TryGetValue(type, out var serializer))
+        {
+            return serializer;
+        }
+
+        return null;
+    }
 }

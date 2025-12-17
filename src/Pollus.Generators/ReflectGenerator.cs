@@ -82,8 +82,6 @@ public class ReflectGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
-            var distinctFieldTypes = new HashSet<string>(model.Fields.Select(e => e.Type));
-
             var partialExt = $$"""
             {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.ClassName}}>
             {
@@ -91,6 +89,10 @@ public class ReflectGenerator : IIncrementalGenerator
                 {
             {{string.Join("\n", model.Fields.Select(e => $"        {e.Name},"))}}
                 }
+
+                public static byte[] Fields => new byte[] {
+            {{string.Join(", ", model.Fields.Select((_, i) => i))}}
+                };
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
                 public void SetValue<T>(byte field, T value) => SetValue((ReflectField)field, value);

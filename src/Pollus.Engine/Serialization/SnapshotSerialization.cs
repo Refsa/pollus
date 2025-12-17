@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Serialization;
 
+using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
 using Pollus.Debugging;

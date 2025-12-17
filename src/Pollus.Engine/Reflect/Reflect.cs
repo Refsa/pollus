@@ -4,10 +4,11 @@ using System.Linq.Expressions;
 using Pollus.ECS;
 
 [AttributeUsage(AttributeTargets.Struct)]
-public sealed class ReflectAttribute : Attribute { }
+public sealed class ReflectAttribute : Attribute;
 
 public interface IReflect
 {
+    static abstract byte[] Fields { get; }
     void SetValue<T>(byte field, T value);
 }
 

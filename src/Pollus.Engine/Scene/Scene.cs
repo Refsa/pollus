@@ -1,39 +1,30 @@
-using System.Runtime.CompilerServices;
-
 namespace Pollus.Engine;
 
-public class Scene
+using Pollus.ECS;
+
+public struct Scene
 {
-    public class Entity
+    public struct Entity
     {
-        public required int EntityID { get; set; }
-        public required int Index { get; set; }
-        public int[] Components { get; set; } = [];
+        public int EntityID { get; set; }
+        public string? Name { get; set; }
+        public Component[] Components { get; set; }
+        public Entity[] Children { get; set; }
     }
 
-    public class Component
-    {
-        public required int TypeID { get; set; }
-        public required int Index { get; set; }
-        public required int Length { get; set; }
-    }
-
-    public class Resource
+    public struct Component
     {
         public required int TypeID { get; set; }
-        public required int Index { get; set; }
-        public required int Length { get; set; }
+        public required byte[] Data { get; set; }
     }
 
-    public class Type
+    public struct Type
     {
         public required int ID { get; set; }
         public required string Name { get; set; }
+        public required string AssemblyQualifiedName { get; set; }
     }
 
-    public Type[] Types { get; private set; } = [];
-    public Entity[] Entities { get; private set; } = [];
-    public Component[] Components { get; private set; } = [];
-    public Resource[] Resources { get; private set; } = [];
+    public required Type[] Types { get; init; }
+    public required Entity[] Entities { get; init; }
 }
-
