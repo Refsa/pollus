@@ -15,11 +15,17 @@ class TypeInfo
     public string Visibility;
 
     public bool IsUnmanaged;
-    public bool IsGeneric => GenericArguments is not null && GenericArguments.Length > 0;
+    public bool IsGeneric => GenericArguments is not null && GenericArguments.Count > 0;
 
     public string[] Attributes;
 
-    public TypeInfo[] GenericArguments;
+    public List<GenericArgument> GenericArguments;
+}
+
+class GenericArgument
+{
+    public TypeInfo TypeInfo;
+    public List<string> Constraints = new();
 }
 
 class Model
@@ -33,6 +39,7 @@ class Field
 {
     public string Name;
     public string Type;
+    public bool IsRequired;
     public string[] Attributes;
 }
 
@@ -46,11 +53,21 @@ internal static class Common
 
             if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } field)
             {
-                data = new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
+                data = new Field()
+                {
+                    Name = field.Name,
+                    Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    IsRequired = field.IsRequired
+                };
             }
             else if (member is IPropertySymbol { IsStatic: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } property)
             {
-                data = new Field() { Name = property.Name, Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
+                data = new Field()
+                {
+                    Name = property.Name,
+                    Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                    IsRequired = property.IsRequired
+                };
             }
 
             if (data is null) continue;
@@ -112,10 +129,33 @@ internal static class Common
 
         if (data is INamedTypeSymbol { IsGenericType: true } namedType)
         {
-            typeInfo.GenericArguments = namedType.TypeArguments
-                .Select(CreateTypeInfo)
-                .ToArray();
-            typeInfo.FullClassName = $"{typeInfo.ClassName}<{string.Join(", ", typeInfo.GenericArguments.Select(e => e.ClassName))}>";
+            typeInfo.GenericArguments = new List<GenericArgument>();
+            for (int i = 0; i < namedType.TypeParameters.Length; i++)
+            {
+                var param = namedType.TypeParameters[i];
+                var arg = namedType.TypeArguments[i];
+                var constraints = new List<string>();
+
+                if (param.HasUnmanagedTypeConstraint) constraints.Add("unmanaged");
+                else if (param.HasValueTypeConstraint) constraints.Add("struct");
+                else if (param.HasReferenceTypeConstraint) constraints.Add("class");
+                else if (param.HasNotNullConstraint) constraints.Add("notnull");
+
+                foreach (var constraintType in param.ConstraintTypes)
+                {
+                    constraints.Add(constraintType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                }
+
+                if (param.HasConstructorConstraint) constraints.Add("new()");
+
+                typeInfo.GenericArguments.Add(new GenericArgument
+                {
+                    TypeInfo = CreateTypeInfo(arg),
+                    Constraints = constraints
+                });
+            }
+
+            typeInfo.FullClassName = $"{typeInfo.ClassName}<{string.Join(", ", typeInfo.GenericArguments.Select(e => e.TypeInfo.ClassName))}>";
         }
 
         typeInfo.FileName = typeInfo.FullClassName.Replace('<', '_').Replace(',', '_').Replace(">", "");

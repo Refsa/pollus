@@ -15,5 +15,6 @@ public interface IReflect
 public interface IReflect<TData> : IReflect
     where TData : unmanaged
 {
+    static abstract byte GetFieldIndex(string fieldName);
     static abstract byte GetFieldIndex<TField>(Expression<Func<TData, TField>> property);
 }

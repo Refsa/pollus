@@ -28,11 +28,9 @@ public class SerializeGenerator : IIncrementalGenerator
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Core.Serialization.ISerializable
                   {
                       {{GetISerializableImpl(model)}}
-
-                      {{GetModuleInitializerImpl(model)}}
                   } 
 
-                  {{GenerateSerializerImpl(model)}}
+                  {{GetSerializerImpl(model)}}
                   """;
 
             if (model.ContainingType != null)
@@ -56,8 +54,7 @@ public class SerializeGenerator : IIncrementalGenerator
                   {{partialExt}}
                   """, Encoding.UTF8);
 
-            var fullClassName = model.TypeInfo.IsGeneric ? $"{model.TypeInfo.ClassName}_{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.ClassName))}" : model.TypeInfo.ClassName;
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{fullClassName}.Serialize.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.Serialize.gen.cs", source);
         });
     }
 
@@ -97,18 +94,23 @@ public class SerializeGenerator : IIncrementalGenerator
               """;
     }
 
-    internal static string GenerateSerializerImpl(Model model)
+    internal static string GetSerializerImpl(Model model)
     {
         var serializerType = model.TypeInfo.IsUnmanaged ? "IBlittableSerializer" : "ISerializer";
-        var genericArguments = model.TypeInfo.IsGeneric ? $"<{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.ClassName))}>" : "";
+        var genericArguments = model.TypeInfo.IsGeneric ? $"<{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.TypeInfo.ClassName))}>" : "";
+        var genericConstraints = model.TypeInfo.IsGeneric ? string.Join("\n", model.TypeInfo.GenericArguments.Select(e => $"where {e.TypeInfo.ClassName} : {string.Join(", ", e.Constraints)}")) : "";
 
         return
             $$"""
-              public class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}>
+              {{model.TypeInfo.Visibility}} class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}>
+              {{genericConstraints}}
               {
                   public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader) where TReader : IReader
                   {
-                      var c = new {{model.TypeInfo.FullClassName}}();
+                      var c = new {{model.TypeInfo.FullClassName}}()
+                      {
+                          {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = reader.Read<{e.Type}>(),"))}}
+                      };
                       c.Deserialize(ref reader);
                       return c;
                   }  

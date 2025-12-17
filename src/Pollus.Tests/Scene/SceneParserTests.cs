@@ -9,22 +9,18 @@ using Pollus.ECS;
 using System.Text;
 using Pollus.Core.Serialization;
 
-[Serialize]
 public partial struct TestEmptyComponent : IComponent;
 
-[Serialize]
 public partial struct TestComponent : IComponent
 {
     public int Value { get; set; }
 }
 
-[Serialize]
 public partial struct TestComplexComponent : IComponent
 {
     public Vec2 Position { get; set; }
 }
 
-[Serialize]
 public partial struct TestComponentWithHandle : IComponent
 {
     public int Value { get; set; }
