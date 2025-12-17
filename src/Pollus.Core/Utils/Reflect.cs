@@ -1,7 +1,6 @@
-namespace Pollus.Engine.Reflect;
+namespace Pollus.Utils;
 
 using System.Linq.Expressions;
-using Pollus.ECS;
 
 [AttributeUsage(AttributeTargets.Struct)]
 public sealed class ReflectAttribute : Attribute;

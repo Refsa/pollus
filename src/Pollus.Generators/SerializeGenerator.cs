@@ -28,10 +28,11 @@ public class SerializeGenerator : IIncrementalGenerator
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Core.Serialization.ISerializable
                   {
                       {{GetISerializableImpl(model)}}
+                      
+                      {{(model.ContainingType is null ? GetModuleInitializerImpl(model) : "")}}
                   } 
 
                   {{GetSerializerImpl(model)}}
-                  {{(model.ContainingType is null ? GetModuleInitializerImpl(model) : "")}}
                   """;
 
             if (model.ContainingType != null)
@@ -115,7 +116,7 @@ public class SerializeGenerator : IIncrementalGenerator
                   {
                       var c = new {{model.TypeInfo.FullClassName}}()
                       {
-                          {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = reader.Read<{e.Type}>(),"))}}
+                          {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = default,"))}}
                       };
                       c.Deserialize(ref reader);
                       return c;

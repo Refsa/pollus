@@ -1,6 +1,5 @@
 namespace Pollus.Generators;
 
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -14,7 +13,7 @@ public class ReflectGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
-            fullyQualifiedMetadataName: "Pollus.Engine.Reflect.ReflectAttribute",
+            fullyQualifiedMetadataName: "Pollus.Utils.ReflectAttribute",
             predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
@@ -25,7 +24,7 @@ public class ReflectGenerator : IIncrementalGenerator
         {
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Engine.Reflect.IReflect<{{model.TypeInfo.FullClassName}}>
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Utils.IReflect<{{model.TypeInfo.FullClassName}}>
                   {
                       {{GetReflectImpl(model)}}
                   } 

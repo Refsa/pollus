@@ -51,7 +51,7 @@ public class ComponentGenerator : IIncrementalGenerator
         {
             if (model is null) return;
 
-            var reflectImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Reflect.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
+            var reflectImpl = model.TypeInfo.Attributes.Contains("Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
             var tweenImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
 
             var serializeImpl = model.TypeInfo.Attributes.Contains("Pollus.Core.Serialization.SerializeAttribute")
@@ -63,7 +63,7 @@ public class ComponentGenerator : IIncrementalGenerator
             var serializerImpl = string.IsNullOrEmpty(serializeImpl) ? null : SerializeGenerator.GetSerializerImpl(model);
 
             List<string> interfaces = [];
-            if (!string.IsNullOrEmpty(reflectImpl)) interfaces.Add($"Pollus.Engine.Reflect.IReflect<{model.TypeInfo.FullClassName}>");
+            if (!string.IsNullOrEmpty(reflectImpl)) interfaces.Add($"Pollus.Utils.IReflect<{model.TypeInfo.FullClassName}>");
             if (!string.IsNullOrEmpty(tweenImpl)) interfaces.Add("Pollus.Engine.Tween.ITweenable");
             if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add("Pollus.Core.Serialization.ISerializable");
 
@@ -103,7 +103,7 @@ public class ComponentGenerator : IIncrementalGenerator
                   using System.Reflection;
                   using Pollus.ECS;
                   using Pollus.Engine.Tween;
-                  using Pollus.Engine.Reflect;
+                  using Pollus.Utils;
                   using Pollus.Core.Serialization;
 
                   {{partialExt}}

@@ -3,7 +3,7 @@ namespace Pollus.Engine.Tween;
 using System.Runtime.InteropServices;
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Reflect;
+using Pollus.Utils;
 using Pollus.Mathematics;
 
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]

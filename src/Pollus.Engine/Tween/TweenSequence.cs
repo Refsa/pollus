@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Tween;
 
 using Pollus.ECS;
-using Pollus.Engine.Reflect;
+using Pollus.Utils;
 
 public partial struct TweenSequence : IComponent
 {

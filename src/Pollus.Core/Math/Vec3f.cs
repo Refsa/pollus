@@ -3,8 +3,10 @@ namespace Pollus.Mathematics;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Pollus.Graphics;
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Vec3f: {X}, {Y}, {Z}")]
 public partial record struct Vec3f
 {

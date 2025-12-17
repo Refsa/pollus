@@ -1,10 +1,12 @@
 namespace Pollus.Mathematics;
 
+using Pollus.Utils;
+using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using Pollus.Graphics;
 
-[ShaderType]
+[ShaderType, Serialize, Reflect]
 [DebuggerDisplay("Vec2f: {X}, {Y}")]
 public partial record struct Vec2f
 {
@@ -14,7 +16,6 @@ public partial record struct Vec2f
     public static Vec2f Down => new(0f, -1f);
     public static Vec2f Left => new(-1f, 0f);
     public static Vec2f Right => new(1f, 0f);
-
 
     public float X;
     public float Y;

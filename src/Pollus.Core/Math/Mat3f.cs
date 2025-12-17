@@ -1,9 +1,11 @@
 namespace Pollus.Mathematics;
 
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 using System.Diagnostics;
 using Pollus.Graphics;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Mat3f: {Col0}, {Col1}, {Col2}")]
 public partial record struct Mat3f
 {
