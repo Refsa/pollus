@@ -33,6 +33,7 @@ public partial struct Vec2
 {
     public float X { get; set; }
     public float Y { get; set; }
+    [SerializeIgnore] public int Ignore { get; set; }
 }
 
 public class TestAsset;
@@ -110,7 +111,7 @@ entities:
   Entity1:
     components:
       TestComplexComponent:
-        Position: {{ X: 10.5, Y: 20.5 }}
+        Position: {{ X: 10.5, Y: 20.5, Ignore: 42 }}
         Name: ""Test""
 ";
         var scene = parser.Parse(Encoding.UTF8.GetBytes(yaml));
@@ -121,6 +122,7 @@ entities:
 
         Assert.Equal(10.5f, complex.Position.X);
         Assert.Equal(20.5f, complex.Position.Y);
+        Assert.Equal(0, complex.Position.Ignore);
     }
 
     [Fact]

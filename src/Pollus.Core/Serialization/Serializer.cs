@@ -5,6 +5,9 @@ using System.Collections.Concurrent;
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
 public sealed class SerializeAttribute : Attribute;
 
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+public sealed class SerializeIgnoreAttribute : Attribute;
+
 public interface IWriter
 {
     public ReadOnlySpan<byte> Buffer { get; }

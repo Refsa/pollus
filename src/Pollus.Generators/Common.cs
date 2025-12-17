@@ -34,6 +34,7 @@ class Field
 {
     public string Name;
     public string Type;
+    public string[] Attributes;
 }
 
 internal static class Common
@@ -42,14 +43,21 @@ internal static class Common
     {
         foreach (var member in type.GetMembers())
         {
+            Field data = null;
+
             if (member is IFieldSymbol { IsStatic: false, IsConst: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } field)
             {
-                fields.Add(new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) });
+                data = new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
             }
             else if (member is IPropertySymbol { IsStatic: false, IsAbstract: false, IsImplicitlyDeclared: false } property)
             {
-                fields.Add(new Field() { Name = property.Name, Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) });
+                data = new Field() { Name = property.Name, Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) };
             }
+
+            if (data is null) continue;
+
+            data.Attributes = member.GetAttributes().Select(a => a.ToString()).ToArray();
+            fields.Add(data);
         }
     }
 

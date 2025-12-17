@@ -61,6 +61,11 @@ public class SerializeGenerator : IIncrementalGenerator
         });
     }
 
+    private static IEnumerable<Field> GetFields(Model model)
+    {
+        return model.Fields.Where(e => !e.Attributes.Any(a => a.Contains("SerializeIgnore")));
+    }
+
     internal static string GetModuleInitializerImpl(Model model)
     {
         if (model.TypeInfo.IsGeneric) return null;
@@ -82,12 +87,12 @@ public class SerializeGenerator : IIncrementalGenerator
             $$"""
                 public void Serialize<TWriter>(ref TWriter writer) where TWriter : IWriter
                 {
-                    {{string.Join("\n", model.Fields.Select(e => $"writer.Write({e.Name});"))}}
+                    {{string.Join("\n", GetFields(model).Select(e => $"writer.Write({e.Name});"))}}
                 }
 
                 public void Deserialize<TReader>(ref TReader reader) where TReader : IReader
                 {
-                    {{string.Join("\n", model.Fields.Select(e => $"{e.Name} = reader.Read<{e.Type}>();"))}}
+                    {{string.Join("\n", GetFields(model).Select(e => $"{e.Name} = reader.Read<{e.Type}>();"))}}
                 }
               """;
     }

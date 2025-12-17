@@ -1,12 +1,10 @@
 namespace Pollus.Engine;
 
-using Pollus.Engine.Serialization;
 using System.Runtime.CompilerServices;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
-using Pollus.ECS;
 using Pollus.Core.Serialization;
 
 public struct SceneParser : IReader
