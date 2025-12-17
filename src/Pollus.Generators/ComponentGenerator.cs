@@ -51,21 +51,23 @@ public class ComponentGenerator : IIncrementalGenerator
         {
             if (model is null) return;
 
+            const string worldSerializationContextType = "WorldSerializationContext";
+
             var reflectImpl = model.TypeInfo.Attributes.Contains("Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
             var tweenImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
 
             var serializeImpl = model.TypeInfo.Attributes.Contains("Pollus.Core.Serialization.SerializeAttribute")
                 ? null
                 : $$"""
-                    {{SerializeGenerator.GetISerializableImpl(model)}}
-                    {{(model.ContainingType is null ? SerializeGenerator.GetModuleInitializerImpl(model) : "")}}
+                    {{SerializeGenerator.GetISerializableImpl(model, worldSerializationContextType)}}
+                    {{(model.ContainingType is null ? SerializeGenerator.GetModuleInitializerImpl(model, worldSerializationContextType) : "")}}
                     """;
-            var serializerImpl = string.IsNullOrEmpty(serializeImpl) ? null : SerializeGenerator.GetSerializerImpl(model);
+            var serializerImpl = string.IsNullOrEmpty(serializeImpl) ? null : SerializeGenerator.GetSerializerImpl(model, worldSerializationContextType);
 
             List<string> interfaces = [];
             if (!string.IsNullOrEmpty(reflectImpl)) interfaces.Add($"Pollus.Utils.IReflect<{model.TypeInfo.FullClassName}>");
             if (!string.IsNullOrEmpty(tweenImpl)) interfaces.Add("Pollus.Engine.Tween.ITweenable");
-            if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add("Pollus.Core.Serialization.ISerializable");
+            if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add($"Pollus.Core.Serialization.ISerializable<{worldSerializationContextType}>");
 
             var partialExt =
                 $$"""
@@ -89,7 +91,7 @@ public class ComponentGenerator : IIncrementalGenerator
                       {
                           {{partialExt}}
 
-                          {{(!string.IsNullOrEmpty(serializeImpl) ? SerializeGenerator.GetModuleInitializerImpl(model) : "")}}
+                          {{(!string.IsNullOrEmpty(serializeImpl) ? SerializeGenerator.GetModuleInitializerImpl(model, worldSerializationContextType) : "")}}
                       }
                       """;
             }
@@ -105,6 +107,7 @@ public class ComponentGenerator : IIncrementalGenerator
                   using Pollus.Engine.Tween;
                   using Pollus.Utils;
                   using Pollus.Core.Serialization;
+                  using Pollus.Engine.Serialization;
 
                   {{partialExt}}
                   """);

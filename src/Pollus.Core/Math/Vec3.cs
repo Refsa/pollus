@@ -9,7 +9,7 @@ using Pollus.Utils;
 [ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Vec3: {X}, {Y}, {Z}")]
 public partial record struct Vec3<T>
-    where T : struct, System.Numerics.INumber<T>
+    where T : unmanaged, System.Numerics.INumber<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 3;
     public static Vec3<T> Zero => new Vec3<T>(default, default, default);

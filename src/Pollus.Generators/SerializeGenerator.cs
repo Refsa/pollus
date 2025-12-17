@@ -23,16 +23,19 @@ public class SerializeGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
+            const string defaultContextType = "DefaultSerializationContext";
+
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Core.Serialization.ISerializable
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} 
+                    : Pollus.Core.Serialization.ISerializable<DefaultSerializationContext>
                   {
-                      {{GetISerializableImpl(model)}}
+                      {{GetISerializableImpl(model, defaultContextType)}}
                       
-                      {{(model.ContainingType is null ? GetModuleInitializerImpl(model) : "")}}
+                      {{(model.ContainingType is null ? GetModuleInitializerImpl(model, defaultContextType) : "")}}
                   } 
 
-                  {{GetSerializerImpl(model)}}
+                  {{GetSerializerImpl(model, defaultContextType)}}
                   """;
 
             if (model.ContainingType != null)
@@ -43,7 +46,7 @@ public class SerializeGenerator : IIncrementalGenerator
                       {
                           {{partialExt}}
 
-                          {{GetModuleInitializerImpl(model)}}
+                          {{GetModuleInitializerImpl(model, defaultContextType)}}
                       }
                       """;
             }
@@ -67,7 +70,7 @@ public class SerializeGenerator : IIncrementalGenerator
         return model.Fields.Where(e => !e.Attributes.Any(a => a.Contains("SerializeIgnore")));
     }
 
-    internal static string GetModuleInitializerImpl(Model model)
+    internal static string GetModuleInitializerImpl(Model model, string contextType)
     {
         if (model.TypeInfo.IsGeneric) return null;
 
@@ -79,29 +82,29 @@ public class SerializeGenerator : IIncrementalGenerator
                 [ModuleInitializer]
                 public static void {{model.TypeInfo.ClassName}}Serializer_ModuleInitializer()
                 {
-                    {{lookupType}}Lookup.RegisterSerializer(new {{model.TypeInfo.ClassName}}Serializer());
+                    {{lookupType}}Lookup<{{contextType}}>.RegisterSerializer(new {{model.TypeInfo.ClassName}}Serializer());
                 }
                 #pragma warning restore CA2255
               """;
     }
 
-    internal static string GetISerializableImpl(Model model)
+    internal static string GetISerializableImpl(Model model, string contextType)
     {
         return
             $$"""
-                public void Serialize<TWriter>(ref TWriter writer) where TWriter : IWriter
+                public void Serialize<TWriter>(ref TWriter writer, in {{contextType}} context) where TWriter : IWriter
                 {
                     {{string.Join("\n", GetFields(model).Select(e => $"writer.Write({e.Name});"))}}
                 }
 
-                public void Deserialize<TReader>(ref TReader reader) where TReader : IReader
+                public void Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader
                 {
                     {{string.Join("\n", GetFields(model).Select(e => $"{e.Name} = reader.Read<{e.Type}>();"))}}
                 }
               """;
     }
 
-    internal static string GetSerializerImpl(Model model)
+    internal static string GetSerializerImpl(Model model, string contextType)
     {
         var serializerType = model.TypeInfo.IsUnmanaged ? "IBlittableSerializer" : "ISerializer";
         var genericArguments = model.TypeInfo.IsGeneric ? $"<{string.Join(", ", model.TypeInfo.GenericArguments.Select(e => e.TypeInfo.ClassName))}>" : "";
@@ -109,21 +112,21 @@ public class SerializeGenerator : IIncrementalGenerator
 
         return
             $$"""
-              {{model.TypeInfo.Visibility}} class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}>
+              {{model.TypeInfo.Visibility}} class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}, {{contextType}}>
               {{genericConstraints}}
               {
-                  public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader) where TReader : IReader
+                  public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader
                   {
                       var c = new {{model.TypeInfo.FullClassName}}()
                       {
                           {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = default,"))}}
                       };
-                      c.Deserialize(ref reader);
+                      c.Deserialize(ref reader, in context);
                       return c;
                   }  
-                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value) where TWriter : IWriter
+                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value, in {{contextType}} context) where TWriter : IWriter
                   {
-                      value.Serialize(ref writer);
+                      value.Serialize(ref writer, in context);
                   }
               }
               """;

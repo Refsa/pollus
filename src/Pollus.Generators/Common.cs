@@ -28,6 +28,11 @@ class GenericArgument
     public List<string> Constraints = new();
 }
 
+class Attribute
+{
+    public string Name;
+}
+
 class Model
 {
     public TypeInfo TypeInfo;

@@ -1,5 +1,6 @@
 namespace Pollus.Engine;
 
+using Pollus.Engine.Serialization;
 using System.Runtime.CompilerServices;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ public struct SceneParser : IReader
     int cursor;
     int length;
     Dictionary<string, Type> types;
+    WorldSerializationContext context;
 
     public void Init(byte[]? data)
     {
@@ -22,9 +24,11 @@ public struct SceneParser : IReader
         this.types = new Dictionary<string, Type>();
     }
 
-    public Scene Parse(byte[] data)
+    public Scene Parse(in WorldSerializationContext context, byte[] data)
     {
+        this.context = context;
         Init(data);
+
         var sceneTypes = new List<Scene.Type>();
         var entities = new List<Scene.Entity>();
 
@@ -234,17 +238,17 @@ public struct SceneParser : IReader
 
     byte[] DeserializeComponent(Type type)
     {
-        var serializer = BlittableSerializerLookup.GetSerializer(type)
+        var serializer = BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type)
                          ?? throw new InvalidOperationException($"No serializer found for type {type.Name}");
-        return serializer.DeserializeBytes(ref this);
+        return serializer.DeserializeBytes(ref this, in context);
     }
 
     T Deserialize<T>()
         where T : unmanaged
     {
-        var serializer = SerializerLookup.GetSerializer<T>()
+        var serializer = SerializerLookup<WorldSerializationContext>.GetSerializer<T>()
                          ?? throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
-        return serializer.Deserialize(ref this);
+        return serializer.Deserialize(ref this, in context);
     }
 
     int GetCurrentIndent()

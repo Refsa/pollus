@@ -3,7 +3,7 @@ namespace Pollus.Core.Serialization;
 using System.Collections.Concurrent;
 
 [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
-public sealed class SerializeAttribute : Attribute;
+public sealed class SerializeAttribute() : Attribute;
 
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public sealed class SerializeIgnoreAttribute : Attribute;
@@ -28,56 +28,53 @@ public interface IReader
     T[] ReadArray<T>() where T : unmanaged;
 }
 
-public interface ISerializable
+public struct DefaultSerializationContext;
+
+public interface ISerializable<TContext>
 {
-    void Serialize<TWriter>(ref TWriter writer) where TWriter : IWriter;
-    void Deserialize<TReader>(ref TReader reader) where TReader : IReader;
+    void Serialize<TWriter>(ref TWriter writer, in TContext context) where TWriter : IWriter;
+    void Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader;
 }
 
-public interface ISerializer
+public interface ISerializer<TContext>
 {
-    public object? DeserializeBoxed<TReader>(ref TReader reader) where TReader : IReader;
+    public object? DeserializeBoxed<TReader>(ref TReader reader, in TContext context) where TReader : IReader;
 }
 
-public interface ISerializer<T> : ISerializer
+public interface ISerializer<TData, TContext> : ISerializer<TContext>
 {
-    public T Deserialize<TReader>(ref TReader reader) where TReader : IReader;
-    public void Serialize<TWriter>(ref TWriter reader, ref T value) where TWriter : IWriter;
+    public TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader;
+    public void Serialize<TWriter>(ref TWriter reader, ref TData value, in TContext context) where TWriter : IWriter;
 
-    object? ISerializer.DeserializeBoxed<TReader>(ref TReader reader)
+    object? ISerializer<TContext>.DeserializeBoxed<TReader>(ref TReader reader, in TContext context)
     {
-        return Deserialize(ref reader);
+        return Deserialize(ref reader, in context);
     }
 }
 
-public static class SerializerLookup
+public static class SerializerLookup<TContext>
 {
-    static readonly ConcurrentDictionary<Type, ISerializer> serializers = new();
+    static readonly ConcurrentDictionary<Type, ISerializer<TContext>> serializers = new();
 
-    public static void RegisterSerializer<T>(ISerializer<T> serializer)
-        where T : unmanaged
+    public static void RegisterSerializer<TData>(ISerializer<TData, TContext> serializer)
+        where TData : unmanaged
     {
-        serializers.TryAdd(typeof(T), serializer);
+        serializers.TryAdd(typeof(TData), serializer);
     }
 
-    public static ISerializer<T>? GetSerializer<T>()
-        where T : unmanaged
+    public static ISerializer<TData, TContext>? GetSerializer<TData>()
+        where TData : unmanaged
     {
-        if (serializers.TryGetValue(typeof(T), out var serializer))
+        if (serializers.TryGetValue(typeof(TData), out var serializer))
         {
-            return (ISerializer<T>)serializer;
+            return (ISerializer<TData, TContext>)serializer;
         }
 
         return null;
     }
 
-    public static ISerializer? GetSerializer(Type type)
+    public static ISerializer<TContext>? GetSerializer(Type type)
     {
-        if (serializers.TryGetValue(type, out var serializer))
-        {
-            return serializer;
-        }
-
-        return null;
+        return serializers.GetValueOrDefault(type);
     }
 }

@@ -70,14 +70,14 @@ public class ReflectGenerator : IIncrementalGenerator
                   public static byte[] Fields => reflectFields;
 
                   [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-                  public void SetValue<T>(byte field, T value) => SetValue((ReflectField)field, value);
+                  public void SetValue<TField>(byte field, TField value) => SetValue((ReflectField)field, value);
 
                   [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-                  public void SetValue<T>(ReflectField field, T value)
+                  public void SetValue<TField>(ReflectField field, TField value)
                   {
                       switch (field)
                       {
-              {{string.Join("\n", model.Fields.Select(e => $"            case ReflectField.{e.Name}: {e.Name} = Unsafe.As<T, {e.Type}>(ref value); break;"))}}
+              {{string.Join("\n", model.Fields.Select(e => $"            case ReflectField.{e.Name}: {e.Name} = Unsafe.As<TField, {e.Type}>(ref value); break;"))}}
                           default: throw new ArgumentException($"Invalid property: {field}", nameof(field));
                       }
                   }
