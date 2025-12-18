@@ -75,8 +75,8 @@ public ref struct SceneReader : IReader, IDisposable
 
         return new Scene
         {
-            Types = sceneTypes.ToArray(),
-            Entities = entities.ToArray(),
+            Types = sceneTypes,
+            Entities = entities,
             ComponentInfos = []
         };
     }
@@ -205,6 +205,7 @@ public ref struct SceneReader : IReader, IDisposable
 
             if (types.TryGetValue(typeAlias, out Type? type))
             {
+                RuntimeHelpers.RunClassConstructor(type.TypeHandle);
                 var cid = Component.GetInfo(type).ID;
 
                 components.Add(new Scene.Component

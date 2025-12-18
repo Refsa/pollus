@@ -40,10 +40,14 @@ entities:
         commands.SpawnScene(scene, root);
         world.Update();
 
-        Assert.Equal(2, world.Store.EntityCount);
-        var entity = world.Store.GetEntityInfo(root);
-        var component = world.Store.GetComponent<TestComponent>(entity.Entity);
-        Assert.Equal(42, component.Value);
+        {
+            Assert.Equal(2, world.Store.EntityCount);
+            
+            var rootRef = world.GetEntityRef(root);
+            var childRef = world.GetEntityRef(rootRef.Get<Parent>().FirstChild);
+            var component = childRef.Get<TestComponent>();
+            Assert.Equal(42, component.Value);
+        }
 
         world.Dispose();
     }

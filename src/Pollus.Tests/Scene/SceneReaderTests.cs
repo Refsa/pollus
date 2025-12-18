@@ -60,7 +60,7 @@ types:
         var context = CreateContext();
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
 
-        Assert.Equal(2, scene.Types.Length);
+        Assert.Equal(2, scene.Types.Count);
         Assert.Equal("TestComponent", scene.Types[0].Name);
         Assert.Equal("TestComplexComponent", scene.Types[1].Name);
     }

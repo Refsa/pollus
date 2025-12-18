@@ -1,3 +1,5 @@
+version: 1
+typeVersion: 1
 types:
   Transform2D: "Pollus.Engine.Transform.Transform2D"
   Sprite: "Pollus.Engine.Rendering.Sprite"

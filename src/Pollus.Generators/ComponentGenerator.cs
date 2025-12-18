@@ -74,6 +74,11 @@ public class ComponentGenerator : IIncrementalGenerator
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}}
                     : {{string.Join(", ", interfaces)}}
                   {
+                      static {{model.TypeInfo.ClassName}}()
+                      {
+                          Component.Register<{{model.TypeInfo.FullClassName}}>();
+                      }
+
                       {{reflectImpl}}
                       {{tweenImpl}}
 

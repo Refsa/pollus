@@ -24,7 +24,7 @@ public class ScenePlugin : IPlugin
 
 public static class SceneCommands
 {
-    public static Commands SpawnScene(this Commands commands, in Handle<Scene> scene, in Entity root)
+    public static Commands SpawnScene(this Commands commands, in Handle<Scene> scene, Entity? root)
     {
         commands.AddCommand(new SpawnSceneCommand { Scene = scene, Root = root });
         return commands;
@@ -36,7 +36,7 @@ public struct SpawnSceneCommand : ICommand
     public static int Priority => 100;
 
     public required Handle<Scene> Scene;
-    public required Entity Root;
+    public required Entity? Root;
 
     public void Execute(World world)
     {
@@ -45,9 +45,9 @@ public struct SpawnSceneCommand : ICommand
         foreach (var sceneEntity in scene.Entities)
         {
             var entity = SpawnEntity(world, sceneEntity);
-            if (Root != Entity.NULL)
+            if (Root.HasValue)
             {
-                new AddChildCommand { Parent = Root, Child = entity }.Execute(world);
+                new AddChildCommand { Parent = Root.Value, Child = entity }.Execute(world);
             }
         }
     }

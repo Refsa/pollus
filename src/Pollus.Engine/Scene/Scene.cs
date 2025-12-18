@@ -34,7 +34,7 @@ public struct Scene
         public required bool Write { get; init; }
     }
 
-    public required Type[] Types { get; init; }
-    public required ComponentInfo[] ComponentInfos { get; init; }
-    public required Entity[] Entities { get; init; }
+    public required List<Type> Types { get; init; }
+    public required List<ComponentInfo> ComponentInfos { get; init; }
+    public required List<Entity> Entities { get; init; }
 }
