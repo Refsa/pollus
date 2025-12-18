@@ -66,7 +66,7 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public ArchetypeInfo GetOrCreateArchetype(in ArchetypeID aid, scoped in Span<ComponentID> cids)
+    public ArchetypeInfo GetOrCreateArchetype(in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
     {
         if (archetypeLookup.TryGetValue(aid, out var index))
             return new(archetypes[index], index);
@@ -106,10 +106,23 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityChange CreateEntity(in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
+    {
+        var entity = entityHandler.Create();
+        return InsertEntity(entity, aid, cids);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public EntityChange InsertEntity<TBuilder>(in Entity entity)
         where TBuilder : struct, IEntityBuilder
     {
-        var archetypeInfo = GetOrCreateArchetype(TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+        return InsertEntity(entity, TBuilder.ArchetypeID, TBuilder.ComponentIDs);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityChange InsertEntity(in Entity entity, in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
+    {
+        var archetypeInfo = GetOrCreateArchetype(aid, cids);
         var (chunkIndex, rowIndex) = archetypeInfo.Archetype.AddEntity(entity);
         archetypeInfo.Archetype.Chunks[chunkIndex].SetAllFlags(rowIndex, ComponentFlags.Added);
 

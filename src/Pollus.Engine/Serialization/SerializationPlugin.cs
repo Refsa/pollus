@@ -11,7 +11,6 @@ public partial struct SerializeTag : IComponent
 
 public struct WorldSerializationContext
 {
-    public Resources Resources { get; set; }
     public AssetServer AssetServer { get; set; }
 }
 

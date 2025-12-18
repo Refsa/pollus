@@ -38,6 +38,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         public readonly string FileName => context.FileName;
         public readonly Handle Handle => context.Handle;
         public readonly Assets Assets => context.AssetServer.Assets;
+        public readonly AssetServer AssetServer => context.AssetServer;
 
         public LoadContext(ref LoadContext context)
         {

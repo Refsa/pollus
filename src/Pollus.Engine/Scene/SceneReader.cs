@@ -1,5 +1,7 @@
 namespace Pollus.Engine;
 
+using Pollus.ECS;
+using Pollus.Debugging;
 using Pollus.Utils;
 using Pollus.Engine.Serialization;
 using System.Runtime.CompilerServices;
@@ -19,7 +21,14 @@ public ref struct SceneReader : IReader, IDisposable
 
     public void Init(byte[]? data)
     {
-        throw new NotSupportedException();
+        this.data = data switch
+        {
+            null => ReadOnlySpan<byte>.Empty,
+            { } d => d.AsSpan()
+        };
+        this.cursor = 0;
+        this.length = this.data.Length;
+        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
     }
 
     public void Dispose()
@@ -67,7 +76,8 @@ public ref struct SceneReader : IReader, IDisposable
         return new Scene
         {
             Types = sceneTypes.ToArray(),
-            Entities = entities.ToArray()
+            Entities = entities.ToArray(),
+            ComponentInfos = []
         };
     }
 
@@ -195,9 +205,12 @@ public ref struct SceneReader : IReader, IDisposable
 
             if (types.TryGetValue(typeAlias, out Type? type))
             {
+                var cid = Component.GetInfo(type).ID;
+
                 components.Add(new Scene.Component
                 {
                     TypeID = -1,
+                    ComponentID = cid.ID,
                     Data = DeserializeComponent(type),
                 });
             }
@@ -245,6 +258,8 @@ public ref struct SceneReader : IReader, IDisposable
 
     byte[] DeserializeComponent(Type type)
     {
+        Guard.IsNotNull(context.AssetServer, "AssetServer was null");
+
         if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type) is { } serializer)
         {
             return serializer.DeserializeBytes(ref this, in context);
@@ -260,6 +275,8 @@ public ref struct SceneReader : IReader, IDisposable
     T Deserialize<T>()
         where T : unmanaged
     {
+        Guard.IsNotNull(context.AssetServer, "AssetServer was null");
+
         if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
         {
             return serializer.Deserialize(ref this, in context);

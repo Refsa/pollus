@@ -28,6 +28,7 @@ public static class Component
         public required bool Read { get; init; }
         public required bool Write { get; init; }
 
+        // TODO: this needs to be changed as it holds a reference to the World in static context
         public Action<RemovedTracker>? RegisterTracker { get; internal set; }
     }
 

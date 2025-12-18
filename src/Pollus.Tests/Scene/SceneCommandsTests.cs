@@ -1,0 +1,50 @@
+namespace Pollus.Tests.Scene;
+
+using Engine;
+using Engine.Assets;
+using Pollus.ECS;
+using Utils;
+
+public class SceneCommandsTests
+{
+    static (World world, TestAssetIO assetIO) CreateWorld()
+    {
+        var assetIO = new TestAssetIO("assets");
+        var assetServer = new AssetServer(assetIO);
+        var world = WorldBuilder.Default
+            .AddResource(assetServer)
+            .AddResource(assetServer.Assets)
+            .AddPlugin<ScenePlugin>()
+            .Build();
+        return (world, assetIO);
+    }
+
+    [Fact]
+    public void SceneCommands_SpawnScene_SingleEntity_SingleComponent()
+    {
+        var (world, assetIO) = CreateWorld();
+        assetIO.AddFile("assets/scene.scene", $@"
+types:
+  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
+entities:
+  Entity1:
+    components:
+      TestComponent:
+        Value: 42
+".ToBytes());
+
+        var scene = world.Resources.Get<AssetServer>().Load<Scene>("assets/scene.scene");
+
+        var commands = world.GetCommands();
+        var root = commands.Spawn().Entity;
+        commands.SpawnScene(scene, root);
+        world.Update();
+
+        Assert.Equal(2, world.Store.EntityCount);
+        var entity = world.Store.GetEntityInfo(root);
+        var component = world.Store.GetComponent<TestComponent>(entity.Entity);
+        Assert.Equal(42, component.Value);
+
+        world.Dispose();
+    }
+}

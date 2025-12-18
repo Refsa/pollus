@@ -3,7 +3,6 @@ namespace Pollus.Tests.Scene;
 using Pollus.Tests.Utils;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Serialization;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
 using Xunit;
@@ -44,7 +43,6 @@ public class SceneReaderTests
     {
         return new WorldSerializationContext
         {
-            Resources = new Resources(),
             AssetServer = new AssetServer(assetIO ?? new TestAssetIO("assets")),
         };
     }
@@ -143,7 +141,6 @@ entities:
     components:
       TestComplexComponent:
         Position: {{ X: 10.5, Y: 20.5, Ignore: 42 }}
-        Name: ""Test""
 ";
         var context = CreateContext();
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));

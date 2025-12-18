@@ -10,9 +10,9 @@ entities:
         Rotation: 0
       Sprite:
         Material:
-          Texture: "some/path/to/sprite.png"
-          ShaderSource: "some/path/to/shader.wgsl"
-          Sampler: "nearest"
+          Texture: "file://some/path/to/sprite.png"
+          ShaderSource: "file://some/path/to/shader.wgsl"
+          Sampler: "internal://nearest"
         Slice:
           Min: { X: 0, Y: 0 }
           Max: { X: 16, Y: 16 }

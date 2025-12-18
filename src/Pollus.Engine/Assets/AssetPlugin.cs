@@ -34,6 +34,8 @@ public class AssetPlugin : IPlugin
 
     public void Apply(World world)
     {
+        if (world.Resources.Has<AssetServer>()) return;
+
         var assetServer = new AssetServer(new FileAssetIO(RootPath));
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);

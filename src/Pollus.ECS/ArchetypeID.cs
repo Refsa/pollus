@@ -7,7 +7,7 @@ public record struct ArchetypeID(int Hash)
         return new ArchetypeID(hash);
     }
 
-    public static ArchetypeID Create(scoped in Span<ComponentID> cids)
+    public static ArchetypeID Create(scoped in ReadOnlySpan<ComponentID> cids)
     {
         var hash = 0;
         for (int i = 0; i < cids.Length; i++)
