@@ -38,13 +38,8 @@ public partial struct Vec2
     [SerializeIgnore] public int Ignore { get; set; }
 }
 
-public class SceneParserTests
+public class SceneReaderTests
 {
-    static SceneParserTests()
-    {
-        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TextAsset>());
-    }
-
     WorldSerializationContext CreateContext(TestAssetIO? assetIO = null)
     {
         return new WorldSerializationContext
@@ -57,7 +52,7 @@ public class SceneParserTests
     [Fact]
     public void Parse_Types()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = $@"
 types:
   TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
@@ -75,7 +70,7 @@ types:
     [Fact]
     public void Parse_Entity_Simple()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = @"
 entities:
   Entity1:
@@ -93,7 +88,7 @@ entities:
     [Fact]
     public void Parse_Entity_EmptyComponent()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = $@"
 types:
   TestEmptyComponent: ""{typeof(TestEmptyComponent).AssemblyQualifiedName}""
@@ -115,7 +110,7 @@ entities:
     [Fact]
     public void Parse_Entity_WithComponent()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = $@"
 types:
   TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
@@ -139,7 +134,7 @@ entities:
     [Fact]
     public void Parse_Entity_WithInlineObject()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = $@"
 types:
   TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
@@ -165,7 +160,7 @@ entities:
     [Fact]
     public void Parse_NestedChildren()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
         var yaml = @"
 entities:
   Parent:
@@ -193,7 +188,7 @@ entities:
     [Fact]
     public void Parse_WithTypedHandle()
     {
-        using var parser = new SceneParser();
+        using var parser = new SceneReader();
 
         var yaml = $@"
 types:

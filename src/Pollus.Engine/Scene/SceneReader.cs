@@ -1,8 +1,6 @@
-using System.Buffers.Text;
-using Pollus.Utils;
-
 namespace Pollus.Engine;
 
+using Pollus.Utils;
 using Pollus.Engine.Serialization;
 using System.Runtime.CompilerServices;
 using System;
@@ -11,7 +9,7 @@ using System.Text;
 using System.Globalization;
 using Pollus.Core.Serialization;
 
-public ref struct SceneParser : IReader, IDisposable
+public ref struct SceneReader : IReader, IDisposable
 {
     ReadOnlySpan<byte> data;
     int cursor;
