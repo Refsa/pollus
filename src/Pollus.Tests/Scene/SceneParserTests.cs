@@ -57,7 +57,7 @@ public class SceneParserTests
     [Fact]
     public void Parse_Types()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = $@"
 types:
   TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
@@ -75,7 +75,7 @@ types:
     [Fact]
     public void Parse_Entity_Simple()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = @"
 entities:
   Entity1:
@@ -93,7 +93,7 @@ entities:
     [Fact]
     public void Parse_Entity_EmptyComponent()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = $@"
 types:
   TestEmptyComponent: ""{typeof(TestEmptyComponent).AssemblyQualifiedName}""
@@ -115,7 +115,7 @@ entities:
     [Fact]
     public void Parse_Entity_WithComponent()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = $@"
 types:
   TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
@@ -139,7 +139,7 @@ entities:
     [Fact]
     public void Parse_Entity_WithInlineObject()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = $@"
 types:
   TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
@@ -165,7 +165,7 @@ entities:
     [Fact]
     public void Parse_NestedChildren()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
         var yaml = @"
 entities:
   Parent:
@@ -193,7 +193,7 @@ entities:
     [Fact]
     public void Parse_WithTypedHandle()
     {
-        var parser = new SceneParser();
+        using var parser = new SceneParser();
 
         var yaml = $@"
 types:

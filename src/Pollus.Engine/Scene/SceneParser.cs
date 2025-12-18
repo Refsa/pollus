@@ -1,3 +1,6 @@
+using System.Buffers.Text;
+using Pollus.Utils;
+
 namespace Pollus.Engine;
 
 using Pollus.Engine.Serialization;
@@ -8,9 +11,9 @@ using System.Text;
 using System.Globalization;
 using Pollus.Core.Serialization;
 
-public struct SceneParser : IReader
+public ref struct SceneParser : IReader, IDisposable
 {
-    byte[] data;
+    ReadOnlySpan<byte> data;
     int cursor;
     int length;
     Dictionary<string, Type> types;
@@ -18,16 +21,22 @@ public struct SceneParser : IReader
 
     public void Init(byte[]? data)
     {
-        this.data = data ?? Array.Empty<byte>();
-        this.cursor = 0;
-        this.length = this.data.Length;
-        this.types = new Dictionary<string, Type>();
+        throw new NotSupportedException();
     }
 
-    public Scene Parse(in WorldSerializationContext context, byte[] data)
+    public void Dispose()
     {
+        types.Clear();
+        Pool<Dictionary<string, Type>>.Shared.Return(types);
+    }
+
+    public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
+    {
+        this.data = data;
+        this.cursor = 0;
+        this.length = this.data.Length;
+        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
         this.context = context;
-        Init(data);
 
         var sceneTypes = new List<Scene.Type>();
         var entities = new List<Scene.Entity>();
@@ -324,7 +333,7 @@ public struct SceneParser : IReader
     {
         int start = cursor;
         while (cursor < length && IsIdentifierChar((char)data[cursor])) cursor++;
-        return Encoding.UTF8.GetString(data, start, cursor - start);
+        return Encoding.UTF8.GetString(data.Slice(start, cursor - start));
     }
 
     bool IsIdentifierChar(char c)
@@ -342,7 +351,7 @@ public struct SceneParser : IReader
             cursor++;
             int start = cursor;
             while (cursor < length && data[cursor] != '"') cursor++;
-            string s = Encoding.UTF8.GetString(data, start, cursor - start);
+            string s = Encoding.UTF8.GetString(data.Slice(start, cursor - start));
             if (cursor < length) cursor++;
             return s;
         }
@@ -350,7 +359,11 @@ public struct SceneParser : IReader
         {
             int start = cursor;
             while (cursor < length && data[cursor] != '\n' && data[cursor] != ',' && data[cursor] != '}' && data[cursor] != ']') cursor++;
-            return Encoding.UTF8.GetString(data, start, cursor - start).Trim();
+
+            int end = cursor;
+            while (end > start && (data[end - 1] == ' ' || data[end - 1] == '\r')) end--;
+
+            return Encoding.UTF8.GetString(data.Slice(start, end - start));
         }
     }
 

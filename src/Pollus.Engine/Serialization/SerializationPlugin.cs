@@ -30,20 +30,20 @@ public partial class SerializationPlugin<TSerialization> : IPlugin
 public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializationContext>
     where T : notnull
 {
-    public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader
+    public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString();
         return context.AssetServer.Load<T>(path);
     }
 
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle<T> value, in WorldSerializationContext context) where TWriter : IWriter
+    public void Serialize<TWriter>(ref TWriter writer, ref Handle<T> value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
     {
     }
 }
 
 public class HandleSerializer : IBlittableSerializer<Handle, WorldSerializationContext>
 {
-    public Handle Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader
+    public Handle Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
     {
         var type = reader.ReadString();
         var path = reader.ReadString();
@@ -51,7 +51,7 @@ public class HandleSerializer : IBlittableSerializer<Handle, WorldSerializationC
         return c;
     }
 
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle value, in WorldSerializationContext context) where TWriter : IWriter
+    public void Serialize<TWriter>(ref TWriter writer, ref Handle value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
     {
     }
 }

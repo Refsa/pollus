@@ -5,15 +5,17 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 public interface IBlittableSerializer<TContext>
+    where TContext : allows ref struct
 {
-    byte[] DeserializeBytes<TReader>(ref TReader reader, in TContext context) where TReader : IReader;
+    byte[] DeserializeBytes<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
 }
 
 public interface IBlittableSerializer<TData, TContext> : IBlittableSerializer<TContext>, ISerializer<TData, TContext>
     where TData : unmanaged
+    where TContext : allows ref struct
 {
-    public new TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader;
-    public new void Serialize<TWriter>(ref TWriter reader, ref TData value, in TContext context) where TWriter : IWriter;
+    public new TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
+    public new void Serialize<TWriter>(ref TWriter reader, ref TData value, in TContext context) where TWriter : IWriter, allows ref struct;
 
     byte[] IBlittableSerializer<TContext>.DeserializeBytes<TReader>(ref TReader reader, in TContext context)
     {
@@ -25,6 +27,7 @@ public interface IBlittableSerializer<TData, TContext> : IBlittableSerializer<TC
 }
 
 public static class BlittableSerializerLookup<TContext>
+    where TContext : allows ref struct
 {
     static readonly ConcurrentDictionary<Type, IBlittableSerializer<TContext>> serializers = new();
 

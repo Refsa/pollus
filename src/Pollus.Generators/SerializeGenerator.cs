@@ -92,12 +92,12 @@ public class SerializeGenerator : IIncrementalGenerator
     {
         return
             $$"""
-                public void Serialize<TWriter>(ref TWriter writer, in {{contextType}} context) where TWriter : IWriter
+                public void Serialize<TWriter>(ref TWriter writer, in {{contextType}} context) where TWriter : IWriter, allows ref struct
                 {
                     {{string.Join("\n", GetFields(model).Select(e => $"writer.Write({e.Name});"))}}
                 }
 
-                public void Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader
+                public void Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader, allows ref struct
                 {
                     {{string.Join("\n", GetFields(model).Select(e => $"{e.Name} = reader.Read<{e.Type}>();"))}}
                 }
@@ -115,7 +115,7 @@ public class SerializeGenerator : IIncrementalGenerator
               {{model.TypeInfo.Visibility}} class {{model.TypeInfo.ClassName}}Serializer{{genericArguments}} : {{serializerType}}<{{model.TypeInfo.FullClassName}}, {{contextType}}>
               {{genericConstraints}}
               {
-                  public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader
+                  public {{model.TypeInfo.FullClassName}} Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader, allows ref struct
                   {
                       var c = new {{model.TypeInfo.FullClassName}}()
                       {
@@ -124,7 +124,7 @@ public class SerializeGenerator : IIncrementalGenerator
                       c.Deserialize(ref reader, in context);
                       return c;
                   }  
-                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value, in {{contextType}} context) where TWriter : IWriter
+                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value, in {{contextType}} context) where TWriter : IWriter, allows ref struct
                   {
                       value.Serialize(ref writer, in context);
                   }
