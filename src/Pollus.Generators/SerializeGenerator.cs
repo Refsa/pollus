@@ -17,7 +17,8 @@ public class SerializeGenerator : IIncrementalGenerator
             fullyQualifiedMetadataName: "Pollus.Core.Serialization.SerializeAttribute",
             predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
-                || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
+                || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
+                || (syntaxNode is ClassDeclarationSyntax classDecl && classDecl.Modifiers.Any(SyntaxKind.PartialKeyword)),
             transform: Common.CollectType
         );
 

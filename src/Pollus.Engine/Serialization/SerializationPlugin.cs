@@ -30,25 +30,15 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
     public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString();
+        if (string.IsNullOrEmpty(path))
+        {
+            var asset = reader.Deserialize<T>();
+            return context.AssetServer.Assets.Add(asset);
+        }
         return context.AssetServer.Load<T>(path);
     }
 
     public void Serialize<TWriter>(ref TWriter writer, ref Handle<T> value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
-    {
-    }
-}
-
-public class HandleSerializer : IBlittableSerializer<Handle, WorldSerializationContext>
-{
-    public Handle Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
-    {
-        var type = reader.ReadString();
-        var path = reader.ReadString();
-        var c = new Handle();
-        return c;
-    }
-
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
     {
     }
 }

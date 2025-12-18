@@ -1,8 +1,6 @@
 namespace Pollus.Engine;
 
-using Pollus.ECS;
-
-public struct Scene
+public class Scene
 {
     public struct Entity
     {

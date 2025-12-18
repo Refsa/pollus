@@ -4,7 +4,7 @@ using Pollus.Engine.Assets;
 using Pollus.ECS;
 using Utils;
 
-public partial struct Prefab : IComponent
+public partial struct SceneRoot : IComponent
 {
     public required Handle<Scene> Scene;
 }
@@ -24,16 +24,17 @@ public class ScenePlugin : IPlugin
 
 public static class SceneCommands
 {
-    public static Commands SpawnScene(this Commands commands, in Handle<Scene> scene, Entity? root)
+    public static EntityCommands SpawnScene(this Commands commands, in Handle<Scene> scene)
     {
-        commands.AddCommand(new SpawnSceneCommand { Scene = scene, Root = root });
-        return commands;
+        var root = commands.Spawn();
+        commands.AddCommand(new SpawnSceneCommand { Scene = scene, Root = root.Entity });
+        return root;
     }
 }
 
 public struct SpawnSceneCommand : ICommand
 {
-    public static int Priority => 100;
+    public static int Priority => 99;
 
     public required Handle<Scene> Scene;
     public required Entity? Root;
@@ -41,14 +42,13 @@ public struct SpawnSceneCommand : ICommand
     public void Execute(World world)
     {
         var scene = world.Resources.Get<AssetServer>().GetAssets<Scene>().Get(Scene);
+        var root = Root ?? world.Spawn();
+        world.Store.AddComponent(root, new SceneRoot { Scene = Scene });
 
         foreach (var sceneEntity in scene.Entities)
         {
             var entity = SpawnEntity(world, sceneEntity);
-            if (Root.HasValue)
-            {
-                new AddChildCommand { Parent = Root.Value, Child = entity }.Execute(world);
-            }
+            new AddChildCommand { Parent = root, Child = entity }.Execute(world);
         }
     }
 

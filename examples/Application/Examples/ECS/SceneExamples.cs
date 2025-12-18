@@ -1,6 +1,8 @@
 namespace Pollus.Examples;
 
 using Engine.Assets;
+using Engine.Camera;
+using Engine.Rendering;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
@@ -15,12 +17,15 @@ public partial class SceneExample : IExample
             .AddPlugins([
                 new TimePlugin(),
                 new PerformanceTrackerPlugin(),
+                new RenderingPlugin(),
                 new ScenePlugin(),
             ])
             .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", static (Commands commands, AssetServer assetServer) =>
             {
+                commands.Spawn(Camera2D.Bundle);
+
                 var scene = assetServer.Load<Scene>("scenes/scene.scene");
-                commands.SpawnScene(scene, Entity.NULL);
+                var root = commands.SpawnScene(scene);
             }))
             .Build())
         .Run();

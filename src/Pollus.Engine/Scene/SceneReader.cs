@@ -33,61 +33,105 @@ public ref struct SceneReader : IReader, IDisposable
 
     public void Dispose()
     {
-        types.Clear();
-        Pool<Dictionary<string, Type>>.Shared.Return(types);
+        if (types != null)
+        {
+            types.Clear();
+            Pool<Dictionary<string, Type>>.Shared.Return(types);
+            types = null!;
+        }
     }
 
-    public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
+    int PeekIndent()
     {
-        this.data = data;
-        this.cursor = 0;
-        this.length = this.data.Length;
-        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
-        this.context = context;
+        int p = cursor;
+        while (p < length)
+        {
+            while (p < length && data[p] != '\n') p++;
+            if (p >= length) return -1;
+            p++;
 
-        var sceneTypes = new List<Scene.Type>();
-        var entities = new List<Scene.Entity>();
+            int start = p;
+            while (p < length && data[p] == ' ') p++;
 
+            if (p < length && (data[p] == '\n' || data[p] == '\r' || data[p] == '#')) continue;
+            if (p >= length) return -1;
+
+            return p - start;
+        }
+
+        return -1;
+    }
+
+    void AdvanceToNextLine()
+    {
         while (cursor < length)
         {
-            SkipAllWhitespace();
-            if (cursor >= length) break;
+            while (cursor < length && data[cursor] != '\n') cursor++;
+            if (cursor >= length) return;
+            cursor++;
 
-            string key = ReadIdentifier();
-            if (string.IsNullOrEmpty(key)) break;
+            int p = cursor;
+            while (p < length && data[p] == ' ') p++;
+            if (p < length && (data[p] == '\n' || data[p] == '\r' || data[p] == '#')) continue;
 
-            if (!Match(':')) break;
-            SkipSpaces();
+            return;
+        }
+    }
 
-            if (key == "types")
+    void SkipIndent()
+    {
+        while (cursor < length && data[cursor] == ' ') cursor++;
+    }
+
+    void SkipWhitespace()
+    {
+        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\n' || data[cursor] == '\r')) cursor++;
+    }
+
+    void SkipSpaces()
+    {
+        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\r')) cursor++;
+    }
+
+    void SkipKey()
+    {
+        SkipStructural();
+        int p = cursor;
+        while (p < length && IsIdentifierChar((char)data[p])) p++;
+        while (p < length && data[p] == ' ') p++;
+        if (p < length && data[p] == ':')
+        {
+            cursor = p + 1;
+        }
+    }
+
+    void SkipStructural()
+    {
+        while (cursor < length)
+        {
+            char c = (char)data[cursor];
+            if (c == ' ' || c == '\n' || c == '\r' || c == '{' || c == '}' || c == ',')
             {
-                ParseTypes(sceneTypes);
-            }
-            else if (key == "entities")
-            {
-                ParseEntities(entities);
+                cursor++;
             }
             else
             {
-                SkipValue();
+                break;
             }
         }
-
-        return new Scene
-        {
-            Types = sceneTypes,
-            Entities = entities,
-            ComponentInfos = []
-        };
     }
 
-    void ParseTypes(List<Scene.Type> sceneTypes)
+    static bool IsIdentifierChar(char c)
     {
-        int indent = GetCurrentIndent();
+        return char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '-';
+    }
+
+    void ParseTypes(List<Scene.Type> sceneTypes, int parentIndent)
+    {
         while (cursor < length)
         {
-            int nextIndent = PeekIndent();
-            if (nextIndent <= indent) break;
+            int indent = PeekIndent();
+            if (indent <= parentIndent) break;
 
             AdvanceToNextLine();
             SkipIndent();
@@ -98,19 +142,9 @@ public ref struct SceneReader : IReader, IDisposable
             if (Match(':'))
             {
                 SkipSpaces();
-                string typeName = ReadValueString();
+                string typeName = ReadString();
 
-                Type? t = Type.GetType(typeName);
-                if (t == null)
-                {
-                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        t = asm.GetType(typeName);
-                        if (t != null) break;
-                    }
-                }
-
-                if (t != null)
+                if (ResolveType(typeName) is { } t)
                 {
                     types[alias] = t;
                     sceneTypes.Add(new Scene.Type
@@ -124,28 +158,41 @@ public ref struct SceneReader : IReader, IDisposable
         }
     }
 
-    void ParseEntities(List<Scene.Entity> entities)
+    Type? ResolveType(string typeName)
     {
-        int parentIndent = GetCurrentIndent();
+        if (string.IsNullOrWhiteSpace(typeName)) return null;
+        Type? t = Type.GetType(typeName);
+        if (t == null)
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                t = asm.GetType(typeName);
+                if (t != null) break;
+            }
+        }
 
+        return t;
+    }
+
+    void ParseEntities(List<Scene.Entity> entities, int parentIndent)
+    {
         while (cursor < length)
         {
-            int nextIndent = PeekIndent();
-            if (nextIndent <= parentIndent) break;
+            int indent = PeekIndent();
+            if (indent <= parentIndent) break;
 
             AdvanceToNextLine();
             SkipIndent();
 
             string entityName = ReadIdentifier();
             if (string.IsNullOrEmpty(entityName)) continue;
-
             if (!Match(':')) continue;
 
             var entity = new Scene.Entity { Name = entityName };
             var components = new List<Scene.Component>();
             var children = new List<Scene.Entity>();
 
-            ParseEntityBody(entityName, ref entity, components, children, nextIndent);
+            ParseEntityBody(ref entity, components, children, indent);
 
             entity.Components = components.ToArray();
             entity.Children = children.ToArray();
@@ -153,7 +200,7 @@ public ref struct SceneReader : IReader, IDisposable
         }
     }
 
-    void ParseEntityBody(string name, ref Scene.Entity entity, List<Scene.Component> components, List<Scene.Entity> children, int entityIndent)
+    void ParseEntityBody(ref Scene.Entity entity, List<Scene.Component> components, List<Scene.Entity> children, int entityIndent)
     {
         while (cursor < length)
         {
@@ -170,7 +217,7 @@ public ref struct SceneReader : IReader, IDisposable
 
             if (prop == "id")
             {
-                string idVal = ReadValueString();
+                string idVal = ReadString();
                 if (int.TryParse(idVal, out int id)) entity.EntityID = id;
             }
             else if (prop == "components")
@@ -249,7 +296,7 @@ public ref struct SceneReader : IReader, IDisposable
             var childComps = new List<Scene.Component>();
             var childKids = new List<Scene.Entity>();
 
-            ParseEntityBody(childName, ref child, childComps, childKids, childIndent);
+            ParseEntityBody(ref child, childComps, childKids, childIndent);
 
             child.Components = childComps.ToArray();
             child.Children = childKids.ToArray();
@@ -273,8 +320,7 @@ public ref struct SceneReader : IReader, IDisposable
         throw new InvalidOperationException($"No serializer found for type {type.Name}");
     }
 
-    T Deserialize<T>()
-        where T : unmanaged
+    T DeserializeBlittable<T>() where T : unmanaged
     {
         Guard.IsNotNull(context.AssetServer, "AssetServer was null");
 
@@ -290,51 +336,45 @@ public ref struct SceneReader : IReader, IDisposable
         throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
     }
 
-    int GetCurrentIndent()
+    public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
     {
-        return 0;
-    }
+        this.data = data;
+        this.cursor = 0;
+        this.length = this.data.Length;
+        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
+        this.context = context;
 
-    int PeekIndent()
-    {
-        int p = cursor;
-        while (p < length && data[p] != '\n') p++;
-        if (p >= length) return -1;
-        p++;
+        var sceneTypes = new List<Scene.Type>();
+        var entities = new List<Scene.Entity>();
 
-        int spaces = 0;
-        while (p < length && data[p] == ' ')
+        while (cursor < length)
         {
-            spaces++;
-            p++;
+            int indent = PeekIndent();
+            if (indent == -1) break;
+
+            AdvanceToNextLine();
+            SkipIndent();
+
+            string key = ReadIdentifier();
+            if (string.IsNullOrEmpty(key)) break;
+
+            if (!Match(':')) break;
+            SkipSpaces();
+
+            if (key == "types") ParseTypes(sceneTypes, indent);
+            else if (key == "entities") ParseEntities(entities, indent);
+            else SkipValue();
         }
 
-        if (p < length && (data[p] == '\n' || data[p] == '#')) return 1000;
-        return spaces;
+        return new Scene
+        {
+            Types = sceneTypes,
+            Entities = entities,
+            ComponentInfos = []
+        };
     }
 
-    void AdvanceToNextLine()
-    {
-        while (cursor < length && data[cursor] != '\n') cursor++;
-        if (cursor < length) cursor++;
-    }
-
-    void SkipIndent()
-    {
-        while (cursor < length && data[cursor] == ' ') cursor++;
-    }
-
-    void SkipAllWhitespace()
-    {
-        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\n' || data[cursor] == '\r')) cursor++;
-    }
-
-    void SkipSpaces()
-    {
-        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\r')) cursor++;
-    }
-
-    bool Match(char c)
+    public bool Match(char c)
     {
         if (cursor < length && data[cursor] == c)
         {
@@ -345,20 +385,31 @@ public ref struct SceneReader : IReader, IDisposable
         return false;
     }
 
-    string ReadIdentifier()
+    public string ReadIdentifier()
     {
         int start = cursor;
         while (cursor < length && IsIdentifierChar((char)data[cursor])) cursor++;
         return Encoding.UTF8.GetString(data.Slice(start, cursor - start));
     }
 
-    bool IsIdentifierChar(char c)
+    public string ReadString()
     {
-        return char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '-';
-    }
+        // Attempt to skip key on current line
+        int p = cursor;
+        while (p < length && data[p] == ' ') p++;
 
-    string ReadValueString()
-    {
+        if (p < length && IsIdentifierChar((char)data[p]))
+        {
+            int scan = p;
+            while (scan < length && IsIdentifierChar((char)data[scan])) scan++;
+            while (scan < length && data[scan] == ' ') scan++;
+
+            if (scan < length && data[scan] == ':')
+            {
+                cursor = scan + 1;
+            }
+        }
+
         SkipSpaces();
         if (cursor >= length) return "";
 
@@ -383,22 +434,30 @@ public ref struct SceneReader : IReader, IDisposable
         }
     }
 
-    void SkipValue()
+    public void SkipValue()
     {
         int startIndent = PeekIndent();
         AdvanceToNextLine();
         while (cursor < length)
         {
             int ind = PeekIndent();
-            if (ind <= startIndent && ind != 1000) break;
+            if (ind != -1 && ind <= startIndent) break;
             AdvanceToNextLine();
         }
     }
 
-    public string ReadString()
+    public T Deserialize<T>() where T : notnull
     {
-        SkipKey();
-        return ReadValueString();
+        if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            return serializer.Deserialize(ref this, in context);
+        }
+        else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
+        {
+            return defaultSerializer.Deserialize(ref this, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
     }
 
     public T Read<T>() where T : unmanaged
@@ -407,8 +466,8 @@ public ref struct SceneReader : IReader, IDisposable
         if (t.IsPrimitive || t.IsEnum)
         {
             SkipKey();
-            SkipStructural();
-            string val = ReadValueString();
+
+            string val = ReadString();
             if (t == typeof(int)) return Unsafe.BitCast<int, T>(int.Parse(val));
             if (t == typeof(float)) return Unsafe.BitCast<float, T>(float.Parse(val, CultureInfo.InvariantCulture));
             if (t == typeof(double)) return Unsafe.BitCast<double, T>(double.Parse(val, CultureInfo.InvariantCulture));
@@ -418,39 +477,11 @@ public ref struct SceneReader : IReader, IDisposable
         }
 
         SkipKey();
-        return Deserialize<T>();
+        return DeserializeBlittable<T>();
     }
 
     public T[] ReadArray<T>() where T : unmanaged
     {
         throw new NotImplementedException();
-    }
-
-    void SkipKey()
-    {
-        SkipStructural();
-        int p = cursor;
-        while (p < length && IsIdentifierChar((char)data[p])) p++;
-        while (p < length && data[p] == ' ') p++;
-        if (p < length && data[p] == ':')
-        {
-            cursor = p + 1;
-        }
-    }
-
-    void SkipStructural()
-    {
-        while (cursor < length)
-        {
-            char c = (char)data[cursor];
-            if (c == ' ' || c == '\n' || c == '\r' || c == '{' || c == '}' || c == ',')
-            {
-                cursor++;
-            }
-            else
-            {
-                break;
-            }
-        }
     }
 }

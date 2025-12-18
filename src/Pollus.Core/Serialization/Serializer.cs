@@ -24,6 +24,7 @@ public interface IReader
 {
     void Init(byte[]? data);
     string ReadString();
+    T Deserialize<T>() where T : notnull;
     T Read<T>() where T : unmanaged;
     T[] ReadArray<T>() where T : unmanaged;
 }
@@ -61,13 +62,13 @@ public static class SerializerLookup<TContext>
     static readonly ConcurrentDictionary<Type, ISerializer<TContext>> serializers = new();
 
     public static void RegisterSerializer<TData>(ISerializer<TData, TContext> serializer)
-        where TData : unmanaged
+        where TData : notnull
     {
         serializers.TryAdd(typeof(TData), serializer);
     }
 
     public static ISerializer<TData, TContext>? GetSerializer<TData>()
-        where TData : unmanaged
+        where TData : notnull
     {
         if (serializers.TryGetValue(typeof(TData), out var serializer))
         {

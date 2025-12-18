@@ -34,6 +34,7 @@ public static class ExampleRunner
             Log.Info("  ecs-iter");
             Log.Info("  query-filter");
             Log.Info("  font");
+            Log.Info("  scene");
             return;
         }
 
@@ -63,6 +64,7 @@ public static class ExampleRunner
             "ecs-iter" => new ECSIter(),
             "query-filter" => new QueryFilterExample(),
             "font" => new FontExample(),
+            "scene" => new SceneExample(),
             _ => null
         };
 

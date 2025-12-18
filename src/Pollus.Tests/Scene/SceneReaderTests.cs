@@ -10,6 +10,7 @@ using Pollus.Engine;
 using Pollus.ECS;
 using System.Text;
 using Pollus.Core.Serialization;
+using System.Runtime.CompilerServices;
 
 public partial struct TestEmptyComponent : IComponent;
 
@@ -35,6 +36,24 @@ public partial struct Vec2
     public float X { get; set; }
     public float Y { get; set; }
     [SerializeIgnore] public int Ignore { get; set; }
+}
+
+[Serialize]
+public partial class RootAsset
+{
+    public required Handle<ChildAsset> Child1;
+    public required Handle<ChildAsset> Child2;
+}
+
+[Serialize]
+public partial class ChildAsset
+{
+    public required Handle<TextAsset> Text;
+}
+
+public partial struct ComplexHandleComponent : IComponent
+{
+    public required Handle<RootAsset> Root;
 }
 
 public class SceneReaderTests
@@ -210,5 +229,45 @@ entities:
 
         Assert.Equal(10, value.Value);
         Assert.NotEqual(Handle<TextAsset>.Null, value.AssetHandle);
+    }
+
+    [Fact]
+    public void Parse_WithTypedHandle_Hierarchy()
+    {
+        using var parser = new SceneReader();
+
+        var yaml = $@"
+types:
+  ComplexHandleComponent: ""{typeof(ComplexHandleComponent).AssemblyQualifiedName}""
+  RootAsset: ""{typeof(RootAsset).AssemblyQualifiedName}""
+  ChildAsset: ""{typeof(ChildAsset).AssemblyQualifiedName}""
+entities:
+  Entity1:
+    components:
+      ComplexHandleComponent:
+        Root:
+          Child1:
+            Text: ""path/to/child1.txt""
+          Child2:
+            Text: ""path/to/child2.txt""
+";
+        var assetIO = new TestAssetIO("assets")
+            .AddFile("path/to/child1.txt", "this is child 1 asset"u8.ToArray())
+            .AddFile("path/to/child2.txt", "this is child 2 asset"u8.ToArray());
+        var context = CreateContext(assetIO);
+        context.AssetServer.AddLoader<TextAssetLoader>();
+
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<RootAsset>());
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<ChildAsset>());
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        Assert.Single(scene.Entities[0].Components);
+
+        var comp = scene.Entities[0].Components[0];
+        var value = MemoryMarshal.AsRef<ComplexHandleComponent>(comp.Data);
+
+        Assert.NotEqual(Handle<RootAsset>.Null, value.Root);
     }
 }

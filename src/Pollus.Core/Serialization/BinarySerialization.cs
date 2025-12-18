@@ -158,4 +158,16 @@ public class BinaryReader : IReader
         cursor += length;
         return value;
     }
+
+    public T Deserialize<T>()
+        where T : notnull
+    {
+        if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            var self = this;
+            return serializer.Deserialize(ref self, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
+    }
 }
