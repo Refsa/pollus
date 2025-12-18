@@ -54,8 +54,8 @@ public struct SpawnSceneCommand : ICommand
 
     static Entity SpawnEntity(World world, in Scene.Entity entity)
     {
-        Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Length];
-        for (int i = 0; i < entity.Components.Length; i++)
+        Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Count];
+        for (int i = 0; i < entity.Components.Count; i++)
         {
             cids[i] = entity.Components[i].ComponentID;
         }
@@ -64,7 +64,7 @@ public struct SpawnSceneCommand : ICommand
         var entityRef = world.Store.CreateEntity(aid, cids);
 
         ref var chunk = ref entityRef.Archetype.Chunks[entityRef.ChunkIndex];
-        for (int i = 0; i < entity.Components.Length; i++)
+        for (int i = 0; i < entity.Components.Count; i++)
         {
             chunk.SetComponent(entityRef.RowIndex, entity.Components[i].ComponentID, entity.Components[i].Data);
         }

@@ -95,12 +95,18 @@ public class SerializeGenerator : IIncrementalGenerator
             $$"""
                 public void Serialize<TWriter>(ref TWriter writer, in {{contextType}} context) where TWriter : IWriter, allows ref struct
                 {
-                    {{string.Join("\n", GetFields(model).Select(e => $"writer.Write({e.Name});"))}}
+                    {{string.Join("\n", GetFields(model).Select(e => e.IsBlittable
+                        ? $"writer.Write({e.Name});"
+                        : $"writer.Serialize({e.Name});"
+                    ))}}
                 }
 
                 public void Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader, allows ref struct
                 {
-                    {{string.Join("\n", GetFields(model).Select(e => $"{e.Name} = reader.Read<{e.Type}>();"))}}
+                    {{string.Join("\n", GetFields(model).Select(e => e.IsBlittable
+                        ? $"{e.Name} = reader.Read<{e.Type}>();"
+                        : $"{e.Name} = reader.Deserialize<{e.Type}>();"
+                    ))}}
                 }
               """;
     }
@@ -125,7 +131,7 @@ public class SerializeGenerator : IIncrementalGenerator
                       c.Deserialize(ref reader, in context);
                       return c;
                   }  
-                  public void Serialize<TWriter>(ref TWriter writer, ref {{model.TypeInfo.FullClassName}} value, in {{contextType}} context) where TWriter : IWriter, allows ref struct
+                  public void Serialize<TWriter>(ref TWriter writer, in {{model.TypeInfo.FullClassName}} value, in {{contextType}} context) where TWriter : IWriter, allows ref struct
                   {
                       value.Serialize(ref writer, in context);
                   }

@@ -113,6 +113,17 @@ public class BinaryWriter : IWriter, IDisposable
         Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
         cursor += byteCount;
     }
+
+    public void Serialize<T>(in T value) where T : notnull
+    {
+        if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            var self = this;
+            serializer.Serialize(ref self, in value, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
+    }
 }
 
 public class BinaryReader : IReader

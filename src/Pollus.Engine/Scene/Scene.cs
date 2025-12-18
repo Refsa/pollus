@@ -6,8 +6,8 @@ public class Scene
     {
         public int EntityID { get; set; }
         public string? Name { get; set; }
-        public Component[] Components { get; set; }
-        public Entity[] Children { get; set; }
+        public List<Component> Components { get; set; }
+        public List<Entity> Children { get; set; }
     }
 
     public struct Component

@@ -15,7 +15,7 @@ public interface IBlittableSerializer<TData, TContext> : IBlittableSerializer<TC
     where TContext : allows ref struct
 {
     public new TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
-    public new void Serialize<TWriter>(ref TWriter reader, ref TData value, in TContext context) where TWriter : IWriter, allows ref struct;
+    public new void Serialize<TWriter>(ref TWriter reader, in TData value, in TContext context) where TWriter : IWriter, allows ref struct;
 
     byte[] IBlittableSerializer<TContext>.DeserializeBytes<TReader>(ref TReader reader, in TContext context)
     {

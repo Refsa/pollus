@@ -27,7 +27,8 @@ public partial class SerializationPlugin<TSerialization> : IPlugin
 public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializationContext>
     where T : notnull
 {
-    public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
+    public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context)
+        where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString();
         if (string.IsNullOrEmpty(path))
@@ -35,10 +36,12 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
             var asset = reader.Deserialize<T>();
             return context.AssetServer.Assets.Add(asset);
         }
+
         return context.AssetServer.Load<T>(path);
     }
 
-    public void Serialize<TWriter>(ref TWriter writer, ref Handle<T> value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
+    public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)
+        where TWriter : IWriter, allows ref struct
     {
     }
 }

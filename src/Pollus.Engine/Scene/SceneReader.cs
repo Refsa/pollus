@@ -44,16 +44,25 @@ public ref struct SceneReader : IReader, IDisposable
     int PeekIndent()
     {
         int p = cursor;
-        while (p < length)
+        if (p > 0 && data[p - 1] != '\n')
         {
             while (p < length && data[p] != '\n') p++;
             if (p >= length) return -1;
             p++;
+        }
 
+        while (p < length)
+        {
             int start = p;
             while (p < length && data[p] == ' ') p++;
 
-            if (p < length && (data[p] == '\n' || data[p] == '\r' || data[p] == '#')) continue;
+            if (p < length && ((char)data[p] is '\n' or '\r' or '#'))
+            {
+                while (p < length && data[p] != '\n') p++;
+                if (p >= length) return -1;
+                p++;
+                continue;
+            }
             if (p >= length) return -1;
 
             return p - start;
@@ -64,15 +73,24 @@ public ref struct SceneReader : IReader, IDisposable
 
     void AdvanceToNextLine()
     {
-        while (cursor < length)
+        if (cursor > 0 && data[cursor - 1] != '\n')
         {
             while (cursor < length && data[cursor] != '\n') cursor++;
             if (cursor >= length) return;
             cursor++;
+        }
 
+        while (cursor < length)
+        {
             int p = cursor;
             while (p < length && data[p] == ' ') p++;
-            if (p < length && (data[p] == '\n' || data[p] == '\r' || data[p] == '#')) continue;
+            if (p < length && ((char)data[p] is '\n' or '\r' or '#'))
+            {
+                cursor = p;
+                while (cursor < length && data[cursor] != '\n') cursor++;
+                if (cursor < length) cursor++;
+                continue;
+            }
 
             return;
         }
@@ -85,12 +103,12 @@ public ref struct SceneReader : IReader, IDisposable
 
     void SkipWhitespace()
     {
-        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\n' || data[cursor] == '\r')) cursor++;
+        while (cursor < length && ((char)data[cursor] is ' ' or '\n' or '\r')) cursor++;
     }
 
     void SkipSpaces()
     {
-        while (cursor < length && (data[cursor] == ' ' || data[cursor] == '\r')) cursor++;
+        while (cursor < length && ((char)data[cursor] is ' ' or '\r')) cursor++;
     }
 
     void SkipKey()
@@ -110,7 +128,7 @@ public ref struct SceneReader : IReader, IDisposable
         while (cursor < length)
         {
             char c = (char)data[cursor];
-            if (c == ' ' || c == '\n' || c == '\r' || c == '{' || c == '}' || c == ',')
+            if (c is ' ' or '\n' or '\r' or '{' or ',')
             {
                 cursor++;
             }
@@ -194,8 +212,8 @@ public ref struct SceneReader : IReader, IDisposable
 
             ParseEntityBody(ref entity, components, children, indent);
 
-            entity.Components = components.ToArray();
-            entity.Children = children.ToArray();
+            entity.Components = components;
+            entity.Children = children;
             entities.Add(entity);
         }
     }
@@ -298,8 +316,8 @@ public ref struct SceneReader : IReader, IDisposable
 
             ParseEntityBody(ref child, childComps, childKids, childIndent);
 
-            child.Components = childComps.ToArray();
-            child.Children = childKids.ToArray();
+            child.Components = childComps;
+            child.Children = childKids;
             children.Add(child);
         }
     }
@@ -317,7 +335,7 @@ public ref struct SceneReader : IReader, IDisposable
             return defaultSerializer.DeserializeBytes(ref this, new());
         }
 
-        throw new InvalidOperationException($"No serializer found for type {type.Name}");
+        throw new InvalidOperationException($"No serializer found for type {type.AssemblyQualifiedName}");
     }
 
     T DeserializeBlittable<T>() where T : unmanaged
@@ -333,7 +351,7 @@ public ref struct SceneReader : IReader, IDisposable
             return defaultSerializer.Deserialize(ref this, new());
         }
 
-        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
     }
 
     public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
@@ -457,7 +475,7 @@ public ref struct SceneReader : IReader, IDisposable
             return defaultSerializer.Deserialize(ref this, new());
         }
 
-        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
     }
 
     public T Read<T>() where T : unmanaged
@@ -468,6 +486,8 @@ public ref struct SceneReader : IReader, IDisposable
             SkipKey();
 
             string val = ReadString();
+            if (string.IsNullOrEmpty(val)) return default;
+
             if (t == typeof(int)) return Unsafe.BitCast<int, T>(int.Parse(val));
             if (t == typeof(float)) return Unsafe.BitCast<float, T>(float.Parse(val, CultureInfo.InvariantCulture));
             if (t == typeof(double)) return Unsafe.BitCast<double, T>(double.Parse(val, CultureInfo.InvariantCulture));

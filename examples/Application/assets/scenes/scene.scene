@@ -1,13 +1,14 @@
 types:
+  GlobalTransform: "Pollus.Engine.Transform.GlobalTransform"
   Transform2D: "Pollus.Engine.Transform.Transform2D"
   Sprite: "Pollus.Engine.Rendering.Sprite"
 entities:
-  entity 1:
+  entity1:
     components:
       GlobalTransform: {}
       Transform2D:
-        Position: { x: 5, y: 10 }
-        Scale: { x: 1, y: 1 }
+        Position: { X: 120, Y: 120 }
+        Scale: { X: 16, Y: 16 }
         Rotation: 0
       Sprite:
         Material:
@@ -17,18 +18,4 @@ entities:
         Slice:
           Min: { X: 0, Y: 0 }
           Max: { X: 16, Y: 16 }
-        Color: { R: 0, G: 0, B: 0, A: 1 }
-    children:
-      child 1:
-        components:
-          Transform2D:
-            Position: { X: 0, Y: 0 }
-            Scale: { X: 1, Y: 1 }
-            Rotation: 0
-  entity 2:
-    components:
-      Transform2D:
-        Position: { X: 10, Y: 10 }
-        Scale: { X: 1, Y: 1 }
-        Rotation: 0
-    children: []
+        Color: { R: 1, G: 1, B: 1, A: 1 }

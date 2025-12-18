@@ -18,6 +18,7 @@ public interface IWriter
     void Write<T>(T value) where T : unmanaged;
     void Write<T>(T[] values) where T : unmanaged;
     void Write(string value);
+    void Serialize<T>(in T value) where T : notnull;
 }
 
 public interface IReader
@@ -48,7 +49,7 @@ public interface ISerializer<TData, TContext> : ISerializer<TContext>
     where TContext : allows ref struct
 {
     public TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
-    public void Serialize<TWriter>(ref TWriter reader, ref TData value, in TContext context) where TWriter : IWriter, allows ref struct;
+    public void Serialize<TWriter>(ref TWriter reader, in TData value, in TContext context) where TWriter : IWriter, allows ref struct;
 
     object? ISerializer<TContext>.DeserializeBoxed<TReader>(ref TReader reader, in TContext context)
     {

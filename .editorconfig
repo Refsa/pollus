@@ -25,6 +25,13 @@ resharper_redundant_name_qualifier_highlighting = hint
 resharper_check_namespace_highlighting=hint
 resharper_unused_member_global_highlighting=hint
 
+# lambdas with brackets should not be on same line as assignment/call
+dotnet_style_allow_statement_lambdas_on_one_line = false:suggestion
+# resharper: put lambda braces on new line
+resharper_place_single_method_argument_lambda_on_same_line = false
+csharp_wrap_before_arrow_with_expressions = true
+
+
 # set max line length to 240
 max_line_length = 240
 

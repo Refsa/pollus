@@ -1,8 +1,10 @@
 namespace Pollus.Engine.Assets;
 
 using System.Runtime.CompilerServices;
+using Core.Serialization;
 using Pollus.Collections;
 using Pollus.Utils;
+using Serialization;
 
 public enum AssetStatus
 {
@@ -27,11 +29,12 @@ public class Assets<T> : IDisposable
 {
     static int _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
-    static int NextID => counter++;
+    static int NextID => Interlocked.Increment(ref counter);
 
     static Assets()
     {
         AssetsFetch<T>.Register();
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<T>());
     }
 
     List<AssetInfo<T>> assets = new();
@@ -82,6 +85,7 @@ public class Assets<T> : IDisposable
                 info.Asset = asset;
                 info.Status = AssetStatus.Loaded;
             }
+
             return handle;
         }
 
@@ -170,6 +174,17 @@ public class Assets : IDisposable
         }
 
         assets.Clear();
+    }
+
+    public void Init<T>()
+        where T : notnull
+    {
+        if (assets.ContainsKey(TypeLookup.ID<T>()))
+        {
+            return;
+        }
+
+        assets.Add(TypeLookup.ID<T>(), new Assets<T>());
     }
 
     public bool TryGetAssets<T>(out Assets<T> container)

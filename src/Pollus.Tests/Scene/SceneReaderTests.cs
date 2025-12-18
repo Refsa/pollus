@@ -192,7 +192,7 @@ entities:
         Assert.Single(scene.Entities);
         var parent = scene.Entities[0];
         Assert.Equal("Parent", parent.Name);
-        Assert.Equal(2, parent.Children.Length);
+        Assert.Equal(2, parent.Children.Count);
 
         Assert.Equal("Child1", parent.Children[0].Name);
         Assert.Equal("Child2", parent.Children[1].Name);
@@ -269,5 +269,51 @@ entities:
         var value = MemoryMarshal.AsRef<ComplexHandleComponent>(comp.Data);
 
         Assert.NotEqual(Handle<RootAsset>.Null, value.Root);
+
+        var rootAsset = context.AssetServer.GetAssets<RootAsset>().Get(value.Root);
+        Assert.NotNull(rootAsset);
+
+        var child1Asset = context.AssetServer.GetAssets<ChildAsset>().Get(rootAsset.Child1);
+        Assert.NotNull(child1Asset);
+        var child1Text = context.AssetServer.GetAssets<TextAsset>().Get(child1Asset.Text);
+        Assert.NotNull(child1Text);
+        Assert.Equal("this is child 1 asset", child1Text.Content);
+
+        var child2Asset = context.AssetServer.GetAssets<ChildAsset>().Get(rootAsset.Child2);
+        Assert.NotNull(child2Asset);
+        var child2Text = context.AssetServer.GetAssets<TextAsset>().Get(child2Asset.Text);
+        Assert.NotNull(child2Text);
+        Assert.Equal("this is child 2 asset", child2Text.Content);
+    }
+
+    [Fact]
+    public void Parse_Entity_MultipleComponents_FirstEmpty_Success()
+    {
+        using var parser = new SceneReader();
+        var yaml = $@"
+types:
+  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
+  TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
+entities:
+  Entity1:
+    components:
+      TestComponent: {{}}
+      TestComplexComponent:
+        Position: {{ X: 10, Y: 20 }}
+";
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        Assert.Equal(2, scene.Entities[0].Components.Count);
+
+        var comp1 = scene.Entities[0].Components[0];
+        var val1 = MemoryMarshal.AsRef<TestComponent>(comp1.Data);
+        Assert.Equal(0, val1.Value);
+
+        var comp2 = scene.Entities[0].Components[1];
+        var val2 = MemoryMarshal.AsRef<TestComplexComponent>(comp2.Data);
+        Assert.Equal(10, val2.Position.X);
+        Assert.Equal(20, val2.Position.Y);
     }
 }

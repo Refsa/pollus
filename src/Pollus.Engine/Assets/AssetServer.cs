@@ -49,6 +49,12 @@ public class AssetServer : IDisposable
         return this;
     }
 
+    public void InitAsset<TAsset>()
+        where TAsset : notnull
+    {
+        Assets.Init<TAsset>();
+    }
+
     public Assets<TAsset> GetAssets<TAsset>()
         where TAsset : notnull
     {
