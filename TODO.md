@@ -22,6 +22,7 @@
 		- f.ex. shader imports, scene files, etc.
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
+	- [ ] Hot reloading
 - Plugins
 	- [x] Defer applying plugins
 	- [x] Plugin dependency graph

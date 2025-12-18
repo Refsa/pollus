@@ -17,6 +17,14 @@ dotnet_naming_style.instance_field_style.required_suffix =
 dotnet_style_require_accessibility_modifiers = never:suggestion
 dotnet_style_readonly_field = true:suggestion
 
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = inside_namespace
+csharp_using_directive_full_qualification = true
+
+resharper_redundant_name_qualifier_highlighting = hint
+resharper_check_namespace_highlighting=hint
+resharper_unused_member_global_highlighting=hint
+
 # set max line length to 240
 max_line_length = 240
 
