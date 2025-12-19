@@ -12,6 +12,7 @@ using System.Text;
 using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
 using Pollus.Engine.Rendering;
+using Pollus.Graphics.Rendering;
 
 public partial struct TestEmptyComponent : IComponent;
 
@@ -71,9 +72,9 @@ public partial struct TestComponentWithObject : IComponent
 
 public enum TestEnum
 {
-  One = 1,
-  Two = 2,
-  Three = 3,
+    One = 1,
+    Two = 2,
+    Three = 3,
 }
 
 public partial struct TestComponentWithEnum : IComponent
@@ -95,32 +96,42 @@ public class SceneReaderTests
     public void Parse_Types()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-types:
-  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
-  TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponent": "{{typeof(TestComponent).AssemblyQualifiedName}}",
+                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}"
+                }
+              }
+              """;
 
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Equal(2, scene.Types.Count);
-        Assert.Equal("TestComponent", scene.Types[0].Name);
-        Assert.Equal("TestComplexComponent", scene.Types[1].Name);
+        Assert.True(scene.Types.ContainsKey("TestComponent"));
+        Assert.True(scene.Types.ContainsKey("TestComplexComponent"));
+        Assert.Equal(typeof(TestComponent), scene.Types["TestComponent"]);
+        Assert.Equal(typeof(TestComplexComponent), scene.Types["TestComplexComponent"]);
     }
 
     [Fact]
     public void Parse_Entity_Simple()
     {
         using var parser = new SceneReader();
-        var yaml = @"
-entities:
-  Entity1:
-    id: 10
-";
+        var json = @"
+{
+  ""entities"": [
+    {
+      ""name"": ""Entity1"",
+      ""id"": 10
+    }
+  ]
+}";
 
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         Assert.Equal("Entity1", scene.Entities[0].Name);
@@ -131,19 +142,30 @@ entities:
     public void Parse_Entity_EmptyComponent()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-types:
-  TestEmptyComponent: ""{typeof(TestEmptyComponent).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestEmptyComponent: {{}}
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestEmptyComponent": "{{typeof(TestEmptyComponent).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "id": 10,
+                    "name": "Entity1",
+                    "components": {
+                      "TestEmptyComponent": {}
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
+        Assert.NotNull(scene.Entities[0].Components);
         Assert.Single(scene.Entities[0].Components);
+
         var comp = scene.Entities[0].Components[0];
         var empty = MemoryMarshal.AsRef<TestEmptyComponent>(comp.Data);
         Assert.IsType<TestEmptyComponent>(empty);
@@ -153,17 +175,26 @@ entities:
     public void Parse_Entity_WithComponent()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-types:
-  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComponent:
-        Value: 42
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponent": "{{typeof(TestComponent).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponent": {
+                        "Value": 42
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         Assert.Single(scene.Entities[0].Components);
@@ -177,17 +208,26 @@ entities:
     public void Parse_Entity_WithInlineObject()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-types:
-  TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComplexComponent:
-        Position: {{ X: 10.5, Y: 20.5, Ignore: 42 }}
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComplexComponent": {
+                        "Position": { "X": 10.5, "Y": 20.5, "Ignore": 42 }
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
@@ -202,17 +242,25 @@ entities:
     public void Parse_NestedChildren()
     {
         using var parser = new SceneReader();
-        var yaml = @"
-entities:
-  Parent:
-    children:
-      Child1:
-      Child2:
-        children:
-          GrandChild:
-";
+        var json = @"
+{
+  ""entities"": [
+    {
+      ""name"": ""Parent"",
+      ""children"": [
+        { ""name"": ""Child1"" },
+        {
+          ""name"": ""Child2"",
+          ""children"": [
+            { ""name"": ""GrandChild"" }
+          ]
+        }
+      ]
+    }
+  ]
+}";
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var parent = scene.Entities[0];
@@ -231,22 +279,31 @@ entities:
     {
         using var parser = new SceneReader();
 
-        var yaml = $@"
-types:
-  TestComponentWithHandle: ""{typeof(TestComponentWithHandle).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComponentWithHandle:
-        Value: 10
-        AssetHandle: ""path/to/asset.txt""
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponentWithHandle": "{{typeof(TestComponentWithHandle).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponentWithHandle": {
+                        "Value": 10,
+                        "AssetHandle": "path/to/asset.txt"
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var assetIO = new TestAssetIO("assets");
         assetIO.AddFile("path/to/asset.txt", "this is some asset"u8.ToArray());
         var context = CreateContext(assetIO);
         context.AssetServer.AddLoader<TextAssetLoader>();
 
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
@@ -261,17 +318,29 @@ entities:
     {
         using var parser = new SceneReader();
 
-        var yaml = $@"
-types:
-  ComplexHandleComponent: ""{typeof(ComplexHandleComponent).AssemblyQualifiedName}""
-  RootAsset: ""{typeof(RootAsset).AssemblyQualifiedName}""
-  ChildAsset: ""{typeof(ChildAsset).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      ComplexHandleComponent:
-        Root: {{ Child1: {{ Text: ""path/to/child1.txt"" }}, Child2: {{ Text: ""path/to/child2.txt"" }} }}
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "ComplexHandleComponent": "{{typeof(ComplexHandleComponent).AssemblyQualifiedName}}",
+                  "RootAsset": "{{typeof(RootAsset).AssemblyQualifiedName}}",
+                  "ChildAsset": "{{typeof(ChildAsset).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "ComplexHandleComponent": {
+                        "Root": {
+                          "Child1": { "Text": "path/to/child1.txt" },
+                          "Child2": { "Text": "path/to/child2.txt" }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var assetIO = new TestAssetIO("assets")
             .AddFile("path/to/child1.txt", "this is child 1 asset"u8.ToArray())
             .AddFile("path/to/child2.txt", "this is child 2 asset"u8.ToArray());
@@ -282,7 +351,7 @@ entities:
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<RootAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<ChildAsset>());
 
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         Assert.Single(scene.Entities[0].Components);
@@ -312,19 +381,28 @@ entities:
     public void Parse_Entity_MultipleComponents_FirstEmpty_Success()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-types:
-  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
-  TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComponent: {{}}
-      TestComplexComponent:
-        Position: {{ X: 10, Y: 20 }}
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponent": "{{typeof(TestComponent).AssemblyQualifiedName}}",
+                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponent": {},
+                      "TestComplexComponent": {
+                        "Position": { "X": 10, "Y": 20 }
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         Assert.Equal(2, scene.Entities[0].Components.Count);
@@ -344,21 +422,30 @@ entities:
     {
         using var parser = new SceneReader();
 
-        var yaml = $@"
-types:
-  TestComponentWithObject: ""{typeof(TestComponentWithObject).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComponentWithObject:
-        HandleObject: {{ Image: ""path/to/image.txt"", Value: 123 }}
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponentWithObject": "{{typeof(TestComponentWithObject).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponentWithObject": {
+                        "HandleObject": { "Image": "path/to/image.txt", "Value": 123 }
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var assetIO = new TestAssetIO("assets")
             .AddFile("path/to/image.txt", "image data"u8.ToArray());
         var context = CreateContext(assetIO);
         context.AssetServer.AddLoader<TextAssetLoader>();
-        
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
@@ -372,17 +459,26 @@ entities:
     public void Parse_WithArraySyntax()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-        types:
-          TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
-        entities:
-          Entity1:
-            components:
-              TestComplexComponent:
-                Position: [10, 20]
-        ";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComplexComponent": {
+                        "Position": [10, 20]
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
         var complex = MemoryMarshal.AsRef<TestComplexComponent>(comp.Data);
@@ -394,17 +490,26 @@ entities:
     public void Parse_WithEnum()
     {
         using var parser = new SceneReader();
-        var yaml = $@"
-        types:
-          TestComponentWithEnum: ""{typeof(TestComponentWithEnum).AssemblyQualifiedName}""
-        entities:
-          Entity1:
-            components:
-              TestComponentWithEnum:
-                EnumValue: One
-        ";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponentWithEnum": "{{typeof(TestComponentWithEnum).AssemblyQualifiedName}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponentWithEnum": {
+                        "EnumValue": "One"
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var context = CreateContext();
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var comp = scene.Entities[0].Components[0];
@@ -417,22 +522,33 @@ entities:
     {
         using var parser = new SceneReader();
         var spriteType = typeof(Sprite).AssemblyQualifiedName!;
-        var yaml = $@"
-types:
-  Sprite: ""{spriteType}""
-entities:
-  Entity1:
-    components:
-      Sprite:
-        Material:
-          ShaderSource: ""shaders/builtin/sprite.wgsl""
-          Texture: {{ Image: ""sprites/test_sheet.png"", Visibility: Fragment }}
-          Sampler: {{ Sampler: ""nearest"", Visibility: Fragment }}
-        Slice:
-          Min: [0, 0]
-          Max: [1, 1]
-        Color: [1, 1, 1, 1]
-";
+        var json =
+            $$"""
+              {
+                "types": {
+                  "Sprite": "{{spriteType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "Sprite": {
+                        "Material": {
+                          "ShaderSource": "shaders/builtin/sprite.wgsl",
+                          "Texture": { "Image": "sprites/test_sheet.png", "Visibility": "Fragment" },
+                          "Sampler": { "Sampler": "nearest", "Visibility": "Fragment" }
+                        },
+                        "Slice": {
+                          "Min": [0, 0],
+                          "Max": [1, 1]
+                        },
+                        "Color": [1, 1, 1, 1]
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
         var assetIO = new TestAssetIO("assets")
             .AddFile("shaders/builtin/sprite.wgsl", "shader"u8.ToArray())
             .AddFile("sprites/test_sheet.png", "img"u8.ToArray());
@@ -440,8 +556,10 @@ entities:
         context.AssetServer.AddLoader<TextAssetLoader>();
         context.AssetServer.InitAsset<SpriteMaterial>();
         context.AssetServer.InitAsset<SamplerAsset>();
+        context.AssetServer.InitAsset<ShaderAsset>();
+        context.AssetServer.InitAsset<Texture2D>();
 
-        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
         var spriteComp = scene.Entities[0].Components[0];

@@ -24,10 +24,10 @@ public interface IWriter
 public interface IReader
 {
     void Init(byte[]? data);
-    string? ReadString();
-    T Deserialize<T>() where T : notnull;
-    T Read<T>() where T : unmanaged;
-    T[] ReadArray<T>() where T : unmanaged;
+    string? ReadString(string? identifier = null);
+    T Deserialize<T>(string? identifier = null) where T : notnull;
+    T Read<T>(string? identifier = null) where T : unmanaged;
+    T[] ReadArray<T>(string? identifier = null) where T : unmanaged;
 }
 
 public struct DefaultSerializationContext;

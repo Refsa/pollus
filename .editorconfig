@@ -38,3 +38,12 @@ max_line_length = 240
 indent_style = space
 indent_size = 4
 
+[*.json]
+# Settings for JSON files
+indent_style = space
+indent_size = 2
+
+[*.scene]
+# Settings for JSON files
+indent_style = space
+indent_size = 2

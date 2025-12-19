@@ -33,7 +33,7 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
 {
     public SamplerBinding Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
     {
-        var samplerPath = reader.ReadString();
+        var samplerPath = reader.ReadString("Sampler");
         var sampler = samplerPath switch
         {
             "nearest" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Nearest),
@@ -44,7 +44,7 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
         return new SamplerBinding()
         {
             Sampler = sampler,
-            Visibility = reader.Read<ShaderStage>()
+            Visibility = reader.Read<ShaderStage>("Visibility")
         };
     }
 

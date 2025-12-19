@@ -104,8 +104,8 @@ public class SerializeGenerator : IIncrementalGenerator
                 public void Deserialize<TReader>(ref TReader reader, in {{contextType}} context) where TReader : IReader, allows ref struct
                 {
                     {{string.Join("\n", GetFields(model).Select(e => e.IsBlittable
-                        ? $"{e.Name} = reader.Read<{e.Type}>();"
-                        : $"{e.Name} = reader.Deserialize<{e.Type}>();"
+                        ? $"{e.Name} = reader.Read<{e.Type}>(\"{e.Name}\");"
+                        : $"{e.Name} = reader.Deserialize<{e.Type}>(\"{e.Name}\");"
                     ))}}
                 }
               """;

@@ -51,7 +51,7 @@ public struct SpawnSceneCommand : ICommand
         }
     }
 
-    static Entity SpawnEntity(World world, in Scene.Entity entity)
+    static Entity SpawnEntity(World world, in Scene.SceneEntity entity)
     {
         Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Count];
         for (int i = 0; i < entity.Components.Count; i++)

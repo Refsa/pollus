@@ -137,7 +137,7 @@ public class BinaryReader : IReader
         cursor = 0;
     }
 
-    public ReadOnlySpan<T> ReadSpan<T>() where T : unmanaged
+    public ReadOnlySpan<T> ReadSpan<T>(string? identifier = null) where T : unmanaged
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var length = Read<int>();
@@ -147,7 +147,7 @@ public class BinaryReader : IReader
         return MemoryMarshal.Cast<byte, T>(span);
     }
 
-    public T Read<T>() where T : unmanaged
+    public T Read<T>(string? identifier = null) where T : unmanaged
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var size = Unsafe.SizeOf<T>();
@@ -156,12 +156,12 @@ public class BinaryReader : IReader
         return value;
     }
 
-    public T[] ReadArray<T>() where T : unmanaged
+    public T[] ReadArray<T>(string? identifier = null) where T : unmanaged
     {
-        return ReadSpan<T>().ToArray();
+        return ReadSpan<T>(identifier).ToArray();
     }
 
-    public string? ReadString()
+    public string? ReadString(string? identifier = null)
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var length = Read<int>();
@@ -170,7 +170,7 @@ public class BinaryReader : IReader
         return value;
     }
 
-    public T Deserialize<T>()
+    public T Deserialize<T>(string? identifier = null)
         where T : notnull
     {
         if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)

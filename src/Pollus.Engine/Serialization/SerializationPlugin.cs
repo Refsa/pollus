@@ -31,7 +31,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
     public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context)
         where TReader : IReader, allows ref struct
     {
-        var path = reader.ReadString();
+        var path = reader.ReadString("$path");
         
         if (string.IsNullOrEmpty(path))
         {

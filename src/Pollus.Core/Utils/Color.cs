@@ -4,7 +4,7 @@ using Core.Serialization;
 using Pollus.Graphics;
 using Pollus.Mathematics;
 
-[ShaderType, Reflect, Serialize]
+[ShaderType, Reflect]
 public partial struct Color
 {
     public static readonly Color TRANSPARENT = new(0f, 0f, 0f, 0f);
@@ -337,5 +337,29 @@ public struct Color8
             B = (byte)(color.B * 255),
             A = (byte)(color.A * 255)
         };
+    }
+}
+
+public class ColorSerializer : IBlittableSerializer<Color, DefaultSerializationContext>
+{
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    public static void ModuleInitializer()
+    {
+        BlittableSerializerLookup<DefaultSerializationContext>.RegisterSerializer(new ColorSerializer());
+    }
+
+    public Color Deserialize<TReader>(ref TReader reader, in DefaultSerializationContext context) where TReader : IReader, allows ref struct
+    {
+        return new(
+            reader.Read<float>("R"),
+            reader.Read<float>("G"),
+            reader.Read<float>("B"),
+            reader.Read<float>("A")
+        );
+    }
+
+    public void Serialize<TWriter>(ref TWriter reader, in Color value, in DefaultSerializationContext context) where TWriter : IWriter, allows ref struct
+    {
+        throw new NotImplementedException();
     }
 }
