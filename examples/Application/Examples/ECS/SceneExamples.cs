@@ -16,6 +16,11 @@ public partial class SceneExample : IExample
     public string Name => "scene";
     IApplication? application;
 
+    partial struct Rotate : IComponent
+    {
+        public float Speed;
+    }
+
     public void Run() => (application = Application.Builder
             .AddPlugins([
                 new TimePlugin(),
@@ -29,14 +34,15 @@ public partial class SceneExample : IExample
                     commands.Spawn(Camera2D.Bundle);
 
                     var scene = assetServer.Load<Scene>("scenes/scene.scene");
-                    var root = commands.SpawnScene(scene);
-                    root.AddComponent(new GlobalTransform())
-                        .AddComponent(new Transform2D());
+                    _ = commands.SpawnScene(scene);
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-                static (Time time, Query query, Query.Filter<All<SceneRoot>> qSceneRoots) =>
+                static (Time time, Query<Transform2D, Rotate> qRotate) =>
                 {
-                    
+                    qRotate.ForEach(time.DeltaTimeF, static (in deltaTime, ref transform, ref rotate) =>
+                    {
+                        transform.Rotation += rotate.Speed * deltaTime;
+                    });
                 }))
             .Build())
         .Run();

@@ -82,8 +82,13 @@ public partial struct TestComponentWithEnum : IComponent
     public TestEnum EnumValue { get; set; }
 }
 
-public class SceneReaderTests
+public partial class SceneReaderTests
 {
+    partial struct TestInnerComponent : IComponent
+    {
+        public int Value { get; set; }
+    }
+
     WorldSerializationContext CreateContext(TestAssetIO? assetIO = null)
     {
         return new WorldSerializationContext
@@ -101,7 +106,8 @@ public class SceneReaderTests
               {
                 "types": {
                   "TestComponent": "{{typeof(TestComponent).AssemblyQualifiedName}}",
-                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}"
+                  "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}",
+                  "TestInnerComponent": "{{typeof(TestInnerComponent).AssemblyQualifiedName}}"
                 }
               }
               """;
@@ -109,11 +115,12 @@ public class SceneReaderTests
         var context = CreateContext();
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
-        Assert.Equal(2, scene.Types.Count);
+        Assert.Equal(3, scene.Types.Count);
         Assert.True(scene.Types.ContainsKey("TestComponent"));
         Assert.True(scene.Types.ContainsKey("TestComplexComponent"));
         Assert.Equal(typeof(TestComponent), scene.Types["TestComponent"]);
         Assert.Equal(typeof(TestComplexComponent), scene.Types["TestComplexComponent"]);
+        Assert.Equal(typeof(TestInnerComponent), scene.Types["TestInnerComponent"]);
     }
 
     [Fact]

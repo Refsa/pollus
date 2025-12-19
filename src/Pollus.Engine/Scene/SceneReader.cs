@@ -49,8 +49,11 @@ public ref struct SceneReader : IReader, IDisposable
 
     public void Dispose()
     {
+    }
 
-
+    public void Init(byte[]? data)
+    {
+        throw new NotSupportedException("SceneReader.Init is not supported, use Parse instead");
     }
 
     public Scene Parse(in WorldSerializationContext context, in ReadOnlySpan<byte> data)
@@ -69,7 +72,17 @@ public ref struct SceneReader : IReader, IDisposable
         {
             foreach (var type in document.Types)
             {
-                types.Add(type.Key, System.Type.GetType(type.Value) ?? throw new Exception($"Type {type.Value} not found"));
+                var resolvedType = System.Type.GetType(type.Value);
+                if (resolvedType is null)
+                {
+                    foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        resolvedType = assembly.GetType(type.Value);
+                        if (resolvedType is not null) break;
+                    }
+                }
+
+                types.Add(type.Key, resolvedType ?? throw new Exception($"Type {type.Value} not found"));
             }
         }
 
@@ -150,9 +163,29 @@ public ref struct SceneReader : IReader, IDisposable
         throw new InvalidOperationException($"No serializer found for type {type.FullName}");
     }
 
-    public void Init(byte[]? data)
+    T ReadJsonObject<T>(JsonElement jsonElement)
+        where T : unmanaged
     {
-        throw new NotImplementedException();
+        try
+        {
+            currentComponent.Push(jsonElement);
+
+            if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } blittableSerializer)
+            {
+                return blittableSerializer.Deserialize(ref this, context);
+            }
+
+            if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
+            {
+                return defaultSerializer.Deserialize(ref this, defaultContext);
+            }
+        }
+        finally
+        {
+            currentComponent.Pop();
+        }
+
+        throw new Exception($"No blittable serializer found for {typeof(T).AssemblyQualifiedName}");
     }
 
     public string? ReadString(string? identifier = null)
@@ -165,6 +198,7 @@ public ref struct SceneReader : IReader, IDisposable
         {
             if (prop.ValueKind == JsonValueKind.String) return prop.GetString();
         }
+
         return null;
     }
 
@@ -191,6 +225,7 @@ public ref struct SceneReader : IReader, IDisposable
                 currentArray.MoveNext();
                 return ReadJsonObject<T>(prop.Value);
             }
+
             prop = currentArray.Current;
             if (!currentArray.MoveNext())
             {
@@ -227,31 +262,6 @@ public ref struct SceneReader : IReader, IDisposable
             JsonValueKind.Undefined or JsonValueKind.Null => default,
             _ => throw new ArgumentOutOfRangeException(nameof(prop.Value.ValueKind)),
         };
-
-    }
-
-    T ReadJsonObject<T>(JsonElement jsonElement)
-        where T : unmanaged
-    {
-        try
-        {
-            currentComponent.Push(jsonElement);
-
-            if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } blittableSerializer)
-            {
-                return blittableSerializer.Deserialize(ref this, context);
-            }
-            if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
-            {
-                return defaultSerializer.Deserialize(ref this, defaultContext);
-            }
-        }
-        finally
-        {
-            currentComponent.Pop();
-        }
-
-        throw new Exception($"No blittable serializer found for {typeof(T).AssemblyQualifiedName}");
     }
 
     public T[] ReadArray<T>(string? identifier = null) where T : unmanaged
