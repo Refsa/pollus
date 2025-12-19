@@ -1,14 +1,12 @@
 types:
-  GlobalTransform: "Pollus.Engine.Transform.GlobalTransform"
   Transform2D: "Pollus.Engine.Transform.Transform2D"
   Sprite: "Pollus.Engine.Rendering.Sprite"
 entities:
   entity1:
     components:
-      GlobalTransform: {}
       Transform2D:
-        Position: { X: 120, Y: 120 }
-        Scale: { X: 16, Y: 16 }
+        Position: [120, 120]
+        Scale: [16, 16]
         Rotation: 0
       Sprite:
         Material:
@@ -16,6 +14,6 @@ entities:
           Texture: { Image: "sprites/test_sheet.png", Visibility: Fragment }
           Sampler: { Sampler: "nearest", Visibility: Fragment }
         Slice:
-          Min: { X: 0, Y: 0 }
-          Max: { X: 16, Y: 16 }
-        Color: { R: 1, G: 1, B: 1, A: 1 }
+          Min: [0, 0]
+          Max: [16, 16]
+        Color: [1, 1, 1, 1]

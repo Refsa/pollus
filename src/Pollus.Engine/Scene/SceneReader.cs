@@ -10,14 +10,38 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using Pollus.Core.Serialization;
+using Pollus.Graphics.Rendering;
 
 public ref struct SceneReader : IReader, IDisposable
 {
+    enum NodeKind
+    {
+        Scalar,
+        Mapping,
+        Sequence,
+    }
+
+    struct Node
+    {
+        public NodeKind Kind;
+        public string? Scalar;
+        public List<KeyValuePair<string, Node>>? Map;
+        public List<Node>? Sequence;
+    }
+
+    struct ValueContext
+    {
+        public Node Node;
+        public int Index;
+        public bool UseNode;
+    }
+
     ReadOnlySpan<byte> data;
     int cursor;
     int length;
     Dictionary<string, Type> types;
     WorldSerializationContext context;
+    List<ValueContext> contexts;
 
     public void Init(byte[]? data)
     {
@@ -26,9 +50,493 @@ public ref struct SceneReader : IReader, IDisposable
             null => ReadOnlySpan<byte>.Empty,
             { } d => d.AsSpan()
         };
-        this.cursor = 0;
-        this.length = this.data.Length;
-        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
+        cursor = 0;
+        length = this.data.Length;
+        types = Pool<Dictionary<string, Type>>.Shared.Rent();
+        types.Clear();
+        contexts = contexts ?? new List<ValueContext>(8);
+        contexts.Clear();
+    }
+
+    public Scene Parse(in WorldSerializationContext context, in ReadOnlySpan<byte> data)
+    {
+        this.data = data;
+        cursor = 0;
+        length = this.data.Length;
+        types = Pool<Dictionary<string, Type>>.Shared.Rent();
+        types.Clear();
+        contexts = contexts ?? new List<ValueContext>(8);
+        contexts.Clear();
+        this.context = context;
+
+        var root = ParseDocument();
+        return BuildScene(root);
+    }
+
+    Scene BuildScene(Node root)
+    {
+        var sceneTypes = new List<Scene.Type>();
+        var sceneEntities = new List<Scene.Entity>();
+        var componentInfos = new List<Scene.ComponentInfo>();
+
+        if (root.Map != null)
+        {
+            for (int i = 0; i < root.Map.Count; i++)
+            {
+                var entry = root.Map[i];
+                if (entry.Key == "types" && entry.Value.Kind == NodeKind.Mapping)
+                {
+                    var typeMap = entry.Value.Map;
+                    if (typeMap != null)
+                    {
+                        for (int t = 0; t < typeMap.Count; t++)
+                        {
+                            var typeEntry = typeMap[t];
+                            var aqn = typeEntry.Value.Scalar ?? string.Empty;
+                            var type = Type.GetType(aqn);
+                            if (type != null)
+                            {
+                                types[typeEntry.Key] = type;
+                            }
+                            sceneTypes.Add(new Scene.Type
+                            {
+                                ID = sceneTypes.Count,
+                                Name = typeEntry.Key,
+                                AssemblyQualifiedName = aqn,
+                            });
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < root.Map.Count; i++)
+            {
+                var entry = root.Map[i];
+                if (entry.Key == "entities" && entry.Value.Kind == NodeKind.Mapping)
+                {
+                    var entityMap = entry.Value.Map;
+                    if (entityMap != null)
+                    {
+                        for (int e = 0; e < entityMap.Count; e++)
+                        {
+                            var entity = BuildEntity(entityMap[e].Key, entityMap[e].Value, sceneTypes);
+                            sceneEntities.Add(entity);
+                        }
+                    }
+                }
+            }
+        }
+
+        return new Scene
+        {
+            Types = sceneTypes,
+            Entities = sceneEntities,
+            ComponentInfos = componentInfos,
+        };
+    }
+
+    Scene.Entity BuildEntity(string name, Node node, List<Scene.Type> sceneTypes)
+    {
+        var entity = new Scene.Entity
+        {
+            Name = name,
+            EntityID = 0,
+            Components = new List<Scene.Component>(),
+            Children = new List<Scene.Entity>(),
+        };
+
+        if (node.Map == null)
+        {
+            return entity;
+        }
+
+        for (int i = 0; i < node.Map.Count; i++)
+        {
+            var entry = node.Map[i];
+            if (entry is { Key: "id", Value.Kind: NodeKind.Scalar })
+            {
+                entity.EntityID = ParseInt(entry.Value.Scalar);
+            }
+            else if (entry is { Key: "components", Value.Kind: NodeKind.Mapping })
+            {
+                var compMap = entry.Value.Map;
+                if (compMap != null)
+                {
+                    for (int c = 0; c < compMap.Count; c++)
+                    {
+                        var compEntry = compMap[c];
+                        var compType = ResolveType(compEntry.Key);
+                        if (compType == null)
+                        {
+                            continue;
+                        }
+
+                        entity.Components.Add(new Scene.Component
+                        {
+                            TypeID = EnsureType(compType, compEntry.Key, sceneTypes),
+                            ComponentID = Component.GetInfo(compType).ID,
+                            Data = DeserializeComponent(compType, compEntry.Value),
+                        });
+                    }
+                }
+            }
+            else if (entry is { Key: "children", Value.Kind: NodeKind.Mapping })
+            {
+                var childMap = entry.Value.Map;
+                if (childMap != null)
+                {
+                    for (int c = 0; c < childMap.Count; c++)
+                    {
+                        var childEntry = childMap[c];
+                        var child = BuildEntity(childEntry.Key, childEntry.Value, sceneTypes);
+                        entity.Children.Add(child);
+                    }
+                }
+            }
+        }
+
+        return entity;
+    }
+
+    Type? ResolveType(string name)
+    {
+        if (types.TryGetValue(name, out var cached))
+        {
+            return cached;
+        }
+
+        var type = Type.GetType(name);
+
+        if (type != null)
+        {
+            types[name] = type;
+        }
+
+        return type;
+    }
+
+    int EnsureType(Type type, string name, List<Scene.Type> sceneTypes)
+    {
+        for (int i = 0; i < sceneTypes.Count; i++)
+        {
+            if (sceneTypes[i].Name == name)
+            {
+                return sceneTypes[i].ID;
+            }
+        }
+
+        var id = sceneTypes.Count;
+        sceneTypes.Add(new Scene.Type
+        {
+            ID = id,
+            Name = name,
+            AssemblyQualifiedName = type.AssemblyQualifiedName ?? name,
+        });
+        types[name] = type;
+        return id;
+    }
+
+    byte[] DeserializeComponent(Type type, Node node)
+    {
+        var blittableSerializer = BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type);
+        if (blittableSerializer != null)
+        {
+            PushContext(node);
+            var data = blittableSerializer.DeserializeBytes(ref this, in context);
+            PopContext();
+            return data;
+        }
+
+        var serializer = SerializerLookup<WorldSerializationContext>.GetSerializer(type);
+        if (serializer != null)
+        {
+            PushContext(node);
+            var boxed = serializer.DeserializeBoxed(ref this, in context);
+            PopContext();
+            if (boxed != null)
+            {
+                return SerializeObject(boxed);
+            }
+        }
+
+        var defaultSerializer = SerializerLookup<DefaultSerializationContext>.GetSerializer(type);
+        if (defaultSerializer != null)
+        {
+            PushContext(node);
+            var boxed = defaultSerializer.DeserializeBoxed(ref this, new DefaultSerializationContext());
+            PopContext();
+            if (boxed != null)
+            {
+                return SerializeObject(boxed);
+            }
+        }
+
+        return Array.Empty<byte>();
+    }
+
+    byte[] SerializeObject(object value)
+    {
+        var type = value.GetType();
+        if (type.IsValueType)
+        {
+            var size = Unsafe.SizeOf<object>();
+            size = Unsafe.SizeOf<object>(); // placeholder to satisfy compiler
+        }
+
+        if (value is byte[] bytes)
+        {
+            return bytes;
+        }
+
+        return Array.Empty<byte>();
+    }
+
+    void PushContext(Node node, bool useNode = false)
+    {
+        contexts.Add(new ValueContext { Node = node, Index = 0, UseNode = useNode });
+    }
+
+    void PopContext()
+    {
+        if (contexts.Count > 0)
+        {
+            contexts.RemoveAt(contexts.Count - 1);
+        }
+    }
+
+    Node? TakeContextNode()
+    {
+        var count = contexts.Count;
+        if (count == 0)
+        {
+            return null;
+        }
+
+        var ctx = contexts[count - 1];
+        if (ctx.UseNode && ctx.Index == 0)
+        {
+            ctx.UseNode = false;
+            contexts[count - 1] = ctx;
+            return ctx.Node;
+        }
+
+        return null;
+    }
+
+    Node? PeekValue()
+    {
+        var count = contexts.Count;
+        while (count > 0)
+        {
+            var ctx = contexts[count - 1];
+            if (ctx.Node.Kind == NodeKind.Mapping)
+            {
+                var map = ctx.Node.Map;
+                if (map != null && ctx.Index < map.Count)
+                {
+                    return map[ctx.Index].Value;
+                }
+            }
+            else if (ctx.Node.Kind == NodeKind.Sequence)
+            {
+                var seq = ctx.Node.Sequence;
+                if (seq != null && ctx.Index < seq.Count)
+                {
+                    return seq[ctx.Index];
+                }
+            }
+            else if (ctx.Node.Kind == NodeKind.Scalar)
+            {
+                if (ctx.Index == 0)
+                {
+                    return ctx.Node;
+                }
+            }
+
+            contexts.RemoveAt(count - 1);
+            count = contexts.Count;
+        }
+
+        return null;
+    }
+
+    Node? NextValue()
+    {
+        var count = contexts.Count;
+        while (count > 0)
+        {
+            var ctx = contexts[count - 1];
+            if (ctx.Node.Kind == NodeKind.Mapping)
+            {
+                var map = ctx.Node.Map;
+                if (map != null && ctx.Index < map.Count)
+                {
+                    var value = map[ctx.Index].Value;
+                    ctx.Index += 1;
+                    contexts[count - 1] = ctx;
+                    return value;
+                }
+            }
+            else if (ctx.Node.Kind == NodeKind.Sequence)
+            {
+                var seq = ctx.Node.Sequence;
+                if (seq != null && ctx.Index < seq.Count)
+                {
+                    var value = seq[ctx.Index];
+                    ctx.Index += 1;
+                    contexts[count - 1] = ctx;
+                    return value;
+                }
+            }
+            else if (ctx.Node.Kind == NodeKind.Scalar)
+            {
+                if (ctx.Index == 0)
+                {
+                    ctx.Index = 1;
+                    contexts[count - 1] = ctx;
+                    return ctx.Node;
+                }
+            }
+
+            contexts.RemoveAt(count - 1);
+            count = contexts.Count;
+        }
+
+        return null;
+    }
+
+    public string? ReadString()
+    {
+        if (contexts.Count > 0)
+        {
+            var ctx = contexts[contexts.Count - 1];
+            if (ctx.UseNode && ctx.Node.Kind != NodeKind.Scalar)
+            {
+                return null;
+            }
+        }
+
+        var node = PeekValue();
+        if (node == null)
+        {
+            return null;
+        }
+
+        if (node.Value.Kind == NodeKind.Scalar)
+        {
+            node = NextValue();
+            return node?.Scalar;
+        }
+
+        return null;
+    }
+
+    public T Deserialize<T>() where T : notnull
+    {
+        Node? node = null;
+
+        node ??= TakeContextNode();
+        node ??= NextValue();
+
+        if (node == null)
+        {
+            return default!;
+        }
+
+        var serializer = SerializerLookup<WorldSerializationContext>.GetSerializer<T>();
+        if (serializer != null)
+        {
+            var useNode = ShouldUseContextNode(typeof(T), node.Value);
+            PushContext(node.Value, useNode);
+            var value = serializer.Deserialize(ref this, in context);
+            PopContext();
+            return value;
+        }
+
+        var defaultSerializer = SerializerLookup<DefaultSerializationContext>.GetSerializer<T>();
+        if (defaultSerializer != null)
+        {
+            var useNode = ShouldUseContextNode(typeof(T), node.Value);
+            PushContext(node.Value, useNode);
+            var value = defaultSerializer.Deserialize(ref this, new DefaultSerializationContext());
+            PopContext();
+            return value;
+        }
+
+        return default!;
+    }
+
+    public T Read<T>() where T : unmanaged
+    {
+        var node = NextValue();
+        if (node == null)
+        {
+            return default;
+        }
+
+        var blittableSerializer = BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>();
+        if (blittableSerializer != null)
+        {
+            var useNode = ShouldUseContextNode(typeof(T), node.Value);
+            PushContext(node.Value, useNode);
+            var value = blittableSerializer.Deserialize(ref this, in context);
+            PopContext();
+            return value;
+        }
+
+        var defaultSerializer = BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>();
+        if (defaultSerializer != null)
+        {
+            var useNode = ShouldUseContextNode(typeof(T), node.Value);
+            PushContext(node.Value, useNode);
+            var value = defaultSerializer.Deserialize(ref this, new DefaultSerializationContext());
+            PopContext();
+            return value;
+        }
+
+        if (node.Value.Kind == NodeKind.Scalar)
+        {
+            return ParseScalar<T>(node.Value.Scalar);
+        }
+
+        return default;
+    }
+
+    public T[] ReadArray<T>() where T : unmanaged
+    {
+        var node = NextValue();
+        if (node == null)
+        {
+            return Array.Empty<T>();
+        }
+
+        if (node.Value.Kind == NodeKind.Sequence && node.Value.Sequence != null)
+        {
+            var seq = node.Value.Sequence;
+            var arr = new T[seq.Count];
+            for (int i = 0; i < seq.Count; i++)
+            {
+                var element = seq[i];
+                if (element.Kind == NodeKind.Scalar)
+                {
+                    arr[i] = ParseScalar<T>(element.Scalar);
+                }
+                else
+                {
+                    var serializer = BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>();
+                    if (serializer != null)
+                    {
+                        var useNode = ShouldUseContextNode(typeof(T), element);
+                        PushContext(element, useNode);
+                        arr[i] = serializer.Deserialize(ref this, in context);
+                        PopContext();
+                    }
+                }
+            }
+            return arr;
+        }
+
+        return Array.Empty<T>();
     }
 
     public void Dispose()
@@ -39,560 +547,421 @@ public ref struct SceneReader : IReader, IDisposable
             Pool<Dictionary<string, Type>>.Shared.Return(types);
             types = null!;
         }
+        contexts?.Clear();
     }
 
-    int PeekIndent()
+    Node ParseDocument()
     {
-        int p = cursor;
-        if (p > 0 && data[p - 1] != '\n')
-        {
-            while (p < length && data[p] != '\n') p++;
-            if (p >= length) return -1;
-            p++;
-        }
-
-        while (p < length)
-        {
-            int start = p;
-            while (p < length && data[p] == ' ') p++;
-
-            if (p < length && ((char)data[p] is '\n' or '\r' or '#'))
-            {
-                while (p < length && data[p] != '\n') p++;
-                if (p >= length) return -1;
-                p++;
-                continue;
-            }
-
-            if (p >= length) return -1;
-
-            return p - start;
-        }
-
-        return -1;
-    }
-
-    void AdvanceToNextLine()
-    {
-        if (cursor > 0 && data[cursor - 1] != '\n')
-        {
-            while (cursor < length && data[cursor] != '\n') cursor++;
-            if (cursor >= length) return;
-            cursor++;
-        }
-
+        var lines = new List<(int start, int length, int indent)>();
+        var minIndent = int.MaxValue;
         while (cursor < length)
         {
-            int p = cursor;
-            while (p < length && data[p] == ' ') p++;
-            if (p < length && ((char)data[p] is '\n' or '\r' or '#'))
-            {
-                cursor = p;
-                while (cursor < length && data[cursor] != '\n') cursor++;
-                if (cursor < length) cursor++;
-                continue;
-            }
-
-            return;
-        }
-    }
-
-    void SkipIndent()
-    {
-        while (cursor < length && data[cursor] == ' ') cursor++;
-    }
-
-    void SkipWhitespace()
-    {
-        while (cursor < length && ((char)data[cursor] is ' ' or '\n' or '\r')) cursor++;
-    }
-
-    void SkipSpaces()
-    {
-        while (cursor < length && ((char)data[cursor] is ' ' or '\r')) cursor++;
-    }
-
-    void SkipKey()
-    {
-        SkipStructural();
-        int p = cursor;
-        while (p < length && IsIdentifierChar((char)data[p])) p++;
-        while (p < length && data[p] == ' ') p++;
-        if (p < length && data[p] == ':')
-        {
-            cursor = p + 1;
-        }
-    }
-
-    string PeekKey(out int nextCursor)
-    {
-        int p = cursor;
-        while (p < length && IsIdentifierChar((char)data[p])) p++;
-        while (p < length && data[p] == ' ') p++;
-        if (p < length && data[p] == ':')
-        {
-            nextCursor = p;
-            return Encoding.UTF8.GetString(data.Slice(cursor, p - cursor));
-        }
-        else
-        {
-            nextCursor = p;
-            return "";
-        }
-    }
-
-    void SkipStructural()
-    {
-        while (cursor < length)
-        {
-            char c = (char)data[cursor];
-            if (c is ' ' or '\n' or '\r' or '{' or ',')
-            {
-                cursor++;
-            }
-            else
+            var lineStart = cursor;
+            var lineSpan = ReadLine();
+            if (lineSpan.Length == 0 && cursor >= length)
             {
                 break;
             }
-        }
-    }
 
-    static bool IsIdentifierChar(char c)
-    {
-        return char.IsLetterOrDigit(c) || c == '_' || c == '.' || c == '-';
-    }
-
-    void ParseTypes(List<Scene.Type> sceneTypes, int parentIndent)
-    {
-        while (cursor < length)
-        {
-            int indent = PeekIndent();
-            if (indent <= parentIndent) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string alias = ReadIdentifier();
-            if (string.IsNullOrEmpty(alias)) continue;
-
-            if (Match(':'))
+            var indent = CountIndent(lineSpan);
+            var trimmed = TrimSpace(lineSpan);
+            if (trimmed.Length > 0 && trimmed[0] != (byte)'#')
             {
-                SkipSpaces();
-                string? typeName = ReadString();
-
-                if (ResolveType(typeName) is { } t)
-                {
-                    types[alias] = t;
-                    sceneTypes.Add(new Scene.Type
-                    {
-                        ID = sceneTypes.Count,
-                        Name = alias,
-                        AssemblyQualifiedName = t.AssemblyQualifiedName ?? typeName!
-                    });
-                }
+                minIndent = Math.Min(minIndent, indent);
             }
-        }
-    }
-
-    Type? ResolveType(string? typeName)
-    {
-        if (string.IsNullOrWhiteSpace(typeName)) return null;
-        Type? t = Type.GetType(typeName);
-        if (t == null)
-        {
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                t = asm.GetType(typeName);
-                if (t != null) break;
-            }
+            lines.Add((lineStart, lineSpan.Length, indent));
         }
 
-        return t;
-    }
-
-    void ParseEntities(List<Scene.Entity> entities, int parentIndent)
-    {
-        while (cursor < length)
+        if (minIndent == int.MaxValue)
         {
-            int indent = PeekIndent();
-            if (indent <= parentIndent) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string entityName = ReadIdentifier();
-            if (string.IsNullOrEmpty(entityName)) continue;
-            if (!Match(':')) continue;
-
-            var entity = new Scene.Entity { Name = entityName };
-            var components = new List<Scene.Component>();
-            var children = new List<Scene.Entity>();
-
-            ParseEntityBody(ref entity, components, children, indent);
-
-            entity.Components = components;
-            entity.Children = children;
-            entities.Add(entity);
+            minIndent = 0;
         }
+
+        var adjusted = new List<(int start, int length, int indent)>(lines.Count);
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            var removed = Math.Min(line.indent, minIndent);
+            adjusted.Add((line.start + removed, Math.Max(0, line.length - removed), Math.Max(0, line.indent - minIndent)));
+        }
+
+        var lineIndex = 0;
+        return ParseMapping(adjusted, ref lineIndex, 0);
     }
 
-    void ParseEntityBody(ref Scene.Entity entity, List<Scene.Component> components, List<Scene.Entity> children, int entityIndent)
+    Node ParseMapping(List<(int start, int length, int indent)> lines, ref int lineIndex, int indent)
     {
-        while (cursor < length)
+        var entries = new List<KeyValuePair<string, Node>>();
+
+        while (lineIndex < lines.Count)
         {
-            int propIndent = PeekIndent();
-            if (propIndent <= entityIndent) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string prop = ReadIdentifier();
-            if (string.IsNullOrEmpty(prop)) continue;
-            if (!Match(':')) continue;
-            SkipSpaces();
-
-            if (prop == "id")
+            var lineInfo = lines[lineIndex];
+            if (lineInfo.length == 0)
             {
-                string? idVal = ReadString();
-                if (int.TryParse(idVal, out int id)) entity.EntityID = id;
+                lineIndex += 1;
+                continue;
             }
-            else if (prop == "components")
+
+            if (lineInfo.indent < indent)
             {
-                ParseComponents(components, propIndent);
+                break;
             }
-            else if (prop == "children")
+
+            if (lineInfo.indent > indent)
             {
-                ParseChildren(children, propIndent);
+                break;
+            }
+
+            var line = data.Slice(lineInfo.start, lineInfo.length);
+            var trimmed = line[lineInfo.indent..];
+            if (trimmed.Length == 0)
+            {
+                lineIndex += 1;
+                continue;
+            }
+
+            if (trimmed[0] == (byte)('#'))
+            {
+                lineIndex += 1;
+                continue;
+            }
+
+            var colonIndex = trimmed.IndexOf((byte)':');
+            if (colonIndex < 0)
+            {
+                lineIndex += 1;
+                continue;
+            }
+
+            var keySpan = trimmed.Slice(0, colonIndex);
+            var valueSpan = TrimSpace(trimmed.Slice(colonIndex + 1));
+            var key = Encoding.UTF8.GetString(keySpan);
+
+            if (valueSpan.Length == 0)
+            {
+                lineIndex += 1;
+                var child = ParseMapping(lines, ref lineIndex, indent + 2);
+                entries.Add(new KeyValuePair<string, Node>(key, child));
+                continue;
+            }
+
+            Node value;
+            if (valueSpan[0] == (byte)'{')
+            {
+                value = ParseInlineObject(valueSpan);
+            }
+            else if (valueSpan[0] == (byte)'[')
+            {
+                value = ParseInlineArray(valueSpan);
             }
             else
             {
-                SkipValue();
-            }
-        }
-    }
-
-    void ParseComponents(List<Scene.Component> components, int parentIndent)
-    {
-        while (cursor < length)
-        {
-            int compIndent = PeekIndent();
-            if (compIndent <= parentIndent) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string typeAlias = ReadIdentifier();
-            if (string.IsNullOrEmpty(typeAlias)) continue;
-            if (!Match(':')) continue;
-            SkipSpaces();
-
-            if (types.TryGetValue(typeAlias, out Type? type))
-            {
-                RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-                var cid = Component.GetInfo(type).ID;
-
-                components.Add(new Scene.Component
+                value = new Node
                 {
-                    TypeID = -1,
-                    ComponentID = cid.ID,
-                    Data = DeserializeComponent(type),
-                });
+                    Kind = NodeKind.Scalar,
+                    Scalar = DecodeScalar(valueSpan),
+                };
             }
-            else
-            {
-                SkipValue();
-            }
-        }
-    }
 
-    void ParseChildren(List<Scene.Entity> children, int parentIndent)
-    {
-        SkipSpaces();
-        if (cursor < length && data[cursor] == '[')
-        {
-            cursor++;
-            while (cursor < length && data[cursor] != ']') cursor++;
-            if (cursor < length) cursor++;
-            return;
+            entries.Add(new KeyValuePair<string, Node>(key, value));
+            lineIndex += 1;
         }
 
-        while (cursor < length)
+        return new Node
         {
-            int childIndent = PeekIndent();
-            if (childIndent <= parentIndent) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string childName = ReadIdentifier();
-            if (string.IsNullOrEmpty(childName)) continue;
-            if (!Match(':')) continue;
-
-            var child = new Scene.Entity { Name = childName };
-            var childComps = new List<Scene.Component>();
-            var childKids = new List<Scene.Entity>();
-
-            ParseEntityBody(ref child, childComps, childKids, childIndent);
-
-            child.Components = childComps;
-            child.Children = childKids;
-            children.Add(child);
-        }
-    }
-
-    byte[] DeserializeComponent(Type type)
-    {
-        Guard.IsNotNull(context.AssetServer, "AssetServer was null");
-
-        SkipWhitespace();
-        bool isInline = false;
-        if (cursor < length && data[cursor] == '{')
-        {
-            isInline = true;
-            cursor++;
-        }
-
-        byte[] result;
-        if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type) is { } serializer)
-        {
-            result = serializer.DeserializeBytes(ref this, in context);
-        }
-        else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer(type) is { } defaultSerializer)
-        {
-            result = defaultSerializer.DeserializeBytes(ref this, new());
-        }
-        else
-        {
-            throw new InvalidOperationException($"No serializer found for type {type.AssemblyQualifiedName}");
-        }
-
-        if (isInline)
-        {
-            SkipWhitespace();
-            if (cursor < length && data[cursor] == '}') cursor++;
-        }
-
-        return result;
-    }
-
-    T DeserializeBlittable<T>() where T : unmanaged
-    {
-        Guard.IsNotNull(context.AssetServer, "AssetServer was null");
-
-        SkipWhitespace();
-        bool isInline = false;
-        if (cursor < length && data[cursor] == '{')
-        {
-            isInline = true;
-            cursor++;
-        }
-
-        T result;
-        if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
-        {
-            result = serializer.Deserialize(ref this, in context);
-        }
-        else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
-        {
-            result = defaultSerializer.Deserialize(ref this, new());
-        }
-        else
-        {
-            throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
-        }
-
-        if (isInline)
-        {
-            SkipWhitespace();
-            if (cursor < length && data[cursor] == '}') cursor++;
-        }
-
-        return result;
-    }
-
-    public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
-    {
-        this.data = data;
-        this.cursor = 0;
-        this.length = this.data.Length;
-        this.types = Pool<Dictionary<string, Type>>.Shared.Rent();
-        this.context = context;
-
-        var sceneTypes = new List<Scene.Type>();
-        var entities = new List<Scene.Entity>();
-
-        while (cursor < length)
-        {
-            int indent = PeekIndent();
-            if (indent == -1) break;
-
-            AdvanceToNextLine();
-            SkipIndent();
-
-            string key = ReadIdentifier();
-            if (string.IsNullOrEmpty(key)) break;
-
-            if (!Match(':')) break;
-            SkipSpaces();
-
-            if (key == "types") ParseTypes(sceneTypes, indent);
-            else if (key == "entities") ParseEntities(entities, indent);
-            else SkipValue();
-        }
-
-        return new Scene
-        {
-            Types = sceneTypes,
-            Entities = entities,
-            ComponentInfos = []
+            Kind = NodeKind.Mapping,
+            Map = entries,
         };
     }
 
-    public bool Match(char c)
+    Node ParseInlineObject(ReadOnlySpan<byte> span)
     {
-        if (cursor < length && data[cursor] == c)
+        var inner = TrimBraces(span);
+        var entries = new List<KeyValuePair<string, Node>>();
+        var idx = 0;
+        while (idx < inner.Length)
         {
-            cursor++;
-            return true;
+            SkipInlineSeparators(inner, ref idx);
+            if (idx >= inner.Length)
+            {
+                break;
+            }
+            var keyStart = idx;
+            while (idx < inner.Length && inner[idx] != (byte)':')
+            {
+                idx += 1;
+            }
+            var keySpan = inner.Slice(keyStart, idx - keyStart);
+            idx += 1;
+            SkipInlineSeparators(inner, ref idx);
+            var valueSpan = ReadInlineValue(inner, ref idx);
+            var key = DecodeScalar(TrimSpace(keySpan));
+            var value = ParseInlineValue(valueSpan.ToArray());
+            entries.Add(new KeyValuePair<string, Node>(key, value));
         }
 
-        return false;
-    }
-
-    public string ReadIdentifier()
-    {
-        int start = cursor;
-        while (cursor < length && IsIdentifierChar((char)data[cursor])) cursor++;
-        return Encoding.UTF8.GetString(data.Slice(start, cursor - start));
-    }
-
-    public string? ReadString()
-    {
-        while (cursor < length)
+        return new Node
         {
-            char c = (char)data[cursor];
-            if (c is ' ' or '\n' or '\r' or ',')
+            Kind = NodeKind.Mapping,
+            Map = entries,
+        };
+    }
+
+    Node ParseInlineArray(ReadOnlySpan<byte> span)
+    {
+        var inner = TrimBrackets(span);
+        var seq = new List<Node>();
+        var idx = 0;
+        while (idx < inner.Length)
+        {
+            SkipInlineSeparators(inner, ref idx);
+            if (idx >= inner.Length)
             {
-                cursor++;
+                break;
+            }
+            var valueSpan = ReadInlineValue(inner, ref idx);
+            seq.Add(ParseInlineValue(valueSpan.ToArray()));
+        }
+
+        return new Node
+        {
+            Kind = NodeKind.Sequence,
+            Sequence = seq,
+        };
+    }
+
+    Node ParseInlineValue(ReadOnlySpan<byte> span)
+    {
+        var trimmed = TrimSpace(span);
+        if (trimmed.Length == 0)
+        {
+            return new Node { Kind = NodeKind.Scalar, Scalar = string.Empty };
+        }
+
+        if (trimmed[0] == (byte)'{')
+        {
+            return ParseInlineObject(trimmed);
+        }
+
+        if (trimmed[0] == (byte)'[')
+        {
+            return ParseInlineArray(trimmed);
+        }
+
+        return new Node
+        {
+            Kind = NodeKind.Scalar,
+            Scalar = DecodeScalar(trimmed),
+        };
+    }
+
+    ReadOnlySpan<byte> TrimSpace(ReadOnlySpan<byte> span)
+    {
+        var start = 0;
+        var end = span.Length - 1;
+        while (start <= end && IsSpace(span[start]))
+        {
+            start += 1;
+        }
+        while (end >= start && IsSpace(span[end]))
+        {
+            end -= 1;
+        }
+        return span.Slice(start, end - start + 1);
+    }
+
+    ReadOnlySpan<byte> TrimBraces(ReadOnlySpan<byte> span)
+    {
+        var trimmed = TrimSpace(span);
+        if (trimmed.Length >= 2 && trimmed[0] == (byte)'{' && trimmed[^1] == (byte)'}')
+        {
+            return trimmed.Slice(1, trimmed.Length - 2);
+        }
+        return trimmed;
+    }
+
+    ReadOnlySpan<byte> TrimBrackets(ReadOnlySpan<byte> span)
+    {
+        var trimmed = TrimSpace(span);
+        if (trimmed.Length >= 2 && trimmed[0] == (byte)'[' && trimmed[^1] == (byte)']')
+        {
+            return trimmed.Slice(1, trimmed.Length - 2);
+        }
+        return trimmed;
+    }
+
+    void SkipInlineSeparators(ReadOnlySpan<byte> span, ref int idx)
+    {
+        while (idx < span.Length)
+        {
+            var c = span[idx];
+            if (c == (byte)',' || IsSpace(c))
+            {
+                idx += 1;
+                continue;
+            }
+            break;
+        }
+    }
+
+    ReadOnlySpan<byte> ReadInlineValue(ReadOnlySpan<byte> span, ref int idx)
+    {
+        var start = idx;
+        var depthBrace = 0;
+        var depthBracket = 0;
+        var inString = false;
+        while (idx < span.Length)
+        {
+            var c = span[idx];
+            if (c == (byte)'"')
+            {
+                inString = !inString;
+            }
+            else if (!inString)
+            {
+                if (c == (byte)'{')
+                {
+                    depthBrace += 1;
+                }
+                else if (c == (byte)'}')
+                {
+                    depthBrace -= 1;
+                }
+                else if (c == (byte)'[')
+                {
+                    depthBracket += 1;
+                }
+                else if (c == (byte)']')
+                {
+                    depthBracket -= 1;
+                }
+                else if (c == (byte)',' && depthBrace == 0 && depthBracket == 0)
+                {
+                    break;
+                }
+            }
+
+            idx += 1;
+            if (depthBrace == 0 && depthBracket == 0 && !inString && idx < span.Length && span[idx] == (byte)',' && start != idx)
+            {
+                break;
+            }
+        }
+
+        return span.Slice(start, idx - start);
+    }
+
+    ReadOnlySpan<byte> ReadLine()
+    {
+        if (cursor >= length)
+        {
+            return ReadOnlySpan<byte>.Empty;
+        }
+
+        var start = cursor;
+        while (cursor < length && data[cursor] != (byte)'\n')
+        {
+            cursor += 1;
+        }
+
+        var end = cursor;
+        if (cursor < length && data[cursor] == (byte)'\n')
+        {
+            cursor += 1;
+        }
+
+        if (end > start && data[end - 1] == (byte)'\r')
+        {
+            end -= 1;
+        }
+
+        return data.Slice(start, end - start);
+    }
+
+    int CountIndent(ReadOnlySpan<byte> line)
+    {
+        var count = 0;
+        for (int i = 0; i < line.Length; i++)
+        {
+            if (line[i] == (byte)' ')
+            {
+                count += 1;
             }
             else
             {
                 break;
             }
         }
-
-        if (cursor >= length) return "";
-
-        if (data[cursor] == '{') return null;
-
-        if (data[cursor] == '"')
-        {
-            cursor++;
-            int start = cursor;
-            while (cursor < length && data[cursor] != '"') cursor++;
-            string s = Encoding.UTF8.GetString(data.Slice(start, cursor - start));
-            if (cursor < length) cursor++;
-            return s;
-        }
-    else
-    {
-        string key = PeekKey(out int nextCursor);
-        if (!string.IsNullOrEmpty(key))
-        {
-            return null;
-        }
-
-        int start = cursor;
-        while (cursor < length && data[cursor] != '\n' && data[cursor] != ',' && data[cursor] != '}' && data[cursor] != ']') cursor++;
-
-        int end = cursor;
-        while (end > start && (data[end - 1] == ' ' || data[end - 1] == '\r')) end--;
-
-        return Encoding.UTF8.GetString(data.Slice(start, end - start));
-    }
+        return count;
     }
 
-    public void SkipValue()
+    bool IsSpace(byte c)
     {
-        int startIndent = PeekIndent();
-        AdvanceToNextLine();
-        while (cursor < length)
-        {
-            int ind = PeekIndent();
-            if (ind != -1 && ind <= startIndent) break;
-            AdvanceToNextLine();
-        }
+        return c == (byte)' ' || c == (byte)'\t';
     }
 
-    public T Deserialize<T>() where T : notnull
+    bool ShouldUseContextNode(Type type, Node node)
     {
-        SkipWhitespace();
-        bool isInline = false;
-        if (cursor < length && data[cursor] == '{')
-        {
-            isInline = true;
-            cursor++;
-        }
-
-        T result;
-        if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
-        {
-            result = serializer.Deserialize(ref this, in context);
-        }
-        else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
-        {
-            result = defaultSerializer.Deserialize(ref this, new());
-        }
-        else
-        {
-            throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
-        }
-
-        if (isInline)
-        {
-            SkipWhitespace();
-            if (cursor < length && data[cursor] == '}') cursor++;
-        }
-
-        return result;
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Handle<>) && node.Kind != NodeKind.Scalar;
     }
 
-    public bool MatchToken(char c)
+    string DecodeScalar(ReadOnlySpan<byte> span)
     {
-        SkipWhitespace();
-        if (cursor < length && data[cursor] == c)
+        var trimmed = TrimSpace(span);
+        if (trimmed.Length >= 2 && trimmed[0] == (byte)'"' && trimmed[^1] == (byte)'"')
         {
-            cursor++;
-            return true;
+            trimmed = trimmed.Slice(1, trimmed.Length - 2);
         }
-
-        return false;
+        return Encoding.UTF8.GetString(trimmed);
     }
 
-    public T Read<T>() where T : unmanaged
+    int ParseInt(string? text)
     {
-        Type t = typeof(T);
-        if (t.IsPrimitive || t.IsEnum)
+        if (int.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
         {
-            SkipKey();
+            return value;
+        }
+        return 0;
+    }
 
-            string? val = ReadString();
-            if (string.IsNullOrEmpty(val)) return default;
+    T ParseScalar<T>(string? text) where T : unmanaged
+    {
+        if (typeof(T) == typeof(int))
+        {
+            var v = int.Parse(text ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture);
+            return Unsafe.As<int, T>(ref v);
+        }
+        if (typeof(T) == typeof(float))
+        {
+            var v = float.Parse(text ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture);
+            return Unsafe.As<float, T>(ref v);
+        }
+        if (typeof(T) == typeof(double))
+        {
+            var v = double.Parse(text ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture);
+            return Unsafe.As<double, T>(ref v);
+        }
+        if (typeof(T) == typeof(uint))
+        {
+            var v = uint.Parse(text ?? "0", NumberStyles.Any, CultureInfo.InvariantCulture);
+            return Unsafe.As<uint, T>(ref v);
+        }
+        if (typeof(T).IsEnum)
+        {
+            if (Enum.TryParse(typeof(T), text ?? string.Empty, true, out var parsed))
+            {
+                return (T)parsed!;
+            }
 
-            if (t == typeof(int)) return Unsafe.BitCast<int, T>(int.Parse(val));
-            if (t == typeof(float)) return Unsafe.BitCast<float, T>(float.Parse(val, CultureInfo.InvariantCulture));
-            if (t == typeof(double)) return Unsafe.BitCast<double, T>(double.Parse(val, CultureInfo.InvariantCulture));
-            if (t == typeof(bool)) return Unsafe.BitCast<bool, T>(bool.Parse(val));
-            if (t.IsEnum) return (T)Enum.Parse(t, val);
+            if (typeof(T) == typeof(ShaderStage))
+            {
+                var v = ShaderStage.Fragment;
+                return Unsafe.As<ShaderStage, T>(ref v);
+            }
+
             return default;
         }
 
-        SkipKey();
-        return DeserializeBlittable<T>();
-    }
-
-    public T[] ReadArray<T>() where T : unmanaged
-    {
-        throw new NotImplementedException();
+        return default;
     }
 }

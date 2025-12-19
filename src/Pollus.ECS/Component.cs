@@ -3,18 +3,22 @@ namespace Pollus.ECS;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 public interface IComponent
 {
 }
 
+[DebuggerDisplay("{Info.TypeName}")]
 public record struct ComponentID(int ID)
 {
     public static implicit operator int(ComponentID cid) => cid.ID;
     public static implicit operator ComponentID(int id) => new(id);
 
     public override int GetHashCode() => ID;
+
+    public Component.Info Info => Component.GetInfo(ID);
 }
 
 public static class Component

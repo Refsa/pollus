@@ -5,6 +5,7 @@ using Engine.Camera;
 using Engine.Rendering;
 using Engine.Transform;
 using Mathematics;
+using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
@@ -33,12 +34,9 @@ public partial class SceneExample : IExample
                         .AddComponent(new Transform2D());
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-                static (Time time, Query<Transform2D>.Filter<All<SceneRoot>> qSceneRoots) =>
+                static (Time time, Query query, Query.Filter<All<SceneRoot>> qSceneRoots) =>
                 {
-                    qSceneRoots.ForEach(time.DeltaTimeF, static (in deltaTime, ref transform) =>
-                    {
-                        transform.Position += new Vec2f(1, 1) * deltaTime * 100f;
-                    });
+                    
                 }))
             .Build())
         .Run();

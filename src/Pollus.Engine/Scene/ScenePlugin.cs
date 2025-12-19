@@ -37,18 +37,17 @@ public struct SpawnSceneCommand : ICommand
     public static int Priority => 99;
 
     public required Handle<Scene> Scene;
-    public required Entity? Root;
+    public required Entity Root;
 
     public void Execute(World world)
     {
         var scene = world.Resources.Get<AssetServer>().GetAssets<Scene>().Get(Scene);
-        var root = Root ?? world.Spawn();
-        world.Store.AddComponent(root, new SceneRoot { Scene = Scene });
+        world.Store.AddComponent(Root, new SceneRoot { Scene = Scene });
 
         foreach (var sceneEntity in scene.Entities)
         {
             var entity = SpawnEntity(world, sceneEntity);
-            new AddChildCommand { Parent = root, Child = entity }.Execute(world);
+            new AddChildCommand { Parent = Root, Child = entity }.Execute(world);
         }
     }
 

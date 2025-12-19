@@ -11,6 +11,7 @@ using Pollus.ECS;
 using System.Text;
 using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
+using Pollus.Engine.Rendering;
 
 public partial struct TestEmptyComponent : IComponent;
 
@@ -276,7 +277,8 @@ entities:
             .AddFile("path/to/child2.txt", "this is child 2 asset"u8.ToArray());
         var context = CreateContext(assetIO);
         context.AssetServer.AddLoader<TextAssetLoader>();
-
+        context.AssetServer.InitAsset<TextAsset>();
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TextAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<RootAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<ChildAsset>());
 
@@ -367,6 +369,28 @@ entities:
     }
 
     [Fact]
+    public void Parse_WithArraySyntax()
+    {
+        using var parser = new SceneReader();
+        var yaml = $@"
+        types:
+          TestComplexComponent: ""{typeof(TestComplexComponent).AssemblyQualifiedName}""
+        entities:
+          Entity1:
+            components:
+              TestComplexComponent:
+                Position: [10, 20]
+        ";
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+        Assert.Single(scene.Entities);
+        var comp = scene.Entities[0].Components[0];
+        var complex = MemoryMarshal.AsRef<TestComplexComponent>(comp.Data);
+        Assert.Equal(10, complex.Position.X);
+        Assert.Equal(20, complex.Position.Y);
+    }
+
+    [Fact]
     public void Parse_WithEnum()
     {
         using var parser = new SceneReader();
@@ -386,5 +410,46 @@ entities:
         var comp = scene.Entities[0].Components[0];
         var enumComp = MemoryMarshal.AsRef<TestComponentWithEnum>(comp.Data);
         Assert.Equal(TestEnum.One, enumComp.EnumValue);
+    }
+
+    [Fact]
+    public void Parse_WithSamplerBindingNearest()
+    {
+        using var parser = new SceneReader();
+        var spriteType = typeof(Sprite).AssemblyQualifiedName!;
+        var yaml = $@"
+types:
+  Sprite: ""{spriteType}""
+entities:
+  Entity1:
+    components:
+      Sprite:
+        Material:
+          ShaderSource: ""shaders/builtin/sprite.wgsl""
+          Texture: {{ Image: ""sprites/test_sheet.png"", Visibility: Fragment }}
+          Sampler: {{ Sampler: ""nearest"", Visibility: Fragment }}
+        Slice:
+          Min: [0, 0]
+          Max: [1, 1]
+        Color: [1, 1, 1, 1]
+";
+        var assetIO = new TestAssetIO("assets")
+            .AddFile("shaders/builtin/sprite.wgsl", "shader"u8.ToArray())
+            .AddFile("sprites/test_sheet.png", "img"u8.ToArray());
+        var context = CreateContext(assetIO);
+        context.AssetServer.AddLoader<TextAssetLoader>();
+        context.AssetServer.InitAsset<SpriteMaterial>();
+        context.AssetServer.InitAsset<SamplerAsset>();
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        var spriteComp = scene.Entities[0].Components[0];
+        var sprite = MemoryMarshal.AsRef<Sprite>(spriteComp.Data);
+        Assert.NotEqual(Handle<SpriteMaterial>.Null, sprite.Material);
+
+        var material = context.AssetServer.GetAssets<SpriteMaterial>().Get(sprite.Material);
+        Assert.NotNull(material);
+        Assert.NotEqual(Handle<SamplerAsset>.Null, material!.Sampler.Sampler);
     }
 }
