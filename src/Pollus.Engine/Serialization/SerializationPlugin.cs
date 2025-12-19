@@ -4,6 +4,7 @@ using Pollus.Utils;
 using Pollus.Engine.Assets;
 using Pollus.Core.Serialization;
 using Pollus.ECS;
+using System.Runtime.CompilerServices;
 
 public partial struct SerializeTag : IComponent
 {
@@ -31,6 +32,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString();
+        
         if (string.IsNullOrEmpty(path))
         {
             var asset = reader.Deserialize<T>();

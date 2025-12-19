@@ -1,9 +1,10 @@
 namespace Pollus.Utils;
 
+using Core.Serialization;
 using Pollus.Graphics;
 using Pollus.Mathematics;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 public partial struct Color
 {
     public static readonly Color TRANSPARENT = new(0f, 0f, 0f, 0f);
@@ -95,7 +96,7 @@ public partial struct Color
     public static readonly Color VIRIDIAN = new(64f / 255f, 130f / 255f, 109f / 255f);
     public static readonly Color YELLOW = new(255f / 255f, 255f / 255f, 0);
 
-    Vec4<float> color;
+    Vec4f color;
 
     public float R { get => color.X; set => color.X = value; }
     public float G { get => color.Y; set => color.Y = value; }
@@ -105,7 +106,7 @@ public partial struct Color
     public Color(Hex hex) : this(hex, hex.A) { }
     public Color(Hex hex, float alpha)
     {
-        this.color = new Vec4<float>(hex.R, hex.G, hex.B, alpha);
+        this.color = new Vec4f(hex.R, hex.G, hex.B, alpha);
     }
 
     public Color(RGB rgb) : this(rgb.R, rgb.G, rgb.B, 1f) { }
@@ -113,35 +114,32 @@ public partial struct Color
     public Color(float r, float g, float b) : this(r, g, b, 1f) { }
     public Color(float r, float g, float b, float a)
     {
-        this.color = new Vec4<float>(r, g, b, a);
+        this.color = new Vec4f(r, g, b, a);
     }
 
     public Color(HSV hsv) : this(hsv, 1f) { }
     public Color(HSV hsv, float a)
     {
         var rgb = (RGB)hsv;
-        this.color = new Vec4<float>(rgb.R, rgb.G, rgb.B, a);
+        this.color = new Vec4f(rgb.R, rgb.G, rgb.B, a);
     }
 
     public static implicit operator Color(Vec4<float> vec4)
     {
-        return new()
-        {
-            color = vec4
-        };
+        return new Color(vec4.X, vec4.Y, vec4.Z, vec4.W);
     }
 
     public static implicit operator Color(System.Numerics.Vector4 vec4)
     {
         return new()
         {
-            color = new Vec4<float>(vec4.X, vec4.Y, vec4.Z, vec4.W)
+            color = new Vec4f(vec4.X, vec4.Y, vec4.Z, vec4.W)
         };
     }
 
     public static implicit operator Vec4<float>(Color col)
     {
-        return col.color;
+        return new Vec4<float>(col.R, col.G, col.B, col.A);
     }
 
     public static implicit operator Vec4<double>(Color col)

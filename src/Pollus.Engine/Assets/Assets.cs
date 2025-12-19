@@ -29,7 +29,7 @@ public class Assets<T> : IDisposable
 {
     static int _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
-    static int NextID => Interlocked.Increment(ref counter);
+    static int NextID => counter++;
 
     static Assets()
     {

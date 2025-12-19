@@ -24,7 +24,7 @@ public interface IWriter
 public interface IReader
 {
     void Init(byte[]? data);
-    string ReadString();
+    string? ReadString();
     T Deserialize<T>() where T : notnull;
     T Read<T>() where T : unmanaged;
     T[] ReadArray<T>() where T : unmanaged;

@@ -161,7 +161,7 @@ public class BinaryReader : IReader
         return ReadSpan<T>().ToArray();
     }
 
-    public string ReadString()
+    public string? ReadString()
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var length = Read<int>();

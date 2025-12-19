@@ -56,6 +56,30 @@ public partial struct ComplexHandleComponent : IComponent
     public required Handle<RootAsset> Root;
 }
 
+[Serialize]
+public partial struct TestHandleObject
+{
+    public Handle<TextAsset> Image { get; set; }
+    public int Value { get; set; }
+}
+
+public partial struct TestComponentWithObject : IComponent
+{
+    public TestHandleObject HandleObject { get; set; }
+}
+
+public enum TestEnum
+{
+  One = 1,
+  Two = 2,
+  Three = 3,
+}
+
+public partial struct TestComponentWithEnum : IComponent
+{
+    public TestEnum EnumValue { get; set; }
+}
+
 public class SceneReaderTests
 {
     WorldSerializationContext CreateContext(TestAssetIO? assetIO = null)
@@ -245,11 +269,7 @@ entities:
   Entity1:
     components:
       ComplexHandleComponent:
-        Root:
-          Child1:
-            Text: ""path/to/child1.txt""
-          Child2:
-            Text: ""path/to/child2.txt""
+        Root: {{ Child1: {{ Text: ""path/to/child1.txt"" }}, Child2: {{ Text: ""path/to/child2.txt"" }} }}
 ";
         var assetIO = new TestAssetIO("assets")
             .AddFile("path/to/child1.txt", "this is child 1 asset"u8.ToArray())
@@ -315,5 +335,56 @@ entities:
         var val2 = MemoryMarshal.AsRef<TestComplexComponent>(comp2.Data);
         Assert.Equal(10, val2.Position.X);
         Assert.Equal(20, val2.Position.Y);
+    }
+
+    [Fact]
+    public void Parse_WithObjectSyntax()
+    {
+        using var parser = new SceneReader();
+
+        var yaml = $@"
+types:
+  TestComponentWithObject: ""{typeof(TestComponentWithObject).AssemblyQualifiedName}""
+entities:
+  Entity1:
+    components:
+      TestComponentWithObject:
+        HandleObject: {{ Image: ""path/to/image.txt"", Value: 123 }}
+";
+        var assetIO = new TestAssetIO("assets")
+            .AddFile("path/to/image.txt", "image data"u8.ToArray());
+        var context = CreateContext(assetIO);
+        context.AssetServer.AddLoader<TextAssetLoader>();
+        
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        var comp = scene.Entities[0].Components[0];
+        var bindingComp = MemoryMarshal.AsRef<TestComponentWithObject>(comp.Data);
+
+        Assert.NotEqual(Handle<TextAsset>.Null, bindingComp.HandleObject.Image);
+        Assert.Equal(123, bindingComp.HandleObject.Value);
+    }
+
+    [Fact]
+    public void Parse_WithEnum()
+    {
+        using var parser = new SceneReader();
+        var yaml = $@"
+        types:
+          TestComponentWithEnum: ""{typeof(TestComponentWithEnum).AssemblyQualifiedName}""
+        entities:
+          Entity1:
+            components:
+              TestComponentWithEnum:
+                EnumValue: One
+        ";
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(yaml));
+
+        Assert.Single(scene.Entities);
+        var comp = scene.Entities[0].Components[0];
+        var enumComp = MemoryMarshal.AsRef<TestComponentWithEnum>(comp.Data);
+        Assert.Equal(TestEnum.One, enumComp.EnumValue);
     }
 }

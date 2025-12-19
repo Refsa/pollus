@@ -63,6 +63,7 @@ public ref struct SceneReader : IReader, IDisposable
                 p++;
                 continue;
             }
+
             if (p >= length) return -1;
 
             return p - start;
@@ -123,6 +124,23 @@ public ref struct SceneReader : IReader, IDisposable
         }
     }
 
+    string PeekKey(out int nextCursor)
+    {
+        int p = cursor;
+        while (p < length && IsIdentifierChar((char)data[p])) p++;
+        while (p < length && data[p] == ' ') p++;
+        if (p < length && data[p] == ':')
+        {
+            nextCursor = p;
+            return Encoding.UTF8.GetString(data.Slice(cursor, p - cursor));
+        }
+        else
+        {
+            nextCursor = p;
+            return "";
+        }
+    }
+
     void SkipStructural()
     {
         while (cursor < length)
@@ -160,7 +178,7 @@ public ref struct SceneReader : IReader, IDisposable
             if (Match(':'))
             {
                 SkipSpaces();
-                string typeName = ReadString();
+                string? typeName = ReadString();
 
                 if (ResolveType(typeName) is { } t)
                 {
@@ -169,14 +187,14 @@ public ref struct SceneReader : IReader, IDisposable
                     {
                         ID = sceneTypes.Count,
                         Name = alias,
-                        AssemblyQualifiedName = t.AssemblyQualifiedName ?? typeName
+                        AssemblyQualifiedName = t.AssemblyQualifiedName ?? typeName!
                     });
                 }
             }
         }
     }
 
-    Type? ResolveType(string typeName)
+    Type? ResolveType(string? typeName)
     {
         if (string.IsNullOrWhiteSpace(typeName)) return null;
         Type? t = Type.GetType(typeName);
@@ -235,7 +253,7 @@ public ref struct SceneReader : IReader, IDisposable
 
             if (prop == "id")
             {
-                string idVal = ReadString();
+                string? idVal = ReadString();
                 if (int.TryParse(idVal, out int id)) entity.EntityID = id;
             }
             else if (prop == "components")
@@ -326,32 +344,70 @@ public ref struct SceneReader : IReader, IDisposable
     {
         Guard.IsNotNull(context.AssetServer, "AssetServer was null");
 
+        SkipWhitespace();
+        bool isInline = false;
+        if (cursor < length && data[cursor] == '{')
+        {
+            isInline = true;
+            cursor++;
+        }
+
+        byte[] result;
         if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(type) is { } serializer)
         {
-            return serializer.DeserializeBytes(ref this, in context);
+            result = serializer.DeserializeBytes(ref this, in context);
         }
         else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer(type) is { } defaultSerializer)
         {
-            return defaultSerializer.DeserializeBytes(ref this, new());
+            result = defaultSerializer.DeserializeBytes(ref this, new());
+        }
+        else
+        {
+            throw new InvalidOperationException($"No serializer found for type {type.AssemblyQualifiedName}");
         }
 
-        throw new InvalidOperationException($"No serializer found for type {type.AssemblyQualifiedName}");
+        if (isInline)
+        {
+            SkipWhitespace();
+            if (cursor < length && data[cursor] == '}') cursor++;
+        }
+
+        return result;
     }
 
     T DeserializeBlittable<T>() where T : unmanaged
     {
         Guard.IsNotNull(context.AssetServer, "AssetServer was null");
 
-        if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
+        SkipWhitespace();
+        bool isInline = false;
+        if (cursor < length && data[cursor] == '{')
         {
-            return serializer.Deserialize(ref this, in context);
-        }
-        else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
-        {
-            return defaultSerializer.Deserialize(ref this, new());
+            isInline = true;
+            cursor++;
         }
 
-        throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
+        T result;
+        if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            result = serializer.Deserialize(ref this, in context);
+        }
+        else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
+        {
+            result = defaultSerializer.Deserialize(ref this, new());
+        }
+        else
+        {
+            throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
+        }
+
+        if (isInline)
+        {
+            SkipWhitespace();
+            if (cursor < length && data[cursor] == '}') cursor++;
+        }
+
+        return result;
     }
 
     public Scene Parse(in WorldSerializationContext context, ReadOnlySpan<byte> data)
@@ -410,26 +466,24 @@ public ref struct SceneReader : IReader, IDisposable
         return Encoding.UTF8.GetString(data.Slice(start, cursor - start));
     }
 
-    public string ReadString()
+    public string? ReadString()
     {
-        // Attempt to skip key on current line
-        int p = cursor;
-        while (p < length && data[p] == ' ') p++;
-
-        if (p < length && IsIdentifierChar((char)data[p]))
+        while (cursor < length)
         {
-            int scan = p;
-            while (scan < length && IsIdentifierChar((char)data[scan])) scan++;
-            while (scan < length && data[scan] == ' ') scan++;
-
-            if (scan < length && data[scan] == ':')
+            char c = (char)data[cursor];
+            if (c is ' ' or '\n' or '\r' or ',')
             {
-                cursor = scan + 1;
+                cursor++;
+            }
+            else
+            {
+                break;
             }
         }
 
-        SkipSpaces();
         if (cursor >= length) return "";
+
+        if (data[cursor] == '{') return null;
 
         if (data[cursor] == '"')
         {
@@ -440,16 +494,22 @@ public ref struct SceneReader : IReader, IDisposable
             if (cursor < length) cursor++;
             return s;
         }
-        else
+    else
+    {
+        string key = PeekKey(out int nextCursor);
+        if (!string.IsNullOrEmpty(key))
         {
-            int start = cursor;
-            while (cursor < length && data[cursor] != '\n' && data[cursor] != ',' && data[cursor] != '}' && data[cursor] != ']') cursor++;
-
-            int end = cursor;
-            while (end > start && (data[end - 1] == ' ' || data[end - 1] == '\r')) end--;
-
-            return Encoding.UTF8.GetString(data.Slice(start, end - start));
+            return null;
         }
+
+        int start = cursor;
+        while (cursor < length && data[cursor] != '\n' && data[cursor] != ',' && data[cursor] != '}' && data[cursor] != ']') cursor++;
+
+        int end = cursor;
+        while (end > start && (data[end - 1] == ' ' || data[end - 1] == '\r')) end--;
+
+        return Encoding.UTF8.GetString(data.Slice(start, end - start));
+    }
     }
 
     public void SkipValue()
@@ -466,16 +526,47 @@ public ref struct SceneReader : IReader, IDisposable
 
     public T Deserialize<T>() where T : notnull
     {
+        SkipWhitespace();
+        bool isInline = false;
+        if (cursor < length && data[cursor] == '{')
+        {
+            isInline = true;
+            cursor++;
+        }
+
+        T result;
         if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
         {
-            return serializer.Deserialize(ref this, in context);
+            result = serializer.Deserialize(ref this, in context);
         }
         else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
         {
-            return defaultSerializer.Deserialize(ref this, new());
+            result = defaultSerializer.Deserialize(ref this, new());
+        }
+        else
+        {
+            throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
         }
 
-        throw new InvalidOperationException($"No serializer found for type {typeof(T).AssemblyQualifiedName}");
+        if (isInline)
+        {
+            SkipWhitespace();
+            if (cursor < length && data[cursor] == '}') cursor++;
+        }
+
+        return result;
+    }
+
+    public bool MatchToken(char c)
+    {
+        SkipWhitespace();
+        if (cursor < length && data[cursor] == c)
+        {
+            cursor++;
+            return true;
+        }
+
+        return false;
     }
 
     public T Read<T>() where T : unmanaged
@@ -485,7 +576,7 @@ public ref struct SceneReader : IReader, IDisposable
         {
             SkipKey();
 
-            string val = ReadString();
+            string? val = ReadString();
             if (string.IsNullOrEmpty(val)) return default;
 
             if (t == typeof(int)) return Unsafe.BitCast<int, T>(int.Parse(val));

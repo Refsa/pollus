@@ -1,12 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
+using System.Runtime.CompilerServices;
 using Core.Serialization;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
+using Serialization;
 
-[Serialize]
 public partial class SamplerBinding : IBinding
 {
     public static SamplerBinding Default => new() { Sampler = Handle<SamplerAsset>.Null };
@@ -25,5 +26,36 @@ public partial class SamplerBinding : IBinding
         var renderAsset = renderAssets.Get<SamplerRenderData>(Sampler);
         var sampler = renderAssets.Get(renderAsset.Sampler);
         return BindGroupEntry.SamplerEntry(binding, sampler);
+    }
+}
+
+public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSerializationContext>
+{
+    public SamplerBinding Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context) where TReader : IReader, allows ref struct
+    {
+        var samplerPath = reader.ReadString();
+        var sampler = samplerPath switch
+        {
+            "nearest" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Nearest),
+            "linear" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Default),
+            _ => context.AssetServer.Load<SamplerAsset>(samplerPath)
+        };
+
+        return new SamplerBinding()
+        {
+            Sampler = sampler,
+            Visibility = reader.Read<ShaderStage>()
+        };
+    }
+
+    public void Serialize<TWriter>(ref TWriter reader, in SamplerBinding value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
+    {
+        
+    }
+
+    [ModuleInitializer]
+    public static void ModuleInitializer()
+    {
+        SerializerLookup<WorldSerializationContext>.RegisterSerializer(new SamplerBindingSerializer());
     }
 }

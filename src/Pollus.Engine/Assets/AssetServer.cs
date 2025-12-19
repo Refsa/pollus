@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Assets;
 
+using Pollus.Debugging;
 using Pollus.Utils;
 
 public class AssetServer : IDisposable
@@ -92,6 +93,7 @@ public class AssetServer : IDisposable
         loader.Load(data, ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)
         {
+            Guard.IsTrue(loadContext.Asset is TAsset, $"AssetServer::Load expected type {typeof(TAsset)} but got {loadContext.Asset?.GetType()} on path {path}");
             var asset = (TAsset)loadContext.Asset!;
             handle = Assets.Add(asset, path);
             assetLookup.TryAdd(path, handle);

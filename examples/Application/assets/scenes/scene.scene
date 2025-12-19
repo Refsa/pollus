@@ -12,9 +12,9 @@ entities:
         Rotation: 0
       Sprite:
         Material:
-          Texture: "sprites/test_sheet.png"
           ShaderSource: "shaders/builtin/sprite.wgsl"
-          Sampler: "nearest"
+          Texture: { Image: "sprites/test_sheet.png", Visibility: Fragment }
+          Sampler: { Sampler: "nearest", Visibility: Fragment }
         Slice:
           Min: { X: 0, Y: 0 }
           Max: { X: 16, Y: 16 }
