@@ -1,7 +1,9 @@
 namespace Pollus.Examples;
 
+using System.Text;
 using Engine.Assets;
 using Engine.Camera;
+using Engine.Input;
 using Engine.Rendering;
 using Engine.Transform;
 using Mathematics;
@@ -27,23 +29,44 @@ public partial class SceneExample : IExample
                 new PerformanceTrackerPlugin(),
                 new RenderingPlugin(),
                 new ScenePlugin(),
+                new InputPlugin(),
             ])
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
+            .AddSystem(CoreStage.PostInit, FnSystem.Create("Init",
                 static (Commands commands, AssetServer assetServer) =>
                 {
+                    Log.Info("""
+                             S: Save Scene
+                             L: Load Scene
+                             U: Unload Scene
+                             """);
+
                     commands.Spawn(Camera2D.Bundle);
 
                     var scene = assetServer.Load<Scene>("scenes/scene.scene");
                     _ = commands.SpawnScene(scene);
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-                static (Time time, Query<Transform2D, Rotate> qRotate) =>
+            .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
+                static (World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<SceneRoot> qSceneRoot) =>
                 {
-                    qRotate.ForEach(time.DeltaTimeF, static (in deltaTime, ref transform, ref rotate) =>
+                    if (keyInputs.JustPressed(Key.KeyS) && qSceneRoot.Any())
                     {
-                        transform.Rotation += rotate.Speed * deltaTime;
-                    });
+                        var sceneWriter = new SceneWriter();
+                        var sceneData = sceneWriter.Write(world, qSceneRoot.Single().Entity);
+                        Log.Info($"Scene data: \n{Encoding.UTF8.GetString(sceneData)}");
+                    }
+
+                    if (keyInputs.JustPressed(Key.KeyL))
+                    {
+                        commands.SpawnScene(assetServer.Load<Scene>("scenes/scene.scene"));
+                    }
+
+                    if (keyInputs.JustPressed(Key.KeyU) && qSceneRoot.Any())
+                    {
+                        commands.DespawnHierarchy(qSceneRoot.Single().Entity);
+                    }
                 }))
+            .AddSystem(CoreStage.Update, FnSystem.Create("Rotate::Update",
+                static (Time time, Query<Transform2D, Rotate> qRotate) => { qRotate.ForEach(time.DeltaTimeF, static (in deltaTime, ref transform, ref rotate) => { transform.Rotation += rotate.Speed * deltaTime; }); }))
             .Build())
         .Run();
 

@@ -358,8 +358,11 @@ public class ColorSerializer : IBlittableSerializer<Color, DefaultSerializationC
         );
     }
 
-    public void Serialize<TWriter>(ref TWriter reader, in Color value, in DefaultSerializationContext context) where TWriter : IWriter, allows ref struct
+    public void Serialize<TWriter>(ref TWriter writer, in Color value, in DefaultSerializationContext context) where TWriter : IWriter, allows ref struct
     {
-        throw new NotImplementedException();
+        writer.Write(value.R, "R");
+        writer.Write(value.G, "G");
+        writer.Write(value.B, "B");
+        writer.Write(value.A, "A");
     }
 }

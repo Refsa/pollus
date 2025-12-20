@@ -48,9 +48,10 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
         };
     }
 
-    public void Serialize<TWriter>(ref TWriter reader, in SamplerBinding value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
+    public void Serialize<TWriter>(ref TWriter writer, in SamplerBinding value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
     {
-        
+        writer.Write(value.Sampler, "Sampler");
+        writer.Write(value.Visibility, "Visibility");
     }
 
     [ModuleInitializer]
