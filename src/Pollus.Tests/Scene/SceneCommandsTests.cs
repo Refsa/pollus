@@ -24,13 +24,22 @@ public class SceneCommandsTests
     {
         var (world, assetIO) = CreateWorld();
         assetIO.AddFile("assets/scene.scene", $@"
-types:
-  TestComponent: ""{typeof(TestComponent).AssemblyQualifiedName}""
-entities:
-  Entity1:
-    components:
-      TestComponent:
-        Value: 42
+{{
+    ""Types"": {{
+        ""TestComponent"": ""{typeof(TestComponent).AssemblyQualifiedName}""
+    }},
+    ""Entities"": [
+        {{
+            ""ID"": 1,
+            ""Name"": ""Entity1"",
+            ""Components"": {{
+                ""TestComponent"": {{
+                    ""Value"": 42
+                }}
+            }}
+        }}
+    ]
+}}
 ".ToBytes());
 
         var scene = world.Resources.Get<AssetServer>().Load<Scene>("assets/scene.scene");

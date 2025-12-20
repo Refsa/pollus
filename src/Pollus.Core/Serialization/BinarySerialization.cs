@@ -76,7 +76,7 @@ public class BinaryWriter : IWriter, IDisposable
         buffer = newBuffer;
     }
 
-    public void Write(ReadOnlySpan<byte> data)
+    public void Write(ReadOnlySpan<byte> data, string? identifier = null)
     {
         Resize<byte>(data.Length + sizeof(int));
         Write(data.Length);
@@ -84,7 +84,7 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += data.Length;
     }
 
-    public void Write<T>(ReadOnlySpan<T> data) where T : unmanaged
+    public void Write<T>(ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged
     {
         var sizeInBytes = data.Length * Unsafe.SizeOf<T>();
         Resize<byte>(sizeof(int) + sizeInBytes);
@@ -93,19 +93,19 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += sizeInBytes;
     }
 
-    public void Write<T>(T value) where T : unmanaged
+    public void Write<T>(T value, string? identifier = null) where T : unmanaged
     {
         Resize<T>(1);
         MemoryMarshal.Write(buffer.AsSpan(cursor), in value);
         cursor += Unsafe.SizeOf<T>();
     }
 
-    public void Write<T>(T[] values) where T : unmanaged
+    public void Write<T>(T[] values, string? identifier = null) where T : unmanaged
     {
         Write<T>(values.AsSpan());
     }
 
-    public void Write(string value)
+    public void Write(string value, string? identifier = null)
     {
         var byteCount = Encoding.UTF8.GetByteCount(value);
         Resize<byte>(byteCount + sizeof(int));
@@ -114,7 +114,7 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += byteCount;
     }
 
-    public void Serialize<T>(in T value) where T : notnull
+    public void Serialize<T>(in T value, string? identifier = null) where T : notnull
     {
         if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
         {

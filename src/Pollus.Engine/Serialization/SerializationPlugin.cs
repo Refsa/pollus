@@ -45,5 +45,20 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
     public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)
         where TWriter : IWriter, allows ref struct
     {
+        if (value.IsNull()) return;
+
+        var path = context.AssetServer.Assets.GetPath(value);
+        if (path.HasValue)
+        {
+            writer.Write(path.Value.Path);
+        }
+        else
+        {
+            var asset = context.AssetServer.Assets.Get(value);
+            if (asset is not null)
+            {
+                writer.Serialize(asset);
+            }
+        }
     }
 }

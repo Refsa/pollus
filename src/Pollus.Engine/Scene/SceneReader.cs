@@ -2,39 +2,13 @@ namespace Pollus.Engine;
 
 using System;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using ECS;
 using Pollus.Core.Serialization;
 using Pollus.Engine.Serialization;
-using Pollus.Utils;
-
-[JsonSerializable(typeof(SceneReader.SceneData))]
-[JsonSerializable(typeof(SceneReader.SceneData.EntityData))]
-[JsonSerializable(typeof(Dictionary<string, string>))]
-[JsonSerializable(typeof(List<SceneReader.SceneData.EntityData>))]
-[JsonSerializable(typeof(Dictionary<string, SceneReader.SceneData.EntityData>))]
-internal sealed partial class SceneReaderJsonSerializerContext : JsonSerializerContext
-{
-}
 
 public ref struct SceneReader : IReader, IDisposable
 {
-    public struct SceneData
-    {
-        public struct EntityData
-        {
-            public int ID { get; set; }
-            public string? Name { get; set; }
-            public Dictionary<string, JsonElement>? Components { get; set; }
-            public EntityData[]? Children { get; set; }
-        }
-
-        public Dictionary<string, string>? Types { get; set; }
-        public EntityData[]? Entities { get; set; }
-    }
-
     // Tracks current component being deserialized
     bool inArray = false;
     JsonElement.ArrayEnumerator currentArray;
@@ -60,10 +34,7 @@ public ref struct SceneReader : IReader, IDisposable
     {
         this.context = context;
 
-        var document = JsonSerializer.Deserialize<SceneData>(data, new JsonSerializerOptions()
-        {
-            PropertyNameCaseInsensitive = true,
-        });
+        var document = JsonSerializer.Deserialize<SceneFileData>(data, SceneFileDataJsonSerializerContext.Default.SceneFileData);
 
         var types = new Dictionary<string, Type>();
         var entities = new List<Scene.SceneEntity>();
@@ -101,7 +72,7 @@ public ref struct SceneReader : IReader, IDisposable
         };
     }
 
-    void ParseEntity(in SceneData.EntityData entity, in IReadOnlyDictionary<string, Type> types, in List<Scene.SceneEntity> entities)
+    void ParseEntity(in SceneFileData.EntityData entity, in IReadOnlyDictionary<string, Type> types, in List<Scene.SceneEntity> entities)
     {
         var sceneEntity = new Scene.SceneEntity()
         {

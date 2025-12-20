@@ -122,6 +122,16 @@ public class Assets<T> : IDisposable
         return AssetStatus.Unknown;
     }
 
+    public AssetPath? GetPath(Handle handle)
+    {
+        if (assetLookup.TryGetValue(handle, out var index))
+        {
+            return assets[index].Path;
+        }
+
+        return null;
+    }
+
     public void Unload(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))
@@ -245,5 +255,16 @@ public class Assets : IDisposable
         }
 
         return AssetStatus.Unknown;
+    }
+
+    public AssetPath? GetPath<T>(Handle<T> handle)
+        where T : notnull
+    {
+        if (TryGetAssets<T>(out var container))
+        {
+            return container.GetPath(handle);
+        }
+
+        return null;
     }
 }

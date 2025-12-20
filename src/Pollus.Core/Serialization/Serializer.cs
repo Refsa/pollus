@@ -13,12 +13,12 @@ public interface IWriter
     public ReadOnlySpan<byte> Buffer { get; }
 
     void Clear();
-    void Write(ReadOnlySpan<byte> data);
-    void Write<T>(ReadOnlySpan<T> data) where T : unmanaged;
-    void Write<T>(T value) where T : unmanaged;
-    void Write<T>(T[] values) where T : unmanaged;
-    void Write(string value);
-    void Serialize<T>(in T value) where T : notnull;
+    void Write(ReadOnlySpan<byte> data, string? identifier = null);
+    void Write<T>(ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged;
+    void Write<T>(T value, string? identifier = null) where T : unmanaged;
+    void Write<T>(T[] values, string? identifier = null) where T : unmanaged;
+    void Write(string value, string? identifier = null);
+    void Serialize<T>(in T value, string? identifier = null) where T : notnull;
 }
 
 public interface IReader
@@ -43,6 +43,7 @@ public interface ISerializer<TContext>
     where TContext : allows ref struct
 {
     public object? DeserializeBoxed<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
+    public void SerializeBoxed<TWriter>(ref TWriter writer, in object value, in TContext context) where TWriter : IWriter, allows ref struct;
 }
 
 public interface ISerializer<TData, TContext> : ISerializer<TContext>
@@ -54,6 +55,11 @@ public interface ISerializer<TData, TContext> : ISerializer<TContext>
     object? ISerializer<TContext>.DeserializeBoxed<TReader>(ref TReader reader, in TContext context)
     {
         return Deserialize(ref reader, in context);
+    }
+
+    void ISerializer<TContext>.SerializeBoxed<TWriter>(ref TWriter writer, in object value, in TContext context)
+    {
+        Serialize(ref writer, (TData)value, in context);
     }
 }
 

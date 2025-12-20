@@ -291,7 +291,7 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    unsafe public Span<byte> GetComponent(int row, in ComponentID cid)
+    unsafe public Span<byte> GetComponent(int row, scoped in ComponentID cid)
     {
         var idx = componentsLookup.Get(cid.ID);
         var cinfo = Component.GetInfo(cid);

@@ -8,6 +8,7 @@ public interface IBlittableSerializer<TContext>
     where TContext : allows ref struct
 {
     byte[] DeserializeBytes<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
+    void SerializeBytes<TWriter>(ref TWriter writer, scoped in ReadOnlySpan<byte> value, in TContext context) where TWriter : IWriter, allows ref struct;
 }
 
 public interface IBlittableSerializer<TData, TContext> : IBlittableSerializer<TContext>, ISerializer<TData, TContext>
@@ -16,6 +17,12 @@ public interface IBlittableSerializer<TData, TContext> : IBlittableSerializer<TC
 {
     public new TData Deserialize<TReader>(ref TReader reader, in TContext context) where TReader : IReader, allows ref struct;
     public new void Serialize<TWriter>(ref TWriter reader, in TData value, in TContext context) where TWriter : IWriter, allows ref struct;
+
+    void IBlittableSerializer<TContext>.SerializeBytes<TWriter>(ref TWriter writer, scoped in ReadOnlySpan<byte> value, in TContext context)
+    {
+        ref readonly var data = ref MemoryMarshal.AsRef<TData>(value);
+        Serialize(ref writer, in data, in context);
+    }
 
     byte[] IBlittableSerializer<TContext>.DeserializeBytes<TReader>(ref TReader reader, in TContext context)
     {

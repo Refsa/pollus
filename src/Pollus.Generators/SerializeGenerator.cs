@@ -96,8 +96,8 @@ public class SerializeGenerator : IIncrementalGenerator
                 public void Serialize<TWriter>(ref TWriter writer, in {{contextType}} context) where TWriter : IWriter, allows ref struct
                 {
                     {{string.Join("\n", GetFields(model).Select(e => e.IsBlittable
-                        ? $"writer.Write({e.Name});"
-                        : $"writer.Serialize({e.Name});"
+                        ? $"writer.Write({e.Name}, \"{e.Name}\");"
+                        : $"writer.Serialize({e.Name}, \"{e.Name}\");"
                     ))}}
                 }
 
