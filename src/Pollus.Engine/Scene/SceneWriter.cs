@@ -6,28 +6,46 @@ using Assets;
 using Core.Serialization;
 using ECS;
 using Serialization;
+using Utils;
 
 public ref struct SceneWriter : IWriter, IDisposable
 {
+    public struct Options()
+    {
+        public static Options Default => new();
+
+        public bool Indented { get; set; } = false;
+        public bool WriteRoot { get; set; } = true;
+    }
+
     SceneFileData data;
     DefaultSerializationContext defaultContext;
     WorldSerializationContext context;
 
-    Dictionary<string, JsonElement> currentProperties = new();
+    readonly Options options;
+
+    Dictionary<string, JsonElement> currentProperties;
     JsonElement currentValue;
 
     public ReadOnlySpan<byte> Buffer => throw new NotSupportedException();
 
     public SceneWriter()
     {
+        this.currentProperties = Pool<Dictionary<string, JsonElement>>.Shared.Rent();
+    }
+
+    public SceneWriter(Options options = default) : this()
+    {
+        this.options = options;
     }
 
     public void Dispose()
     {
-        // TODO release managed resources here
+        currentProperties.Clear();
+        Pool<Dictionary<string, JsonElement>>.Shared.Return(currentProperties);
     }
 
-    public byte[] Write(in World world, in Entity root, bool writeRoot = true)
+    public byte[] Write(in World world, in Entity root)
     {
         this.context = new() { AssetServer = world.Resources.Get<AssetServer>() };
         this.defaultContext = new();
@@ -38,7 +56,7 @@ public ref struct SceneWriter : IWriter, IDisposable
             Types = [],
         };
 
-        if (writeRoot) data.Entities.Add(CollectEntityData(world, root));
+        if (options.WriteRoot) data.Entities.Add(CollectEntityData(world, root));
         else
         {
             var entityRef = world.GetEntityRef(root);
@@ -53,7 +71,12 @@ public ref struct SceneWriter : IWriter, IDisposable
             }
         }
 
-        return JsonSerializer.SerializeToUtf8Bytes(data, SceneFileDataJsonSerializerContext.Default.SceneFileData);
+        var serializer = options switch
+        {
+            { Indented: true } => SceneFileDataJsonSerializerContext.Indented,
+            _ => SceneFileDataJsonSerializerContext.Default,
+        };
+        return JsonSerializer.SerializeToUtf8Bytes(data, serializer.SceneFileData);
     }
 
     SceneFileData.EntityData CollectEntityData(in World world, in Entity entity)
@@ -68,7 +91,7 @@ public ref struct SceneWriter : IWriter, IDisposable
         var entityInfo = world.Store.GetEntityInfo(entity);
         var archetype = world.Store.GetArchetype(entityInfo.ArchetypeIndex);
         ref var chunk = ref archetype.Chunks[entityInfo.ChunkIndex];
-        
+
         if (archetype.HasComponent<Parent>())
         {
             ref var parent = ref chunk.GetComponent<Parent>(entityInfo.RowIndex);
@@ -79,7 +102,7 @@ public ref struct SceneWriter : IWriter, IDisposable
                 current = world.GetEntityRef(current).Get<Child>().NextSibling;
             }
         }
-        
+
         foreach (var componentId in archetype.GetChunkInfo().ComponentIDs)
         {
             if (componentId == Component.GetInfo<Parent>().ID || componentId == Component.GetInfo<Child>().ID) continue;
@@ -180,27 +203,27 @@ public ref struct SceneWriter : IWriter, IDisposable
             currentProperties = prevProperties;
             currentValue = prevValue;
 
-            if (identifier != null) currentProperties![identifier] = result;
+            if (identifier != null) currentProperties[identifier] = result;
             else currentValue = result;
             return;
         }
 
         var element = JsonSerializer.SerializeToElement(value);
-        if (identifier != null) currentProperties![identifier] = element;
+        if (identifier != null) currentProperties[identifier] = element;
         else currentValue = element;
     }
 
     public void Write<T>(T[] values, string? identifier = null) where T : unmanaged
     {
         var element = JsonSerializer.SerializeToElement(values);
-        if (identifier != null) currentProperties![identifier] = element;
+        if (identifier != null) currentProperties[identifier] = element;
         else currentValue = element;
     }
 
     public void Write(string value, string? identifier = null)
     {
         var element = JsonSerializer.SerializeToElement(value);
-        if (identifier != null) currentProperties![identifier] = element;
+        if (identifier != null) currentProperties[identifier] = element;
         else currentValue = element;
     }
 
@@ -237,7 +260,7 @@ public ref struct SceneWriter : IWriter, IDisposable
         currentProperties = prevProperties;
         currentValue = prevValue;
 
-        if (identifier != null) currentProperties![identifier] = result;
+        if (identifier != null) currentProperties[identifier] = result;
         else currentValue = result;
     }
 }

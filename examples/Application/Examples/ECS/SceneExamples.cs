@@ -50,7 +50,10 @@ public partial class SceneExample : IExample
                 {
                     if (keyInputs.JustPressed(Key.KeyS) && qSceneRoot.Any())
                     {
-                        var sceneWriter = new SceneWriter();
+                        using var sceneWriter = new SceneWriter(new()
+                        {
+                            Indented = true,
+                        });
                         var sceneData = sceneWriter.Write(world, qSceneRoot.Single().Entity);
                         Log.Info($"Scene data: \n{Encoding.UTF8.GetString(sceneData)}");
                     }

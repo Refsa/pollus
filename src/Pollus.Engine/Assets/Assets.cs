@@ -102,6 +102,16 @@ public class Assets<T> : IDisposable
         return handle;
     }
 
+    public AssetInfo<T>? GetInfo(Handle handle)
+    {
+        if (assetLookup.TryGetValue(handle, out var index))
+        {
+            return assets[index];
+        }
+
+        return null;
+    }
+
     public T? Get(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))

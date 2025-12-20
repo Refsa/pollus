@@ -1,10 +1,12 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Serialization;
 using Pollus.Graphics.Rendering;
 
-public class SamplerAsset
+[Serialize]
+public partial class SamplerAsset
 {
-    public required SamplerDescriptor Descriptor { get; init; }
+    public required SamplerDescriptor Descriptor { get; set; }
 
     public static implicit operator SamplerAsset(SamplerDescriptor descriptor) => new() { Descriptor = descriptor };
 }

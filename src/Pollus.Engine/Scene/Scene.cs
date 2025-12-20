@@ -31,6 +31,11 @@ public class Scene
 [JsonSerializable(typeof(Dictionary<string, SceneFileData.EntityData>))]
 internal sealed partial class SceneFileDataJsonSerializerContext : JsonSerializerContext
 {
+    public static SceneFileDataJsonSerializerContext Indented = new(new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        IndentSize = 2,
+    });
 }
 
 public struct SceneFileData

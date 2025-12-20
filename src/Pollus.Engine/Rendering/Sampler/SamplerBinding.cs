@@ -36,6 +36,9 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
         var samplerPath = reader.ReadString("Sampler");
         var sampler = samplerPath switch
         {
+            null => context.AssetServer.GetAssets<SamplerAsset>().Add(
+                reader.Deserialize<SamplerAsset>()
+            ),
             "nearest" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Nearest),
             "linear" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Default),
             _ => context.AssetServer.Load<SamplerAsset>(samplerPath)
@@ -50,7 +53,29 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
 
     public void Serialize<TWriter>(ref TWriter writer, in SamplerBinding value, in WorldSerializationContext context) where TWriter : IWriter, allows ref struct
     {
-        writer.Write(value.Sampler, "Sampler");
+        if (context.AssetServer.GetAssets<SamplerAsset>().GetInfo(value.Sampler) is { } samplerInfo)
+        {
+            if (samplerInfo.Path is not null)
+            {
+                writer.Write(value.Sampler, "Sampler");
+            }
+            else if (samplerInfo.Asset is not null)
+            {
+                if (samplerInfo.Asset.Descriptor == SamplerDescriptor.Default)
+                {
+                    writer.Write("linear", "Sampler");
+                }
+                else if (samplerInfo.Asset.Descriptor == SamplerDescriptor.Nearest)
+                {
+                    writer.Write("nearest", "Sampler");
+                }
+                else
+                {
+                    writer.Serialize(samplerInfo.Asset, "Sampler");
+                }
+            }
+        }
+
         writer.Write(value.Visibility, "Visibility");
     }
 
