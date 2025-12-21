@@ -98,26 +98,60 @@ public partial struct Color
 
     Vec4f color;
 
-    public float R { get => color.X; set => color.X = value; }
-    public float G { get => color.Y; set => color.Y = value; }
-    public float B { get => color.Z; set => color.Z = value; }
-    public float A { get => color.W; set => color.W = value; }
+    public float R
+    {
+        get => color.X;
+        set => color.X = value;
+    }
 
-    public Color(Hex hex) : this(hex, hex.A) { }
+    public float G
+    {
+        get => color.Y;
+        set => color.Y = value;
+    }
+
+    public float B
+    {
+        get => color.Z;
+        set => color.Z = value;
+    }
+
+    public float A
+    {
+        get => color.W;
+        set => color.W = value;
+    }
+
+    public Color(Hex hex) : this(hex, hex.A)
+    {
+    }
+
     public Color(Hex hex, float alpha)
     {
         this.color = new Vec4f(hex.R, hex.G, hex.B, alpha);
     }
 
-    public Color(RGB rgb) : this(rgb.R, rgb.G, rgb.B, 1f) { }
-    public Color(RGB rgb, float a) : this(rgb.R, rgb.G, rgb.B, a) { }
-    public Color(float r, float g, float b) : this(r, g, b, 1f) { }
+    public Color(RGB rgb) : this(rgb.R, rgb.G, rgb.B, 1f)
+    {
+    }
+
+    public Color(RGB rgb, float a) : this(rgb.R, rgb.G, rgb.B, a)
+    {
+    }
+
+    public Color(float r, float g, float b) : this(r, g, b, 1f)
+    {
+    }
+
     public Color(float r, float g, float b, float a)
     {
         this.color = new Vec4f(r, g, b, a);
     }
 
-    public Color(HSV hsv) : this(hsv, 1f) { }
+    public Color(HSV hsv) : this(hsv, 1f)
+    {
+    }
+
     public Color(HSV hsv, float a)
     {
         var rgb = (RGB)hsv;
@@ -315,6 +349,7 @@ public partial struct Color
             {
                 h = 4f + gc - rc;
             }
+
             h = (h / 6f) % 1f;
             return new HSV(h, s, v);
         }

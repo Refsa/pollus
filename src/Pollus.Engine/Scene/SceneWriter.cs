@@ -152,16 +152,6 @@ public ref struct SceneWriter : IWriter, IDisposable
         throw new NotImplementedException();
     }
 
-    public void Write(ReadOnlySpan<byte> data, string? identifier = null)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Write<T>(ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged
-    {
-        throw new NotImplementedException();
-    }
-
     public void Write<T>(T value, string? identifier = null) where T : unmanaged
     {
         if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
@@ -218,6 +208,16 @@ public ref struct SceneWriter : IWriter, IDisposable
         var element = JsonSerializer.SerializeToElement(values);
         if (identifier != null) currentProperties[identifier] = element;
         else currentValue = element;
+    }
+
+    public void Write(scoped ReadOnlySpan<byte> data, string? identifier = null)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Write<T>(scoped ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged
+    {
+        throw new NotImplementedException();
     }
 
     public void Write(string value, string? identifier = null)
