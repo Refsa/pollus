@@ -43,8 +43,11 @@ public partial class SceneExample : IExample
 
                     commands.Spawn(Camera2D.Bundle);
 
-                    var scene = assetServer.Load<Scene>("scenes/scene.scene");
-                    _ = commands.SpawnScene(scene);
+                    // var scene = assetServer.Load<Scene>("scenes/scene.scene");
+                    // _ = commands.SpawnScene(scene);
+
+                    var parentScene = assetServer.Load<Scene>("scenes/parent.scene");
+                    _ = commands.SpawnScene(parentScene);
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
                 static (World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<SceneRoot> qSceneRoot) =>

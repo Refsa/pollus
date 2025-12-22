@@ -6,6 +6,7 @@ using System.Text.Json;
 using ECS;
 using Pollus.Core.Serialization;
 using Pollus.Engine.Serialization;
+using Utils;
 
 public ref struct SceneReader : IReader, IDisposable
 {
@@ -37,6 +38,7 @@ public ref struct SceneReader : IReader, IDisposable
         var document = JsonSerializer.Deserialize<SceneFileData>(data, SceneFileDataJsonSerializerContext.Default.SceneFileData);
 
         var types = new Dictionary<string, Type>();
+        var scenes = new Dictionary<string, Handle<Scene>>();
         var entities = new List<Scene.SceneEntity>();
 
         if (document.Types is not null)
@@ -61,7 +63,7 @@ public ref struct SceneReader : IReader, IDisposable
         {
             foreach (var entity in document.Entities)
             {
-                ParseEntity(entity, types, entities);
+                ParseEntity(entity, types, entities, scenes);
             }
         }
 
@@ -69,16 +71,24 @@ public ref struct SceneReader : IReader, IDisposable
         {
             Types = types,
             Entities = entities,
+            Scenes = scenes,
         };
     }
 
-    void ParseEntity(in SceneFileData.EntityData entity, in IReadOnlyDictionary<string, Type> types, in List<Scene.SceneEntity> entities)
+    void ParseEntity(in SceneFileData.EntityData entity, in IReadOnlyDictionary<string, Type> types, in List<Scene.SceneEntity> entities, in Dictionary<string, Handle<Scene>> scenes)
     {
         var sceneEntity = new Scene.SceneEntity()
         {
             Name = entity.Name,
             EntityID = entity.ID,
         };
+
+        if (entity.Scene is not null)
+        {
+            var handle = context.AssetServer.GetAssets<Scene>().Initialize(entity.Scene);
+            sceneEntity.Scene = handle;
+            scenes.TryAdd(entity.Scene, handle);
+        }
 
         if (entity.Components is not null)
         {
@@ -103,7 +113,7 @@ public ref struct SceneReader : IReader, IDisposable
             sceneEntity.Children = [];
             foreach (var child in entity.Children)
             {
-                ParseEntity(child, types, sceneEntity.Children);
+                ParseEntity(child, types, sceneEntity.Children, scenes);
             }
         }
 

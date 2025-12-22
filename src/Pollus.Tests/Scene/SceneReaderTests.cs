@@ -577,4 +577,27 @@ public partial class SceneReaderTests
         Assert.NotNull(material);
         Assert.NotEqual(Handle<SamplerAsset>.Null, material!.Sampler.Sampler);
     }
+
+    [Fact]
+    public void Parse_Entity_WithScene()
+    {
+        using var parser = new SceneReader();
+        var json =
+            $$"""
+              {
+                "entities": [
+                    {
+                        "name": "Entity1",
+                        "scene": "path/to/scene.scene"
+                    }
+                ]
+              }
+              """;
+        var context = CreateContext();
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
+
+        Assert.Single(scene.Entities);
+        Assert.Equal("Entity1", scene.Entities[0].Name);
+        Assert.NotEqual(Handle<Scene>.Null, scene.Entities[0].Scene);
+    }
 }

@@ -271,4 +271,10 @@ public class SceneWriterTests
         else
             Assert.Equal(1, val.GetInt32());
     }
+
+    [Fact]
+    public void Write_Entity_WithScene()
+    {
+        using var world = CreateWorld();
+    }
 }

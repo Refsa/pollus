@@ -23,40 +23,61 @@ public struct SpawnSceneCommand : ICommand
 
     public void Execute(World world)
     {
-        var scene = world.Resources.Get<AssetServer>().GetAssets<Scene>().Get(Scene);
-        world.Store.AddComponent(Root, new SceneRoot { Scene = Scene });
+        var assetServer = world.Resources.Get<AssetServer>();
+        var sceneAssets = assetServer.GetAssets<Scene>();
+        var scene = sceneAssets.Get(Scene);
+        if (scene is null) throw new Exception($"Scene {Scene} not found");
+
+        world.Store.AddComponent(Root, new SceneRoot());
+        world.Store.AddComponent(Root, new SceneRef { Scene = Scene });
 
         foreach (var sceneEntity in scene.Entities)
         {
-            var entity = SpawnEntity(world, sceneEntity);
+            var entity = SpawnEntity(world, sceneAssets, sceneEntity);
             new AddChildCommand { Parent = Root, Child = entity }.Execute(world);
         }
     }
 
-    static Entity SpawnEntity(World world, in Scene.SceneEntity entity)
+    static Entity SpawnEntity(World world, Assets<Scene> sceneAssets, in Scene.SceneEntity entity)
     {
-        Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Count];
-        for (int i = 0; i < entity.Components.Count; i++)
+        ArchetypeStore.EntityChange entityRef;
+        if (entity.Components is { Count: > 0 })
         {
-            cids[i] = entity.Components[i].ComponentID;
+            Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Count];
+            for (int i = 0; i < entity.Components.Count; i++)
+            {
+                cids[i] = entity.Components[i].ComponentID;
+            }
+
+            var aid = ArchetypeID.Create(cids);
+            entityRef = world.Store.CreateEntity(aid, cids);
+
+            ref var chunk = ref entityRef.Archetype.Chunks[entityRef.ChunkIndex];
+            for (int i = 0; i < entity.Components.Count; i++)
+            {
+                chunk.SetComponent(entityRef.RowIndex, entity.Components[i].ComponentID, entity.Components[i].Data);
+            }
         }
-
-        var aid = ArchetypeID.Create(cids);
-        var entityRef = world.Store.CreateEntity(aid, cids);
-
-        ref var chunk = ref entityRef.Archetype.Chunks[entityRef.ChunkIndex];
-        for (int i = 0; i < entity.Components.Count; i++)
+        else
         {
-            chunk.SetComponent(entityRef.RowIndex, entity.Components[i].ComponentID, entity.Components[i].Data);
+            entityRef = world.Store.CreateEntity<EntityBuilder>();
         }
 
         if (entity.Children is not null)
         {
             foreach (var sceneEntityChild in entity.Children)
             {
-                var childEntity = SpawnEntity(world, sceneEntityChild);
+                var childEntity = SpawnEntity(world, sceneAssets, sceneEntityChild);
                 new AddChildCommand { Parent = entityRef.Entity, Child = childEntity }.Execute(world);
             }
+        }
+
+        if (entity.Scene is not null)
+        {
+            var scene = sceneAssets.Get(entity.Scene.Value);
+            if (scene is null) throw new Exception($"Scene {entity.Scene.Value} not found");
+            var spawnSceneCommand = new SpawnSceneCommand { Scene = entity.Scene.Value, Root = entityRef.Entity };
+            spawnSceneCommand.Execute(world);
         }
 
         return entityRef.Entity;

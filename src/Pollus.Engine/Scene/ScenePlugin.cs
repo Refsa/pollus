@@ -6,8 +6,14 @@ using Utils;
 
 public partial struct SceneRoot : IComponent
 {
+    
+}
+
+public partial struct SceneRef : IComponent
+{
     public required Handle<Scene> Scene;
 }
+
 
 public class ScenePlugin : IPlugin
 {

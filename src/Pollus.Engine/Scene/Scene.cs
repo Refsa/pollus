@@ -2,6 +2,7 @@ namespace Pollus.Engine;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Utils;
 
 public class Scene
 {
@@ -9,6 +10,7 @@ public class Scene
     {
         public int EntityID { get; set; }
         public string? Name { get; set; }
+        public Handle<Scene>? Scene { get; set; }
         public List<EntityComponent>? Components { get; set; }
         public List<SceneEntity>? Children { get; set; }
     }
@@ -21,6 +23,7 @@ public class Scene
 
     public required Dictionary<string, Type> Types { get; init; }
     public required List<SceneEntity> Entities { get; init; }
+    public required Dictionary<string, Handle<Scene>> Scenes { get; init; }
 }
 
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
@@ -44,6 +47,7 @@ public struct SceneFileData
     {
         public int ID { get; set; }
         public string? Name { get; set; }
+        public string? Scene { get; set; }
         public Dictionary<string, JsonElement>? Components { get; set; }
         public List<EntityData>? Children { get; set; }
     }

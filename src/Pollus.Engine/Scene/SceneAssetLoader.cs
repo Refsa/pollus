@@ -11,6 +11,10 @@ public class SceneAssetLoader : AssetLoader<Scene>
     {
         using var reader = new SceneReader();
         var scene = reader.Parse(new() { AssetServer = context.AssetServer }, data);
+        foreach (var path in scene.Scenes.Keys)
+        {
+            context.AssetServer.Load<Scene>(path);
+        }
         context.SetAsset(scene);
     }
 }
