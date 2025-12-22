@@ -30,7 +30,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn(Entity.With(new TestComponent { Value = 10 }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -46,7 +49,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn();
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -65,7 +71,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn(Entity.With(new TestEmptyComponent()));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -83,7 +92,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn(Entity.With(new TestComponent { Value = 42 }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -101,7 +113,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn(Entity.With(new TestComplexComponent { Position = new Vec2 { X = 10.5f, Y = 20.5f, Ignore = 42 } }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -130,7 +145,10 @@ public class SceneWriterTests
         new AddChildCommand { Parent = parent, Child = child2 }.Execute(world);
         new AddChildCommand { Parent = child2, Child = grandChild }.Execute(world);
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, parent);
         var json = ParseJson(data);
 
@@ -170,7 +188,10 @@ public class SceneWriterTests
         var handle = world.Resources.Get<AssetServer>().Load<TextAsset>("path/to/asset.txt");
         var entity = world.Spawn(Entity.With(new TestComponentWithHandle { Value = 10, AssetHandle = handle }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -210,7 +231,10 @@ public class SceneWriterTests
 
         var entity = world.Spawn(Entity.With(new ComplexHandleComponent { Root = rootAsset }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -232,7 +256,10 @@ public class SceneWriterTests
             .With(new TestComponent { Value = 0 })
             .With(new TestComplexComponent { Position = new Vec2 { X = 10, Y = 20 } }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -255,7 +282,10 @@ public class SceneWriterTests
         using var world = CreateWorld();
         var entity = world.Spawn(Entity.With(new TestComponentWithEnum { EnumValue = TestEnum.One }));
 
-        using var writer = new SceneWriter();
+        using var writer = new SceneWriter(new()
+        {
+            WriteRoot = true,
+        });
         var data = writer.Write(world, entity);
         var json = ParseJson(data);
 
@@ -273,8 +303,132 @@ public class SceneWriterTests
     }
 
     [Fact]
-    public void Write_Entity_WithScene()
+    public void Write_Entity_WithSceneRef_DontWriteSubScenes()
     {
+        var assetIO = new TestAssetIO(
+            ("path/to/scene.scene", ""u8.ToArray())
+        );
+        var assetServer = new AssetServer(assetIO);
+        assetServer.Assets.Add(Scene.Empty, new AssetPath("path/to/scene.scene"));
+
         using var world = CreateWorld();
+        world.Resources.Add(assetServer);
+
+        var commands = world.GetCommands();
+        var parent = commands.Spawn()
+            .AddChildren([
+                commands.Spawn(Entity.With(new TestComponent() { Value = 10 })).Entity,
+                commands.Spawn(Entity.With(new TestComponent() { Value = 20 })).Entity,
+                commands.Spawn(Entity.With(new SceneRef() { Scene = new Handle<Scene>(0) }))
+                    .AddChildren([
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 30 })).Entity,
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 40 })).Entity,
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 50 })).Entity,
+                    ])
+                    .Entity,
+            ]);
+        world.Update();
+
+        var writer = new SceneWriter(new()
+        {
+            WriteSubScenes = false,
+            WriteRoot = false,
+        });
+
+        var bytes = writer.Write(world, parent.Entity);
+        var json = ParseJson(bytes);
+
+        var entities = json.RootElement.GetProperty("Entities").Deserialize<List<SceneFileData.EntityData>>();
+        Assert.NotNull(entities);
+        Assert.Equal(3, entities.Count);
+
+        Assert.Collection(entities, [
+            entity => Assert.Equal(0, entity.Children.Count),
+            entity => Assert.Equal(0, entity.Children.Count),
+            entity => Assert.Equal(0, entity.Children.Count),
+        ]);
+
+        Assert.Collection(entities, [
+            entity => Assert.Equal(1, entity.Components.Count),
+            entity => Assert.Equal(1, entity.Components.Count),
+            entity => Assert.Equal(0, entity.Components.Count),
+        ]);
+
+        var lastChild = entities[^1];
+        Assert.Equal("path/to/scene.scene", lastChild.Scene);
+    }
+
+    [Fact]
+    public void Write_Entity_WithSceneRef_WriteSubScenes()
+    {
+        var assetIO = new TestAssetIO(
+            ("path/to/scene.scene", ""u8.ToArray())
+        );
+        var assetServer = new AssetServer(assetIO);
+        assetServer.Assets.Add(Scene.Empty, new AssetPath("path/to/scene.scene"));
+
+        using var world = CreateWorld();
+        world.Resources.Add(assetServer);
+
+        var commands = world.GetCommands();
+        var parent = commands.Spawn()
+            .AddChildren([
+                commands.Spawn(Entity.With(new TestComponent() { Value = 10 })).Entity,
+                commands.Spawn(Entity.With(new TestComponent() { Value = 20 })).Entity,
+                commands.Spawn(Entity.With(new SceneRef() { Scene = new Handle<Scene>(0) }))
+                    .AddChildren([
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 30 })).Entity,
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 40 })).Entity,
+                        commands.Spawn(Entity.With(new TestComponent() { Value = 50 })).Entity,
+                    ])
+                    .Entity,
+            ]);
+        world.Update();
+
+        var writer = new SceneWriter(new()
+        {
+            WriteSubScenes = true,
+            WriteRoot = false,
+        });
+
+        var bytes = writer.Write(world, parent.Entity);
+        var json = ParseJson(bytes);
+
+        var entities = json.RootElement.GetProperty("Entities").Deserialize<List<SceneFileData.EntityData>>();
+        Assert.NotNull(entities);
+        Assert.Equal(3, entities.Count);
+
+        Assert.Collection(entities, [
+            entity =>
+            {
+                Assert.NotNull(entity.Children);
+                Assert.Empty(entity.Children);
+
+                Assert.NotNull(entity.Components);
+                Assert.Single(entity.Components);
+            },
+            entity =>
+            {
+                Assert.NotNull(entity.Children);
+                Assert.Empty(entity.Children);
+
+                Assert.NotNull(entity.Components);
+                Assert.Single(entity.Components);
+            },
+            entity =>
+            {
+                Assert.NotNull(entity.Components);
+                Assert.Empty(entity.Components);
+
+                Assert.NotNull(entity.Children);
+                Assert.Equal(3, entity.Children.Count);
+
+                Assert.Collection(entity.Children, [
+                    child => Assert.Single(child.Components!),
+                    child => Assert.Single(child.Components!),
+                    child => Assert.Single(child.Components!),
+                ]);
+            },
+        ]);
     }
 }

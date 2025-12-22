@@ -21,6 +21,13 @@ public class Scene
         public required byte[] Data { get; set; }
     }
 
+    public static Scene Empty => new()
+    {
+        Types = [],
+        Entities = [],
+        Scenes = [],
+    };
+
     public required Dictionary<string, Type> Types { get; init; }
     public required List<SceneEntity> Entities { get; init; }
     public required Dictionary<string, Handle<Scene>> Scenes { get; init; }

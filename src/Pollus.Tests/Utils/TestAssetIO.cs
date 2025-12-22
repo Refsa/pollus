@@ -10,6 +10,14 @@ public class TestAssetIO : AssetIO
     {
     }
 
+    public TestAssetIO(params (AssetPath, byte[])[] files) : base("assets")
+    {
+        foreach (var (path, data) in files)
+        {
+            content.Add(path, data);
+        }
+    }
+
     public TestAssetIO AddFile(AssetPath path, byte[] data)
     {
         content.Add(path, data);

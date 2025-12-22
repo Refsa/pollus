@@ -16,7 +16,16 @@ public ref struct SceneWriter : IWriter, IDisposable
 
         public bool Indented { get; set; } = false;
         public bool WriteRoot { get; set; } = true;
+        public bool WriteSubScenes { get; set; } = false;
     }
+
+    static HashSet<ComponentID> ignoredComponents = new()
+    {
+        Component.GetInfo<Parent>().ID,
+        Component.GetInfo<Child>().ID,
+        Component.GetInfo<SceneRef>().ID,
+        Component.GetInfo<SceneRoot>().ID,
+    };
 
     SceneFileData data;
     DefaultSerializationContext defaultContext;
@@ -92,6 +101,17 @@ public ref struct SceneWriter : IWriter, IDisposable
         var archetype = world.Store.GetArchetype(entityInfo.ArchetypeIndex);
         ref var chunk = ref archetype.Chunks[entityInfo.ChunkIndex];
 
+        if (archetype.HasComponent<SceneRef>())
+        {
+            ref var sceneRef = ref chunk.GetComponent<SceneRef>(entityInfo.RowIndex);
+            if (!options.WriteSubScenes)
+            {
+                var assetPath = world.Resources.Get<AssetServer>().GetAssets<Scene>().GetPath(sceneRef.Scene);
+                if (assetPath.HasValue) entityData.Scene = assetPath.Value.Path;
+                return entityData;
+            }
+        }
+
         if (archetype.HasComponent<Parent>())
         {
             ref var parent = ref chunk.GetComponent<Parent>(entityInfo.RowIndex);
@@ -105,7 +125,7 @@ public ref struct SceneWriter : IWriter, IDisposable
 
         foreach (var componentId in archetype.GetChunkInfo().ComponentIDs)
         {
-            if (componentId == Component.GetInfo<Parent>().ID || componentId == Component.GetInfo<Child>().ID) continue;
+            if (ignoredComponents.Contains(componentId)) continue;
 
             var cinfo = Component.GetInfo(componentId);
             var alias = cinfo.Type.Name;
