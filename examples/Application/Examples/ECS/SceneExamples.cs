@@ -28,7 +28,10 @@ public partial class SceneExample : IExample
                 new TimePlugin(),
                 new PerformanceTrackerPlugin(),
                 new RenderingPlugin(),
-                new ScenePlugin(),
+                new ScenePlugin()
+                {
+                    TypesVersion = 1,
+                },
                 new InputPlugin(),
             ])
             .AddSystem(CoreStage.PostInit, FnSystem.Create("Init",
@@ -50,11 +53,11 @@ public partial class SceneExample : IExample
                     _ = commands.SpawnScene(parentScene);
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
-                static (World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<SceneRoot> qSceneRoot) =>
+                static (SceneSerializer sceneSerializer, World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<SceneRoot> qSceneRoot) =>
                 {
                     if (keyInputs.JustPressed(Key.KeyS) && qSceneRoot.Any())
                     {
-                        using var sceneWriter = new SceneWriter(new()
+                        using var sceneWriter = sceneSerializer.GetWriter(new()
                         {
                             Indented = true,
                         });

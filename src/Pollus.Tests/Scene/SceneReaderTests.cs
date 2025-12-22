@@ -82,6 +82,22 @@ public partial struct TestComponentWithEnum : IComponent
     public TestEnum EnumValue { get; set; }
 }
 
+public class TestFileTypeMigration : ISceneFileTypeMigration
+{
+    public int FromVersion => 1;
+    public int ToVersion => 2;
+
+    public Type GetType(string typeName, string assemblyQualifiedName)
+    {
+        if (assemblyQualifiedName == "This.Is.A.Test.Component")
+        {
+            return typeof(TestComponent);
+        }
+
+        return Type.GetType(assemblyQualifiedName) ?? throw new Exception($"Type {assemblyQualifiedName} not found");
+    }
+}
+
 public partial class SceneReaderTests
 {
     partial struct TestInnerComponent : IComponent
@@ -599,5 +615,33 @@ public partial class SceneReaderTests
         Assert.Single(scene.Entities);
         Assert.Equal("Entity1", scene.Entities[0].Name);
         Assert.NotEqual(Handle<Scene>.Null, scene.Entities[0].Scene);
+    }
+
+    [Fact]
+    public void Parse_WithFileTypeMigration()
+    {
+        var json =
+            $$"""
+              {
+                "formatVersion": 1,
+                "typesVersion": 1,
+                "types": {
+                    "TestComponent": "This.Is.A.Test.Component"
+                }
+              }
+              """;
+
+        var context = CreateContext();
+        using var parser = new SceneReader(new()
+        {
+            TypesVersion = 2,
+            FileTypeMigrations = [new TestFileTypeMigration()],
+        });
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
+        Assert.Single(scene.Types);
+        Assert.Equal(typeof(TestComponent), scene.Types["TestComponent"]);
+        Assert.Equal(1, scene.FormatVersion);
+        Assert.Equal(1, scene.TypesVersion);
     }
 }

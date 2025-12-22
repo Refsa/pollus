@@ -10,16 +10,32 @@ using Utils;
 
 public ref struct SceneReader : IReader, IDisposable
 {
+    public struct Options()
+    {
+        public static Options Default => new();
+
+        public int FormatVersion { get; set; } = 1;
+        public int TypesVersion { get; set; } = 1;
+
+        public ISceneFileTypeMigration[]? FileTypeMigrations { get; set; }
+    }
+
     // Tracks current component being deserialized
     bool inArray = false;
     JsonElement.ArrayEnumerator currentArray;
     Stack<JsonElement> currentComponent = new();
 
+    Options options;
     WorldSerializationContext context;
     DefaultSerializationContext defaultContext = default;
 
     public SceneReader()
     {
+    }
+
+    public SceneReader(Options options) : this()
+    {
+        this.options = options;
     }
 
     public void Dispose()
@@ -45,7 +61,14 @@ public ref struct SceneReader : IReader, IDisposable
         {
             foreach (var type in document.Types)
             {
-                var resolvedType = System.Type.GetType(type.Value);
+                var typeMigration = options.FileTypeMigrations?.FirstOrDefault(migration => migration.FromVersion == document.TypesVersion);
+
+                var resolvedType = typeMigration switch
+                {
+                    { } migration => migration.GetType(type.Key, type.Value),
+                    null => System.Type.GetType(type.Value),
+                };
+
                 if (resolvedType is null)
                 {
                     foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -72,6 +95,8 @@ public ref struct SceneReader : IReader, IDisposable
             Types = types,
             Entities = entities,
             Scenes = scenes,
+            FormatVersion = document.FormatVersion,
+            TypesVersion = document.TypesVersion,
         };
     }
 

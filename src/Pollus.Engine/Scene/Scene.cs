@@ -28,6 +28,9 @@ public class Scene
         Scenes = [],
     };
 
+    public int FormatVersion { get; set; } = 1;
+    public int TypesVersion { get; set; } = 1;
+
     public required Dictionary<string, Type> Types { get; init; }
     public required List<SceneEntity> Entities { get; init; }
     public required Dictionary<string, Handle<Scene>> Scenes { get; init; }
@@ -48,7 +51,7 @@ internal sealed partial class SceneFileDataJsonSerializerContext : JsonSerialize
     });
 }
 
-public struct SceneFileData
+public struct SceneFileData()
 {
     public struct EntityData
     {
@@ -59,6 +62,17 @@ public struct SceneFileData
         public List<EntityData>? Children { get; set; }
     }
 
+    public int FormatVersion { get; set; } = 1;
+    public int TypesVersion { get; set; } = 1;
+
     public Dictionary<string, string>? Types { get; set; }
     public List<EntityData>? Entities { get; set; }
+}
+
+public interface ISceneFileTypeMigration
+{
+    public int FromVersion { get; }
+    public int ToVersion { get; }
+
+    public Type GetType(string typeName, string assemblyQualifiedName);
 }

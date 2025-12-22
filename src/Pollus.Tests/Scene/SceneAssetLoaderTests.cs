@@ -51,7 +51,10 @@ public class SceneAssetLoaderTests
             .AddFile("path/to/child.scene", Encoding.UTF8.GetBytes(childSceneJson));
 
         var server = new AssetServer(assetIO);
-        server.AddLoader<SceneAssetLoader>();
+        server.AddLoader<SceneAssetLoader>(new()
+        {
+            SceneSerializer = new SceneSerializer(1, 1),
+        });
 
         var parentSceneHandle = server.Load<Scene>("path/to/parent.scene");
         var parentScene = server.GetAssets<Scene>().Get(parentSceneHandle);

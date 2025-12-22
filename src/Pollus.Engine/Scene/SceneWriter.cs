@@ -14,6 +14,9 @@ public ref struct SceneWriter : IWriter, IDisposable
     {
         public static Options Default => new();
 
+        public int FormatVersion { get; set; } = 1;
+        public int TypesVersion { get; set; } = 1;
+
         public bool Indented { get; set; } = false;
         public bool WriteRoot { get; set; } = true;
         public bool WriteSubScenes { get; set; } = false;
@@ -43,7 +46,7 @@ public ref struct SceneWriter : IWriter, IDisposable
         this.currentProperties = Pool<Dictionary<string, JsonElement>>.Shared.Rent();
     }
 
-    public SceneWriter(Options options = default) : this()
+    public SceneWriter(Options options) : this()
     {
         this.options = options;
     }
@@ -61,6 +64,8 @@ public ref struct SceneWriter : IWriter, IDisposable
 
         data = new()
         {
+            FormatVersion = options.FormatVersion,
+            TypesVersion = options.TypesVersion,
             Entities = [],
             Types = [],
         };

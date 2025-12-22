@@ -14,7 +14,10 @@ public class SceneCommandsTests
         var world = WorldBuilder.Default
             .AddResource(assetServer)
             .AddResource(assetServer.Assets)
-            .AddPlugin<ScenePlugin>()
+            .AddPlugin(new ScenePlugin()
+            {
+                TypesVersion = 1,
+            })
             .Build();
         return (world, assetIO);
     }
