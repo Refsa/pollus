@@ -1,17 +1,18 @@
 namespace Pollus.Engine.Serialization;
 
-using System.Buffers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using Pollus.Core.Serialization;
-using Pollus.Debugging;
-using Pollus.ECS;
 using Pollus.Utils;
+using Pollus.Engine.Assets;
+using Pollus.Core.Serialization;
+using Pollus.ECS;
+using System.Runtime.CompilerServices;
 
-public struct SerializeTag : IComponent
+public partial struct SerializeTag : IComponent
 {
+}
 
+public struct WorldSerializationContext
+{
+    public AssetServer AssetServer { get; set; }
 }
 
 [SystemSet]
@@ -24,46 +25,40 @@ public partial class SerializationPlugin<TSerialization> : IPlugin
     }
 }
 
-public interface ISerialization
+public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializationContext>
+    where T : notnull
 {
-    struct WriterWrapper : IDisposable
+    public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context)
+        where TReader : IReader, allows ref struct
     {
-        ISerialization serialization;
-        public IWriter Writer { get; }
-
-        public WriterWrapper(ISerialization serialization, IWriter writer)
+        var path = reader.ReadString("$path");
+        
+        if (string.IsNullOrEmpty(path))
         {
-            this.serialization = serialization;
-            Writer = writer;
+            var asset = reader.Deserialize<T>();
+            return context.AssetServer.Assets.Add(asset);
         }
 
-        public void Dispose()
-        {
-            serialization.Return(Writer);
-        }
+        return context.AssetServer.Load<T>(path);
     }
 
-    struct ReaderWrapper : IDisposable
+    public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)
+        where TWriter : IWriter, allows ref struct
     {
-        ISerialization serialization;
-        public IReader Reader { get; }
+        if (value.IsNull()) return;
 
-        public ReaderWrapper(ISerialization serialization, IReader reader)
+        var path = context.AssetServer.Assets.GetPath(value);
+        if (path.HasValue)
         {
-            this.serialization = serialization;
-            Reader = reader;
+            writer.Write(path.Value.Path, "$path");
         }
-
-        public void Dispose()
+        else
         {
-            Reader.Init(null);
-            serialization.Return(Reader);
+            var asset = context.AssetServer.Assets.Get(value);
+            if (asset is not null)
+            {
+                writer.Serialize(asset);
+            }
         }
     }
-
-    WriterWrapper Writer { get; }
-    ReaderWrapper Reader { get; }
-
-    void Return(IWriter writer);
-    void Return(IReader reader);
 }

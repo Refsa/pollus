@@ -1,13 +1,15 @@
 namespace Pollus.Mathematics;
 
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Pollus.Graphics;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Vec2: {X}, {Y}")]
 public partial record struct Vec2<T>
-    where T : struct, System.Numerics.INumber<T>
+    where T : unmanaged, System.Numerics.INumber<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 2;
 

@@ -29,9 +29,9 @@ public partial class Archetype : IDisposable
     public int EntityCount => entityCount;
     public ChunkInfo GetChunkInfo() => chunkInfo;
 
-    public Archetype(Span<ComponentID> cids) : this(ArchetypeID.Create(cids), cids) { }
+    public Archetype(scoped in ReadOnlySpan<ComponentID> cids) : this(ArchetypeID.Create(cids), cids) { }
 
-    public Archetype(ArchetypeID aid, Span<ComponentID> cids)
+    public Archetype(in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
     {
         id = aid;
 

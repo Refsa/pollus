@@ -4,11 +4,11 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
 
-public class ECSSpawnExample : IExample
+public partial class ECSSpawnExample : IExample
 {
     public string Name => "ecs-spawn";
 
-    struct Component1 : IComponent
+    partial struct Component1 : IComponent
     {
         public int Value { get; set; }
     }

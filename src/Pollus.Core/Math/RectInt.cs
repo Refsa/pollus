@@ -2,8 +2,10 @@ namespace Pollus.Mathematics;
 
 using System.Diagnostics;
 using Pollus.Graphics;
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Rect: {Min} {Max}")]
 public partial struct RectInt
 {

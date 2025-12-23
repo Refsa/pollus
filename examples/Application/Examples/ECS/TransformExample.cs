@@ -12,15 +12,15 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class TransformExample : IExample
+public partial class TransformExample : IExample
 {
     public string Name => "transform";
 
     IApplication? app;
 
-    struct Component1 : IComponent { }
-    struct Base : IComponent { }
-    struct Rotate : IComponent
+    partial struct Component1 : IComponent { }
+    partial struct Base : IComponent { }
+    partial struct Rotate : IComponent
     {
         public float MinAngle;
         public float MaxAngle;

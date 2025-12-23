@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Assets;
 
+using Pollus.Engine.Serialization;
+using Pollus.Core.Serialization;
 using Pollus.Utils;
 
 public struct LoadContext
@@ -36,6 +38,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         public readonly string FileName => context.FileName;
         public readonly Handle Handle => context.Handle;
         public readonly Assets Assets => context.AssetServer.Assets;
+        public readonly AssetServer AssetServer => context.AssetServer;
 
         public LoadContext(ref LoadContext context)
         {
@@ -47,6 +50,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
     static AssetLoader()
     {
         AssetsFetch<TAsset>.Register();
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TAsset>());
     }
 
     static readonly int _assetType = TypeLookup.ID<TAsset>();

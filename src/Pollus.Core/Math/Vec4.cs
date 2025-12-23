@@ -3,11 +3,13 @@ namespace Pollus.Mathematics;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Pollus.Graphics;
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Vec4: {X}, {Y}, {Z}, {W}")]
 public partial record struct Vec4<T>
-    where T : struct, System.Numerics.INumber<T>
+    where T : unmanaged, System.Numerics.INumber<T>
 {
     public static int SizeInBytes => Unsafe.SizeOf<T>() * 4;
 

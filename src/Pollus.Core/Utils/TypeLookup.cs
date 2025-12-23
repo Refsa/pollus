@@ -6,8 +6,8 @@ public static class TypeLookup
 {
     static class Type<T>
     {
-        public static int ID = Interlocked.Increment(ref counter);
-        public static string Name = typeof(T).AssemblyQualifiedName ?? typeof(T).FullName ?? throw new InvalidOperationException($"Type {typeof(T)} has no assembly qualified name");
+        public static readonly int ID = Interlocked.Increment(ref counter);
+        public static readonly string Name = typeof(T).AssemblyQualifiedName ?? typeof(T).FullName ?? throw new InvalidOperationException($"Type {typeof(T)} has no assembly qualified name");
 
         static Type()
         {
@@ -26,6 +26,7 @@ public static class TypeLookup
         {
             return type;
         }
+
         return null;
     }
 }

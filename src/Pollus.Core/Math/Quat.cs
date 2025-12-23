@@ -1,9 +1,11 @@
-using System.Diagnostics;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-
 namespace Pollus.Mathematics;
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using Pollus.Core.Serialization;
+using Pollus.Utils;
+
+[Reflect, Serialize]
 [DebuggerDisplay("Quat: {EulerAngleX}, {EulerAngleY}, {EulerAngleZ}")]
 public record struct Quat
 {
@@ -24,9 +26,13 @@ public record struct Quat
         this.W = w;
     }
 
-    public Quat(Vec3f v, float w) : this(v.X, v.Y, v.Z, w) { }
+    public Quat(Vec3f v, float w) : this(v.X, v.Y, v.Z, w)
+    {
+    }
 
-    public Quat(Vec4f f) : this(f.X, f.Y, f.Z, f.W) { }
+    public Quat(Vec4f f) : this(f.X, f.Y, f.Z, f.W)
+    {
+    }
 
     public static Quat operator *(Quat q1, Quat q2) => new(
         q1.W * q2.X + q1.X * q2.W + q1.Y * q2.Z - q1.Z * q2.Y,
@@ -118,6 +124,7 @@ public record struct Quat
             q.EulerAngleZ
         );
     }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Quat Identity()
     {

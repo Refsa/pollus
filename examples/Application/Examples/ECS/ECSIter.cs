@@ -9,7 +9,7 @@ public partial class ECSIter : IExample
     public string Name => "ecs-iter";
     IApplication? application;
 
-    public struct Component1 : IComponent
+    public partial struct Component1 : IComponent
     {
         public int Value;
     }

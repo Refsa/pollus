@@ -7,7 +7,7 @@ namespace Pollus.Utils;
 public class Pool<T>
     where T : new()
 {
-    static Pool<T>? shared;
+    [ThreadStatic] static Pool<T>? shared;
     public static Pool<T> Shared => shared ??= new Pool<T>(static () => new(), 16);
 
     public delegate T FactoryDelegate();

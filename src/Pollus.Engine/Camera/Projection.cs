@@ -20,7 +20,7 @@ public interface IProjection
 }
 
 [StructLayout(LayoutKind.Explicit)]
-public struct Projection : IComponent, IProjection
+public partial struct Projection : IComponent, IProjection
 {
     [FieldOffset(0)]
     ProjectionType type;

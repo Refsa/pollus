@@ -3,7 +3,7 @@ namespace Pollus.Engine.Transform;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
-public struct GlobalTransform : IComponent
+public partial struct GlobalTransform : IComponent
 {
     public static readonly GlobalTransform Default = new()
     {

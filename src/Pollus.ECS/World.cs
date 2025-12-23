@@ -85,6 +85,15 @@ public class World : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public EntityRef GetEntityRef(in Entity entity)
+    {
+        var entityInfo = Store.GetEntityInfo(entity);
+        var archetype = Store.GetArchetype(entityInfo.ArchetypeIndex);
+        ref var chunk = ref archetype.Chunks[entityInfo.ChunkIndex];
+        return new EntityRef(in entity, entityInfo.RowIndex, ref chunk);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Clone(in Entity toClone, in Entity cloned)
     {
         Store.CloneEntity(toClone, cloned);

@@ -1,5 +1,7 @@
 namespace Pollus.Mathematics;
 
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
@@ -8,7 +10,7 @@ using System.Runtime.Intrinsics.X86;
 using Pollus.Debugging;
 using Pollus.Graphics;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Mat4f: {Col0}, {Col1}, {Col2}, {Col3}")]
 public partial record struct Mat4f
 {

@@ -17,5 +17,33 @@ dotnet_naming_style.instance_field_style.required_suffix =
 dotnet_style_require_accessibility_modifiers = never:suggestion
 dotnet_style_readonly_field = true:suggestion
 
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = inside_namespace
+csharp_using_directive_full_qualification = true
+
+resharper_redundant_name_qualifier_highlighting = hint
+resharper_check_namespace_highlighting=hint
+resharper_unused_member_global_highlighting=hint
+resharper_place_single_method_argument_lambda_on_same_line = none
+resharper_convert_to_primary_constructor_highlighting = none
+
+# lambdas with brackets should not be on same line as assignment/call
+dotnet_style_allow_statement_lambdas_on_one_line = false:suggestion
+# resharper: put lambda braces on new line
+csharp_wrap_before_arrow_with_expressions = true
+
 # set max line length to 240
 max_line_length = 240
+
+indent_style = space
+indent_size = 4
+
+[*.json]
+# Settings for JSON files
+indent_style = space
+indent_size = 2
+
+[*.scene]
+# Settings for JSON files
+indent_style = space
+indent_size = 2

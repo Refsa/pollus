@@ -3,8 +3,11 @@ namespace Pollus.Engine.Tween;
 using System.Runtime.InteropServices;
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Reflect;
+using Pollus.Utils;
 using Pollus.Mathematics;
+
+[AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class)]
+public sealed class TweenAttribute : Attribute;
 
 public class TweenPlugin : IPlugin
 {
@@ -167,7 +170,7 @@ public enum TweenFlag
 /* -------------------------------------------------------------------------------------------- */
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public struct Tween<TType> : IComponent
+public partial struct Tween<TType> : IComponent
     where TType : unmanaged
 {
     public byte FieldID;
@@ -175,7 +178,7 @@ public struct Tween<TType> : IComponent
     public TType To;
 }
 
-public struct TweenData : IComponent
+public partial struct TweenData : IComponent
 {
     public Easing Easing;
     public EasingDirection Direction;
@@ -186,12 +189,12 @@ public struct TweenData : IComponent
     public float Progress;
 }
 
-public struct TweenTarget : IComponent
+public partial struct TweenTarget : IComponent
 {
     public Entity Entity;
 }
 
-public struct TweenDisabled : IComponent
+public partial struct TweenDisabled : IComponent
 {
 }
 

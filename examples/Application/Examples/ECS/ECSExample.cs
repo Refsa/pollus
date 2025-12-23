@@ -12,12 +12,12 @@ public partial class ECSExample : IExample
     public string Name => "ecs";
     IApplication? application;
 
-    public struct Component1 : IComponent
+    public partial struct Component1 : IComponent
     {
         public int Value;
     }
 
-    public struct Component2 : IComponent
+    public partial struct Component2 : IComponent
     {
         public int Value;
     }

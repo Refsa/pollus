@@ -1,11 +1,14 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Serialization;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public class SpriteMaterial : IMaterial
+[Serialize]
+public partial class SpriteMaterial : IMaterial
 {
-    public static readonly VertexFormat[] InstanceFormats = [
+    public static readonly VertexFormat[] InstanceFormats =
+    [
         VertexFormat.Mat3x4,
         VertexFormat.Float32x4,
         VertexFormat.Float32x4,
@@ -13,7 +16,8 @@ public class SpriteMaterial : IMaterial
 
     public static string Name => "SpriteMaterial";
 
-    public static VertexBufferLayout[] VertexLayouts => [
+    public static VertexBufferLayout[] VertexLayouts =>
+    [
         VertexBufferLayout.Instance(0, InstanceFormats),
     ];
 
@@ -37,7 +41,8 @@ public class SpriteMaterial : IMaterial
         },
     };
 
-    public IBinding[][] Bindings => [
+    public IBinding[][] Bindings =>
+    [
         [new UniformBinding<SceneUniform>(), Texture, Sampler]
     ];
 

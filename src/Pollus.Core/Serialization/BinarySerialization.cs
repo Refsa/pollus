@@ -1,10 +1,9 @@
-namespace Pollus.Engine.Serialization;
+namespace Pollus.Core.Serialization;
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Pollus.Core.Serialization;
 using Pollus.Debugging;
 using Pollus.Utils;
 
@@ -77,7 +76,7 @@ public class BinaryWriter : IWriter, IDisposable
         buffer = newBuffer;
     }
 
-    public void Write(ReadOnlySpan<byte> data)
+    public void Write(ReadOnlySpan<byte> data, string? identifier = null)
     {
         Resize<byte>(data.Length + sizeof(int));
         Write(data.Length);
@@ -85,7 +84,7 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += data.Length;
     }
 
-    public void Write<T>(ReadOnlySpan<T> data) where T : unmanaged
+    public void Write<T>(ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged
     {
         var sizeInBytes = data.Length * Unsafe.SizeOf<T>();
         Resize<byte>(sizeof(int) + sizeInBytes);
@@ -94,25 +93,36 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += sizeInBytes;
     }
 
-    public void Write<T>(T value) where T : unmanaged
+    public void Write<T>(scoped in T value, string? identifier = null) where T : unmanaged
     {
         Resize<T>(1);
         MemoryMarshal.Write(buffer.AsSpan(cursor), in value);
         cursor += Unsafe.SizeOf<T>();
     }
 
-    public void Write<T>(T[] values) where T : unmanaged
+    public void Write<T>(T[] values, string? identifier = null) where T : unmanaged
     {
         Write<T>(values.AsSpan());
     }
 
-    public void Write(string value)
+    public void Write(string value, string? identifier = null)
     {
         var byteCount = Encoding.UTF8.GetByteCount(value);
         Resize<byte>(byteCount + sizeof(int));
         Write(byteCount);
         Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
         cursor += byteCount;
+    }
+
+    public void Serialize<T>(scoped in T value, string? identifier = null) where T : notnull
+    {
+        if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            var self = this;
+            serializer.Serialize(ref self, in value, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
     }
 }
 
@@ -127,7 +137,7 @@ public class BinaryReader : IReader
         cursor = 0;
     }
 
-    public ReadOnlySpan<T> ReadSpan<T>() where T : unmanaged
+    public ReadOnlySpan<T> ReadSpan<T>(string? identifier = null) where T : unmanaged
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var length = Read<int>();
@@ -137,13 +147,7 @@ public class BinaryReader : IReader
         return MemoryMarshal.Cast<byte, T>(span);
     }
 
-    public void ReadTo<T>(Span<T> target) where T : unmanaged
-    {
-        var span = ReadSpan<T>();
-        span.CopyTo(target);
-    }
-
-    public T Read<T>() where T : unmanaged
+    public T Read<T>(string? identifier = null) where T : unmanaged
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var size = Unsafe.SizeOf<T>();
@@ -152,17 +156,29 @@ public class BinaryReader : IReader
         return value;
     }
 
-    public T[] ReadArray<T>() where T : unmanaged
+    public T[] ReadArray<T>(string? identifier = null) where T : unmanaged
     {
-        return ReadSpan<T>().ToArray();
+        return ReadSpan<T>(identifier).ToArray();
     }
 
-    public string ReadString()
+    public string? ReadString(string? identifier = null)
     {
         Guard.IsNotNull(buffer, "buffer was null");
         var length = Read<int>();
         var value = Encoding.UTF8.GetString(buffer.AsSpan(cursor, length));
         cursor += length;
         return value;
+    }
+
+    public T Deserialize<T>(string? identifier = null)
+        where T : notnull
+    {
+        if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
+        {
+            var self = this;
+            return serializer.Deserialize(ref self, new());
+        }
+
+        throw new InvalidOperationException($"No serializer found for type {typeof(T).Name}");
     }
 }

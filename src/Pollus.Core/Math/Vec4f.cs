@@ -2,8 +2,10 @@ namespace Pollus.Mathematics;
 
 using System.Diagnostics;
 using Pollus.Graphics;
+using Pollus.Core.Serialization;
+using Pollus.Utils;
 
-[ShaderType]
+[ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Vec4f: {X}, {Y}, {Z}, {W}")]
 public partial record struct Vec4f
 {

@@ -1,6 +1,7 @@
 #pragma warning disable CA1416
 namespace Pollus.Tests.ECS;
 
+using Pollus.Core.Serialization;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Serialization;
@@ -58,4 +59,5 @@ public class SerializationTests
         }
     }
 }
+
 #pragma warning restore CA1416

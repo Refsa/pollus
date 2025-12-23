@@ -1,9 +1,9 @@
 namespace Pollus.Engine.Tween;
 
 using Pollus.ECS;
-using Pollus.Engine.Reflect;
+using Pollus.Utils;
 
-public struct TweenSequence : IComponent
+public partial struct TweenSequence : IComponent
 {
     public Entity Current;
     public TweenFlag Flags;

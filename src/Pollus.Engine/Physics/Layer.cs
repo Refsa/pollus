@@ -3,7 +3,7 @@ namespace Pollus.Spatial;
 using System.Runtime.CompilerServices;
 using Pollus.ECS;
 
-public struct Layer : IComponent
+public partial struct Layer : IComponent
 {
     public uint Value;
 

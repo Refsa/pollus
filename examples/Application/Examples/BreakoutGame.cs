@@ -20,28 +20,28 @@ using Pollus.Mathematics;
 using Pollus.Mathematics.Collision2D;
 using Pollus.Utils;
 
-public class BreakoutGame : IExample
+public partial class BreakoutGame : IExample
 {
     public string Name => "breakout";
     IApplication? application;
     public void Stop() => application?.Shutdown();
 
-    struct Player : IComponent { }
+    partial struct Player : IComponent { }
 
-    struct Disabled : IComponent { }
+    partial struct Disabled : IComponent { }
 
-    struct Paddle : IComponent { }
+    partial struct Paddle : IComponent { }
 
-    struct Brick : IComponent { }
+    partial struct Brick : IComponent { }
 
-    struct Ball : IComponent { }
+    partial struct Ball : IComponent { }
 
-    struct Velocity : IComponent
+    partial struct Velocity : IComponent
     {
         public required Vec2f Value;
     }
 
-    struct MainMixer : IComponent
+    partial struct MainMixer : IComponent
     {
 
     }

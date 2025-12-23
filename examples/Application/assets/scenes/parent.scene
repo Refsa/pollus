@@ -1,0 +1,9 @@
+{
+    "types": {},
+    "entities": [
+        {
+            "name": "Parent",
+            "scene": "scenes/scene.scene"
+        }
+    ]
+}

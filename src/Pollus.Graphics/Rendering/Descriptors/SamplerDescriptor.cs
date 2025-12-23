@@ -1,6 +1,9 @@
 namespace Pollus.Graphics.Rendering;
 
-public struct SamplerDescriptor
+using Core.Serialization;
+
+[Serialize]
+public partial record struct SamplerDescriptor
 {
     public static readonly SamplerDescriptor Default = new()
     {

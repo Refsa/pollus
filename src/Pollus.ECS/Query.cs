@@ -310,10 +310,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public readonly EntityRef GetEntity(in Entity entity)
     {
-        var entityInfo = world.Store.GetEntityInfo(entity);
-        var archetype = world.Store.GetArchetype(entityInfo.ArchetypeIndex);
-        ref var chunk = ref archetype.Chunks[entityInfo.ChunkIndex];
-        return new EntityRef(in entity, entityInfo.RowIndex, ref chunk);
+        return world.GetEntityRef(entity);
     }
 
     public ComponentID[] GetComponents(in Entity entity)

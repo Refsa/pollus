@@ -49,7 +49,7 @@ public class ShapePlugin : IPlugin
     }
 }
 
-public struct ShapeDraw : IComponent
+public partial struct ShapeDraw : IComponent
 {
     public static EntityBuilder<ShapeDraw, Transform2D, GlobalTransform> Bundle => new(
         new()

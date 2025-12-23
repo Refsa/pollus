@@ -1,0 +1,29 @@
+{
+  "types": {
+    "Transform2D": "Pollus.Engine.Transform.Transform2D",
+    "Sprite": "Pollus.Engine.Rendering.Sprite",
+    "Rotate": "Pollus.Examples.SceneExample+Rotate"
+  },
+  "entities": [
+    {
+      "id": 1,
+      "name": "entity 1",
+      "components": {
+        "Transform2D": { "Position": [ 128, 128 ], "Scale": [ 64, 64 ], "Rotation": 0 },
+        "Sprite": {
+          "Material": {
+            "ShaderSource": "shaders/builtin/sprite.wgsl",
+            "Texture": { "Image": "sprites/test_sheet.png", "Visibility": "Fragment" },
+            "Sampler": { "Sampler": "nearest", "Visibility": "Fragment" }
+          },
+          "Slice": { "Min": [ 0, 0 ], "Max": [ 16, 16 ] },
+          "Color": [ 1, 1, 1, 1 ]
+        },
+        "Rotate": {
+          "Speed": 45
+        }
+      },
+      "children": [ ]
+    }
+  ]
+}

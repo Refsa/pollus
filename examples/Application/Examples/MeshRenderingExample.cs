@@ -13,11 +13,11 @@ using Pollus.Mathematics;
 using Pollus.Utils;
 
 
-public class MeshRenderingExample : IExample
+public partial class MeshRenderingExample : IExample
 {
     public string Name => "mesh-rendering";
 
-    struct RotateMe : IComponent
+    partial struct RotateMe : IComponent
     {
         public float Speed;
     }

@@ -1,10 +1,7 @@
 namespace Pollus.Generators;
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -14,122 +11,63 @@ using Microsoft.CodeAnalysis.Text;
 [Generator(LanguageNames.CSharp)]
 public class TweenGenerator : IIncrementalGenerator
 {
-    class TypeInfo
-    {
-        public string Namespace;
-        public string ClassName;
-        public string FullTypeKind;
-        public string Visibility;
-    }
-
-    class Model
-    {
-        public TypeInfo TypeInfo;
-        public TypeInfo ContainingType;
-        public List<Field> Fields;
-    }
-
-    class Field
-    {
-        public string Name;
-        public string Type;
-    }
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
-            fullyQualifiedMetadataName: "Pollus.Engine.Reflect.ReflectAttribute",
+            fullyQualifiedMetadataName: "Pollus.Engine.Tween.TweenAttribute",
             predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
-            transform: static (context, cancellationToken) =>
-            {
-                var attribute = context.Attributes.FirstOrDefault(e => e.AttributeClass.Name == "ReflectAttribute");
-                var data = context.TargetSymbol as ITypeSymbol;
-
-                var fields = new List<Field>();
-                CollectFields(data, fields);
-
-                TypeInfo containingType = null;
-                if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
-                {
-                    var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
-                    if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
-                    containingType = new TypeInfo()
-                    {
-                        Namespace = data.ContainingNamespace.ToDisplayString(),
-                        ClassName = data.ContainingType.Name,
-                        FullTypeKind = containingTypeKind,
-                        Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
-                    };
-                }
-
-                var fullTypeKind = data.TypeKind.ToString().ToLower();
-                if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
-                TypeInfo typeInfo = new()
-                {
-                    Namespace = data.ContainingNamespace.ToDisplayString(),
-                    ClassName = data.Name,
-                    FullTypeKind = fullTypeKind,
-                    Visibility = data.DeclaredAccessibility.ToString().ToLower(),
-                };
-
-                return new Model()
-                {
-                    TypeInfo = typeInfo,
-                    ContainingType = containingType,
-                    Fields = fields,
-                };
-            }
+            transform: Common.CollectType
         );
 
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
-            var distinctFieldTypes = new HashSet<string>(model.Fields.Select(e => e.Type));
-
-            var partialExt = $$"""
-            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Engine.Tween.ITweenable
-            {
-                public static void PrepareTweenSystems(Schedule schedule)
-                {
-            {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.ClassName}, {e}>());"))}}
-                }
-            } 
-            """;
+            var partialExt =
+                $$"""
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Engine.Tween.ITweenable
+                  {
+                      {{GetTweenImpl(model)}}
+                  } 
+                  """;
 
             if (model.ContainingType != null)
             {
-                partialExt = $$"""
-                {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
-                {
-                    {{partialExt}}
-                }
-                """;
+                partialExt =
+                    $$"""
+                      {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
+                      {
+                          {{partialExt}}
+                      }
+                      """;
             }
 
-            var source = SourceText.From($$"""
-            namespace {{model.TypeInfo.Namespace}};
-            using System.Runtime.CompilerServices;
-            using System.Linq.Expressions;
-            using System.Reflection;
-            using Pollus.Engine.Tween;
-            using Pollus.ECS;
+            var source = SourceText.From(
+                $$"""
+                  namespace {{model.TypeInfo.Namespace}};
+                  using System.Runtime.CompilerServices;
+                  using System.Linq.Expressions;
+                  using System.Reflection;
+                  using Pollus.Engine.Tween;
+                  using Pollus.ECS;
 
-            {{partialExt}}
-            """, Encoding.UTF8);
+                  {{partialExt}}
+                  """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.Tweenable.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.Tweenable.gen.cs", source);
         });
     }
 
-    static void CollectFields(ITypeSymbol type, List<Field> fields)
+    internal static string GetTweenImpl(Model model)
     {
-        foreach (var member in type.GetMembers())
-        {
-            if (member is IFieldSymbol field && !field.IsStatic && !field.IsConst && !field.IsAbstract)
-            {
-                fields.Add(new Field() { Name = field.Name, Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) });
-            }
-        }
+        var distinctFieldTypes = new HashSet<string>(model.Fields.Select(e => e.Type));
+
+        return
+            $$"""
+                  public static void PrepareTweenSystems(Schedule schedule)
+                  {
+              {{string.Join("\n", distinctFieldTypes.Select(e => $"        schedule.AddSystems(CoreStage.Update, new TweenSystem<{model.TypeInfo.FullClassName}, {e}>());"))}}
+                  }
+              """;
     }
 }

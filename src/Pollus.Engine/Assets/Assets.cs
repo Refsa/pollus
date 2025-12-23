@@ -1,8 +1,10 @@
 namespace Pollus.Engine.Assets;
 
 using System.Runtime.CompilerServices;
+using Core.Serialization;
 using Pollus.Collections;
 using Pollus.Utils;
+using Serialization;
 
 public enum AssetStatus
 {
@@ -32,6 +34,7 @@ public class Assets<T> : IDisposable
     static Assets()
     {
         AssetsFetch<T>.Register();
+        BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<T>());
     }
 
     List<AssetInfo<T>> assets = new();
@@ -82,6 +85,7 @@ public class Assets<T> : IDisposable
                 info.Asset = asset;
                 info.Status = AssetStatus.Loaded;
             }
+
             return handle;
         }
 
@@ -96,6 +100,16 @@ public class Assets<T> : IDisposable
             Path = path,
         });
         return handle;
+    }
+
+    public AssetInfo<T>? GetInfo(Handle handle)
+    {
+        if (assetLookup.TryGetValue(handle, out var index))
+        {
+            return assets[index];
+        }
+
+        return null;
     }
 
     public T? Get(Handle handle)
@@ -116,6 +130,16 @@ public class Assets<T> : IDisposable
         }
 
         return AssetStatus.Unknown;
+    }
+
+    public AssetPath? GetPath(Handle handle)
+    {
+        if (assetLookup.TryGetValue(handle, out var index))
+        {
+            return assets[index].Path;
+        }
+
+        return null;
     }
 
     public void Unload(Handle handle)
@@ -170,6 +194,17 @@ public class Assets : IDisposable
         }
 
         assets.Clear();
+    }
+
+    public void Init<T>()
+        where T : notnull
+    {
+        if (assets.ContainsKey(TypeLookup.ID<T>()))
+        {
+            return;
+        }
+
+        assets.Add(TypeLookup.ID<T>(), new Assets<T>());
     }
 
     public bool TryGetAssets<T>(out Assets<T> container)
@@ -230,5 +265,16 @@ public class Assets : IDisposable
         }
 
         return AssetStatus.Unknown;
+    }
+
+    public AssetPath? GetPath<T>(Handle<T> handle)
+        where T : notnull
+    {
+        if (TryGetAssets<T>(out var container))
+        {
+            return container.GetPath(handle);
+        }
+
+        return null;
     }
 }

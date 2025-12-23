@@ -17,6 +17,8 @@ public class MaterialPlugin<TMaterial> : IPlugin
 
     public void Apply(World world)
     {
+        world.Resources.Get<AssetServer>().InitAsset<TMaterial>();
+
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
         world.Schedule.AddSystems(CoreStage.PreRender, new ExtractMaterialSystem<TMaterial>());
     }
