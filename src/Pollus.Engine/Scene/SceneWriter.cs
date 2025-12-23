@@ -1,12 +1,13 @@
 namespace Pollus.Engine;
 
-using System.Text.Json;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Assets;
 using Core.Serialization;
 using ECS;
+using Pollus.Debugging;
 using Serialization;
-using Utils;
 
 public ref struct SceneWriter : IWriter, IDisposable
 {
@@ -30,31 +31,26 @@ public ref struct SceneWriter : IWriter, IDisposable
         Component.GetInfo<SceneRoot>().ID,
     };
 
-    SceneFileData data;
     DefaultSerializationContext defaultContext;
     WorldSerializationContext context;
 
     readonly Options options;
 
-    Dictionary<string, JsonElement> currentProperties;
-    JsonElement currentValue;
+    readonly MemoryStream stream;
+    readonly Utf8JsonWriter writer;
 
-    public ReadOnlySpan<byte> Buffer => throw new NotSupportedException();
-
-    public SceneWriter()
-    {
-        this.currentProperties = Pool<Dictionary<string, JsonElement>>.Shared.Rent();
-    }
+    public ReadOnlySpan<byte> Buffer => stream.GetBuffer();
 
     public SceneWriter(Options options) : this()
     {
         this.options = options;
+        stream = new();
+        writer = new(stream, new JsonWriterOptions() { Indented = options.Indented });
     }
 
     public void Dispose()
     {
-        currentProperties.Clear();
-        Pool<Dictionary<string, JsonElement>>.Shared.Return(currentProperties);
+        writer?.Dispose();
     }
 
     public byte[] Write(in World world, in Entity root)
@@ -62,49 +58,81 @@ public ref struct SceneWriter : IWriter, IDisposable
         this.context = new() { AssetServer = world.Resources.Get<AssetServer>() };
         this.defaultContext = new();
 
-        data = new()
-        {
-            FormatVersion = options.FormatVersion,
-            TypesVersion = options.TypesVersion,
-            Entities = [],
-            Types = [],
-        };
+        writer.WriteStartObject();
 
-        if (options.WriteRoot) data.Entities.Add(CollectEntityData(world, root));
-        else
-        {
-            var entityRef = world.GetEntityRef(root);
-            ref var parent = ref entityRef.TryGet<Parent>(out var parentExists);
-            if (!parentExists) throw new Exception($"Entity {root} has no parent");
+        writer.WriteNumber("FormatVersion", options.FormatVersion);
+        writer.WriteNumber("TypesVersion", options.TypesVersion);
 
-            var currentEntity = parent.FirstChild;
-            while (currentEntity != Entity.NULL)
+        {
+            writer.WriteStartObject("Types");
+
+            var types = new HashSet<Type>();
+            CollectTypes(world, root, types);
+            foreach (var type in types)
             {
-                data.Entities.Add(CollectEntityData(world, currentEntity));
-                currentEntity = world.GetEntityRef(currentEntity).Get<Child>().NextSibling;
+                writer.WriteString(type.Name, type.AssemblyQualifiedName);
             }
+
+            writer.WriteEndObject();
         }
 
-        var serializer = options switch
         {
-            { Indented: true } => SceneFileDataJsonSerializerContext.Indented,
-            _ => SceneFileDataJsonSerializerContext.Default,
-        };
-        return JsonSerializer.SerializeToUtf8Bytes(data, serializer.SceneFileData);
+            writer.WriteStartArray("Entities");
+
+            if (options.WriteRoot) WriteEntityData(world, root);
+            else
+            {
+                var entityRef = world.GetEntityRef(root);
+                ref var parent = ref entityRef.TryGet<Parent>(out var parentExists);
+                if (!parentExists) throw new Exception($"Entity {root} has no parent");
+
+                var currentEntity = parent.FirstChild;
+                while (currentEntity != Entity.NULL)
+                {
+                    WriteEntityData(world, currentEntity);
+                    currentEntity = world.GetEntityRef(currentEntity).Get<Child>().NextSibling;
+                }
+            }
+
+            writer.WriteEndArray();
+        }
+
+        writer.WriteEndObject();
+        writer.Flush();
+        return stream.ToArray();
     }
 
-    SceneFileData.EntityData CollectEntityData(in World world, in Entity entity)
+    void CollectTypes(in World world, in Entity entity, HashSet<Type> types)
     {
-        var entityData = new SceneFileData.EntityData()
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        var archetype = world.Store.Archetypes[entityInfo.ArchetypeIndex];
+        foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
         {
-            ID = entity.ID,
-            Components = [],
-            Children = [],
-        };
+            var cinfo = Component.GetInfo(cid);
+            types.Add(cinfo.Type);
+        }
+
+        if (archetype.HasComponent<Parent>())
+        {
+            var parent = archetype.Chunks[entityInfo.ChunkIndex].GetComponent<Parent>(entityInfo.RowIndex);
+            var child = parent.FirstChild;
+            while (child != Entity.NULL)
+            {
+                CollectTypes(world, child, types);
+                child = world.GetEntityRef(child).Get<Child>().NextSibling;
+            }
+        }
+    }
+
+    void WriteEntityData(in World world, in Entity entity)
+    {
+        writer.WriteStartObject();
 
         var entityInfo = world.Store.GetEntityInfo(entity);
         var archetype = world.Store.GetArchetype(entityInfo.ArchetypeIndex);
         ref var chunk = ref archetype.Chunks[entityInfo.ChunkIndex];
+
+        writer.WriteNumber("ID", entity.ID);
 
         if (archetype.HasComponent<SceneRef>())
         {
@@ -112,64 +140,55 @@ public ref struct SceneWriter : IWriter, IDisposable
             if (!options.WriteSubScenes)
             {
                 var assetPath = world.Resources.Get<AssetServer>().GetAssets<Scene>().GetPath(sceneRef.Scene);
-                if (assetPath.HasValue) entityData.Scene = assetPath.Value.Path;
-                return entityData;
+                if (assetPath.HasValue) writer.WriteString("Scene", assetPath.Value.Path);
+
+                writer.WriteEndObject();
+                return;
             }
+        }
+
+        {
+            writer.WriteStartObject("Components");
+            foreach (var componentId in archetype.GetChunkInfo().ComponentIDs)
+            {
+                if (ignoredComponents.Contains(componentId)) continue;
+
+                var cinfo = Component.GetInfo(componentId);
+                writer.WriteStartObject(cinfo.Type.Name);
+
+                if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(cinfo.Type) is { } serializer)
+                {
+                    serializer.SerializeBytes(ref this, chunk.GetComponent(entityInfo.RowIndex, componentId), in context);
+                }
+                else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer(cinfo.Type) is { } defaultSerializer)
+                {
+                    defaultSerializer.SerializeBytes(ref this, chunk.GetComponent(entityInfo.RowIndex, componentId), in defaultContext);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"No serializer found for component {cinfo.Type}");
+                }
+
+                writer.WriteEndObject();
+            }
+            writer.WriteEndObject();
         }
 
         if (archetype.HasComponent<Parent>())
         {
+            writer.WriteStartArray("Children");
             ref var parent = ref chunk.GetComponent<Parent>(entityInfo.RowIndex);
             var current = parent.FirstChild;
             while (current != Entity.NULL)
             {
-                entityData.Children.Add(CollectEntityData(world, current));
+                WriteEntityData(world, current);
                 current = world.GetEntityRef(current).Get<Child>().NextSibling;
             }
+
+            writer.WriteEndArray();
         }
 
-        foreach (var componentId in archetype.GetChunkInfo().ComponentIDs)
-        {
-            if (ignoredComponents.Contains(componentId)) continue;
-
-            var cinfo = Component.GetInfo(componentId);
-            var alias = cinfo.Type.Name;
-            if (!data.Types.ContainsKey(alias))
-            {
-                data.Types.Add(alias, cinfo.TypeName);
-            }
-
-            currentProperties.Clear();
-            currentValue = default;
-
-            if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer(cinfo.Type) is { } serializer)
-            {
-                serializer.SerializeBytes(ref this, chunk.GetComponent(entityInfo.RowIndex, componentId), in context);
-            }
-            else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer(cinfo.Type) is { } defaultSerializer)
-            {
-                defaultSerializer.SerializeBytes(ref this, chunk.GetComponent(entityInfo.RowIndex, componentId), in defaultContext);
-            }
-            else
-            {
-                throw new InvalidOperationException($"No serializer found for component {cinfo.Type}");
-            }
-
-            if (currentProperties.Count > 0)
-            {
-                entityData.Components.Add(alias, JsonSerializer.SerializeToElement(currentProperties));
-            }
-            else if (currentValue.ValueKind != JsonValueKind.Undefined)
-            {
-                entityData.Components.Add(alias, currentValue);
-            }
-            else
-            {
-                entityData.Components.Add(alias, JsonSerializer.SerializeToElement(new object()));
-            }
-        }
-
-        return entityData;
+        writer.WriteEndObject();
     }
 
     public void Clear()
@@ -177,62 +196,39 @@ public ref struct SceneWriter : IWriter, IDisposable
         throw new NotImplementedException();
     }
 
-    public void Write<T>(T value, string? identifier = null) where T : unmanaged
+    public void Write<T>(scoped in T value, string? identifier = null) where T : unmanaged
     {
+        identifier ??= typeof(T).Name;
         if (BlittableSerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
         {
-            var prevProperties = currentProperties;
-            var prevValue = currentValue;
-            currentProperties = new();
-            currentValue = default;
-
+            writer.WriteStartObject(identifier);
             serializer.Serialize(ref this, value, in context);
-
-            JsonElement result;
-            if (currentProperties.Count > 0) result = JsonSerializer.SerializeToElement(currentProperties);
-            else if (currentValue.ValueKind != JsonValueKind.Undefined) result = currentValue;
-            else result = JsonSerializer.SerializeToElement(new object());
-
-            currentProperties = prevProperties;
-            currentValue = prevValue;
-
-            if (identifier != null) currentProperties![identifier] = result;
-            else currentValue = result;
-            return;
+            writer.WriteEndObject();
         }
-
-        if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
+        else if (BlittableSerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
         {
-            var prevProperties = currentProperties;
-            var prevValue = currentValue;
-            currentProperties = new();
-            currentValue = default;
-
+            writer.WriteStartObject(identifier);
             defaultSerializer.Serialize(ref this, value, in defaultContext);
-
-            JsonElement result;
-            if (currentProperties.Count > 0) result = JsonSerializer.SerializeToElement(currentProperties);
-            else if (currentValue.ValueKind != JsonValueKind.Undefined) result = currentValue;
-            else result = JsonSerializer.SerializeToElement(new object());
-
-            currentProperties = prevProperties;
-            currentValue = prevValue;
-
-            if (identifier != null) currentProperties[identifier] = result;
-            else currentValue = result;
-            return;
+            writer.WriteEndObject();
         }
-
-        var element = JsonSerializer.SerializeToElement(value);
-        if (identifier != null) currentProperties[identifier] = element;
-        else currentValue = element;
+        else
+        {
+            if (!WriteAsKnownJsonType(value, identifier))
+            {
+                throw new NotSupportedException($"No blittable writer found for type {typeof(T)}");
+            }
+        }
     }
 
     public void Write<T>(T[] values, string? identifier = null) where T : unmanaged
     {
-        var element = JsonSerializer.SerializeToElement(values);
-        if (identifier != null) currentProperties[identifier] = element;
-        else currentValue = element;
+        writer.WriteStartArray(identifier ?? typeof(T).Name);
+        foreach (var value in values)
+        {
+            Write(value, identifier);
+        }
+
+        writer.WriteEndArray();
     }
 
     public void Write(scoped ReadOnlySpan<byte> data, string? identifier = null)
@@ -247,45 +243,67 @@ public ref struct SceneWriter : IWriter, IDisposable
 
     public void Write(string value, string? identifier = null)
     {
-        var element = JsonSerializer.SerializeToElement(value);
-        if (identifier != null) currentProperties[identifier] = element;
-        else currentValue = element;
+        Guard.IsNotNull(identifier, "Missing identifier when writing string value to Scene");
+        writer.WriteString(identifier, value);
     }
 
-    public void Serialize<T>(in T value, string? identifier = null) where T : notnull
+    public void Serialize<T>(scoped in T value, string? identifier = null) where T : notnull
     {
-        var prevProperties = currentProperties;
-        var prevValue = currentValue;
+        writer.WriteStartObject(identifier ?? typeof(T).Name);
 
-        currentProperties = new();
-        currentValue = default;
-
-        bool serialized = false;
         if (SerializerLookup<WorldSerializationContext>.GetSerializer<T>() is { } serializer)
         {
             serializer.Serialize(ref this, value, in context);
-            serialized = true;
         }
         else if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } defaultSerializer)
         {
             defaultSerializer.Serialize(ref this, value, in defaultContext);
-            serialized = true;
-        }
-
-        JsonElement result;
-        if (serialized)
-        {
-            result = currentProperties.Count > 0 ? JsonSerializer.SerializeToElement(currentProperties) : currentValue;
         }
         else
         {
-            result = JsonSerializer.SerializeToElement(value);
+            if (!WriteAsKnownJsonType(value, identifier!))
+            {
+                JsonSerializer.Serialize(writer, value);
+            }
         }
 
-        currentProperties = prevProperties;
-        currentValue = prevValue;
+        writer.WriteEndObject();
+    }
 
-        if (identifier != null) currentProperties[identifier] = result;
-        else currentValue = result;
+    bool WriteAsKnownJsonType<T>(in T value, string identifier)
+    {
+        if (value is sbyte or short or int)
+        {
+            writer.WriteNumber(identifier, Unsafe.As<T, int>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+        else if (value is byte or ushort or uint)
+        {
+            writer.WriteNumber(identifier, Unsafe.As<T, uint>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+        else if (value is float)
+        {
+            writer.WriteNumber(identifier, Unsafe.As<T, float>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+        else if (value is double)
+        {
+            writer.WriteNumber(identifier, Unsafe.As<T, double>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+        else if (value is decimal)
+        {
+            writer.WriteNumber(identifier, Unsafe.As<T, decimal>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+        else if (typeof(T).IsEnum)
+        {
+            // TODO: user underlying type to serialize
+            writer.WriteNumber(identifier, Unsafe.As<T, int>(ref Unsafe.AsRef(in value)));
+            return true;
+        }
+
+        return false;
     }
 }

@@ -50,7 +50,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         var path = context.AssetServer.Assets.GetPath(value);
         if (path.HasValue)
         {
-            writer.Write(path.Value.Path);
+            writer.Write(path.Value.Path, "$path");
         }
         else
         {

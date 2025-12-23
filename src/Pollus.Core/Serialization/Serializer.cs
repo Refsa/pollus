@@ -15,10 +15,10 @@ public interface IWriter
     void Clear();
     void Write(scoped ReadOnlySpan<byte> data, string? identifier = null);
     void Write<T>(scoped ReadOnlySpan<T> data, string? identifier = null) where T : unmanaged;
-    void Write<T>(T value, string? identifier = null) where T : unmanaged;
+    void Write<T>(scoped in T value, string? identifier = null) where T : unmanaged;
     void Write<T>(T[] values, string? identifier = null) where T : unmanaged;
     void Write(string value, string? identifier = null);
-    void Serialize<T>(in T value, string? identifier = null) where T : notnull;
+    void Serialize<T>(scoped in T value, string? identifier = null) where T : notnull;
 }
 
 public interface IReader

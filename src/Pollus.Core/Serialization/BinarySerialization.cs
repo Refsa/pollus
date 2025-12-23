@@ -93,7 +93,7 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += sizeInBytes;
     }
 
-    public void Write<T>(T value, string? identifier = null) where T : unmanaged
+    public void Write<T>(scoped in T value, string? identifier = null) where T : unmanaged
     {
         Resize<T>(1);
         MemoryMarshal.Write(buffer.AsSpan(cursor), in value);
@@ -114,7 +114,7 @@ public class BinaryWriter : IWriter, IDisposable
         cursor += byteCount;
     }
 
-    public void Serialize<T>(in T value, string? identifier = null) where T : notnull
+    public void Serialize<T>(scoped in T value, string? identifier = null) where T : notnull
     {
         if (SerializerLookup<DefaultSerializationContext>.GetSerializer<T>() is { } serializer)
         {

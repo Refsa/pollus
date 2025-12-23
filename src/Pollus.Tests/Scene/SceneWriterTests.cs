@@ -202,7 +202,7 @@ public class SceneWriterTests
         Assert.True(components.TryGetProperty("TestComponentWithHandle", out var comp));
         Assert.Equal(10, comp.GetProperty("Value").GetInt32());
 
-        var assetHandle = comp.GetProperty("AssetHandle");
+        var assetHandle = comp.GetProperty("AssetHandle").GetProperty("$path");
         Assert.Equal("path/to/asset.txt", assetHandle.GetString());
     }
 
@@ -343,15 +343,15 @@ public class SceneWriterTests
         Assert.Equal(3, entities.Count);
 
         Assert.Collection(entities, [
-            entity => Assert.Equal(0, entity.Children.Count),
-            entity => Assert.Equal(0, entity.Children.Count),
-            entity => Assert.Equal(0, entity.Children.Count),
+            entity => Assert.Null(entity.Children),
+            entity => Assert.Null(entity.Children),
+            entity => Assert.Null(entity.Children),
         ]);
 
         Assert.Collection(entities, [
             entity => Assert.Equal(1, entity.Components.Count),
             entity => Assert.Equal(1, entity.Components.Count),
-            entity => Assert.Equal(0, entity.Components.Count),
+            entity => Assert.Null(entity.Components),
         ]);
 
         var lastChild = entities[^1];
@@ -401,16 +401,14 @@ public class SceneWriterTests
         Assert.Collection(entities, [
             entity =>
             {
-                Assert.NotNull(entity.Children);
-                Assert.Empty(entity.Children);
+                Assert.Null(entity.Children);
 
                 Assert.NotNull(entity.Components);
                 Assert.Single(entity.Components);
             },
             entity =>
             {
-                Assert.NotNull(entity.Children);
-                Assert.Empty(entity.Children);
+                Assert.Null(entity.Children);
 
                 Assert.NotNull(entity.Components);
                 Assert.Single(entity.Components);
