@@ -82,4 +82,9 @@ public class FileAssetIO : AssetIO
         content = File.ReadAllBytes(BuildPath(path));
         return Result.Success;
     }
+
+    public override async Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
+    {
+        return await File.ReadAllBytesAsync(BuildPath(path), cancellationToken);
+    }
 }

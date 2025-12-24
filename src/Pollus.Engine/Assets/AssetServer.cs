@@ -1,16 +1,27 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
+using Collections;
 using ECS;
 using Pollus.Debugging;
 using Pollus.Utils;
 
 public class AssetServer : IDisposable
 {
+    struct AssetLoadState
+    {
+        public required Handle Handle { get; init; }
+        public required AssetPath Path { get; init; }
+        public required Task<byte[]> Task { get; init; }
+        public required IAssetLoader Loader { get; init; }
+    }
+
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
+
     ConcurrentQueue<AssetPath> queuedPaths = new();
+    ArrayList<AssetLoadState> loadStates = new();
 
     bool isDisposed;
 
@@ -108,25 +119,17 @@ public class AssetServer : IDisposable
     public Handle<TAsset> Load<TAsset>(AssetPath path)
         where TAsset : notnull
     {
+        Assets.Init<TAsset>();
         return Load(path);
     }
 
     public Handle Load(AssetPath path)
     {
-        if (assetLookup.TryGetValue(path, out var handle))
-        {
-            return handle;
-        }
+        if (assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!AssetIO.Exists(path)) return Handle.Null;
+        if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
-        if (!AssetIO.Exists(path))
-        {
-            return Handle.Null;
-        }
-
-        if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx))
-        {
-            return Handle.Null;
-        }
+        AssetIO.LoadPath(path, out var data);
 
         var loader = loaders[loaderIdx];
         var loadContext = new LoadContext()
@@ -137,7 +140,6 @@ public class AssetServer : IDisposable
             AssetServer = this,
         };
 
-        AssetIO.LoadPath(path, out var data);
         loader.Load(data, ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)
         {
@@ -150,6 +152,61 @@ public class AssetServer : IDisposable
         }
 
         return Handle.Null;
+    }
+
+    public Handle<T> LoadAsync<T>(AssetPath path)
+        where T : notnull
+    {
+        Assets.Init<T>();
+        return LoadAsync(path);
+    }
+
+    public Handle LoadAsync(AssetPath path)
+    {
+        if (assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!AssetIO.Exists(path)) return Handle.Null;
+        if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
+
+        var loader = loaders[loaderIdx];
+        var loadState = new AssetLoadState()
+        {
+            Handle = Assets.GetHandle(path, loader.AssetType),
+            Path = path,
+            Task = AssetIO.LoadPathAsync(path),
+            Loader = loader,
+        };
+        loadStates.Add(loadState);
+        return loadState.Handle;
+    }
+
+    public void Update()
+    {
+        for (int i = loadStates.Count - 1; i >= 0; i--)
+        {
+            ref var loadState = ref loadStates.Get(i);
+            if (loadState.Task.IsCompleted is false) continue;
+            var data = loadState.Task.Result;
+
+            var loadContext = new LoadContext()
+            {
+                Path = loadState.Path,
+                FileName = Path.GetFileNameWithoutExtension(loadState.Path.Path),
+                Handle = loadState.Handle,
+                AssetServer = this,
+            };
+
+            loadState.Loader.Load(data, ref loadContext);
+            if (loadContext.Status == AssetStatus.Loaded)
+            {
+                var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
+                var asset = loadContext.Asset;
+                Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {loadState.Path}");
+                Assets.Set(loadState.Handle, asset!);
+                assetLookup.TryAdd(loadState.Path, loadState.Handle);
+            }
+
+            loadStates.RemoveAt(i);
+        }
     }
 
     public void FlushQueue()

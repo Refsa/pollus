@@ -34,6 +34,7 @@ public abstract class AssetIO : IDisposable
     public abstract bool IsFile(in AssetPath path);
     public abstract Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content);
     public abstract Result LoadPath(in AssetPath path, out byte[] content);
+    public abstract Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default);
 
     protected void NotifyAssetChanged(AssetPath path)
     {

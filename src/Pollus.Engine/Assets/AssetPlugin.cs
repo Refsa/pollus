@@ -23,6 +23,7 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
 
 public class AssetPlugin : IPlugin
 {
+    public const string UpdateSystem = "AssetPlugin::Update";
     public const string FlushSystem = "AssetPlugin::Flush";
 
     static AssetPlugin()
@@ -42,11 +43,17 @@ public class AssetPlugin : IPlugin
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);
 
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(FlushSystem,
+        world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,
             static (AssetServer assetServer, Events events) =>
             {
-                assetServer.FlushQueue();
+                assetServer.Update();
                 assetServer.FlushEvents(events);
+            }));
+
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(FlushSystem,
+            static (AssetServer assetServer) =>
+            {
+                assetServer.FlushQueue();
             }));
     }
 }

@@ -2,6 +2,7 @@ namespace Pollus.Core.Parser;
 
 using System.Numerics;
 using Pollus.Mathematics;
+using Utils;
 
 public record struct ParserError : IError
 {

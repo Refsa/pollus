@@ -56,4 +56,9 @@ public class TestAssetIO : AssetIO
         content = Array.Empty<byte>();
         return Result.FileNotFound;
     }
+
+    public override Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }
