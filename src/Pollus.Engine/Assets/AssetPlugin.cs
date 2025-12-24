@@ -17,12 +17,14 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
 
     public Assets<T> DoFetch(World world, ISystem system)
     {
-        return world.Resources.Get<Assets>().GetAssets<T>();
+        return world.Resources.Get<AssetsContainer>().GetAssets<T>();
     }
 }
 
 public class AssetPlugin : IPlugin
 {
+    public const string FlushSystem = "AssetPlugin::Flush";
+
     static AssetPlugin()
     {
         ResourceFetch<AssetServer>.Register();
@@ -39,5 +41,12 @@ public class AssetPlugin : IPlugin
         var assetServer = new AssetServer(new FileAssetIO(RootPath));
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);
+
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(FlushSystem,
+            static (AssetServer assetServer, Events events) =>
+            {
+                assetServer.FlushQueue();
+                assetServer.FlushEvents(events);
+            }));
     }
 }

@@ -1,11 +1,6 @@
 namespace Pollus.Engine.Assets;
 
-public record struct AssetPath(string Path)
-{
-    public static implicit operator AssetPath(string path) => new(path);
-}
-
-public abstract class AssetIO
+public abstract class AssetIO : IDisposable
 {
     public enum Result
     {
@@ -15,6 +10,8 @@ public abstract class AssetIO
         DirectoryNotFound = -1,
         Success = 1,
     }
+
+    public event Action<AssetPath>? OnAssetChanged;
 
     public string RootPath { get; }
 
@@ -37,64 +34,19 @@ public abstract class AssetIO
     public abstract bool IsFile(in AssetPath path);
     public abstract Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content);
     public abstract Result LoadPath(in AssetPath path, out byte[] content);
-}
 
-public class FileAssetIO : AssetIO
-{
-    public FileAssetIO(string rootPath) : base(rootPath)
+    protected void NotifyAssetChanged(AssetPath path)
     {
+        OnAssetChanged?.Invoke(path);
     }
 
-    public override bool Exists(in AssetPath path)
+    public virtual void Watch()
     {
-        return File.Exists(BuildPath(path));
+        throw new NotSupportedException("Watching is not supported by this asset IO");
     }
 
-    public override bool IsDirectory(in AssetPath path)
+    public virtual void Dispose()
     {
-        return Directory.Exists(BuildPath(path));
-    }
-
-    public override bool IsFile(in AssetPath path)
-    {
-        return File.Exists(BuildPath(path));
-    }
-
-    public override Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content)
-    {
-        content = [];
-        if (IsDirectory(path) is false)
-        {
-            return Result.DirectoryNotFound;
-        }
-
-        RecursiveScan(BuildPath(path), content);
-        return Result.Success;
-
-        static void RecursiveScan(string folder, List<AssetPath> content)
-        {
-            foreach (var file in Directory.GetFiles(folder))
-            {
-                var assetPath = new AssetPath(file.Replace(Directory.GetCurrentDirectory(), ""));
-                content.Add(assetPath);
-            }
-
-            foreach (var dir in Directory.GetDirectories(folder))
-            {
-                RecursiveScan(dir, content);
-            }
-        }
-    }
-
-    public override Result LoadPath(in AssetPath path, out byte[] content)
-    {
-        if (Exists(path) is false)
-        {
-            content = Array.Empty<byte>();
-            return Result.FileNotFound;
-        }
-
-        content = File.ReadAllBytes(BuildPath(path));
-        return Result.Success;
+        
     }
 }

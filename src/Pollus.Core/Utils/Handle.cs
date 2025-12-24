@@ -1,6 +1,6 @@
 namespace Pollus.Utils;
 
-public record struct Handle(int Type, int ID)
+public record struct Handle(TypeID Type, int ID)
 {
     public static Handle Null => new(-1, -1);
 
@@ -10,7 +10,7 @@ public record struct Handle(int Type, int ID)
 
 public record struct Handle<T>(int ID)
 {
-    static readonly int typeId = TypeLookup.ID<T>();
+    static readonly TypeID typeId = TypeLookup.ID<T>();
     public static Handle<T> Null => new(-1);
 
     public static implicit operator Handle(Handle<T> handle) => new(typeId, handle.ID);

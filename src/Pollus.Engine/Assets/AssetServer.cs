@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Assets;
 
+using System.Collections.Concurrent;
+using ECS;
 using Pollus.Debugging;
 using Pollus.Utils;
 
@@ -8,11 +10,12 @@ public class AssetServer : IDisposable
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
+    ConcurrentQueue<AssetPath> queuedPaths = new();
 
     bool isDisposed;
 
     public AssetIO AssetIO { get; }
-    public Assets Assets { get; } = new();
+    public AssetsContainer Assets { get; } = new();
 
     public AssetServer(AssetIO assetIO)
     {
@@ -27,6 +30,20 @@ public class AssetServer : IDisposable
         Assets.Dispose();
     }
 
+    void OnAssetChanged(AssetPath obj)
+    {
+        if (assetLookup.ContainsKey(obj))
+        {
+            queuedPaths.Enqueue(obj);
+        }
+    }
+
+    public void Watch()
+    {
+        AssetIO.OnAssetChanged += OnAssetChanged;
+        AssetIO.Watch();
+    }
+
     public AssetServer AddLoader<TLoader>() where TLoader : IAssetLoader, new()
     {
         var idx = loaders.Count;
@@ -36,6 +53,7 @@ public class AssetServer : IDisposable
         {
             loaderLookup.Add(ext, idx);
         }
+
         return this;
     }
 
@@ -47,6 +65,7 @@ public class AssetServer : IDisposable
         {
             loaderLookup.Add(ext, idx);
         }
+
         return this;
     }
 
@@ -62,8 +81,37 @@ public class AssetServer : IDisposable
         return Assets.GetAssets<TAsset>();
     }
 
+    public Handle<TAsset> Queue<TAsset>(AssetPath path)
+        where TAsset : notnull
+    {
+        return Queue(path);
+    }
+
+    public Handle Queue(AssetPath path)
+    {
+        if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx))
+        {
+            return Handle.Null;
+        }
+
+        var loader = loaders[loaderIdx];
+        if (!Assets.TryGetAssets(loader.AssetType, out var storage))
+        {
+            return Handle.Null;
+        }
+
+        var handle = storage.Initialize(path);
+        queuedPaths.Enqueue(path);
+        return handle;
+    }
+
     public Handle<TAsset> Load<TAsset>(AssetPath path)
         where TAsset : notnull
+    {
+        return Load(path);
+    }
+
+    public Handle Load(AssetPath path)
     {
         if (assetLookup.TryGetValue(path, out var handle))
         {
@@ -72,12 +120,12 @@ public class AssetServer : IDisposable
 
         if (!AssetIO.Exists(path))
         {
-            return Handle<TAsset>.Null;
+            return Handle.Null;
         }
 
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx))
         {
-            return Handle<TAsset>.Null;
+            return Handle.Null;
         }
 
         var loader = loaders[loaderIdx];
@@ -85,7 +133,7 @@ public class AssetServer : IDisposable
         {
             Path = path,
             FileName = Path.GetFileNameWithoutExtension(path.Path),
-            Handle = Assets.GetHandle<TAsset>(path),
+            Handle = Assets.GetHandle(path, loader.AssetType),
             AssetServer = this,
         };
 
@@ -93,13 +141,27 @@ public class AssetServer : IDisposable
         loader.Load(data, ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)
         {
-            Guard.IsTrue(loadContext.Asset is TAsset, $"AssetServer::Load expected type {typeof(TAsset)} but got {loadContext.Asset?.GetType()} on path {path}");
-            var asset = (TAsset)loadContext.Asset!;
-            handle = Assets.Add(asset, path);
+            var expectedType = TypeLookup.GetType(loader.AssetType);
+            var asset = loadContext.Asset;
+            Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {path}");
+            handle = Assets.Add(asset!, loader.AssetType, path);
             assetLookup.TryAdd(path, handle);
             return handle;
         }
 
-        return Handle<TAsset>.Null;
+        return Handle.Null;
+    }
+
+    public void FlushQueue()
+    {
+        while (queuedPaths.TryDequeue(out var path))
+        {
+            Load(path);
+        }
+    }
+
+    public void FlushEvents(Events events)
+    {
+        Assets.FlushEvents(events);
     }
 }

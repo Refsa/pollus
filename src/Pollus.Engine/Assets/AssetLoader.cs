@@ -24,7 +24,7 @@ public struct LoadContext
 public interface IAssetLoader
 {
     string[] Extensions { get; }
-    int AssetType { get; }
+    TypeID AssetType { get; }
     void Load(ReadOnlySpan<byte> data, ref LoadContext context);
 }
 
@@ -37,7 +37,7 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         public readonly AssetPath Path => context.Path;
         public readonly string FileName => context.FileName;
         public readonly Handle Handle => context.Handle;
-        public readonly Assets Assets => context.AssetServer.Assets;
+        public readonly AssetsContainer Assets => context.AssetServer.Assets;
         public readonly AssetServer AssetServer => context.AssetServer;
 
         public LoadContext(ref LoadContext context)
@@ -53,8 +53,8 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TAsset>());
     }
 
-    static readonly int _assetType = TypeLookup.ID<TAsset>();
-    public int AssetType => _assetType;
+    static readonly TypeID _assetType = TypeLookup.ID<TAsset>();
+    public TypeID AssetType => _assetType;
 
     public abstract string[] Extensions { get; }
 

@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Assets;
 
-using System.Runtime.CompilerServices;
 using Core.Serialization;
+using ECS;
 using Pollus.Collections;
 using Pollus.Utils;
 using Serialization;
@@ -24,10 +24,21 @@ public class AssetInfo<T>
     public T? Asset { get; set; }
 }
 
-public class Assets<T> : IDisposable
+public interface IAssetStorage
+{
+    TypeID AssetType { get; }
+    Handle Add(object asset, AssetPath? path = null);
+    void Set(Handle handle, object asset);
+    Handle Initialize(AssetPath? path);
+    void FlushEvents(Events events);
+    AssetStatus GetStatus(Handle handle);
+    AssetPath? GetPath(Handle handle);
+}
+
+public class Assets<T> : IDisposable, IAssetStorage
     where T : notnull
 {
-    static int _assetTypeId = TypeLookup.ID<T>();
+    static readonly TypeID _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
     static int NextID => counter++;
 
@@ -37,9 +48,13 @@ public class Assets<T> : IDisposable
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<T>());
     }
 
+    public TypeID AssetType => TypeLookup.ID<T>();
+
     List<AssetInfo<T>> assets = new();
     Dictionary<Handle, int> assetLookup = new();
     Dictionary<AssetPath, Handle> pathLookup = new();
+
+    List<AssetEvent<T>> queuedEvents = new();
 
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
 
@@ -86,6 +101,11 @@ public class Assets<T> : IDisposable
                 info.Status = AssetStatus.Loaded;
             }
 
+            queuedEvents.Add(new AssetEvent<T>
+            {
+                Type = AssetEventType.Added,
+                Handle = handle,
+            });
             return handle;
         }
 
@@ -99,7 +119,18 @@ public class Assets<T> : IDisposable
             Asset = asset,
             Path = path,
         });
+        queuedEvents.Add(new AssetEvent<T>
+        {
+            Type = AssetEventType.Added,
+            Handle = handle,
+        });
         return handle;
+    }
+
+    public Handle Add(object asset, AssetPath? path = null)
+    {
+        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
+        return Add(typedAsset, path);
     }
 
     public AssetInfo<T>? GetInfo(Handle handle)
@@ -142,7 +173,31 @@ public class Assets<T> : IDisposable
         return null;
     }
 
-    public void Unload(Handle handle)
+    public void Set(Handle handle, object asset)
+    {
+        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
+        Set(handle, typedAsset);
+    }
+
+    public void Set(Handle handle, T asset)
+    {
+        if (!assetLookup.TryGetValue(handle, out var index))
+        {
+            throw new InvalidOperationException($"Asset with handle {handle} not found");
+        }
+
+        var assetInfo = assets[index];
+        assetInfo.Asset = asset;
+        assetInfo.Status = AssetStatus.Loaded;
+
+        queuedEvents.Add(new AssetEvent<T>
+        {
+            Type = AssetEventType.Changed,
+            Handle = handle,
+        });
+    }
+
+    public void Remove(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))
         {
@@ -153,128 +208,28 @@ public class Assets<T> : IDisposable
                 disposable.Dispose();
             }
 
-            assetInfo.Asset = default;
-        }
-    }
-
-    public void Remove(Handle handle)
-    {
-        if (assetLookup.TryGetValue(handle, out var index))
-        {
-            var assetInfo = assets[index];
-            if (assetInfo.Asset is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-
             assets.RemoveAt(index);
             assetLookup.Remove(handle);
             if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
-        }
-    }
-}
 
-public class Assets : IDisposable
-{
-    bool isDisposed;
-    readonly Dictionary<int, object> assets = [];
-
-    public void Dispose()
-    {
-        if (isDisposed) return;
-        isDisposed = true;
-        GC.SuppressFinalize(this);
-
-        foreach (var asset in assets.Values)
-        {
-            if (asset is IDisposable disposable)
+            queuedEvents.Add(new AssetEvent<T>
             {
-                disposable.Dispose();
-            }
+                Type = AssetEventType.Removed,
+                Handle = handle,
+            });
         }
-
-        assets.Clear();
     }
 
-    public void Init<T>()
-        where T : notnull
+    public void FlushEvents(Events events)
     {
-        if (assets.ContainsKey(TypeLookup.ID<T>()))
+        events.InitEvent<AssetEvent<T>>();
+        var writer = events.GetWriter<AssetEvent<T>>();
+
+        foreach (var @event in queuedEvents)
         {
-            return;
+            writer.Write(@event);
         }
 
-        assets.Add(TypeLookup.ID<T>(), new Assets<T>());
-    }
-
-    public bool TryGetAssets<T>(out Assets<T> container)
-        where T : notnull
-    {
-        if (assets.TryGetValue(TypeLookup.ID<T>(), out var containerObject))
-        {
-            container = (Assets<T>)containerObject;
-            return true;
-        }
-
-        container = null!;
-        return false;
-    }
-
-    public Assets<T> GetAssets<T>()
-        where T : notnull
-    {
-        if (!TryGetAssets<T>(out var container))
-        {
-            var id = TypeLookup.ID<T>();
-            container = new Assets<T>();
-            assets.Add(id, container);
-        }
-
-        return container;
-    }
-
-    public Handle<T> Add<T>(T asset, AssetPath? path = null)
-        where T : notnull
-    {
-        return GetAssets<T>().Add(asset, path);
-    }
-
-    public Handle<T> GetHandle<T>(AssetPath path)
-        where T : notnull
-    {
-        return GetAssets<T>().Initialize(path);
-    }
-
-    public T? Get<T>(Handle<T> handle)
-        where T : notnull
-    {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.Get(handle);
-        }
-
-        return default;
-    }
-
-    public AssetStatus GetStatus<T>(Handle handle)
-        where T : notnull
-    {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.GetStatus(handle);
-        }
-
-        return AssetStatus.Unknown;
-    }
-
-    public AssetPath? GetPath<T>(Handle<T> handle)
-        where T : notnull
-    {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.GetPath(handle);
-        }
-
-        return null;
+        queuedEvents.Clear();
     }
 }

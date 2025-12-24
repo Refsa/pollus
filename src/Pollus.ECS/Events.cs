@@ -1,17 +1,21 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using Utils;
 
 public class Events
 {
-    readonly Dictionary<Type, IEventQueue> events = [];
+    readonly Dictionary<TypeID, IEventQueue> events = [];
 
     public void InitEvent<TEvent>()
         where TEvent : struct
     {
+        var typeId = TypeLookup.ID<TEvent>();
+        if (events.ContainsKey(typeId)) return;
+
         EventWriterFetch<TEvent>.Register();
         EventReaderFetch<TEvent>.Register();
-        events.Add(typeof(TEvent), new EventQueue<TEvent>());
+        events.Add(typeId, new EventQueue<TEvent>());
     }
 
     internal void ClearEvents()
@@ -25,30 +29,36 @@ public class Events
     public EventWriter<TEvent> GetWriter<TEvent>()
         where TEvent : struct
     {
-        if (events.TryGetValue(typeof(TEvent), out var queue))
+        var typeId = TypeLookup.ID<TEvent>();
+        if (events.TryGetValue(typeId, out var queue))
         {
             return ((EventQueue<TEvent>)queue).GetWriter();
         }
+
         return default;
     }
 
     public EventReader<TEvent>? GetReader<TEvent>()
         where TEvent : struct
     {
-        if (events.TryGetValue(typeof(TEvent), out var queue))
+        var typeId = TypeLookup.ID<TEvent>();
+        if (events.TryGetValue(typeId, out var queue))
         {
             return ((EventQueue<TEvent>)queue).GetReader();
         }
+
         return default;
     }
 
     public ReadOnlySpan<TEvent> ReadEvents<TEvent>()
         where TEvent : struct
     {
-        if (events.TryGetValue(typeof(TEvent), out var queue))
+        var typeId = TypeLookup.ID<TEvent>();
+        if (events.TryGetValue(typeId, out var queue))
         {
             return ((EventQueue<TEvent>)queue).Events;
         }
+
         return default;
     }
 }
@@ -87,6 +97,7 @@ public class EventQueue<TEvent> : IEventQueue
         {
             reader.Cursor = int.Max(0, reader.Cursor - prevEnd);
         }
+
         cursor -= prevEnd;
         prevEnd = cursor;
     }
