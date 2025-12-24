@@ -26,9 +26,10 @@ resharper_check_namespace_highlighting=hint
 resharper_unused_member_global_highlighting=hint
 resharper_place_single_method_argument_lambda_on_same_line = none
 resharper_convert_to_primary_constructor_highlighting = none
+resharper_csharp_keep_existing_linebreaks = true
+resharper_keep_existing_arrangement = true
 
-# lambdas with brackets should not be on same line as assignment/call
-dotnet_style_allow_statement_lambdas_on_one_line = false:suggestion
+dotnet_style_allow_statement_lambdas_on_one_line = false
 # resharper: put lambda braces on new line
 csharp_wrap_before_arrow_with_expressions = true
 

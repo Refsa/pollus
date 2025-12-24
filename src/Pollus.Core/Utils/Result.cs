@@ -1,4 +1,4 @@
-namespace Ludere.Utils;
+namespace Pollus.Utils;
 
 public interface IError
 {

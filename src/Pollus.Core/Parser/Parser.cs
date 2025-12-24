@@ -1,4 +1,4 @@
-namespace Ludere.Utils.Parser;
+namespace Pollus.Core.Parser;
 
 using System.Numerics;
 using Pollus.Mathematics;
