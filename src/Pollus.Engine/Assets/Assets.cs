@@ -2,6 +2,7 @@ namespace Pollus.Engine.Assets;
 
 using Core.Serialization;
 using ECS;
+using Microsoft.VisualBasic;
 using Pollus.Collections;
 using Pollus.Utils;
 using Serialization;
@@ -22,6 +23,8 @@ public class AssetInfo<T>
     public AssetStatus Status { get; set; }
     public AssetPath? Path { get; set; }
     public T? Asset { get; set; }
+
+    public DateTime LastModified { get; set; }
 }
 
 public interface IAssetStorage
@@ -97,13 +100,19 @@ public class Assets<T> : IDisposable, IAssetStorage
             if (assetLookup.TryGetValue(handle, out var index))
             {
                 var info = assets[index];
+                if (info.Asset is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+
                 info.Asset = asset;
                 info.Status = AssetStatus.Loaded;
+                info.LastModified = DateTime.UtcNow;
             }
 
             queuedEvents.Add(new AssetEvent<T>
             {
-                Type = AssetEventType.Added,
+                Type = AssetEventType.Changed,
                 Handle = handle,
             });
             return handle;
@@ -118,6 +127,7 @@ public class Assets<T> : IDisposable, IAssetStorage
             Status = AssetStatus.Loaded,
             Asset = asset,
             Path = path,
+            LastModified = DateTime.UtcNow,
         });
         queuedEvents.Add(new AssetEvent<T>
         {
@@ -189,6 +199,7 @@ public class Assets<T> : IDisposable, IAssetStorage
         var assetInfo = assets[index];
         assetInfo.Asset = asset;
         assetInfo.Status = AssetStatus.Loaded;
+        assetInfo.LastModified = DateTime.UtcNow;
 
         queuedEvents.Add(new AssetEvent<T>
         {

@@ -234,9 +234,9 @@ public class AssetServer : IDisposable
         foreach (var kvp in queuedPaths)
         {
             if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
-            Log.Info((FormattableString)$"AssetServer::QueuedPathLoaded {kvp.Key}");
             Load(kvp.Key, true);
             queuedPaths.TryRemove(kvp.Key, out _);
+            Log.Info((FormattableString)$"AssetServer::FlushQueue {kvp.Key}");
         }
     }
 
