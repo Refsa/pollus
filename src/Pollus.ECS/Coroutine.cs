@@ -3,6 +3,7 @@ namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 using Pollus.Coroutine;
 using Pollus.Debugging;
+using Utils;
 
 public class Coroutine<TSystemParam> : SystemBase<Time, TSystemParam, Param<World>>, IDisposable
     where TSystemParam : ISystemParam
@@ -38,7 +39,14 @@ public class Coroutine<TSystemParam> : SystemBase<Time, TSystemParam, Param<Worl
             }
             else if (current.Instruction == Yield.Type.Custom)
             {
-                if (!YieldCustomInstructionHandler<Param<World>>.Handle(in current, worldParam)) return;
+                if (!YieldCustomInstructionHandler<Param<World>>.TryGetHandler(current, out var handler))
+                {
+                    var typeId = current.GetData<int>(0);
+                    var type = TypeLookup.GetType(typeId);
+                    throw new InvalidOperationException($"Coroutine: no handler found for custom yield type {type?.Name}");
+                }
+
+                if (!handler.Handler(ref current, worldParam)) return;
             }
 
             wrapper.MoveNext();

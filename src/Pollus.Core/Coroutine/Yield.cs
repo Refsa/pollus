@@ -1,6 +1,7 @@
 namespace Pollus.Coroutine;
 
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
@@ -31,16 +32,16 @@ public struct Yield : IDisposable
         if (instructionData is not null) ArrayPool<byte>.Shared.Return(instructionData);
     }
 
-    public T GetData<T>(int offset = 0)
+    public readonly T GetData<T>(int offset = 0)
         where T : unmanaged
     {
         return MemoryMarshal.Read<T>(instructionData.AsSpan()[offset..(offset + Unsafe.SizeOf<T>())]);
     }
 
-    public TCustomData GetCustomData<TCustomData>()
+    public ref TCustomData GetCustomData<TCustomData>()
         where TCustomData : struct
     {
-        return MemoryMarshal.Read<TCustomData>(instructionData.AsSpan()[4..]);
+        return ref MemoryMarshal.AsRef<TCustomData>(instructionData.AsSpan()[4..]);
     }
 
     public void SetData<T>(in T value)
@@ -82,13 +83,14 @@ public struct YieldCustomData<TData>
 public static class YieldCustomInstructionHandler<TParam>
     where TParam : struct
 {
-    class HandlerData
+    public class HandlerData
     {
         public required HandlerDelegate Handler;
         public required Type[] Dependencies;
     }
 
-    public delegate bool HandlerDelegate(in Yield yield, in TParam param);
+    public delegate bool HandlerDelegate(scoped ref Yield yield, scoped in TParam param);
+
     static Dictionary<int, HandlerData> handlers = [];
 
     public static void AddHandler<TCustomData>(HandlerDelegate handler, Type[] dependencies)
@@ -97,10 +99,16 @@ public static class YieldCustomInstructionHandler<TParam>
         handlers[TypeLookup.ID<TCustomData>()] = new HandlerData { Handler = handler, Dependencies = dependencies };
     }
 
-    public static bool Handle(in Yield yield, TParam param)
+    public static bool TryGetHandler(scoped in Yield yield, [MaybeNullWhen(false)] out HandlerData handler)
     {
         var typeId = yield.GetData<int>(0);
-        return handlers[typeId].Handler(in yield, param);
+        return handlers.TryGetValue(typeId, out handler);
+    }
+
+    public static bool Handle(scoped ref Yield yield, scoped in TParam param)
+    {
+        var typeId = yield.GetData<int>(0);
+        return handlers[typeId].Handler(ref yield, param);
     }
 
     public static Type[] GetDependencies(in Yield yield)

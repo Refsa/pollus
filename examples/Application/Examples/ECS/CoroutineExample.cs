@@ -20,41 +20,42 @@ public partial class CoroutineExample : IExample
     }
 
     public void Run() => (app = Application.Builder
-        .AddPlugins([
-            new InputPlugin(),
-            new StatePlugin<TestState>(TestState.Second),
-        ])
-        .AddSystemSet<CoroutineSystemSet>()
-        .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
-        {
-            Locals = [Local.From(1f)],
-        },
-        static (param) =>
-        {
-            return Routine();
-            static IEnumerable<Yield> Routine()
-            {
-                yield return Yield.WaitForSeconds(1f);
-                Log.Info("Coroutine Tick, Press Space to enter First State");
-                yield return Coroutine.WaitForEnterState(TestState.First);
-                Log.Info("Entered First State, Press Space to exit First State");
-                yield return Coroutine.WaitForExitState(TestState.First);
-                Log.Info("Exited First State");
-            }
-        }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>
-        {
-            if (keyboard.JustPressed(Key.Space))
-            {
-                state.Set(state.Current switch
+            .AddPlugins([
+                new InputPlugin(),
+                new StatePlugin<TestState>(TestState.Second),
+            ])
+            .AddSystemSet<CoroutineSystemSet>()
+            .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
                 {
-                    TestState.First => TestState.Second,
-                    TestState.Second => TestState.First,
-                    _ => throw new NotImplementedException(),
-                });
-            }
-        }))
-        .Build())
+                    Locals = [Local.From(1f)],
+                },
+                static (param) =>
+                {
+                    return Routine();
+
+                    static IEnumerable<Yield> Routine()
+                    {
+                        yield return Yield.WaitForSeconds(1f);
+                        Log.Info("Coroutine Tick, Press Space to enter First State");
+                        yield return Coroutine.WaitForEnterState(TestState.First);
+                        Log.Info("Entered First State, Press Space to exit First State");
+                        yield return Coroutine.WaitForExitState(TestState.First);
+                        Log.Info("Exited First State");
+                    }
+                }))
+            .AddSystem(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>
+            {
+                if (keyboard.JustPressed(Key.Space))
+                {
+                    state.Set(state.Current switch
+                    {
+                        TestState.First => TestState.Second,
+                        TestState.Second => TestState.First,
+                        _ => throw new NotImplementedException(),
+                    });
+                }
+            }))
+            .Build())
         .Run();
 
     public void Stop()
@@ -73,8 +74,30 @@ public partial class CoroutineExample : IExample
 
         static IEnumerable<Yield> Routine(Time time)
         {
-            yield return Yield.WaitForSeconds(1f);
-            Log.Info($"Coroutine from SystemSet Tick, time: {time.SecondsSinceStartup}");
+            yield return CustomYields.WaitForFrames(100_000);
+            Log.Info($"Coroutine from SystemSet, waited for 100_000 frames, frameCount: {time.FrameCount}");
+        }
+    }
+
+    static class CustomYields
+    {
+        struct WaitForFramesData
+        {
+            public required int FrameCount { get; init; }
+            int current { get; set; }
+
+            public static bool WaitForNFramesHandler(scoped ref Yield yield, scoped in Param<World> param)
+            {
+                ref var data = ref yield.GetCustomData<WaitForFramesData>();
+                if (++data.current >= data.FrameCount) return true;
+                return false;
+            }
+        }
+
+        public static Yield WaitForFrames(int frameCount)
+        {
+            YieldCustomInstructionHandler<Param<World>>.AddHandler<WaitForFramesData>(WaitForFramesData.WaitForNFramesHandler, []);
+            return Yield.Custom(new WaitForFramesData { FrameCount = frameCount });
         }
     }
 }
