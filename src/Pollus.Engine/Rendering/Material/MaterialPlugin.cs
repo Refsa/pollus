@@ -9,7 +9,8 @@ public class MaterialPlugin<TMaterial> : IPlugin
 {
     public static MaterialPlugin<TMaterial> Default => new MaterialPlugin<TMaterial>();
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<RenderingPlugin>(),
     ];
 
@@ -20,29 +21,24 @@ public class MaterialPlugin<TMaterial> : IPlugin
         world.Resources.Get<AssetServer>().InitAsset<TMaterial>();
 
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
-        world.Schedule.AddSystems(CoreStage.PreRender, new ExtractMaterialSystem<TMaterial>());
+
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new($"MaterialPlugin<{typeof(TMaterial).Name}>::PrepareSystem")
+            {
+                RunsAfter = [RenderingPlugin.BeginFrameSystem]
+            },
+            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
+            {
+                foreach (scoped ref readonly var assetEvent in assetEvents.Read())
+                {
+                    if (assetEvent.Type is AssetEventType.Removed) continue;
+
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+                }
+            }));
     }
 
     public static MaterialPlugin<TMaterial> Create()
     {
         return new MaterialPlugin<TMaterial>();
-    }
-}
-
-public class ExtractMaterialSystem<TMaterial> : SystemBase<RenderAssets, AssetServer, IWGPUContext, Assets<TMaterial>>
-    where TMaterial : IMaterial
-{
-    public ExtractMaterialSystem()
-        : base(new SystemDescriptor($"ExtractMaterialSystem::<{typeof(TMaterial).Name}>"))
-    { }
-
-    protected override void OnTick(
-        RenderAssets renderAssets, AssetServer assetServer,
-        IWGPUContext gpuContext, Assets<TMaterial> materials)
-    {
-        foreach (var material in materials.AssetInfos)
-        {
-            renderAssets.Prepare(gpuContext, assetServer, material.Handle);
-        }
     }
 }

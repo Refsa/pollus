@@ -13,7 +13,8 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
 {
     public delegate void ExtractDelegate(in TExtractParam param, ref TUniform uniform);
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<RenderingPlugin>(),
     ];
 
@@ -38,12 +39,20 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
-            $"{typeof(TUniform).Name}::PrepareSystem",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<Uniform<TUniform>> uniformAssets) =>
+            new($"{typeof(TUniform).Name}::PrepareSystem")
             {
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+            },
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<Uniform<TUniform>> uniformAssets, EventReader<AssetEvent<Uniform<TUniform>>> assetEvents) =>
+            {
+                foreach (scoped ref readonly var assetEvent in assetEvents.Read())
+                {
+                    if (assetEvent.Type is AssetEventType.Removed) continue;
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+                }
+
                 var handle = new Handle<Uniform<TUniform>>(0);
                 var uniformAsset = uniformAssets.Get(handle)!;
-                renderAssets.Prepare(gpuContext, assetServer, handle);
                 var renderAsset = renderAssets.Get<UniformRenderData>(handle);
                 renderAssets.Get(renderAsset.UniformBuffer).Write(uniformAsset.Data, 0);
             }

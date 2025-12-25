@@ -7,14 +7,27 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
+public static class DrawSystemShared<TBatches, TBatch>
+    where TBatches : IRenderBatches<TBatch>
+    where TBatch : IRenderBatch
+{
+    public static readonly string ExtractSystem = $"DrawSystem::Extract<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
+    public static readonly string WriteSystem = $"DrawSystem::Write<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
+    public static readonly string DrawSystem = $"DrawSystem::Draw<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
+}
+
 public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
     where TBatches : IRenderBatches<TBatch>
     where TBatch : IRenderBatch
     where TExtractQuery : IQuery
 {
     public ExtractDrawSystem()
-        : base(new SystemDescriptor(nameof(ExtractSpritesSystem)))
-    { }
+        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.ExtractSystem)
+        {
+            RunsAfter = [RenderingPlugin.BeginFrameSystem]
+        })
+    {
+    }
 
     protected override void OnTick(
         RenderAssets renderAssets, AssetServer assetServer,
@@ -32,8 +45,12 @@ public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, Ass
     where TBatch : IRenderBatch
 {
     public WriteBatchesSystem()
-        : base(new SystemDescriptor(nameof(WriteBatchesSystem<TBatches, TBatch>)))
-    { }
+        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.WriteSystem)
+        {
+            RunsAfter = [DrawSystemShared<TBatches, TBatch>.ExtractSystem]
+        })
+    {
+    }
 
     protected override void OnTick(
         RenderAssets renderAssets, AssetServer assetServer,
@@ -66,14 +83,16 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
     where TBatch : IRenderBatch
 {
     public delegate Draw DrawBatchDelegate(RenderAssets renderAssets, TBatch batch);
+
     public required DrawBatchDelegate DrawExec;
     public required RenderStep2D RenderStep;
 
     public DrawBatchesSystem()
-        : base(new SystemDescriptor(nameof(DrawBatchesSystem<TBatches, TBatch>))
-            .After(nameof(WriteBatchesSystem<TBatches, TBatch>))
-    )
-    { }
+        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.DrawSystem)
+            .After(DrawSystemShared<TBatches, TBatch>.WriteSystem)
+        )
+    {
+    }
 
     protected override void OnTick(DrawGroups2D renderSteps, RenderAssets renderAssets, TBatches batches)
     {

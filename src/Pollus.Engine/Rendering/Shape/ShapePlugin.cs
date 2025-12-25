@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Graphics.WGPU;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
@@ -14,7 +15,8 @@ public class ShapePlugin : IPlugin
         AssetsFetch<Shape>.Register();
     }
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<RenderingPlugin>(),
     ];
 
@@ -46,6 +48,21 @@ public class ShapePlugin : IPlugin
                 },
             },
         ]);
+
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new("ShapePlugin::PrepareShapeAssets")
+            {
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+                RunCriteria = EventRunCriteria<AssetEvent<Shape>>.Create,
+            },
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, EventReader<AssetEvent<Shape>> assetEvents) =>
+            {
+                foreach (scoped ref readonly var assetEvent in assetEvents.Read())
+                {
+                    if (assetEvent.Type is AssetEventType.Removed) continue;
+
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+                }
+            }));
     }
 }
 

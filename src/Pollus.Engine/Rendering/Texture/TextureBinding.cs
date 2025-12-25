@@ -21,7 +21,6 @@ public partial class TextureBinding : IBinding
 
     public BindGroupEntry Binding(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, uint binding)
     {
-        renderAssets.Prepare(gpuContext, assetServer, Image);
         var renderAsset = renderAssets.Get<TextureRenderData>(Image);
         var textureView = renderAssets.Get(renderAsset.View);
         return BindGroupEntry.TextureEntry(binding, textureView);

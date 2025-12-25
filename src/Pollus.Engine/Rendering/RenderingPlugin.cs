@@ -89,11 +89,12 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
             BeginFrameSystem,
-            static (RenderContext context, IWGPUContext gpuContext, AssetServer assetServer, Assets<Texture2D> textures, RenderAssets renderAssets) =>
+            static (RenderContext context, IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, EventReader<AssetEvent<Texture2D>> assetEvents) =>
             {
-                foreach (var texture in textures.AssetInfos)
+                foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    renderAssets.Prepare(gpuContext, assetServer, texture.Handle, false);
+                    if (assetEvent.Type is AssetEventType.Removed) continue;
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
                 }
 
                 context.PrepareFrame();

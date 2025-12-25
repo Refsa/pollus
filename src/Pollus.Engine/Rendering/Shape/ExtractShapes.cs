@@ -22,12 +22,7 @@ public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch
 
     protected override void Extract(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, ShapeBatches batches, Query<GlobalTransform, ShapeDraw> query)
     {
-        foreach (var shape in assetServer.GetAssets<Shape>().AssetInfos)
-        {
-            renderAssets.Prepare(gpuContext, assetServer, shape.Handle);
-        }
         batches.Reset();
-
         query.ForEach(new Job
         {
             Batches = batches,

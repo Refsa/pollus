@@ -18,7 +18,8 @@ public class MeshPlugin : IPlugin
         ResourceFetch<MeshRenderBatches>.Register();
     }
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From(() => AssetPlugin.Default),
         PluginDependency.From<RenderingPlugin>(),
     ];
@@ -27,6 +28,8 @@ public class MeshPlugin : IPlugin
 
     public void Apply(World world)
     {
+        world.Resources.Init<MeshAsset>();
+
         world.Resources.Get<RenderAssets>().AddLoader(new MeshRenderDataLoader());
 
         if (SharedPrimitives != PrimitiveType.None)
@@ -39,12 +42,17 @@ public class MeshPlugin : IPlugin
         }
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
-            "MeshPlugin::PrepareMeshAssets",
-            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, Assets<MeshAsset> meshAssets) =>
+            new("MeshPlugin::PrepareMeshAssets")
             {
-                foreach (var meshAsset in meshAssets.AssetInfos)
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+                RunCriteria = EventRunCriteria<AssetEvent<MeshAsset>>.Create,
+            },
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, EventReader<AssetEvent<MeshAsset>> assetEvents) =>
+            {
+                foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    renderAssets.Prepare(gpuContext, assetServer, meshAsset.Handle);
+                    if (assetEvent.Type is AssetEventType.Removed) continue;
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
                 }
             }
         ));
