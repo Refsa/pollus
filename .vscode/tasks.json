@@ -18,6 +18,7 @@
                 "watch",
                 "run",
                 "--project",
+                "${workspaceFolder}/examples/Desktop/Pollus.Examples.Desktop.csproj"
             ],
         }
     ]

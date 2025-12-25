@@ -1,4 +1,4 @@
-    namespace Pollus.Engine.Assets;
+namespace Pollus.Engine.Assets;
 
 using Pollus.ECS;
 
@@ -34,6 +34,7 @@ public class AssetPlugin : IPlugin
     public static AssetPlugin Default => new() { RootPath = "assets" };
 
     public required string RootPath { get; init; }
+    public bool Watch { get; init; } = true;
 
     public void Apply(World world)
     {
@@ -42,6 +43,12 @@ public class AssetPlugin : IPlugin
         var assetServer = new AssetServer(new FileAssetIO(RootPath));
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);
+
+        if (Watch && !OperatingSystem.IsBrowser())
+        {
+            assetServer.Watch();
+            world.AddPlugin(new DevelopmentAssetsWatch());
+        }
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,
             static (AssetServer assetServer, Events events) =>

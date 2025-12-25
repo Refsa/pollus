@@ -20,7 +20,7 @@ public class AssetServer : IDisposable
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
 
-    ConcurrentQueue<AssetPath> queuedPaths = new();
+    ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
 
     bool isDisposed;
@@ -45,7 +45,10 @@ public class AssetServer : IDisposable
     {
         if (assetLookup.ContainsKey(obj))
         {
-            queuedPaths.Enqueue(obj);
+            if (queuedPaths.TryAdd(obj, DateTime.UtcNow) is false)
+            {
+                queuedPaths[obj] = DateTime.UtcNow;
+            }
         }
     }
 
@@ -112,20 +115,24 @@ public class AssetServer : IDisposable
         }
 
         var handle = storage.Initialize(path);
-        queuedPaths.Enqueue(path);
+        if (queuedPaths.TryAdd(path, DateTime.UtcNow) is false)
+        {
+            queuedPaths[path] = DateTime.UtcNow;
+        }
+
         return handle;
     }
 
-    public Handle<TAsset> Load<TAsset>(AssetPath path)
+    public Handle<TAsset> Load<TAsset>(AssetPath path, bool reload = false)
         where TAsset : notnull
     {
         Assets.Init<TAsset>();
         return Load(path);
     }
 
-    public Handle Load(AssetPath path)
+    public Handle Load(AssetPath path, bool reload = false)
     {
-        if (assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && assetLookup.TryGetValue(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -224,9 +231,12 @@ public class AssetServer : IDisposable
 
     public void FlushQueue()
     {
-        while (queuedPaths.TryDequeue(out var path))
+        foreach (var kvp in queuedPaths)
         {
-            Load(path);
+            if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
+            Log.Info((FormattableString)$"AssetServer::QueuedPathLoaded {kvp.Key}");
+            Load(kvp.Key, true);
+            queuedPaths.TryRemove(kvp.Key, out _);
         }
     }
 

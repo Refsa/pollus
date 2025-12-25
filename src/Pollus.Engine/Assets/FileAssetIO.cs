@@ -17,16 +17,22 @@ public class FileAssetIO : AssetIO
 
     public override void Watch()
     {
-        watcher = new FileSystemWatcher(Path.GetFullPath(RootPath));
-        watcher.NotifyFilter = NotifyFilters.LastWrite;
-        watcher.IncludeSubdirectories = true;
-        watcher.EnableRaisingEvents = true;
+        if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+        {
+            var fullPath = Path.GetFullPath(RootPath);
+            watcher = new FileSystemWatcher(fullPath);
+            watcher.NotifyFilter = NotifyFilters.LastWrite;
+            watcher.IncludeSubdirectories = true;
+            watcher.EnableRaisingEvents = true;
 
-        watcher.Changed += OnFileChanged;
+            watcher.Changed += OnFileChanged;
+        }
     }
 
     void OnFileChanged(object sender, FileSystemEventArgs e)
     {
+        if (!OperatingSystem.IsWindows() && !OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
+
         var relativePath = Path.GetRelativePath(Path.GetFullPath(RootPath), e.FullPath);
         relativePath = relativePath.Replace('\\', '/');
         NotifyAssetChanged(new AssetPath(relativePath));

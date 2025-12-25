@@ -6,6 +6,8 @@
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+
+        <PollusAssetsPath>$(MSBuildThisFileDirectory)Application/assets</PollusAssetsPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,5 +15,12 @@
 
         <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Engine\Pollus.Engine.csproj" />
         <ProjectReference Include="$(MSBuildThisFileDirectory)..\src\Pollus.Generators\Pollus.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>PollusAssetsPath</_Parameter1>
+            <_Parameter2>$(PollusAssetsPath)</_Parameter2>
+        </AssemblyAttribute>
     </ItemGroup>
 </Project>

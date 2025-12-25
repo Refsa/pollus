@@ -92,7 +92,7 @@ public partial class BreakoutGame : IExample
         .InitEvent<Event.RestartGame>()
         .InitEvent<Event.SpawnBall>()
         .AddPlugins([
-            new AssetPlugin { RootPath = "assets" },
+            AssetPlugin.Default,
             new RenderingPlugin(),
             new InputPlugin(),
             new ImguiPlugin(),

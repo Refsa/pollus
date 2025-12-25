@@ -24,7 +24,8 @@ public class MaterialPlugin<TMaterial> : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new($"MaterialPlugin<{typeof(TMaterial).Name}>::PrepareSystem")
             {
-                RunsAfter = [RenderingPlugin.BeginFrameSystem]
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+                RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
             },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {

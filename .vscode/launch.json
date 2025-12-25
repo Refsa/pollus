@@ -1,7 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-
         {
             "name": ".NET Core Attach",
             "type": "coreclr",
@@ -22,6 +21,12 @@
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "internalConsole",
             "stopAtEntry": false
+        },
+        {
+            "name": "Attach to Pollus Desktop",
+            "type": "coreclr",
+            "request": "attach",
+            "processName": "Pollus.Examples.Desktop.exe"
         },
         {
             // Use IntelliSense to find out which attributes exist for C# debugging
