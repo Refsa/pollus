@@ -14,9 +14,17 @@ public interface IRenderDataLoader
 
 public class RenderAssetInfo
 {
-    public Handle Handle { get; set; }
-    public object? Asset { get; set; }
-    public DateTime LastModified { get; set; }
+    public required Handle Handle { get; set; }
+    public required RenderAssetStatus Status { get; set; }
+    public required object Asset { get; set; }
+    public required DateTime LastModified { get; set; }
+}
+
+public enum RenderAssetStatus
+{
+    Initialized = 0,
+    Loaded,
+    Unloaded,
 }
 
 public class RenderAssets : IRenderAssets, IDisposable
@@ -25,7 +33,7 @@ public class RenderAssets : IRenderAssets, IDisposable
     static int NextID => Interlocked.Increment(ref counter);
 
     readonly Dictionary<TypeID, IRenderDataLoader> loaders = [];
-    readonly Dictionary<Handle, object> renderData = [];
+    readonly Dictionary<Handle, RenderAssetInfo> renderData = [];
 
     public void Dispose()
     {
@@ -43,6 +51,11 @@ public class RenderAssets : IRenderAssets, IDisposable
         return renderData.ContainsKey(handle);
     }
 
+    public RenderAssetInfo? GetInfo(Handle handle)
+    {
+        return renderData.GetValueOrDefault(handle);
+    }
+
     IRenderAssets IRenderAssets.Add<T>(Handle handle, T data)
     {
         return Add(handle, data);
@@ -51,7 +64,13 @@ public class RenderAssets : IRenderAssets, IDisposable
     public RenderAssets Add<T>(Handle handle, T data)
         where T : notnull
     {
-        renderData.Add(handle, data);
+        renderData.Add(handle, new()
+        {
+            Handle = handle,
+            Asset = data,
+            LastModified = DateTime.UtcNow,
+            Status = RenderAssetStatus.Loaded,
+        });
         return this;
     }
 
@@ -59,7 +78,13 @@ public class RenderAssets : IRenderAssets, IDisposable
         where T : notnull
     {
         var handle = new Handle<T>(NextID);
-        renderData.Add(handle, data);
+        renderData.Add(handle, new()
+        {
+            Handle = handle,
+            Asset = data,
+            LastModified = DateTime.UtcNow,
+            Status = RenderAssetStatus.Loaded,
+        });
         return handle;
     }
 
@@ -70,19 +95,19 @@ public class RenderAssets : IRenderAssets, IDisposable
 
     public TRenderData Get<TRenderData>(Handle handle) where TRenderData : notnull
     {
-        return (TRenderData)renderData[handle];
+        return (TRenderData)renderData[handle].Asset;
     }
 
     public TRenderData Get<TRenderData>(Handle<TRenderData> handle) where TRenderData : notnull
     {
-        return (TRenderData)renderData[handle];
+        return (TRenderData)renderData[handle].Asset;
     }
 
     public bool TryGet<TRenderData>(Handle handle, out TRenderData data) where TRenderData : notnull
     {
         if (renderData.TryGetValue(handle, out var value))
         {
-            data = (TRenderData)value;
+            data = (TRenderData)value.Asset;
             return true;
         }
 

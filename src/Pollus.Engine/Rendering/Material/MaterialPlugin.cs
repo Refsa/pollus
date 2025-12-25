@@ -27,10 +27,10 @@ public class MaterialPlugin<TMaterial> : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(PrepareSystem)
-            {
-                RunsAfter = [RenderingPlugin.BeginFrameSystem],
-                RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
-            },
+        {
+            RunsAfter = [RenderingPlugin.BeginFrameSystem],
+            RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
+        },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
@@ -42,25 +42,25 @@ public class MaterialPlugin<TMaterial> : IPlugin
             }));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(ReloadSystem)
-            {
-                RunsAfter = [PrepareSystem],
-            },
+        {
+            RunsAfter = [PrepareSystem],
+        },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materialAssets) =>
             {
                 var shaderAssets = assetServer.GetAssets<ShaderAsset>();
-                var textureAssets = assetServer.GetAssets<Texture2D>();
-                var samplerAssets = assetServer.GetAssets<SamplerAsset>();
-                var bufferAssets = assetServer.GetAssets<StorageBuffer>();
 
                 foreach (var material in materialAssets.AssetInfos)
                 {
                     if (material.Status is not AssetStatus.Loaded || material.Asset is null) continue;
                     var shouldReload = false;
 
+                    var materialInfo = renderAssets.GetInfo(material.Handle);
+                    if (materialInfo is null) continue;
+
                     var shaderAsset = shaderAssets.GetInfo(material.Asset.ShaderSource)
                                       ?? throw new InvalidOperationException("Shader asset not found");
 
-                    if ((shaderAsset.LastModified - material.LastModified).TotalMilliseconds > 300)
+                    if ((shaderAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
                     {
                         shouldReload = true;
                     }
@@ -74,9 +74,9 @@ public class MaterialPlugin<TMaterial> : IPlugin
                             {
                                 if (binding is TextureBinding textureBinding)
                                 {
-                                    var textureAsset = textureAssets.GetInfo(textureBinding.Image)
+                                    var textureAsset = renderAssets.GetInfo(textureBinding.Image)
                                                        ?? throw new InvalidOperationException("Texture asset not found");
-                                    if ((textureAsset.LastModified - material.LastModified).TotalMilliseconds > 300)
+                                    if ((textureAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
                                     {
                                         shouldReload = true;
                                         break;
@@ -84,9 +84,9 @@ public class MaterialPlugin<TMaterial> : IPlugin
                                 }
                                 else if (binding is SamplerBinding samplerBinding)
                                 {
-                                    var samplerAsset = samplerAssets.GetInfo(samplerBinding.Sampler)
+                                    var samplerAsset = renderAssets.GetInfo(samplerBinding.Sampler)
                                                        ?? throw new InvalidOperationException("Sampler asset not found");
-                                    if ((samplerAsset.LastModified - material.LastModified).TotalMilliseconds > 300)
+                                    if ((samplerAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
                                     {
                                         shouldReload = true;
                                         break;
@@ -94,9 +94,9 @@ public class MaterialPlugin<TMaterial> : IPlugin
                                 }
                                 else if (binding is IStorageBufferBinding storageBufferBinding)
                                 {
-                                    var storageBufferAsset = bufferAssets.GetInfo(storageBufferBinding.Buffer)
+                                    var storageBufferAsset = renderAssets.GetInfo(storageBufferBinding.Buffer)
                                                              ?? throw new InvalidOperationException("Storage buffer asset not found");
-                                    if ((storageBufferAsset.LastModified - material.LastModified).TotalMilliseconds > 300)
+                                    if ((storageBufferAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
                                     {
                                         shouldReload = true;
                                         break;
