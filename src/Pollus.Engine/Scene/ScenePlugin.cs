@@ -13,6 +13,11 @@ public partial struct SceneRef : IComponent
     public required Handle<Scene> Scene;
 }
 
+public partial struct PendingSceneLoad : IComponent
+{
+    public required Handle<Scene> Scene;
+}
+
 public class ScenePlugin : IPlugin
 {
     public PluginDependency[] Dependencies =>
@@ -34,6 +39,8 @@ public class ScenePlugin : IPlugin
             SceneSerializer = sceneSerializer,
         });
         world.Resources.Add(sceneSerializer);
+
+        world.Schedule.AddSystemSet<SceneSystems>();
     }
 }
 
@@ -66,5 +73,29 @@ public class SceneSerializer
             FormatVersion = FormatVersion,
             TypesVersion = TypesVersion,
         });
+    }
+}
+
+[SystemSet]
+public partial class SceneSystems
+{
+    [System(nameof(LoadScene))] static readonly SystemBuilderDescriptor LoadSceneDescriptor = new()
+    {
+        Stage = CoreStage.Last,
+    };
+
+    static void LoadScene(World world, Assets<Scene> sceneAssets, Query<PendingSceneLoad> qPendingSceneLoad)
+    {
+        foreach (var pendingSceneLoad in qPendingSceneLoad)
+        {
+            var assetInfo = sceneAssets.GetInfo(pendingSceneLoad.Component0.Scene);
+            if (assetInfo is null || assetInfo.Status != AssetStatus.Loaded || assetInfo.Asset is null)
+            {
+                continue;
+            }
+
+            world.Store.RemoveComponent<PendingSceneLoad>(pendingSceneLoad.Entity);
+            SceneHelper.SpawnScene(world, sceneAssets, pendingSceneLoad.Entity, pendingSceneLoad.Component0.Scene);
+        }
     }
 }

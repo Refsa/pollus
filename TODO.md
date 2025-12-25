@@ -15,14 +15,14 @@
 	- [ ] Filters
 	- [ ] Mixers
 - Assets
-	- [ ] Async loading
+	- [-] Async loading
 	- [ ] Streaming / partial loading
 	- [ ] dependency / hierarchy
 		- an asset might require one or more other assets to complete its loading
 		- f.ex. shader imports, scene files, etc.
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
-	- [ ] Hot reloading
+	- [-] Hot reloading
 - Plugins
 	- [x] Defer applying plugins
 	- [x] Plugin dependency graph
@@ -61,13 +61,20 @@
 		- world snapshot, scene serialization later
 		- binary format
 - Scene
-	- [ ] Scene Layout
-		- entities
-		- resources
-		- asset prefetch
-		- reproduce hierarchy layout?
-	- [ ] Serialization
-		- Human readable format
+	- [-] Scene Layout
+		- [x] entities
+		- [ ] resources
+		- [-] asset prefetch
+			- Handle<T> is supported to load assets
+		- [x] reproduce hierarchy layout?
+			- scenes are created as parent/child hierarchies
+			- scenes can contain references to scenes
+	- [-] Serialization
+		- [-] Human readable format
+			- using JSON right now, but auto-formatters doesnt create a very readable layout
+			- YAML/KDL might provide a more readable layout
+	- [-] Scene Spawning
+		- [ ] check for sub scene loops
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches

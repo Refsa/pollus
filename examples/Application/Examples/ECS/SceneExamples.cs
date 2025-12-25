@@ -6,12 +6,10 @@ using Engine.Camera;
 using Engine.Input;
 using Engine.Rendering;
 using Engine.Transform;
-using Mathematics;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Debug;
-using Utils;
 
 public partial class SceneExample : IExample
 {
@@ -46,10 +44,7 @@ public partial class SceneExample : IExample
 
                     commands.Spawn(Camera2D.Bundle);
 
-                    // var scene = assetServer.Load<Scene>("scenes/scene.scene");
-                    // _ = commands.SpawnScene(scene);
-
-                    var parentScene = assetServer.Load<Scene>("scenes/parent.scene");
+                    var parentScene = assetServer.LoadAsync<Scene>("scenes/parent.scene");
                     _ = commands.SpawnScene(parentScene);
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
@@ -67,7 +62,7 @@ public partial class SceneExample : IExample
 
                     if (keyInputs.JustPressed(Key.KeyL))
                     {
-                        commands.SpawnScene(assetServer.Load<Scene>("scenes/scene.scene"));
+                        commands.SpawnScene(assetServer.LoadAsync<Scene>("scenes/parent.scene"));
                     }
 
                     if (keyInputs.JustPressed(Key.KeyU) && qSceneRoot.Any())
