@@ -1,5 +1,7 @@
 namespace Pollus.Engine.Assets;
 
+using Utils;
+
 public class FileAssetIO : AssetIO
 {
     FileSystemWatcher? watcher;
@@ -45,16 +47,16 @@ public class FileAssetIO : AssetIO
         return File.Exists(BuildPath(path));
     }
 
-    public override Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content)
+    public override Result<List<AssetPath>, Error> GetDirectoryContent(in AssetPath path)
     {
-        content = [];
         if (IsDirectory(path) is false)
         {
-            return Result.DirectoryNotFound;
+            return Error.From(ErrorType.DirectoryNotFound);
         }
 
+        var content = new List<AssetPath>();
         RecursiveScan(BuildPath(path), content);
-        return Result.Success;
+        return content;
 
         static void RecursiveScan(string folder, List<AssetPath> content)
         {
@@ -71,20 +73,25 @@ public class FileAssetIO : AssetIO
         }
     }
 
-    public override Result LoadPath(in AssetPath path, out byte[] content)
+    public override Result<byte[], Error> LoadPath(in AssetPath path)
     {
         if (Exists(path) is false)
         {
-            content = Array.Empty<byte>();
-            return Result.FileNotFound;
+            return Error.From(ErrorType.FileNotFound);
         }
 
-        content = File.ReadAllBytes(BuildPath(path));
-        return Result.Success;
+        return File.ReadAllBytes(BuildPath(path));
     }
 
-    public override async Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
+    public override async Task<Result<byte[], Error>> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
-        return await File.ReadAllBytesAsync(BuildPath(path), cancellationToken);
+        try
+        {
+            return await File.ReadAllBytesAsync(BuildPath(path), cancellationToken);
+        }
+        catch (Exception e)
+        {
+            return Error.Exception(e);
+        }
     }
 }

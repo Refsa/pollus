@@ -1,6 +1,7 @@
 namespace Pollus.Tests.Utils;
 
 using Pollus.Engine.Assets;
+using Pollus.Utils;
 
 public class TestAssetIO : AssetIO
 {
@@ -39,25 +40,17 @@ public class TestAssetIO : AssetIO
         return content.ContainsKey(path);
     }
 
-    public override Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content)
+    public override Result<List<AssetPath>, Error> GetDirectoryContent(in AssetPath path)
     {
-        content = [];
-        return Result.Success;
+        return content.Keys.ToList();
     }
 
-    public override Result LoadPath(in AssetPath path, out byte[] content)
+    public override Result<byte[], Error> LoadPath(in AssetPath path)
     {
-        if (this.content.TryGetValue(path, out var data))
-        {
-            content = data;
-            return Result.Success;
-        }
-
-        content = Array.Empty<byte>();
-        return Result.FileNotFound;
+        return content[path];
     }
 
-    public override Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
+    public override Task<Result<byte[], Error>> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

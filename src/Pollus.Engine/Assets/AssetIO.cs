@@ -1,14 +1,47 @@
 namespace Pollus.Engine.Assets;
 
+using Utils;
+
 public abstract class AssetIO : IDisposable
 {
-    public enum Result
+    public enum ErrorType
     {
-        EmptyFile = -4,
-        PathNotFound = -3,
-        FileNotFound = -2,
-        DirectoryNotFound = -1,
-        Success = 1,
+        EmptyFile = 0,
+        PathNotFound,
+        FileNotFound,
+        DirectoryNotFound,
+        Exception,
+    }
+
+    public readonly struct Error : IError
+    {
+        public static string Name => "AssetIOError";
+
+        public required ErrorType Result { get; init; }
+        public string Inner { get; init; }
+
+        public static implicit operator Error(ErrorType result)
+        {
+            return From(result);
+        }
+
+        public static Error From(ErrorType result)
+        {
+            return new Error()
+            {
+                Result = result,
+                Inner = result.ToString(),
+            };
+        }
+
+        public static Error Exception(Exception exception)
+        {
+            return new Error()
+            {
+                Result = ErrorType.Exception,
+                Inner = exception.Message,
+            };
+        }
     }
 
     public event Action<AssetPath>? OnAssetChanged;
@@ -32,9 +65,9 @@ public abstract class AssetIO : IDisposable
     public abstract bool Exists(in AssetPath path);
     public abstract bool IsDirectory(in AssetPath path);
     public abstract bool IsFile(in AssetPath path);
-    public abstract Result GetDirectoryContent(in AssetPath path, out List<AssetPath> content);
-    public abstract Result LoadPath(in AssetPath path, out byte[] content);
-    public abstract Task<byte[]> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default);
+    public abstract Result<List<AssetPath>, Error> GetDirectoryContent(in AssetPath path);
+    public abstract Result<byte[], Error> LoadPath(in AssetPath path);
+    public abstract Task<Result<byte[], Error>> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default);
 
     protected void NotifyAssetChanged(AssetPath path)
     {
@@ -48,6 +81,5 @@ public abstract class AssetIO : IDisposable
 
     public virtual void Dispose()
     {
-        
     }
 }

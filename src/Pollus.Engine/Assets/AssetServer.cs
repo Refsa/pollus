@@ -12,7 +12,7 @@ public class AssetServer : IDisposable
     {
         public required Handle Handle { get; init; }
         public required AssetPath Path { get; init; }
-        public required Task<byte[]> Task { get; init; }
+        public required Task<Result<byte[], AssetIO.Error>> Task { get; init; }
         public required IAssetLoader Loader { get; init; }
     }
 
@@ -129,7 +129,12 @@ public class AssetServer : IDisposable
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
-        AssetIO.LoadPath(path, out var data);
+        var loadResult = AssetIO.LoadPath(path);
+        if (loadResult.IsErr())
+        {
+            Log.Error((FormattableString)$"AssetServer::Load failed to load asset {path}:\n{loadResult.ToErr()}");
+            return Handle.Null;
+        }
 
         var loader = loaders[loaderIdx];
         var loadContext = new LoadContext()
@@ -140,7 +145,7 @@ public class AssetServer : IDisposable
             AssetServer = this,
         };
 
-        loader.Load(data, ref loadContext);
+        loader.Load(loadResult.Unwrap(), ref loadContext);
         if (loadContext.Status == AssetStatus.Loaded)
         {
             var expectedType = TypeLookup.GetType(loader.AssetType);
@@ -185,7 +190,14 @@ public class AssetServer : IDisposable
         {
             ref var loadState = ref loadStates.Get(i);
             if (loadState.Task.IsCompleted is false) continue;
-            var data = loadState.Task.Result;
+            loadStates.RemoveAt(i);
+
+            var loadResult = loadState.Task.Result;
+            if (loadResult.IsErr())
+            {
+                Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
+                continue;
+            }
 
             var loadContext = new LoadContext()
             {
@@ -195,7 +207,7 @@ public class AssetServer : IDisposable
                 AssetServer = this,
             };
 
-            loadState.Loader.Load(data, ref loadContext);
+            loadState.Loader.Load(loadResult.Unwrap(), ref loadContext);
             if (loadContext.Status == AssetStatus.Loaded)
             {
                 var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
@@ -204,8 +216,6 @@ public class AssetServer : IDisposable
                 Assets.Set(loadState.Handle, asset!);
                 assetLookup.TryAdd(loadState.Path, loadState.Handle);
             }
-
-            loadStates.RemoveAt(i);
         }
     }
 
