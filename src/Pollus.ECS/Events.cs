@@ -26,40 +26,35 @@ public class Events
         }
     }
 
-    public EventWriter<TEvent> GetWriter<TEvent>()
+    EventQueue<TEvent> GetQueue<TEvent>()
         where TEvent : struct
     {
         var typeId = TypeLookup.ID<TEvent>();
-        if (events.TryGetValue(typeId, out var queue))
+        if (!events.TryGetValue(typeId, out var queue))
         {
-            return ((EventQueue<TEvent>)queue).GetWriter();
+            queue = new EventQueue<TEvent>();
+            events.Add(typeId, queue);
         }
 
-        return default;
+        return (EventQueue<TEvent>)queue;
+    }
+
+    public EventWriter<TEvent> GetWriter<TEvent>()
+        where TEvent : struct
+    {
+        return GetQueue<TEvent>().GetWriter();
     }
 
     public EventReader<TEvent>? GetReader<TEvent>()
         where TEvent : struct
     {
-        var typeId = TypeLookup.ID<TEvent>();
-        if (events.TryGetValue(typeId, out var queue))
-        {
-            return ((EventQueue<TEvent>)queue).GetReader();
-        }
-
-        return default;
+        return GetQueue<TEvent>().GetReader();
     }
 
     public ReadOnlySpan<TEvent> ReadEvents<TEvent>()
         where TEvent : struct
     {
-        var typeId = TypeLookup.ID<TEvent>();
-        if (events.TryGetValue(typeId, out var queue))
-        {
-            return ((EventQueue<TEvent>)queue).Events;
-        }
-
-        return default;
+        return GetQueue<TEvent>().Events;
     }
 }
 
@@ -122,6 +117,11 @@ public class EventQueue<TEvent> : IEventQueue
 public struct EventWriter<TEvent>
     where TEvent : struct
 {
+    static EventWriter()
+    {
+        EventWriterFetch<TEvent>.Register();
+    }
+
     readonly EventQueue<TEvent> queue;
 
     public EventWriter(EventQueue<TEvent> queue)
@@ -136,6 +136,11 @@ public struct EventWriter<TEvent>
 public class EventReader<TEvent> : IDisposable
     where TEvent : struct
 {
+    static EventReader()
+    {
+        EventReaderFetch<TEvent>.Register();
+    }
+
     readonly EventQueue<TEvent> queue;
     internal int Cursor { get; set; }
 
@@ -207,7 +212,7 @@ public class EventReaderFetch<TEvent> : IFetch<EventReader<TEvent>>
         reader = world.Events.GetReader<TEvent>();
         if (reader is null)
         {
-            throw new InvalidOperationException($"Event {typeof(TEvent).Name} is not initialized");
+            throw new InvalidOperationException($"Event {typeof(TEvent).AssemblyQualifiedName} is not initialized");
         }
 
         system.Resources.Add(reader);
