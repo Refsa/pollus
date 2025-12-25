@@ -14,7 +14,7 @@ public class UniformRenderData
 public class UniformRenderDataLoader<T> : IRenderDataLoader
     where T : unmanaged, IShaderType
 {
-    public int TargetType => TypeLookup.ID<Uniform<T>>();
+    public TypeID TargetType => TypeLookup.ID<Uniform<T>>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -27,5 +27,11 @@ public class UniformRenderDataLoader<T> : IRenderDataLoader
         {
             UniformBuffer = renderAssets.Add(uniformBuffer),
         });
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var uniform = renderAssets.Get<UniformRenderData>(handle);
+        renderAssets.Unload(uniform.UniformBuffer);
     }
 }

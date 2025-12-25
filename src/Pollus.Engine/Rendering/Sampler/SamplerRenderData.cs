@@ -12,7 +12,7 @@ public class SamplerRenderData
 
 public class SamplerRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => TypeLookup.ID<SamplerAsset>();
+    public TypeID TargetType => TypeLookup.ID<SamplerAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -25,5 +25,11 @@ public class SamplerRenderDataLoader : IRenderDataLoader
         {
             Sampler = renderAssets.Add(sampler),
         });
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var sampler = renderAssets.Get<SamplerRenderData>(handle);
+        renderAssets.Unload(sampler.Sampler);
     }
 }

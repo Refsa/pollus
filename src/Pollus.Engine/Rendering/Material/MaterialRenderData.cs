@@ -14,7 +14,7 @@ public class MaterialRenderData
 public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
     where TMaterial : IMaterial
 {
-    public int TargetType => TypeLookup.ID<TMaterial>();
+    public TypeID TargetType => TypeLookup.ID<TMaterial>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -79,6 +79,16 @@ public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
         foreach (var bindGroupLayout in bindGroupLayouts)
         {
             bindGroupLayout.Dispose();
+        }
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var material = renderAssets.Get<MaterialRenderData>(handle);
+        renderAssets.Unload(material.Pipeline);
+        foreach (var bindGroup in material.BindGroups)
+        {
+            renderAssets.Unload(bindGroup);
         }
     }
 }

@@ -13,7 +13,7 @@ public class StorageBufferRenderData
 
 public class StorageBufferRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => TypeLookup.ID<StorageBuffer>();
+    public TypeID TargetType => TypeLookup.ID<StorageBuffer>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -34,5 +34,11 @@ public class StorageBufferRenderDataLoader : IRenderDataLoader
         buffer.WriteTo(gpuBuffer, 0);
 
         renderAssets.Add(handle, bufferData);
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var buffer = renderAssets.Get<StorageBufferRenderData>(handle);
+        renderAssets.Unload(buffer.Buffer);
     }
 }

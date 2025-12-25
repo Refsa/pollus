@@ -1,14 +1,22 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
-using Pollus.Utils;
 using Pollus.Graphics;
+using Pollus.Graphics.WGPU;
+using Pollus.Utils;
 
 public interface IRenderDataLoader
 {
-    int TargetType { get; }
+    TypeID TargetType { get; }
     void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle);
+    void Unload(RenderAssets renderAssets, Handle handle);
+}
+
+public class RenderAssetInfo
+{
+    public Handle Handle { get; set; }
+    public object? Asset { get; set; }
+    public DateTime LastModified { get; set; }
 }
 
 public class RenderAssets : IRenderAssets, IDisposable
@@ -16,7 +24,7 @@ public class RenderAssets : IRenderAssets, IDisposable
     static volatile int counter;
     static int NextID => Interlocked.Increment(ref counter);
 
-    readonly Dictionary<int, IRenderDataLoader> loaders = [];
+    readonly Dictionary<TypeID, IRenderDataLoader> loaders = [];
     readonly Dictionary<Handle, object> renderData = [];
 
     public void Dispose()
@@ -102,7 +110,9 @@ public class RenderAssets : IRenderAssets, IDisposable
             throw new InvalidOperationException($"No loader found for type {TypeLookup.GetType(handle.Type)}");
         }
 
-        if (renderData.ContainsKey(handle) && !reload) return;
+        var exists = renderData.ContainsKey(handle);
+        if (exists && !reload) return;
+        if (exists && reload) Unload(handle);
         loader.Prepare(this, gpuContext, assetServer, handle);
     }
 
@@ -110,7 +120,8 @@ public class RenderAssets : IRenderAssets, IDisposable
     {
         if (renderData.TryGetValue(handle, out var data))
         {
-            if (data is IDisposable disposable) disposable.Dispose();
+            if (loaders.TryGetValue(handle.Type, out var loader)) loader.Unload(this, handle);
+            else if (data is IDisposable disposable) disposable.Dispose();
             renderData.Remove(handle);
         }
     }

@@ -6,7 +6,12 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public class StorageBufferBinding<TElement> : IBinding
+public interface IStorageBufferBinding
+{
+    Handle<StorageBuffer> Buffer { get; set; }
+}
+
+public class StorageBufferBinding<TElement> : IBinding, IStorageBufferBinding
     where TElement : unmanaged, IShaderType
 {
     public BindingType Type => BindingType.Buffer;

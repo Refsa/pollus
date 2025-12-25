@@ -14,7 +14,7 @@ public class TextureRenderData
 public class TextureRenderDataLoader<TTexture> : IRenderDataLoader
     where TTexture : ITexture
 {
-    public int TargetType => TypeLookup.ID<TTexture>();
+    public TypeID TargetType => TypeLookup.ID<TTexture>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -39,5 +39,12 @@ public class TextureRenderDataLoader<TTexture> : IRenderDataLoader
             Texture = renderAssets.Add(texture),
             View = renderAssets.Add(textureView),
         });
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var texture = renderAssets.Get<TextureRenderData>(handle);
+        renderAssets.Unload(texture.Texture);
+        renderAssets.Unload(texture.View);
     }
 }

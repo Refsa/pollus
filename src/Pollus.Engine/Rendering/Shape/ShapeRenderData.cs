@@ -14,7 +14,7 @@ public class ShapeRenderData
 
 public class ShapeRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => TypeLookup.ID<Shape>();
+    public TypeID TargetType => TypeLookup.ID<Shape>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -34,5 +34,11 @@ public class ShapeRenderDataLoader : IRenderDataLoader
             VertexCount = vertexData.Count,
             VertexBuffer = renderAssets.Add(vertexBuffer),
         });
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var shape = renderAssets.Get<ShapeRenderData>(handle);
+        renderAssets.Unload(shape.VertexBuffer);
     }
 }

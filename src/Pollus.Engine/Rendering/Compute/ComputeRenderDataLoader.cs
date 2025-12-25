@@ -14,7 +14,7 @@ public class ComputeRenderData
 public class ComputeRenderDataLoader<TCompute> : IRenderDataLoader
     where TCompute : IComputeShader
 {
-    public int TargetType => TypeLookup.ID<TCompute>();
+    public TypeID TargetType => TypeLookup.ID<TCompute>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -73,6 +73,16 @@ public class ComputeRenderDataLoader<TCompute> : IRenderDataLoader
         foreach (var bgl in bindGroupLayouts)
         {
             bgl.Dispose();
+        }
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var compute = renderAssets.Get<ComputeRenderData>(handle);
+        renderAssets.Unload(compute.Pipeline);
+        foreach (var bindGroup in compute.BindGroups)
+        {
+            renderAssets.Unload(bindGroup);
         }
     }
 }

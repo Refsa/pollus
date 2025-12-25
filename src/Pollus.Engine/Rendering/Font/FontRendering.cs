@@ -26,7 +26,7 @@ public class FontMeshRenderData
 
 public class FontMeshRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => TypeLookup.ID<TextMeshAsset>();
+    public TypeID TargetType => TypeLookup.ID<TextMeshAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -70,6 +70,13 @@ public class FontMeshRenderDataLoader : IRenderDataLoader
                 IndexOffset = 0,
             });
         }
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var fontMesh = renderAssets.Get<FontMeshRenderData>(handle);
+        renderAssets.Unload(fontMesh.VertexBuffer);
+        renderAssets.Unload(fontMesh.IndexBuffer);
     }
 }
 

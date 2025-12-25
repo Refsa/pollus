@@ -20,7 +20,7 @@ public class MeshRenderData
 
 public class MeshRenderDataLoader : IRenderDataLoader
 {
-    public int TargetType => TypeLookup.ID<MeshAsset>();
+    public TypeID TargetType => TypeLookup.ID<MeshAsset>();
 
     public void Prepare(RenderAssets renderAssets, IWGPUContext gpuContext, AssetServer assetServer, Handle handle)
     {
@@ -57,5 +57,12 @@ public class MeshRenderDataLoader : IRenderDataLoader
             IndexCount = meshAsset.Mesh.GetIndices()?.Count ?? 0,
             IndexOffset = 0,
         });
+    }
+
+    public void Unload(RenderAssets renderAssets, Handle handle)
+    {
+        var mesh = renderAssets.Get<MeshRenderData>(handle);
+        renderAssets.Unload(mesh.VertexBuffer);
+        renderAssets.Unload(mesh.IndexBuffer);
     }
 }
