@@ -21,3 +21,14 @@ public sealed class SystemAttribute : Attribute
         CallbackMethod = callbackMethod;
     }
 }
+
+[AttributeUsage(AttributeTargets.Field)]
+public sealed class CoroutineAttribute : Attribute
+{
+    public string CallbackMethod { get; }
+
+    public CoroutineAttribute(string callbackMethod)
+    {
+        CallbackMethod = callbackMethod;
+    }
+}

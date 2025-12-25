@@ -7,7 +7,7 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 
-public class CoroutineExample : IExample
+public partial class CoroutineExample : IExample
 {
     public string Name => "coroutine";
 
@@ -24,19 +24,20 @@ public class CoroutineExample : IExample
             new InputPlugin(),
             new StatePlugin<TestState>(TestState.Second),
         ])
+        .AddSystemSet<CoroutineSystemSet>()
         .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
         {
             Locals = [Local.From(1f)],
         },
-        static (EmptyParam param) =>
+        static (param) =>
         {
             return Routine();
             static IEnumerable<Yield> Routine()
             {
                 yield return Yield.WaitForSeconds(1f);
-                Log.Info("Coroutine Tick");
+                Log.Info("Coroutine Tick, Press Space to enter First State");
                 yield return Coroutine.WaitForEnterState(TestState.First);
-                Log.Info("Entered First State");
+                Log.Info("Entered First State, Press Space to exit First State");
                 yield return Coroutine.WaitForExitState(TestState.First);
                 Log.Info("Exited First State");
             }
@@ -59,5 +60,21 @@ public class CoroutineExample : IExample
     public void Stop()
     {
         app?.Shutdown();
+    }
+
+    [SystemSet]
+    public partial class CoroutineSystemSet
+    {
+        [Coroutine(nameof(Routine))]
+        static readonly SystemBuilderDescriptor RoutineDescriptor = new()
+        {
+            Stage = CoreStage.Update,
+        };
+
+        static IEnumerable<Yield> Routine(Time time)
+        {
+            yield return Yield.WaitForSeconds(1f);
+            Log.Info($"Coroutine from SystemSet Tick, time: {time.SecondsSinceStartup}");
+        }
     }
 }
