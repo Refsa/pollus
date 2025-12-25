@@ -21,6 +21,10 @@ public partial class SceneExample : IExample
         public float Speed;
     }
 
+    partial struct Root : IComponent
+    {
+    }
+
     public void Run() => (application = Application.Builder
             .AddPlugins([
                 new TimePlugin(),
@@ -45,10 +49,11 @@ public partial class SceneExample : IExample
                     commands.Spawn(Camera2D.Bundle);
 
                     var parentScene = assetServer.LoadAsync<Scene>("scenes/parent.scene");
-                    _ = commands.SpawnScene(parentScene);
+                    _ = commands.SpawnScene(parentScene)
+                        .AddComponent(new Root());
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
-                static (SceneSerializer sceneSerializer, World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<SceneRoot> qSceneRoot) =>
+                static (SceneSerializer sceneSerializer, World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<Root> qSceneRoot) =>
                 {
                     if (keyInputs.JustPressed(Key.KeyS) && qSceneRoot.Any())
                     {
@@ -62,7 +67,9 @@ public partial class SceneExample : IExample
 
                     if (keyInputs.JustPressed(Key.KeyL))
                     {
-                        commands.SpawnScene(assetServer.LoadAsync<Scene>("scenes/parent.scene"));
+                        var parentScene = assetServer.LoadAsync<Scene>("scenes/parent.scene");
+                        _ = commands.SpawnScene(parentScene)
+                            .AddComponent(new Root());
                     }
 
                     if (keyInputs.JustPressed(Key.KeyU) && qSceneRoot.Any())

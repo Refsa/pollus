@@ -1,5 +1,6 @@
 namespace Pollus.Engine;
 
+using System.Runtime.InteropServices;
 using Assets;
 using Debugging;
 using ECS;
@@ -7,63 +8,55 @@ using Utils;
 
 public static class SceneHelper
 {
-    public static void SpawnScene(World world, Assets<Scene> sceneAssets, Entity root, Handle<Scene> sceneHandle)
+    public static void SpawnScene(Commands commands, Assets<Scene> sceneAssets, Entity rootEntity, Handle<Scene> sceneHandle)
     {
+        var assetInfo = sceneAssets.GetInfo(sceneHandle);
+        if (assetInfo is null) throw new Exception($"Scene {sceneHandle} not found");
+
+        if (assetInfo.Status != AssetStatus.Loaded || assetInfo.Asset is null)
+        {
+            commands.AddComponent(rootEntity, new PendingSceneLoad { Scene = sceneHandle });
+            return;
+        }
+
         var scene = sceneAssets.Get(sceneHandle);
         Guard.IsNotNull(scene, (FormattableString)$"Scene {sceneHandle} not found");
 
-        world.Store.AddComponent(root, new SceneRoot());
-        world.Store.AddComponent(root, new SceneRef { Scene = sceneHandle });
+        commands.AddComponent(rootEntity, new SceneRoot());
+        commands.AddComponent(rootEntity, new SceneRef { Scene = sceneHandle });
 
         foreach (var sceneEntity in scene.Entities)
         {
-            var entity = SpawnEntity(world, sceneAssets, sceneEntity);
-            new AddChildCommand { Parent = root, Child = entity }.Execute(world);
+            var entity = SpawnEntity(commands, sceneAssets, sceneEntity);
+            commands.AddChild(rootEntity, entity.Entity);
         }
     }
 
-    static Entity SpawnEntity(World world, Assets<Scene> sceneAssets, in Scene.SceneEntity entity)
+    static EntityCommands SpawnEntity(Commands commands, Assets<Scene> sceneAssets, in Scene.SceneEntity sceneEntity)
     {
-        ArchetypeStore.EntityChange entityRef;
-        if (entity.Components is { Count: > 0 })
+        var entityCommands = commands.Spawn();
+        if (sceneEntity.Components is { Count: > 0 })
         {
-            Span<ComponentID> cids = stackalloc ComponentID[entity.Components.Count];
-            for (int i = 0; i < entity.Components.Count; i++)
+            foreach (scoped ref readonly var t in CollectionsMarshal.AsSpan(sceneEntity.Components))
             {
-                cids[i] = entity.Components[i].ComponentID;
-            }
-
-            var aid = ArchetypeID.Create(cids);
-            entityRef = world.Store.CreateEntity(aid, cids);
-
-            ref var chunk = ref entityRef.Archetype.Chunks[entityRef.ChunkIndex];
-            for (int i = 0; i < entity.Components.Count; i++)
-            {
-                chunk.SetComponent(entityRef.RowIndex, entity.Components[i].ComponentID, entity.Components[i].Data);
-            }
-        }
-        else
-        {
-            entityRef = world.Store.CreateEntity<EntityBuilder>();
-        }
-
-        if (entity.Children is not null)
-        {
-            foreach (var sceneEntityChild in entity.Children)
-            {
-                var childEntity = SpawnEntity(world, sceneAssets, sceneEntityChild);
-                new AddChildCommand { Parent = entityRef.Entity, Child = childEntity }.Execute(world);
+                entityCommands.AddComponent(t.ComponentID, t.Data);
             }
         }
 
-        if (entity.Scene is not null)
+        if (sceneEntity.Children is not null)
         {
-            var scene = sceneAssets.Get(entity.Scene.Value);
-            if (scene is null) throw new Exception($"Scene {entity.Scene.Value} not found");
-            var spawnSceneCommand = new SpawnSceneCommand { Scene = entity.Scene.Value, Root = entityRef.Entity };
-            spawnSceneCommand.Execute(world);
+            foreach (var sceneEntityChild in sceneEntity.Children)
+            {
+                var childEntity = SpawnEntity(commands, sceneAssets, sceneEntityChild);
+                entityCommands.AddChild(childEntity.Entity);
+            }
         }
 
-        return entityRef.Entity;
+        if (sceneEntity.Scene is { } childSceneHandle)
+        {
+            SpawnScene(commands, sceneAssets, entityCommands.Entity, childSceneHandle);
+        }
+
+        return entityCommands;
     }
 }

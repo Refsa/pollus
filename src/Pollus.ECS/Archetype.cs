@@ -125,6 +125,13 @@ public partial class Archetype : IDisposable
         return RemoveEntity(srcChunkIndex, srcRowIndex);
     }
 
+    public void SetComponent(int chunkIndex, int rowIndex, in ComponentID componentID, in ReadOnlySpan<byte> data)
+    {
+        ref var chunk = ref chunks[chunkIndex];
+        chunk.SetComponent(rowIndex, componentID, data);
+        chunk.SetFlag(rowIndex, componentID, ComponentFlags.Changed);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void SetComponent<C>(int chunkIndex, int rowIndex, scoped in C component) where C : unmanaged, IComponent
     {

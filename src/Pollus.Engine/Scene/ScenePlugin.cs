@@ -84,7 +84,7 @@ public partial class SceneSystems
         Stage = CoreStage.Last,
     };
 
-    static void LoadScene(World world, Assets<Scene> sceneAssets, Query<PendingSceneLoad> qPendingSceneLoad)
+    static void LoadScene(Commands commands, Assets<Scene> sceneAssets, Query<PendingSceneLoad> qPendingSceneLoad)
     {
         foreach (var pendingSceneLoad in qPendingSceneLoad)
         {
@@ -94,8 +94,8 @@ public partial class SceneSystems
                 continue;
             }
 
-            world.Store.RemoveComponent<PendingSceneLoad>(pendingSceneLoad.Entity);
-            SceneHelper.SpawnScene(world, sceneAssets, pendingSceneLoad.Entity, pendingSceneLoad.Component0.Scene);
+            commands.RemoveComponent<PendingSceneLoad>(pendingSceneLoad.Entity);
+            SceneHelper.SpawnScene(commands, sceneAssets, pendingSceneLoad.Entity, pendingSceneLoad.Component0.Scene);
         }
     }
 }

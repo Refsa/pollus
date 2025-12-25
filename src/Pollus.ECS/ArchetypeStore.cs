@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Pollus.Collections;
 using Pollus.Core.Serialization;
 using Pollus.Debugging;
@@ -213,8 +214,7 @@ public class ArchetypeStore : IDisposable
         return ref archetype.GetComponent<C>(entityInfo.ChunkIndex, entityInfo.RowIndex);
     }
 
-    public void AddComponent<C>(in Entity entity, scoped in C component)
-        where C : unmanaged, IComponent
+    public void AddComponent(in Entity entity, in ComponentID componentID, in ReadOnlySpan<byte> data)
     {
         if (!entityHandler.IsAlive(entity))
         {
@@ -224,12 +224,12 @@ public class ArchetypeStore : IDisposable
         ref var entityInfo = ref entityHandler.GetEntityInfo(entity);
         var prevEntityInfo = entityInfo;
         var archetype = archetypes[prevEntityInfo.ArchetypeIndex];
-        if (archetype.HasComponent<C>()) return;
+        if (archetype.HasComponent(componentID)) return;
 
         var prevInfo = archetype.GetChunkInfo();
         Span<ComponentID> cids = stackalloc ComponentID[prevInfo.ComponentIDs.Length + 1];
         prevInfo.ComponentIDs.CopyTo(cids);
-        cids[^1] = Component.GetInfo<C>().ID;
+        cids[^1] = componentID;
 
         var nextAid = ArchetypeID.Create(cids);
         var (nextArchetype, nextArchetypeIndex) = GetOrCreateArchetype(nextAid, cids);
@@ -239,7 +239,7 @@ public class ArchetypeStore : IDisposable
         entityInfo.ChunkIndex = chunkIndex;
         entityInfo.RowIndex = rowIndex;
 
-        nextArchetype.SetComponent(chunkIndex, rowIndex, component);
+        nextArchetype.SetComponent(chunkIndex, rowIndex, componentID, data);
 
         var movedEntity = archetype.MoveEntity(prevEntityInfo.ChunkIndex, prevEntityInfo.RowIndex, nextArchetype, chunkIndex, rowIndex);
         if (!movedEntity.IsNull)
@@ -249,7 +249,15 @@ public class ArchetypeStore : IDisposable
             movedEntityInfo.RowIndex = prevEntityInfo.RowIndex;
         }
 
-        nextArchetype.Chunks[entityInfo.ChunkIndex].SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Added);
+        nextArchetype.Chunks[entityInfo.ChunkIndex].SetFlag(entityInfo.RowIndex, componentID, ComponentFlags.Added);
+    }
+
+    public void AddComponent<C>(in Entity entity, scoped in C component)
+        where C : unmanaged, IComponent
+    {
+        var componentSpan = MemoryMarshal.CreateReadOnlySpan(in component, 1);
+        var span = MemoryMarshal.Cast<C, byte>(componentSpan);
+        AddComponent(entity, Component.GetInfo<C>().ID, span);
     }
 
     public void RemoveComponent<C>(in Entity entity)

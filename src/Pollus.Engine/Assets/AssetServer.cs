@@ -186,16 +186,17 @@ public class AssetServer : IDisposable
 
     public void Update()
     {
-        for (int i = loadStates.Count - 1; i >= 0; i--)
+        var count = loadStates.Count;
+        for (int i = count - 1; i >= 0; i--)
         {
             ref var loadState = ref loadStates.Get(i);
             if (loadState.Task.IsCompleted is false) continue;
-            loadStates.RemoveAt(i);
 
             var loadResult = loadState.Task.Result;
             if (loadResult.IsErr())
             {
                 Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
+                loadStates.RemoveAt(i);
                 continue;
             }
 
@@ -216,6 +217,8 @@ public class AssetServer : IDisposable
                 Assets.Set(loadState.Handle, asset!);
                 assetLookup.TryAdd(loadState.Path, loadState.Handle);
             }
+
+            loadStates.RemoveAt(i);
         }
     }
 

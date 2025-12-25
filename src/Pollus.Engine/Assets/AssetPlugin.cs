@@ -1,4 +1,4 @@
-namespace Pollus.Engine.Assets;
+    namespace Pollus.Engine.Assets;
 
 using Pollus.ECS;
 

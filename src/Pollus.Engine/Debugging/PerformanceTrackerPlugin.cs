@@ -30,7 +30,7 @@ public class PerformanceTrackerPlugin : IPlugin
         {
             this.frameTime = frameTime;
             frameTimes.Enqueue(frameTime);
-            if (frameTimes.Count > int.Max(60, (int)(1f / frameTime * 4))) frameTimes.Dequeue();
+            while (frameTimes.Count > int.Max(60, (int)(1f / frameTime * 4))) frameTimes.Dequeue();
         }
     }
 

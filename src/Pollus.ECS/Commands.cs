@@ -141,6 +141,12 @@ public class Commands
         return this;
     }
 
+    public Commands AddComponent(in Entity entity, in ComponentID componentID, in byte[] data)
+    {
+        AddCommand(AddComponentCommand.From(entity, componentID, data));
+        return this;
+    }
+
     public Commands RemoveComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -198,6 +204,12 @@ public struct EntityCommands
         where C : unmanaged, IComponent
     {
         commands.AddComponent(Entity, component);
+        return this;
+    }
+
+    public EntityCommands AddComponent(in ComponentID componentID, in byte[] data)
+    {
+        commands.AddComponent(Entity, componentID, data);
         return this;
     }
 
@@ -282,6 +294,30 @@ public struct SetComponentCommand<C> : ICommand
     {
         Guard.IsTrue(world.Store.HasComponent<C>(entity), $"Entity {entity} does not have component {typeof(C)}");
         world.Store.SetComponent(entity, component);
+    }
+}
+
+public struct AddComponentCommand : ICommand
+{
+    public static int Priority => 90;
+    
+    Entity entity;
+    ComponentID componentID;
+    byte[] data;
+
+    public static AddComponentCommand From(in Entity entity, in ComponentID componentID, in byte[] data)
+    {
+        return new AddComponentCommand()
+        {
+            entity = entity,
+            componentID = componentID,
+            data = data
+        };
+    }
+
+    public void Execute(World world)
+    {
+        world.Store.AddComponent(entity, componentID, data);
     }
 }
 
