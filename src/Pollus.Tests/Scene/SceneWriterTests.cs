@@ -309,7 +309,7 @@ public class SceneWriterTests
             ("path/to/scene.scene", ""u8.ToArray())
         );
         var assetServer = new AssetServer(assetIO);
-        var sceneHandle = assetServer.Assets.Add(Scene.Empty, new AssetPath("path/to/scene.scene"));
+        var sceneHandle = assetServer.Assets.AddAsset(Scene.Empty, new AssetPath("path/to/scene.scene"));
 
         using var world = CreateWorld();
         world.Resources.Add(assetServer);
@@ -365,7 +365,7 @@ public class SceneWriterTests
             ("path/to/scene.scene", ""u8.ToArray())
         );
         var assetServer = new AssetServer(assetIO);
-        assetServer.Assets.Add(Scene.Empty, new AssetPath("path/to/scene.scene"));
+        assetServer.Assets.AddAsset(Scene.Empty, new AssetPath("path/to/scene.scene"));
 
         using var world = CreateWorld();
         world.Resources.Add(assetServer);

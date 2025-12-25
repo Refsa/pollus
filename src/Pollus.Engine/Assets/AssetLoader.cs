@@ -14,6 +14,8 @@ public struct LoadContext
     public AssetStatus Status { get; set; }
     public object? Asset { get; private set; }
 
+    public List<Handle>? Dependencies { get; set; }
+
     public void SetAsset<T>(T asset)
     {
         Asset = asset;
@@ -44,7 +46,14 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
         {
             this.context = ref context;
         }
+
         public void SetAsset(T asset) => context.SetAsset(asset);
+
+        public void AddDependency(Handle dependency)
+        {
+            context.Dependencies ??= [];
+            context.Dependencies.Add(dependency);
+        }
     }
 
     static AssetLoader()

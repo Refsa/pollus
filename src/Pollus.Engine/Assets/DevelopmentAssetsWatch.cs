@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
+using Debugging;
 using ECS;
 
 public class DevelopmentAssetsWatch : IDisposable
@@ -23,9 +24,16 @@ public class DevelopmentAssetsWatch : IDisposable
 
     ConcurrentDictionary<string, Timer> debounceTimers = new();
 
-    public DevelopmentAssetsWatch()
+    public static DevelopmentAssetsWatch? Create()
     {
-        sourcePath = GetAssetPath();
+        var sourcePath = GetAssetPath();
+        if (sourcePath is null) return null;
+        return new DevelopmentAssetsWatch(sourcePath);
+    }
+
+    public DevelopmentAssetsWatch(string? devAssetsPath)
+    {
+        sourcePath = devAssetsPath ?? GetAssetPath() ?? throw new InvalidOperationException("PollusAssetsPath needs to be set in project file");
         watcher = new FileSystemWatcher(sourcePath);
         watcher.NotifyFilter = NotifyFilters.LastWrite;
         watcher.IncludeSubdirectories = true;
@@ -65,13 +73,13 @@ public class DevelopmentAssetsWatch : IDisposable
         debounceTimers.TryRemove(copyTask.SourcePath, out _);
     }
 
-    private static string GetAssetPath()
+    static string? GetAssetPath()
     {
         var assembly = System.Reflection.Assembly.GetEntryAssembly();
         var attribute = assembly?.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), true)
             .Cast<System.Reflection.AssemblyMetadataAttribute>()
             .FirstOrDefault(x => x.Key == "PollusAssetsPath");
 
-        return attribute?.Value ?? throw new InvalidOperationException("PollusAssetsPath assembly metadata not found");
+        return attribute?.Value;
     }
 }

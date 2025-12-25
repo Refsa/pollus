@@ -2,7 +2,6 @@ namespace Pollus.Engine.Assets;
 
 using Core.Serialization;
 using ECS;
-using Microsoft.VisualBasic;
 using Pollus.Collections;
 using Pollus.Utils;
 using Serialization;
@@ -17,13 +16,24 @@ public enum AssetStatus
     Loaded,
 }
 
-public class AssetInfo<T>
+public interface IAssetInfo
+{
+    public Handle Handle { get; set; }
+    public AssetStatus Status { get; set; }
+    public AssetPath? Path { get; set; }
+
+    public List<Handle>? Dependencies { get; set; }
+    public DateTime LastModified { get; set; }
+}
+
+public class AssetInfo<T> : IAssetInfo
 {
     public Handle Handle { get; set; }
     public AssetStatus Status { get; set; }
     public AssetPath? Path { get; set; }
     public T? Asset { get; set; }
 
+    public List<Handle>? Dependencies { get; set; }
     public DateTime LastModified { get; set; }
 }
 
@@ -31,11 +41,12 @@ public interface IAssetStorage
 {
     TypeID AssetType { get; }
     Handle Add(object asset, AssetPath? path = null);
-    void Set(Handle handle, object asset);
+    void SetAsset(Handle handle, object asset);
     Handle Initialize(AssetPath? path);
     void FlushEvents(Events events);
     AssetStatus GetStatus(Handle handle);
     AssetPath? GetPath(Handle handle);
+    void SetDependencies(Handle handle, List<Handle>? dependencies);
 }
 
 public class Assets<T> : IDisposable, IAssetStorage
@@ -43,7 +54,7 @@ public class Assets<T> : IDisposable, IAssetStorage
 {
     static readonly TypeID _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
-    static int NextID => counter++;
+    static int NextID => Interlocked.Exchange(ref counter, counter + 1);
 
     static Assets()
     {
@@ -183,13 +194,19 @@ public class Assets<T> : IDisposable, IAssetStorage
         return null;
     }
 
-    public void Set(Handle handle, object asset)
+    public void SetDependencies(Handle handle, List<Handle>? dependencies)
     {
-        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
-        Set(handle, typedAsset);
+        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        assets[index].Dependencies = dependencies;
     }
 
-    public void Set(Handle handle, T asset)
+    public void SetAsset(Handle handle, object asset)
+    {
+        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
+        SetAsset(handle, typedAsset);
+    }
+
+    public void SetAsset(Handle handle, T asset)
     {
         if (!assetLookup.TryGetValue(handle, out var index))
         {

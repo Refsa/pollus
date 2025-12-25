@@ -98,7 +98,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
             }
         }
 
-        var handle = assetServer.Assets.Add(new WorldSnapshot { RawData = ser.Writer.Buffer.ToArray() }, latest.Path);
+        var handle = assetServer.Assets.AddAsset(new WorldSnapshot { RawData = ser.Writer.Buffer.ToArray() }, latest.Path);
         writer.Write(new SnapshotSerializeResultEvent { SnapshotHandle = handle });
     }
 

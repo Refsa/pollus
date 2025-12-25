@@ -44,10 +44,10 @@ public class AssetPlugin : IPlugin
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);
 
-        if (Watch && !OperatingSystem.IsBrowser())
+        if (Watch && !OperatingSystem.IsBrowser() && DevelopmentAssetsWatch.Create() is { } devAssetsWatch)
         {
             assetServer.Watch();
-            world.Resources.Add(new DevelopmentAssetsWatch());
+            world.Resources.Add(devAssetsWatch);
         }
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,

@@ -74,32 +74,38 @@ public class AssetsContainer : IDisposable
         return false;
     }
 
-    public Handle<T> Add<T>(T asset, AssetPath? path = null)
+    public Handle<T> AddAsset<T>(T asset, AssetPath? path = null)
         where T : notnull
     {
         return GetAssets<T>().Add(asset, path);
     }
 
-    public Handle Add(object asset, TypeID typeId, AssetPath? path = null)
+    public Handle AddAsset(object asset, TypeID typeId, AssetPath? path = null)
     {
         if (!TryGetAssets(typeId, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {typeId} not found");
         return storage.Add(asset, path);
     }
 
-    public void Set<T>(Handle<T> handle, T asset)
+    public void SetAsset<T>(Handle<T> handle, T asset)
         where T : notnull
     {
-        GetAssets<T>().Set(handle, asset);
+        GetAssets<T>().SetAsset(handle, asset);
     }
 
-    public void Set(Handle handle, object asset)
+    public void SetAsset(Handle handle, object asset)
     {
         if (!TryGetAssets(handle.Type, out var storage))
         {
             throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
         }
 
-        storage.Set(handle, asset);
+        storage.SetAsset(handle, asset);
+    }
+
+    public void SetDependencies(Handle handle, List<Handle>? dependencies)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        storage.SetDependencies(handle, dependencies);
     }
 
     public Handle<T> GetHandle<T>(AssetPath path)

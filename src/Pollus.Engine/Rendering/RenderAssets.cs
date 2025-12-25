@@ -18,6 +18,9 @@ public class RenderAssetInfo
     public required RenderAssetStatus Status { get; set; }
     public required object Asset { get; set; }
     public required DateTime LastModified { get; set; }
+
+    public HashSet<Handle> Dependencies { get; set; } = [];
+    public HashSet<Handle> AssetDependencies { get; set; } = [];
 }
 
 public enum RenderAssetStatus
@@ -40,7 +43,7 @@ public class RenderAssets : IRenderAssets, IDisposable
         GC.SuppressFinalize(this);
         foreach (var data in renderData.Values)
         {
-            if (data is IDisposable disposable) disposable.Dispose();
+            if (data.Asset is IDisposable disposable) disposable.Dispose();
         }
 
         renderData.Clear();

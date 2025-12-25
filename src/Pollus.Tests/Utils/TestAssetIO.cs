@@ -52,6 +52,6 @@ public class TestAssetIO : AssetIO
 
     public override Task<Result<byte[], Error>> LoadPathAsync(AssetPath path, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return Task.FromResult(Result<byte[], Error>.Ok(content[path]));
     }
 }

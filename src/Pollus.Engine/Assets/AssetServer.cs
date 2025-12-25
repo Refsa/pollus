@@ -158,7 +158,8 @@ public class AssetServer : IDisposable
             var expectedType = TypeLookup.GetType(loader.AssetType);
             var asset = loadContext.Asset;
             Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {path}");
-            handle = Assets.Add(asset!, loader.AssetType, path);
+            handle = Assets.AddAsset(asset!, loader.AssetType, path);
+            Assets.SetDependencies(handle, loadContext.Dependencies);
             assetLookup.TryAdd(path, handle);
             return handle;
         }
@@ -221,11 +222,19 @@ public class AssetServer : IDisposable
                 var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
                 var asset = loadContext.Asset;
                 Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {loadState.Path}");
-                Assets.Set(loadState.Handle, asset!);
+                Assets.SetAsset(loadState.Handle, asset!);
                 assetLookup.TryAdd(loadState.Path, loadState.Handle);
             }
 
             loadStates.RemoveAt(i);
+        }
+    }
+
+    public void FlushLoading()
+    {
+        while (loadStates.Count > 0)
+        {
+            Update();
         }
     }
 

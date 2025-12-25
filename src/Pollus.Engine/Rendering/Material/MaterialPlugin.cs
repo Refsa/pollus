@@ -18,8 +18,6 @@ public class MaterialPlugin<TMaterial> : IPlugin
         PluginDependency.From<RenderingPlugin>(),
     ];
 
-    public MaterialPlugin() { }
-
     public void Apply(World world)
     {
         world.Resources.Get<AssetServer>().InitAsset<TMaterial>();
@@ -27,10 +25,10 @@ public class MaterialPlugin<TMaterial> : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(PrepareSystem)
-        {
-            RunsAfter = [RenderingPlugin.BeginFrameSystem],
-            RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
-        },
+            {
+                RunsAfter = [RenderingPlugin.BeginFrameSystem],
+                RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
+            },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
@@ -42,9 +40,9 @@ public class MaterialPlugin<TMaterial> : IPlugin
             }));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(ReloadSystem)
-        {
-            RunsAfter = [PrepareSystem],
-        },
+            {
+                RunsAfter = [PrepareSystem],
+            },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materialAssets) =>
             {
                 var shaderAssets = assetServer.GetAssets<ShaderAsset>();

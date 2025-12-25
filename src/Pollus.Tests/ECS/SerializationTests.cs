@@ -43,7 +43,7 @@ public class SerializationTests
             deserializeWorld.AddPlugin(new AssetPlugin { RootPath = "assets", });
             deserializeWorld.Prepare();
 
-            var worldSnapshotHandle = deserializeWorld.Resources.Get<AssetServer>().Assets.Add(worldSnapshot, "snapshots/test.bin");
+            var worldSnapshotHandle = deserializeWorld.Resources.Get<AssetServer>().Assets.AddAsset(worldSnapshot, "snapshots/test.bin");
             deserializeWorld.Events.GetWriter<SnapshotDeserializeEvent>().Write(new() { Snapshot = worldSnapshotHandle });
             deserializeWorld.Update();
 

@@ -36,7 +36,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         if (string.IsNullOrEmpty(path))
         {
             var asset = reader.Deserialize<T>();
-            return context.AssetServer.Assets.Add(asset);
+            return context.AssetServer.Assets.AddAsset(asset);
         }
 
         return context.AssetServer.Load<T>(path);
