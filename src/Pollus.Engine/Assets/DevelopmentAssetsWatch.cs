@@ -1,10 +1,9 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
-using Debugging;
 using ECS;
 
-public class DevelopmentAssetsWatch : IPlugin, IDisposable
+public class DevelopmentAssetsWatch : IDisposable
 {
     class CopyTask
     {
@@ -19,20 +18,13 @@ public class DevelopmentAssetsWatch : IPlugin, IDisposable
 
     const int DEBOUNCE_TIME = 300;
 
-    FileSystemWatcher? watcher;
-    string? sourcePath;
+    FileSystemWatcher watcher;
+    string sourcePath;
 
     ConcurrentDictionary<string, Timer> debounceTimers = new();
 
-    public void Dispose()
+    public DevelopmentAssetsWatch()
     {
-        watcher?.Dispose();
-    }
-
-    public void Apply(World world)
-    {
-        world.Resources.Add(this);
-
         sourcePath = GetAssetPath();
         watcher = new FileSystemWatcher(sourcePath);
         watcher.NotifyFilter = NotifyFilters.LastWrite;
@@ -42,6 +34,11 @@ public class DevelopmentAssetsWatch : IPlugin, IDisposable
         watcher.Changed += OnFileChanged;
     }
 
+    public void Dispose()
+    {
+        watcher?.Dispose();
+    }
+
     void OnFileChanged(object sender, FileSystemEventArgs e)
     {
         if (debounceTimers.TryGetValue(e.FullPath, out var task))
@@ -49,8 +46,6 @@ public class DevelopmentAssetsWatch : IPlugin, IDisposable
             task.Change(DEBOUNCE_TIME, Timeout.Infinite);
             return;
         }
-
-        Guard.IsNotNull(sourcePath, nameof(sourcePath));
 
         var relative = Path.GetRelativePath(sourcePath, e.FullPath);
         var binPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets");

@@ -1,11 +1,15 @@
 namespace Pollus.Utils;
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
+[DebuggerDisplay("{TypeName}")]
 public record struct TypeID(int ID)
 {
     public static implicit operator int(TypeID typeId) => typeId.ID;
     public static implicit operator TypeID(int id) => new(id);
+
+    public string TypeName => TypeLookup.GetType(ID).AssemblyQualifiedName;
 
     public override int GetHashCode() => ID;
 }

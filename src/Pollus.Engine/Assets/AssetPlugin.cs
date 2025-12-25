@@ -47,7 +47,7 @@ public class AssetPlugin : IPlugin
         if (Watch && !OperatingSystem.IsBrowser())
         {
             assetServer.Watch();
-            world.AddPlugin(new DevelopmentAssetsWatch());
+            world.Resources.Add(new DevelopmentAssetsWatch());
         }
 
         world.Schedule.AddSystems(CoreStage.First, FnSystem.Create(UpdateSystem,
