@@ -1,9 +1,11 @@
 namespace Pollus.Engine.Rendering;
 
+using Debugging;
 using Graphics.Rendering;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
+using Utils;
 
 public class MaterialPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial
@@ -21,7 +23,6 @@ public class MaterialPlugin<TMaterial> : IPlugin
     public void Apply(World world)
     {
         world.Resources.Get<AssetServer>().InitAssets<TMaterial>();
-
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(PrepareSystem)
@@ -29,89 +30,43 @@ public class MaterialPlugin<TMaterial> : IPlugin
                 RunsAfter = [RenderingPlugin.BeginFrameSystem],
                 RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
             },
-            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
+            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materials, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+                    if (assetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed or AssetEventType.DependenciesChanged)) continue;
 
-                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
-                }
-            }));
-
-        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(ReloadSystem)
-            {
-                RunsAfter = [PrepareSystem],
-            },
-            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materialAssets) =>
-            {
-                var shaderAssets = assetServer.Assets.GetAssets<ShaderAsset>();
-
-                foreach (var material in materialAssets.AssetInfos)
-                {
-                    if (material.Status is not AssetStatus.Loaded || material.Asset is null) continue;
-                    var shouldReload = false;
-
-                    var materialInfo = renderAssets.GetInfo(material.Handle);
-                    if (materialInfo is null) continue;
-
-                    var shaderAsset = shaderAssets.GetInfo(material.Asset.ShaderSource)
-                                      ?? throw new InvalidOperationException("Shader asset not found");
-
-                    if ((shaderAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
+                    if (assetEvent.Type is AssetEventType.Added)
                     {
-                        shouldReload = true;
-                    }
-
-                    if (shouldReload is false)
-                    {
-                        foreach (var group in material.Asset.Bindings)
+                        var shaderAsset = materials.Get(assetEvent.Handle)!;
+                        HashSet<Handle> deps = [shaderAsset.ShaderSource];
+                        foreach (var group in shaderAsset.Bindings)
                         {
-                            if (shouldReload) break;
                             foreach (var binding in group)
                             {
                                 if (binding is TextureBinding textureBinding)
                                 {
-                                    var textureAsset = renderAssets.GetInfo(textureBinding.Image)
-                                                       ?? throw new InvalidOperationException("Texture asset not found");
-                                    if ((textureAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
-                                    {
-                                        shouldReload = true;
-                                        break;
-                                    }
+                                    deps.Add(textureBinding.Image);
                                 }
                                 else if (binding is SamplerBinding samplerBinding)
                                 {
-                                    var samplerAsset = renderAssets.GetInfo(samplerBinding.Sampler)
-                                                       ?? throw new InvalidOperationException("Sampler asset not found");
-                                    if ((samplerAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
-                                    {
-                                        shouldReload = true;
-                                        break;
-                                    }
+                                    deps.Add(samplerBinding.Sampler);
                                 }
                                 else if (binding is IStorageBufferBinding storageBufferBinding)
                                 {
-                                    var storageBufferAsset = renderAssets.GetInfo(storageBufferBinding.Buffer)
-                                                             ?? throw new InvalidOperationException("Storage buffer asset not found");
-                                    if ((storageBufferAsset.LastModified - materialInfo.LastModified).TotalMilliseconds > 300)
-                                    {
-                                        shouldReload = true;
-                                        break;
-                                    }
+                                    deps.Add(storageBufferBinding.Buffer);
                                 }
                             }
                         }
+
+                        assetServer.Assets.SetDependencies(assetEvent.Handle, deps);
                     }
 
-                    if (shouldReload)
-                    {
-                        renderAssets.Prepare(gpuContext, assetServer, material.Handle, true);
-                        material.LastModified = DateTime.UtcNow;
-                    }
+                    if (assetServer.Assets.IsLoaded(assetEvent.Handle) is false) continue;
+
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed or AssetEventType.DependenciesChanged);
                 }
-            }
-        ));
+            }));
     }
 
     public static MaterialPlugin<TMaterial> Create()

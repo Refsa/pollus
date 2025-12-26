@@ -14,6 +14,7 @@ public enum AssetStatus
     Unloaded = 1,
     Initialized,
     Loading,
+    WaitingForDependency,
     Loaded,
 }
 
@@ -43,15 +44,24 @@ public class AssetInfo<T> : IAssetInfo
 public interface IAssetStorage : IDisposable
 {
     TypeID AssetType { get; }
+
+    Handle Initialize(AssetPath? path);
     Handle Add(object asset, AssetPath? path = null);
     void SetAsset(Handle handle, object asset);
-    Handle Initialize(AssetPath? path);
+
+    void AppendEvent(Handle handle, AssetEventType type);
     void FlushEvents(Events events);
     void ClearEvents();
+
     AssetStatus GetStatus(Handle handle);
+    void SetStatus(Handle handle, AssetStatus status);
+
     AssetPath? GetPath(Handle handle);
+
+    void AddDependent(Handle handle, Handle dependent);
+    IReadOnlySet<Handle> GetDependents(Handle handle);
     void SetDependencies(Handle handle, HashSet<Handle>? dependencies);
-    void NotifyDependants(Handle handle);
+    IReadOnlySet<Handle>? GetDependencies(Handle handle);
 }
 
 public class Assets<T> : IAssetStorage
@@ -208,53 +218,24 @@ public class Assets<T> : IAssetStorage
     {
         if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
         assets[index].Dependencies = dependencies;
-
-        if (dependencies is null) return;
-        foreach (var dependency in dependencies)
-        {
-            if (!assetLookup.TryGetValue(dependency, out var dependentIndex)) throw new InvalidOperationException($"Asset with handle {dependency} not found");
-            assets[dependentIndex].Dependents.Add(handle);
-        }
     }
 
-    public void NotifyDependants(Handle handle)
+    public IReadOnlySet<Handle>? GetDependencies(Handle handle)
     {
-        var info = GetInfo(handle);
-        if (info is null || info.Dependents.Count == 0) return;
+        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        return assets[index].Dependencies;
+    }
 
-        var visited = Pool<HashSet<Handle>>.Shared.Rent();
-        var queue = Pool<Queue<Handle>>.Shared.Rent();
-        try
-        {
-            visited.Add(handle);
-            foreach (var dependent in info.Dependents) queue.Enqueue(dependent);
+    public void AddDependent(Handle handle, Handle dependent)
+    {
+        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        assets[index].Dependents.Add(dependent);
+    }
 
-            while (queue.Count > 0)
-            {
-                var current = queue.Dequeue();
-                visited.Add(current);
-                queuedEvents.Add(new AssetEvent<T>
-                {
-                    Type = AssetEventType.DependenciesChanged,
-                    Handle = current,
-                });
-
-                info = GetInfo(current);
-                if (info is null) continue;
-                foreach (var dependent in info.Dependents)
-                {
-                    if (visited.Contains(dependent)) continue;
-                    queue.Enqueue(dependent);
-                }
-            }
-        }
-        finally
-        {
-            visited.Clear();
-            queue.Clear();
-            Pool<HashSet<Handle>>.Shared.Return(visited);
-            Pool<Queue<Handle>>.Shared.Return(queue);
-        }
+    public IReadOnlySet<Handle> GetDependents(Handle handle)
+    {
+        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        return assets[index].Dependents;
     }
 
     public void SetAsset(Handle handle, object asset)
@@ -303,6 +284,16 @@ public class Assets<T> : IAssetStorage
                 Handle = handle,
             });
         }
+    }
+
+    public void AppendEvent(Handle handle, AssetEventType type)
+    {
+        if (!assetLookup.ContainsKey(handle)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        queuedEvents.Add(new AssetEvent<T>
+        {
+            Type = type,
+            Handle = handle,
+        });
     }
 
     public void FlushEvents(Events events)

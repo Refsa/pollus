@@ -17,12 +17,21 @@ public class AssetServer : IDisposable
         public required IAssetLoader Loader { get; init; }
     }
 
+    struct AssetWaitState
+    {
+        public required Handle Handle { get; init; }
+        public required AssetPath Path { get; init; }
+        public required object Asset { get; init; }
+        public required HashSet<Handle> Dependencies { get; init; }
+    }
+
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
+    ArrayList<AssetWaitState> waitStates = new();
 
     bool isDisposed;
 
