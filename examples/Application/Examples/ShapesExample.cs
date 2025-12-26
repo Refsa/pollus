@@ -31,7 +31,7 @@ public class ShapesExample : IExample
 
         var shapeMaterial = shapeMaterials.Add(new ShapeMaterial
         {
-            ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
+            ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/shape.wgsl"),
         });
 
         commands.Spawn(ShapeDraw.Bundle

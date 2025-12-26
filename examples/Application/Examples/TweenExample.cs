@@ -45,7 +45,7 @@ public partial class TweenExample : IExample
 
             var shapeMaterial = shapeMaterials.Add(new ShapeMaterial
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
             var scale = 4f;

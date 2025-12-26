@@ -143,7 +143,7 @@ public partial class ComputeExample : IExample
 
                     computeData.ParticleMaterial = particleMaterials.Add(new()
                     {
-                        ShaderSource = assetServer.Load<ShaderAsset>("shaders/particle.wgsl"),
+                        ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/particle.wgsl"),
                         ParticleBuffer = new()
                         {
                             Buffer = particleBufferHandle,
@@ -156,7 +156,7 @@ public partial class ComputeExample : IExample
                     {
                         Label = "compute",
                         EntryPoint = "main",
-                        Shader = assetServer.Load<ShaderAsset>("shaders/compute.wgsl"),
+                        Shader = assetServer.LoadAsync<ShaderAsset>("shaders/compute.wgsl"),
                         Bindings =
                         [
                             [

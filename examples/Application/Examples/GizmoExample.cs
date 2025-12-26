@@ -34,7 +34,7 @@ public class GizmoExample : IExample
             .AddSystem(CoreStage.PostInit, FnSystem.Create(new("GizmoExample::Prepare"),
                 static (Commands commands, ExampleData exampleData, AssetServer assetServer) =>
                 {
-                    exampleData.Texture = assetServer.Load<Texture2D>("textures/test.png");
+                    exampleData.Texture = assetServer.LoadAsync<Texture2D>("textures/test.png");
                     commands.Spawn(Camera2D.Bundle);
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create(new("GizmoExample::Update")

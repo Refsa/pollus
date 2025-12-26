@@ -29,7 +29,7 @@ public class AudioExample : IExample
                     },
                     new AudioPlayback
                     {
-                        Asset = assetServer.Load<AudioAsset>("sounds/test.wav"),
+                        Asset = assetServer.LoadAsync<AudioAsset>("sounds/test.wav"),
                     }
                 ).Spawn(world);
             }))

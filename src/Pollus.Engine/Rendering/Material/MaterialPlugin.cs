@@ -33,7 +33,7 @@ public class MaterialPlugin<TMaterial> : IPlugin
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is AssetEventType.Unloaded) continue;
+                    if (assetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
 
                     renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
                 }

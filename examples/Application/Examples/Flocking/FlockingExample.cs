@@ -119,7 +119,7 @@ class FlockingGame : IPlugin
 
             commonResources.BoidMaterial = shapeMaterials.Add(new ShapeMaterial()
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
             for (int i = 0; i < 0; i++)

@@ -48,26 +48,26 @@ public partial class MeshRenderingExample : IExample
             Handle[] materialHandles = [
                 materials.Add(new Material()
                 {
-                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<Texture2D>("breakout/ball_1.png"),
+                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.LoadAsync<Texture2D>("breakout/ball_1.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
-                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<Texture2D>("breakout/ball_2.png"),
+                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.LoadAsync<Texture2D>("breakout/ball_2.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
-                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<Texture2D>("breakout/ball_3.png"),
+                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.LoadAsync<Texture2D>("breakout/ball_3.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
                 materials.Add(new Material()
                 {
-                    ShaderSource = assetServer.Load<ShaderAsset>("shaders/quad.wgsl"),
-                    Texture = assetServer.Load<Texture2D>("breakout/ball_4.png"),
+                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/quad.wgsl"),
+                    Texture = assetServer.LoadAsync<Texture2D>("breakout/ball_4.png"),
                     Sampler = samplers.Add(SamplerDescriptor.Nearest),
                 }),
             ];

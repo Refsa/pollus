@@ -35,7 +35,7 @@ public class GizmoPlugin : IPlugin
                 Assets<GizmoOutlinedMaterial> outlinedMaterials
             ) =>
             {
-                var fontHandle = assetServer.Load<FontAsset>("builtin/fonts/SmoochSans-Light.ttf");
+                var fontHandle = assetServer.LoadAsync<FontAsset>("builtin/fonts/SmoochSans-Light.ttf");
                 var font = assetServer.GetAssets<FontAsset>().Get(fontHandle);
                 Guard.IsNotNull(font, "GizmoPlugin::Setup: Font not found");
                 gizmos.SetFont(font);

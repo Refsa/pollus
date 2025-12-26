@@ -115,8 +115,8 @@ public partial class BreakoutGame : IExample
 
             var spriteMaterial = materials.Add(new SpriteMaterial
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/sprite.wgsl"),
-                Texture = assetServer.Load<Texture2D>("breakout/breakout_sheet.png"),
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/sprite.wgsl"),
+                Texture = assetServer.LoadAsync<Texture2D>("breakout/breakout_sheet.png"),
                 Sampler = samplers.Add(SamplerDescriptor.Nearest),
             });
             gameState.spritesheet = spriteMaterial;
@@ -484,7 +484,7 @@ public partial class BreakoutGame : IExample
                     },
                     new AudioPlayback
                     {
-                        Asset = assetServer.Load<AudioAsset>("sounds/bounce.wav")
+                        Asset = assetServer.LoadAsync<AudioAsset>("sounds/bounce.wav")
                     }
                 ));
             }

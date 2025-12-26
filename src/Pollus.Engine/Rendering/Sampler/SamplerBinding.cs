@@ -41,7 +41,7 @@ public class SamplerBindingSerializer : ISerializer<SamplerBinding, WorldSeriali
             ),
             "nearest" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Nearest),
             "linear" => context.AssetServer.GetAssets<SamplerAsset>().Add(SamplerDescriptor.Default),
-            _ => context.AssetServer.Load<SamplerAsset>(samplerPath)
+            _ => context.AssetServer.LoadAsync<SamplerAsset>(samplerPath)
         };
 
         return new SamplerBinding()

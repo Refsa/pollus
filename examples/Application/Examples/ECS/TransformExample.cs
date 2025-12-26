@@ -46,7 +46,7 @@ public partial class TransformExample : IExample
             commands.Spawn(Camera2D.Bundle);
             var shapeMaterial = shapeMaterials.Add(new ShapeMaterial
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/shape.wgsl"),
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/shape.wgsl"),
             });
 
             var parent = commands.Spawn(Entity.With(

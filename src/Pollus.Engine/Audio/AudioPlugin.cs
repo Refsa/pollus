@@ -156,8 +156,10 @@ struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
             deviceSource.Pitch = source.Pitch;
             deviceSource.Looping = source.Mode == PlaybackMode.Loop;
 
-            var audioAsset = AudioAssets.Get(playback.Asset);
-            deviceBuffer.SetData<byte>(audioAsset!.Data, audioAsset.SampleInfo);
+            var audioAssetInfo = AudioAssets.GetInfo(playback.Asset);
+            if (audioAssetInfo?.Asset is null || audioAssetInfo.Status is not AssetStatus.Loaded) return;
+
+            deviceBuffer.SetData(audioAssetInfo.Asset.Data, audioAssetInfo.Asset.SampleInfo);
             deviceSource.QueueBuffer(deviceBuffer);
             deviceSource.Play();
             playback.StartTicks = Time.Ticks;
