@@ -20,7 +20,7 @@ public class MaterialPlugin<TMaterial> : IPlugin
 
     public void Apply(World world)
     {
-        world.Resources.Get<AssetServer>().InitAsset<TMaterial>();
+        world.Resources.Get<AssetServer>().InitAssets<TMaterial>();
 
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
 
@@ -45,7 +45,7 @@ public class MaterialPlugin<TMaterial> : IPlugin
             },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materialAssets) =>
             {
-                var shaderAssets = assetServer.GetAssets<ShaderAsset>();
+                var shaderAssets = assetServer.Assets.GetAssets<ShaderAsset>();
 
                 foreach (var material in materialAssets.AssetInfos)
                 {

@@ -54,7 +54,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         }
         else
         {
-            var asset = context.AssetServer.Assets.Get(value);
+            var asset = context.AssetServer.Assets.GetAsset(value);
             if (asset is not null)
             {
                 writer.Serialize(asset);

@@ -17,7 +17,7 @@ public class AssetsFetch<T> : IFetch<Assets<T>>
 
     public Assets<T> DoFetch(World world, ISystem system)
     {
-        return world.Resources.Get<AssetsContainer>().GetAssets<T>();
+        return world.Resources.Get<AssetServer>().GetAssets<T>();
     }
 }
 
@@ -42,7 +42,6 @@ public class AssetPlugin : IPlugin
 
         var assetServer = new AssetServer(new FileAssetIO(RootPath));
         world.Resources.Add(assetServer);
-        world.Resources.Add(assetServer.Assets);
 
         if (EnableFileWatch && !OperatingSystem.IsBrowser() && DevelopmentAssetsWatch.Create() is { } devAssetsWatch)
         {
@@ -54,7 +53,7 @@ public class AssetPlugin : IPlugin
             static (AssetServer assetServer, Events events) =>
             {
                 assetServer.Update();
-                assetServer.FlushEvents(events);
+                assetServer.Assets.FlushEvents(events);
             }));
 
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(FlushSystem,

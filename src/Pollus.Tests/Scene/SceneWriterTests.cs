@@ -216,7 +216,7 @@ public class SceneWriterTests
         using var world = CreateWorld(assetIO);
         var server = world.Resources.Get<AssetServer>();
         server.AddLoader<TextAssetLoader>();
-        server.InitAsset<TextAsset>();
+        server.InitAssets<TextAsset>();
 
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TextAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<RootAsset>());
@@ -225,9 +225,9 @@ public class SceneWriterTests
         var child1 = server.Load<TextAsset>("path/to/child1.txt");
         var child2 = server.Load<TextAsset>("path/to/child2.txt");
 
-        var child1Asset = server.Assets.GetAssets<ChildAsset>().Add(new ChildAsset { Text = child1 });
-        var child2Asset = server.Assets.GetAssets<ChildAsset>().Add(new ChildAsset { Text = child2 });
-        var rootAsset = server.Assets.GetAssets<RootAsset>().Add(new RootAsset { Child1 = child1Asset, Child2 = child2Asset });
+        var child1Asset = server.GetAssets<ChildAsset>().Add(new ChildAsset { Text = child1 });
+        var child2Asset = server.GetAssets<ChildAsset>().Add(new ChildAsset { Text = child2 });
+        var rootAsset = server.GetAssets<RootAsset>().Add(new RootAsset { Child1 = child1Asset, Child2 = child2Asset });
 
         var entity = world.Spawn(Entity.With(new ComplexHandleComponent { Root = rootAsset }));
 
@@ -349,8 +349,8 @@ public class SceneWriterTests
         ]);
 
         Assert.Collection(entities, [
-            entity => Assert.Equal(1, entity.Components.Count),
-            entity => Assert.Equal(1, entity.Components.Count),
+            entity => Assert.Single(entity.Components),
+            entity => Assert.Single(entity.Components),
             entity => Assert.Null(entity.Components),
         ]);
 

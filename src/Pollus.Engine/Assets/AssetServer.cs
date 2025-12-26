@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Collections;
 using ECS;
 using Pollus.Debugging;
@@ -26,13 +27,14 @@ public class AssetServer : IDisposable
     bool isDisposed;
 
     public AssetIO AssetIO { get; }
-    public AssetsContainer Assets { get; } = new();
+    public AssetsContainer Assets { get; }
 
     public bool FileWatchEnabled => AssetIO.FileWatchEnabled;
 
     public AssetServer(AssetIO assetIO)
     {
         AssetIO = assetIO;
+        Assets = new();
     }
 
     public void Dispose()
@@ -85,16 +87,21 @@ public class AssetServer : IDisposable
         return this;
     }
 
-    public void InitAsset<TAsset>()
+    public void InitAssets<TAsset>()
         where TAsset : notnull
     {
-        Assets.Init<TAsset>();
+        Assets.InitAssets<TAsset>();
     }
 
     public Assets<TAsset> GetAssets<TAsset>()
         where TAsset : notnull
     {
         return Assets.GetAssets<TAsset>();
+    }
+    
+    public IAssetStorage GetAssets(TypeID typeId)
+    {
+        return Assets.GetAssets(typeId);
     }
 
     public Handle<TAsset> Queue<TAsset>(AssetPath path)
@@ -128,7 +135,7 @@ public class AssetServer : IDisposable
     public Handle<TAsset> Load<TAsset>(AssetPath path, bool reload = false)
         where TAsset : notnull
     {
-        Assets.Init<TAsset>();
+        Assets.InitAssets<TAsset>();
         return Load(path);
     }
 
@@ -173,7 +180,7 @@ public class AssetServer : IDisposable
     public Handle<T> LoadAsync<T>(AssetPath path)
         where T : notnull
     {
-        Assets.Init<T>();
+        Assets.InitAssets<T>();
         return LoadAsync(path);
     }
 
@@ -250,10 +257,5 @@ public class AssetServer : IDisposable
             _ = Load(kvp.Key, true);
             Log.Info((FormattableString)$"AssetServer::FlushQueue {kvp.Key}");
         }
-    }
-
-    public void FlushEvents(Events events)
-    {
-        Assets.FlushEvents(events);
     }
 }

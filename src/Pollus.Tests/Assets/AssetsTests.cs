@@ -31,7 +31,7 @@ public class AssetsTests
             .AddLoader<TextAssetLoader>();
 
         var handle = assetServer.Load<TextAsset>(new AssetPath("test.txt"));
-        var asset = assetServer.Assets.Get(handle);
+        var asset = assetServer.Assets.GetAsset(handle);
 
         Assert.NotNull(asset);
         Assert.Equal("this is some text", asset.Content);
@@ -55,7 +55,7 @@ public class AssetsTests
 
         stopwatch.Stop();
 
-        var asset = assetServer.Assets.Get(handle);
+        var asset = assetServer.Assets.GetAsset(handle);
 
         Assert.NotNull(asset);
         Assert.Equal("this is some text", asset.Content);

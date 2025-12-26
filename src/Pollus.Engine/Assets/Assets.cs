@@ -11,8 +11,8 @@ public enum AssetStatus
 {
     Failed = -1,
     Unknown = 0,
+    Unloaded = 1,
     Initialized,
-    Unloaded,
     Loading,
     Loaded,
 }
@@ -40,7 +40,7 @@ public class AssetInfo<T> : IAssetInfo
     public DateTime LastModified { get; set; }
 }
 
-public interface IAssetStorage
+public interface IAssetStorage : IDisposable
 {
     TypeID AssetType { get; }
     Handle Add(object asset, AssetPath? path = null);
@@ -54,7 +54,7 @@ public interface IAssetStorage
     void NotifyDependants(Handle handle);
 }
 
-public class Assets<T> : IDisposable, IAssetStorage
+public class Assets<T> : IAssetStorage
     where T : notnull
 {
     static readonly TypeID _assetTypeId = TypeLookup.ID<T>();
@@ -67,14 +67,13 @@ public class Assets<T> : IDisposable, IAssetStorage
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<T>());
     }
 
-    public TypeID AssetType => TypeLookup.ID<T>();
-
     List<AssetInfo<T>> assets = new();
     Dictionary<Handle, int> assetLookup = new();
     Dictionary<AssetPath, Handle> pathLookup = new();
 
     List<AssetEvent<T>> queuedEvents = new();
 
+    public TypeID AssetType => TypeLookup.ID<T>();
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
 
     public void Dispose()
@@ -187,6 +186,12 @@ public class Assets<T> : IDisposable, IAssetStorage
         }
 
         return AssetStatus.Unknown;
+    }
+
+    public void SetStatus(Handle handle, AssetStatus status)
+    {
+        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
+        assets[index].Status = status;
     }
 
     public AssetPath? GetPath(Handle handle)

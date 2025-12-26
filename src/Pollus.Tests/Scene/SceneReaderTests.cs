@@ -369,7 +369,7 @@ public partial class SceneReaderTests
             .AddFile("path/to/child2.txt", "this is child 2 asset"u8.ToArray());
         var context = CreateContext(assetIO);
         context.AssetServer.AddLoader<TextAssetLoader>();
-        context.AssetServer.InitAsset<TextAsset>();
+        context.AssetServer.InitAssets<TextAsset>();
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<TextAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<RootAsset>());
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<ChildAsset>());
@@ -577,10 +577,10 @@ public partial class SceneReaderTests
             .AddFile("sprites/test_sheet.png", "img"u8.ToArray());
         var context = CreateContext(assetIO);
         context.AssetServer.AddLoader<TextAssetLoader>();
-        context.AssetServer.InitAsset<SpriteMaterial>();
-        context.AssetServer.InitAsset<SamplerAsset>();
-        context.AssetServer.InitAsset<ShaderAsset>();
-        context.AssetServer.InitAsset<Texture2D>();
+        context.AssetServer.InitAssets<SpriteMaterial>();
+        context.AssetServer.InitAssets<SamplerAsset>();
+        context.AssetServer.InitAssets<ShaderAsset>();
+        context.AssetServer.InitAssets<Texture2D>();
 
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 

@@ -1,117 +1,78 @@
 namespace Pollus.Engine.Assets;
 
+using System.Diagnostics.CodeAnalysis;
 using ECS;
 using Utils;
 
 public class AssetsContainer : IDisposable
 {
-    bool isDisposed;
-    readonly Dictionary<TypeID, IAssetStorage> assets = [];
+    Dictionary<TypeID, IAssetStorage> assets = new();
 
     public void Dispose()
     {
-        if (isDisposed) return;
-        isDisposed = true;
-        GC.SuppressFinalize(this);
-
         foreach (var asset in assets.Values)
         {
-            if (asset is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
+            asset.Dispose();
         }
 
         assets.Clear();
+        GC.SuppressFinalize(this);
     }
 
-    public void Init<T>()
-        where T : notnull
+    public Assets<TAsset> InitAssets<TAsset>()
+        where TAsset : notnull
     {
-        if (assets.ContainsKey(TypeLookup.ID<T>()))
+        if (!assets.TryGetValue(TypeLookup.ID<TAsset>(), out var storage))
         {
-            return;
+            storage = new Assets<TAsset>();
+            assets.Add(TypeLookup.ID<TAsset>(), storage);
         }
 
-        assets.Add(TypeLookup.ID<T>(), new Assets<T>());
+        return (Assets<TAsset>)storage;
     }
-
-    public bool TryGetAssets<T>(out Assets<T> container)
-        where T : notnull
-    {
-        if (assets.TryGetValue(TypeLookup.ID<T>(), out var containerObject))
-        {
-            container = (Assets<T>)containerObject;
-            return true;
-        }
-
-        container = null!;
-        return false;
-    }
-
-    public Assets<T> GetAssets<T>()
-        where T : notnull
-    {
-        if (!TryGetAssets<T>(out var container))
-        {
-            var id = TypeLookup.ID<T>();
-            container = new Assets<T>();
-            assets.Add(id, container);
-        }
-
-        return container;
-    }
-
-    public bool TryGetAssets(TypeID typeId, out IAssetStorage storage)
-    {
-        if (assets.TryGetValue(typeId, out var asset))
-        {
-            storage = asset;
-            return true;
-        }
-
-        storage = null!;
-        return false;
-    }
-
-    public Handle<T> AddAsset<T>(T asset, AssetPath? path = null)
-        where T : notnull
-    {
-        return GetAssets<T>().Add(asset, path);
-    }
-
-    public Handle AddAsset(object asset, TypeID typeId, AssetPath? path = null)
+    
+    public IAssetStorage GetAssets(TypeID typeId)
     {
         if (!TryGetAssets(typeId, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {typeId} not found");
-        return storage.Add(asset, path);
+        return storage;
     }
 
-    public void SetAsset<T>(Handle<T> handle, T asset)
-        where T : notnull
+    public Assets<TAsset> GetAssets<TAsset>()
+        where TAsset : notnull
     {
-        GetAssets<T>().SetAsset(handle, asset);
+        return InitAssets<TAsset>();
     }
 
-    public void SetAsset(Handle handle, object asset)
+    public bool TryGetAssets(TypeID typeId, [MaybeNullWhen(false)] out IAssetStorage storage)
     {
-        if (!TryGetAssets(handle.Type, out var storage))
+        if (assets.TryGetValue(typeId, out var s))
         {
-            throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+            storage = s;
+            return true;
         }
 
-        storage.SetAsset(handle, asset);
+        storage = null;
+        return false;
     }
 
-    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
+    public bool TryGetAssets<TAsset>([MaybeNullWhen(false)] out Assets<TAsset> storage)
+        where TAsset : notnull
     {
-        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
-        storage.SetDependencies(handle, dependencies);
+        if (TryGetAssets(TypeLookup.ID<TAsset>(), out var s))
+        {
+            storage = (Assets<TAsset>)s;
+            return true;
+        }
+
+        storage = null;
+        return false;
     }
 
-    public Handle<T> GetHandle<T>(AssetPath path)
-        where T : notnull
+    public TAsset? GetAsset<TAsset>(Handle<TAsset> handle)
+        where TAsset : notnull
     {
-        return GetAssets<T>().Initialize(path);
+        if (!TryGetAssets(TypeLookup.ID<TAsset>(), out var storage)) throw new InvalidOperationException($"Asset storage with type ID {TypeLookup.ID<TAsset>()} not found");
+        return ((Assets<TAsset>)storage).Get(handle);
     }
 
     public Handle GetHandle(AssetPath path, TypeID typeId)
@@ -120,37 +81,67 @@ public class AssetsContainer : IDisposable
         return storage.Initialize(path);
     }
 
-    public T? Get<T>(Handle<T> handle)
-        where T : notnull
+    public Handle<TAsset> GetHandle<TAsset>(AssetPath path)
+        where TAsset : notnull
     {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.Get(handle);
-        }
-
-        return default;
+        return GetHandle(path, TypeLookup.ID<TAsset>());
     }
 
-    public AssetStatus GetStatus<T>(Handle handle)
-        where T : notnull
+    public AssetPath? GetPath<TAsset>(Handle<TAsset> handle)
+        where TAsset : notnull
     {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.GetStatus(handle);
-        }
-
-        return AssetStatus.Unknown;
+        if (!TryGetAssets(TypeLookup.ID<TAsset>(), out var storage)) throw new InvalidOperationException($"Asset storage with type ID {TypeLookup.ID<TAsset>()} not found");
+        return storage.GetPath(handle);
     }
 
-    public AssetPath? GetPath<T>(Handle<T> handle)
-        where T : notnull
+    public AssetPath? GetPath(Handle handle)
     {
-        if (TryGetAssets<T>(out var container))
-        {
-            return container.GetPath(handle);
-        }
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        return storage.GetPath(handle);
+    }
 
-        return null;
+    public AssetStatus GetStatus<TAsset>(Handle<TAsset> handle)
+        where TAsset : notnull
+    {
+        if (!TryGetAssets(TypeLookup.ID<TAsset>(), out var storage)) throw new InvalidOperationException($"Asset storage with type ID {TypeLookup.ID<TAsset>()} not found");
+        return storage.GetStatus(handle);
+    }
+
+    public AssetStatus GetStatus(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        return storage.GetStatus(handle);
+    }
+
+    public Handle AddAsset<TAsset>(TAsset asset, AssetPath? path = null)
+        where TAsset : notnull
+    {
+        return GetAssets<TAsset>().Add(asset, path);
+    }
+
+    public Handle AddAsset(object asset, TypeID typeId, AssetPath? path = null)
+    {
+        if (!TryGetAssets(typeId, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {typeId} not found");
+        return storage.Add(asset, path);
+    }
+
+    public void SetAsset<TAsset>(Handle<TAsset> handle, TAsset asset)
+        where TAsset : notnull
+    {
+        if (!TryGetAssets(TypeLookup.ID<TAsset>(), out var storage)) throw new InvalidOperationException($"Asset storage with type ID {TypeLookup.ID<TAsset>()} not found");
+        storage.SetAsset(handle, asset);
+    }
+
+    public void SetAsset(Handle handle, object asset)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        storage.SetAsset(handle, asset);
+    }
+
+    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        storage.SetDependencies(handle, dependencies);
     }
 
     public void NotifyDependants(Handle handle)
