@@ -45,6 +45,9 @@ public class RenderingPlugin : IPlugin
 
         var assetServer = world.Resources.Get<AssetServer>();
         assetServer.AddLoader<WgslShaderSourceLoader>();
+        assetServer.InitAsset<Texture2D>();
+        assetServer.InitAsset<SamplerAsset>();
+        assetServer.InitAsset<StorageBuffer>();
 
         world.AddPlugins([
             new ImagePlugin(),

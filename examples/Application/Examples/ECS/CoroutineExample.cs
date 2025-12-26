@@ -74,8 +74,10 @@ public partial class CoroutineExample : IExample
 
         static IEnumerable<Yield> Routine(Time time)
         {
-            yield return CustomYields.WaitForFrames(100_000);
-            Log.Info($"Coroutine from SystemSet, waited for 100_000 frames, frameCount: {time.FrameCount}");
+            var frames = int.Min((int)(1f / time.DeltaTimeF), 100_000);
+            if (time.FrameCount < 10) frames = 10;
+            yield return CustomYields.WaitForFrames(frames);
+            Log.Info($"WaitForFrames custom yield, waited for {frames} frames, frameCount: {time.FrameCount}");
         }
     }
 
