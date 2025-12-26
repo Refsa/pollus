@@ -47,7 +47,7 @@ public class UniformPlugin<TUniform, TExtractParam> : IPlugin
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is AssetEventType.Removed) continue;
+                    if (assetEvent.Type is AssetEventType.Unloaded) continue;
                     renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
                 }
 

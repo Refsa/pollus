@@ -33,7 +33,7 @@ public partial class FontExample : IExample
                 {
                     world.Spawn(Camera2D.Bundle);
 
-                    var spaceMono = assetServer.Load<FontAsset>("fonts/SpaceMono-Regular.ttf");
+                    var spaceMono = assetServer.LoadAsync<FontAsset>("fonts/SpaceMono-Regular.ttf");
 
                     for (int i = 8; i <= 64; i += 4)
                     {

@@ -16,10 +16,15 @@
 	- [ ] Mixers
 - Assets
 	- [-] Async loading
+		- [x] LoadAsync to load from a Task
+		- [ ] async support in AssetLoader
 	- [ ] Streaming / partial loading
 	- [ ] dependency / hierarchy
 		- an asset might require one or more other assets to complete its loading
 		- f.ex. shader imports, scene files, etc.
+		- [x] tracking dependencies/dependents
+		- [ ] load order dependency
+		- [ ] improved status on loading
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
 	- [-] Hot reloading
@@ -121,6 +126,11 @@
 	- [ ] Culling
 	- [ ] MSAA
 	- [ ] Per-Camera frame graphs/rendering
+	- [-] RenderAssets
+		- [x] Asset Handle -> GPU Resource
+		- [x] GPU Resource reloading
+		- [ ] GPU Resource dependency graph
+		- [ ] Automatic cleanup of unused resources
 - 2D Physics
 	- [ ] Spatial Queries
 	- [ ] Collision Queries

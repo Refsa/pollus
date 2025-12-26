@@ -1,8 +1,6 @@
-using Pollus.Graphics.WGPU;
-
 namespace Pollus.Engine.Rendering;
 
-using Pollus.Debugging;
+using Pollus.Graphics.WGPU;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
@@ -57,9 +55,11 @@ public partial struct TextMesh : IComponent
     public static readonly TextMesh Default = new TextMesh()
     {
         Mesh = Handle<TextMeshAsset>.Null,
+        Material = Handle<FontMaterial>.Null,
     };
 
-    public Handle<TextMeshAsset> Mesh;
+    public required Handle<TextMeshAsset> Mesh;
+    public required Handle<FontMaterial> Material;
 }
 
 public class TextMeshAsset
@@ -67,8 +67,6 @@ public class TextMeshAsset
     public required string Name { get; init; }
     public required ArrayList<TextBuilder.TextVertex> Vertices { get; init; }
     public required ArrayList<uint> Indices { get; init; }
-
-    public bool IsDirty = true;
 }
 
 public class FontPlugin : IPlugin
@@ -122,11 +120,20 @@ public partial class FontSystemSet
     [System(nameof(PrepareFont))] static readonly SystemBuilderDescriptor PrepareFontDescriptor = new()
     {
         Stage = CoreStage.First,
+        RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
     };
 
     [System(nameof(BuildTextMesh))] static readonly SystemBuilderDescriptor BuildTextMeshDescriptor = new()
     {
         Stage = CoreStage.PreRender,
+        RunsAfter = [RenderingPlugin.BeginFrameSystem],
+    };
+
+    [System(nameof(FontMaterialChanged))] static readonly SystemBuilderDescriptor FontMaterialChangedDescriptor = new()
+    {
+        Stage = CoreStage.PreRender,
+        RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<FontMaterial>.PrepareSystem],
+        RunCriteria = EventRunCriteria<AssetEvent<FontMaterial>>.Create,
     };
 
     [System(nameof(Cleanup))] static readonly SystemBuilderDescriptor CleanupDescriptor = new()
@@ -137,19 +144,37 @@ public partial class FontSystemSet
     [System(nameof(PrepareTextMesh))] static readonly SystemBuilderDescriptor PrepareTextMeshDescriptor = new()
     {
         Stage = CoreStage.PreRender,
+        RunsAfter = [RenderingPlugin.BeginFrameSystem],
+        RunCriteria = EventRunCriteria<AssetEvent<TextMeshAsset>>.Create,
     };
 
-    static void PrepareFont(AssetServer assetServer, Assets<FontAsset> fonts, Assets<FontMaterial> materials, Assets<SamplerAsset> samplers, Assets<Texture2D> textures)
+    static void PrepareFont(AssetServer assetServer, EventReader<AssetEvent<FontAsset>> fontEvents, Assets<FontAsset> fonts, Assets<FontMaterial> materials, Assets<SamplerAsset> samplers, Assets<Texture2D> textures)
     {
-        foreach (var font in fonts.AssetInfos)
+        foreach (scoped ref readonly var fontEvent in fontEvents.Read())
         {
-            if (font.Asset == null || font.Asset.Material != Handle<FontMaterial>.Null) continue;
+            if (fontEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+            var font = fonts.Get(fontEvent.Handle);
+            if (font is null) continue;
 
-            font.Asset.Material = materials.Add(new FontMaterial()
+            font.Material = materials.Add(new FontMaterial()
             {
-                ShaderSource = assetServer.Load<ShaderAsset>("shaders/builtin/font.wgsl"),
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/font.wgsl"),
                 Sampler = samplers.Add(SamplerDescriptor.Default),
-                Texture = font.Asset.Atlas,
+                Texture = font.Atlas,
+            });
+        }
+    }
+
+    static void FontMaterialChanged(Assets<FontAsset> fonts, EventReader<AssetEvent<FontMaterial>> fontMaterialEvents, Query<TextDraw, TextMesh> query)
+    {
+        foreach (scoped ref readonly var fontMaterialEvent in fontMaterialEvents.Read())
+        {
+            if (fontMaterialEvent.Type is not AssetEventType.Added) continue;
+            query.ForEach((fonts, fontMaterialEvent.Handle), static (in userData, ref draw, ref mesh) =>
+            {
+                var font = userData.fonts.Get(draw.Font);
+                if (font?.Material != userData.Handle) return;
+                mesh.Material = font.Material;
             });
         }
     }
@@ -183,18 +208,21 @@ public partial class FontSystemSet
             tma.Indices.Clear();
             TextBuilder.BuildMesh(draw.Text, font, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
 
-            tma.IsDirty = true;
             draw.IsDirty = false;
+            userData.meshes.SetAsset(mesh.Mesh, tma);
         });
     }
 
-    static void PrepareTextMesh(IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets)
+    static void PrepareTextMesh(IWGPUContext gpuContext, RenderAssets renderAssets, AssetServer assetServer, Assets<TextMeshAsset> meshes, EventReader<AssetEvent<TextMeshAsset>> textMeshAssetEvents)
     {
-        foreach (var textMeshAsset in assetServer.GetAssets<TextMeshAsset>().AssetInfos)
+        foreach (scoped ref readonly var textMeshAssetEvent in textMeshAssetEvents.Read())
         {
-            if (textMeshAsset.Asset is not { IsDirty: true } tma) continue;
-            renderAssets.Prepare(gpuContext, assetServer, textMeshAsset.Handle, true);
-            tma.IsDirty = false;
+            if (textMeshAssetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+
+            var textMeshAsset = meshes.Get(textMeshAssetEvent.Handle);
+            if (textMeshAsset is null) continue;
+
+            renderAssets.Prepare(gpuContext, assetServer, textMeshAssetEvent.Handle, true);
         }
     }
 

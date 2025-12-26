@@ -2,8 +2,8 @@ namespace Pollus.Engine.Rendering;
 
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
-using Pollus.Mathematics;
 using StbTrueTypeSharp;
+using Utils;
 
 public class FontAssetLoader : AssetLoader<FontAsset>
 {
@@ -89,6 +89,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
             AtlasHeight = (uint)atlasHeight,
             Glyphs = glyphs,
             Packer = packer,
+            Material = Handle<FontMaterial>.Null,
         };
 
         context.SetAsset(asset);

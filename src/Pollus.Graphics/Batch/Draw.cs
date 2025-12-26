@@ -21,6 +21,11 @@ public record struct Draw
         Handle<GPUBindGroup> _first;
     }
 
+    public static readonly Draw Empty = new()
+    {
+        Pipeline = Handle<GPURenderPipeline>.Null,
+    };
+
     public required Handle<GPURenderPipeline> Pipeline;
     public BindGroupArray BindGroups;
     public VertexBufferArray VertexBuffers;
@@ -36,6 +41,8 @@ public record struct Draw
 
     public uint InstanceCount = 1;
     public uint InstanceOffset;
+
+    public bool IsEmpty => Pipeline == Handle<GPURenderPipeline>.Null;
 
     public Draw()
     {

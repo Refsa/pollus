@@ -212,13 +212,12 @@ public class ExtractTextDrawSystem : ExtractDrawSystem<FontBatches, FontBatch, Q
     readonly struct Job : IForEach<Transform2D, TextDraw, TextMesh>
     {
         public required FontBatches Batches { get; init; }
-        public required Assets<FontAsset> Fonts { get; init; }
 
         public void Execute(ref Transform2D transform, ref TextDraw textDraw, ref TextMesh textMesh)
         {
-            var font = Fonts.Get(textDraw.Font);
+            if (textMesh.Mesh == Handle<TextMeshAsset>.Null || textMesh.Material == Handle<FontMaterial>.Null) return;
 
-            var batch = Batches.GetOrCreate(new FontBatchKey(textMesh.Mesh, font.Material));
+            var batch = Batches.GetOrCreate(new FontBatchKey(textMesh.Mesh, textMesh.Material));
             batch.Write(transform.ToMat4f(), textDraw.Color);
         }
     }
@@ -230,7 +229,6 @@ public class ExtractTextDrawSystem : ExtractDrawSystem<FontBatches, FontBatch, Q
         query.ForEach(new Job
         {
             Batches = batches,
-            Fonts = assetServer.GetAssets<FontAsset>(),
         });
     }
 }

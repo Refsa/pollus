@@ -294,7 +294,7 @@ public class Assets<T> : IDisposable, IAssetStorage
 
             queuedEvents.Add(new AssetEvent<T>
             {
-                Type = AssetEventType.Removed,
+                Type = AssetEventType.Unloaded,
                 Handle = handle,
             });
         }

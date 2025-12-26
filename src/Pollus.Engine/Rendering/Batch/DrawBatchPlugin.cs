@@ -101,6 +101,7 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
         {
             if (batch.IsEmpty) continue;
             var draw = DrawExec(renderAssets, batch);
+            if (draw.IsEmpty) continue;
             commands.Add(draw);
         }
     }
