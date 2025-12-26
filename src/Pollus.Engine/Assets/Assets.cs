@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Assets;
 
+using System.Runtime.InteropServices;
 using Core.Serialization;
 using ECS;
 using Pollus.Collections;
@@ -22,7 +23,8 @@ public interface IAssetInfo
     public AssetStatus Status { get; set; }
     public AssetPath? Path { get; set; }
 
-    public List<Handle>? Dependencies { get; set; }
+    public HashSet<Handle>? Dependencies { get; set; }
+    public HashSet<Handle> Dependents { get; set; }
     public DateTime LastModified { get; set; }
 }
 
@@ -33,7 +35,8 @@ public class AssetInfo<T> : IAssetInfo
     public AssetPath? Path { get; set; }
     public T? Asset { get; set; }
 
-    public List<Handle>? Dependencies { get; set; }
+    public HashSet<Handle>? Dependencies { get; set; }
+    public HashSet<Handle> Dependents { get; set; } = [];
     public DateTime LastModified { get; set; }
 }
 
@@ -44,9 +47,11 @@ public interface IAssetStorage
     void SetAsset(Handle handle, object asset);
     Handle Initialize(AssetPath? path);
     void FlushEvents(Events events);
+    void ClearEvents();
     AssetStatus GetStatus(Handle handle);
     AssetPath? GetPath(Handle handle);
-    void SetDependencies(Handle handle, List<Handle>? dependencies);
+    void SetDependencies(Handle handle, HashSet<Handle>? dependencies);
+    void NotifyDependants(Handle handle);
 }
 
 public class Assets<T> : IDisposable, IAssetStorage
@@ -194,10 +199,57 @@ public class Assets<T> : IDisposable, IAssetStorage
         return null;
     }
 
-    public void SetDependencies(Handle handle, List<Handle>? dependencies)
+    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
     {
         if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
         assets[index].Dependencies = dependencies;
+
+        if (dependencies is null) return;
+        foreach (var dependency in dependencies)
+        {
+            if (!assetLookup.TryGetValue(dependency, out var dependentIndex)) throw new InvalidOperationException($"Asset with handle {dependency} not found");
+            assets[dependentIndex].Dependents.Add(handle);
+        }
+    }
+
+    public void NotifyDependants(Handle handle)
+    {
+        var info = GetInfo(handle);
+        if (info is null || info.Dependents.Count == 0) return;
+
+        var visited = Pool<HashSet<Handle>>.Shared.Rent();
+        var queue = Pool<Queue<Handle>>.Shared.Rent();
+        try
+        {
+            visited.Add(handle);
+            foreach (var dependent in info.Dependents) queue.Enqueue(dependent);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                visited.Add(current);
+                queuedEvents.Add(new AssetEvent<T>
+                {
+                    Type = AssetEventType.DependenciesChanged,
+                    Handle = current,
+                });
+
+                info = GetInfo(current);
+                if (info is null) continue;
+                foreach (var dependent in info.Dependents)
+                {
+                    if (visited.Contains(dependent)) continue;
+                    queue.Enqueue(dependent);
+                }
+            }
+        }
+        finally
+        {
+            visited.Clear();
+            queue.Clear();
+            Pool<HashSet<Handle>>.Shared.Return(visited);
+            Pool<Queue<Handle>>.Shared.Return(queue);
+        }
     }
 
     public void SetAsset(Handle handle, object asset)
@@ -258,6 +310,11 @@ public class Assets<T> : IDisposable, IAssetStorage
             writer.Write(@event);
         }
 
+        queuedEvents.Clear();
+    }
+
+    public void ClearEvents()
+    {
         queuedEvents.Clear();
     }
 }

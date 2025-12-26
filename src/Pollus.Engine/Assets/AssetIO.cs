@@ -47,6 +47,7 @@ public abstract class AssetIO : IDisposable
     public event Action<AssetPath>? OnAssetChanged;
 
     public string RootPath { get; }
+    public virtual bool FileWatchEnabled => false;
 
     public AssetIO(string rootPath)
     {
@@ -74,7 +75,7 @@ public abstract class AssetIO : IDisposable
         OnAssetChanged?.Invoke(path);
     }
 
-    public virtual void Watch()
+    public virtual void EnableFileWatch()
     {
         throw new NotSupportedException("Watching is not supported by this asset IO");
     }

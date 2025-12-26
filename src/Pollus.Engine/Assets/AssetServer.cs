@@ -28,6 +28,8 @@ public class AssetServer : IDisposable
     public AssetIO AssetIO { get; }
     public AssetsContainer Assets { get; } = new();
 
+    public bool FileWatchEnabled => AssetIO.FileWatchEnabled;
+
     public AssetServer(AssetIO assetIO)
     {
         AssetIO = assetIO;
@@ -52,10 +54,10 @@ public class AssetServer : IDisposable
         }
     }
 
-    public void Watch()
+    public void EnableFileWatch()
     {
         AssetIO.OnAssetChanged += OnAssetChanged;
-        AssetIO.Watch();
+        AssetIO.EnableFileWatch();
     }
 
     public AssetServer AddLoader<TLoader>() where TLoader : IAssetLoader, new()
@@ -161,6 +163,7 @@ public class AssetServer : IDisposable
             handle = Assets.AddAsset(asset!, loader.AssetType, path);
             Assets.SetDependencies(handle, loadContext.Dependencies);
             assetLookup.TryAdd(path, handle);
+            Assets.NotifyDependants(handle);
             return handle;
         }
 
@@ -243,8 +246,8 @@ public class AssetServer : IDisposable
         foreach (var kvp in queuedPaths)
         {
             if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
-            Load(kvp.Key, true);
             queuedPaths.TryRemove(kvp.Key, out _);
+            _ = Load(kvp.Key, true);
             Log.Info((FormattableString)$"AssetServer::FlushQueue {kvp.Key}");
         }
     }

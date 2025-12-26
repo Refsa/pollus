@@ -102,7 +102,7 @@ public class AssetsContainer : IDisposable
         storage.SetAsset(handle, asset);
     }
 
-    public void SetDependencies(Handle handle, List<Handle>? dependencies)
+    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
     {
         if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
         storage.SetDependencies(handle, dependencies);
@@ -151,6 +151,12 @@ public class AssetsContainer : IDisposable
         }
 
         return null;
+    }
+
+    public void NotifyDependants(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        storage.NotifyDependants(handle);
     }
 
     public void FlushEvents(Events events)

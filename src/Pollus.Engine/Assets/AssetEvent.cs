@@ -7,6 +7,7 @@ public enum AssetEventType
     Added,
     Removed,
     Changed,
+    DependenciesChanged,
 }
 
 public struct AssetEvent<TAsset>

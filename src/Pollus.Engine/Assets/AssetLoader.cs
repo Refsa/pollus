@@ -14,7 +14,7 @@ public struct LoadContext
     public AssetStatus Status { get; set; }
     public object? Asset { get; private set; }
 
-    public List<Handle>? Dependencies { get; set; }
+    public HashSet<Handle>? Dependencies { get; set; }
 
     public void SetAsset<T>(T asset)
     {

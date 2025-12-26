@@ -34,7 +34,7 @@ public class AssetPlugin : IPlugin
     public static AssetPlugin Default => new() { RootPath = "assets" };
 
     public required string RootPath { get; init; }
-    public bool Watch { get; init; } = true;
+    public bool EnableFileWatch { get; init; } = true;
 
     public void Apply(World world)
     {
@@ -44,9 +44,9 @@ public class AssetPlugin : IPlugin
         world.Resources.Add(assetServer);
         world.Resources.Add(assetServer.Assets);
 
-        if (Watch && !OperatingSystem.IsBrowser() && DevelopmentAssetsWatch.Create() is { } devAssetsWatch)
+        if (EnableFileWatch && !OperatingSystem.IsBrowser() && DevelopmentAssetsWatch.Create() is { } devAssetsWatch)
         {
-            assetServer.Watch();
+            assetServer.EnableFileWatch();
             world.Resources.Add(devAssetsWatch);
         }
 

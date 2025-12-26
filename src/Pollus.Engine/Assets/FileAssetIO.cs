@@ -6,6 +6,8 @@ public class FileAssetIO : AssetIO
 {
     FileSystemWatcher? watcher;
 
+    public override bool FileWatchEnabled => watcher is not null;
+
     public FileAssetIO(string rootPath) : base(rootPath)
     {
     }
@@ -15,7 +17,7 @@ public class FileAssetIO : AssetIO
         watcher?.Dispose();
     }
 
-    public override void Watch()
+    public override void EnableFileWatch()
     {
         if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
         {
