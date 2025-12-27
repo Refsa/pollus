@@ -2,13 +2,15 @@ namespace Pollus.Engine.Serialization;
 
 using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
+using Core.Assets;
 using Pollus.Collections;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
 
-public class WorldSnapshot
+[Asset]
+public partial class WorldSnapshot
 {
     public required byte[] RawData { get; set; }
 }

@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Core.Assets;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -39,7 +40,8 @@ public partial class ComputeExample : IExample
         public Handle<ParticleMaterial> ParticleMaterial = Handle<ParticleMaterial>.Null;
     }
 
-    class ParticleMaterial : IMaterial
+    [Asset]
+    partial class ParticleMaterial : IMaterial
     {
         public static string Name => "particle";
 

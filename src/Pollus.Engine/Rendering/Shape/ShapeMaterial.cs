@@ -1,9 +1,11 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public class ShapeMaterial : IMaterial
+[Asset]
+public partial class ShapeMaterial : IMaterial
 {
     public static string Name => "shape";
 

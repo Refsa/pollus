@@ -1,11 +1,13 @@
 namespace Pollus.Debugging;
 
+using Core.Assets;
 using Pollus.Graphics.WGPU;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-class GizmoFilledMaterial : IMaterial
+[Asset]
+partial class GizmoFilledMaterial : IMaterial
 {
     public static string Name => "GizmoFilledMaterial";
 
@@ -61,7 +63,8 @@ class GizmoFilledMaterial : IMaterial
     ];
 }
 
-class GizmoOutlinedMaterial : IMaterial
+[Asset]
+partial class GizmoOutlinedMaterial : IMaterial
 {
     public static string Name => "GizmoOutlinedMaterial";
 

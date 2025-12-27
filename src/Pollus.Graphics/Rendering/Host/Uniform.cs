@@ -1,6 +1,9 @@
 namespace Pollus.Graphics.Rendering;
 
-public class Uniform<T> : IBufferData
+using Core.Assets;
+
+[Asset]
+public partial class Uniform<T> : IBufferData
     where T : unmanaged, IShaderType
 {
     public BufferUsage Usage => BufferUsage.CopyDst | BufferUsage.Uniform;

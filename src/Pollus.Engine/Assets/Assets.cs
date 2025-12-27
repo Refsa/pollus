@@ -1,11 +1,11 @@
 namespace Pollus.Engine.Assets;
 
-using System.Runtime.InteropServices;
 using Core.Serialization;
 using ECS;
 using Pollus.Collections;
 using Pollus.Utils;
 using Serialization;
+using Core.Assets;
 
 public enum AssetStatus
 {
@@ -30,6 +30,7 @@ public interface IAssetInfo
 }
 
 public class AssetInfo<T> : IAssetInfo
+    where T : IAsset
 {
     public Handle Handle { get; set; }
     public AssetStatus Status { get; set; }
@@ -46,8 +47,8 @@ public interface IAssetStorage : IDisposable
     TypeID AssetType { get; }
 
     Handle Initialize(AssetPath? path);
-    Handle Add(object asset, AssetPath? path = null);
-    void SetAsset(Handle handle, object asset);
+    Handle Add(IAsset asset, AssetPath? path = null);
+    void Set(Handle handle, IAsset asset);
 
     void AppendEvent(Handle handle, AssetEventType type);
     void FlushEvents(Events events);
@@ -65,7 +66,7 @@ public interface IAssetStorage : IDisposable
 }
 
 public class Assets<T> : IAssetStorage
-    where T : notnull
+    where T : IAsset
 {
     static readonly TypeID _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
@@ -132,6 +133,7 @@ public class Assets<T> : IAssetStorage
 
                 info.Asset = asset;
                 info.Status = AssetStatus.Loaded;
+                info.Dependencies = [..asset.Dependencies];
                 info.LastModified = DateTime.UtcNow;
             }
 
@@ -152,6 +154,7 @@ public class Assets<T> : IAssetStorage
             Status = AssetStatus.Loaded,
             Asset = asset,
             Path = path,
+            Dependencies = [..asset.Dependencies],
             LastModified = DateTime.UtcNow,
         });
         queuedEvents.Add(new AssetEvent<T>
@@ -162,20 +165,59 @@ public class Assets<T> : IAssetStorage
         return handle;
     }
 
-    public Handle Add(object asset, AssetPath? path = null)
+    public Handle Add(IAsset asset, AssetPath? path = null)
     {
         if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
         return Add(typedAsset, path);
     }
 
-    public AssetInfo<T>? GetInfo(Handle handle)
+    public void Set(Handle handle, IAsset asset)
+    {
+        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
+        Set(handle, typedAsset);
+    }
+
+    public void Set(Handle handle, T asset)
+    {
+        if (!assetLookup.TryGetValue(handle, out var index))
+        {
+            throw new InvalidOperationException($"Asset with handle {handle} not found");
+        }
+
+        var assetInfo = assets[index];
+        assetInfo.Asset = asset;
+        assetInfo.Status = AssetStatus.Loaded;
+        assetInfo.LastModified = DateTime.UtcNow;
+        assetInfo.Dependencies = [..asset.Dependencies];
+
+        queuedEvents.Add(new AssetEvent<T>
+        {
+            Type = AssetEventType.Changed,
+            Handle = handle,
+        });
+    }
+
+    public void Remove(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))
         {
-            return assets[index];
-        }
+            var assetInfo = assets[index];
+            assetInfo.Status = AssetStatus.Unloaded;
+            if (assetInfo.Asset is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
 
-        return null;
+            assets.RemoveAt(index);
+            assetLookup.Remove(handle);
+            if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
+
+            queuedEvents.Add(new AssetEvent<T>
+            {
+                Type = AssetEventType.Unloaded,
+                Handle = handle,
+            });
+        }
     }
 
     public T? Get(Handle handle)
@@ -186,6 +228,16 @@ public class Assets<T> : IAssetStorage
         }
 
         return default;
+    }
+
+    public AssetInfo<T>? GetInfo(Handle handle)
+    {
+        if (assetLookup.TryGetValue(handle, out var index))
+        {
+            return assets[index];
+        }
+
+        return null;
     }
 
     public AssetStatus GetStatus(Handle handle)
@@ -236,54 +288,6 @@ public class Assets<T> : IAssetStorage
     {
         if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
         return assets[index].Dependents;
-    }
-
-    public void SetAsset(Handle handle, object asset)
-    {
-        if (asset is not T typedAsset) throw new InvalidOperationException($"Asset is not of type {typeof(T)}");
-        SetAsset(handle, typedAsset);
-    }
-
-    public void SetAsset(Handle handle, T asset)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index))
-        {
-            throw new InvalidOperationException($"Asset with handle {handle} not found");
-        }
-
-        var assetInfo = assets[index];
-        assetInfo.Asset = asset;
-        assetInfo.Status = AssetStatus.Loaded;
-        assetInfo.LastModified = DateTime.UtcNow;
-
-        queuedEvents.Add(new AssetEvent<T>
-        {
-            Type = AssetEventType.Changed,
-            Handle = handle,
-        });
-    }
-
-    public void Remove(Handle handle)
-    {
-        if (assetLookup.TryGetValue(handle, out var index))
-        {
-            var assetInfo = assets[index];
-            assetInfo.Status = AssetStatus.Unloaded;
-            if (assetInfo.Asset is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-
-            assets.RemoveAt(index);
-            assetLookup.Remove(handle);
-            if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
-
-            queuedEvents.Add(new AssetEvent<T>
-            {
-                Type = AssetEventType.Unloaded,
-                Handle = handle,
-            });
-        }
     }
 
     public void AppendEvent(Handle handle, AssetEventType type)

@@ -1,9 +1,11 @@
 namespace Pollus.Engine.Rendering;
 
 using System.Text;
+using Core.Assets;
 using Pollus.Engine.Assets;
 
-public class ShaderAsset
+[Asset]
+public partial class ShaderAsset
 {
     public required string Name { get; set; }
     public required string Source { get; set; }
@@ -13,7 +15,7 @@ public class WgslShaderSourceLoader : AssetLoader<ShaderAsset>
 {
     public override string[] Extensions => [".wgsl"];
 
-    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<ShaderAsset> context)
+    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         context.SetAsset(new ShaderAsset
         {

@@ -11,6 +11,7 @@ using Pollus.ECS;
 using System.Text;
 using Pollus.Core.Serialization;
 using System.Runtime.CompilerServices;
+using Core.Assets;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;
 
@@ -40,14 +41,14 @@ public partial struct Vec2
     [SerializeIgnore] public int Ignore { get; set; }
 }
 
-[Serialize]
+[Serialize, Asset]
 public partial class RootAsset
 {
     public required Handle<ChildAsset> Child1;
     public required Handle<ChildAsset> Child2;
 }
 
-[Serialize]
+[Serialize, Asset]
 public partial class ChildAsset
 {
     public required Handle<TextAsset> Text;
@@ -375,6 +376,7 @@ public partial class SceneReaderTests
         BlittableSerializerLookup<WorldSerializationContext>.RegisterSerializer(new HandleSerializer<ChildAsset>());
 
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
+        context.AssetServer.FlushLoading();
 
         Assert.Single(scene.Entities);
         Assert.Single(scene.Entities[0].Components);

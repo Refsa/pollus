@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Engine.Assets;
@@ -12,7 +13,7 @@ public class MaterialRenderData
 }
 
 public class MaterialRenderDataLoader<TMaterial> : IRenderDataLoader
-    where TMaterial : IMaterial
+    where TMaterial : IMaterial, IAsset
 {
     public TypeID TargetType => TypeLookup.ID<TMaterial>();
 

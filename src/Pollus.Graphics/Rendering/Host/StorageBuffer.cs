@@ -1,8 +1,10 @@
 namespace Pollus.Graphics.Rendering;
 
 using System.Runtime.InteropServices;
+using Core.Assets;
 
-public class StorageBuffer : IBufferData
+[Asset]
+public partial class StorageBuffer : IBufferData
 {
     byte[] data;
     uint capacity;

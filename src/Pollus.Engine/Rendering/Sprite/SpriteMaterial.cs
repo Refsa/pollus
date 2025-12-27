@@ -1,10 +1,11 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Core.Serialization;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-[Serialize]
+[Serialize, Asset]
 public partial class SpriteMaterial : IMaterial
 {
     public static readonly VertexFormat[] InstanceFormats =

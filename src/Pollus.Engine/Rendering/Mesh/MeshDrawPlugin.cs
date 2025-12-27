@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
@@ -12,7 +13,8 @@ public partial struct MeshDraw<TMaterial> : IComponent
     public required Handle<TMaterial> Material;
 }
 
-public class Material : IMaterial
+[Asset]
+public partial class Material : IMaterial
 {
     public static string Name => "DefaultMaterial";
     public static VertexBufferLayout[] VertexLayouts => [
@@ -57,7 +59,7 @@ public class Material : IMaterial
 }
 
 public class MeshDrawPlugin<TMaterial> : IPlugin
-    where TMaterial : IMaterial
+    where TMaterial : IMaterial, IAsset
 {
     public PluginDependency[] Dependencies => [
         PluginDependency.From<RenderingPlugin>(),

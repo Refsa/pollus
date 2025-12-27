@@ -5,6 +5,7 @@ using Pollus.Engine.Assets;
 using Pollus.Core.Serialization;
 using Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Core.Assets;
 
 public partial struct SerializeTag : IComponent
 {
@@ -26,7 +27,7 @@ public partial class SerializationPlugin<TSerialization> : IPlugin
 }
 
 public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializationContext>
-    where T : notnull
+    where T : IAsset
 {
     public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context)
         where TReader : IReader, allows ref struct
@@ -39,7 +40,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
             return context.AssetServer.Assets.AddAsset(asset);
         }
 
-        return context.AssetServer.Load<T>(path);
+        return context.AssetServer.LoadAsync<T>(path);
     }
 
     public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)

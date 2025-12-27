@@ -1,14 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
-using Debugging;
-using Graphics.Rendering;
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
 using Utils;
 
 public class MaterialPlugin<TMaterial> : IPlugin
-    where TMaterial : IMaterial
+    where TMaterial : IMaterial, IAsset
 {
     public static readonly string PrepareSystem = $"MaterialPlugin<{typeof(TMaterial).Name}>::PrepareSystem";
     public static readonly string ReloadSystem = $"MaterialPlugin<{typeof(TMaterial).Name}>::ReloadSystem";
@@ -35,35 +34,6 @@ public class MaterialPlugin<TMaterial> : IPlugin
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
                     if (assetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed or AssetEventType.DependenciesChanged)) continue;
-
-                    if (assetEvent.Type is AssetEventType.Added)
-                    {
-                        var shaderAsset = materials.Get(assetEvent.Handle)!;
-                        HashSet<Handle> deps = [shaderAsset.ShaderSource];
-                        foreach (var group in shaderAsset.Bindings)
-                        {
-                            foreach (var binding in group)
-                            {
-                                if (binding is TextureBinding textureBinding)
-                                {
-                                    deps.Add(textureBinding.Image);
-                                }
-                                else if (binding is SamplerBinding samplerBinding)
-                                {
-                                    deps.Add(samplerBinding.Sampler);
-                                }
-                                else if (binding is IStorageBufferBinding storageBufferBinding)
-                                {
-                                    deps.Add(storageBufferBinding.Buffer);
-                                }
-                            }
-                        }
-
-                        assetServer.Assets.SetDependencies(assetEvent.Handle, deps);
-                    }
-
-                    if (assetServer.Assets.IsLoaded(assetEvent.Handle) is false) continue;
-
                     renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed or AssetEventType.DependenciesChanged);
                 }
             }));

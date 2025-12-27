@@ -8,7 +8,7 @@ public class ImageAssetLoader : AssetLoader<Texture2D>
 {
     public override string[] Extensions => [".bmp", ".png", ".gif", ".jpg", ".jpeg", ".tiff", ".tga"];
 
-    unsafe protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<Texture2D> context)
+    unsafe protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         fixed (byte* ptr = data)
         {

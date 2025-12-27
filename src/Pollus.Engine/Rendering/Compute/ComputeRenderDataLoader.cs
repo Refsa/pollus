@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -12,7 +13,7 @@ public class ComputeRenderData
 }
 
 public class ComputeRenderDataLoader<TCompute> : IRenderDataLoader
-    where TCompute : IComputeShader
+    where TCompute : IComputeShader, IAsset
 {
     public TypeID TargetType => TypeLookup.ID<TCompute>();
 

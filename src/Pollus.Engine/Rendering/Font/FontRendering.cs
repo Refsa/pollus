@@ -1,8 +1,7 @@
-using Pollus.Debugging;
-
 namespace Pollus.Engine.Rendering;
 
 using System.Runtime.InteropServices;
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
@@ -80,7 +79,8 @@ public class FontMeshRenderDataLoader : IRenderDataLoader
     }
 }
 
-public class FontMaterial : IMaterial
+[Asset]
+public partial class FontMaterial : IMaterial
 {
     public static string Name => "font";
 

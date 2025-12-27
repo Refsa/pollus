@@ -6,6 +6,7 @@ using Collections;
 using ECS;
 using Pollus.Debugging;
 using Pollus.Utils;
+using Core.Assets;
 
 public class AssetServer : IDisposable
 {
@@ -97,13 +98,13 @@ public class AssetServer : IDisposable
     }
 
     public void InitAssets<TAsset>()
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         Assets.InitAssets<TAsset>();
     }
 
     public Assets<TAsset> GetAssets<TAsset>()
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         return Assets.GetAssets<TAsset>();
     }
@@ -114,7 +115,7 @@ public class AssetServer : IDisposable
     }
 
     public Handle<TAsset> Queue<TAsset>(AssetPath path)
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         return Queue(path);
     }
@@ -142,7 +143,7 @@ public class AssetServer : IDisposable
     }
 
     public Handle<TAsset> Load<TAsset>(AssetPath path, bool reload = false)
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         Assets.InitAssets<TAsset>();
         return Load(path);
@@ -177,7 +178,6 @@ public class AssetServer : IDisposable
             var asset = loadContext.Asset;
             Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {path}");
             handle = Assets.AddAsset(asset!, loader.AssetType, path);
-            Assets.SetDependencies(handle, loadContext.Dependencies);
             assetLookup.TryAdd(path, handle);
             Assets.NotifyDependants(handle);
             return handle;
@@ -187,7 +187,7 @@ public class AssetServer : IDisposable
     }
 
     public Handle<T> LoadAsync<T>(AssetPath path)
-        where T : notnull
+        where T : IAsset
     {
         Assets.InitAssets<T>();
         return LoadAsync(path);

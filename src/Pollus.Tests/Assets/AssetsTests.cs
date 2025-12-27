@@ -1,9 +1,30 @@
 namespace Pollus.Tests.Assets;
 
 using System.Diagnostics;
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Utils;
+
+[Asset]
+partial class TestAsset
+{
+    public float Value { get; set; }
+    public Handle<TextAsset> Dependency { get; set; }
+}
+
+[Asset]
+partial class ParentTestAsset
+{
+    public float Value { get; set; }
+    public required ContainsAsset Child { get; set; }
+}
+
+[Asset]
+partial class ContainsAsset
+{
+    public Handle<TextAsset> Dependency { get; set; }
+}
 
 public class AssetsTests
 {
@@ -62,12 +83,13 @@ public class AssetsTests
     }
 
     [Fact]
-    public void Assets_SetDependencies()
+    public void AssetsContainer_SetDependencies()
     {
-        var assets = new Assets<TextAsset>();
+        var assetsContainer = new AssetsContainer();
+        var assets = assetsContainer.InitAssets<TextAsset>();
         var handle1 = assets.Add(new TextAsset("test1"));
         var handle2 = assets.Add(new TextAsset("test2"));
-        assets.SetDependencies(handle1, [handle2]);
+        assetsContainer.SetDependencies(handle1, [handle2]);
 
         var asset1Info = assets.GetInfo(handle1);
         Assert.NotNull(asset1Info);
@@ -77,44 +99,47 @@ public class AssetsTests
 
         var asset2Info = assets.GetInfo(handle2);
         Assert.NotNull(asset2Info);
-        Assert.Null(asset2Info.Dependencies);
+        Assert.NotNull(asset2Info.Dependencies);
+        Assert.Empty(asset2Info.Dependencies);
         Assert.Single(asset2Info.Dependents);
         Assert.Equal(handle1, asset2Info.Dependents.First().As<TextAsset>());
     }
 
     [Fact]
-    public void Assets_NotifyDependants_SingleDependency()
+    public void AssetsContainer_NotifyDependants_SingleDependency()
     {
-        var assets = new Assets<TextAsset>();
+        var assetsContainer = new AssetsContainer();
+        var assets = assetsContainer.InitAssets<TextAsset>();
         var handle1 = assets.Add(new TextAsset("test1"));
         var handle2 = assets.Add(new TextAsset("test2"));
-        assets.SetDependencies(handle1, [handle2]);
-        assets.ClearEvents();
+        assetsContainer.SetDependencies(handle1, [handle2]);
+        assetsContainer.ClearEvents();
 
         var events = new Events();
-        assets.NotifyDependants(handle2);
-        assets.FlushEvents(events);
+        assetsContainer.NotifyDependants(handle2);
+        assetsContainer.FlushEvents(events);
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(1, assetEvents.Length);
     }
 
     [Fact]
-    public void Assets_NotifyDependants_DeepDependency()
+    public void AssetsContainer_NotifyDependants_DeepDependency()
     {
-        var assets = new Assets<TextAsset>();
+        var assetsContainer = new AssetsContainer();
+        var assets = assetsContainer.InitAssets<TextAsset>();
         var handle1 = assets.Add(new TextAsset("test1"));
         var handle2 = assets.Add(new TextAsset("test2"));
         var handle3 = assets.Add(new TextAsset("test3"));
         var handle4 = assets.Add(new TextAsset("test4"));
-        assets.SetDependencies(handle1, [handle2]);
-        assets.SetDependencies(handle2, [handle3]);
-        assets.SetDependencies(handle3, [handle4]);
-        assets.ClearEvents();
+        assetsContainer.SetDependencies(handle1, [handle2]);
+        assetsContainer.SetDependencies(handle2, [handle3]);
+        assetsContainer.SetDependencies(handle3, [handle4]);
+        assetsContainer.ClearEvents();
 
         var events = new Events();
-        assets.NotifyDependants(handle4);
-        assets.FlushEvents(events);
+        assetsContainer.NotifyDependants(handle4);
+        assetsContainer.FlushEvents(events);
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
@@ -127,22 +152,23 @@ public class AssetsTests
     }
 
     [Fact]
-    public void Assets_NotifyDependants_CircularDependency()
+    public void AssetsContainer_NotifyDependants_CircularDependency()
     {
-        var assets = new Assets<TextAsset>();
+        var assetsContainer = new AssetsContainer();
+        var assets = assetsContainer.InitAssets<TextAsset>();
         var handle1 = assets.Add(new TextAsset("test1"));
         var handle2 = assets.Add(new TextAsset("test2"));
         var handle3 = assets.Add(new TextAsset("test3"));
         var handle4 = assets.Add(new TextAsset("test4"));
-        assets.SetDependencies(handle1, [handle2]);
-        assets.SetDependencies(handle2, [handle3]);
-        assets.SetDependencies(handle3, [handle4]);
-        assets.SetDependencies(handle4, [handle1]);
-        assets.ClearEvents();
+        assetsContainer.SetDependencies(handle1, [handle2]);
+        assetsContainer.SetDependencies(handle2, [handle3]);
+        assetsContainer.SetDependencies(handle3, [handle4]);
+        assetsContainer.SetDependencies(handle4, [handle1]);
+        assetsContainer.ClearEvents();
 
         var events = new Events();
-        assets.NotifyDependants(handle4);
-        assets.FlushEvents(events);
+        assetsContainer.NotifyDependants(handle4);
+        assetsContainer.FlushEvents(events);
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
@@ -152,5 +178,33 @@ public class AssetsTests
         Assert.Equal(handle2, assetEvents[1].Handle);
         Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[2].Type);
         Assert.Equal(handle1, assetEvents[2].Handle);
+    }
+
+    [Fact]
+    public void AssetsContainer_DependenciesFromAttribute()
+    {
+        var assetsContainer = new AssetsContainer();
+        var textAssetHandle = assetsContainer.AddAsset(new TextAsset("test"));
+        var testAssetHandle = assetsContainer.AddAsset(new TestAsset() { Value = 1, Dependency = textAssetHandle });
+
+        var testAssetInfo = assetsContainer.GetInfo(testAssetHandle);
+        Assert.NotNull(testAssetInfo);
+        Assert.NotNull(testAssetInfo.Dependencies);
+        Assert.Single(testAssetInfo.Dependencies);
+        Assert.Equal(textAssetHandle, testAssetInfo.Dependencies.First().As<TextAsset>());
+    }
+
+    [Fact]
+    public void AssetsContainer_DependenciesFromAttribute_Nested()
+    {
+        var assetsContainer = new AssetsContainer();
+        var textAssetHandle = assetsContainer.AddAsset(new TextAsset("test"));
+        var parentAssetHandle = assetsContainer.AddAsset(new ParentTestAsset() { Value = 1, Child = new ContainsAsset() { Dependency = textAssetHandle } });
+
+        var parentAssetInfo = assetsContainer.GetInfo(parentAssetHandle);
+        Assert.NotNull(parentAssetInfo);
+        Assert.NotNull(parentAssetInfo.Dependencies);
+        Assert.Single(parentAssetInfo.Dependencies);
+        Assert.Equal(textAssetHandle, parentAssetInfo.Dependencies.First().As<TextAsset>());
     }
 }

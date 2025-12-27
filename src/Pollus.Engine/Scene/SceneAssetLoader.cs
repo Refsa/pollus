@@ -9,7 +9,7 @@ public class SceneAssetLoader : AssetLoader<Scene>
 
     public required SceneSerializer SceneSerializer { get; set; }
 
-    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<Scene> context)
+    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         using var reader = SceneSerializer.GetReader(new());
         var scene = reader.Parse(new() { AssetServer = context.AssetServer }, data);

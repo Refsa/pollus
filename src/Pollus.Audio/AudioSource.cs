@@ -2,6 +2,7 @@ namespace Pollus.Audio;
 
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Core.Assets;
 using Pollus.Mathematics;
 using Silk.NET.OpenAL;
 
@@ -13,7 +14,8 @@ public enum AudioSourceState
     Stopped,
 }
 
-unsafe public class AudioSource : IDisposable
+[Asset]
+unsafe public partial class AudioSource : IDisposable
 {
     AudioManager audio;
     uint sourceId;
