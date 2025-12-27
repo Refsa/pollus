@@ -4,6 +4,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using ECS;
+using Pollus.Core.Assets;
 using Pollus.Core.Serialization;
 using Pollus.Engine.Serialization;
 using Utils;
@@ -26,6 +27,7 @@ public ref struct SceneReader : IReader, IDisposable
     Stack<JsonElement> currentComponent = new();
 
     Utf8JsonReader reader;
+    Scene result;
 
     Options options;
     WorldSerializationContext context;
@@ -33,6 +35,13 @@ public ref struct SceneReader : IReader, IDisposable
 
     public SceneReader()
     {
+        result = new Scene()
+        {
+            Types = [],
+            Entities = [],
+            Scenes = [],
+            Assets = [],
+        };
     }
 
     public SceneReader(Options options) : this()
@@ -54,13 +63,6 @@ public ref struct SceneReader : IReader, IDisposable
         this.context = context;
         this.reader = new(data);
 
-        var result = new Scene()
-        {
-            Types = new(),
-            Entities = new(),
-            Scenes = new(),
-        };
-
         while (reader.Read())
         {
             if (reader.TokenType != JsonTokenType.PropertyName) continue;
@@ -78,21 +80,22 @@ public ref struct SceneReader : IReader, IDisposable
             else if (reader.ValueTextEquals("Types"u8) || reader.ValueTextEquals("types"u8))
             {
                 reader.Read();
-                ParseTypes(ref reader, result.Types, result.TypesVersion);
+                ParseTypes(ref reader);
             }
             else if (reader.ValueTextEquals("Entities"u8) || reader.ValueTextEquals("entities"u8))
             {
                 reader.Read();
-                ParseEntities(ref reader, result.Types, result.Entities, result.Scenes);
+                ParseEntities(ref reader);
             }
         }
 
         return result;
     }
 
-    void ParseTypes(ref Utf8JsonReader reader, Dictionary<string, Type> types, int typesVersion)
+    void ParseTypes(ref Utf8JsonReader reader)
     {
         if (reader.TokenType != JsonTokenType.StartObject) return;
+        var typesVersion = result.TypesVersion;
 
         while (reader.Read())
         {
@@ -105,7 +108,7 @@ public ref struct SceneReader : IReader, IDisposable
                 string typeName = reader.GetString()!;
 
                 var typeMigration = options.FileTypeMigrations?.FirstOrDefault(migration => migration.FromVersion == typesVersion);
-                
+
                 Type? resolvedType = typeMigration switch
                 {
                     { } migration => migration.GetType(key, typeName),
@@ -121,12 +124,12 @@ public ref struct SceneReader : IReader, IDisposable
                     }
                 }
 
-                types.Add(key, resolvedType ?? throw new InvalidOperationException($"Type {typeName} not found"));
+                result.Types.Add(key, resolvedType ?? throw new InvalidOperationException($"Type {typeName} not found"));
             }
         }
     }
 
-    void ParseEntities(ref Utf8JsonReader reader, Dictionary<string, Type> types, List<Scene.SceneEntity> entities, Dictionary<string, Handle<Scene>> scenes)
+    void ParseEntities(ref Utf8JsonReader reader)
     {
         if (reader.TokenType != JsonTokenType.StartArray) return;
 
@@ -136,14 +139,14 @@ public ref struct SceneReader : IReader, IDisposable
 
             if (reader.TokenType == JsonTokenType.StartObject)
             {
-                var entity = ParseEntity(ref reader, types, scenes);
+                var entity = ParseEntity(ref reader);
 
-                entities.Add(entity);
+                result.Entities.Add(entity);
             }
         }
     }
 
-    Scene.SceneEntity ParseEntity(ref Utf8JsonReader reader, Dictionary<string, Type> types, Dictionary<string, Handle<Scene>> scenes)
+    Scene.SceneEntity ParseEntity(ref Utf8JsonReader reader)
     {
         var entity = new Scene.SceneEntity();
 
@@ -170,18 +173,18 @@ public ref struct SceneReader : IReader, IDisposable
                 {
                     var handle = context.AssetServer.GetAssets<Scene>().Initialize(scenePath);
                     entity.Scene = handle;
-                    scenes.TryAdd(scenePath, handle);
+                    result.Scenes.TryAdd(scenePath, handle);
                 }
             }
             else if (reader.ValueTextEquals("Components"u8) || reader.ValueTextEquals("components"u8))
             {
-                entity.Components = ParseComponents(ref reader, types);
+                entity.Components = ParseComponents(ref reader);
             }
             else if (reader.ValueTextEquals("Children"u8) || reader.ValueTextEquals("children"u8))
             {
                 reader.Read();
                 entity.Children = new();
-                ParseEntities(ref reader, types, entity.Children, scenes);
+                ParseEntities(ref reader);
             }
             else
             {
@@ -193,7 +196,7 @@ public ref struct SceneReader : IReader, IDisposable
         return entity;
     }
 
-    List<Scene.EntityComponent>? ParseComponents(ref Utf8JsonReader reader, Dictionary<string, Type> types)
+    List<Scene.EntityComponent>? ParseComponents(ref Utf8JsonReader reader)
     {
         reader.Read();
         if (reader.TokenType != JsonTokenType.StartObject)
@@ -211,7 +214,7 @@ public ref struct SceneReader : IReader, IDisposable
             var componentName = reader.GetString()!;
             reader.Read();
 
-            if (types.TryGetValue(componentName, out var type))
+            if (result.Types.TryGetValue(componentName, out var type))
             {
                 RuntimeHelpers.RunClassConstructor(type.TypeHandle);
                 using var doc = JsonDocument.ParseValue(ref reader);

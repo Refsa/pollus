@@ -109,7 +109,13 @@ public ref struct SceneWriter : IWriter, IDisposable
         foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
         {
             var cinfo = Component.GetInfo(cid);
+            if (ignoredComponents.Contains(cid)) continue;
             types.Add(cinfo.Type);
+        }
+
+        if (archetype.HasComponent<SceneRef>() && !options.WriteSubScenes)
+        {
+            return;
         }
 
         if (archetype.HasComponent<Parent>())
