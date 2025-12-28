@@ -29,6 +29,7 @@ public class AssetsContainer : IDisposable
             var s = new Assets<TAsset>();
             s.OnAdded += OnAssetAddedOrModified;
             s.OnModified += OnAssetAddedOrModified;
+            s.OnRemoved += OnAssetRemoved;
             storage = s;
             assets.Add(TypeLookup.ID<TAsset>(), storage);
         }
@@ -146,6 +147,18 @@ public class AssetsContainer : IDisposable
         storage.Set(handle, asset);
     }
 
+    public void RemoveAsset(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
+        var info = storage.GetInfo(handle);
+        if (info?.Path is { } path)
+        {
+            assetLookup.Remove(path);
+        }
+        OnAssetRemoved(handle, info);
+        storage.Remove(handle);
+    }
+
     public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
     {
         if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
@@ -240,6 +253,42 @@ public class AssetsContainer : IDisposable
 
         ValidateStatus(handle);
         NotifyDependants(handle);
+    }
+
+    void OnAssetRemoved(Handle handle, IAssetInfo? info)
+    {
+        if (info == null) return;
+
+        if (info.Dependents is { Count: > 0 })
+        {
+            foreach (var dependent in info.Dependents)
+            {
+                if (TryGetAssets(dependent.Type, out var dependentStorage))
+                {
+                    var dependentInfo = dependentStorage.GetInfo(dependent);
+                    dependentInfo?.Dependencies?.Remove(handle);
+                }
+            }
+        }
+
+        if (info.Dependencies is { Count: > 0 })
+        {
+            foreach (var dep in info.Dependencies)
+            {
+                if (TryGetAssets(dep.Type, out var depStorage))
+                {
+                    var depInfo = depStorage.GetInfo(dep);
+                    depInfo?.Dependents.Remove(handle);
+                }
+            }
+        }
+    }
+
+    void OnAssetRemoved(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) return;
+        var info = storage.GetInfo(handle);
+        OnAssetRemoved(handle, info);
     }
 
     bool ValidateStatus(Handle handle)

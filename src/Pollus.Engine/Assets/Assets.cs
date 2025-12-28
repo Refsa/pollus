@@ -14,6 +14,7 @@ public interface IAssetStorage : IDisposable
     Handle Initialize(AssetPath? path);
     Handle Add(IAsset asset, AssetPath? path = null);
     void Set(Handle handle, IAsset asset);
+    void Remove(Handle handle);
 
     void AppendEvent(Handle handle, AssetEventType type);
     void FlushEvents(Events events);
@@ -179,7 +180,6 @@ public class Assets<T> : IAssetStorage
         if (assetLookup.TryGetValue(handle, out var index))
         {
             var assetInfo = assets[index];
-            assetInfo.Status = AssetStatus.Unloaded;
             if (assetInfo.Asset is IDisposable disposable)
             {
                 disposable.Dispose();
@@ -189,11 +189,16 @@ public class Assets<T> : IAssetStorage
             assetLookup.Remove(handle);
             if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
 
+            for (int i = index; i < assets.Count; i++)
+            {
+                assetLookup[assets[i].Handle] = i;
+            }
+
             OnRemoved?.Invoke(handle);
 
             queuedEvents.Add(new AssetEvent<T>
             {
-                Type = AssetEventType.Unloaded,
+                Type = AssetEventType.Deleted,
                 Handle = handle,
             });
         }

@@ -43,21 +43,15 @@ public class AssetServer : IDisposable
         Assets.Dispose();
     }
 
-    void OnAssetChanged(AssetPath obj)
-    {
-        if (Assets.TryGetHandle(obj, out _))
-        {
-            if (queuedPaths.TryAdd(obj, DateTime.UtcNow) is false)
-            {
-                queuedPaths[obj] = DateTime.UtcNow;
-            }
-        }
-    }
-
     public void EnableFileWatch()
     {
         AssetIO.OnAssetChanged += OnAssetChanged;
         AssetIO.EnableFileWatch();
+    }
+
+    void OnAssetChanged(AssetPath obj)
+    {
+        Queue(obj);
     }
 
     public AssetServer AddLoader<TLoader>() where TLoader : IAssetLoader, new()
