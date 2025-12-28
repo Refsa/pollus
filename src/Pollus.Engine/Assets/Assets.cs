@@ -52,7 +52,7 @@ public class Assets<T> : IAssetStorage
     public event Action<Handle, IAsset>? OnModified;
     public event Action<Handle>? OnRemoved;
 
-    public TypeID AssetType => TypeLookup.ID<T>();
+    public TypeID AssetType => _assetTypeId;
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
 
     public void Dispose()

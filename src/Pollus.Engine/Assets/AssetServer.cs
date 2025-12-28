@@ -18,7 +18,6 @@ public class AssetServer : IDisposable
 
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
-    Dictionary<AssetPath, Handle> assetLookup = new();
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
@@ -46,7 +45,7 @@ public class AssetServer : IDisposable
 
     void OnAssetChanged(AssetPath obj)
     {
-        if (assetLookup.ContainsKey(obj))
+        if (Assets.TryGetHandle(obj, out _))
         {
             if (queuedPaths.TryAdd(obj, DateTime.UtcNow) is false)
             {
@@ -140,7 +139,7 @@ public class AssetServer : IDisposable
 
     public Handle Load(AssetPath path, bool reload = false)
     {
-        if (!reload && assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -167,14 +166,13 @@ public class AssetServer : IDisposable
             var asset = loadContext.Asset;
             Guard.IsNotNull(asset, "AssetServer::Load asset was null");
             Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {path}");
-            
+
             if (loadContext.Dependencies is { Count: > 0 })
             {
                 asset.Dependencies.UnionWith(loadContext.Dependencies);
             }
 
             handle = Assets.AddAsset(asset, loader.AssetType, path);
-            assetLookup.TryAdd(path, handle);
             return handle;
         }
 
@@ -190,7 +188,7 @@ public class AssetServer : IDisposable
 
     public Handle LoadAsync(AssetPath path, bool reload = false)
     {
-        if (!reload && assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -204,20 +202,6 @@ public class AssetServer : IDisposable
         };
         loadStates.Add(loadState);
         return loadState.Handle;
-    }
-
-    public Handle<TAsset> AddAsync<TAsset>(TAsset asset, AssetPath? path = null)
-        where TAsset : IAsset
-    {
-        Assets.InitAssets<TAsset>();
-        return AddAsync(asset, TypeLookup.ID<TAsset>(), path);
-    }
-
-    public Handle AddAsync(IAsset asset, TypeID typeId, AssetPath? path = null)
-    {
-        var handle = Assets.AddAsset(asset, typeId, path);
-        if (path.HasValue) assetLookup.TryAdd(path.Value, handle);
-        return handle;
     }
 
     public void Update()
@@ -258,7 +242,6 @@ public class AssetServer : IDisposable
                 }
 
                 Assets.AddAsset(asset, loadState.Loader.AssetType, loadState.Path);
-                assetLookup.TryAdd(loadState.Path, loadState.Handle);
             }
 
             loadStates.RemoveAt(i);

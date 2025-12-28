@@ -38,7 +38,7 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         if (string.IsNullOrEmpty(path))
         {
             var asset = reader.Deserialize<T>();
-            handle = context.AssetServer.AddAsync(asset);
+            handle = context.AssetServer.Assets.AddAsset(asset);
         }
         else
         {
@@ -54,10 +54,10 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
     {
         if (value.IsNull()) return;
 
-        var path = context.AssetServer.Assets.GetPath(value);
-        if (path.HasValue)
+        var info = context.AssetServer.Assets.GetInfo(value);
+        if (info?.Path is { } path)
         {
-            writer.Write(path.Value.Path, "$path");
+            writer.Write(path.Path, "$path");
         }
         else
         {

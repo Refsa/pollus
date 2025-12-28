@@ -22,15 +22,6 @@ public class SceneAssetLoader : AssetLoader<Scene>
             _ = context.AssetServer.LoadAsync<Scene>(path);
         }
 
-        foreach (var handle in scene.Assets)
-        {
-            var path = context.AssetServer.Assets.GetPath(handle);
-            if (path.HasValue)
-            {
-                _ = context.AssetServer.LoadAsync(path.Value);
-            }
-        }
-
         context.SetAsset(scene);
     }
 }
