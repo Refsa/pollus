@@ -21,6 +21,7 @@ public class AssetServer : IDisposable
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
+    CancellationTokenSource loadStateCancellationTokenSource = new();
 
     bool isDisposed;
 
@@ -41,6 +42,10 @@ public class AssetServer : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
         Assets.Dispose();
+
+        loadStateCancellationTokenSource.Cancel();
+        loadStateCancellationTokenSource.Dispose();
+        loadStates.Clear();
     }
 
     public void EnableFileWatch()
@@ -191,7 +196,7 @@ public class AssetServer : IDisposable
         {
             Handle = Assets.GetHandle(path, loader.AssetType),
             Path = path,
-            Task = AssetIO.LoadPathAsync(path),
+            Task = AssetIO.LoadPathAsync(path, loadStateCancellationTokenSource.Token),
             Loader = loader,
         };
         loadStates.Add(loadState);
@@ -204,6 +209,13 @@ public class AssetServer : IDisposable
         for (int i = count - 1; i >= 0; i--)
         {
             ref var loadState = ref loadStates.Get(i);
+            var info = Assets.GetInfo(loadState.Handle);
+            if (info is null || info.Status == AssetStatus.Failed)
+            {
+                loadStates.RemoveAt(i);
+                continue;
+            }
+
             if (loadState.Task.IsCompleted is false) continue;
 
             var loadResult = loadState.Task.Result;
