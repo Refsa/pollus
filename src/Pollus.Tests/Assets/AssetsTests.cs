@@ -143,11 +143,11 @@ public class AssetsTests
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[0].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[0].Type);
         Assert.Equal(handle3, assetEvents[0].Handle);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[1].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[1].Type);
         Assert.Equal(handle2, assetEvents[1].Handle);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[2].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[2].Type);
         Assert.Equal(handle1, assetEvents[2].Handle);
     }
 
@@ -172,11 +172,11 @@ public class AssetsTests
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[0].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[0].Type);
         Assert.Equal(handle3, assetEvents[0].Handle);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[1].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[1].Type);
         Assert.Equal(handle2, assetEvents[1].Handle);
-        Assert.Equal(AssetEventType.DependenciesChanged, assetEvents[2].Type);
+        Assert.Equal(AssetEventType.Changed, assetEvents[2].Type);
         Assert.Equal(handle1, assetEvents[2].Handle);
     }
 

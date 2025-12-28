@@ -154,7 +154,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var fontEvent in fontEvents.Read())
         {
-            if (fontEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+            if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
             var font = fonts.Get(fontEvent.Handle);
             if (font is null) continue;
 
@@ -171,7 +171,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var fontMaterialEvent in fontMaterialEvents.Read())
         {
-            if (fontMaterialEvent.Type is not AssetEventType.Added) continue;
+            if (fontMaterialEvent.Type is not AssetEventType.Loaded) continue;
             query.ForEach((fonts, fontMaterialEvent.Handle), static (in userData, ref draw, ref mesh) =>
             {
                 var font = userData.fonts.Get(draw.Font);
@@ -219,7 +219,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var textMeshAssetEvent in textMeshAssetEvents.Read())
         {
-            if (textMeshAssetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+            if (textMeshAssetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
 
             var textMeshAsset = meshes.Get(textMeshAssetEvent.Handle);
             if (textMeshAsset is null) continue;

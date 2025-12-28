@@ -7,41 +7,6 @@ using Pollus.Utils;
 using Serialization;
 using Core.Assets;
 
-public enum AssetStatus
-{
-    Failed = -1,
-    Unknown = 0,
-    Unloaded = 1,
-    Initialized,
-    Loading,
-    WaitingForDependency,
-    Loaded,
-}
-
-public interface IAssetInfo
-{
-    public Handle Handle { get; set; }
-    public AssetStatus Status { get; set; }
-    public AssetPath? Path { get; set; }
-
-    public HashSet<Handle>? Dependencies { get; set; }
-    public HashSet<Handle> Dependents { get; set; }
-    public DateTime LastModified { get; set; }
-}
-
-public class AssetInfo<T> : IAssetInfo
-    where T : IAsset
-{
-    public Handle Handle { get; set; }
-    public AssetStatus Status { get; set; }
-    public AssetPath? Path { get; set; }
-    public T? Asset { get; set; }
-
-    public HashSet<Handle>? Dependencies { get; set; }
-    public HashSet<Handle> Dependents { get; set; } = [];
-    public DateTime LastModified { get; set; }
-}
-
 public interface IAssetStorage : IDisposable
 {
     TypeID AssetType { get; }
@@ -54,15 +19,14 @@ public interface IAssetStorage : IDisposable
     void FlushEvents(Events events);
     void ClearEvents();
 
-    AssetStatus GetStatus(Handle handle);
-    void SetStatus(Handle handle, AssetStatus status);
-
-    AssetPath? GetPath(Handle handle);
+    IAssetInfo? GetInfo(Handle handle);
 
     void AddDependent(Handle handle, Handle dependent);
-    IReadOnlySet<Handle> GetDependents(Handle handle);
     void SetDependencies(Handle handle, HashSet<Handle>? dependencies);
-    IReadOnlySet<Handle>? GetDependencies(Handle handle);
+
+    event Action<Handle, IAsset> OnAdded;
+    event Action<Handle, IAsset> OnModified;
+    event Action<Handle> OnRemoved;
 }
 
 public class Assets<T> : IAssetStorage
@@ -82,7 +46,11 @@ public class Assets<T> : IAssetStorage
     Dictionary<Handle, int> assetLookup = new();
     Dictionary<AssetPath, Handle> pathLookup = new();
 
-    List<AssetEvent<T>> queuedEvents = new();
+    ArrayList<AssetEvent<T>> queuedEvents = new();
+
+    public event Action<Handle, IAsset>? OnAdded;
+    public event Action<Handle, IAsset>? OnModified;
+    public event Action<Handle>? OnRemoved;
 
     public TypeID AssetType => TypeLookup.ID<T>();
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
@@ -133,8 +101,10 @@ public class Assets<T> : IAssetStorage
 
                 info.Asset = asset;
                 info.Status = AssetStatus.Loaded;
-                info.Dependencies = [..asset.Dependencies];
+                info.Dependencies = [.. asset.Dependencies];
                 info.LastModified = DateTime.UtcNow;
+
+                OnModified?.Invoke(handle, asset);
             }
 
             queuedEvents.Add(new AssetEvent<T>
@@ -148,15 +118,20 @@ public class Assets<T> : IAssetStorage
         handle = new Handle<T>(NextID);
         if (path.HasValue) pathLookup.Add(path.Value, handle);
         assetLookup.Add(handle, assets.Count);
-        assets.Add(new AssetInfo<T>
+
+        var newInfo = new AssetInfo<T>
         {
             Handle = handle,
-            Status = AssetStatus.Loaded,
+            Status = AssetStatus.Added,
             Asset = asset,
             Path = path,
-            Dependencies = [..asset.Dependencies],
+            Dependencies = [.. asset.Dependencies],
             LastModified = DateTime.UtcNow,
-        });
+        };
+
+        assets.Add(newInfo);
+        OnAdded?.Invoke(handle, asset);
+
         queuedEvents.Add(new AssetEvent<T>
         {
             Type = AssetEventType.Added,
@@ -186,9 +161,11 @@ public class Assets<T> : IAssetStorage
 
         var assetInfo = assets[index];
         assetInfo.Asset = asset;
-        assetInfo.Status = AssetStatus.Loaded;
+        assetInfo.Status = AssetStatus.Added;
         assetInfo.LastModified = DateTime.UtcNow;
-        assetInfo.Dependencies = [..asset.Dependencies];
+        assetInfo.Dependencies = [.. asset.Dependencies];
+
+        OnModified?.Invoke(handle, asset);
 
         queuedEvents.Add(new AssetEvent<T>
         {
@@ -212,6 +189,8 @@ public class Assets<T> : IAssetStorage
             assetLookup.Remove(handle);
             if (assetInfo.Path.HasValue) pathLookup.Remove(assetInfo.Path.Value);
 
+            OnRemoved?.Invoke(handle);
+
             queuedEvents.Add(new AssetEvent<T>
             {
                 Type = AssetEventType.Unloaded,
@@ -230,7 +209,7 @@ public class Assets<T> : IAssetStorage
         return default;
     }
 
-    public AssetInfo<T>? GetInfo(Handle handle)
+    IAssetInfo? IAssetStorage.GetInfo(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))
         {
@@ -240,30 +219,9 @@ public class Assets<T> : IAssetStorage
         return null;
     }
 
-    public AssetStatus GetStatus(Handle handle)
+    public AssetInfo<T>? GetInfo(Handle handle)
     {
-        if (assetLookup.TryGetValue(handle, out var index))
-        {
-            return assets[index].Status;
-        }
-
-        return AssetStatus.Unknown;
-    }
-
-    public void SetStatus(Handle handle, AssetStatus status)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
-        assets[index].Status = status;
-    }
-
-    public AssetPath? GetPath(Handle handle)
-    {
-        if (assetLookup.TryGetValue(handle, out var index))
-        {
-            return assets[index].Path;
-        }
-
-        return null;
+        return ((IAssetStorage)this).GetInfo(handle) as AssetInfo<T>;
     }
 
     public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
@@ -272,22 +230,10 @@ public class Assets<T> : IAssetStorage
         assets[index].Dependencies = dependencies;
     }
 
-    public IReadOnlySet<Handle>? GetDependencies(Handle handle)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
-        return assets[index].Dependencies;
-    }
-
     public void AddDependent(Handle handle, Handle dependent)
     {
         if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
         assets[index].Dependents.Add(dependent);
-    }
-
-    public IReadOnlySet<Handle> GetDependents(Handle handle)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
-        return assets[index].Dependents;
     }
 
     public void AppendEvent(Handle handle, AssetEventType type)
@@ -304,12 +250,7 @@ public class Assets<T> : IAssetStorage
     {
         events.InitEvent<AssetEvent<T>>();
         var writer = events.GetWriter<AssetEvent<T>>();
-
-        foreach (var @event in queuedEvents)
-        {
-            writer.Write(@event);
-        }
-
+        writer.Append(queuedEvents.AsSpan());
         queuedEvents.Clear();
     }
 

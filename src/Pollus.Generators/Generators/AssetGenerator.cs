@@ -48,7 +48,7 @@ public class AssetGenerator : IIncrementalGenerator
                   namespace {{model.TypeInfo.Namespace}};
                   using Pollus.Core.Assets;
                   using Pollus.Utils;
-                  using System.Collections.ObjectModel;
+                  using System.Collections.Generic;
 
                   {{partialExt}}
                   """, Encoding.UTF8);
@@ -70,12 +70,12 @@ public class AssetGenerator : IIncrementalGenerator
 
         if (!dependencies.Any())
         {
-            return "public ReadOnlySet<Handle> Dependencies => [];";
+            return "public HashSet<Handle> Dependencies => [];";
         }
 
         return
             $$"""
-                  public ReadOnlySet<Handle> Dependencies => [
+                  public HashSet<Handle> Dependencies => [
                     {{string.Join(",\n\t\t", dependencies)}}
                   ];
               """;

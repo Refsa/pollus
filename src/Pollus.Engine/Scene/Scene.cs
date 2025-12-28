@@ -29,6 +29,7 @@ public class Scene : IAsset
         Types = [],
         Entities = [],
         Scenes = [],
+        Assets = [],
     };
 
     public int FormatVersion { get; set; } = 1;
@@ -37,8 +38,9 @@ public class Scene : IAsset
     public required Dictionary<string, Type> Types { get; init; }
     public required List<SceneEntity> Entities { get; init; }
     public required Dictionary<string, Handle<Scene>> Scenes { get; init; }
+    public required HashSet<Handle> Assets { get; init; }
 
-    public ReadOnlySet<Handle> Dependencies => [..Scenes.Values];
+    public HashSet<Handle> Dependencies => [.. Scenes.Values, .. Assets];
 }
 
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]

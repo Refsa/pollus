@@ -4,7 +4,6 @@ using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
-using Utils;
 
 public class MaterialPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial, IAsset
@@ -29,13 +28,14 @@ public class MaterialPlugin<TMaterial> : IPlugin
                 RunsAfter = [RenderingPlugin.BeginFrameSystem],
                 RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
             },
-            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, Assets<TMaterial> materials, EventReader<AssetEvent<TMaterial>> assetEvents) =>
+            static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed or AssetEventType.DependenciesChanged)) continue;
-                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed or AssetEventType.DependenciesChanged);
-                }
+                    if (assetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
+
+                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+                } 
             }));
     }
 

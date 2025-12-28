@@ -1,6 +1,7 @@
 namespace Pollus.Engine;
 
 using Pollus.Engine.Assets;
+using Pollus.Engine.Serialization;
 
 public class SceneAssetLoader : AssetLoader<Scene>
 {
@@ -12,11 +13,22 @@ public class SceneAssetLoader : AssetLoader<Scene>
     protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         using var reader = SceneSerializer.GetReader(new());
-        var scene = reader.Parse(new() { AssetServer = context.AssetServer }, data);
+        var ctx = new WorldSerializationContext() { AssetServer = context.AssetServer };
+        var scene = reader.Parse(ctx, data);
+        scene.Assets.UnionWith(ctx.Dependencies);
+
         foreach (var path in scene.Scenes.Keys)
         {
-            var subHandle = context.AssetServer.LoadAsync<Scene>(path);
-            context.AddDependency(subHandle);
+            _ = context.AssetServer.LoadAsync<Scene>(path);
+        }
+
+        foreach (var handle in scene.Assets)
+        {
+            var path = context.AssetServer.Assets.GetPath(handle);
+            if (path.HasValue)
+            {
+                _ = context.AssetServer.LoadAsync(path.Value);
+            }
         }
 
         context.SetAsset(scene);

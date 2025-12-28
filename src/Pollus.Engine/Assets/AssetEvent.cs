@@ -5,9 +5,9 @@ using Utils;
 public enum AssetEventType
 {
     Added,
+    Loaded,
     Unloaded,
     Changed,
-    DependenciesChanged,
     Deleted,
 }
 

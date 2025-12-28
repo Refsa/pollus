@@ -82,6 +82,14 @@ public class EventQueue<TEvent> : IEventQueue
         events[cursor++] = e;
     }
 
+    public void AppendEvents(ReadOnlySpan<TEvent> append)
+    {
+        if (append.Length == 0) return;
+        if (cursor + append.Length >= events.Length) Array.Resize(ref events, cursor + append.Length);
+        append.CopyTo(events.AsSpan(cursor));
+        cursor += append.Length;
+    }
+
     public void Clear()
     {
         if (cursor == 0) return;
@@ -131,6 +139,11 @@ public struct EventWriter<TEvent>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Write(in TEvent e) => queue.AddEvent(e);
+
+    public void Append(ReadOnlySpan<TEvent> events)
+    {
+        queue.AppendEvents(events);
+    }
 }
 
 public class EventReader<TEvent> : IDisposable

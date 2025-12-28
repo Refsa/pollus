@@ -145,8 +145,8 @@ public ref struct SceneWriter : IWriter, IDisposable
             ref var sceneRef = ref chunk.GetComponent<SceneRef>(entityInfo.RowIndex);
             if (!options.WriteSubScenes)
             {
-                var assetPath = world.Resources.Get<AssetServer>().GetAssets<Scene>().GetPath(sceneRef.Scene);
-                if (assetPath.HasValue) writer.WriteString("Scene", assetPath.Value.Path);
+                var assetInfo = world.Resources.Get<AssetServer>().Assets.GetInfo(sceneRef.Scene);
+                if (assetInfo?.Path is { } path) writer.WriteString("Scene", path.Path);
 
                 writer.WriteEndObject();
                 return;

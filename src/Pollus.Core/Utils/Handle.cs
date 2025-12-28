@@ -5,8 +5,8 @@ using Debugging;
 public record struct Handle(TypeID Type, int ID)
 {
     public static Handle Null => new(-1, -1);
-
     readonly int hashCode = HashCode.Combine(Type, ID);
+
     public override int GetHashCode() => hashCode;
 
     public Handle<T> As<T>() where T : notnull
@@ -23,6 +23,8 @@ public record struct Handle<T>(int ID)
 
     public static implicit operator Handle(Handle<T> handle) => new(TypeId, handle.ID);
     public static implicit operator Handle<T>(Handle handle) => new(handle.ID);
+
+    public TypeID TypeID => TypeLookup.ID<T>();
 
     public override int GetHashCode()
     {

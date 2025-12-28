@@ -1,12 +1,10 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Collections;
-using ECS;
+using Core.Assets;
 using Pollus.Debugging;
 using Pollus.Utils;
-using Core.Assets;
 
 public class AssetServer : IDisposable
 {
@@ -18,21 +16,12 @@ public class AssetServer : IDisposable
         public required IAssetLoader Loader { get; init; }
     }
 
-    struct AssetWaitState
-    {
-        public required Handle Handle { get; init; }
-        public required AssetPath Path { get; init; }
-        public required object Asset { get; init; }
-        public required HashSet<Handle> Dependencies { get; init; }
-    }
-
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
-    ArrayList<AssetWaitState> waitStates = new();
 
     bool isDisposed;
 
@@ -108,7 +97,7 @@ public class AssetServer : IDisposable
     {
         return Assets.GetAssets<TAsset>();
     }
-    
+
     public IAssetStorage GetAssets(TypeID typeId)
     {
         return Assets.GetAssets(typeId);
@@ -146,7 +135,7 @@ public class AssetServer : IDisposable
         where TAsset : IAsset
     {
         Assets.InitAssets<TAsset>();
-        return Load(path);
+        return Load(path, reload);
     }
 
     public Handle Load(AssetPath path, bool reload = false)
@@ -176,26 +165,32 @@ public class AssetServer : IDisposable
         {
             var expectedType = TypeLookup.GetType(loader.AssetType);
             var asset = loadContext.Asset;
-            Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {path}");
-            handle = Assets.AddAsset(asset!, loader.AssetType, path);
+            Guard.IsNotNull(asset, "AssetServer::Load asset was null");
+            Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {path}");
+            
+            if (loadContext.Dependencies is { Count: > 0 })
+            {
+                asset.Dependencies.UnionWith(loadContext.Dependencies);
+            }
+
+            handle = Assets.AddAsset(asset, loader.AssetType, path);
             assetLookup.TryAdd(path, handle);
-            Assets.NotifyDependants(handle);
             return handle;
         }
 
         return Handle.Null;
     }
 
-    public Handle<T> LoadAsync<T>(AssetPath path)
-        where T : IAsset
+    public Handle<TAsset> LoadAsync<TAsset>(AssetPath path, bool reload = false)
+        where TAsset : IAsset
     {
-        Assets.InitAssets<T>();
-        return LoadAsync(path);
+        Assets.InitAssets<TAsset>();
+        return LoadAsync(path, reload);
     }
 
-    public Handle LoadAsync(AssetPath path)
+    public Handle LoadAsync(AssetPath path, bool reload = false)
     {
-        if (assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && assetLookup.TryGetValue(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -209,6 +204,20 @@ public class AssetServer : IDisposable
         };
         loadStates.Add(loadState);
         return loadState.Handle;
+    }
+
+    public Handle<TAsset> AddAsync<TAsset>(TAsset asset, AssetPath? path = null)
+        where TAsset : IAsset
+    {
+        Assets.InitAssets<TAsset>();
+        return AddAsync(asset, TypeLookup.ID<TAsset>(), path);
+    }
+
+    public Handle AddAsync(IAsset asset, TypeID typeId, AssetPath? path = null)
+    {
+        var handle = Assets.AddAsset(asset, typeId, path);
+        if (path.HasValue) assetLookup.TryAdd(path.Value, handle);
+        return handle;
     }
 
     public void Update()
@@ -240,8 +249,15 @@ public class AssetServer : IDisposable
             {
                 var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
                 var asset = loadContext.Asset;
-                Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {loadState.Path}");
-                Assets.SetAsset(loadState.Handle, asset!);
+                Guard.IsNotNull(asset, $"AssetServer::Load expected asset on path {loadState.Path}");
+                Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {loadState.Path}");
+
+                if (loadContext.Dependencies is { Count: > 0 })
+                {
+                    asset.Dependencies.UnionWith(loadContext.Dependencies);
+                }
+
+                Assets.AddAsset(asset, loadState.Loader.AssetType, loadState.Path);
                 assetLookup.TryAdd(loadState.Path, loadState.Handle);
             }
 
@@ -263,7 +279,7 @@ public class AssetServer : IDisposable
         {
             if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
             queuedPaths.TryRemove(kvp.Key, out _);
-            _ = Load(kvp.Key, true);
+            _ = LoadAsync(kvp.Key, true);
             Log.Info((FormattableString)$"AssetServer::FlushQueue {kvp.Key}");
         }
     }

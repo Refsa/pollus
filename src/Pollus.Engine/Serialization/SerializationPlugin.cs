@@ -1,19 +1,19 @@
 namespace Pollus.Engine.Serialization;
 
-using Pollus.Utils;
-using Pollus.Engine.Assets;
+using Core.Assets;
 using Pollus.Core.Serialization;
 using Pollus.ECS;
-using System.Runtime.CompilerServices;
-using Core.Assets;
+using Pollus.Engine.Assets;
+using Pollus.Utils;
 
 public partial struct SerializeTag : IComponent
 {
 }
 
-public struct WorldSerializationContext
+public struct WorldSerializationContext()
 {
-    public AssetServer AssetServer { get; set; }
+    public required AssetServer AssetServer { get; set; }
+    public HashSet<Handle> Dependencies { get; set; } = [];
 }
 
 [SystemSet]
@@ -33,14 +33,20 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
         where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString("$path");
-        
+
+        Handle handle;
         if (string.IsNullOrEmpty(path))
         {
             var asset = reader.Deserialize<T>();
-            return context.AssetServer.Assets.AddAsset(asset);
+            handle = context.AssetServer.AddAsync(asset);
+        }
+        else
+        {
+            handle = context.AssetServer.LoadAsync<T>(path);
         }
 
-        return context.AssetServer.LoadAsync<T>(path);
+        context.Dependencies.Add(handle);
+        return handle;
     }
 
     public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)
