@@ -29,6 +29,7 @@ public class AssetServer : IDisposable
     public AssetsContainer Assets { get; }
 
     public bool FileWatchEnabled => AssetIO.FileWatchEnabled;
+    public int PendingLoads => loadStates.Count;
 
     public AssetServer(AssetIO assetIO)
     {
