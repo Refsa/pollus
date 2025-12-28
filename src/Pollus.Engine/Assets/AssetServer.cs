@@ -210,6 +210,7 @@ public class AssetServer : IDisposable
             if (loadResult.IsErr())
             {
                 Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
+                Assets.SetFailed(loadState.Handle);
                 loadStates.RemoveAt(i);
                 continue;
             }

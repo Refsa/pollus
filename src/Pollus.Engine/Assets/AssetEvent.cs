@@ -9,6 +9,7 @@ public enum AssetEventType
     Unloaded,
     Changed,
     Deleted,
+    Failed,
 }
 
 public struct AssetEvent<TAsset>

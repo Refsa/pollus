@@ -209,6 +209,22 @@ public class AssetsContainer : IDisposable
         return info?.Status == AssetStatus.Loaded;
     }
 
+    public bool IsFailed(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) return false;
+        var info = storage.GetInfo(handle);
+        return info?.Status == AssetStatus.Failed;
+    }
+
+    public void SetFailed(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) return;
+        var info = storage.GetInfo(handle);
+        info?.Status = AssetStatus.Failed;
+        NotifyDependants(handle);
+        storage.AppendEvent(handle, AssetEventType.Failed);
+    }
+
     public void FlushEvents(Events events)
     {
         foreach (var asset in assets.Values)
@@ -290,7 +306,12 @@ public class AssetsContainer : IDisposable
         {
             foreach (var dep in info.Dependencies)
             {
-                if (!IsLoaded(dep))
+                if (IsFailed(dep))
+                {
+                    newStatus = AssetStatus.Failed;
+                    break;
+                }
+                else if (!IsLoaded(dep))
                 {
                     newStatus = AssetStatus.WaitingForDependency;
                     break;
@@ -298,17 +319,18 @@ public class AssetsContainer : IDisposable
             }
         }
 
-        if (info.Status != newStatus)
-        {
-            if (newStatus == AssetStatus.Loaded)
-            {
-                storage.AppendEvent(handle, AssetEventType.Loaded);
-            }
+        if (info.Status == newStatus) return false;
 
-            info.Status = newStatus;
-            return true;
+        if (newStatus == AssetStatus.Loaded)
+        {
+            storage.AppendEvent(handle, AssetEventType.Loaded);
+        }
+        else if (newStatus == AssetStatus.Failed)
+        {
+            storage.AppendEvent(handle, AssetEventType.Failed);
         }
 
-        return false;
+        info.Status = newStatus;
+        return true;
     }
 }
