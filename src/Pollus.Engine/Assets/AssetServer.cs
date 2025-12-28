@@ -245,9 +245,15 @@ public class AssetServer : IDisposable
 
     public void FlushLoading()
     {
-        while (loadStates.Count > 0)
+        var timeout = DateTime.UtcNow.AddSeconds(10);
+        while (loadStates.Count > 0 && DateTime.UtcNow < timeout)
         {
             Update();
+        }
+
+        if (loadStates.Count > 0)
+        {
+            Log.Error("AssetServer::FlushLoading timed out");
         }
     }
 
