@@ -319,9 +319,11 @@ public class AssetsContainer : IDisposable
             }
         }
 
-        if (info.Status == newStatus) return false;
-
-        if (newStatus == AssetStatus.Loaded)
+        if (info.Status == newStatus)
+        {
+            storage.AppendEvent(handle, AssetEventType.Changed);
+        }
+        else if (newStatus == AssetStatus.Loaded)
         {
             storage.AppendEvent(handle, AssetEventType.Loaded);
         }
