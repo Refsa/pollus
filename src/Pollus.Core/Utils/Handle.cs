@@ -34,6 +34,6 @@ public record struct Handle<T>(int ID)
 
 public static class HandleExtensions
 {
-    public static bool IsNull<T>(this Handle<T> handle) => handle == Handle<T>.Null;
-    public static bool IsNull(this Handle handle) => handle == Handle.Null;
+    public static bool IsNull<T>(this Handle<T> handle) => handle.ID == -1;
+    public static bool IsNull(this Handle handle) => handle.ID == -1;
 }

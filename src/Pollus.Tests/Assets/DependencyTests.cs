@@ -24,12 +24,12 @@ public class DependencyTests
         
         var dependentHandle = storage.Add(dependentAsset, new AssetPath("dependent"));
         
-        var status = container.GetStatus(dependentHandle);
+        var status = container.GetInfo(dependentHandle)!.Status;
         Assert.Equal(AssetStatus.WaitingForDependency, status);
         
         storage.Set(depHandle, new TestAsset());
         
-        status = container.GetStatus(dependentHandle);
+        status = container.GetInfo(dependentHandle)!.Status;
         Assert.Equal(AssetStatus.Loaded, status);
     }
 }

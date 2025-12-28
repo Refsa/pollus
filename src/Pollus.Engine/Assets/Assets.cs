@@ -22,9 +22,6 @@ public interface IAssetStorage : IDisposable
 
     IAssetInfo? GetInfo(Handle handle);
 
-    void AddDependent(Handle handle, Handle dependent);
-    void SetDependencies(Handle handle, HashSet<Handle>? dependencies);
-
     event Action<Handle, IAsset> OnAdded;
     event Action<Handle, IAsset> OnModified;
     event Action<Handle> OnRemoved;
@@ -35,7 +32,7 @@ public class Assets<T> : IAssetStorage
 {
     static readonly TypeID _assetTypeId = TypeLookup.ID<T>();
     static volatile int counter;
-    static int NextID => Interlocked.Exchange(ref counter, counter + 1);
+    static int NextID => Interlocked.Increment(ref counter) - 1;
 
     static Assets()
     {
@@ -227,18 +224,6 @@ public class Assets<T> : IAssetStorage
     public AssetInfo<T>? GetInfo(Handle handle)
     {
         return ((IAssetStorage)this).GetInfo(handle) as AssetInfo<T>;
-    }
-
-    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
-        assets[index].Dependencies = dependencies;
-    }
-
-    public void AddDependent(Handle handle, Handle dependent)
-    {
-        if (!assetLookup.TryGetValue(handle, out var index)) throw new InvalidOperationException($"Asset with handle {handle} not found");
-        assets[index].Dependents.Add(dependent);
     }
 
     public void AppendEvent(Handle handle, AssetEventType type)

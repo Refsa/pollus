@@ -67,7 +67,7 @@ public class AssetsTests
         var handle = assetServer.LoadAsync<TextAsset>(new AssetPath("test.txt"));
 
         var stopwatch = Stopwatch.StartNew();
-        while (assetServer.Assets.GetStatus<TextAsset>(handle) != AssetStatus.Loaded)
+        while (assetServer.Assets.GetInfo(handle)!.Status != AssetStatus.Loaded)
         {
             assetServer.Update();
             await Task.Delay(10);
@@ -83,36 +83,21 @@ public class AssetsTests
     }
 
     [Fact]
-    public void AssetsContainer_SetDependencies()
-    {
-        var assetsContainer = new AssetsContainer();
-        var assets = assetsContainer.InitAssets<TextAsset>();
-        var handle1 = assets.Add(new TextAsset("test1"));
-        var handle2 = assets.Add(new TextAsset("test2"));
-        assetsContainer.SetDependencies(handle1, [handle2]);
-
-        var asset1Info = assets.GetInfo(handle1);
-        Assert.NotNull(asset1Info);
-        Assert.NotNull(asset1Info.Dependencies);
-        Assert.Single(asset1Info.Dependencies);
-        Assert.Equal(handle2, asset1Info.Dependencies.First().As<TextAsset>());
-
-        var asset2Info = assets.GetInfo(handle2);
-        Assert.NotNull(asset2Info);
-        Assert.NotNull(asset2Info.Dependencies);
-        Assert.Empty(asset2Info.Dependencies);
-        Assert.Single(asset2Info.Dependents);
-        Assert.Equal(handle1, asset2Info.Dependents.First().As<TextAsset>());
-    }
-
-    [Fact]
     public void AssetsContainer_NotifyDependants_SingleDependency()
     {
         var assetsContainer = new AssetsContainer();
         var assets = assetsContainer.InitAssets<TextAsset>();
         var handle1 = assets.Add(new TextAsset("test1"));
         var handle2 = assets.Add(new TextAsset("test2"));
-        assetsContainer.SetDependencies(handle1, [handle2]);
+        
+        var info1 = (IAssetInfo)assetsContainer.GetInfo(handle1)!;
+        var info2 = (IAssetInfo)assetsContainer.GetInfo(handle2)!;
+        
+        info1.SetDependencies([handle2]);
+        info2.AddDependent(handle1);
+        info1.Status = AssetStatus.WaitingForDependency;
+        info2.Status = AssetStatus.Loaded;
+        
         assetsContainer.ClearEvents();
 
         var events = new Events();
@@ -121,6 +106,8 @@ public class AssetsTests
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(1, assetEvents.Length);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[0].Type);
+        Assert.Equal(handle1, assetEvents[0].Handle);
     }
 
     [Fact]
@@ -132,9 +119,24 @@ public class AssetsTests
         var handle2 = assets.Add(new TextAsset("test2"));
         var handle3 = assets.Add(new TextAsset("test3"));
         var handle4 = assets.Add(new TextAsset("test4"));
-        assetsContainer.SetDependencies(handle1, [handle2]);
-        assetsContainer.SetDependencies(handle2, [handle3]);
-        assetsContainer.SetDependencies(handle3, [handle4]);
+        
+        var info1 = (IAssetInfo)assetsContainer.GetInfo(handle1)!;
+        var info2 = (IAssetInfo)assetsContainer.GetInfo(handle2)!;
+        var info3 = (IAssetInfo)assetsContainer.GetInfo(handle3)!;
+        var info4 = (IAssetInfo)assetsContainer.GetInfo(handle4)!;
+        
+        info1.SetDependencies([handle2]);
+        info2.AddDependent(handle1);
+        info2.SetDependencies([handle3]);
+        info3.AddDependent(handle2);
+        info3.SetDependencies([handle4]);
+        info4.AddDependent(handle3);
+        
+        info1.Status = AssetStatus.WaitingForDependency;
+        info2.Status = AssetStatus.WaitingForDependency;
+        info3.Status = AssetStatus.WaitingForDependency;
+        info4.Status = AssetStatus.Loaded;
+        
         assetsContainer.ClearEvents();
 
         var events = new Events();
@@ -143,11 +145,11 @@ public class AssetsTests
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
-        Assert.Equal(AssetEventType.Changed, assetEvents[0].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[0].Type);
         Assert.Equal(handle3, assetEvents[0].Handle);
-        Assert.Equal(AssetEventType.Changed, assetEvents[1].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[1].Type);
         Assert.Equal(handle2, assetEvents[1].Handle);
-        Assert.Equal(AssetEventType.Changed, assetEvents[2].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[2].Type);
         Assert.Equal(handle1, assetEvents[2].Handle);
     }
 
@@ -160,10 +162,26 @@ public class AssetsTests
         var handle2 = assets.Add(new TextAsset("test2"));
         var handle3 = assets.Add(new TextAsset("test3"));
         var handle4 = assets.Add(new TextAsset("test4"));
-        assetsContainer.SetDependencies(handle1, [handle2]);
-        assetsContainer.SetDependencies(handle2, [handle3]);
-        assetsContainer.SetDependencies(handle3, [handle4]);
-        assetsContainer.SetDependencies(handle4, [handle1]);
+        
+        var info1 = (IAssetInfo)assetsContainer.GetInfo(handle1)!;
+        var info2 = (IAssetInfo)assetsContainer.GetInfo(handle2)!;
+        var info3 = (IAssetInfo)assetsContainer.GetInfo(handle3)!;
+        var info4 = (IAssetInfo)assetsContainer.GetInfo(handle4)!;
+        
+        info1.SetDependencies([handle2]);
+        info2.AddDependent(handle1);
+        info2.SetDependencies([handle3]);
+        info3.AddDependent(handle2);
+        info3.SetDependencies([handle4]);
+        info4.AddDependent(handle3);
+        info4.SetDependencies([handle1]);
+        info1.AddDependent(handle4);
+        
+        info1.Status = AssetStatus.WaitingForDependency;
+        info2.Status = AssetStatus.WaitingForDependency;
+        info3.Status = AssetStatus.WaitingForDependency;
+        info4.Status = AssetStatus.Loaded;
+        
         assetsContainer.ClearEvents();
 
         var events = new Events();
@@ -172,11 +190,11 @@ public class AssetsTests
 
         var assetEvents = events.GetReader<AssetEvent<TextAsset>>()!.Read();
         Assert.Equal(3, assetEvents.Length);
-        Assert.Equal(AssetEventType.Changed, assetEvents[0].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[0].Type);
         Assert.Equal(handle3, assetEvents[0].Handle);
-        Assert.Equal(AssetEventType.Changed, assetEvents[1].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[1].Type);
         Assert.Equal(handle2, assetEvents[1].Handle);
-        Assert.Equal(AssetEventType.Changed, assetEvents[2].Type);
+        Assert.Equal(AssetEventType.Loaded, assetEvents[2].Type);
         Assert.Equal(handle1, assetEvents[2].Handle);
     }
 

@@ -85,7 +85,7 @@ public ref struct SceneReader : IReader, IDisposable
             else if (reader.ValueTextEquals("Entities"u8) || reader.ValueTextEquals("entities"u8))
             {
                 reader.Read();
-                ParseEntities(ref reader);
+                ParseEntities(ref reader, result.Entities);
             }
         }
 
@@ -129,7 +129,7 @@ public ref struct SceneReader : IReader, IDisposable
         }
     }
 
-    void ParseEntities(ref Utf8JsonReader reader)
+    void ParseEntities(ref Utf8JsonReader reader, in List<Scene.SceneEntity> entities)
     {
         if (reader.TokenType != JsonTokenType.StartArray) return;
 
@@ -140,8 +140,7 @@ public ref struct SceneReader : IReader, IDisposable
             if (reader.TokenType == JsonTokenType.StartObject)
             {
                 var entity = ParseEntity(ref reader);
-
-                result.Entities.Add(entity);
+                entities.Add(entity);
             }
         }
     }
@@ -184,7 +183,7 @@ public ref struct SceneReader : IReader, IDisposable
             {
                 reader.Read();
                 entity.Children = new();
-                ParseEntities(ref reader);
+                ParseEntities(ref reader, entity.Children);
             }
             else
             {

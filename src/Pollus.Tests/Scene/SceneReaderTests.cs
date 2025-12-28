@@ -10,7 +10,6 @@ using Pollus.Engine;
 using Pollus.ECS;
 using System.Text;
 using Pollus.Core.Serialization;
-using System.Runtime.CompilerServices;
 using Core.Assets;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Rendering;

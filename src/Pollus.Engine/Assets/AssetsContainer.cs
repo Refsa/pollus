@@ -155,22 +155,9 @@ public class AssetsContainer : IDisposable
         {
             assetLookup.Remove(path);
         }
+
         OnAssetRemoved(handle, info);
         storage.Remove(handle);
-    }
-
-    public void SetDependencies(Handle handle, HashSet<Handle>? dependencies)
-    {
-        if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
-        storage.SetDependencies(handle, dependencies);
-
-        if (dependencies is null) return;
-        foreach (var dependency in dependencies)
-        {
-            if (dependency.IsNull()) throw new InvalidOperationException($"Dependency is null, {dependency}");
-            if (!assets.TryGetValue(dependency.Type, out var dependentStorage)) throw new InvalidOperationException($"Asset with handle {dependency} not found");
-            dependentStorage.AddDependent(dependency, handle);
-        }
     }
 
     public void NotifyDependants(Handle handle)
@@ -244,9 +231,10 @@ public class AssetsContainer : IDisposable
         {
             foreach (var dep in asset.Dependencies)
             {
+                if (dep.IsNull()) continue;
                 if (TryGetAssets(dep.Type, out var depStorage))
                 {
-                    depStorage.AddDependent(dep, handle);
+                    depStorage.GetInfo(dep)?.AddDependent(handle);
                 }
             }
         }

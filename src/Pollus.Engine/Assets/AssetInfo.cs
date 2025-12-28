@@ -24,6 +24,16 @@ public interface IAssetInfo
     public HashSet<Handle>? Dependencies { get; set; }
     public HashSet<Handle> Dependents { get; set; }
     public DateTime LastModified { get; set; }
+
+    public void SetDependencies(HashSet<Handle>? dependencies)
+    {
+        Dependencies = dependencies;
+    }
+
+    public void AddDependent(Handle dependent)
+    {
+        Dependents.Add(dependent);
+    }
 }
 
 public class AssetInfo<T> : IAssetInfo
