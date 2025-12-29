@@ -1,9 +1,8 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Collections;
-using ECS;
+using Core.Assets;
 using Pollus.Debugging;
 using Pollus.Utils;
 
@@ -19,10 +18,10 @@ public class AssetServer : IDisposable
 
     List<IAssetLoader> loaders = new();
     Dictionary<string, int> loaderLookup = new();
-    Dictionary<AssetPath, Handle> assetLookup = new();
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
+    CancellationTokenSource loadStateCancellationTokenSource = new();
 
     bool isDisposed;
 
@@ -30,6 +29,7 @@ public class AssetServer : IDisposable
     public AssetsContainer Assets { get; }
 
     public bool FileWatchEnabled => AssetIO.FileWatchEnabled;
+    public int PendingLoads => loadStates.Count;
 
     public AssetServer(AssetIO assetIO)
     {
@@ -43,23 +43,21 @@ public class AssetServer : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
         Assets.Dispose();
-    }
 
-    void OnAssetChanged(AssetPath obj)
-    {
-        if (assetLookup.ContainsKey(obj))
-        {
-            if (queuedPaths.TryAdd(obj, DateTime.UtcNow) is false)
-            {
-                queuedPaths[obj] = DateTime.UtcNow;
-            }
-        }
+        loadStateCancellationTokenSource.Cancel();
+        loadStateCancellationTokenSource.Dispose();
+        loadStates.Clear();
     }
 
     public void EnableFileWatch()
     {
         AssetIO.OnAssetChanged += OnAssetChanged;
         AssetIO.EnableFileWatch();
+    }
+
+    void OnAssetChanged(AssetPath obj)
+    {
+        Queue(obj);
     }
 
     public AssetServer AddLoader<TLoader>() where TLoader : IAssetLoader, new()
@@ -88,24 +86,24 @@ public class AssetServer : IDisposable
     }
 
     public void InitAssets<TAsset>()
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         Assets.InitAssets<TAsset>();
     }
 
     public Assets<TAsset> GetAssets<TAsset>()
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         return Assets.GetAssets<TAsset>();
     }
-    
+
     public IAssetStorage GetAssets(TypeID typeId)
     {
         return Assets.GetAssets(typeId);
     }
 
     public Handle<TAsset> Queue<TAsset>(AssetPath path)
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         return Queue(path);
     }
@@ -133,15 +131,15 @@ public class AssetServer : IDisposable
     }
 
     public Handle<TAsset> Load<TAsset>(AssetPath path, bool reload = false)
-        where TAsset : notnull
+        where TAsset : IAsset
     {
         Assets.InitAssets<TAsset>();
-        return Load(path);
+        return Load(path, reload);
     }
 
     public Handle Load(AssetPath path, bool reload = false)
     {
-        if (!reload && assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -166,27 +164,31 @@ public class AssetServer : IDisposable
         {
             var expectedType = TypeLookup.GetType(loader.AssetType);
             var asset = loadContext.Asset;
-            Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {path}");
-            handle = Assets.AddAsset(asset!, loader.AssetType, path);
-            Assets.SetDependencies(handle, loadContext.Dependencies);
-            assetLookup.TryAdd(path, handle);
-            Assets.NotifyDependants(handle);
+            Guard.IsNotNull(asset, "AssetServer::Load asset was null");
+            Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {path}");
+
+            if (loadContext.Dependencies is { Count: > 0 })
+            {
+                asset.Dependencies.UnionWith(loadContext.Dependencies);
+            }
+
+            handle = Assets.AddAsset(asset, loader.AssetType, path);
             return handle;
         }
 
         return Handle.Null;
     }
 
-    public Handle<T> LoadAsync<T>(AssetPath path)
-        where T : notnull
+    public Handle<TAsset> LoadAsync<TAsset>(AssetPath path, bool reload = false)
+        where TAsset : IAsset
     {
-        Assets.InitAssets<T>();
-        return LoadAsync(path);
+        Assets.InitAssets<TAsset>();
+        return LoadAsync(path, reload);
     }
 
-    public Handle LoadAsync(AssetPath path)
+    public Handle LoadAsync(AssetPath path, bool reload = false)
     {
-        if (assetLookup.TryGetValue(path, out var handle)) return handle;
+        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
         if (!AssetIO.Exists(path)) return Handle.Null;
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
@@ -195,7 +197,7 @@ public class AssetServer : IDisposable
         {
             Handle = Assets.GetHandle(path, loader.AssetType),
             Path = path,
-            Task = AssetIO.LoadPathAsync(path),
+            Task = AssetIO.LoadPathAsync(path, loadStateCancellationTokenSource.Token),
             Loader = loader,
         };
         loadStates.Add(loadState);
@@ -208,12 +210,20 @@ public class AssetServer : IDisposable
         for (int i = count - 1; i >= 0; i--)
         {
             ref var loadState = ref loadStates.Get(i);
+            var info = Assets.GetInfo(loadState.Handle);
+            if (info is null || info.Status == AssetStatus.Failed)
+            {
+                loadStates.RemoveAt(i);
+                continue;
+            }
+
             if (loadState.Task.IsCompleted is false) continue;
 
             var loadResult = loadState.Task.Result;
             if (loadResult.IsErr())
             {
                 Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
+                Assets.SetFailed(loadState.Handle);
                 loadStates.RemoveAt(i);
                 continue;
             }
@@ -231,9 +241,15 @@ public class AssetServer : IDisposable
             {
                 var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
                 var asset = loadContext.Asset;
-                Guard.IsTrue(asset is not null && asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset?.GetType()} on path {loadState.Path}");
-                Assets.SetAsset(loadState.Handle, asset!);
-                assetLookup.TryAdd(loadState.Path, loadState.Handle);
+                Guard.IsNotNull(asset, $"AssetServer::Load expected asset on path {loadState.Path}");
+                Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {loadState.Path}");
+
+                if (loadContext.Dependencies is { Count: > 0 })
+                {
+                    asset.Dependencies.UnionWith(loadContext.Dependencies);
+                }
+
+                Assets.AddAsset(asset, loadState.Loader.AssetType, loadState.Path);
             }
 
             loadStates.RemoveAt(i);
@@ -242,9 +258,15 @@ public class AssetServer : IDisposable
 
     public void FlushLoading()
     {
-        while (loadStates.Count > 0)
+        var timeout = DateTime.UtcNow.AddSeconds(10);
+        while (loadStates.Count > 0 && DateTime.UtcNow < timeout)
         {
             Update();
+        }
+
+        if (loadStates.Count > 0)
+        {
+            Log.Error("AssetServer::FlushLoading timed out");
         }
     }
 
@@ -254,7 +276,7 @@ public class AssetServer : IDisposable
         {
             if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
             queuedPaths.TryRemove(kvp.Key, out _);
-            _ = Load(kvp.Key, true);
+            _ = LoadAsync(kvp.Key, true);
             Log.Info((FormattableString)$"AssetServer::FlushQueue {kvp.Key}");
         }
     }

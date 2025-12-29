@@ -32,10 +32,10 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
 {
     public Handle<MeshAsset> Mesh { get; init; }
     public Handle Material { get; init; }
+    public override Handle[] RequiredResources => [Mesh, Material];
 
-    public MeshRenderBatch(in MeshBatchKey key)
+    public MeshRenderBatch(in MeshBatchKey key) : base(key.GetHashCode())
     {
-        Key = key.GetHashCode();
         Mesh = key.Mesh;
         Material = key.Material;
     }

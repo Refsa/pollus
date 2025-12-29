@@ -3,6 +3,7 @@ namespace Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.ECS;
 using Utils;
+using System.Runtime.CompilerServices;
 
 public partial struct SceneRoot : IComponent
 {

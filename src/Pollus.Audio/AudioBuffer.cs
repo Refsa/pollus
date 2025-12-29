@@ -4,7 +4,10 @@ using System.Runtime.InteropServices;
 
 namespace Pollus.Audio;
 
-public class AudioBuffer : IDisposable
+using Core.Assets;
+
+[Asset]
+public partial class AudioBuffer : IDisposable
 {
     AudioManager audio;
     uint bufferId;

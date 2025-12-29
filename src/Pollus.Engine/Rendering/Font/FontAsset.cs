@@ -1,10 +1,12 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.Mathematics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public class FontAsset
+[Asset]
+public partial class FontAsset
 {
     public required Handle Handle { get; init; }
     public required string Name { get; init; }

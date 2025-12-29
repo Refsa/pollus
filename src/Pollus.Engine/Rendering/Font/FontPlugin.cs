@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.Graphics.WGPU;
 using Pollus.Collections;
 using Pollus.ECS;
@@ -62,7 +63,8 @@ public partial struct TextMesh : IComponent
     public required Handle<FontMaterial> Material;
 }
 
-public class TextMeshAsset
+[Asset]
+public partial class TextMeshAsset
 {
     public required string Name { get; init; }
     public required ArrayList<TextBuilder.TextVertex> Vertices { get; init; }
@@ -152,7 +154,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var fontEvent in fontEvents.Read())
         {
-            if (fontEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+            if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
             var font = fonts.Get(fontEvent.Handle);
             if (font is null) continue;
 
@@ -169,7 +171,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var fontMaterialEvent in fontMaterialEvents.Read())
         {
-            if (fontMaterialEvent.Type is not AssetEventType.Added) continue;
+            if (fontMaterialEvent.Type is not AssetEventType.Loaded) continue;
             query.ForEach((fonts, fontMaterialEvent.Handle), static (in userData, ref draw, ref mesh) =>
             {
                 var font = userData.fonts.Get(draw.Font);
@@ -209,7 +211,7 @@ public partial class FontSystemSet
             TextBuilder.BuildMesh(draw.Text, font, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
 
             draw.IsDirty = false;
-            userData.meshes.SetAsset(mesh.Mesh, tma);
+            userData.meshes.Set(mesh.Mesh, tma);
         });
     }
 
@@ -217,7 +219,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var textMeshAssetEvent in textMeshAssetEvents.Read())
         {
-            if (textMeshAssetEvent.Type is not (AssetEventType.Added or AssetEventType.Changed)) continue;
+            if (textMeshAssetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
 
             var textMeshAsset = meshes.Get(textMeshAssetEvent.Handle);
             if (textMeshAsset is null) continue;

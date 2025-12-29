@@ -1,11 +1,13 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 
-public class MeshAsset
+[Asset]
+public partial class MeshAsset
 {
     public required string Name { get; init; }
     public required Mesh Mesh { get; init; }

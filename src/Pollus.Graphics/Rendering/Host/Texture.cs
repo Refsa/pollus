@@ -1,5 +1,7 @@
 namespace Pollus.Graphics.Rendering;
 
+using Core.Assets;
+
 public interface ITexture
 {
     public string Name { get; }
@@ -17,7 +19,8 @@ public interface ITexture
     public byte[] Data { get; }
 }
 
-public class Texture2D : ITexture
+[Asset]
+public partial class Texture2D : ITexture
 {
     public required string Name { get; init; }
     public required TextureFormat Format { get; init; }

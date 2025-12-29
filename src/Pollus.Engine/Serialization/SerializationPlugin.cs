@@ -1,18 +1,19 @@
 namespace Pollus.Engine.Serialization;
 
-using Pollus.Utils;
-using Pollus.Engine.Assets;
+using Core.Assets;
 using Pollus.Core.Serialization;
 using Pollus.ECS;
-using System.Runtime.CompilerServices;
+using Pollus.Engine.Assets;
+using Pollus.Utils;
 
 public partial struct SerializeTag : IComponent
 {
 }
 
-public struct WorldSerializationContext
+public struct WorldSerializationContext()
 {
-    public AssetServer AssetServer { get; set; }
+    public required AssetServer AssetServer { get; set; }
+    public HashSet<Handle> Dependencies { get; set; } = [];
 }
 
 [SystemSet]
@@ -26,20 +27,26 @@ public partial class SerializationPlugin<TSerialization> : IPlugin
 }
 
 public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializationContext>
-    where T : notnull
+    where T : IAsset
 {
     public Handle<T> Deserialize<TReader>(ref TReader reader, in WorldSerializationContext context)
         where TReader : IReader, allows ref struct
     {
         var path = reader.ReadString("$path");
-        
+
+        Handle handle;
         if (string.IsNullOrEmpty(path))
         {
             var asset = reader.Deserialize<T>();
-            return context.AssetServer.Assets.AddAsset(asset);
+            handle = context.AssetServer.Assets.AddAsset(asset);
+        }
+        else
+        {
+            handle = context.AssetServer.LoadAsync<T>(path);
         }
 
-        return context.AssetServer.Load<T>(path);
+        context.Dependencies.Add(handle);
+        return handle;
     }
 
     public void Serialize<TWriter>(ref TWriter writer, in Handle<T> value, in WorldSerializationContext context)
@@ -47,10 +54,10 @@ public class HandleSerializer<T> : IBlittableSerializer<Handle<T>, WorldSerializ
     {
         if (value.IsNull()) return;
 
-        var path = context.AssetServer.Assets.GetPath(value);
-        if (path.HasValue)
+        var info = context.AssetServer.Assets.GetInfo(value);
+        if (info?.Path is { } path)
         {
-            writer.Write(path.Value.Path, "$path");
+            writer.Write(path.Path, "$path");
         }
         else
         {

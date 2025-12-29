@@ -44,9 +44,11 @@ class Field
 {
     public string Name;
     public string Type;
+    public string FullClassName;
     public bool IsRequired;
     public string[] Attributes;
     public bool IsBlittable;
+    public string[] TypeAttributes;
 }
 
 internal static class Common
@@ -62,9 +64,11 @@ internal static class Common
                 data = new Field()
                 {
                     Name = field.Name,
+                    FullClassName = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     Type = field.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     IsRequired = field.IsRequired,
                     IsBlittable = field.Type.IsUnmanagedType,
+                    TypeAttributes = field.Type.GetAttributes().Select(a => a.ToString()).ToArray(),
                 };
             }
             else if (member is IPropertySymbol { IsStatic: false, IsAbstract: false, IsImplicitlyDeclared: false, IsReadOnly: false } property)
@@ -72,9 +76,11 @@ internal static class Common
                 data = new Field()
                 {
                     Name = property.Name,
+                    FullClassName = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     Type = property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                     IsRequired = property.IsRequired,
                     IsBlittable = property.Type.IsUnmanagedType,
+                    TypeAttributes = property.Type.GetAttributes().Select(a => a.ToString()).ToArray(),
                 };
             }
 

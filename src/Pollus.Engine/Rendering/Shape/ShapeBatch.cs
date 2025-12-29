@@ -36,10 +36,10 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
 
     public Handle Material { get; }
     public Handle<Shape> Shape { get; }
+    public override Handle[] RequiredResources => [Material, Shape];
 
-    public ShapeBatch(in ShapeBatchKey key)
+    public ShapeBatch(in ShapeBatchKey key) : base(key.GetHashCode())
     {
-        Key = key.GetHashCode();
         Material = key.Material;
         Shape = key.Shape;
     }

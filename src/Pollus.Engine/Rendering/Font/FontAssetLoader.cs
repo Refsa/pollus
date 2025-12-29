@@ -10,7 +10,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
     static readonly string[] extensions = [".ttf", ".otf"];
     public override string[] Extensions => extensions;
 
-    unsafe protected override void Load(ReadOnlySpan<byte> data, ref LoadContext<FontAsset> context)
+    unsafe protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         var info = new StbTrueType.stbtt_fontinfo();
         fixed (byte* ptr = data)

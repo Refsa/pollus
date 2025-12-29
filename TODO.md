@@ -15,16 +15,16 @@
 	- [ ] Filters
 	- [ ] Mixers
 - Assets
-	- [-] Async loading
+	- [x] Async loading
 		- [x] LoadAsync to load from a Task
-		- [ ] async support in AssetLoader
+		- [x] async support in AssetLoader
 	- [ ] Streaming / partial loading
-	- [ ] dependency / hierarchy
+	- [x] dependency / hierarchy
 		- an asset might require one or more other assets to complete its loading
 		- f.ex. shader imports, scene files, etc.
 		- [x] tracking dependencies/dependents
-		- [ ] load order dependency
-		- [ ] improved status on loading
+		- [x] load order dependency
+		- [x] improved status on loading
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
 	- [-] Hot reloading
@@ -70,7 +70,7 @@
 		- [x] entities
 		- [ ] resources
 		- [-] asset prefetch
-			- Handle<T> is supported to load assets
+			- Handle<T> is supported to load assets, scene will not be fully loaded until all assets are loaded
 		- [x] reproduce hierarchy layout?
 			- scenes are created as parent/child hierarchies
 			- scenes can contain references to scenes

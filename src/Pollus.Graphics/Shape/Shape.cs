@@ -1,10 +1,12 @@
 namespace Pollus.Graphics;
 
+using Core.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public class Shape
+[Asset]
+public partial class Shape
 {
     public required string Name { get; init; }
     public required Vec2f[] Positions { get; init; }

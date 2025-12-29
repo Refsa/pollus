@@ -1,14 +1,10 @@
 namespace Pollus.Engine.Assets;
 
 using Pollus.ECS;
-
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public sealed class AssetAttribute : Attribute
-{
-}
+using Core.Assets;
 
 public class AssetsFetch<T> : IFetch<Assets<T>>
-    where T : notnull
+    where T : IAsset
 {
     public static void Register()
     {

@@ -1,10 +1,13 @@
 namespace Pollus.Engine;
 
+using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Core.Assets;
 using Utils;
 
-public class Scene
+[Asset]
+public class Scene : IAsset
 {
     public struct SceneEntity
     {
@@ -26,6 +29,7 @@ public class Scene
         Types = [],
         Entities = [],
         Scenes = [],
+        Assets = [],
     };
 
     public int FormatVersion { get; set; } = 1;
@@ -34,6 +38,9 @@ public class Scene
     public required Dictionary<string, Type> Types { get; init; }
     public required List<SceneEntity> Entities { get; init; }
     public required Dictionary<string, Handle<Scene>> Scenes { get; init; }
+    public required HashSet<Handle> Assets { get; init; }
+
+    public HashSet<Handle> Dependencies => [.. Scenes.Values, .. Assets];
 }
 
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]

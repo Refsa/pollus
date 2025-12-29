@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Assets;
 
+using Core.Assets;
 using Pollus.Engine.Serialization;
 using Pollus.Core.Serialization;
 using Pollus.Utils;
@@ -12,11 +13,12 @@ public struct LoadContext
     public required AssetServer AssetServer { get; init; }
 
     public AssetStatus Status { get; set; }
-    public object? Asset { get; private set; }
+    public IAsset? Asset { get; private set; }
 
     public HashSet<Handle>? Dependencies { get; set; }
 
-    public void SetAsset<T>(T asset)
+    public void SetAsset<TAsset>(TAsset asset)
+        where TAsset : IAsset
     {
         Asset = asset;
         Status = AssetStatus.Loaded;
@@ -31,22 +33,22 @@ public interface IAssetLoader
 }
 
 public abstract class AssetLoader<TAsset> : IAssetLoader
-    where TAsset : notnull
+    where TAsset : IAsset
 {
-    protected ref struct LoadContext<T>
+    protected ref struct LoadContext
     {
-        ref LoadContext context;
+        ref Assets.LoadContext context;
         public readonly AssetPath Path => context.Path;
         public readonly string FileName => context.FileName;
         public readonly Handle Handle => context.Handle;
         public readonly AssetServer AssetServer => context.AssetServer;
 
-        public LoadContext(ref LoadContext context)
+        public LoadContext(ref Assets.LoadContext context)
         {
             this.context = ref context;
         }
 
-        public void SetAsset(T asset) => context.SetAsset(asset);
+        public void SetAsset(TAsset asset) => context.SetAsset(asset);
 
         public void AddDependency(Handle dependency)
         {
@@ -66,11 +68,11 @@ public abstract class AssetLoader<TAsset> : IAssetLoader
 
     public abstract string[] Extensions { get; }
 
-    public void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    public void Load(ReadOnlySpan<byte> data, ref Assets.LoadContext context)
     {
-        var wrappedContext = new LoadContext<TAsset>(ref context);
+        var wrappedContext = new LoadContext(ref context);
         Load(data, ref wrappedContext);
     }
 
-    protected abstract void Load(ReadOnlySpan<byte> data, ref LoadContext<TAsset> context);
+    protected abstract void Load(ReadOnlySpan<byte> data, ref LoadContext context);
 }

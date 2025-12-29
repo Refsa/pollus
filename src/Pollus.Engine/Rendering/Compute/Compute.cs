@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Core.Assets;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.WGPU;
@@ -13,7 +14,8 @@ public interface IComputeShader
     IBinding[][] Bindings { get; }
 }
 
-public class ComputeShader : IComputeShader
+[Asset]
+public partial class ComputeShader : IComputeShader
 {
     public required string Label { get; init; }
     public required Handle<ShaderAsset> Shader { get; init; }
@@ -22,7 +24,7 @@ public class ComputeShader : IComputeShader
 }
 
 public class ComputePlugin<TCompute> : IPlugin
-    where TCompute : IComputeShader
+    where TCompute : IComputeShader, IAsset
 {
     public const string SetupSystem = $"ComputePlugin<{nameof(TCompute)}>::Setup";
 

@@ -109,7 +109,13 @@ public ref struct SceneWriter : IWriter, IDisposable
         foreach (var cid in archetype.GetChunkInfo().ComponentIDs)
         {
             var cinfo = Component.GetInfo(cid);
+            if (ignoredComponents.Contains(cid)) continue;
             types.Add(cinfo.Type);
+        }
+
+        if (archetype.HasComponent<SceneRef>() && !options.WriteSubScenes)
+        {
+            return;
         }
 
         if (archetype.HasComponent<Parent>())
@@ -139,8 +145,8 @@ public ref struct SceneWriter : IWriter, IDisposable
             ref var sceneRef = ref chunk.GetComponent<SceneRef>(entityInfo.RowIndex);
             if (!options.WriteSubScenes)
             {
-                var assetPath = world.Resources.Get<AssetServer>().GetAssets<Scene>().GetPath(sceneRef.Scene);
-                if (assetPath.HasValue) writer.WriteString("Scene", assetPath.Value.Path);
+                var assetInfo = world.Resources.Get<AssetServer>().Assets.GetInfo(sceneRef.Scene);
+                if (assetInfo?.Path is { } path) writer.WriteString("Scene", path.Path);
 
                 writer.WriteEndObject();
                 return;

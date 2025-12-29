@@ -1,12 +1,14 @@
 namespace Pollus.Engine.Rendering;
 
+using System.Collections.ObjectModel;
+using Core.Assets;
 using Core.Serialization;
 using Pollus.Engine.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-[Serialize]
+[Serialize, Asset]
 public partial class TextureBinding : IBinding
 {
     public static TextureBinding Default => new() { Image = Handle<Texture2D>.Null };

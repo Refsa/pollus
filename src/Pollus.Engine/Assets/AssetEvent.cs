@@ -5,10 +5,11 @@ using Utils;
 public enum AssetEventType
 {
     Added,
+    Loaded,
     Unloaded,
     Changed,
-    DependenciesChanged,
     Deleted,
+    Failed,
 }
 
 public struct AssetEvent<TAsset>
