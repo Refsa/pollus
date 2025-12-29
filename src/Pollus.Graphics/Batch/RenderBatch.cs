@@ -14,11 +14,13 @@ public interface IRenderBatch
     bool IsStatic { get; }
     bool IsDirty { get; set; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; }
+    public Handle[] RequiredResources { get; }
 
     void Reset();
     GPUBuffer CreateBuffer(IWGPUContext context);
     void EnsureCapacity(GPUBuffer buffer);
     ReadOnlySpan<byte> GetBytes();
+    bool CanDraw(IRenderAssets renderAssets);
 }
 
 public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
@@ -29,6 +31,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
 
     public int Key { get; init; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
+    public abstract Handle[] RequiredResources { get; }
 
     public int Count => count;
     public int Capacity => scratch.Length;
@@ -38,20 +41,35 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public bool IsDirty { get; set; }
     public bool IsStatic { get; init; }
 
-    public RenderBatch()
+    protected RenderBatch()
     {
         scratch = new TInstanceData[16];
     }
 
+    protected RenderBatch(int key) : this()
+    {
+        Key = key;
+    }
+
     public void Dispose()
     {
-
     }
 
     public void Reset()
     {
         count = 0;
         IsDirty = true;
+    }
+
+    public bool CanDraw(IRenderAssets renderAssets)
+    {
+        if (IsEmpty) return false;
+        foreach (var resource in RequiredResources)
+        {
+            if (!renderAssets.Has(resource)) return false;
+        }
+
+        return true;
     }
 
     public void Write(in TInstanceData data)

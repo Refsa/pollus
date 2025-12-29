@@ -19,10 +19,10 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     }
 
     public Handle Material { get; init; }
+    public override Handle[] RequiredResources => [Material];
 
-    public SpriteBatch(in SpriteBatchKey key)
+    public SpriteBatch(in SpriteBatchKey key) : base(key.GetHashCode())
     {
-        Key = key.GetHashCode();
         Material = key.Material;
         IsStatic = key.IsStatic;
     }

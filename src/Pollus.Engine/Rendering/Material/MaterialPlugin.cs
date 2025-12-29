@@ -35,7 +35,7 @@ public class MaterialPlugin<TMaterial> : IPlugin
                     if (assetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
 
                     renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
-                } 
+                }
             }));
     }
 

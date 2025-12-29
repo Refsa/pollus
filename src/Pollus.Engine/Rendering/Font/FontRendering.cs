@@ -178,10 +178,10 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
 
     public Handle<FontMaterial> Material { get; }
     public Handle<TextMeshAsset> TextMesh { get; }
+    public override Handle[] RequiredResources => [Material, TextMesh];
 
-    public FontBatch(in FontBatchKey key)
+    public FontBatch(in FontBatchKey key) : base(key.GetHashCode())
     {
-        Key = key.GetHashCode();
         Material = key.Material;
         TextMesh = key.TextMesh;
     }

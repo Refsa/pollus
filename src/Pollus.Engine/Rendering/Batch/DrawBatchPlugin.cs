@@ -7,9 +7,9 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
-public static class DrawSystemShared<TBatches, TBatch>
+public static class DrawSystemLabels<TBatches, TBatch>
     where TBatches : IRenderBatches<TBatch>
-    where TBatch : IRenderBatch
+    where TBatch : class, IRenderBatch
 {
     public static readonly string ExtractSystem = $"DrawSystem::Extract<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
     public static readonly string WriteSystem = $"DrawSystem::Write<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
@@ -18,11 +18,11 @@ public static class DrawSystemShared<TBatches, TBatch>
 
 public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
     where TBatches : IRenderBatches<TBatch>
-    where TBatch : IRenderBatch
+    where TBatch : class, IRenderBatch
     where TExtractQuery : IQuery
 {
-    public ExtractDrawSystem()
-        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.ExtractSystem)
+    protected ExtractDrawSystem()
+        : base(new SystemDescriptor(DrawSystemLabels<TBatches, TBatch>.ExtractSystem)
         {
             RunsAfter = [RenderingPlugin.BeginFrameSystem]
         })
@@ -42,12 +42,12 @@ public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : Syste
 
 public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches>
     where TBatches : IRenderBatches<TBatch>
-    where TBatch : IRenderBatch
+    where TBatch : class, IRenderBatch
 {
     public WriteBatchesSystem()
-        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.WriteSystem)
+        : base(new SystemDescriptor(DrawSystemLabels<TBatches, TBatch>.WriteSystem)
         {
-            RunsAfter = [DrawSystemShared<TBatches, TBatch>.ExtractSystem]
+            RunsAfter = [DrawSystemLabels<TBatches, TBatch>.ExtractSystem]
         })
     {
     }
@@ -80,7 +80,7 @@ public class WriteBatchesSystem<TBatches, TBatch> : SystemBase<RenderAssets, Ass
 
 public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, RenderAssets, TBatches>
     where TBatches : IRenderBatches<TBatch>
-    where TBatch : IRenderBatch
+    where TBatch : class, IRenderBatch
 {
     public delegate Draw DrawBatchDelegate(RenderAssets renderAssets, TBatch batch);
 
@@ -88,8 +88,8 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
     public required RenderStep2D RenderStep;
 
     public DrawBatchesSystem()
-        : base(new SystemDescriptor(DrawSystemShared<TBatches, TBatch>.DrawSystem)
-            .After(DrawSystemShared<TBatches, TBatch>.WriteSystem)
+        : base(new SystemDescriptor(DrawSystemLabels<TBatches, TBatch>.DrawSystem)
+            .After(DrawSystemLabels<TBatches, TBatch>.WriteSystem)
         )
     {
     }
@@ -99,7 +99,7 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
         var commands = renderSteps.GetDrawList(RenderStep);
         foreach (var batch in batches.Batches)
         {
-            if (batch.IsEmpty) continue;
+            if (!batch.CanDraw(renderAssets)) continue;
             var draw = DrawExec(renderAssets, batch);
             if (draw.IsEmpty) continue;
             commands.Add(draw);
