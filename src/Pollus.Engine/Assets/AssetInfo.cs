@@ -7,9 +7,7 @@ public enum AssetStatus
 {
     Failed = -1,
     Unknown = 0,
-    Unloaded = 1,
     Initialized,
-    Loading,
     Added,
     WaitingForDependency,
     Loaded,
