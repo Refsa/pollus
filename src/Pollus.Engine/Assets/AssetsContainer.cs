@@ -7,6 +7,12 @@ using Core.Assets;
 
 public class AssetsContainer : IDisposable
 {
+    static AssetsContainer()
+    {
+        Pool<HashSet<Handle>>.Factory = () => new();
+        Pool<Queue<Handle>>.Factory = () => new();
+    }
+
     Dictionary<TypeID, IAssetStorage> assets = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
 

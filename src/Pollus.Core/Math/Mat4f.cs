@@ -47,9 +47,9 @@ public partial record struct Mat4f
     }
 
     public Mat4f(float m00, float m01, float m02, float m03,
-                float m10, float m11, float m12, float m13,
-                float m20, float m21, float m22, float m23,
-                float m30, float m31, float m32, float m33)
+        float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23,
+        float m30, float m31, float m32, float m33)
     {
         Col0 = new(m00, m01, m02, m03);
         Col1 = new(m10, m11, m12, m13);
@@ -120,9 +120,9 @@ public partial record struct Mat4f
         );
 
         return new(Unsafe.As<Vector128<float>, Vec4f>(ref col0),
-                   Unsafe.As<Vector128<float>, Vec4f>(ref col1),
-                   Unsafe.As<Vector128<float>, Vec4f>(ref col2),
-                   Unsafe.As<Vector128<float>, Vec4f>(ref col3));
+            Unsafe.As<Vector128<float>, Vec4f>(ref col1),
+            Unsafe.As<Vector128<float>, Vec4f>(ref col2),
+            Unsafe.As<Vector128<float>, Vec4f>(ref col3));
     }
 
     public static Vec4f operator *(in Mat4f left, in Vec4f right)
@@ -189,6 +189,18 @@ public partial record struct Mat4f
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Mat4f FromTRS(Vec3f translation, float rotation, Vec2f scale)
+    {
+        var (sin, cos) = Math.SinCos(rotation);
+        return new(
+            new Vec4f(cos * scale.X, sin * scale.X, 0f, 0f),
+            new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, 0f),
+            new Vec4f(0f, 0f, 1f, 0f),
+            new Vec4f(translation.X, translation.Y, translation.Z, 1f)
+        );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f FromTRS_Row(Vec3f translation, Quat rotation, Vec3f scale)
     {
         Guard.IsTrue(rotation.IsNormalized(), "Rotation must be normalized.");
@@ -210,6 +222,18 @@ public partial record struct Mat4f
             new Vec4f(cos * scale.X, sin * scale.X, 0f, translation.X),
             new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, translation.Y),
             new Vec4f(0f, 0f, 1f, 0f),
+            new Vec4f(0f, 0f, 0f, 1f)
+        );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Mat4f FromTRS_Row(Vec3f translation, float rotation, Vec2f scale)
+    {
+        var (sin, cos) = Math.SinCos(rotation);
+        return new(
+            new Vec4f(cos * scale.X, sin * scale.X, 0f, translation.X),
+            new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, translation.Y),
+            new Vec4f(0f, 0f, 1f, translation.Z),
             new Vec4f(0f, 0f, 0f, 1f)
         );
     }

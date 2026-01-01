@@ -115,6 +115,11 @@ public struct ResourceContainer<TResource> : IDisposable
 
 public struct ResourceContainers : IDisposable
 {
+    static ResourceContainers()
+    {
+        Pool<Dictionary<string, ResourceHandle>>.Factory = () => new Dictionary<string, ResourceHandle>();
+    }
+
     int count;
     ResourceContainer<TextureResource> textures;
     ResourceContainer<BufferResource> buffers;

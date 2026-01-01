@@ -5,15 +5,16 @@ namespace Pollus.Utils;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class Pool<T>
-    where T : new()
 {
     [ThreadStatic] static Pool<T>? shared;
-    public static Pool<T> Shared => shared ??= new Pool<T>(static () => new(), 16);
+    public static FactoryDelegate? Factory;
+    public static Pool<T> Shared => shared ??= new Pool<T>(
+        Factory ?? throw new NullReferenceException($"Factory not set on Pool<{typeof(T).Name}>"), 16);
 
     public delegate T FactoryDelegate();
 
     readonly FactoryDelegate factory;
-    readonly Stack<T> open = [];
+    readonly Stack<T> open;
 
     public Pool(FactoryDelegate factory, int capacity)
     {

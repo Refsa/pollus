@@ -114,8 +114,8 @@
 		- [x] frame graph color targets
 	- [-] Gizmos
 		- [x] Drawing API
-			- [ ] DrawTexture
-			- [ ] DrawText
+			- [x] DrawTexture
+			- [x] DrawText
 		- [ ] SDF drawing
 		- [ ] Handles/Interactions
 	- [ ] HDR surface formats
