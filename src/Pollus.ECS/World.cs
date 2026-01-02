@@ -107,7 +107,7 @@ public class World : IDisposable
         archetype.Preallocate(count);
     }
 
-    public World AddPlugin<TPlugin>(TPlugin plugin)
+    public World AddPlugin<TPlugin>(TPlugin plugin, bool addDependencies = false)
         where TPlugin : IPlugin
     {
         var pluginType = plugin.GetType();
@@ -117,21 +117,33 @@ public class World : IDisposable
             return this;
         }
 
+        if (addDependencies)
+        {
+            foreach (var dependency in plugin.Dependencies)
+            {
+                if (!registeredPlugins.Contains(dependency.Type))
+                {
+                    AddPlugin(dependency.Plugin, true);
+                }
+            }
+        }
+
+        registeredPlugins.Add(pluginType);
         plugin.Apply(this);
         return this;
     }
 
-    public World AddPlugin<TPlugin>()
+    public World AddPlugin<TPlugin>(bool addDependencies = false)
         where TPlugin : IPlugin, new()
     {
-        return AddPlugin(new TPlugin());
+        return AddPlugin(new TPlugin(), addDependencies);
     }
 
-    public World AddPlugins(params IPlugin[] plugins)
+    public World AddPlugins(bool addDependencies, params IPlugin[] plugins)
     {
         foreach (var plugin in plugins)
         {
-            AddPlugin(plugin);
+            AddPlugin(plugin, addDependencies);
         }
 
         return this;

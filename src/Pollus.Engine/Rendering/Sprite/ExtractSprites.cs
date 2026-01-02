@@ -6,23 +6,23 @@ using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 
-class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query<Transform2D, Sprite>>
+class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query<GlobalTransform, Sprite>>
 {
-    struct ExtractJob : IForEach<Transform2D, Sprite>
+    struct ExtractJob : IForEach<GlobalTransform, Sprite>
     {
         public required SpriteBatches Batches { get; init; }
         public required bool IsStatic { get; init; }
 
-        public void Execute(ref Transform2D transform, ref Sprite sprite)
+        public void Execute(ref GlobalTransform transform, ref Sprite sprite)
         {
             var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material, IsStatic));
-            var matrix = transform.ToMat4f_Row();
+            var matrix = transform.Value.Transpose();
             var extents = sprite.Slice.Size();
             batch.Write(new SpriteBatch.InstanceData
             {
-                Model_0 = matrix.Col0,
-                Model_1 = matrix.Col1,
-                Model_2 = matrix.Col2,
+                Model0 = matrix.Col0,
+                Model1 = matrix.Col1,
+                Model2 = matrix.Col2,
                 Slice = new Vec4f(sprite.Slice.Min.X, sprite.Slice.Min.Y, extents.X, extents.Y),
                 Color = sprite.Color,
             });
@@ -32,7 +32,7 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
     protected override void Extract(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, SpriteBatches batches,
-        Query<Transform2D, Sprite> query)
+        Query<GlobalTransform, Sprite> query)
     {
         var hasStatic = query.Any<Added<StaticCalculated>>();
         batches.Reset(hasStatic);

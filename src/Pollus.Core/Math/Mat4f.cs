@@ -365,7 +365,7 @@ public partial record struct Mat4f
         return Math.Atan2(Col1.X, Col0.X);
     }
 
-    public Mat4f Transpose()
+    public readonly Mat4f Transpose()
     {
         return new(
             new Vec4f(Col0.X, Col1.X, Col2.X, Col3.X),

@@ -21,7 +21,7 @@ public class GizmoPlugin : IPlugin
     public void Apply(World world)
     {
         world.Resources.Add(new Gizmos());
-        world.AddPlugins([
+        world.AddPlugins(true, [
             new MaterialPlugin<GizmoFilledMaterial>(),
             new MaterialPlugin<GizmoOutlinedMaterial>(),
         ]);

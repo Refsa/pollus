@@ -26,7 +26,12 @@ struct SceneUniform {
 
 var<private> model: mat4x4f;
 fn vs_setup(input: ModelInput) {
-    model = transpose(mat4x4f(input.model_0, input.model_1, input.model_2, vec4f(0.0, 0.0, 0.0, 1.0)));
+    model = transpose(mat4x4f(
+        input.model_0, 
+        input.model_1, 
+        input.model_2, 
+        vec4f(0.0, 0.0, 0.0, 1.0))
+    );
 }
 
 @vertex

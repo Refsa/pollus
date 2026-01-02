@@ -53,13 +53,14 @@ public class RenderingPlugin : IPlugin
         }
         assetServer.InitAssets<StorageBuffer>();
 
-        world.AddPlugins([
+        world.AddPlugins(true, [
             new ImagePlugin(),
             new CameraPlugin(),
             new FrameGraph2DPlugin(),
             new MeshPlugin() { SharedPrimitives = PrimitiveType.All },
             new ComputePlugin<ComputeShader>(),
             new SpritePlugin(),
+            new ShapePlugin(),
             new UniformPlugin<SceneUniform, Param<Time, Query<Projection, Transform2D>>>()
             {
                 Extract = static (in param, ref uniform) =>

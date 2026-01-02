@@ -18,6 +18,7 @@ public class ShapePlugin : IPlugin
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<RenderingPlugin>(),
+PluginDependency.From<TransformPlugin<Transform2D>>(),
     ];
 
     public void Apply(World world)

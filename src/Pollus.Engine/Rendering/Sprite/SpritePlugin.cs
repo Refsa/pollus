@@ -3,16 +3,18 @@ namespace Pollus.Engine.Rendering;
 using Assets;
 using Pollus.ECS;
 using Pollus.Graphics;
+using Transform;
 
 public class SpritePlugin : IPlugin
 {
     public PluginDependency[] Dependencies => [
         PluginDependency.From<RenderingPlugin>(),
+        PluginDependency.From<TransformPlugin<Transform2D>>(),
     ];
 
     public void Apply(World world)
     {
-        world.AddPlugins([
+        world.AddPlugins(true, [
             new MaterialPlugin<SpriteMaterial>(),
         ]);
         world.Resources.Add(new SpriteBatches());

@@ -6,6 +6,8 @@ using Pollus.Mathematics;
 
 public interface ITransform
 {
+    static abstract Mat4f ToMat4f(in ITransform transform);
+
     Mat4f ToMat4f();
     GlobalTransform ToGlobalTransform(Mat4f parentTransform);
 }
@@ -32,11 +34,20 @@ public partial class TransformPlugin<TTransform> : IPlugin
         Query<GlobalTransform, Read<TTransform>>.Filter<None<Parent, Child, Static>> qOrphans
     )
     {
-        qOrphans.ForEach(static (ref globalTransform, ref transform) => { globalTransform.Value = transform.Component.ToMat4f(); });
+        qOrphans.ForEach(static (ref globalTransform, ref transform) =>
+        {
+            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+        });
 
-        qTreeTransforms.ForEach(static (ref globalTransform, ref transform) => { globalTransform.Value = transform.Component.ToMat4f(); });
+        qTreeTransforms.ForEach(static (ref globalTransform, ref transform) =>
+        {
+            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+        });
 
-        qRoots.ForEach(query, static (in query, in root, ref globalTransform, ref transform, ref parent) => { Propagate(root, query, Mat4f.Identity()); });
+        qRoots.ForEach(query, static (in query, in root, ref _, ref _, ref _) =>
+        {
+            Propagate(root, query, Mat4f.Identity());
+        });
     }
 
     static void HandleStatic(
@@ -49,29 +60,29 @@ public partial class TransformPlugin<TTransform> : IPlugin
     {
         qOrphans.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = transform.Component.ToMat4f();
+            globalTransform.Value = TTransform.ToMat4f(transform.Component);
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 
         qTreeTransforms.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = transform.Component.ToMat4f();
+            globalTransform.Value = TTransform.ToMat4f(transform.Component);
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 
-        qRoots.ForEach(query, static (in query, in root, ref globalTransform, ref transform, ref parent) => { Propagate(root, query, Mat4f.Identity()); });
+        qRoots.ForEach(query, static (in query, in root, ref _, ref _, ref _) =>
+        {
+            Propagate(root, query, Mat4f.Identity());
+        });
     }
 
     static void Propagate(in Entity current, in Query query, in Mat4f parentTransform)
     {
         {
             ref var child = ref query.TryGet<Child>(current, out var hasChild);
-            if (hasChild)
+            if (hasChild && child.NextSibling != Entity.NULL)
             {
-                if (!child.NextSibling.IsNull)
-                {
-                    Propagate(child.NextSibling, query, parentTransform);
-                }
+                Propagate(child.NextSibling, query, parentTransform);
             }
         }
 

@@ -53,4 +53,9 @@ public partial struct Transform2D : ITransform, IComponent
             Value = ToMat4f() * parentTransform,
         };
     }
+
+    public static Mat4f ToMat4f(in ITransform transform)
+    {
+        return transform.ToMat4f();
+    }
 }

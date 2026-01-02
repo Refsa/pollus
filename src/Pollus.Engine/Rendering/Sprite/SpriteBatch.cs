@@ -11,9 +11,9 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     [ShaderType]
     public partial struct InstanceData
     {
-        public required Vec4f Model_0;
-        public required Vec4f Model_1;
-        public required Vec4f Model_2;
+        public required Vec4f Model0;
+        public required Vec4f Model1;
+        public required Vec4f Model2;
         public required Vec4f Slice;
         public required Vec4f Color;
     }
