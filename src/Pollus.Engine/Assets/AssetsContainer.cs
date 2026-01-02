@@ -7,12 +7,6 @@ using Core.Assets;
 
 public class AssetsContainer : IDisposable
 {
-    static AssetsContainer()
-    {
-        Pool<HashSet<Handle>>.Factory = () => new();
-        Pool<Queue<Handle>>.Factory = () => new();
-    }
-
     Dictionary<TypeID, IAssetStorage> assets = new();
     Dictionary<AssetPath, Handle> assetLookup = new();
 
@@ -157,12 +151,8 @@ public class AssetsContainer : IDisposable
     {
         if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");
         var info = storage.GetInfo(handle);
-        if (info?.Path is { } path)
-        {
-            assetLookup.Remove(path);
-        }
 
-        OnAssetRemoved(handle, info);
+        OnAssetRemoved(handle, info?.Path, info);
         storage.Remove(handle);
     }
 
@@ -247,8 +237,14 @@ public class AssetsContainer : IDisposable
         }
     }
 
-    void OnAssetAddedOrModified(Handle handle, IAsset asset)
+    void OnAssetAddedOrModified(Handle handle, AssetPath? path, IAsset asset)
     {
+        if (path.HasValue)
+        {
+            if (!assetLookup.TryAdd(path.Value, handle))
+                assetLookup[path.Value] = handle;
+        }
+
         if (asset.Dependencies is { Count: > 0 })
         {
             foreach (var dep in asset.Dependencies)
@@ -265,9 +261,10 @@ public class AssetsContainer : IDisposable
         NotifyDependants(handle);
     }
 
-    void OnAssetRemoved(Handle handle, IAssetInfo? info)
+    void OnAssetRemoved(Handle handle, AssetPath? path, IAssetInfo? info)
     {
         if (info == null) return;
+        if (path.HasValue) assetLookup.Remove(path.Value);
 
         if (info.Dependents is { Count: > 0 })
         {
@@ -294,11 +291,11 @@ public class AssetsContainer : IDisposable
         }
     }
 
-    void OnAssetRemoved(Handle handle)
+    void OnAssetRemoved(Handle handle, AssetPath? path)
     {
         if (!TryGetAssets(handle.Type, out var storage)) return;
         var info = storage.GetInfo(handle);
-        OnAssetRemoved(handle, info);
+        OnAssetRemoved(handle, path, info);
     }
 
     bool ValidateStatus(Handle handle)

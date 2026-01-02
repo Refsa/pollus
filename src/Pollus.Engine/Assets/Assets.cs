@@ -22,9 +22,9 @@ public interface IAssetStorage : IDisposable
 
     IAssetInfo? GetInfo(Handle handle);
 
-    event Action<Handle, IAsset> OnAdded;
-    event Action<Handle, IAsset> OnModified;
-    event Action<Handle> OnRemoved;
+    event Action<Handle, AssetPath?, IAsset> OnAdded;
+    event Action<Handle, AssetPath?, IAsset> OnModified;
+    event Action<Handle, AssetPath?> OnRemoved;
 }
 
 public class Assets<T> : IAssetStorage
@@ -46,9 +46,9 @@ public class Assets<T> : IAssetStorage
 
     ArrayList<AssetEvent<T>> queuedEvents = new();
 
-    public event Action<Handle, IAsset>? OnAdded;
-    public event Action<Handle, IAsset>? OnModified;
-    public event Action<Handle>? OnRemoved;
+    public event Action<Handle, AssetPath?, IAsset>? OnAdded;
+    public event Action<Handle, AssetPath?, IAsset>? OnModified;
+    public event Action<Handle, AssetPath?>? OnRemoved;
 
     public TypeID AssetType => _assetTypeId;
     public ListEnumerable<AssetInfo<T>> AssetInfos => new(assets);
@@ -102,7 +102,7 @@ public class Assets<T> : IAssetStorage
                 info.Dependencies = [.. asset.Dependencies];
                 info.LastModified = DateTime.UtcNow;
 
-                OnModified?.Invoke(handle, asset);
+                OnModified?.Invoke(handle, path, asset);
             }
 
             queuedEvents.Add(new AssetEvent<T>
@@ -128,7 +128,7 @@ public class Assets<T> : IAssetStorage
         };
 
         assets.Add(newInfo);
-        OnAdded?.Invoke(handle, asset);
+        OnAdded?.Invoke(handle, path, asset);
 
         queuedEvents.Add(new AssetEvent<T>
         {
@@ -163,7 +163,7 @@ public class Assets<T> : IAssetStorage
         assetInfo.LastModified = DateTime.UtcNow;
         assetInfo.Dependencies = [.. asset.Dependencies];
 
-        OnModified?.Invoke(handle, asset);
+        OnModified?.Invoke(handle, assetInfo.Path, asset);
 
         queuedEvents.Add(new AssetEvent<T>
         {
@@ -192,7 +192,7 @@ public class Assets<T> : IAssetStorage
                 assetLookup[assets[i].Handle] = i;
             }
 
-            OnRemoved?.Invoke(handle);
+            OnRemoved?.Invoke(handle, assetInfo.Path);
 
             queuedEvents.Add(new AssetEvent<T>
             {
