@@ -10,7 +10,7 @@ public partial class Shape
 {
     public required string Name { get; init; }
     public required Vec2f[] Positions { get; init; }
-    public required Vec2f[] Uvs { get; init; }
+    public required Vec2f[] UVs { get; init; }
 
     public VertexData GetVertexData()
     {
@@ -19,7 +19,7 @@ public partial class Shape
 
         for (int i = 0; i < Positions.Length; i++)
         {
-            vertexData.Write(i, Positions[i], Uvs[i]);
+            vertexData.Write(i, Positions[i], UVs[i]);
         }
 
         return vertexData;
@@ -36,7 +36,7 @@ public partial class Shape
         {
             Name = "Line",
             Positions = [start, end],
-            Uvs = [Vec2f.Zero, Vec2f.One],
+            UVs = [Vec2f.Zero, Vec2f.One],
         };
     }
 
@@ -45,14 +45,14 @@ public partial class Shape
         var uvs = new Vec2f[points.Length];
         for (int i = 0; i < points.Length; i++)
         {
-            uvs[i] = new Vec2f(i / (points.Length - 1), 0);
+            uvs[i] = new Vec2f(i / (points.Length - 1f), 0);
         }
 
         return new()
         {
             Name = "LineSegment",
             Positions = points.ToArray(),
-            Uvs = uvs,
+            UVs = uvs,
         };
     }
 
@@ -67,7 +67,7 @@ public partial class Shape
                 center + new Vec2f(-extents.X, extents.Y),
                 center + new Vec2f(extents.X, extents.Y),
             ],
-            Uvs = [
+            UVs = [
                 Vec2f.Zero,
                 new Vec2f(1, 0),
                 Vec2f.One,
@@ -103,7 +103,7 @@ public partial class Shape
         {
             Name = "Arc",
             Positions = positions,
-            Uvs = uvs,
+            UVs = uvs,
         };
     }
 
@@ -130,7 +130,7 @@ public partial class Shape
         {
             Name = "Circle",
             Positions = positions,
-            Uvs = uvs,
+            UVs = uvs,
         };
     }
 
@@ -145,7 +145,7 @@ public partial class Shape
         {
             Name = "Triangle",
             Positions = [p1, p2, p3],
-            Uvs = [Vec2f.Zero, Vec2f.One, Vec2f.Zero],
+            UVs = [Vec2f.Zero, Vec2f.One, Vec2f.Zero],
         };
     }
 
@@ -174,7 +174,7 @@ public partial class Shape
         {
             Name = "Capsule",
             Positions = [.. arc1.Positions, .. line1.Positions, .. line2.Positions, .. arc2.Positions],
-            Uvs = [.. arc1.Uvs, .. line1.Uvs, .. line2.Uvs, .. arc2.Uvs],
+            UVs = [.. arc1.UVs, .. line1.UVs, .. line2.UVs, .. arc2.UVs],
         };
     }
 
@@ -189,7 +189,7 @@ public partial class Shape
                 center + new Vec2f(0, height),
                 center + new Vec2f(-width * 0.5f, -height * 0.5f),
             ],
-            Uvs = [
+            UVs = [
                 Vec2f.Zero,
                 new Vec2f(1, 0),
                 new Vec2f(0.5f, 1),

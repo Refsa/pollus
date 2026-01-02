@@ -172,6 +172,7 @@ public class Assets<T> : IAssetStorage
         });
     }
 
+
     public void Remove(Handle handle)
     {
         if (assetLookup.TryGetValue(handle, out var index))
@@ -206,6 +207,16 @@ public class Assets<T> : IAssetStorage
         if (assetLookup.TryGetValue(handle, out var index))
         {
             return assets[index].Asset;
+        }
+
+        return default;
+    }
+
+    public T? Get(AssetPath path)
+    {
+        if (pathLookup.TryGetValue(path, out var handle))
+        {
+            return Get(handle);
         }
 
         return default;

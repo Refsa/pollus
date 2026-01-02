@@ -1,22 +1,11 @@
 ﻿namespace Pollus.Benchmark;
 
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-using BenchmarkDotNet.Toolchains.NativeAot;
 
 public static class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // BenchmarkRunner.Run<TestBenchmarks>();
-        // BenchmarkRunner.Run<NativeMapBenchmarks>();
-
-        BenchmarkRunner.Run<SpawnBenchmarks>();
-        // BenchmarkRunner.Run<QueryBenchmarks>();
-        // BenchmarkRunner.Run<SystemBenchmark>();
-        // BenchmarkRunner.Run<SpatialBench>();
-        // BenchmarkRunner.Run<MathBenchmarks>();
-        // BenchmarkRunner.Run<QueryLookupBenchmark>();
+        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
     }
 }

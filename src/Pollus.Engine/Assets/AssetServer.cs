@@ -85,10 +85,10 @@ public class AssetServer : IDisposable
         return this;
     }
 
-    public void InitAssets<TAsset>()
+    public Assets<TAsset> InitAssets<TAsset>()
         where TAsset : IAsset
     {
-        Assets.InitAssets<TAsset>();
+        return Assets.InitAssets<TAsset>();
     }
 
     public Assets<TAsset> GetAssets<TAsset>()

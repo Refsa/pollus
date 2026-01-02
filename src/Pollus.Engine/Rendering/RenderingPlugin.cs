@@ -46,7 +46,11 @@ public class RenderingPlugin : IPlugin
         var assetServer = world.Resources.Get<AssetServer>();
         assetServer.AddLoader<WgslShaderSourceLoader>();
         assetServer.InitAssets<Texture2D>();
-        assetServer.InitAssets<SamplerAsset>();
+        {
+            var samplerAssets = assetServer.InitAssets<SamplerAsset>();
+            samplerAssets.Add(SamplerDescriptor.Nearest, "internal://samplers/nearest");
+            samplerAssets.Add(SamplerDescriptor.Default, "internal://samplers/linear");
+        }
         assetServer.InitAssets<StorageBuffer>();
 
         world.AddPlugins([

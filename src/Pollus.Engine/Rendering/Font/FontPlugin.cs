@@ -171,7 +171,7 @@ public partial class FontSystemSet
     {
         foreach (scoped ref readonly var fontMaterialEvent in fontMaterialEvents.Read())
         {
-            if (fontMaterialEvent.Type is not AssetEventType.Loaded) continue;
+            if (fontMaterialEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
             query.ForEach((fonts, fontMaterialEvent.Handle), static (in userData, ref draw, ref mesh) =>
             {
                 var font = userData.fonts.Get(draw.Font);
