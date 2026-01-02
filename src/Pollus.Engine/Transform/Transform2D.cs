@@ -30,6 +30,7 @@ public partial struct Transform2D : ITransform, IComponent
     public Vec2f Position;
     public Vec2f Scale;
     public float Rotation;
+    public float ZIndex;
 
     public readonly Vec2f Left => new(MathF.Cos(Rotation - MathF.PI * 0.5f), MathF.Sin(Rotation - MathF.PI * 0.5f));
     public readonly Vec2f Right => new(MathF.Cos(Rotation + MathF.PI * 0.5f), MathF.Sin(Rotation + MathF.PI * 0.5f));
@@ -38,12 +39,12 @@ public partial struct Transform2D : ITransform, IComponent
 
     public readonly Mat4f ToMat4f()
     {
-        return Mat4f.FromTRS(Position, Rotation.Radians(), Scale);
+        return Mat4f.FromTRS(new Vec3f(Position, ZIndex), Rotation.Radians(), Scale);
     }
 
     public readonly Mat4f ToMat4f_Row()
     {
-        return Mat4f.FromTRS_Row(Position, Rotation.Radians(), Scale);
+        return Mat4f.FromTRS_Row(new Vec3f(Position, ZIndex), Rotation.Radians(), Scale);
     }
 
     public readonly GlobalTransform ToGlobalTransform(Mat4f parentTransform)

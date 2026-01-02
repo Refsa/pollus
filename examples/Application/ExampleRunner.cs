@@ -35,6 +35,7 @@ public static class ExampleRunner
             Log.Info("  query-filter");
             Log.Info("  font");
             Log.Info("  scene");
+            Log.Info("  render-order");
             return;
         }
 
@@ -65,6 +66,7 @@ public static class ExampleRunner
             "query-filter" => new QueryFilterExample(),
             "font" => new FontExample(),
             "scene" => new SceneExample(),
+            "render-order" => new RenderOrderExample(),
             _ => null
         };
 

@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Debugging;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Graphics;
@@ -14,6 +15,7 @@ public static class DrawSystemLabels<TBatches, TBatch>
     public static readonly string ExtractSystem = $"DrawSystem::Extract<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
     public static readonly string WriteSystem = $"DrawSystem::Write<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
     public static readonly string DrawSystem = $"DrawSystem::Draw<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
+    public static readonly string SortSystem = $"DrawSystem::Sort<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
 }
 
 public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
@@ -89,8 +91,9 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
 
     public DrawBatchesSystem()
         : base(new SystemDescriptor(DrawSystemLabels<TBatches, TBatch>.DrawSystem)
-            .After(DrawSystemLabels<TBatches, TBatch>.WriteSystem)
-        )
+        {
+            RunsAfter = [DrawSystemLabels<TBatches, TBatch>.WriteSystem]
+        })
     {
     }
 
@@ -103,6 +106,31 @@ public class DrawBatchesSystem<TBatches, TBatch> : SystemBase<DrawGroups2D, Rend
             var draw = DrawExec(renderAssets, batch);
             if (draw.IsEmpty) continue;
             commands.Add(draw);
+        }
+    }
+}
+
+public class SortBatchesSystem<TBatches, TBatch, TInstanceData> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches>
+    where TBatches : IRenderBatches<TBatch>
+    where TBatch : class, IRenderBatch<TInstanceData>
+    where TInstanceData : unmanaged, IShaderType
+{
+    public required Comparison<TInstanceData> Compare;
+
+    public SortBatchesSystem()
+        : base(new SystemDescriptor(DrawSystemLabels<TBatches, TBatch>.SortSystem)
+        {
+            RunsAfter = [DrawSystemLabels<TBatches, TBatch>.ExtractSystem],
+            RunsBefore = [DrawSystemLabels<TBatches, TBatch>.WriteSystem],
+        })
+    {
+    }
+
+    protected override void OnTick(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, TBatches batches)
+    {
+        foreach (var batch in batches.Batches)
+        {
+            batch.Sort(Compare);
         }
     }
 }

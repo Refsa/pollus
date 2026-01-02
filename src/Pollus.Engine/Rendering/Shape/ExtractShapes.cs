@@ -3,7 +3,6 @@ namespace Pollus.Engine.Rendering;
 using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
-using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
 
 public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch, Query<GlobalTransform, ShapeDraw>>

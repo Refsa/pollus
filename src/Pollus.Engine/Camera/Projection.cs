@@ -75,7 +75,7 @@ public struct OrthographicProjection : IProjection, ComponentWrapper<Orthographi
 
     public static readonly OrthographicProjection Default = new()
     {
-        NearClip = 0f,
+        NearClip = -100f,
         FarClip = 100f,
         ScalingMode = ScalingMode.WindowSize(1),
         Scale = 1

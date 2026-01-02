@@ -31,6 +31,8 @@
 - Plugins
 	- [x] Defer applying plugins
 	- [x] Plugin dependency graph
+	- [ ] dependency handling using world.AddPlugin from a plugin
+		- should have a SubPlugins on IPlugin so these can be added in WorldBuilder
 - ECS
 	- [ ] Proper Testing
 	- [x] Systems
@@ -65,6 +67,14 @@
 	- [-] Serialization
 		- world snapshot, scene serialization later
 		- binary format
+	- [ ] Required Components
+		- RequiredAttribute to define required components
+		- might need a Default on IComponent
+		- source generator to establish some graph type that defines what is needed
+		- need some work on the bundle part to make this actually nice to use
+	- [ ] Bundle
+		- struct that can hold several components to be added as one
+		- needs a source generator for IEntityBuilder
 - Scene
 	- [-] Scene Layout
 		- [x] entities

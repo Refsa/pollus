@@ -23,7 +23,14 @@ public interface IRenderBatch
     bool CanDraw(IRenderAssets renderAssets);
 }
 
-public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
+public interface IRenderBatch<TInstanceData> : IRenderBatch
+    where TInstanceData : unmanaged, IShaderType
+{
+    Span<TInstanceData> Data { get; }
+    void Sort(Comparison<TInstanceData> comparer);
+}
+
+public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, IDisposable
     where TInstanceData : unmanaged, IShaderType
 {
     int count;
@@ -32,6 +39,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     public int Key { get; init; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
     public abstract Handle[] RequiredResources { get; }
+    public Span<TInstanceData> Data => scratch.AsSpan(0, count);
 
     public int Count => count;
     public int Capacity => scratch.Length;
@@ -113,6 +121,11 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch, IDisposable
     {
         var size = Alignment.AlignedSize<TInstanceData>((uint)count);
         if (buffer.Size < size) buffer.Resize<TInstanceData>((uint)count);
+    }
+
+    public void Sort(Comparison<TInstanceData> comparer)
+    {
+        Data.Sort(comparer);
     }
 
     void Resize(int capacity)
