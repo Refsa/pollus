@@ -30,11 +30,14 @@ public class FontPlugin : IPlugin
         world.Resources.Init<FontAsset>();
         world.Resources.Get<AssetServer>().AddLoader<FontAssetLoader>();
         world.Resources.Get<RenderAssets>().AddLoader<FontMeshRenderDataLoader>();
-        world.Resources.Add(new FontBatches());
+        world.Resources.Add(new FontBatches()
+        {
+            RendererID = RendererKey.From<FontBatches>().Key,
+        });
 
         var registry = world.Resources.Get<RenderQueueRegistry>();
         var batches = world.Resources.Get<FontBatches>();
-        registry.Register(RendererKey.From<FontBatches>().Key, batches);
+        registry.Register(batches.RendererID, batches);
 
         world.AddPlugin(MaterialPlugin<FontMaterial>.Default);
 

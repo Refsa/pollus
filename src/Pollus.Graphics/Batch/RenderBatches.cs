@@ -1,41 +1,43 @@
 namespace Pollus.Graphics;
 
-using Pollus.Collections;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Core.Assets;
 using Pollus.Utils;
 
-public interface IRenderBatches<TBatch>
-    where TBatch : IRenderBatch
+public interface IRenderBatches
 {
-    ListEnumerable<TBatch> Batches { get; }
-    void Reset(bool all = false);
-}
+    IReadOnlyList<IRenderBatch> Batches { get; }
 
-public interface IGlobalRenderBatches
-{
-    void Prepare(int batchID, int instanceIndex);
-    void UpdateBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext);
+    int RendererID { get; set; }
+    void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext);
     Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets);
-    int GetBatchCount(int batchID);
     void Reset(bool all = false);
 }
 
-public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IGlobalRenderBatches, IDisposable
+public interface IRenderBatches<TBatch> : IRenderBatches
     where TBatch : IRenderBatch
+{
+}
+
+public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDisposable
+    where TBatch : class, IRenderBatch
     where TKey : notnull
 {
     readonly List<TBatch> batches = [];
     readonly Dictionary<int, int> batchLookup = [];
     bool isDisposed;
 
-    public void UpdateBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext)
+    public int RendererID { get; set; }
+    public IReadOnlyList<IRenderBatch> Batches => batches;
+
+    public void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext)
     {
-        for (int i = 0; i < batches.Count; i++)
+        foreach (var batch in Batches)
         {
-            var batch = batches[i];
-            if (batch.IsEmpty || !batch.IsDirty) continue;
+            if (batch.IsEmpty || !batch.HasRequiredResources(renderAssets)) continue;
+
+            batch.Prepare();
+            if (!batch.IsDirty) continue;
 
             GPUBuffer? instanceBuffer;
             if (batch.InstanceBufferHandle == Handle<GPUBuffer>.Null)
@@ -46,15 +48,13 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IGlo
             else
             {
                 instanceBuffer = renderAssets.Get(batch.InstanceBufferHandle);
-                batch.EnsureCapacity(instanceBuffer);
+                batch.EnsureBufferCapacity(instanceBuffer);
             }
 
-            instanceBuffer.Write(batch.GetBytes(), 0);
+            instanceBuffer.Write(batch.InstanceDataBytes, 0);
             batch.IsDirty = false;
         }
     }
-
-    public ListEnumerable<TBatch> Batches => new(batches);
 
     public void Dispose()
     {
@@ -114,16 +114,6 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IGlo
             if (!all && batch.IsStatic) continue;
             batch.Reset();
         }
-    }
-
-    public void Prepare(int batchID, int instanceIndex)
-    {
-        batches[batchID].AddSorted(instanceIndex);
-    }
-
-    public int GetBatchCount(int batchID)
-    {
-        return batches[batchID].Count;
     }
 
     public abstract Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets);

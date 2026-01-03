@@ -41,10 +41,10 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
         Shape = key.Shape;
     }
 
-    public int Write(Mat4f model, Color color)
+    public void Draw(ulong sortKey, Mat4f model, Color color)
     {
         var tModel = model.Transpose();
-        return Write(new InstanceData()
+        base.Draw(sortKey, new InstanceData()
         {
             Model0 = tModel.Col0,
             Model1 = tModel.Col1,

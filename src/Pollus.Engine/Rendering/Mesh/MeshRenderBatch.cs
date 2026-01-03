@@ -54,4 +54,9 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
         Mesh = key.Mesh;
         Material = key.Material;
     }
+
+    public void Draw(ulong sortKey, Mat4f model)
+    {
+        base.Draw(sortKey, model.Transpose());
+    }
 }

@@ -24,11 +24,13 @@ public class ShapePlugin : IPlugin
     public void Apply(World world)
     {
         world.AddPlugin(new MaterialPlugin<ShapeMaterial>());
-        world.Resources.Add(new ShapeBatches());
+        world.Resources.Add(new ShapeBatches()
+        {
+            RendererID = RendererKey.From<ShapeBatches>().Key,
+        });
 
         var registry = world.Resources.Get<RenderQueueRegistry>();
-        var batches = world.Resources.Get<ShapeBatches>();
-        registry.Register(RendererKey.From<ShapeBatches>().Key, batches);
+        registry.Register(world.Resources.Get<ShapeBatches>().RendererID, world.Resources.Get<ShapeBatches>());
         world.Resources.Get<RenderAssets>().AddLoader(new ShapeRenderDataLoader());
 
         world.Schedule.AddSystems(CoreStage.PreRender, [

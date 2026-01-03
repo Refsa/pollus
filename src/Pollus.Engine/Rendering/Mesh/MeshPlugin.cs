@@ -35,7 +35,12 @@ public class MeshPlugin : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new MeshRenderDataLoader());
 
         var registry = world.Resources.Get<RenderQueueRegistry>();
-        registry.Register(RendererKey.From<MeshRenderBatches>().Key, world.Resources.Get<MeshRenderBatches>());
+        world.Resources.Add(new MeshRenderBatches()
+        {
+            RendererID = RendererKey.From<MeshRenderBatches>().Key,
+        });
+        var batches = world.Resources.Get<MeshRenderBatches>();
+        registry.Register(batches.RendererID, batches);
 
         if (SharedPrimitives != PrimitiveType.None)
         {

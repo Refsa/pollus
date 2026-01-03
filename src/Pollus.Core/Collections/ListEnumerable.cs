@@ -2,9 +2,9 @@ namespace Pollus.Collections;
 
 public ref struct ListEnumerable<TItem>
 {
-    private readonly IList<TItem> _list;
+    private readonly IReadOnlyList<TItem> _list;
 
-    public ListEnumerable(IList<TItem> list)
+    public ListEnumerable(IReadOnlyList<TItem> list)
     {
         _list = list;
     }
@@ -14,10 +14,10 @@ public ref struct ListEnumerable<TItem>
 
 public ref struct ListEnumerator<TItem>
 {
-    private readonly IList<TItem> _list;
+    private readonly IReadOnlyList<TItem> _list;
     private int _index;
 
-    public ListEnumerator(IList<TItem> list)
+    public ListEnumerator(IReadOnlyList<TItem> list)
     {
         _list = list;
         _index = -1;

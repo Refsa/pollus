@@ -12,10 +12,9 @@ public static class DrawSystemLabels<TBatches, TBatch>
     public static readonly string ExtractSystem = $"DrawSystem::Extract<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
     public static readonly string WriteSystem = $"DrawSystem::Write<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
     public static readonly string DrawSystem = $"DrawSystem::Draw<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
-    public static readonly string SortSystem = $"DrawSystem::Sort<{typeof(TBatches).Name}, {typeof(TBatch).Name}>";
 }
 
-public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery, DrawQueue>
+public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : SystemBase<RenderAssets, AssetServer, IWGPUContext, TBatches, TExtractQuery>
     where TBatches : IRenderBatches<TBatch>
     where TBatch : class, IRenderBatch
     where TExtractQuery : IQuery
@@ -31,10 +30,10 @@ public abstract class ExtractDrawSystem<TBatches, TBatch, TExtractQuery> : Syste
     protected override void OnTick(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, TBatches batches,
-        TExtractQuery query, DrawQueue drawQueue)
+        TExtractQuery query)
     {
-        Extract(renderAssets, assetServer, gpuContext, batches, query, drawQueue);
+        Extract(renderAssets, assetServer, gpuContext, batches, query);
     }
 
-    protected abstract void Extract(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, TBatches batches, TExtractQuery query, DrawQueue drawQueue);
+    protected abstract void Extract(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, TBatches batches, TExtractQuery query);
 }

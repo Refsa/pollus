@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Collections;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
@@ -20,62 +21,29 @@ public record struct RendererKey
 
 public class RenderQueueRegistry
 {
-    readonly Dictionary<int, IGlobalRenderBatches> batches = new();
+    readonly Dictionary<int, IRenderBatches> batchCollections = new();
 
-    public void Register(int id, IGlobalRenderBatches batchCollection)
+    public void Register(int id, IRenderBatches batchCollection)
     {
-        batches[id] = batchCollection;
+        batchCollections[id] = batchCollection;
     }
 
-    public IEnumerable<IGlobalRenderBatches> Batches => batches.Values;
+    public IReadOnlyCollection<IRenderBatches> Batches => batchCollections.Values;
 
-    public IGlobalRenderBatches Get(int id) => batches[id];
+    public IRenderBatches Get(int id) => batchCollections[id];
 }
 
 public static class RenderQueueSystems
 {
-    public static readonly string PrepareRenderQueueSystem = "Rendering::PrepareRenderQueue";
-    public static readonly string UpdateRenderBuffersSystem = "Rendering::UpdateRenderBuffers";
+    public static readonly string WriteRenderBuffersSystem = "Rendering::WriteRenderBuffers";
     public static readonly string SubmitRenderQueueSystem = "Rendering::SubmitRenderQueue";
 }
 
-public class PrepareRenderQueueSystem : SystemBase<DrawQueue, RenderQueueRegistry>
+public class WriteRenderBuffersSystem : SystemBase<RenderQueueRegistry, RenderAssets, IWGPUContext>
 {
-    public PrepareRenderQueueSystem() : base(new SystemDescriptor(RenderQueueSystems.PrepareRenderQueueSystem)
+    public WriteRenderBuffersSystem() : base(new SystemDescriptor(RenderQueueSystems.WriteRenderBuffersSystem)
     {
         RunsBefore = [FrameGraph2DPlugin.Render],
-    })
-    {
-    }
-
-    protected override void OnTick(DrawQueue drawQueue, RenderQueueRegistry registry)
-    {
-        if (drawQueue.Count == 0) return;
-        drawQueue.Sort();
-
-        var nodes = drawQueue.Nodes;
-        int currentRendererID = -1;
-        int currentBatchID = -1;
-
-        for (int i = 0; i < nodes.Length; i++)
-        {
-            ref var node = ref nodes[i];
-            if (node.RendererID != currentRendererID || node.BatchID != currentBatchID)
-            {
-                currentRendererID = node.RendererID;
-                currentBatchID = node.BatchID;
-            }
-
-            registry.Get(currentRendererID).Prepare(currentBatchID, node.InstanceIndex);
-        }
-    }
-}
-
-public class UpdateRenderBuffersSystem : SystemBase<RenderQueueRegistry, RenderAssets, IWGPUContext>
-{
-    public UpdateRenderBuffersSystem() : base(new SystemDescriptor(RenderQueueSystems.UpdateRenderBuffersSystem)
-    {
-        RunsAfter = [RenderQueueSystems.PrepareRenderQueueSystem],
     })
     {
     }
@@ -84,54 +52,75 @@ public class UpdateRenderBuffersSystem : SystemBase<RenderQueueRegistry, RenderA
     {
         foreach (var batches in registry.Batches)
         {
-            batches.UpdateBuffers(renderAssets, gpuContext);
+            batches.WriteBuffers(renderAssets, gpuContext);
         }
     }
 }
 
-public class SubmitRenderQueueSystem : SystemBase<DrawQueue, RenderQueueRegistry, RenderAssets, DrawGroups2D>
+public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAssets, DrawGroups2D>
 {
+    struct DrawEntry : IComparable<DrawEntry>
+    {
+        public ulong SortKey;
+        public int RendererID;
+        public int BatchID;
+        public int SortedIndex;
+
+        public int CompareTo(DrawEntry other) => SortKey.CompareTo(other.SortKey);
+    }
+
     public required RenderStep2D RenderStep;
 
-    readonly Dictionary<(int, int), int> batchSeenCount = new();
+    readonly ArrayList<DrawEntry> drawOrder = new(1024);
 
     public SubmitRenderQueueSystem() : base(new SystemDescriptor(RenderQueueSystems.SubmitRenderQueueSystem)
     {
-        RunsAfter = [RenderQueueSystems.UpdateRenderBuffersSystem],
+        RunsAfter = [RenderQueueSystems.WriteRenderBuffersSystem],
         RunsBefore = [FrameGraph2DPlugin.Render],
     })
     {
     }
 
-    protected override void OnTick(DrawQueue drawQueue, RenderQueueRegistry registry, RenderAssets renderAssets, DrawGroups2D drawGroups)
+    protected override void OnTick(RenderQueueRegistry registry, RenderAssets renderAssets, DrawGroups2D drawGroups)
     {
-        if (drawQueue.Count == 0) return;
+        drawOrder.Clear();
 
-        var nodes = drawQueue.Nodes;
+        foreach (var batchCollection in registry.Batches)
+        {
+            foreach (var batch in batchCollection.Batches)
+            {
+                var entries = batch.SortEntries;
+                drawOrder.EnsureCapacity(drawOrder.Count + entries.Length);
+                for (int i = 0; i < entries.Length; i++)
+                {
+                    drawOrder.Add(new DrawEntry
+                    {
+                        SortKey = entries[i].SortKey,
+                        RendererID = batchCollection.RendererID,
+                        BatchID = batch.BatchID,
+                        SortedIndex = i,
+                    });
+                }
+            }
+        }
+
+        if (drawOrder.Count == 0) return;
+
+        drawOrder.AsSpan().Sort();
+
         var drawList = drawGroups.GetDrawList(RenderStep);
-
-        batchSeenCount.Clear();
 
         int currentRendererID = -1;
         int currentBatchID = -1;
         int start = 0;
         int count = 0;
 
-        for (int i = 0; i < nodes.Length; i++)
+        for (int i = 0; i < drawOrder.Count; i++)
         {
-            ref var node = ref nodes[i];
+            var entry = drawOrder[i];
 
-            var key = (node.RendererID, node.BatchID);
-            if (!batchSeenCount.TryGetValue(key, out var seenSoFar))
-            {
-                seenSoFar = 0;
-            }
-
-            int drawIndex = seenSoFar;
-            batchSeenCount[key] = seenSoFar + 1;
-
-            var isNewBatch = node.RendererID != currentRendererID || node.BatchID != currentBatchID;
-            var isNonContiguous = (start + count) != drawIndex;
+            var isNewBatch = entry.RendererID != currentRendererID || entry.BatchID != currentBatchID;
+            var isNonContiguous = (start + count) != entry.SortedIndex;
 
             if (isNewBatch || isNonContiguous)
             {
@@ -141,9 +130,9 @@ public class SubmitRenderQueueSystem : SystemBase<DrawQueue, RenderQueueRegistry
                     if (!draw.IsEmpty) drawList.Add(draw);
                 }
 
-                currentRendererID = node.RendererID;
-                currentBatchID = node.BatchID;
-                start = drawIndex;
+                currentRendererID = entry.RendererID;
+                currentBatchID = entry.BatchID;
+                start = entry.SortedIndex;
                 count = 0;
             }
 
@@ -157,3 +146,4 @@ public class SubmitRenderQueueSystem : SystemBase<DrawQueue, RenderQueueRegistry
         }
     }
 }
+
