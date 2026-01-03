@@ -5,25 +5,25 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 
-public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatches, MeshRenderBatch, Query<Transform2D, MeshDraw<TMaterial>>>
+public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatches, MeshRenderBatch, Query<GlobalTransform, MeshDraw<TMaterial>>>
     where TMaterial : IMaterial
 {
-    struct ExtractJob : IForEach<Transform2D, MeshDraw<TMaterial>>
+    struct ExtractJob : IForEach<GlobalTransform, MeshDraw<TMaterial>>
     {
         public required MeshRenderBatches Batches { get; init; }
 
-        public void Execute(ref Transform2D transform, ref MeshDraw<TMaterial> renderable)
+        public void Execute(ref GlobalTransform transform, ref MeshDraw<TMaterial> renderable)
         {
             var batch = Batches.GetOrCreate(new MeshBatchKey(renderable.Mesh, renderable.Material));
-            var sortKey = RenderingUtils.CreateSortKey2D(transform.ZIndex, batch.Key);
-            batch.Draw(sortKey, transform.ToMat4f());
+            var sortKey = RenderingUtils.CreateSortKey2D(transform.Value.Col2.W, batch.Key);
+            batch.Draw(sortKey, transform.Value);
         }
     }
 
     protected override void Extract(
         RenderAssets renderAssets, AssetServer assetServer,
         IWGPUContext gpuContext, MeshRenderBatches batches,
-        Query<Transform2D, MeshDraw<TMaterial>> query)
+        Query<GlobalTransform, MeshDraw<TMaterial>> query)
     {
         batches.Reset();
         query.ForEach(new ExtractJob

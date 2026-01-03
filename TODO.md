@@ -125,7 +125,7 @@
 		- [x] frame graph color targets
 	- [ ] Meshes
 		- [ ] Split into 2D and 3D variants
-		- [ ] update ExtractMeshSystem to use GlobalTransform
+		- [x] update ExtractMeshSystem to use GlobalTransform
 	- [-] Gizmos
 		- [x] Drawing API
 			- [x] DrawTexture
