@@ -6,18 +6,24 @@ using Pollus.Utils;
 
 public class StageGraph
 {
+    public class Node
+    {
+        public List<ISystem> Systems { get; } = [];
+        public Node? Next { get; set; }
+    }
+
     public StageLabel Label { get; init; }
-    public StageGraphNode? First { get; set; }
+    public Node? First { get; set; }
 
     Pool<List<ISystem>> dependencyPool = new(() => new List<ISystem>(), 4);
     Dictionary<ISystem, List<ISystem>> dependencies = [];
+
+    List<Node> nodes = [];
+    Pool<Node> nodePool = new(() => new Node(), 4);
+
     Dictionary<ISystem, int> inDegree = [];
-
     HashSet<ISystem> seenSystems = [];
-    HashSet<SystemLabel> seenLabels = [];
-
-    List<StageGraphNode> nodes = [];
-    Pool<StageGraphNode> nodePool = new(() => new StageGraphNode(), 4);
+    Dictionary<SystemLabel, ISystem> labelToSystem = [];
 
     public void Reset()
     {
@@ -37,47 +43,73 @@ public class StageGraph
         if (systems.Count == 0) return;
         TopologicalSort(systems);
 
+        labelToSystem.Clear();
+        foreach (var system in systems)
+        {
+            labelToSystem[system.Descriptor.Label] = system;
+        }
+
         var current = First = nodePool.Rent();
         nodes.Add(current);
 
         foreach (var system in systems)
         {
-            if (!seenSystems.Add(system)) continue;
-            seenLabels.Add(system.Descriptor.Label);
+            if (seenSystems.Contains(system)) continue;
 
-            var compatibleSystems = systems.Where(e =>
-                !seenSystems.Contains(e) &&
-                !e.Descriptor.Dependencies.Overlaps(system.Descriptor.Dependencies) &&
-                e.Descriptor.RunsAfter.All(dep => seenLabels.Contains(dep)));
+            bool fits = current.Systems.Count == 0 || !current.Systems.Any(s =>
+                s.Descriptor.Dependencies.Overlaps(system.Descriptor.Dependencies) ||
+                system.Descriptor.RunsAfter.Contains(s.Descriptor.Label) ||
+                s.Descriptor.RunsBefore.Contains(system.Descriptor.Label)
+            );
 
-            if (!compatibleSystems.Any())
+            if (!fits)
             {
-                if (current.Systems.Count != 0)
-                {
-                    var prev = current;
-                    current = nodePool.Rent();
-                    nodes.Add(current);
-                    prev.Next = current;
-                }
+                var next = nodePool.Rent();
+                nodes.Add(next);
+                current.Next = next;
+                current = next;
             }
 
             current.Systems.Add(system);
+            seenSystems.Add(system);
 
-            foreach (var compatibleSystem in compatibleSystems)
+            foreach (var candidate in systems)
             {
-                if (current.Systems.Any(e => e.Descriptor.Dependencies.Overlaps(compatibleSystem.Descriptor.Dependencies)))
+                if (seenSystems.Contains(candidate)) continue;
+                if (candidate.Descriptor.Dependencies.Overlaps(system.Descriptor.Dependencies)) continue;
+                if (!AllPredecessorsSeen(candidate)) continue;
+
+                if (current.Systems.Any(e =>
+                        e.Descriptor.Dependencies.Overlaps(candidate.Descriptor.Dependencies) ||
+                        candidate.Descriptor.RunsAfter.Contains(e.Descriptor.Label) ||
+                        e.Descriptor.RunsBefore.Contains(candidate.Descriptor.Label)))
                 {
                     continue;
                 }
 
-                current.Systems.Add(compatibleSystem);
-                seenSystems.Add(compatibleSystem);
-                seenLabels.Add(compatibleSystem.Descriptor.Label);
+                current.Systems.Add(candidate);
+                seenSystems.Add(candidate);
             }
         }
 
         seenSystems.Clear();
-        seenLabels.Clear();
+    }
+
+    bool AllPredecessorsSeen(ISystem system)
+    {
+        foreach (var predLabel in system.Descriptor.RunsAfter)
+        {
+            if (labelToSystem.TryGetValue(predLabel, out var pred) && !seenSystems.Contains(pred))
+                return false;
+        }
+
+        foreach (var (_, other) in labelToSystem)
+        {
+            if (other.Descriptor.RunsBefore.Contains(system.Descriptor.Label) && !seenSystems.Contains(other))
+                return false;
+        }
+
+        return true;
     }
 
     public void TopologicalSort(List<ISystem> systems)
@@ -178,10 +210,4 @@ public class StageGraph
 
         return sb.ToString();
     }
-}
-
-public class StageGraphNode
-{
-    public List<ISystem> Systems { get; } = [];
-    public StageGraphNode? Next { get; set; }
 }
