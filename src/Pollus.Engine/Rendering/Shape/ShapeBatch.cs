@@ -1,9 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.ECS;
 using Pollus.Graphics;
-using Pollus.Graphics.Rendering;
-using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
@@ -44,10 +41,10 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
         Shape = key.Shape;
     }
 
-    public void Write(Mat4f model, Color color)
+    public int Write(Mat4f model, Color color)
     {
         var tModel = model.Transpose();
-        Write(new InstanceData()
+        return Write(new InstanceData()
         {
             Model_0 = tModel.Col0,
             Model_1 = tModel.Col1,
@@ -59,6 +56,20 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
 
 public class ShapeBatches : RenderBatches<ShapeBatch, ShapeBatchKey>
 {
+    public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
+    {
+        var batch = GetBatch(batchID);
+        var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+        var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
+
+        return Draw.Create(material.Pipeline)
+            .SetVertexInfo((uint)shape.VertexCount, 0)
+            .SetInstanceInfo((uint)count, (uint)start)
+            .SetVertexBuffer(0, shape.VertexBuffer)
+            .SetVertexBuffer(1, batch.InstanceBufferHandle)
+            .SetBindGroups(material.BindGroups);
+    }
+
     protected override ShapeBatch CreateBatch(in ShapeBatchKey key)
     {
         return new ShapeBatch(key);

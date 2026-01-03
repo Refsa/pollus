@@ -13,6 +13,8 @@ public interface IRenderBatch
     bool IsFull { get; }
     bool IsStatic { get; }
     bool IsDirty { get; set; }
+    int Key { get; }
+    int BatchID { get; set; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; }
     public Handle[] RequiredResources { get; }
 
@@ -21,6 +23,7 @@ public interface IRenderBatch
     void EnsureCapacity(GPUBuffer buffer);
     ReadOnlySpan<byte> GetBytes();
     bool CanDraw(IRenderAssets renderAssets);
+    void AddSorted(int index);
 }
 
 public interface IRenderBatch<TInstanceData> : IRenderBatch
@@ -35,13 +38,16 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
 {
     int count;
     TInstanceData[] scratch;
+    TInstanceData[] drawScratch;
+    int drawCount;
 
     public int Key { get; init; }
+    public int BatchID { get; set; } = -1;
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
     public abstract Handle[] RequiredResources { get; }
     public Span<TInstanceData> Data => scratch.AsSpan(0, count);
 
-    public int Count => count;
+    public int Count => drawCount;
     public int Capacity => scratch.Length;
     public bool IsEmpty => count == 0;
     public bool IsFull => count == scratch.Length;
@@ -52,6 +58,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
     protected RenderBatch()
     {
         scratch = new TInstanceData[16];
+        drawScratch = new TInstanceData[16];
     }
 
     protected RenderBatch(int key) : this()
@@ -66,6 +73,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
     public void Reset()
     {
         count = 0;
+        drawCount = 0;
         IsDirty = true;
     }
 
@@ -80,17 +88,25 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
         return true;
     }
 
-    public void Write(in TInstanceData data)
+    public int Write(in TInstanceData data)
     {
-        if (count == scratch.Length) Resize(count * 2);
+        if (count == scratch.Length) ResizeExtract(count * 2);
 
         scratch[count++] = data;
         IsDirty = true;
+        return count - 1;
+    }
+
+    public void AddSorted(int index)
+    {
+        if (drawCount == drawScratch.Length) ResizeDraw(drawCount * 2);
+
+        drawScratch[drawCount++] = scratch[index];
     }
 
     public void Write(ReadOnlySpan<TInstanceData> data)
     {
-        if (count + data.Length > scratch.Length) Resize(count + data.Length);
+        if (count + data.Length > scratch.Length) ResizeExtract(count + data.Length);
 
         data.CopyTo(scratch.AsSpan()[count..]);
         count += data.Length;
@@ -99,7 +115,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
 
     public ReadOnlySpan<TInstanceData> GetData()
     {
-        return scratch.AsSpan(0, count);
+        return drawScratch.AsSpan(0, drawCount);
     }
 
     public ReadOnlySpan<byte> GetBytes()
@@ -112,15 +128,15 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
         return context.CreateBuffer(new()
         {
             Label = $"InstanceBuffer_{typeof(TInstanceData).Name}_{Key}",
-            Size = Alignment.AlignedSize<TInstanceData>((uint)scratch.Length),
+            Size = Alignment.AlignedSize<TInstanceData>((uint)Math.Max(drawScratch.Length, scratch.Length)),
             Usage = BufferUsage.CopyDst | BufferUsage.Vertex,
         });
     }
 
     public void EnsureCapacity(GPUBuffer buffer)
     {
-        var size = Alignment.AlignedSize<TInstanceData>((uint)count);
-        if (buffer.Size < size) buffer.Resize<TInstanceData>((uint)count);
+        var size = Alignment.AlignedSize<TInstanceData>((uint)drawCount);
+        if (buffer.Size < size) buffer.Resize<TInstanceData>((uint)drawCount);
     }
 
     public void Sort(Comparison<TInstanceData> comparer)
@@ -128,10 +144,17 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
         Data.Sort(comparer);
     }
 
-    void Resize(int capacity)
+    void ResizeExtract(int capacity)
     {
         var next = new TInstanceData[capacity];
         scratch.AsSpan().CopyTo(next);
         scratch = next;
+    }
+
+    void ResizeDraw(int capacity)
+    {
+        var next = new TInstanceData[capacity];
+        drawScratch.AsSpan().CopyTo(next);
+        drawScratch = next;
     }
 }

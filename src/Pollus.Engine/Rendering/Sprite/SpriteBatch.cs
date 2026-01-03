@@ -30,6 +30,17 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
 
 public class SpriteBatches : RenderBatches<SpriteBatch, SpriteBatchKey>
 {
+    public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
+    {
+        var batch = GetBatch(batchID);
+        var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+        return Draw.Create(material.Pipeline)
+            .SetVertexInfo(6, 0)
+            .SetInstanceInfo((uint)count, (uint)start)
+            .SetVertexBuffer(0, batch.InstanceBufferHandle)
+            .SetBindGroups(material.BindGroups);
+    }
+
     protected override SpriteBatch CreateBatch(in SpriteBatchKey key)
     {
         return new SpriteBatch(key);

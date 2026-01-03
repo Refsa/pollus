@@ -16,6 +16,7 @@ public class RenderingPlugin : IPlugin
     public const string EndFrameSystem = "Rendering::EndFrame";
     public const string RenderStepsCleanupSystem = "Rendering::RenderStepsCleanup";
     public const string WindowResizedSystem = "Rendering::WindowResized";
+    public const string ProcessQueueSystem = "Rendering::ProcessRenderQueue";
 
     static RenderingPlugin()
     {
@@ -42,6 +43,9 @@ public class RenderingPlugin : IPlugin
             .AddLoader(new SamplerRenderDataLoader())
             .AddLoader(new StorageBufferRenderDataLoader())
         );
+
+        world.Resources.Add(new DrawQueue());
+        world.Resources.Add(new RenderQueueRegistry());
 
         var assetServer = world.Resources.Get<AssetServer>();
         assetServer.AddLoader<WgslShaderSourceLoader>();
@@ -107,6 +111,15 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
+        world.Schedule.AddSystems(CoreStage.Render, [
+            new PrepareRenderQueueSystem(),
+            new UpdateRenderBuffersSystem(),
+            new SubmitRenderQueueSystem
+            {
+                RenderStep = RenderStep2D.Main
+            }
+        ]);
+
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(
             EndFrameSystem,
             static (RenderContext context) => { context.EndFrame(); }
@@ -117,10 +130,15 @@ public class RenderingPlugin : IPlugin
             {
                 RunsAfter = [EndFrameSystem],
             },
-            static (RenderContext context, DrawGroups2D renderSteps) =>
+            static (RenderContext context, DrawGroups2D renderSteps, DrawQueue drawQueue, RenderQueueRegistry registry) =>
             {
                 context.CleanupFrame();
                 renderSteps.Cleanup();
+                drawQueue.Clear();
+                foreach (var batch in registry.Batches)
+                {
+                    batch.Reset(false);
+                }
             }
         ));
 

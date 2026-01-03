@@ -34,6 +34,9 @@ public class MeshPlugin : IPlugin
 
         world.Resources.Get<RenderAssets>().AddLoader(new MeshRenderDataLoader());
 
+        var registry = world.Resources.Get<RenderQueueRegistry>();
+        registry.Register(RendererKey.From<MeshRenderBatches>().Key, world.Resources.Get<MeshRenderBatches>());
+
         if (SharedPrimitives != PrimitiveType.None)
         {
             var assetServer = world.Resources.Get<AssetServer>();

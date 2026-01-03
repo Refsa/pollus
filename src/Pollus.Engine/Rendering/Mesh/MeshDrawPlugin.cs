@@ -4,6 +4,7 @@ using Core.Assets;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
+using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
 public partial struct MeshDraw<TMaterial> : IComponent
@@ -17,7 +18,9 @@ public partial struct MeshDraw<TMaterial> : IComponent
 public partial class Material : IMaterial
 {
     public static string Name => "DefaultMaterial";
-    public static VertexBufferLayout[] VertexLayouts => [
+
+    public static VertexBufferLayout[] VertexLayouts =>
+    [
         VertexBufferLayout.Vertex(0, [
             VertexFormat.Float32x3,
             VertexFormat.Float32x2,
@@ -48,7 +51,8 @@ public partial class Material : IMaterial
         },
     };
 
-    public IBinding[][] Bindings => [
+    public IBinding[][] Bindings =>
+    [
         [new UniformBinding<SceneUniform>(), Texture, Sampler]
     ];
 
@@ -61,7 +65,8 @@ public partial class Material : IMaterial
 public class MeshDrawPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial, IAsset
 {
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<RenderingPlugin>(),
     ];
 
@@ -71,24 +76,6 @@ public class MeshDrawPlugin<TMaterial> : IPlugin
 
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractMeshDrawSystem<TMaterial>(),
-            new WriteBatchesSystem<MeshRenderBatches, MeshRenderBatch>(),
-            new DrawBatchesSystem<MeshRenderBatches, MeshRenderBatch>()
-            {
-                RenderStep = RenderStep2D.Main,
-                DrawExec = static (renderAssets, batch) =>
-                {
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-                    var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
-
-                    return Draw.Create(material.Pipeline)
-                        .SetIndexBuffer(mesh.IndexBuffer, mesh.IndexFormat, (uint)mesh.IndexCount, 0)
-                        .SetInstanceInfo((uint)batch.Count, 0)
-                        .SetVertexInfo(mesh.VertexCount, mesh.VertexOffset)
-                        .SetVertexBuffer(0, mesh.VertexBuffer)
-                        .SetVertexBuffer(1, batch.InstanceBufferHandle)
-                        .SetBindGroups(material.BindGroups);
-                }
-            },
         ]);
     }
 }

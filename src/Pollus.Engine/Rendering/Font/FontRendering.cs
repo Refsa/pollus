@@ -186,10 +186,10 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
         TextMesh = key.TextMesh;
     }
 
-    public void Write(Mat4f model, Color color)
+    public int Write(Mat4f model, Color color)
     {
         var tModel = model.Transpose();
-        Write(new InstanceData()
+        return Write(new InstanceData()
         {
             Model_0 = tModel.Col0,
             Model_1 = tModel.Col1,
@@ -201,6 +201,21 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
 
 public class FontBatches : RenderBatches<FontBatch, FontBatchKey>
 {
+    public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
+    {
+        var batch = GetBatch(batchID);
+        var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+        var textMesh = renderAssets.Get<FontMeshRenderData>(batch.TextMesh);
+
+        return Draw.Create(material.Pipeline)
+            .SetVertexInfo(textMesh.VertexCount, 0)
+            .SetInstanceInfo((uint)count, (uint)start)
+            .SetVertexBuffer(0, textMesh.VertexBuffer)
+            .SetVertexBuffer(1, batch.InstanceBufferHandle)
+            .SetIndexBuffer(textMesh.IndexBuffer, textMesh.IndexFormat, (uint)textMesh.IndexCount, 0)
+            .SetBindGroups(material.BindGroups);
+    }
+
     protected override FontBatch CreateBatch(in FontBatchKey key)
     {
         return new FontBatch(key);
@@ -212,23 +227,30 @@ public class ExtractTextDrawSystem : ExtractDrawSystem<FontBatches, FontBatch, Q
     readonly struct Job : IForEach<Transform2D, TextDraw, TextMesh>
     {
         public required FontBatches Batches { get; init; }
+        public required DrawQueue DrawQueue { get; init; }
+        public required RendererKey RendererKey { get; init; }
 
         public void Execute(ref Transform2D transform, ref TextDraw textDraw, ref TextMesh textMesh)
         {
             if (textMesh.Mesh == Handle<TextMeshAsset>.Null || textMesh.Material == Handle<FontMaterial>.Null) return;
 
             var batch = Batches.GetOrCreate(new FontBatchKey(textMesh.Mesh, textMesh.Material));
-            batch.Write(transform.ToMat4f(), textDraw.Color);
+            var instanceIndex = batch.Write(transform.ToMat4f(), textDraw.Color);
+
+            var sortKey = RenderingUtils.CreateSortKey2D(transform.Position.Y, batch.Key);
+            DrawQueue.Add(sortKey, RendererKey.Key, batch.BatchID, instanceIndex);
         }
     }
 
     protected override void Extract(RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext,
-        FontBatches batches, Query<Transform2D, TextDraw, TextMesh> query)
+        FontBatches batches, Query<Transform2D, TextDraw, TextMesh> query, DrawQueue drawQueue)
     {
         batches.Reset();
         query.ForEach(new Job
         {
             Batches = batches,
+            DrawQueue = drawQueue,
+            RendererKey = RendererKey.From<FontBatches>(),
         });
     }
 }

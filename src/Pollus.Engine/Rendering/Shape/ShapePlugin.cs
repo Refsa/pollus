@@ -18,36 +18,21 @@ public class ShapePlugin : IPlugin
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<RenderingPlugin>(),
-PluginDependency.From<TransformPlugin<Transform2D>>(),
+        PluginDependency.From<TransformPlugin<Transform2D>>(),
     ];
 
     public void Apply(World world)
     {
         world.AddPlugin(new MaterialPlugin<ShapeMaterial>());
         world.Resources.Add(new ShapeBatches());
+
+        var registry = world.Resources.Get<RenderQueueRegistry>();
+        var batches = world.Resources.Get<ShapeBatches>();
+        registry.Register(RendererKey.From<ShapeBatches>().Key, batches);
         world.Resources.Get<RenderAssets>().AddLoader(new ShapeRenderDataLoader());
 
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractShapeDrawSystem(),
-            new WriteBatchesSystem<ShapeBatches, ShapeBatch>(),
-            new DrawBatchesSystem<ShapeBatches, ShapeBatch>()
-            {
-                RenderStep = RenderStep2D.Main,
-                DrawExec = static (renderAssets, batch) =>
-                {
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-                    var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
-
-                    var draw = Draw.Create(material.Pipeline)
-                        .SetVertexInfo(shape.VertexCount, 0)
-                        .SetInstanceInfo((uint)batch.Count, 0)
-                        .SetVertexBuffer(0, shape.VertexBuffer)
-                        .SetVertexBuffer(1, batch.InstanceBufferHandle)
-                        .SetBindGroups(material.BindGroups);
-
-                    return draw;
-                },
-            },
         ]);
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new("ShapePlugin::PrepareShapeAssets")

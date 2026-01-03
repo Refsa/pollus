@@ -22,6 +22,21 @@ public record struct MeshBatchKey
 
 public class MeshRenderBatches : RenderBatches<MeshRenderBatch, MeshBatchKey>
 {
+    public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
+    {
+        var batch = GetBatch(batchID);
+        var material = renderAssets.Get<MaterialRenderData>(batch.Material);
+        var mesh = renderAssets.Get<MeshRenderData>(batch.Mesh);
+
+        return Draw.Create(material.Pipeline)
+            .SetIndexBuffer(mesh.IndexBuffer, mesh.IndexFormat, (uint)mesh.IndexCount, 0)
+            .SetVertexInfo(mesh.VertexCount, mesh.VertexOffset)
+            .SetInstanceInfo((uint)count, (uint)start)
+            .SetVertexBuffer(0, mesh.VertexBuffer)
+            .SetVertexBuffer(1, batch.InstanceBufferHandle)
+            .SetBindGroups(material.BindGroups);
+    }
+
     protected override MeshRenderBatch CreateBatch(in MeshBatchKey key)
     {
         return new MeshRenderBatch(key);

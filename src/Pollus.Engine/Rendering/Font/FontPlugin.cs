@@ -86,30 +86,14 @@ public class FontPlugin : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader<FontMeshRenderDataLoader>();
         world.Resources.Add(new FontBatches());
 
+        var registry = world.Resources.Get<RenderQueueRegistry>();
+        var batches = world.Resources.Get<FontBatches>();
+        registry.Register(RendererKey.From<FontBatches>().Key, batches);
+
         world.AddPlugin(MaterialPlugin<FontMaterial>.Default);
 
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractTextDrawSystem(),
-            new WriteBatchesSystem<FontBatches, FontBatch>(),
-            new DrawBatchesSystem<FontBatches, FontBatch>()
-            {
-                RenderStep = RenderStep2D.Main,
-                DrawExec = static (renderAssets, batch) =>
-                {
-                    var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-                    var textMesh = renderAssets.Get<FontMeshRenderData>(batch.TextMesh);
-
-                    var draw = Draw.Create(material.Pipeline)
-                        .SetVertexInfo(textMesh.VertexCount, 0)
-                        .SetInstanceInfo((uint)batch.Count, 0)
-                        .SetVertexBuffer(0, textMesh.VertexBuffer)
-                        .SetVertexBuffer(1, batch.InstanceBufferHandle)
-                        .SetIndexBuffer(textMesh.IndexBuffer, textMesh.IndexFormat, (uint)textMesh.IndexCount, 0)
-                        .SetBindGroups(material.BindGroups);
-
-                    return draw;
-                },
-            },
         ]);
 
         world.Schedule.AddSystemSet<FontSystemSet>();

@@ -97,6 +97,7 @@
 	- [ ] dunno some custom UI stuff
 - Rendering
 	- [-] Text/Font
+		- [ ] cleanup source files
 	- [ ] 2D Pipeline
 		- [x] Sprites
 		- [ ] Animated Sprites
@@ -122,6 +123,9 @@
 		- [ ] move to builder pattern for better readability and resource handling
 	- [ ] Render target
 		- [x] frame graph color targets
+	- [ ] Meshes
+		- [ ] Split into 2D and 3D variants
+		- [ ] update ExtractMeshSystem to use GlobalTransform
 	- [-] Gizmos
 		- [x] Drawing API
 			- [x] DrawTexture
