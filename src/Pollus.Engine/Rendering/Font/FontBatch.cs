@@ -1,26 +1,26 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.Graphics;
-using Pollus.Mathematics;
-using Pollus.Utils;
+using Graphics;
+using Mathematics;
+using Utils;
 
-public record struct ShapeBatchKey
+public record struct FontBatchKey
 {
     readonly int hashCode;
-    public readonly Handle<Shape> Shape;
-    public readonly Handle Material;
+    public readonly Handle<TextMeshAsset> TextMesh;
+    public readonly Handle<FontMaterial> Material;
 
-    public ShapeBatchKey(Handle<Shape> shape, Handle material)
+    public FontBatchKey(Handle<TextMeshAsset> textMesh, Handle<FontMaterial> material)
     {
-        Shape = shape;
+        TextMesh = textMesh;
         Material = material;
-        hashCode = HashCode.Combine(shape, material);
+        hashCode = HashCode.Combine(textMesh, material);
     }
 
     public override int GetHashCode() => hashCode;
 }
 
-public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
+public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
 {
     [ShaderType]
     public partial struct InstanceData
@@ -31,14 +31,14 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
         public Vec4f Color;
     }
 
-    public Handle Material { get; }
-    public Handle<Shape> Shape { get; }
-    public override Handle[] RequiredResources => [Material, Shape];
+    public Handle<FontMaterial> Material { get; }
+    public Handle<TextMeshAsset> TextMesh { get; }
+    public override Handle[] RequiredResources => [Material, TextMesh];
 
-    public ShapeBatch(in ShapeBatchKey key) : base(key.GetHashCode())
+    public FontBatch(in FontBatchKey key) : base(key.GetHashCode())
     {
         Material = key.Material;
-        Shape = key.Shape;
+        TextMesh = key.TextMesh;
     }
 
     public int Write(Mat4f model, Color color)
@@ -54,24 +54,25 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
     }
 }
 
-public class ShapeBatches : RenderBatches<ShapeBatch, ShapeBatchKey>
+public class FontBatches : RenderBatches<FontBatch, FontBatchKey>
 {
     public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
     {
         var batch = GetBatch(batchID);
         var material = renderAssets.Get<MaterialRenderData>(batch.Material);
-        var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
+        var textMesh = renderAssets.Get<FontMeshRenderData>(batch.TextMesh);
 
         return Draw.Create(material.Pipeline)
-            .SetVertexInfo((uint)shape.VertexCount, 0)
+            .SetVertexInfo(textMesh.VertexCount, 0)
             .SetInstanceInfo((uint)count, (uint)start)
-            .SetVertexBuffer(0, shape.VertexBuffer)
+            .SetVertexBuffer(0, textMesh.VertexBuffer)
             .SetVertexBuffer(1, batch.InstanceBufferHandle)
+            .SetIndexBuffer(textMesh.IndexBuffer, textMesh.IndexFormat, (uint)textMesh.IndexCount, 0)
             .SetBindGroups(material.BindGroups);
     }
 
-    protected override ShapeBatch CreateBatch(in ShapeBatchKey key)
+    protected override FontBatch CreateBatch(in FontBatchKey key)
     {
-        return new ShapeBatch(key);
+        return new FontBatch(key);
     }
 }

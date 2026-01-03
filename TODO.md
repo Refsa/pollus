@@ -97,7 +97,7 @@
 	- [ ] dunno some custom UI stuff
 - Rendering
 	- [-] Text/Font
-		- [ ] cleanup source files
+		- [x] cleanup source files
 	- [ ] 2D Pipeline
 		- [x] Sprites
 		- [ ] Animated Sprites
