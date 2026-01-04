@@ -76,7 +76,7 @@ public class QueryBenchmarks
     public int Query_One_ForEach_IChunkForEach()
     {
         var q = new Query<Component1>(oneComponentWorld);
-        q.ForEach(new ChunkForEachOne());
+        q.ForEachChunk(new ChunkForEachOne());
         return 0;
     }
 
@@ -89,14 +89,6 @@ public class QueryBenchmarks
             row.Component0.First++;
         }
 
-        return 0;
-    }
-
-    [Benchmark]
-    public int Query_One_ForEach_IEntityForEach()
-    {
-        var q = new Query<Component1>(oneComponentWorld);
-        q.ForEach(new ForEachOne_Entity());
         return 0;
     }
 
@@ -129,16 +121,7 @@ public class QueryBenchmarks
     struct ForEachOne : IForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public readonly void Execute(ref Component1 c)
-        {
-            c.First++;
-        }
-    }
-
-    struct ForEachOne_Entity : IEntityForEach<Component1>
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public readonly void Execute(in Entity e, ref Component1 c)
+        public readonly void Execute(scoped in Entity e, scoped ref Component1 c)
         {
             c.First++;
         }
@@ -147,7 +130,7 @@ public class QueryBenchmarks
     struct ForEachTwo : IForEach<Component1, Component2>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public readonly void Execute(ref Component1 c1, ref Component2 c2)
+        public readonly void Execute(scoped in Entity e, scoped ref Component1 c1, scoped ref Component2 c2)
         {
             c1.First += c2.First;
         }
@@ -156,7 +139,7 @@ public class QueryBenchmarks
     struct ChunkForEachOne : IChunkForEach<Component1>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-        public readonly void Execute(in Span<Component1> chunk0)
+        public readonly void Execute(scoped in ReadOnlySpan<Entity> entities, scoped in Span<Component1> chunk0)
         {
             for (int i = 0; i < chunk0.Length; i++)
             {

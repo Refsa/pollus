@@ -113,7 +113,7 @@ public class AudioPlugin : IPlugin
     }
 }
 
-struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
+struct AudioUpdateForEach : IForEach<AudioSource, AudioPlayback>
 {
     public required Time Time;
     public required Commands Commands;
@@ -123,7 +123,7 @@ struct AudioUpdateForEach : IEntityForEach<AudioSource, AudioPlayback>
     public required Assets<Pollus.Audio.AudioSource> DeviceSources;
     public required Assets<Pollus.Audio.AudioBuffer> DeviceBuffers;
 
-    public void Execute(in Entity entity, ref AudioSource source, ref AudioPlayback playback)
+    public void Execute(scoped in Entity entity, scoped ref AudioSource source, scoped ref AudioPlayback playback)
     {
         if (source.DeviceSource == Handle<Pollus.Audio.AudioSource>.Null)
         {

@@ -43,6 +43,7 @@ public class QueryFilterFetch<TFilterQuery> : IFetch<TFilterQuery>
             query = TFilterQuery.Create(world);
             system.Resources.Add(query);
         }
+
         return query;
     }
 }
@@ -95,6 +96,14 @@ public struct Query : IQuery, IQueryCreate<Query>
         this.world = world;
         this.filterArchetype = filterArchetype;
         this.filterChunk = filterChunk;
+    }
+
+    public Query Filtered<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return this;
     }
 
     public void ForEach<TFilters>(ForEachEntityDelegate pred)
@@ -164,6 +173,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         {
             return chunk.GetEntities()[0];
         }
+
         throw new InvalidOperationException("No entities found");
     }
 
@@ -183,6 +193,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         {
             count += chunk.Count;
         }
+
         return count;
     }
 
@@ -201,6 +212,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         {
             if (chunk.Count > 0) return true;
         }
+
         return false;
     }
 
@@ -304,6 +316,7 @@ public struct Query : IQuery, IQueryCreate<Query>
             exists = true;
             return ref Get<C>(entityInfo);
         }
+
         exists = false;
         return ref Unsafe.NullRef<C>();
     }

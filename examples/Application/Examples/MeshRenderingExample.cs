@@ -25,7 +25,7 @@ public partial class MeshRenderingExample : IExample
     {
         public required float SecondsSinceStartup;
 
-        public void Execute(ref Transform2D transform, ref RotateMe rotateMe)
+        public void Execute(scoped in Entity entity, scoped ref Transform2D transform, scoped ref RotateMe rotateMe)
         {
             transform.Rotation = (SecondsSinceStartup * rotateMe.Speed).Wrap(0f, 360f);
         }

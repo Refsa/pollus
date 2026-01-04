@@ -22,7 +22,7 @@ struct CameraProjectionUpdateForEach : IForEach<Projection>
 {
     public required Vec2<uint> WindowSize { get; init; }
 
-    public void Execute(ref Projection projection)
+    public void Execute(scoped in Entity e, scoped ref Projection projection)
     {
         projection.Update(WindowSize);
     }

@@ -8,27 +8,22 @@ using Pollus.Mathematics;
 
 class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query<GlobalTransform, Sprite>>
 {
-    struct ExtractJob : IForEach<GlobalTransform, Sprite>
+    static void ExtractQuery(in (SpriteBatches batches, bool isStatic) userData,
+        ref GlobalTransform transform, ref Sprite sprite)
     {
-        public required SpriteBatches Batches { get; init; }
-        public required bool IsStatic { get; init; }
+        var batch = userData.batches.GetOrCreate(new SpriteBatchKey(sprite.Material, userData.isStatic));
+        var matrix = transform.Value.Transpose();
+        var extents = sprite.Slice.Size();
+        var sortKey = RenderingUtils.CreateSortKey2D(matrix.Col2.W, batch.Key);
 
-        public void Execute(ref GlobalTransform transform, ref Sprite sprite)
+        batch.Draw(sortKey, new SpriteBatch.InstanceData
         {
-            var batch = Batches.GetOrCreate(new SpriteBatchKey(sprite.Material, IsStatic));
-            var matrix = transform.Value.Transpose();
-            var extents = sprite.Slice.Size();
-            var sortKey = RenderingUtils.CreateSortKey2D(matrix.Col2.W, batch.Key);
-
-            batch.Draw(sortKey, new SpriteBatch.InstanceData
-            {
-                Model0 = matrix.Col0,
-                Model1 = matrix.Col1,
-                Model2 = matrix.Col2,
-                Slice = new Vec4f(sprite.Slice.Min.X, sprite.Slice.Min.Y, extents.X, extents.Y),
-                Color = sprite.Color,
-            });
-        }
+            Model0 = matrix.Col0,
+            Model1 = matrix.Col1,
+            Model2 = matrix.Col2,
+            Slice = new Vec4f(sprite.Slice.Min.X, sprite.Slice.Min.Y, extents.X, extents.Y),
+            Color = sprite.Color,
+        });
     }
 
     protected override void Extract(
@@ -41,17 +36,9 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
 
         if (hasStatic)
         {
-            query.ForEach<ExtractJob, Added<StaticCalculated>>(new ExtractJob
-            {
-                Batches = batches,
-                IsStatic = true,
-            });
+            query.Filtered<Added<StaticCalculated>>().ForEach((batches, true), ExtractQuery);
         }
 
-        query.ForEach<ExtractJob, None<Static>>(new ExtractJob
-        {
-            Batches = batches,
-            IsStatic = false,
-        });
+        query.Filtered<None<StaticCalculated>>().ForEach((batches, false), ExtractQuery);
     }
 }

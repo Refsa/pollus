@@ -16,7 +16,7 @@ namespace Pollus.ECS.Generators
         private void GenerateQueries(IncrementalGeneratorPostInitializationContext context)
         {
             const string TEMPLATE =
-@"namespace Pollus.ECS;
+                @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
 public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
@@ -58,9 +58,15 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         public void ForEach<TForEach>(TForEach iter)
-            where TForEach : struct, IForEachBase<$gen_args$>
+            where TForEach : struct, IForEach<$gen_args$>
         {
             query.ForEach(iter);
+        }
+
+        public void ForEachChunk<TForEach>(TForEach iter)
+            where TForEach : struct, IChunkForEach<$gen_args$>
+        {
+            query.ForEachChunk(iter);
         }
 
         public EntityRow Single()
@@ -100,6 +106,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         this.filterChunk = filterChunk;
     }
 
+    public Query<$gen_args$> Filtered<TFilters>()
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        return this;
+    }
+
     public void ForEach<TFilters>(ForEachDelegate<$gen_args$> pred)
         where TFilters : ITuple, new()
     {
@@ -120,14 +134,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 pred($comp_args$);
             }
         }
-    }
-
-    public void ForEach<TUserData, TFilters>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
-        where TFilters : ITuple, new()
-    {
-        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
-        filterChunk = QueryFilter<TFilters>.FilterChunk;
-        ForEach(userData, pred);
     }
 
     public readonly void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
@@ -167,14 +173,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
     }
 
-    public void ForEach<TUserData, TFilters>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
-        where TFilters : ITuple, new()
-    {
-        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
-        filterChunk = QueryFilter<TFilters>.FilterChunk;
-        ForEach(userData, pred);
-    }
-
     public readonly void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
     {
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
@@ -191,7 +189,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     public void ForEach<TForEach, TFilters>(TForEach iter)
-        where TForEach : struct, IForEachBase<$gen_args$>
+        where TForEach : struct, IForEach<$gen_args$>
         where TFilters : ITuple, new()
     {
         filterArchetype = QueryFilter<TFilters>.FilterArchetype;
@@ -200,37 +198,37 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     public readonly void ForEach<TForEach>(TForEach iter)
-        where TForEach : struct, IForEachBase<$gen_args$>
+        where TForEach : struct, IForEach<$gen_args$>
     {
         foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_spans$
 
-            if (iter is IForEach<$gen_args$>)
+            scoped var entities = chunk.GetEntities();
+            for (int i = 0; i < count; i++)
             {
-                for (int i = 0; i < count; i++)
-                {
-                    iter.Execute($comp_args$);
-                }
+                iter.Execute(entities[i], $comp_args$);
             }
-            else if (iter is IEntityForEach<$gen_args$>)
-            {
-                scoped var entities = chunk.GetEntities();
-                for (int i = 0; i < count; i++)
-                {
-                    iter.Execute(entities[i], $comp_args$);
-                }
-            }
-            else if (iter is IChunkForEach<$gen_args$>)
-            {
-                iter.Execute($chunk_args$);
-            }
-            else if (iter is IChunkEntityForEach<C0>)
-            {
-                scoped var entities = chunk.GetEntities();
-                iter.Execute(entities, $chunk_args$);
-            }
+        }
+    }
+
+    public void ForEachChunk<TForEach, TFilters>(TForEach iter)
+        where TForEach : struct, IChunkForEach<$gen_args$>
+        where TFilters : ITuple, new()
+    {
+        filterArchetype = QueryFilter<TFilters>.FilterArchetype;
+        filterChunk = QueryFilter<TFilters>.FilterChunk;
+        ForEachChunk(iter);
+    }
+
+    public readonly void ForEachChunk<TForEach>(TForEach iter)
+        where TForEach : struct, IChunkForEach<$gen_args$>
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        {
+            $comp_spans$
+            iter.Execute(chunk.GetEntities(), $chunk_args$);
         }
     }
 
@@ -386,7 +384,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         private void GenerateForEach(IncrementalGeneratorPostInitializationContext context)
         {
             const string TEMPLATE =
-@"namespace Pollus.ECS;
+                @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
 public delegate void ForEachDelegate<$gen_args$>($args$) 
@@ -401,41 +399,18 @@ public delegate void ForEachEntityDelegate<$gen_args$>(scoped in Entity entity, 
 public delegate void ForEachEntityUserDataDelegate<TUserData, $gen_args$>(scoped in TUserData userData, scoped in Entity entity, $args$)
     $gen_constraints$;
 
-public interface IForEachBase<$gen_args$>
-    $gen_constraints$
-{
-    void Execute($args$) { }
-    void Execute(in Entity entity, $args$) { }
-    void Execute($chunk_spans$) { }
-    void Execute(scoped in ReadOnlySpan<Entity> entities, $chunk_spans$) { }
-}
-
-public interface IForEach<$gen_args$> : IForEachBase<$gen_args$>
+public interface IForEach<$gen_args$>
     $gen_constraints$
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    new void Execute($args$);
+    void Execute(in Entity entity, $args$);
 }
 
-public interface IEntityForEach<$gen_args$> : IForEachBase<$gen_args$>
+public interface IChunkForEach<$gen_args$>
     $gen_constraints$
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    new void Execute(in Entity entity, $args$);
-}
-
-public interface IChunkForEach<$gen_args$> : IForEachBase<$gen_args$>
-    $gen_constraints$
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    new void Execute($chunk_spans$);
-}
-
-public interface IChunkEntityForEach<$gen_args$> : IForEachBase<$gen_args$>
-    $gen_constraints$
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    new void Execute(scoped in ReadOnlySpan<Entity> entities, $chunk_spans$);
+    void Execute(scoped in ReadOnlySpan<Entity> entities, $chunk_spans$);
 }
 ";
 
