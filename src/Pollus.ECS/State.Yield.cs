@@ -6,17 +6,19 @@ public struct WaitForStateEnter<TState>
     where TState : unmanaged, Enum
 {
     public static readonly Type[] Dependencies = [typeof(StateEvent<TState>)];
+
     static WaitForStateEnter()
     {
         Coroutine.RegisterHandler<WaitForStateEnter<TState>>(
-        static (in Yield yield, in Param<World> param) =>
-        {
-            var handler = yield.GetCustomData<WaitForStateEnter<TState>>();
-            return handler.Execute(param);
-        }, Dependencies);
+            static (scoped ref yield, scoped in param) =>
+            {
+                var handler = yield.GetCustomData<WaitForStateEnter<TState>>();
+                return handler.Execute(param);
+            }, Dependencies);
     }
 
     public TState State { get; }
+
     public WaitForStateEnter(TState state)
     {
         State = state;
@@ -46,14 +48,15 @@ public struct WaitForStateExit<TState>
     static WaitForStateExit()
     {
         Coroutine.RegisterHandler<WaitForStateExit<TState>>(
-        static (in Yield yield, in Param<World> param) =>
-        {
-            var handler = yield.GetCustomData<WaitForStateExit<TState>>();
-            return handler.Execute(param);
-        }, Dependencies);
+            static (scoped ref yield, scoped in param) =>
+            {
+                var handler = yield.GetCustomData<WaitForStateExit<TState>>();
+                return handler.Execute(param);
+            }, Dependencies);
     }
 
     public TState State { get; }
+
     public WaitForStateExit(TState state)
     {
         State = state;

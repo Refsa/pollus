@@ -54,6 +54,13 @@ class Field
     public string[] TypeAttributes;
 }
 
+class Method
+{
+    public string Name;
+    public string ReturnType;
+    public List<string> Parameters;
+}
+
 internal static class Common
 {
     public static void CollectFields(ITypeSymbol type, List<Field> fields)

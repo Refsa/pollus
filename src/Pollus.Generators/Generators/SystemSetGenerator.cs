@@ -1,5 +1,6 @@
 namespace Pollus.Generators
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -11,15 +12,6 @@ namespace Pollus.Generators
     [Generator]
     public class SystemSetGenerator : IIncrementalGenerator
     {
-        class TypeInfo
-        {
-            public string Namespace;
-            public string ClassName;
-            public string FullClassName;
-            public string FullTypeKind;
-            public string Visibility;
-        }
-
         class Model
         {
             public TypeInfo TypeInfo;
@@ -40,19 +32,6 @@ namespace Pollus.Generators
             public Method CoroutineCallbackMethod;
         }
 
-        class Field
-        {
-            public string Name;
-            public string Type;
-        }
-
-        class Method
-        {
-            public string Name;
-            public string ReturnType;
-            public List<string> Parameters;
-        }
-
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -62,8 +41,8 @@ namespace Pollus.Generators
                     || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.ClassKeyword)),
                 transform: static (context, cancellationToken) =>
                 {
-                    var attribute = context.Attributes.FirstOrDefault(e => e.AttributeClass.Name == "SystemSetAttribute");
                     var data = context.TargetSymbol as ITypeSymbol;
+                    if (data is null) throw new Exception("Target symbol is null");
 
                     var systemModels = new List<SystemModel>();
                     var coroutineModels = new List<CoroutineModel>();
@@ -122,40 +101,10 @@ namespace Pollus.Generators
                         }
                     }
 
-                    TypeInfo containingType = null;
-                    if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
-                    {
-                        var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
-                        if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
-                        var fullName = data.ContainingType.ToString().Replace(data.ContainingType.ContainingNamespace?.ToString() ?? "", "").TrimStart('.');
-
-                        containingType = new TypeInfo()
-                        {
-                            Namespace = data.ContainingNamespace.ToDisplayString(),
-                            ClassName = fullName.Replace('<', '_').Replace(',', '_').TrimEnd('>'),
-                            FullClassName = fullName,
-                            FullTypeKind = containingTypeKind,
-                            Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
-                        };
-                    }
-
-                    var fullTypeKind = data.TypeKind.ToString().ToLower();
-                    if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
-
-                    var fullTypeName = data.ToString().Replace(data.ContainingNamespace?.ToString() ?? "_", "").Replace(data.ContainingType?.Name ?? "_", "").TrimStart('.');
-                    TypeInfo typeInfo = new()
-                    {
-                        Namespace = data.ContainingNamespace.ToDisplayString(),
-                        ClassName = fullTypeName.Replace('<', '_').Replace(',', '_').TrimEnd('>'),
-                        FullClassName = fullTypeName,
-                        FullTypeKind = fullTypeKind,
-                        Visibility = data.DeclaredAccessibility.ToString().ToLower(),
-                    };
-
                     return new Model()
                     {
-                        TypeInfo = typeInfo,
-                        ContainingType = containingType,
+                        TypeInfo = Common.CreateTypeInfo(data),
+                        ContainingType = data.ContainingType != null ? Common.CreateTypeInfo(data.ContainingType) : null,
                         SystemModels = systemModels,
                         CoroutineModels = coroutineModels,
                     };
@@ -177,8 +126,6 @@ namespace Pollus.Generators
                                       {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.FullClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
                                   }
                                   schedule.AddSystems({{lowerName}}.Stage, FnSystem.Create({{lowerName}}, (SystemDelegate<{{string.Join(", ", systemModel.SystemCallbackMethod.Parameters)}}>){{systemModel.SystemCallbackMethod.Name}}));
-
-
                           """);
                 }
 
