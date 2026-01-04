@@ -53,27 +53,39 @@ public class ComponentGenerator : IIncrementalGenerator
 
             const string worldSerializationContextType = "WorldSerializationContext";
 
-            var reflectImpl = model.TypeInfo.Attributes.Contains("Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
-            var tweenImpl = model.TypeInfo.Attributes.Contains("Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
+            var reflectImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
+            var tweenImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
 
-            var serializeImpl = model.TypeInfo.Attributes.Contains("Pollus.Core.Serialization.SerializeAttribute")
+            var serializeImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Core.Serialization.SerializeAttribute")
                 ? null
                 : $$"""
                     {{SerializeGenerator.GetISerializableImpl(model, worldSerializationContextType)}}
                     {{(model.ContainingType is null ? SerializeGenerator.GetModuleInitializerImpl(model, worldSerializationContextType) : "")}}
                     """;
             var serializerImpl = string.IsNullOrEmpty(serializeImpl) ? null : SerializeGenerator.GetSerializerImpl(model, worldSerializationContextType);
+            var defaultImpl = model.TypeInfo.Interfaces.Any(e => e == "IDefault")
+                ? null
+                : $"public static {model.TypeInfo.FullClassName} Default {{ get; }} = default;";
 
             List<string> interfaces = [];
             if (!string.IsNullOrEmpty(reflectImpl)) interfaces.Add($"Pollus.Utils.IReflect<{model.TypeInfo.FullClassName}>");
             if (!string.IsNullOrEmpty(tweenImpl)) interfaces.Add("Pollus.Engine.Tween.ITweenable");
             if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add($"Pollus.Core.Serialization.ISerializable<{worldSerializationContextType}>");
+            if (!string.IsNullOrEmpty(defaultImpl)) interfaces.Add($"Pollus.ECS.IDefault<{model.TypeInfo.FullClassName}>");
+
+            string requiredComponents = string.Join(", ", model.TypeInfo.Attributes
+                .Where(a => a.Name.StartsWith("Pollus.ECS.Required"))
+                .Select(s => $"typeof({s.GenericArguments[0].FullyQualifiedClassName})")
+            );
 
             var partialExt =
                 $$"""
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}}
                     : {{string.Join(", ", interfaces)}}
                   {
+                      public static Type[] RequiredComponents { get; } = [{{requiredComponents}}];
+                      {{defaultImpl}}
+
                       static {{model.TypeInfo.ClassName}}()
                       {
                           Component.Register<{{model.TypeInfo.FullClassName}}>();

@@ -10,6 +10,7 @@ class TypeInfo
     public string Namespace;
     public string ClassName;
     public string FullClassName;
+    public string FullyQualifiedClassName;
     public string FileName;
     public string FullTypeKind;
     public string Visibility;
@@ -17,7 +18,8 @@ class TypeInfo
     public bool IsUnmanaged;
     public bool IsGeneric => GenericArguments is not null && GenericArguments.Count > 0;
 
-    public string[] Attributes;
+    public Attribute[] Attributes;
+    public string[] Interfaces;
 
     public List<GenericArgument> GenericArguments;
 }
@@ -31,6 +33,7 @@ class GenericArgument
 class Attribute
 {
     public string Name;
+    public TypeInfo[] GenericArguments;
 }
 
 class Model
@@ -135,10 +138,16 @@ internal static class Common
             Namespace = data.ContainingNamespace?.ToDisplayString(),
             ClassName = data.Name,
             FullClassName = data.Name,
+            FullyQualifiedClassName = data.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             FullTypeKind = fullTypeKind,
             Visibility = data.DeclaredAccessibility.ToString().ToLower(),
             IsUnmanaged = data.IsUnmanagedType,
-            Attributes = data.GetAttributes().Select(a => a.ToString()).ToArray(),
+            Interfaces = data.Interfaces.Select(e => e.Name).ToArray(),
+            Attributes = data.GetAttributes().Select(a => new Attribute()
+            {
+                Name = a.ToString(),
+                GenericArguments = a.AttributeClass?.TypeArguments.Select(CreateTypeInfo).ToArray(),
+            }).ToArray(),
         };
 
         if (data is INamedTypeSymbol { IsGenericType: true } namedType)
@@ -172,7 +181,7 @@ internal static class Common
             typeInfo.FullClassName = $"{typeInfo.ClassName}<{string.Join(", ", typeInfo.GenericArguments.Select(e => e.TypeInfo.ClassName))}>";
         }
 
-        typeInfo.FileName = typeInfo.FullClassName.Replace('<', '_').Replace(',', '_').Replace(">", "");
+        typeInfo.FileName = typeInfo.FullClassName.Replace('<', '_').Replace(',', '_').Replace(">", "").Replace("global::", "");
 
         return typeInfo;
     }

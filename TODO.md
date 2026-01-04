@@ -106,6 +106,8 @@
 		- [x] Polygons/Shapes
 		- [-] 2D Frame Graph Passes
 		- [-] Sorting
+			- [ ] parallel sorting
+			- [ ] GPU sorting/dispatch
 	- [x] Extract rendering data
 	- [x] Shared base for batching
 	- [ ] Rendering Stage/Frame Graph

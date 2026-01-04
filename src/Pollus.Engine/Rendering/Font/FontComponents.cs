@@ -5,7 +5,7 @@ using ECS;
 using Transform;
 using Utils;
 
-public partial struct TextDraw : IComponent
+public partial struct TextDraw : IComponent, IDefault<TextDraw>
 {
     public static readonly EntityBuilder<TextDraw, TextMesh, Transform2D> Bundle = Entity.With(
         TextDraw.Default,
@@ -13,7 +13,7 @@ public partial struct TextDraw : IComponent
         Transform2D.Default
     );
 
-    public static readonly TextDraw Default = new TextDraw()
+    public static TextDraw Default { get; } = new TextDraw()
     {
         Font = Handle<FontAsset>.Null,
         Color = Color.WHITE,
@@ -45,9 +45,9 @@ public partial struct TextDraw : IComponent
     }
 }
 
-public partial struct TextMesh : IComponent
+public partial struct TextMesh : IComponent, IDefault<TextMesh>
 {
-    public static readonly TextMesh Default = new TextMesh()
+    public static TextMesh Default { get; } = new TextMesh()
     {
         Mesh = Handle<TextMeshAsset>.Null,
         Material = Handle<FontMaterial>.Null,

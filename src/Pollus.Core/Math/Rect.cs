@@ -9,6 +9,8 @@ using Pollus.Graphics;
 [DebuggerDisplay("Rect: {Min} {Max}")]
 public partial struct Rect
 {
+    public static readonly Rect Zero = new Rect();
+
     public Vec2f Min;
     public Vec2f Max;
 
@@ -127,6 +129,7 @@ public partial struct Rect
         {
             return new Vec2f(x1, y1);
         }
+
         return Vec2f.Zero;
     }
 

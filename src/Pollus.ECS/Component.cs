@@ -8,6 +8,13 @@ using System.Runtime.CompilerServices;
 
 public interface IComponent
 {
+    static virtual Type[] RequiredComponents { get; } = [];
+}
+
+public interface IDefault<C>
+    where C : unmanaged, IComponent
+{
+    static virtual C Default { get; } = default;
 }
 
 [DebuggerDisplay("{Info.TypeName}")]

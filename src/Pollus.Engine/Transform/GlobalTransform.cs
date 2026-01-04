@@ -3,9 +3,9 @@ namespace Pollus.Engine.Transform;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
-public partial struct GlobalTransform : IComponent
+public partial struct GlobalTransform : IComponent, IDefault<GlobalTransform>
 {
-    public static readonly GlobalTransform Default = new()
+    public static GlobalTransform Default { get; } = new()
     {
         Value = Mat4f.Identity(),
     };

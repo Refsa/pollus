@@ -3,11 +3,11 @@ namespace Pollus.Engine.Transform;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
-public struct Transform3D : ITransform, IComponent
+public partial struct Transform3D : ITransform, IComponent, IDefault<Transform3D>
 {
     public static readonly EntityBuilder<Transform3D, GlobalTransform> Bundle = Entity.With(Transform3D.Default, GlobalTransform.Default);
 
-    public static readonly Transform3D Default = new()
+    public static Transform3D Default { get; } = new()
     {
         Position = Vec3f.Zero,
         Scale = Vec3f.One,

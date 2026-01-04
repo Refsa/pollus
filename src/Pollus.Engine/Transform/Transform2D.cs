@@ -3,14 +3,14 @@ namespace Pollus.Engine.Transform;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
-public partial struct Transform2D : ITransform, IComponent
+public partial struct Transform2D : ITransform, IComponent, IDefault<Transform2D>
 {
     public static EntityBuilder<Transform2D, GlobalTransform> Bundle => new(
         Default,
         GlobalTransform.Default
     );
 
-    public static readonly Transform2D Default = new()
+    public static Transform2D Default { get; } = new()
     {
         Position = Vec2f.Zero,
         Scale = Vec2f.One,
