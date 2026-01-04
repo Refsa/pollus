@@ -105,19 +105,19 @@ public partial class MeshRenderingExample : IExample
                 var zoomIn = keyboard.JustPressed(Key.ArrowUp);
                 var zoomOut = keyboard.JustPressed(Key.ArrowDown);
 
-                qCamera.ForEach((ref Transform2D transform, ref OrthographicProjection projection) =>
+                qCamera.ForEach((ref transform, ref projection) =>
                 {
                     if (controlHeld)
                     {
                         if (zoomIn || zoomOut)
                         {
-                            projection.Scale += inputVec.Y * 0.25f;
+                            projection.Scale += inputVec.Y * -0.25f;
                             projection.Scale = projection.Scale.Clamp(0.25f, 10f);
                         }
                     }
                     else
                     {
-                        transform.Position += inputVec * 400f * (float)time.DeltaTime;
+                        transform.Position += inputVec * -400f * (float)time.DeltaTime;
                     }
                 });
 

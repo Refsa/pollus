@@ -15,7 +15,7 @@ public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatc
         public void Execute(ref GlobalTransform transform, ref MeshDraw<TMaterial> renderable)
         {
             var batch = Batches.GetOrCreate(new MeshBatchKey(renderable.Mesh, renderable.Material));
-            var sortKey = RenderingUtils.CreateSortKey2D(transform.Value.Col2.W, batch.Key);
+            var sortKey = RenderingUtils.CreateSortKey2D(transform.Value.Col3.Z, batch.Key);
             batch.Draw(sortKey, transform.Value);
         }
     }

@@ -8,4 +8,9 @@ public class RenderingUtils
         zKey ^= (uint)(-(int)(zKey >> 31)) | 0x80000000;
         return ((ulong)zKey << 32) | (uint)batchKey;
     }
+
+    public static int PackSortKeys(int key1, int key2)
+    {
+        return (key1 << 16) | (key2 & 0xFFFF);
+    }
 }

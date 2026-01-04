@@ -66,7 +66,12 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
         public int BatchID;
         public int SortedIndex;
 
-        public int CompareTo(DrawEntry other) => SortKey.CompareTo(other.SortKey);
+        public int CompareTo(DrawEntry other)
+        {
+            var sortKeyComparison = SortKey.CompareTo(other.SortKey);
+            if (sortKeyComparison != 0) return sortKeyComparison;
+            return SortedIndex.CompareTo(other.SortedIndex);
+        }
     }
 
     public required RenderStep2D RenderStep;
@@ -120,7 +125,7 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
             var entry = drawOrder[i];
 
             var isNewBatch = entry.RendererID != currentRendererID || entry.BatchID != currentBatchID;
-            var isNonContiguous = (start + count) != entry.SortedIndex;
+            var isNonContiguous = !isNewBatch && (start + count) != entry.SortedIndex;
 
             if (isNewBatch || isNonContiguous)
             {

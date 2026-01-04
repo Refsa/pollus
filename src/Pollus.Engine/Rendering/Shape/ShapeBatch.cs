@@ -4,20 +4,9 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public record struct ShapeBatchKey
+public record struct ShapeBatchKey(Handle<Shape> Shape, Handle Material)
 {
-    readonly int hashCode;
-    public readonly Handle<Shape> Shape;
-    public readonly Handle Material;
-
-    public ShapeBatchKey(Handle<Shape> shape, Handle material)
-    {
-        Shape = shape;
-        Material = material;
-        hashCode = HashCode.Combine(shape, material);
-    }
-
-    public override int GetHashCode() => hashCode;
+    public int SortKey { get; } = RenderingUtils.PackSortKeys(Shape.ID, Material.ID);
 }
 
 public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
@@ -35,7 +24,7 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
     public Handle<Shape> Shape { get; }
     public override Handle[] RequiredResources => [Material, Shape];
 
-    public ShapeBatch(in ShapeBatchKey key) : base(key.GetHashCode())
+    public ShapeBatch(in ShapeBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
         Shape = key.Shape;

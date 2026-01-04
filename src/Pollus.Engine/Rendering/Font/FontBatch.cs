@@ -4,20 +4,9 @@ using Graphics;
 using Mathematics;
 using Utils;
 
-public record struct FontBatchKey
+public record struct FontBatchKey(Handle<TextMeshAsset> TextMesh, Handle<FontMaterial> Material)
 {
-    readonly int hashCode;
-    public readonly Handle<TextMeshAsset> TextMesh;
-    public readonly Handle<FontMaterial> Material;
-
-    public FontBatchKey(Handle<TextMeshAsset> textMesh, Handle<FontMaterial> material)
-    {
-        TextMesh = textMesh;
-        Material = material;
-        hashCode = HashCode.Combine(textMesh, material);
-    }
-
-    public override int GetHashCode() => hashCode;
+    public int SortKey { get; } = RenderingUtils.PackSortKeys(TextMesh.ID, Material.ID);
 }
 
 public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
@@ -35,7 +24,7 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
     public Handle<TextMeshAsset> TextMesh { get; }
     public override Handle[] RequiredResources => [Material, TextMesh];
 
-    public FontBatch(in FontBatchKey key) : base(key.GetHashCode())
+    public FontBatch(in FontBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
         TextMesh = key.TextMesh;
