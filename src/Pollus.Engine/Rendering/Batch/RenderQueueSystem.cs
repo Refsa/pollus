@@ -90,9 +90,9 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
     {
         drawOrder.Clear();
 
-        foreach (var batchCollection in registry.Batches)
+        foreach (var batches in registry.Batches)
         {
-            foreach (var batch in batchCollection.Batches)
+            foreach (var batch in batches.Batches)
             {
                 var entries = batch.SortEntries;
                 drawOrder.EnsureCapacity(drawOrder.Count + entries.Length);
@@ -101,7 +101,7 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
                     drawOrder.Add(new DrawEntry
                     {
                         SortKey = entries[i].SortKey,
-                        RendererID = batchCollection.RendererID,
+                        RendererID = batches.RendererID,
                         BatchID = batch.BatchID,
                         SortedIndex = i,
                     });

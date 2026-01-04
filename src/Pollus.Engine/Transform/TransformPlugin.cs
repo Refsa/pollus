@@ -1,13 +1,10 @@
 namespace Pollus.Engine.Transform;
 
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
 public interface ITransform
 {
-    static abstract Mat4f ToMat4f(in ITransform transform);
-
     Mat4f ToMat4f();
     GlobalTransform ToGlobalTransform(Mat4f parentTransform);
 }
@@ -36,12 +33,12 @@ public partial class TransformPlugin<TTransform> : IPlugin
     {
         qOrphans.ForEach(static (ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+            globalTransform.Value = transform.Component.ToMat4f();
         });
 
         qTreeTransforms.ForEach(static (ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+            globalTransform.Value = transform.Component.ToMat4f();
         });
 
         qRoots.ForEach(query, static (in query, in root, ref _, ref _, ref _) =>
@@ -60,13 +57,13 @@ public partial class TransformPlugin<TTransform> : IPlugin
     {
         qOrphans.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+            globalTransform.Value = transform.Component.ToMat4f();
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 
         qTreeTransforms.ForEach((query, commands), static (in data, in entity, ref globalTransform, ref transform) =>
         {
-            globalTransform.Value = TTransform.ToMat4f(transform.Component);
+            globalTransform.Value = transform.Component.ToMat4f();
             data.commands.AddComponent(entity, new StaticCalculated());
         });
 

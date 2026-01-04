@@ -38,7 +38,7 @@ public struct Transform3D : ITransform, IComponent
         };
     }
 
-    public static Mat4f ToMat4f(in ITransform transform)
+    public static Mat4f ToMat4f(in Transform3D transform)
     {
         return transform.ToMat4f();
     }
