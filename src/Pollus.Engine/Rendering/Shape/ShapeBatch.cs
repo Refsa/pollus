@@ -22,12 +22,13 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
 
     public Handle Material { get; }
     public Handle<Shape> Shape { get; }
-    public override Handle[] RequiredResources => [Material, Shape];
+    public override Handle[] RequiredResources { get; }
 
     public ShapeBatch(in ShapeBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
         Shape = key.Shape;
+        RequiredResources = [Material, Shape];
     }
 
     public void Draw(ulong sortKey, Mat4f model, Color color)

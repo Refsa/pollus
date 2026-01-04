@@ -1,5 +1,7 @@
 namespace Pollus.Collections;
 
+using System.Runtime.InteropServices;
+
 public ref struct ListEnumerable<TItem>
 {
     private readonly IReadOnlyList<TItem> _list;

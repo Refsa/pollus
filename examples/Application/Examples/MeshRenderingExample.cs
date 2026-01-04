@@ -105,8 +105,11 @@ public partial class MeshRenderingExample : IExample
                 var zoomIn = keyboard.JustPressed(Key.ArrowUp);
                 var zoomOut = keyboard.JustPressed(Key.ArrowDown);
 
-                qCamera.ForEach((ref transform, ref projection) =>
+                foreach (var camera in qCamera)
                 {
+                    ref var transform = ref camera.Component0;
+                    ref var projection = ref camera.Component1;
+
                     if (controlHeld)
                     {
                         if (zoomIn || zoomOut)
@@ -119,7 +122,7 @@ public partial class MeshRenderingExample : IExample
                     {
                         transform.Position += inputVec * -400f * (float)time.DeltaTime;
                     }
-                });
+                }
 
                 qRotateMe.ForEach(new RotateMeForEach { SecondsSinceStartup = (float)time.SecondsSinceStartup });
             })).Build()).Run();

@@ -1,12 +1,13 @@
 namespace Pollus.Graphics;
 
+using Collections;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
 
 public interface IRenderBatches
 {
-    IReadOnlyList<IRenderBatch> Batches { get; }
+    ReadOnlySpan<IRenderBatch> Batches { get; }
 
     int RendererID { get; set; }
     void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext);
@@ -23,12 +24,12 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
     where TBatch : class, IRenderBatch
     where TKey : notnull
 {
-    readonly List<TBatch> batches = [];
+    readonly ArrayList<TBatch> batches = [];
     readonly Dictionary<int, int> batchLookup = [];
     bool isDisposed;
 
     public int RendererID { get; set; }
-    public IReadOnlyList<IRenderBatch> Batches => batches;
+    public ReadOnlySpan<IRenderBatch> Batches => batches.AsSpan();
 
     public void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext)
     {
@@ -62,7 +63,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
         isDisposed = true;
         GC.SuppressFinalize(this);
 
-        foreach (var batch in batches)
+        foreach (var batch in Batches)
         {
             (batch as IDisposable)?.Dispose();
         }
@@ -109,7 +110,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
 
     public void Reset(bool all = false)
     {
-        foreach (var batch in batches)
+        foreach (var batch in Batches)
         {
             if (!all && batch.IsStatic) continue;
             batch.Reset();

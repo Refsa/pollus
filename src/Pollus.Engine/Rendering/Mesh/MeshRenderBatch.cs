@@ -13,12 +13,13 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
 {
     public Handle<MeshAsset> Mesh { get; init; }
     public Handle Material { get; init; }
-    public override Handle[] RequiredResources => [Mesh, Material];
+    public override Handle[] RequiredResources { get; }
 
     public MeshRenderBatch(in MeshBatchKey key) : base(key.SortKey)
     {
         Mesh = key.Mesh;
         Material = key.Material;
+        RequiredResources = [Mesh, Material];
     }
 }
 

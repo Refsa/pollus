@@ -132,9 +132,9 @@ public class RenderingPlugin : IPlugin
             {
                 context.CleanupFrame();
                 renderSteps.Cleanup();
-                foreach (var batch in registry.Batches)
+                foreach (scoped ref readonly var batches in registry.Batches)
                 {
-                    batch.Reset(false);
+                    batches.Reset(false);
                 }
             }
         ));

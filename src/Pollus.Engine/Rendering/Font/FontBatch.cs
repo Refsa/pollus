@@ -22,12 +22,13 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
 
     public Handle<FontMaterial> Material { get; }
     public Handle<TextMeshAsset> TextMesh { get; }
-    public override Handle[] RequiredResources => [Material, TextMesh];
+    public override Handle[] RequiredResources { get; }
 
     public FontBatch(in FontBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
         TextMesh = key.TextMesh;
+        RequiredResources = [Material, TextMesh];
     }
 
     public void Draw(ulong sortKey, Mat4f model, Color color)

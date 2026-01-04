@@ -21,16 +21,19 @@ public record struct RendererKey
 
 public class RenderQueueRegistry
 {
-    readonly Dictionary<int, IRenderBatches> batchCollections = new();
+    readonly ArrayList<IRenderBatches> batches = [];
+    readonly Dictionary<int, int> lookup = [];
 
     public void Register(int id, IRenderBatches batchCollection)
     {
-        batchCollections[id] = batchCollection;
+        var index = batches.Count;
+        batches.Add(batchCollection);
+        lookup.Add(id, index);
     }
 
-    public IReadOnlyCollection<IRenderBatches> Batches => batchCollections.Values;
+    public ReadOnlySpan<IRenderBatches> Batches => batches.AsSpan();
 
-    public IRenderBatches Get(int id) => batchCollections[id];
+    public IRenderBatches Get(int id) => batches[lookup[id]];
 }
 
 public static class RenderQueueSystems
@@ -50,7 +53,7 @@ public class WriteRenderBuffersSystem : SystemBase<RenderQueueRegistry, RenderAs
 
     protected override void OnTick(RenderQueueRegistry registry, RenderAssets renderAssets, IWGPUContext gpuContext)
     {
-        foreach (var batches in registry.Batches)
+        foreach (scoped ref readonly var batches in registry.Batches)
         {
             batches.WriteBuffers(renderAssets, gpuContext);
         }
@@ -90,9 +93,9 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
     {
         drawOrder.Clear();
 
-        foreach (var batches in registry.Batches)
+        foreach (scoped ref readonly var batches in registry.Batches)
         {
-            foreach (var batch in batches.Batches)
+            foreach (scoped ref readonly var batch in batches.Batches)
             {
                 var entries = batch.SortEntries;
                 drawOrder.EnsureCapacity(drawOrder.Count + entries.Length);

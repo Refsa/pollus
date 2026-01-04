@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class ArrayList<T> : IEnumerable<T>
+public class ArrayList<T> : IEnumerable
 {
     private T[] items;
     private int count;
@@ -77,13 +77,35 @@ public class ArrayList<T> : IEnumerable<T>
         other.count = count;
     }
 
-    public IEnumerator<T> GetEnumerator()
-    {
-        return (IEnumerator<T>)items.GetEnumerator();
-    }
-
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return items.GetEnumerator();
+        throw new NotSupportedException("Dont use the IEnumerable interface for ArrayList");
+    }
+
+    public Enumerator GetEnumerator()
+    {
+        return new Enumerator(items, count);
+    }
+
+    public ref struct Enumerator
+    {
+        readonly T[] items;
+        readonly int count;
+        int index;
+
+        public ref T Current => ref items[index];
+
+        public Enumerator(T[] items, int count)
+        {
+            this.items = items;
+            this.count = count;
+            index = -1;
+        }
+
+        public bool MoveNext()
+        {
+            index++;
+            return index < count;
+        }
     }
 }

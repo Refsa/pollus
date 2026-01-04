@@ -8,7 +8,7 @@ using Pollus.Graphics.WGPU;
 public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatches, MeshRenderBatch, Query<GlobalTransform, MeshDraw<TMaterial>>>
     where TMaterial : IMaterial
 {
-    struct ExtractJob : IForEach<GlobalTransform, MeshDraw<TMaterial>>
+    readonly struct ExtractJob : IForEach<GlobalTransform, MeshDraw<TMaterial>>
     {
         public required MeshRenderBatches Batches { get; init; }
 
