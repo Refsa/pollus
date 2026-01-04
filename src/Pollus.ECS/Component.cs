@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 public interface IComponent
 {
-    static virtual Type[] RequiredComponents { get; } = [];
+    static virtual ComponentID[] RequiredComponents { get; } = [];
 }
 
 public interface IDefault<C>

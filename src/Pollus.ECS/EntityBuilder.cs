@@ -11,7 +11,7 @@ public interface IEntityBuilder
     Entity Spawn(World world, in Entity entity);
 }
 
-unsafe public struct EntityBuilder : IEntityBuilder
+public struct EntityBuilder : IEntityBuilder
 {
     static readonly ComponentID[] componentIDs = [];
     public static ComponentID[] ComponentIDs => componentIDs;

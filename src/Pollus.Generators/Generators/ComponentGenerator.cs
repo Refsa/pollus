@@ -75,7 +75,7 @@ public class ComponentGenerator : IIncrementalGenerator
 
             string requiredComponents = string.Join(", ", model.TypeInfo.Attributes
                 .Where(a => a.Name.StartsWith("Pollus.ECS.Required"))
-                .Select(s => $"typeof({s.GenericArguments[0].FullyQualifiedClassName})")
+                .Select(s => $"Component.GetInfo<{s.GenericArguments[0].FullyQualifiedClassName}>().ID, ..{s.GenericArguments[0].FullyQualifiedClassName}.RequiredComponents")
             );
 
             var partialExt =
@@ -83,7 +83,7 @@ public class ComponentGenerator : IIncrementalGenerator
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}}
                     : {{string.Join(", ", interfaces)}}
                   {
-                      public static Type[] RequiredComponents { get; } = [{{requiredComponents}}];
+                      public static ComponentID[] RequiredComponents { get; } = [{{requiredComponents}}];
                       {{defaultImpl}}
 
                       static {{model.TypeInfo.ClassName}}()
