@@ -159,3 +159,5 @@
 - General
 	- [x] Seeded random
 	- [x] Tweens
+- Source Analyzers
+	- [ ] hightlight partial requirements
