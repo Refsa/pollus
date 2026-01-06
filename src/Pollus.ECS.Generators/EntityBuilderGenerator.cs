@@ -17,7 +17,7 @@ namespace Pollus.ECS.Generators
         void GenerateTupleExtensions(IncrementalGeneratorPostInitializationContext context)
         {
             const string TEMPLATE =
-@"namespace Pollus.ECS;
+                @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 
 public static class TupleEntityBuilder
@@ -25,7 +25,7 @@ public static class TupleEntityBuilder
     $methods$
 }";
             const string METHOD_TEMPLATE =
-@"
+                @"
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static EntityBuilder<$gen_args$> Builder<$gen_args$>(this in ($tuple_params$) tuple)
         $gen_constraints$
@@ -68,7 +68,7 @@ public static class TupleEntityBuilder
         void GenerateConstructorsOnEntity(IncrementalGeneratorPostInitializationContext context)
         {
             const string TEMPLATE =
-@"
+                @"
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public static EntityBuilder<$gen_args$> With<$gen_args$>($parameters$)
         $gen_constraints$
@@ -123,16 +123,34 @@ public static class TupleEntityBuilder
         }
 
         static readonly string BASE_TEMPLATE =
-@"namespace Pollus.ECS;
+            @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Pollus.Utils;
 
 public struct EntityBuilder<$gen_args$> : IEntityBuilder
 $gen_constraints$
 {
     static readonly ComponentID[] componentIDs = [$component_ids$];
-    public static ComponentID[] ComponentIDs => componentIDs;
-    static readonly ArchetypeID archetypeID = ArchetypeID.Create(componentIDs);
+    public static ComponentID[] ComponentIDs { get; } = CollectionUtils.Distinct($required_components$, componentIDs);
+    static readonly ComponentDefaultData[] requiredComponents = CollectRequiredComponents();
+    static readonly ArchetypeID archetypeID = ArchetypeID.Create(ComponentIDs);
     public static ArchetypeID ArchetypeID => archetypeID;
+
+    static ComponentDefaultData[] CollectRequiredComponents()
+    {
+        var tmp = new Dictionary<ComponentID, ComponentDefaultData>();
+        $collect_required_components$
+        return tmp.Values.ToArray();
+
+        void Collect(Dictionary<ComponentID, byte[]> defaults)
+        {
+            foreach (var kvp in defaults)
+            {
+                if (componentIDs.Contains(kvp.Key)) continue;
+                tmp[kvp.Key] = new ComponentDefaultData(kvp.Key, kvp.Value);
+            }
+        }
+    }
 
 $fields$
 
@@ -149,12 +167,8 @@ $set_fields$
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
-        var entityRef = world.Store.CreateEntity<EntityBuilder<$gen_args$>>();
-        ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
-        
-$chunk_set_component$
-
-        return entityRef.Entity;
+        var entity = world.Store.Entities.Create();
+        return Spawn(world, entity);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -164,6 +178,11 @@ $chunk_set_component$
         ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
         
 $chunk_set_component$
+
+        foreach (scoped ref readonly var required in requiredComponents.AsSpan())
+        {
+            chunk.SetComponent(entityRef.RowIndex, required.CID, required.Data);
+        }
 
         return entityRef.Entity;
     }
@@ -204,6 +223,8 @@ $set_method$
             var tuple_args = new StringBuilder();
             var tuple_set = new StringBuilder();
             var set_methods = new StringBuilder();
+            var required_components = new StringBuilder();
+            var collect_required_components = new StringBuilder();
 
             for (int i = 0; i < genArgCount; i++)
             {
@@ -211,7 +232,7 @@ $set_method$
 
                 gen_args.AppendFormat("C{0}{1}", i, isLast ? "" : ", ");
                 gen_constraints.AppendFormat("\twhere C{0} : unmanaged, IComponent{1}", i, isLast ? "" : "\n");
-                component_ids.AppendFormat("Component.GetInfo<C{0}>().ID{1}", i, isLast ? "" : ", ");
+                component_ids.AppendFormat("Component.Register<C{0}>().ID{1}", i, isLast ? "" : ", ");
                 fields.AppendFormat("\tpublic C{0} Component{0};{1}", i, isLast ? "" : "\n");
                 constructor_args.AppendFormat("scoped in C{0} c{0}{1}", i, isLast ? "" : ", ");
                 set_fields.AppendFormat("\t\tComponent{0} = c{0};{1}", i, isLast ? "" : "\n");
@@ -219,6 +240,8 @@ $set_method$
                 chunk_set_component.AppendFormat("\t\tchunk.SetComponent(entityRef.RowIndex, Component{0});{1}", i, isLast ? "" : "\n");
                 tuple_args.AppendFormat("C{0} c{0}{1}", i, isLast ? "" : ", ");
                 tuple_set.AppendFormat("tuple.c{0}{1}", i, isLast ? "" : ", ");
+                required_components.AppendFormat("RequiredComponents.Get<C{0}>().ComponentIDs{1}", i, isLast ? "" : ", ");
+                collect_required_components.AppendFormat("Collect(RequiredComponents.Get<C{0}>().Defaults);{1}", i, isLast ? "" : "\n");
             }
 
             for (int i = 0; i < genArgCount; i++)
@@ -248,8 +271,9 @@ $set_method$
                 .Replace("$with_args$", with_args.ToString())
                 .Replace("$tuple_args$", tuple_args.ToString())
                 .Replace("$tuple_set$", tuple_set.ToString())
-                .Replace("$set_method$", set_methods.ToString());
-            ;
+                .Replace("$set_method$", set_methods.ToString())
+                .Replace("$required_components$", required_components.ToString())
+                .Replace("$collect_required_components$", collect_required_components.ToString());
         }
     }
 }

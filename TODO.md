@@ -67,7 +67,8 @@
 	- [-] Serialization
 		- world snapshot, scene serialization later
 		- binary format
-	- [ ] Required Components
+	- [x] Required Components
+		- [ ] optimize
 		- RequiredAttribute to define required components
 		- might need a Default on IComponent
 		- source generator to establish some graph type that defines what is needed

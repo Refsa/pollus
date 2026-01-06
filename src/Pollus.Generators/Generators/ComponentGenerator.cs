@@ -73,22 +73,18 @@ public class ComponentGenerator : IIncrementalGenerator
             if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add($"Pollus.Core.Serialization.ISerializable<{worldSerializationContextType}>");
             if (!string.IsNullOrEmpty(defaultImpl)) interfaces.Add($"Pollus.ECS.IDefault<{model.TypeInfo.FullClassName}>");
 
-            string requiredComponents = string.Join(", ", model.TypeInfo.Attributes
-                .Where(a => a.Name.StartsWith("Pollus.ECS.Required"))
-                .Select(s => $"Component.GetInfo<{s.GenericArguments[0].FullyQualifiedClassName}>().ID, ..{s.GenericArguments[0].FullyQualifiedClassName}.RequiredComponents")
-            );
-
             var partialExt =
                 $$"""
                   {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}}
                     : {{string.Join(", ", interfaces)}}
                   {
-                      public static ComponentID[] RequiredComponents { get; } = [{{requiredComponents}}];
                       {{defaultImpl}}
+                      {{CollectRequiredImpl(model)}}
 
                       static {{model.TypeInfo.ClassName}}()
                       {
                           Component.Register<{{model.TypeInfo.FullClassName}}>();
+                          RequiredComponents.Init<{{model.TypeInfo.FullClassName}}>();
                       }
 
                       {{reflectImpl}}
@@ -133,6 +129,42 @@ public class ComponentGenerator : IIncrementalGenerator
 
             context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.Component.gen.cs", source);
         });
+    }
+
+    static string CollectRequiredImpl(Model model)
+    {
+        var requiredAttributes = model.TypeInfo.Attributes.Where(a => a.Name.StartsWith("Pollus.ECS.Required")).ToArray();
+        var childCollectCalls = string.Join("\n", requiredAttributes
+            .Select(s => $"{s.GenericArguments[0].FullyQualifiedClassName}.CollectRequired(collector);"));
+
+        var explicitDefaults = string.Join("\n", requiredAttributes
+            .Select(s =>
+            {
+                var typeName = s.GenericArguments[0].FullyQualifiedClassName;
+                var constructorArg = s.ConstructorArguments?.FirstOrDefault();
+                if (constructorArg != null)
+                {
+                    var methodName = constructorArg.Trim('"');
+                    return $"collector[Component.GetInfo<{typeName}>().ID] = CollectionUtils.GetBytes({methodName}());";
+                }
+
+                return $"collector[Component.GetInfo<{typeName}>().ID] = CollectionUtils.GetBytes({typeName}.Default);";
+            }));
+
+        var selfDefault = $"collector[Component.GetInfo<{model.TypeInfo.FullyQualifiedClassName}>().ID] = CollectionUtils.GetBytes({model.TypeInfo.FullyQualifiedClassName}.Default);";
+
+        return
+            $$"""
+              public static void CollectRequired(Dictionary<ComponentID, byte[]> collector)
+              {
+                  var selfId = Component.GetInfo<{{model.TypeInfo.FullyQualifiedClassName}}>().ID;
+                  if (collector.ContainsKey(selfId)) return;
+
+                  {{selfDefault}}
+                  {{childCollectCalls}}
+                  {{explicitDefaults}}
+              }
+              """;
     }
 
     static bool HasComponentBase(BaseListSyntax baseList)

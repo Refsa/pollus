@@ -4,6 +4,7 @@ using System.Threading;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis.CSharp;
 
 class TypeInfo
 {
@@ -34,6 +35,7 @@ class Attribute
 {
     public string Name;
     public TypeInfo[] GenericArguments;
+    public string[] ConstructorArguments;
 }
 
 class Model
@@ -154,6 +156,7 @@ internal static class Common
             {
                 Name = a.ToString(),
                 GenericArguments = a.AttributeClass?.TypeArguments.Select(CreateTypeInfo).ToArray(),
+                ConstructorArguments = a.ConstructorArguments.Select(arg => arg.ToCSharpString()).ToArray(),
             }).ToArray(),
         };
 

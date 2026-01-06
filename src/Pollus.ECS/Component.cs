@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 public interface IComponent
 {
-    static virtual ComponentID[] RequiredComponents { get; } = [];
+    static virtual void CollectRequired(Dictionary<ComponentID, byte[]> collector) { }
 }
 
 public interface IDefault<C>
@@ -18,7 +18,7 @@ public interface IDefault<C>
 }
 
 [DebuggerDisplay("{Info.TypeName}")]
-public record struct ComponentID(int ID)
+public readonly record struct ComponentID(int ID)
 {
     public static implicit operator int(ComponentID cid) => cid.ID;
     public static implicit operator ComponentID(int id) => new(id);
@@ -26,6 +26,8 @@ public record struct ComponentID(int ID)
     public override int GetHashCode() => ID;
 
     public Component.Info Info => Component.GetInfo(ID);
+
+    public override string ToString() => $"ComponentID({ID}, {Info.TypeName})";
 }
 
 public static class Component

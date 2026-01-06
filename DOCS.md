@@ -43,7 +43,32 @@ public partial struct Health : IComponent
 }
 ```
 
-### Queries
+#### Default and Required components
+- `Required<T>` is used to define a component that must be present on an entity
+    - Recursively added to the entity if not present in the EntityBuilder
+    - Allows setting a custom factory method to be used when auto-adding the component
+- `IDefault<T>` is used to define a default constructor for a component
+    - This is auto-generated if not present, with a value of `default`
+    - Override to set the default value when being auto-constructed by Required components
+```cs
+[Required<Health>]
+public partial struct Player : IComponent, IDefault<Player>
+{
+    public static Player Default => new() { Level = 1 };
+
+    public int Level;
+}
+
+[Required<Health>(nameof(HealthConstructor))]
+public partial struct Enemy : IComponent
+{
+    public int Damage;
+
+    static Health HealthConstructor() => new() { MaxValue = 100};
+}
+```
+
+#### Queries
 - Queries can be created manually, but are usually injected in systems
 ```cs
 Query<Health, Thing> query;

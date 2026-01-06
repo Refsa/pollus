@@ -40,6 +40,7 @@ public class CommandsTests
         {
             entities.Add(commands.Spawn(Entity.With(new TestComponent1 { Value = 5 + i * 1000 })).Entity);
         }
+
         world.Update();
 
         commands = world.GetCommands();
@@ -47,6 +48,7 @@ public class CommandsTests
         {
             commands.AddComponent(entities[i], new TestComponent2 { Value = 10 + i * 1000 });
         }
+
         world.Update();
 
         var index = 0;
@@ -74,6 +76,7 @@ public class CommandsTests
             commands.AddComponent(entity, new TestComponent2 { Value = 10 + i * 1000 });
             entities.Add(entity);
         }
+
         world.Update();
 
         var index = 0;
@@ -143,6 +146,25 @@ public class CommandsTests
 
         var component1 = world.Store.GetComponent<TestComponent1>(entity);
         Assert.Equal(10, component1.Value);
+    }
+
+    [Fact]
+    public void Commands_SpawnWithRequiredCompnents()
+    {
+        using var world = new World();
+
+        var commands = world.GetCommands();
+        var entity = commands.Spawn(Entity.With(new TestComponent4 { Value = 5 })).Entity;
+        world.Update();
+
+        var component1 = world.Store.GetComponent<TestComponent1>(entity);
+        Assert.Equal(111, component1.Value);
+
+        var component4 = world.Store.GetComponent<TestComponent4>(entity);
+        Assert.Equal(5, component4.Value);
+
+        var component2 = world.Store.GetComponent<TestComponent2>(entity);
+        Assert.Equal(222, component2.Value);
     }
 }
 #pragma warning restore CA1416
