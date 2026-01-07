@@ -1,43 +1,45 @@
 namespace Pollus.ECS;
 
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
-public class SparseSet<T>
+public class SparseSet<TIndex, TValue>
+    where TIndex : unmanaged, INumber<TIndex>, IMinMaxValue<TIndex>
 {
-    T[] values;
-    SparseSet sparseSet;
+    TValue[] values;
+    SparseSet<TIndex> sparseSet;
 
     public int Length => sparseSet.Length;
     public bool IsEmpty => sparseSet.IsEmpty;
 
     public SparseSet(int capacity)
     {
-        sparseSet = new SparseSet(capacity);
-        values = new T[capacity];
+        sparseSet = new SparseSet<TIndex>(capacity);
+        values = new TValue[capacity];
     }
 
-    public void Add(int item, T value)
+    public void Add(TIndex item, TValue value)
     {
         var idx = sparseSet.Add(item);
         if (idx >= values.Length) Array.Resize(ref values, idx * 2);
         values[idx] = value;
     }
 
-    public void Remove(int item)
+    public void Remove(TIndex item)
     {
         var idx = sparseSet.Remove(item);
         if (idx != -1) values[idx] = default!;
     }
 
-    public bool Contains(int item)
+    public bool Contains(TIndex item)
     {
         return sparseSet.Contains(item);
     }
 
-    public ref T Get(int idx)
+    public ref TValue Get(TIndex idx)
     {
         var i = sparseSet.Get(idx);
-        if (i == -1) return ref Unsafe.NullRef<T>();
+        if (i == -1) return ref Unsafe.NullRef<TValue>();
         return ref values[i];
     }
 
@@ -55,9 +57,9 @@ public class SparseSet<T>
     {
         int length;
         int index;
-        T[] values;
+        TValue[] values;
 
-        public Enumerator(T[] values, int length)
+        public Enumerator(TValue[] values, int length)
         {
             this.length = length;
             this.values = values;
@@ -70,13 +72,14 @@ public class SparseSet<T>
             return index < length;
         }
 
-        public ref T Current => ref values[index];
+        public ref TValue Current => ref values[index];
     }
 }
 
-public class SparseSet
+public class SparseSet<TIndex>
+    where TIndex : unmanaged, INumber<TIndex>, IMinMaxValue<TIndex>
 {
-    int[] dense;
+    TIndex[] dense;
     int[] sparse;
     int n;
 
@@ -85,7 +88,7 @@ public class SparseSet
 
     public SparseSet(int capacity)
     {
-        dense = new int[capacity];
+        dense = new TIndex[capacity];
         sparse = new int[capacity];
         Array.Fill(sparse, -1);
         n = 0;
@@ -96,58 +99,60 @@ public class SparseSet
         n = 0;
     }
 
-    public bool Contains(int idx)
+    public bool Contains(TIndex idx)
     {
-        if (idx >= sparse.Length) return false;
-        return sparse[idx] != -1;
+        int i = int.CreateTruncating(idx);
+        if (i >= sparse.Length) return false;
+        return sparse[i] != -1;
     }
 
-    public int Get(int idx)
+    public int Get(TIndex idx)
     {
-        return sparse[idx];
+        int i = int.CreateTruncating(idx);
+        if (i >= sparse.Length) return -1;
+        return sparse[i];
     }
 
-    /// <summary>
-    /// adds item, returns the index of the item in the dense array
-    /// </summary>
-    /// <param name="idx"></param>
-    /// <returns></returns>
-    public int Add(int idx)
+    public int Add(TIndex idx)
     {
         if (Contains(idx))
-            return sparse[idx];
-        if (idx >= sparse.Length) ResizeSparse(idx);
+        {
+            int i = int.CreateTruncating(idx);
+            return sparse[i];
+        }
+
+        int sparseIdx = int.CreateTruncating(idx);
+        if (sparseIdx >= sparse.Length) ResizeSparse(sparseIdx);
         if (n >= dense.Length) ResizeDense();
 
-        sparse[idx] = n;
+        sparse[sparseIdx] = n;
         dense[n] = idx;
         n++;
 
         return n - 1;
     }
 
-    /// <summary>
-    /// removes item, returns the index of the item in the dense array
-    /// </summary>
-    /// <param name="idx"></param>
-    /// <returns></returns>
-    public int Remove(int idx)
+    public int Remove(TIndex idx)
     {
         if (!Contains(idx)) return -1;
 
+        int sparseIdx = int.CreateTruncating(idx);
         n--;
-        int d = sparse[idx];
-        int last = dense[n];
+        int d = sparse[sparseIdx];
+        TIndex last = dense[n];
         dense[d] = last;
-        sparse[last] = d;
-        sparse[idx] = -1;
+        int lastSparseIdx = int.CreateTruncating(last);
+        sparse[lastSparseIdx] = d;
+        sparse[sparseIdx] = -1;
 
         return d;
     }
 
     void ResizeSparse(int size)
     {
+        int oldLength = sparse.Length;
         Array.Resize(ref sparse, size * 2);
+        Array.Fill(sparse, -1, oldLength, sparse.Length - oldLength);
     }
 
     void ResizeDense()
@@ -162,11 +167,11 @@ public class SparseSet
 
     public ref struct Enumerator
     {
-        readonly int[] dense;
+        readonly TIndex[] dense;
         int index;
         int length;
 
-        public Enumerator(int[] dense, int length)
+        public Enumerator(TIndex[] dense, int length)
         {
             this.dense = dense;
             this.length = length;
@@ -179,6 +184,6 @@ public class SparseSet
             return index < length;
         }
 
-        public int Current => dense[index];
+        public TIndex Current => dense[index];
     }
 }

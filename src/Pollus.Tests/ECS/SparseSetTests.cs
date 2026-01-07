@@ -2,13 +2,12 @@ namespace Pollus.Tests.ECS;
 
 using Pollus.ECS;
 
-
 public class SparseSetTests
 {
     [Fact]
     public void SparseSet_Add()
     {
-        var sparseSet = new SparseSet(1024);
+        var sparseSet = new SparseSet<int>(1024);
         sparseSet.Add(0);
         sparseSet.Add(64);
         sparseSet.Add(128);
@@ -26,7 +25,7 @@ public class SparseSetTests
     [Fact]
     public void SparseSet_Remove()
     {
-        var sparseSet = new SparseSet(1024);
+        var sparseSet = new SparseSet<int>(1024);
         sparseSet.Add(0);
         sparseSet.Add(64);
         sparseSet.Add(128);
@@ -45,7 +44,7 @@ public class SparseSetTests
     [Fact]
     public void SparseSet_Enumerator()
     {
-        var sparseSet = new SparseSet(1024);
+        var sparseSet = new SparseSet<int>(1024);
         sparseSet.Add(0);
         sparseSet.Add(64);
         sparseSet.Add(128);
@@ -62,7 +61,7 @@ public class SparseSetTests
     [Fact]
     public void SparseSet_T_Add()
     {
-        var sparseSet = new SparseSet<int>(1024);
+        var sparseSet = new SparseSet<int, int>(1024);
         sparseSet.Add(0, 10);
         sparseSet.Add(64, 20);
         sparseSet.Add(128, 30);
@@ -80,7 +79,7 @@ public class SparseSetTests
     [Fact]
     public void SparseSet_T_Remove()
     {
-        var sparseSet = new SparseSet<int>(1024);
+        var sparseSet = new SparseSet<int, int>(1024);
         sparseSet.Add(0, 10);
         sparseSet.Add(64, 20);
         sparseSet.Add(128, 30);
@@ -99,7 +98,7 @@ public class SparseSetTests
     [Fact]
     public void SparseSet_T_Enumerator()
     {
-        var sparseSet = new SparseSet<int>(1024);
+        var sparseSet = new SparseSet<int, int>(1024);
         sparseSet.Add(0, 10);
         sparseSet.Add(64, 20);
         sparseSet.Add(128, 30);
@@ -111,5 +110,23 @@ public class SparseSetTests
             Assert.Equal((i + 1) * 10, value);
             i++;
         }
+    }
+
+    [Fact]
+    public void SparseSet_UInt_Add()
+    {
+        var sparseSet = new SparseSet<uint>(1024);
+        sparseSet.Add(0u);
+        sparseSet.Add(64u);
+        sparseSet.Add(128u);
+        sparseSet.Add(192u);
+
+        Assert.Equal(4, sparseSet.Length);
+        Assert.True(sparseSet.Contains(0u));
+        Assert.True(sparseSet.Contains(64u));
+        Assert.True(sparseSet.Contains(128u));
+        Assert.True(sparseSet.Contains(192u));
+
+        Assert.False(sparseSet.Contains(1u));
     }
 }

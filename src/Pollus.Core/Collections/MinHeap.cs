@@ -1,31 +1,32 @@
 namespace Pollus.Collections;
 
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
-public class MinHeap
+public class MinHeap<T>
+    where T : INumber<T>
 {
-    int[] heap;
+    T[] heap;
     int size;
     SpinWait spin = new();
 
     public MinHeap(int initialCapacity = 1024)
     {
-        heap = new int[initialCapacity];
+        heap = new T[initialCapacity];
         size = 0;
     }
 
     public bool HasFree => Volatile.Read(ref size) > 0;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public int Pop()
+    public T? Pop()
     {
         while (true)
         {
             int currentSize = Volatile.Read(ref size);
-            if (currentSize == 0) return -1;
+            if (currentSize == 0) return default;
 
-            int minEntity = heap[0];
-            int lastEntity = heap[currentSize - 1];
+            var minEntity = heap[0];
+            var lastEntity = heap[currentSize - 1];
 
             if (Interlocked.CompareExchange(ref size, currentSize - 1, currentSize) != currentSize)
             {
@@ -43,8 +44,7 @@ public class MinHeap
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Push(int id)
+    public void Push(T id)
     {
         while (true)
         {
@@ -66,34 +66,32 @@ public class MinHeap
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void GrowHeap()
     {
-        var newHeap = new int[heap.Length * 2];
+        var newHeap = new T[heap.Length * 2];
         Array.Copy(heap, newHeap, heap.Length);
         Interlocked.CompareExchange(ref heap, newHeap, heap);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void HeapifyUp(int index)
     {
-        int newEntity = heap[index];
+        T newEntity = heap[index];
         while (index > 0)
         {
             int parentIndex = (index - 1) / 2;
-            int parent = heap[parentIndex];
+            T parent = heap[parentIndex];
             if (parent <= newEntity)
                 break;
             heap[index] = parent;
             index = parentIndex;
         }
+
         heap[index] = newEntity;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     void HeapifyDown(int index, int heapSize)
     {
-        int topEntity = heap[index];
+        T topEntity = heap[index];
         while (true)
         {
             int leftChild = 2 * index + 1;
@@ -109,6 +107,7 @@ public class MinHeap
             heap[index] = heap[minChild];
             index = minChild;
         }
+
         heap[index] = topEntity;
     }
 
