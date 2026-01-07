@@ -126,7 +126,7 @@ public class SerializeGenerator : IIncrementalGenerator
                   {
                       var c = new {{model.TypeInfo.FullClassName}}()
                       {
-                          {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = default,"))}}
+                          {{string.Join("\n", GetFields(model).Where(e => e.IsRequired).Select(e => $"{e.Name} = default!,"))}}
                       };
                       c.Deserialize(ref reader, in context);
                       return c;

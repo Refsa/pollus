@@ -58,7 +58,7 @@
 	- [x] System Param Sets
 	- [-] Improve system creation/setup
 	- [x] Improve delegate foreach in queries
-	- [-] Coroutines
+	- [x] Coroutines
 	- [ ] Optimized tag components
 	- [x] versioning
 		- [x] event lifetimes

@@ -77,8 +77,6 @@ public partial class SnapshotSerializationPlugin : IPlugin
             ser.Writer.Write(info.TypeName);
         }
 
-        // Resources
-
         // Archetypes and Component data
         var archetypes = world.Store.Archetypes.Where(a => FilterHelpers.RunArchetypeFilters(a, [All<SerializeTag>.Instance]));
         ser.Writer.Write(archetypes.Count());
@@ -124,7 +122,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
             var sizeInBytes = deser.Reader.Read<int>();
             var read = deser.Reader.Read<bool>();
             var write = deser.Reader.Read<bool>();
-            var typeName = deser.Reader.ReadString();
+            var typeName = deser.Reader.ReadString() ?? throw new NullReferenceException($"Missing type name for component {cid}");
 
             var type = Type.GetType(typeName) ?? throw new InvalidOperationException($"Type {typeName} not found");
 
@@ -140,10 +138,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
             componentLookup[cid] = info;
         }
 
-        // Resources
-
         // Archetypes and Component data
-        Span<NativeArray<byte>> componentMemory = stackalloc NativeArray<byte>[componentLookup.Count];
         var archetypeCount = deser.Reader.Read<int>();
         for (int i = 0; i < archetypeCount; i++)
         {

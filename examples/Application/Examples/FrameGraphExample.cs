@@ -25,7 +25,6 @@ public class FrameGraphExample : IExample
     struct BlitPassData
     {
         public ResourceHandle<TextureResource> ColorAttachment;
-        public ResourceHandle<TextureResource> MSAAColorAttachment;
         public ResourceHandle<TextureResource> Backbuffer;
     }
 

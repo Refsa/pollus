@@ -138,8 +138,8 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             Format = (Emscripten.WGPU.WGPUTextureFormat)preferredFormat,
             PresentMode = Emscripten.WGPU.WGPUPresentMode.Fifo,
             Usage = (Emscripten.WGPU.WGPUTextureUsage)TextureUsage.RenderAttachment,
-            Height = (uint)window.Size.Y,
-            Width = (uint)window.Size.X
+            Height = window.Size.Y,
+            Width = window.Size.X
         };
         swapChain = wgpu.DeviceCreateSwapChain(device, surface, descriptor);
         if (swapChain == null) throw new ApplicationException("Failed to create swap chain");
@@ -162,12 +162,13 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             var instA = _instance;
             if (instA == null) return;
             Log.Debug("WGPU: Adapter acquired");
-            instA!.adapter = adapter;
-            instA!.state = SetupState.AdapterReady;
+            instA.adapter = adapter;
+            instA.state = SetupState.AdapterReady;
         }
         else
         {
             Log.Warn("WGPU: Adapter not acquired");
+            if (_instance == null) return;
             _instance.state = SetupState.Failed;
         }
     }
@@ -196,7 +197,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         var deviceDescriptor = new Emscripten.WGPU.WGPUDeviceDescriptor()
         {
             RequiredLimits = (Emscripten.WGPU.WGPURequiredLimits*)requiredLimitsPtr,
-            RequiredFeatureCount = (nuint)1,
+            RequiredFeatureCount = 1,
             RequiredFeatures = requiredFeatures,
         };
 
@@ -211,13 +212,14 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             var instD = _instance;
             if (instD == null) return;
             Log.Debug("WGPU: Device acquired");
-            instD!.device = device;
-            instD!.state = SetupState.DeviceReady;
+            instD.device = device;
+            instD.state = SetupState.DeviceReady;
         }
         else
         {
             var msg = Marshal.PtrToStringAnsi((IntPtr)message);
             Log.Warn($"WGPU: Device not acquired: {status}, {msg}");
+            if (_instance == null) return;
             _instance.state = SetupState.Failed;
         }
     }

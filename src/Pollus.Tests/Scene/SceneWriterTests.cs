@@ -1,3 +1,5 @@
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
+
 namespace Pollus.Tests.Scene;
 
 using System.Text.Json;
@@ -349,8 +351,16 @@ public class SceneWriterTests
         ]);
 
         Assert.Collection(entities, [
-            entity => Assert.Single(entity.Components),
-            entity => Assert.Single(entity.Components),
+            entity =>
+            {
+                Assert.NotNull(entity.Components);
+                Assert.Single(entity.Components);
+            },
+            entity =>
+            {
+                Assert.NotNull(entity.Components);
+                Assert.Single(entity.Components);
+            },
             entity => Assert.Null(entity.Components),
         ]);
 

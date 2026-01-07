@@ -90,21 +90,6 @@ public record struct ParserError : IError
     }
 }
 
-public struct Parser
-{
-    public struct Output
-    {
-        Range range;
-    }
-
-    readonly string input;
-
-    public Parser(string input)
-    {
-        this.input = input;
-    }
-}
-
 public ref struct ParserState
 {
     readonly ReadOnlySpan<char> original;

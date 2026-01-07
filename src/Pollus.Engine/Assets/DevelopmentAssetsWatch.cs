@@ -1,9 +1,10 @@
 namespace Pollus.Engine.Assets;
 
 using System.Collections.Concurrent;
-using Debugging;
+using System.Runtime.Versioning;
 using ECS;
 
+[UnsupportedOSPlatform("browser")]
 public class DevelopmentAssetsWatch : IDisposable
 {
     class CopyTask
@@ -44,7 +45,7 @@ public class DevelopmentAssetsWatch : IDisposable
 
     public void Dispose()
     {
-        watcher?.Dispose();
+        watcher.Dispose();
     }
 
     void OnFileChanged(object sender, FileSystemEventArgs e)

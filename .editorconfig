@@ -28,6 +28,7 @@ resharper_place_single_method_argument_lambda_on_same_line = none
 resharper_convert_to_primary_constructor_highlighting = none
 resharper_csharp_keep_existing_linebreaks = true
 resharper_keep_existing_arrangement = true
+resharper_static_member_in_generic_type_highlighting = none
 
 dotnet_style_allow_statement_lambdas_on_one_line = false
 # resharper: put lambda braces on new line

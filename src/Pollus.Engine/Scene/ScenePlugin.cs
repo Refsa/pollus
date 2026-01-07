@@ -49,7 +49,7 @@ public class SceneSerializer
 {
     public int FormatVersion { get; init; }
     public int TypesVersion { get; init; }
-    public ISceneFileTypeMigration[] FileTypeMigrations { get; init; }
+    public required ISceneFileTypeMigration[] FileTypeMigrations { get; init; }
 
     public SceneSerializer(int formatVersion, int typesVersion)
     {

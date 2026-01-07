@@ -53,7 +53,10 @@ public class SceneAssetLoaderTests
         var server = new AssetServer(assetIO);
         server.AddLoader<SceneAssetLoader>(new()
         {
-            SceneSerializer = new SceneSerializer(1, 1),
+            SceneSerializer = new SceneSerializer(1, 1)
+            {
+                FileTypeMigrations = [],
+            },
         });
 
         var parentSceneHandle = server.Load<Scene>("path/to/parent.scene");
@@ -70,7 +73,9 @@ public class SceneAssetLoaderTests
         Assert.NotNull(childScene);
         Assert.Single(childScene.Entities);
         Assert.Equal("Entity1", childScene.Entities[0].Name);
-        var testComponent = MemoryMarshal.AsRef<TestComponent>(childScene.Entities[0].Components[0].Data);
+        var components = childScene.Entities[0].Components;
+        Assert.NotNull(components);
+        var testComponent = MemoryMarshal.AsRef<TestComponent>(components[0].Data);
         Assert.Equal(10, testComponent.Value);
 
         var parentAssetInfo = server.GetAssets<Scene>().GetInfo(parentSceneHandle);

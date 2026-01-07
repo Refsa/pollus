@@ -61,7 +61,9 @@ public static class RequiredComponents
     public static IContainer Init<C>()
         where C : unmanaged, IComponent
     {
-        var container = new Container<C>();
+        if (containers.TryGetValue(Component.GetInfo<C>().ID, out var container)) return container;
+
+        container = new Container<C>();
         containers[Component.GetInfo<C>().ID] = container;
         return container;
     }

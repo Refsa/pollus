@@ -1,7 +1,9 @@
 #pragma warning disable IDE1006
 namespace Pollus.ECS;
 
-public interface IComponentWrapper : IComponent { }
+public interface IComponentWrapper : IComponent
+{
+}
 
 public static class ComponentWrapper<TWrapper>
     where TWrapper : unmanaged, IComponent
@@ -31,10 +33,11 @@ public static class ComponentWrapper<TWrapper>
         {
             info = Component.Register<TWrapped>();
         }
+
         static readonly Component.Info info;
     }
 
-    static Component.Info targetInfo;
-    public static Component.Info Info => targetInfo;
+    static Component.Info? targetInfo;
+    public static Component.Info Info => targetInfo ?? throw new InvalidOperationException($"Target<TWrapped>.Init() must be called before using ComponentWrapper<{typeof(TWrapper).FullName}>.Info");
 }
 #pragma warning restore IDE1006

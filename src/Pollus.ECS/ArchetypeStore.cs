@@ -3,7 +3,6 @@ namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Collections;
-using Pollus.Core.Serialization;
 using Pollus.Debugging;
 
 public class ArchetypeStore : IDisposable

@@ -98,13 +98,16 @@ public class TestFileTypeMigration : ISceneFileTypeMigration
     }
 }
 
-public partial class SceneReaderTests
+public partial class Outer
 {
-    partial struct TestInnerComponent : IComponent
+    public partial struct TestInnerComponent : IComponent
     {
         public int Value { get; set; }
     }
+}
 
+public class SceneReaderTests
+{
     WorldSerializationContext CreateContext(TestAssetIO? assetIO = null)
     {
         return new WorldSerializationContext
@@ -123,7 +126,7 @@ public partial class SceneReaderTests
                 "types": {
                   "TestComponent": "{{typeof(TestComponent).AssemblyQualifiedName}}",
                   "TestComplexComponent": "{{typeof(TestComplexComponent).AssemblyQualifiedName}}",
-                  "TestInnerComponent": "{{typeof(TestInnerComponent).AssemblyQualifiedName}}"
+                  "TestInnerComponent": "{{typeof(Outer.TestInnerComponent).AssemblyQualifiedName}}"
                 }
               }
               """;
@@ -136,7 +139,7 @@ public partial class SceneReaderTests
         Assert.True(scene.Types.ContainsKey("TestComplexComponent"));
         Assert.Equal(typeof(TestComponent), scene.Types["TestComponent"]);
         Assert.Equal(typeof(TestComplexComponent), scene.Types["TestComplexComponent"]);
-        Assert.Equal(typeof(TestInnerComponent), scene.Types["TestInnerComponent"]);
+        Assert.Equal(typeof(Outer.TestInnerComponent), scene.Types["TestInnerComponent"]);
     }
 
     [Fact]
@@ -186,10 +189,11 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        Assert.NotNull(scene.Entities[0].Components);
-        Assert.Single(scene.Entities[0].Components);
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
 
-        var comp = scene.Entities[0].Components[0];
+        var comp = components[0];
         var empty = MemoryMarshal.AsRef<TestEmptyComponent>(comp.Data);
         Assert.IsType<TestEmptyComponent>(empty);
     }
@@ -220,9 +224,11 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        Assert.Single(scene.Entities[0].Components);
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
 
-        var comp = scene.Entities[0].Components[0];
+        var comp = components[0];
         var value = MemoryMarshal.AsRef<TestComponent>(comp.Data);
         Assert.Equal(42, value.Value);
     }
@@ -253,7 +259,11 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        var comp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
+
+        var comp = components[0];
         var complex = MemoryMarshal.AsRef<TestComplexComponent>(comp.Data);
 
         Assert.Equal(10.5f, complex.Position.X);
@@ -288,13 +298,18 @@ public partial class SceneReaderTests
         Assert.Single(scene.Entities);
         var parent = scene.Entities[0];
         Assert.Equal("Parent", parent.Name);
+        Assert.NotNull(parent.Children);
         Assert.Equal(2, parent.Children.Count);
 
         Assert.Equal("Child1", parent.Children[0].Name);
         Assert.Equal("Child2", parent.Children[1].Name);
 
-        Assert.Single(parent.Children[1].Children);
-        Assert.Equal("GrandChild", parent.Children[1].Children[0].Name);
+        {
+            var children = parent.Children[1].Children;
+            Assert.NotNull(children);
+            Assert.Single(children);
+            Assert.Equal("GrandChild", children[0].Name);
+        }
     }
 
     [Fact]
@@ -329,7 +344,11 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        var comp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
+
+        var comp = components[0];
         var value = MemoryMarshal.AsRef<TestComponentWithHandle>(comp.Data);
 
         Assert.Equal(10, value.Value);
@@ -378,9 +397,11 @@ public partial class SceneReaderTests
         context.AssetServer.FlushLoading();
 
         Assert.Single(scene.Entities);
-        Assert.Single(scene.Entities[0].Components);
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
 
-        var comp = scene.Entities[0].Components[0];
+        var comp = components[0];
         var value = MemoryMarshal.AsRef<ComplexHandleComponent>(comp.Data);
 
         Assert.NotEqual(Handle<RootAsset>.Null, value.Root);
@@ -429,13 +450,15 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        Assert.Equal(2, scene.Entities[0].Components.Count);
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Equal(2, components.Count);
 
-        var comp1 = scene.Entities[0].Components[0];
+        var comp1 = components[0];
         var val1 = MemoryMarshal.AsRef<TestComponent>(comp1.Data);
         Assert.Equal(0, val1.Value);
 
-        var comp2 = scene.Entities[0].Components[1];
+        var comp2 = components[1];
         var val2 = MemoryMarshal.AsRef<TestComplexComponent>(comp2.Data);
         Assert.Equal(10, val2.Position.X);
         Assert.Equal(20, val2.Position.Y);
@@ -472,7 +495,9 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        var comp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        var comp = components[0];
         var bindingComp = MemoryMarshal.AsRef<TestComponentWithObject>(comp.Data);
 
         Assert.NotEqual(Handle<TextAsset>.Null, bindingComp.HandleObject.Image);
@@ -504,7 +529,9 @@ public partial class SceneReaderTests
         var context = CreateContext();
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
         Assert.Single(scene.Entities);
-        var comp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        var comp = components[0];
         var complex = MemoryMarshal.AsRef<TestComplexComponent>(comp.Data);
         Assert.Equal(10, complex.Position.X);
         Assert.Equal(20, complex.Position.Y);
@@ -536,7 +563,11 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        var comp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
+
+        var comp = components[0];
         var enumComp = MemoryMarshal.AsRef<TestComponentWithEnum>(comp.Data);
         Assert.Equal(TestEnum.One, enumComp.EnumValue);
     }
@@ -586,13 +617,17 @@ public partial class SceneReaderTests
         var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
 
         Assert.Single(scene.Entities);
-        var spriteComp = scene.Entities[0].Components[0];
+        var components = scene.Entities[0].Components;
+        Assert.NotNull(components);
+        Assert.Single(components);
+
+        var spriteComp = components[0];
         var sprite = MemoryMarshal.AsRef<Sprite>(spriteComp.Data);
         Assert.NotEqual(Handle<SpriteMaterial>.Null, sprite.Material);
 
         var material = context.AssetServer.GetAssets<SpriteMaterial>().Get(sprite.Material);
         Assert.NotNull(material);
-        Assert.NotEqual(Handle<SamplerAsset>.Null, material!.Sampler.Sampler);
+        Assert.NotEqual(Handle<SamplerAsset>.Null, material.Sampler.Sampler);
     }
 
     [Fact]

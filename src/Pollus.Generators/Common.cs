@@ -146,6 +146,7 @@ internal static class Common
         {
             Namespace = data.ContainingNamespace?.ToDisplayString(),
             ClassName = data.Name,
+            FileName = data.Name,
             FullClassName = data.Name,
             FullyQualifiedClassName = data.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
             FullTypeKind = fullTypeKind,

@@ -229,10 +229,10 @@ public partial struct Color
 
         public uint Value { get; set; }
 
-        public float R => (float)((Value & 0xFF000000) >> 24) / (float)(0xFF);
-        public float G => (float)((Value & 0x00FF0000) >> 16) / (float)(0xFF);
-        public float B => (float)((Value & 0x0000FF00) >> 8) / (float)(0xFF);
-        public float A => (float)((Value & 0x000000FF)) / (float)(0xFF);
+        public float R => (float)((Value & 0xFF000000) >> 24) / 0xFF;
+        public float G => (float)((Value & 0x00FF0000) >> 16) / 0xFF;
+        public float B => (float)((Value & 0x0000FF00) >> 8) / 0xFF;
+        public float A => (float)(Value & 0x000000FF) / 0xFF;
 
         /// <summary>
         /// 0xRRGGBB00 or 0xRRGGBBAA
@@ -329,19 +329,19 @@ public partial struct Color
             var delta = max - min;
 
             var v = max;
-            if (min == max) return new HSV(0f, 0f, v);
+            if (min.Approximately(max, float.Epsilon)) return new HSV(0f, 0f, v);
 
             var s = delta / max;
             var rc = (max - rgb.R) / delta;
             var gc = (max - rgb.G) / delta;
             var bc = (max - rgb.B) / delta;
 
-            var h = 0f;
-            if (rgb.R == max)
+            float h;
+            if (rgb.R.Approximately(max, float.Epsilon))
             {
                 h = 0f + bc - gc;
             }
-            else if (rgb.G == max)
+            else if (rgb.G.Approximately(max, float.Epsilon))
             {
                 h = 2f + rc - bc;
             }
