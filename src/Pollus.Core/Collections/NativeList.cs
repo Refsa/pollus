@@ -53,5 +53,16 @@ public struct NativeList<T> : IDisposable
         count--;
     }
 
+    public void EnsureCapacity(int capacity)
+    {
+        if (data.Length < capacity) data.Resize(Math.Max(capacity, data.Length * 2));
+    }
+
+    public void Resize(int newCount)
+    {
+        EnsureCapacity(newCount);
+        count = newCount;
+    }
+
     public Span<T> AsSpan() => data.Slice(0, count);
 }

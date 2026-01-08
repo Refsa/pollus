@@ -17,6 +17,7 @@ public class MinHeap<T>
     }
 
     public bool HasFree => Volatile.Read(ref size) > 0;
+    public bool IsEmpty => Volatile.Read(ref size) == 0;
 
     public T? Pop()
     {

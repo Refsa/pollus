@@ -68,6 +68,8 @@ unsafe public struct NativeArray<T> : IDisposable
     public readonly Span<T> AsSpan() => new(data, length);
     public readonly Span<T> Slice(int start) => new(data + start, length - start);
     public readonly Span<T> Slice(int start, int length) => new(data + start, length);
+    public readonly NativeSlice<T> AsSlice() => new(data, length);
+    public readonly NativeSlice<T> AsSlice(int start, int length) => new((T*)Unsafe.Add<T>(data, start), length);
     public Enumerator GetEnumerator() => new(data, length);
 
     public NativeArray<T> SubArray(int start, int length)
@@ -86,6 +88,8 @@ unsafe public struct NativeArray<T> : IDisposable
         int index;
         int length;
 
+        public ref T Current => ref data[index];
+
         public Enumerator(T* data, int length)
         {
             this.data = data;
@@ -98,7 +102,5 @@ unsafe public struct NativeArray<T> : IDisposable
             index++;
             return index < length;
         }
-
-        public ref T Current => ref data[index];
     }
 }

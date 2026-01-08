@@ -28,11 +28,6 @@ public class ArrayList<T> : IEnumerable
 
     public Span<T> AsSpan() => items.AsSpan(0, count);
 
-    public void SetCount(int count)
-    {
-        this.count = count;
-    }
-
     public void Clear(bool zero = false)
     {
         if (zero) Array.Clear(items, 0, count);
@@ -41,7 +36,7 @@ public class ArrayList<T> : IEnumerable
 
     public void Add(T item)
     {
-        if (count == items.Length) Array.Resize(ref items, count * 2);
+        if (count == items.Length) Array.Resize(ref items, Math.Max(count * 2, 4));
         items[count++] = item;
     }
 
@@ -67,7 +62,13 @@ public class ArrayList<T> : IEnumerable
 
     public void EnsureCapacity(int capacity)
     {
-        if (items.Length < capacity) Array.Resize(ref items, capacity);
+        if (items.Length < capacity) Array.Resize(ref items, Math.Max(capacity, items.Length * 2));
+    }
+
+    public void Resize(int newCount)
+    {
+        EnsureCapacity(newCount);
+        count = newCount;
     }
 
     public void CopyTo(ArrayList<T> other)
