@@ -55,7 +55,7 @@
         <WasmExtraFilesToDeploy Include="www/*.js" />
         <WasmExtraFilesToDeploy Include="www/*.css" />
 
-        <NativeFileReference Include="bin\Release\net10.0-browser\browser-wasm\native\imgui\cimgui.a" />
+        <NativeFileReference Include="bin\Release\$(TargetFramework)\browser-wasm\native\imgui\cimgui.a" />
     </ItemGroup>
 
     <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
