@@ -2,7 +2,6 @@ namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
 using Pollus.Collections;
-using Pollus.Core.Serialization;
 
 public partial record struct Entity(int ID, int Version = 0)
 {
@@ -29,18 +28,17 @@ public class Entities
     volatile int counter = -1;
     int aliveCount = 0;
     EntityInfo[] entities = new EntityInfo[64];
-    MinHeap freeList = new();
+    MinHeap<int> freeList = new();
 
     public int AliveCount => Volatile.Read(ref aliveCount);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Create()
     {
-        var entityId = freeList.Pop();
         ref var entityInfo = ref Unsafe.NullRef<EntityInfo>();
 
-        if (entityId == -1) entityInfo = ref NewEntity();
-        else entityInfo = ref entities[entityId];
+        if (freeList.TryPop(out var entityId)) entityInfo = ref entities[entityId];
+        else entityInfo = ref NewEntity();
 
         entityInfo.Entity.Version++;
         entityInfo.IsAlive = true;

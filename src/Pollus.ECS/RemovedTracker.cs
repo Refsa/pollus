@@ -100,7 +100,7 @@ public class RemovedTracker<C> : IRemovedTracker
         public ulong Version;
     }
 
-    SparseSet<Removed> tracker = new(32);
+    SparseSet<int, Removed> tracker = new(32);
     ulong version = 0;
 
     public void Tick(ulong version)
@@ -113,7 +113,7 @@ public class RemovedTracker<C> : IRemovedTracker
         }
     }
 
-    public SparseSet<Removed>.Enumerator GetEnumerator() => tracker.GetEnumerator();
+    public SparseSet<int, Removed>.Enumerator GetEnumerator() => tracker.GetEnumerator();
 
     public void SetRemoved(Entity entity, ReadOnlySpan<byte> componentBytes)
     {

@@ -19,12 +19,21 @@ public class MinHeap<T>
     public bool HasFree => Volatile.Read(ref size) > 0;
     public bool IsEmpty => Volatile.Read(ref size) == 0;
 
-    public T? Pop()
+    public bool TryPop(out T value)
+    {
+        Unsafe.SkipInit(out value);
+        if (IsEmpty) return false;
+
+        value = Pop();
+        return true;
+    }
+
+    public T Pop()
     {
         while (true)
         {
             int currentSize = Volatile.Read(ref size);
-            if (currentSize == 0) return default;
+            if (currentSize == 0) throw new InvalidOperationException("Heap is empty");
 
             var minEntity = heap[0];
             var lastEntity = heap[currentSize - 1];
