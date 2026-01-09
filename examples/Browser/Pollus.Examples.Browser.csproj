@@ -18,7 +18,7 @@
         <WasmNativeWorkload>true</WasmNativeWorkload>
         <WasmEnableThreads>false</WasmEnableThreads>
 
-        <WasmCachePath>$(Temp)\pollus\wasm-cache</WasmCachePath>
+        <WasmCachePath>$([System.IO.Path]::GetTempPath())pollus/wasm-cache</WasmCachePath>
 
         <!-- Embed assets from the output directory -->
         <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
