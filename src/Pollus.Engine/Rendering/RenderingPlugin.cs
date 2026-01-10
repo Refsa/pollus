@@ -112,10 +112,7 @@ public class RenderingPlugin : IPlugin
 
         world.Schedule.AddSystems(CoreStage.Render, [
             new WriteRenderBuffersSystem(),
-            new SubmitRenderQueueSystem
-            {
-                RenderStep = RenderStep2D.Main
-            }
+            new SubmitRenderQueueSystem(),
         ]);
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(

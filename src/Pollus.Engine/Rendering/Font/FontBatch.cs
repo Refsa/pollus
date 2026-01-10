@@ -4,7 +4,7 @@ using Graphics;
 using Mathematics;
 using Utils;
 
-public record struct FontBatchKey(Handle<TextMeshAsset> TextMesh, Handle<FontMaterial> Material)
+public record struct FontBatchKey(Handle<TextMeshAsset> TextMesh, Handle<FontMaterial> Material, RenderStep2D RenderStep = RenderStep2D.Main)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(TextMesh.ID, Material.ID);
 }
@@ -28,6 +28,7 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
     {
         Material = key.Material;
         TextMesh = key.TextMesh;
+        RenderStep = (int)key.RenderStep;
         RequiredResources = [Material, TextMesh];
     }
 

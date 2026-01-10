@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public readonly record struct SpriteBatchKey(Handle Material, bool IsStatic)
+public readonly record struct SpriteBatchKey(Handle Material, bool IsStatic, RenderStep2D RenderStep = RenderStep2D.Main)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(Material.ID, IsStatic ? 1 : 0);
 }
@@ -28,6 +28,7 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     {
         Material = key.Material;
         IsStatic = key.IsStatic;
+        RenderStep = (int)key.RenderStep;
         RequiredResources = [Material];
     }
 }

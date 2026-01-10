@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public record struct ShapeBatchKey(Handle<Shape> Shape, Handle Material)
+public record struct ShapeBatchKey(Handle<Shape> Shape, Handle Material, RenderStep2D RenderStep = RenderStep2D.Main)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(Shape.ID, Material.ID);
 }
@@ -28,6 +28,7 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
     {
         Material = key.Material;
         Shape = key.Shape;
+        RenderStep = (int)key.RenderStep;
         RequiredResources = [Material, Shape];
     }
 

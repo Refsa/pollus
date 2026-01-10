@@ -4,27 +4,13 @@ using Collections;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
-using Utils;
-
-public record struct RendererKey
-{
-    public int Key { get; init; }
-
-    public static RendererKey From<T>()
-    {
-        return new RendererKey()
-        {
-            Key = TypeLookup.ID<T>(),
-        };
-    }
-}
 
 public class RenderQueueRegistry
 {
     readonly ArrayList<IRenderBatches> batches = [];
-    readonly Dictionary<int, int> lookup = [];
+    readonly Dictionary<RendererKey, int> lookup = [];
 
-    public void Register(int id, IRenderBatches batchCollection)
+    public void Register(in RendererKey id, IRenderBatches batchCollection)
     {
         var index = batches.Count;
         batches.Add(batchCollection);
@@ -33,7 +19,7 @@ public class RenderQueueRegistry
 
     public ReadOnlySpan<IRenderBatches> Batches => batches.AsSpan();
 
-    public IRenderBatches Get(int id) => batches[lookup[id]];
+    public IRenderBatches Get(in RendererKey id) => batches[lookup[id]];
 }
 
 public static class RenderQueueSystems
@@ -65,19 +51,20 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
     struct DrawEntry : IComparable<DrawEntry>
     {
         public ulong SortKey;
-        public int RendererID;
+        public RendererKey RendererKey;
         public int BatchID;
         public int SortedIndex;
+        public int RenderStep;
 
         public int CompareTo(DrawEntry other)
         {
+            var renderStepComparison = RenderStep.CompareTo(other.RenderStep);
+            if (renderStepComparison != 0) return renderStepComparison;
             var sortKeyComparison = SortKey.CompareTo(other.SortKey);
             if (sortKeyComparison != 0) return sortKeyComparison;
             return SortedIndex.CompareTo(other.SortedIndex);
         }
     }
-
-    public required RenderStep2D RenderStep;
 
     readonly ArrayList<DrawEntry> drawOrder = new(1024);
 
@@ -104,9 +91,10 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
                     drawOrder.Add(new DrawEntry
                     {
                         SortKey = entries[i].SortKey,
-                        RendererID = batches.RendererID,
+                        RendererKey = batches.RendererKey,
                         BatchID = batch.BatchID,
                         SortedIndex = i,
+                        RenderStep = batch.RenderStep,
                     });
                 }
             }
@@ -116,10 +104,9 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
 
         drawOrder.AsSpan().Sort();
 
-        var drawList = drawGroups.GetDrawList(RenderStep);
-
-        int currentRendererID = -1;
+        RendererKey currentRendererKey = RendererKey.Null;
         int currentBatchID = -1;
+        int currentRenderStep = -1;
         int start = 0;
         int count = 0;
 
@@ -127,19 +114,25 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
         {
             var entry = drawOrder[i];
 
-            var isNewBatch = entry.RendererID != currentRendererID || entry.BatchID != currentBatchID;
+            var isNewBatch = entry.RendererKey != currentRendererKey || entry.BatchID != currentBatchID;
+            var isNewRenderStep = entry.RenderStep != currentRenderStep;
             var isNonContiguous = !isNewBatch && (start + count) != entry.SortedIndex;
 
-            if (isNewBatch || isNonContiguous)
+            if (isNewBatch || isNewRenderStep || isNonContiguous)
             {
-                if (count > 0 && currentRendererID != -1)
+                if (count > 0 && currentRendererKey != RendererKey.Null)
                 {
-                    var draw = registry.Get(currentRendererID).GetDrawCall(currentBatchID, start, count, renderAssets);
-                    if (!draw.IsEmpty) drawList.Add(draw);
+                    var draw = registry.Get(currentRendererKey).GetDrawCall(currentBatchID, start, count, renderAssets);
+                    if (!draw.IsEmpty)
+                    {
+                        var drawList = drawGroups.GetDrawList((RenderStep2D)currentRenderStep);
+                        drawList.Add(draw);
+                    }
                 }
 
-                currentRendererID = entry.RendererID;
+                currentRendererKey = entry.RendererKey;
                 currentBatchID = entry.BatchID;
+                currentRenderStep = entry.RenderStep;
                 start = entry.SortedIndex;
                 count = 0;
             }
@@ -147,10 +140,14 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
             count++;
         }
 
-        if (count > 0 && currentRendererID != -1)
+        if (count > 0 && currentRendererKey != RendererKey.Null)
         {
-            var draw = registry.Get(currentRendererID).GetDrawCall(currentBatchID, start, count, renderAssets);
-            if (!draw.IsEmpty) drawList.Add(draw);
+            var draw = registry.Get(currentRendererKey).GetDrawCall(currentBatchID, start, count, renderAssets);
+            if (!draw.IsEmpty)
+            {
+                var drawList = drawGroups.GetDrawList((RenderStep2D)currentRenderStep);
+                drawList.Add(draw);
+            }
         }
     }
 }

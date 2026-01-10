@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Graphics;
 using Pollus.ECS;
 using Transform;
 
@@ -16,13 +17,16 @@ public class SpritePlugin : IPlugin
         world.AddPlugins(true, [
             new MaterialPlugin<SpriteMaterial>(),
         ]);
-        world.Resources.Add(new SpriteBatches()
-        {
-            RendererID = RendererKey.From<SpriteBatches>().Key,
-        });
 
-        var registry = world.Resources.Get<RenderQueueRegistry>();
-        registry.Register(world.Resources.Get<SpriteBatches>().RendererID, world.Resources.Get<SpriteBatches>());
+        {
+            var batches = new SpriteBatches()
+            {
+                RendererKey = RendererKey.From<SpriteBatches>(),
+            };
+            var registry = world.Resources.Get<RenderQueueRegistry>();
+            registry.Register(batches.RendererKey, batches);
+            world.Resources.Add(batches);
+        }
 
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractSpritesSystem(),

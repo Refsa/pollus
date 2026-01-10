@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
 using Core.Assets;
+using Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Collections;
 using Pollus.ECS;
@@ -30,14 +31,16 @@ public class FontPlugin : IPlugin
         world.Resources.Init<FontAsset>();
         world.Resources.Get<AssetServer>().AddLoader<FontAssetLoader>();
         world.Resources.Get<RenderAssets>().AddLoader<FontMeshRenderDataLoader>();
-        world.Resources.Add(new FontBatches()
-        {
-            RendererID = RendererKey.From<FontBatches>().Key,
-        });
 
-        var registry = world.Resources.Get<RenderQueueRegistry>();
-        var batches = world.Resources.Get<FontBatches>();
-        registry.Register(batches.RendererID, batches);
+        {
+            var batches = new FontBatches()
+            {
+                RendererKey = RendererKey.From<FontBatches>(),
+            };
+            var registry = world.Resources.Get<RenderQueueRegistry>();
+            registry.Register(batches.RendererKey, batches);
+            world.Resources.Add(batches);
+        }
 
         world.AddPlugin(MaterialPlugin<FontMaterial>.Default);
 

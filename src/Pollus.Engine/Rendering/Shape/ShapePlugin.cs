@@ -5,8 +5,6 @@ using Pollus.ECS;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
-using Pollus.Mathematics;
-using Pollus.Utils;
 
 public class ShapePlugin : IPlugin
 {
@@ -24,13 +22,17 @@ public class ShapePlugin : IPlugin
     public void Apply(World world)
     {
         world.AddPlugin(new MaterialPlugin<ShapeMaterial>());
-        world.Resources.Add(new ShapeBatches()
-        {
-            RendererID = RendererKey.From<ShapeBatches>().Key,
-        });
 
-        var registry = world.Resources.Get<RenderQueueRegistry>();
-        registry.Register(world.Resources.Get<ShapeBatches>().RendererID, world.Resources.Get<ShapeBatches>());
+        {
+            var batches = new ShapeBatches()
+            {
+                RendererKey = RendererKey.From<ShapeBatches>(),
+            };
+            var registry = world.Resources.Get<RenderQueueRegistry>();
+            registry.Register(batches.RendererKey, batches);
+            world.Resources.Add(batches);
+        }
+
         world.Resources.Get<RenderAssets>().AddLoader(new ShapeRenderDataLoader());
 
         world.Schedule.AddSystems(CoreStage.PreRender, [

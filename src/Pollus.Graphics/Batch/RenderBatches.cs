@@ -9,7 +9,7 @@ public interface IRenderBatches
 {
     ReadOnlySpan<IRenderBatch> Batches { get; }
 
-    int RendererID { get; set; }
+    RendererKey RendererKey { get; set; }
     void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext);
     Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets);
     void Reset(bool all = false);
@@ -28,7 +28,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
     readonly Dictionary<int, int> batchLookup = [];
     bool isDisposed;
 
-    public int RendererID { get; set; }
+    public RendererKey RendererKey { get; set; }
     public ReadOnlySpan<IRenderBatch> Batches => batches.AsSpan();
 
     public void WriteBuffers(IRenderAssets renderAssets, IWGPUContext gpuContext)

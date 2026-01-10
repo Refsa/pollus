@@ -15,6 +15,7 @@ public interface IRenderBatch
     bool IsDirty { get; set; }
     int Key { get; }
     int BatchID { get; set; }
+    int RenderStep { get; }
     Handle<GPUBuffer> InstanceBufferHandle { get; set; }
     Handle[] RequiredResources { get; }
     Span<SortBuffer.Entry> SortEntries { get; }
@@ -55,6 +56,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
 
     public bool IsDirty { get; set; }
     public bool IsStatic { get; init; }
+    public int RenderStep { get; init; }
 
     protected RenderBatch()
     {
