@@ -26,40 +26,26 @@ public partial class BreakoutGame : IExample
     IApplication? application;
     public void Stop() => application?.Shutdown();
 
-    partial struct Player : IComponent
-    {
-    }
+    partial struct Player : IComponent;
 
-    partial struct Disabled : IComponent
-    {
-    }
+    partial struct Disabled : IComponent;
 
-    partial struct Paddle : IComponent
-    {
-    }
+    partial struct Paddle : IComponent;
 
-    partial struct Brick : IComponent
-    {
-    }
+    partial struct Brick : IComponent;
 
-    partial struct Ball : IComponent
-    {
-    }
+    partial struct Ball : IComponent;
 
     partial struct Velocity : IComponent
     {
         public required Vec2f Value;
     }
 
-    partial struct MainMixer : IComponent
-    {
-    }
+    partial struct MainMixer : IComponent;
 
     struct Event
     {
-        public struct BrickDestroyed
-        {
-        }
+        public struct BrickDestroyed;
 
         public struct Collision
         {
@@ -68,9 +54,7 @@ public partial class BreakoutGame : IExample
             public Intersection2D Intersection;
         }
 
-        public struct RestartGame
-        {
-        }
+        public struct RestartGame;
 
         public struct SpawnBall
         {
@@ -140,13 +124,12 @@ public partial class BreakoutGame : IExample
                     var paddleSize = new Vec2f(96f, 16f);
                     commands.Spawn(Entity.With(
                         new Player(),
-                        new Transform2D
+                        Transform2D.Default with
                         {
                             Position = new Vec2f(window.Size.X / 2f - 32f, 32f),
-                            Scale = paddleSize,
+                            Scale = new Vec2f(2f, 1f),
                             Rotation = 0f,
                         },
-                        GlobalTransform.Default,
                         new Paddle(),
                         CollisionShape.Rectangle(Vec2f.Zero, paddleSize * 0.5f),
                         new Sprite
@@ -239,20 +222,18 @@ public partial class BreakoutGame : IExample
                             {
                                 commands.Spawn(Entity.With(
                                     new Brick(),
-                                    new Transform2D
+                                    Transform2D.Default with
                                     {
                                         Position = new Vec2f(x * (width + spacing) + width * 0.5f + spacing,
                                             window.Size.Y - 32f - y * (height + spacing) - height * 0.5f),
-                                        Scale = new Vec2f(width, height),
+                                        Scale = new Vec2f(width / 48f, height / 16f),
                                         Rotation = 0f,
                                     },
-                                    GlobalTransform.Default,
                                     CollisionShape.Rectangle(Vec2f.Zero, new Vec2f(width, height) * 0.5f),
-                                    new Sprite
+                                    Sprite.Default with
                                     {
                                         Material = gameState.spritesheet,
-                                        Slice = new Rect(16, (x + y) % 3 * 16, 48, 16),
-                                        Color = Color.WHITE,
+                                        Slice = Rect.FromOriginSize(new Vec2f(16f, (x + y) % 3 * 16f), new Vec2f(48f, 16f)),
                                     }
                                 ));
                             }
@@ -273,13 +254,11 @@ public partial class BreakoutGame : IExample
                         commands.Spawn(Entity.With(
                             new Ball(),
                             new Velocity { Value = 400f * new Vec2f((random.NextFloat() * 2f - 1f).Wrap(-0.25f, 0.25f), random.NextFloat()).Normalized() },
-                            new Transform2D
+                            Transform2D.Default with
                             {
                                 Position = (window.Size.X / 2f, 128f),
-                                Scale = (16f, 16f),
                                 Rotation = 0f,
                             },
-                            GlobalTransform.Default,
                             new Sprite
                             {
                                 Material = gameState.spritesheet,

@@ -69,9 +69,7 @@ public class SpriteBenchmark : IExample
                                 Transform2D.Default with
                                 {
                                     Position = new Vec2f(random.NextFloat() * window.Size.X, random.NextFloat() * window.Size.Y),
-                                    Scale = Vec2f.One * 16f,
                                 },
-                                GlobalTransform.Default,
                                 new Sprite
                                 {
                                     Material = sharedAssets.SpriteMaterial,

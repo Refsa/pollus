@@ -26,6 +26,7 @@ export function setupExampleButtons() {
         "query-filter",
         "font",
         "scene",
+        "render-order"
     ];
 
     for (const example of examples) {

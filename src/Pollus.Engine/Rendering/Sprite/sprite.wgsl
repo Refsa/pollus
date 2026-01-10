@@ -44,6 +44,8 @@ fn vs_setup(input: VertexInput) {
         input.i_model_2, 
         vec4f(0.0, 0.0, 0.0, 1.0)
     ));
+    model[0] *= input.i_slice.z;
+    model[1] *= input.i_slice.w;
     model *= FLIP_Y;
 
     vertex = vec4f(f32(input.index & 0x1u), f32((input.index & 0x2u) >> 1u), 0.0, 1.0);

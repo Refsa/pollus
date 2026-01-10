@@ -62,10 +62,9 @@ public partial class RenderOrderExample : IExample
                         Transform2D.Default with
                         {
                             Position = new Vec2f(100 + i * 32, 256),
-                            Scale = Vec2f.One * 64f,
+                            Scale = Vec2f.One * 4f,
                             ZIndex = i,
-                        },
-                        GlobalTransform.Default
+                        }
                     ));
 
                     if (i == 0)

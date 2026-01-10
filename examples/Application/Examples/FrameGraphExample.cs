@@ -60,9 +60,7 @@ public class FrameGraphExample : IExample
                         Transform2D.Default with
                         {
                             Position = new Vec2f(100, 100),
-                            Scale = new Vec2f(48, 16),
                         },
-                        GlobalTransform.Default,
                         new Sprite
                         {
                             Material = spriteMaterial,
