@@ -166,5 +166,65 @@ public class CommandsTests
         var component2 = world.Store.GetComponent<TestComponent2>(entity);
         Assert.Equal(222, component2.Value);
     }
+
+    [Fact]
+    public void Commands_Despawn()
+    {
+        using var world = new World();
+
+        var commands = world.GetCommands();
+        var entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 })).Entity;
+        world.Update();
+
+        Assert.True(world.Store.EntityExists(entity));
+
+        commands = world.GetCommands();
+        commands.Despawn(entity);
+        world.Update();
+
+        Assert.False(world.Store.EntityExists(entity));
+    }
+
+    [Fact]
+    public void Commands_Despawn_SameEntityTwice_Throws()
+    {
+        using var world = new World();
+
+        var commands = world.GetCommands();
+        var entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 })).Entity;
+        world.Update();
+
+        commands = world.GetCommands();
+        commands.Despawn(entity);
+        commands.Despawn(entity);
+
+        Assert.Throws<ArgumentException>(() => world.Update());
+    }
+
+    [Fact]
+    public void Commands_Despawn_Many()
+    {
+        using var world = new World();
+        var entities = new List<Entity>();
+
+        var commands = world.GetCommands();
+        for (int i = 0; i < 1000; i++)
+        {
+            entities.Add(commands.Spawn(Entity.With(new TestComponent1 { Value = i })).Entity);
+        }
+        world.Update();
+
+        commands = world.GetCommands();
+        foreach (var entity in entities)
+        {
+            commands.Despawn(entity);
+        }
+        world.Update();
+
+        foreach (var entity in entities)
+        {
+            Assert.False(world.Store.EntityExists(entity));
+        }
+    }
 }
 #pragma warning restore CA1416

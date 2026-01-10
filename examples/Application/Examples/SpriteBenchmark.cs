@@ -52,7 +52,7 @@ public class SpriteBenchmark : IExample
                     });
                 }))
             .AddSystem(CoreStage.Update, FnSystem.Create("SpriteBenchmark::Update",
-                static (Commands commands, SharedAssets sharedAssets, Time time, IWindow window, Random random, Local<FPS> fps, Query<Sprite> qSprites) =>
+                static (Commands commands, SharedAssets sharedAssets, Time time, IWindow window, Random random, Local<FPS> fps, Query.Filter<All<Sprite>> qSprites) =>
                 {
                     fps.Value.Frames++;
                     fps.Value.Time += time.DeltaTimeF;
@@ -84,12 +84,11 @@ public class SpriteBenchmark : IExample
                     else if (fps.Value.Frames < 60)
                     {
                         var targetDist = 60 - fps.Value.Frames;
-                        for (int i = 0; i < targetDist * 100; i++)
+                        var toDespawn = targetDist * 100;
+                        foreach (var entity in qSprites)
                         {
-                            qSprites.ForEach((in Entity entity, ref Sprite sprite) =>
-                            {
-                                commands.Despawn(entity);
-                            });
+                            if (toDespawn-- <= 0) break;
+                            commands.Despawn(entity);
                         }
                     }
 
