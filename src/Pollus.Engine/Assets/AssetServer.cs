@@ -140,7 +140,12 @@ public class AssetServer : IDisposable
     public Handle Load(AssetPath path, bool reload = false)
     {
         if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
-        if (!AssetIO.Exists(path)) return Handle.Null;
+        if (!AssetIO.Exists(path))
+        {
+            Log.Error((FormattableString)$"AssetServer::Load asset {path} does not exist");
+            return Handle.Null;
+        }
+
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
         var loadResult = AssetIO.LoadPath(path);
@@ -189,7 +194,12 @@ public class AssetServer : IDisposable
     public Handle LoadAsync(AssetPath path, bool reload = false)
     {
         if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
-        if (!AssetIO.Exists(path)) return Handle.Null;
+        if (!AssetIO.Exists(path))
+        {
+            Log.Error((FormattableString)$"AssetServer::Load asset {path} does not exist");
+            return Handle.Null;
+        }
+
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
         var loader = loaders[loaderIdx];
