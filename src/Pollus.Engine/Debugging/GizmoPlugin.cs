@@ -68,7 +68,7 @@ public class GizmoPlugin : IPlugin
                 gizmos.PrepareFrame(gpuContext, renderAssets);
 
                 if (gizmos.HasContent is false) return;
-                var commands = drawGroups.GetCommandList(RenderStep2D.UI);
+                var commands = drawGroups.GetCommandList(RenderStep2D.Last);
                 gizmos.Dispatch(commands);
             }));
     }
