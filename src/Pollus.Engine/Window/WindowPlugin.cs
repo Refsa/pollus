@@ -37,7 +37,8 @@ public class WindowPlugin : IPlugin
         ResourceFetch<IWindow>.Register();
     }
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<PlatformEventsPlugin>(),
     ];
 

@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Debugging;
 using Pollus.Graphics;
 using Pollus.Engine.Window;
 using Pollus.ECS;
@@ -139,6 +140,7 @@ public class RenderingPlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new(WindowResizedSystem)
             {
                 RunsAfter = [RenderStepsCleanupSystem],
+                RunCriteria = EventRunCriteria<WindowEvent.Resized>.Create,
             },
             static (EventReader<WindowEvent.Resized> eWindowResized, RenderContext renderContext, RenderAssets renderAssets, IWGPUContext gpuContext) =>
             {
