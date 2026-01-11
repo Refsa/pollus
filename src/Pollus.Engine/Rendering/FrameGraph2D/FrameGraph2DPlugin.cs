@@ -63,6 +63,9 @@ public class FrameGraph2DPlugin : IPlugin
                     static (context, in param, in data) =>
                     {
                         ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                        using var _debugScope = commandEncoder.DebugGroupScope("Clear Color");
+                        commandEncoder.InsertDebugMarker("Clear Color");
+
                         ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
 
                         param.RenderAssets.Get(Blit.Handle).ClearTexture(
@@ -75,8 +78,12 @@ public class FrameGraph2DPlugin : IPlugin
                     static (context, in param, in data) =>
                     {
                         ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                        using var _debugScope = commandEncoder.DebugGroupScope("Main Pass");
+                        commandEncoder.InsertDebugMarker("Main Pass");
+
                         using var passEncoder = commandEncoder.BeginRenderPass(new()
                         {
+                            Label = "Main Pass",
                             ColorAttachments = stackalloc RenderPassColorAttachment[]
                             {
                                 new()
@@ -97,8 +104,12 @@ public class FrameGraph2DPlugin : IPlugin
                     static (context, in param, in data) =>
                     {
                         ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                        using var _debugScope = commandEncoder.DebugGroupScope("UI Pass");
+                        commandEncoder.InsertDebugMarker("UI Pass");
+
                         using var passEncoder = commandEncoder.BeginRenderPass(new()
                         {
+                            Label = "UI Pass",
                             ColorAttachments = stackalloc RenderPassColorAttachment[]
                             {
                                 new()
@@ -123,6 +134,9 @@ public class FrameGraph2DPlugin : IPlugin
                     static (context, in param, in data) =>
                     {
                         ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                        using var _debugScope = commandEncoder.DebugGroupScope("Final Blit");
+                        commandEncoder.InsertDebugMarker("Final Blit");
+
                         ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
                         ref var backbufferTexture = ref context.Resources.GetTexture(data.Backbuffer);
 

@@ -182,7 +182,8 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         wgpu.TextureRelease(texture.As<Pollus.Emscripten.WGPU.WGPUTexture>());
     }
 
-    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth)
+    public void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth,
+        uint writeHeight, uint writeDepth)
     {
         var dst = new Pollus.Emscripten.WGPU.WGPUImageCopyTexture
         {
@@ -265,6 +266,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 }
             };
         }
+
         var entriesSpan = entriesArr.AsSpan();
         fixed (Pollus.Emscripten.WGPU.WGPUBindGroupLayoutEntry* entriesPtr = entriesSpan)
         {
@@ -308,16 +310,20 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                     emsEntry.Offset = entry.Offset;
                     emsEntry.Size = entry.Size;
                 }
+
                 if (entry.TextureView is GPUTextureView textureView)
                 {
                     emsEntry.TextureView = textureView.Native.As<Pollus.Emscripten.WGPU.WGPUTextureView>();
                 }
+
                 if (entry.Sampler is GPUSampler sampler)
                 {
                     emsEntry.Sampler = sampler.Native.As<Pollus.Emscripten.WGPU.WGPUSampler>();
                 }
+
                 entries[i] = emsEntry;
             }
+
             var entriesSpan = entries.AsSpan();
             fixed (Pollus.Emscripten.WGPU.WGPUBindGroupEntry* entriesPtr = entriesSpan)
             {
@@ -375,6 +381,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             wgpu.QueueSubmit(queue.As<Pollus.Emscripten.WGPU.WGPUQueue>(), 1, ref one);
             return;
         }
+
         var ptrs = stackalloc Pollus.Emscripten.WGPU.WGPUCommandBuffer*[commandBuffers.Length];
         for (int i = 0; i < commandBuffers.Length; i++) ptrs[i] = commandBuffers[i].As<Pollus.Emscripten.WGPU.WGPUCommandBuffer>();
         wgpu.QueueSubmit(queue.As<Pollus.Emscripten.WGPU.WGPUQueue>(), (nuint)commandBuffers.Length, ptrs);
@@ -399,6 +406,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             };
             descriptor.NextInChain = (Pollus.Emscripten.WGPU.WGPUChainedStruct*)&wgsl;
         }
+
         var handle = wgpu.DeviceCreateShaderModule(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), &descriptor);
         return new NativeHandle<ShaderModuleTag>((nint)handle);
     }
@@ -506,9 +514,11 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                         Value = vconsts[i].Value
                     };
                 }
+
                 v.ConstantCount = (nuint)vconsts.Length;
                 v.Constants = temp;
             }
+
             if (vertexState.Layouts is VertexBufferLayout[] layouts && layouts.Length > 0)
             {
                 var vbufs = stackalloc Pollus.Emscripten.WGPU.WGPUVertexBufferLayout[layouts.Length];
@@ -524,11 +534,14 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                         Attributes = (Pollus.Emscripten.WGPU.WGPUVertexAttribute*)attrsHandle.AddrOfPinnedObject()
                     };
                 }
+
                 v.BufferCount = (nuint)layouts.Length;
                 v.Buffers = vbufs;
             }
+
             native.Vertex = v;
         }
+
         if (descriptor.FragmentState is FragmentState fragmentState)
         {
             var entry = pins.PinString(fragmentState.EntryPoint);
@@ -554,9 +567,11 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                         Value = fconsts[i].Value
                     };
                 }
+
                 f.ConstantCount = (nuint)fconsts.Length;
                 f.Constants = temp;
             }
+
             if (fragmentState.ColorTargets is ColorTargetState[] colorTargets && colorTargets.Length > 0)
             {
                 var targets = stackalloc Pollus.Emscripten.WGPU.WGPUColorTargetState[colorTargets.Length];
@@ -591,11 +606,14 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                         targets[i].Blend = &blends[i];
                     }
                 }
+
                 f.TargetCount = (nuint)colorTargets.Length;
                 f.Targets = targets;
             }
+
             native.Fragment = &f;
         }
+
         if (descriptor.DepthStencilState is DepthStencilState ds)
         {
             var temp = new Pollus.Emscripten.WGPU.WGPUDepthStencilState
@@ -626,6 +644,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             };
             native.DepthStencil = &temp;
         }
+
         if (descriptor.MultisampleState is MultisampleState ms)
         {
             native.Multisample = new Pollus.Emscripten.WGPU.WGPUMultisampleState
@@ -636,6 +655,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 AlphaToCoverageEnabled = ms.AlphaToCoverageEnabled
             };
         }
+
         if (descriptor.PrimitiveState is PrimitiveState ps)
         {
             native.Primitive = new Pollus.Emscripten.WGPU.WGPUPrimitiveState
@@ -647,10 +667,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 CullMode = (Pollus.Emscripten.WGPU.WGPUCullMode)ps.CullMode
             };
         }
+
         if (descriptor.PipelineLayout is GPUPipelineLayout pl)
         {
             native.Layout = pl.Native.As<Pollus.Emscripten.WGPU.WGPUPipelineLayout>();
         }
+
         var handle = wgpu.DeviceCreateRenderPipeline(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), in native);
         return new NativeHandle<RenderPipelineTag>((nint)handle);
     }
@@ -678,6 +700,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 ClearValue = new Pollus.Emscripten.WGPU.WGPUColor { R = clear.X, G = clear.Y, B = clear.Z, A = clear.W }
             };
         }
+
         var rp = new Pollus.Emscripten.WGPU.WGPURenderPassDescriptor
         {
             Label = null,
@@ -701,6 +724,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             };
             rp.DepthStencilAttachment = &nativeDsa;
         }
+
         var handle = wgpu.CommandEncoderBeginRenderPass(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), rp);
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
@@ -829,6 +853,21 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
     public void ComputePassEncoderDispatchWorkgroups(in NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z)
     {
         wgpu.ComputePassEncoderDispatchWorkgroups(pass.As<Pollus.Emscripten.WGPU.WGPUComputePassEncoder>(), x, y, z);
+    }
+
+    public void CommandEncoderPushDebugGroup(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    {
+        wgpu.CommandEncoderPushDebugGroup(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), label.Pointer);
+    }
+
+    public void CommandEncoderPopDebugGroup(in NativeHandle<CommandEncoderTag> encoder)
+    {
+        wgpu.CommandEncoderPopDebugGroup(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>());
+    }
+
+    public void CommandEncoderInsertDebugMarker(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    {
+        wgpu.CommandEncoderInsertDebugMarker(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), label.Pointer);
     }
 }
 

@@ -40,6 +40,28 @@ public readonly struct GPUCommandEncoder : IDisposable
         return new GPUComputePassEncoder(context, this, label);
     }
 
+    public void InsertDebugMarker(ReadOnlySpan<char> label)
+    {
+        using var labelPtr = new NativeUtf8(label);
+        context.Backend.CommandEncoderInsertDebugMarker(native, labelPtr);
+    }
+
+    public void PushDebugGroup(ReadOnlySpan<char> label)
+    {
+        using var labelPtr = new NativeUtf8(label);
+        context.Backend.CommandEncoderPushDebugGroup(native, labelPtr);
+    }
+
+    public void PopDebugGroup()
+    {
+        context.Backend.CommandEncoderPopDebugGroup(native);
+    }
+
+    public DebugGroupScopeHandler DebugGroupScope(ReadOnlySpan<char> label)
+    {
+        return new DebugGroupScopeHandler(this, label);
+    }
+
     public void CopyTextureToTexture(GPUTexture srcTex, GPUTexture dstTex, Extent3D copySize)
     {
         context.Backend.CommandEncoderCopyTextureToTexture(
@@ -48,5 +70,21 @@ public readonly struct GPUCommandEncoder : IDisposable
             dstTex.Native,
             copySize.Width, copySize.Height, copySize.DepthOrArrayLayers
         );
+    }
+
+    public ref struct DebugGroupScopeHandler : IDisposable
+    {
+        GPUCommandEncoder encoder;
+
+        public DebugGroupScopeHandler(GPUCommandEncoder encoder, ReadOnlySpan<char> label)
+        {
+            this.encoder = encoder;
+            encoder.PushDebugGroup(label);
+        }
+
+        public void Dispose()
+        {
+            encoder.PopDebugGroup();
+        }
     }
 }

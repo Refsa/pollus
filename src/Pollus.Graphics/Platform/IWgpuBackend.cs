@@ -14,7 +14,10 @@ public interface IWgpuBackend : IDisposable
     NativeHandle<TextureTag> DeviceCreateTexture(in NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, in NativeUtf8 label);
     void TextureDestroy(in NativeHandle<TextureTag> texture);
     void TextureRelease(in NativeHandle<TextureTag> texture);
-    void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth, uint writeHeight, uint writeDepth);
+
+    void QueueWriteTexture(in NativeHandle<QueueTag> queue, in NativeHandle<TextureTag> texture, uint mipLevel, uint originX, uint originY, uint originZ, ReadOnlySpan<byte> data, uint bytesPerRow, uint rowsPerImage, uint writeWidth,
+        uint writeHeight, uint writeDepth);
+
     NativeHandle<SamplerTag> DeviceCreateSampler(in NativeHandle<DeviceTag> device, in SamplerDescriptor descriptor, in NativeUtf8 label);
     void SamplerRelease(in NativeHandle<SamplerTag> sampler);
     NativeHandle<BindGroupLayoutTag> DeviceCreateBindGroupLayout(in NativeHandle<DeviceTag> device, in BindGroupLayoutDescriptor descriptor, in NativeUtf8 label);
@@ -56,5 +59,10 @@ public interface IWgpuBackend : IDisposable
     void ComputePassEncoderSetPipeline(in NativeHandle<ComputePassEncoderTag> pass, in NativeHandle<ComputePipelineTag> pipeline);
     void ComputePassEncoderSetBindGroup(in NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets);
     void ComputePassEncoderDispatchWorkgroups(in NativeHandle<ComputePassEncoderTag> pass, uint x, uint y, uint z);
+
+    void CommandEncoderPushDebugGroup(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label);
+    void CommandEncoderPopDebugGroup(in NativeHandle<CommandEncoderTag> encoder);
+
+    void CommandEncoderInsertDebugMarker(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label);
 }
 

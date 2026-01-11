@@ -649,6 +649,21 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     {
         wgpu.ComputePassEncoderDispatchWorkgroups(pass.As<Silk.NET.WebGPU.ComputePassEncoder>(), x, y, z);
     }
+
+    public void CommandEncoderPushDebugGroup(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    {
+        wgpu.CommandEncoderPushDebugGroup(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), label.Pointer);
+    }
+
+    public void CommandEncoderPopDebugGroup(in NativeHandle<CommandEncoderTag> encoder)
+    {
+        wgpu.CommandEncoderPopDebugGroup(encoder.As<Silk.NET.WebGPU.CommandEncoder>());
+    }
+
+    public void CommandEncoderInsertDebugMarker(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    {
+        wgpu.CommandEncoderInsertDebugMarker(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), label.Pointer);
+    }
 }
 
 
