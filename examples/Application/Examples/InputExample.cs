@@ -5,7 +5,6 @@ using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Input;
 
-
 public class InputExample : IExample
 {
     public string Name => "input";
@@ -18,13 +17,13 @@ public class InputExample : IExample
         application = Application.Builder
             .AddPlugin<InputPlugin>()
             .AddSystem(CoreStage.Update, FnSystem.Create("Update",
-            static (EventReader<ButtonEvent<Key>> eKeys) =>
-            {
-                foreach (var key in eKeys.Read())
+                static (EventReader<ButtonEvent<Key>> eKeys, ButtonInput<Key> directInput) =>
                 {
-                    Log.Info($"Key {key.Button} {(key.State == ButtonState.JustReleased ? "released" : "pressed")}");
-                }
-            }))
+                    foreach (var key in eKeys.Read())
+                    {
+                        Log.Info($"Key {key.Button} {(key.State == ButtonState.JustReleased ? "released" : "pressed")}");
+                    }
+                }))
             .Build();
         application.Run();
     }

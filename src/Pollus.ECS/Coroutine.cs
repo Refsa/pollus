@@ -1,6 +1,5 @@
 namespace Pollus.ECS;
 
-using System.Runtime.CompilerServices;
 using Pollus.Coroutine;
 using Pollus.Debugging;
 using Utils;

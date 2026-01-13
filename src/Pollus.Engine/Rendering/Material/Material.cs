@@ -1,6 +1,5 @@
 namespace Pollus.Engine.Rendering;
 
-using System.Collections.ObjectModel;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 

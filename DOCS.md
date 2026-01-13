@@ -7,6 +7,7 @@ __A brief overview of each aspect of the engine.__
     - [Components](#components)
     - [Queries](#queries)
     - [Systems](#systems)
+    - [Coroutines](#coroutines)
     - [Schedule](#schedule)
     - [Commands](#commands)
     - [Events](#events)
@@ -18,6 +19,14 @@ __A brief overview of each aspect of the engine.__
 - [Rendering](#rendering)
     - [Shaders](#shaders)
     - [Materials](#materials)
+    - [Compute Shaders](#compute-shaders)
+    - [Frame Graph](#framegraph)
+    - [Sprites](#sprites)
+    - [Shapes](#shapes)
+    - [Meshes](#meshes)
+    - [Text](#text)
+- [Scene](#scene)
+- [Tween](#tween)
 - [Audio](#audio)
 - [Input](#input)
 
@@ -202,6 +211,45 @@ new RunOnce(),
 - If you add data to `world.Resources` that is now able to be used as a system parameter.
 - More advanced use cases can set up access to sub-data in Resources, allowing for better automatic scheduling of systems.
     - As an example there is `Assets<T>` that is fetching from `AssetServer` that is stored in the `Resources` on `World`
+
+### Coroutines
+- Special type of system that allows step-by-step actions
+- Makes use of a custom `Yield` type to handle control flow
+- Supports custom yield actions, example found in [Coroutine Example](./examples/Application/Examples/ECS/CoroutineExample.cs)
+
+```cs
+Coroutine.Create(new("TestCoroutine"),
+static (param) =>
+{
+    return Routine();
+
+    static IEnumerable<Yield> Routine()
+    {
+        yield return Yield.WaitForSeconds(1f);
+        yield return Coroutine.WaitForEnterState(TestState.First);
+        yield return Coroutine.WaitForExitState(TestState.First);
+    }
+})
+```
+
+Coroutines can also be auto generated in system sets
+```cs
+[SystemSet]
+static partial class GeneratedSystemSet
+{
+    // `nameof(ExampleSystem)` is the method that should run for this coroutine
+    [Coroutine(nameof(ExampleSystem))] 
+    static readonly SystemBuilderDescriptor ExampleSystemDescriptor = new()
+    {
+        Stage = CoreStage.Update,
+    };
+
+    static IEnumerable<Yield> ExampleSystem(Time time)
+    {
+        yield return Yield.WaitForSeconds(1f);
+    }
+}
+```
 
 ### Schedule
 - Schedule defines system execution order
@@ -409,6 +457,10 @@ static void MySystem(EventReader<AssetEvent<MyAsset>> myAssetEvents)
 ### AssetLoader
 - AssetLoaders are responsible for converting raw data into assets
 - AssetLoaders are registered on the AssetServer
+- Supports asset hot-reload on supported systems via FileSystemWatcher
+    - Shaders, Textures, Scenes, and other internal engine assets supports hot-reload
+    - Custom asset types needs to implement handling of hot-reload
+
 ```cs
 world.Resources.Get<AssetServer>().AddLoader(new TextAssetLoader());
 
@@ -429,18 +481,88 @@ public class TextAssetLoader : AssetLoader<TextAsset>
 - `TransformPlugin<Transform2D>` to enable hierarchy support
 - `GlobalTransform` is required for transform hierarchy
     - Final transform value is calculated into the `Matrix` on `GlobalTransform`
+- `ZIndex` to control render order
 
 ## Rendering
 - TODO
 
 ### Materials
-- TODO
+- Materials contains information about the pipeline for rendering objects with a shader
 
 ### Shaders
+- WGSL is the shader language
+
+### Compute Shaders
+- Engine has support for compute shaders
+- Functions in the same way as a regular material
+- Configured via ComputeCommands and dispatched on a compute encoder
+- Example can be found in [Compute Example](./examples/ComputeExample.cs)
+
+### FrameGraph
 - TODO
+
+### Sprites
+- TODO
+
+### Shapes
+- TODO
+
+### Meshes
+- TODO
+
+### Text
+- TODO
+
+## Scene
+- Scenes is a serializable collection of entities
+- Can save and load flat and hierarchical entities
+- Serialized as JSON
+- Supports hot-reload of scene asset and any used sub-assets
+- Full example can be found in the [Scene Example](./examples/SceneExample.cs)
+
+## Tween
+- Engine supports tweening object properties in an efficient ECS way
+- Can tween any component property
+- Currently have to manually register components you want to tween
+- Supports sequencing of tweens
+
+```cs
+// Single tween that runs forever
+Tween.Create(entity, (Transform2D comp) => comp.Position)
+    .WithFromTo(pos, pos + Vec2f.Up * 64f)
+    .WithDuration(2f)
+    .WithEasing(Easing.Quartic)
+    .WithFlags(TweenFlag.PingPong)
+    .Append(commands);
+```1
+
+```cs
+// Sequence of tweens
+Tween.Sequence(commands)
+    .WithFlags(TweenFlag.Loop)
+    .Then(Tween.Create(entity, (Transform2D comp) => comp.Position)
+        .WithFromTo(pos, pos + Vec2f.Up * 64f)
+        .WithDuration(2f)
+        .WithFlags(TweenFlag.None)
+        .WithEasing(Easing.Quartic)
+    )
+    .Then(Tween.Create(entity, (Transform2D comp) => comp.Scale)
+        .WithFromTo(Vec2f.One * 4, Vec2f.One * 8)
+        .WithDuration(1f)
+        .WithFlags(TweenFlag.None)
+        .WithEasing(Easing.Quartic)
+    )
+    .Append();
+```
 
 ## Audio
-- TODO
+- There is a limited audio system that allows playing sounds
+- Very basic right now
+- Example can be found in the [Audio Example](./examples/AudioExample.cs)
 
 ## Input
-- TODO
+- Keyboard, Mouse and Gamepad input is supported (uses SDL)
+- Inputs are read via the Event system, but can be read via polling as well
+    - `EventReader<ButtonEvent<Key>>` to read via events
+    - `ButtonInput<Key>` to read via polling
+- Example can be found in the [Input Example](./examples/InputExample.cs)
