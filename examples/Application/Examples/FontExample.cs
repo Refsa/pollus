@@ -40,10 +40,13 @@ public partial class FontExample : IExample
                         world.Spawn(TextDraw.Bundle
                             .Set(TextDraw.Default with
                             {
-                                Font = spaceMono,
                                 Size = i,
                                 Text = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz\nThe Quick Brown Fox Jumps Over The Lazy Dog",
                                 Color = Color.WHITE,
+                            })
+                            .With(TextFont.Default with
+                            {
+                                Font = spaceMono,
                             })
                             .Set(Transform2D.Default with
                             {
@@ -54,12 +57,14 @@ public partial class FontExample : IExample
                     world.Spawn(Entity
                         .With(TextDraw.Default with
                         {
-                            Font = spaceMono,
                             Size = 16f,
                             Text = "Seconds",
                             Color = Color.BLACK,
                         })
-                        .With(TextMesh.Default)
+                        .With(TextFont.Default with
+                        {
+                            Font = spaceMono,
+                        })
                         .With(Transform2D.Default with
                         {
                             Position = Vec2f.One * 16f,

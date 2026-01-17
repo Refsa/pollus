@@ -5,23 +5,24 @@ using ECS;
 using Transform;
 using Utils;
 
+[Required<TextMesh>, Required<TextFont>, Required<GlobalTransform>]
 public partial struct TextDraw : IComponent, IDefault<TextDraw>
 {
-    public static readonly EntityBuilder<TextDraw, TextMesh, Transform2D> Bundle = Entity.With(
+    public static readonly EntityBuilder<TextDraw, TextMesh, TextFont, Transform2D, GlobalTransform> Bundle = Entity.With(
         TextDraw.Default,
         TextMesh.Default,
-        Transform2D.Default
+        TextFont.Default,
+        Transform2D.Default,
+        GlobalTransform.Default
     );
 
     public static TextDraw Default { get; } = new TextDraw()
     {
-        Font = Handle<FontAsset>.Null,
         Color = Color.WHITE,
         Size = 12f,
         Text = NativeUtf8.Null,
     };
 
-    public required Handle<FontAsset> Font;
     public required Color Color;
     public required float Size;
     public bool IsDirty = false;
@@ -45,14 +46,26 @@ public partial struct TextDraw : IComponent, IDefault<TextDraw>
     }
 }
 
+public partial struct TextFont : IComponent, IDefault<TextFont>
+{
+    public static TextFont Default { get; } = new()
+    {
+        Font = Handle<FontAsset>.Null,
+        Material = Handle.Null,
+        RenderStep = RenderStep2D.Main,
+    };
+
+    public required Handle<FontAsset> Font;
+    public required Handle Material;
+    public required RenderStep2D RenderStep;
+}
+
 public partial struct TextMesh : IComponent, IDefault<TextMesh>
 {
-    public static TextMesh Default { get; } = new TextMesh()
+    public static TextMesh Default { get; } = new()
     {
         Mesh = Handle<TextMeshAsset>.Null,
-        Material = Handle<FontMaterial>.Null,
     };
 
     public required Handle<TextMeshAsset> Mesh;
-    public required Handle<FontMaterial> Material;
 }

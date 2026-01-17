@@ -534,7 +534,7 @@ Tween.Create(entity, (Transform2D comp) => comp.Position)
     .WithEasing(Easing.Quartic)
     .WithFlags(TweenFlag.PingPong)
     .Append(commands);
-```1
+```
 
 ```cs
 // Sequence of tweens

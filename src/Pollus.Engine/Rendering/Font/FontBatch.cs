@@ -4,7 +4,7 @@ using Graphics;
 using Mathematics;
 using Utils;
 
-public record struct FontBatchKey(Handle<TextMeshAsset> TextMesh, Handle<FontMaterial> Material, RenderStep2D RenderStep = RenderStep2D.Main)
+public record struct FontBatchKey(Handle<TextMeshAsset> TextMesh, Handle Material, RenderStep2D RenderStep = RenderStep2D.Main)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(TextMesh.ID, Material.ID);
 }
@@ -20,7 +20,7 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
         public Vec4f Color;
     }
 
-    public Handle<FontMaterial> Material { get; }
+    public Handle Material { get; }
     public Handle<TextMeshAsset> TextMesh { get; }
     public override Handle[] RequiredResources { get; }
 
@@ -50,6 +50,8 @@ public class FontBatches : RenderBatches<FontBatch, FontBatchKey>
     public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
     {
         var batch = GetBatch(batchID);
+        if (!batch.HasRequiredResources(renderAssets)) return Draw.Empty;
+
         var material = renderAssets.Get<MaterialRenderData>(batch.Material);
         var textMesh = renderAssets.Get<FontMeshRenderData>(batch.TextMesh);
 
