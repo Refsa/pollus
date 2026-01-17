@@ -15,7 +15,12 @@ public partial class TextBuilder
         public Vec4f Color;
     }
 
-    public static void BuildMesh(
+    public ref struct Result
+    {
+        public Rect Bounds;
+    }
+
+    public static Result BuildMesh(
         NativeUtf8 text,
         FontAsset font,
         Vec2f startPos,
@@ -24,11 +29,19 @@ public partial class TextBuilder
         ArrayList<TextVertex> vertices,
         ArrayList<uint> indices)
     {
+        var bounds = Rect.Zero;
         foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count))
         {
+            foreach (scoped ref readonly var point in quad.Vertices) bounds.Expand(point.Position);
+
             vertices.AddRange(quad.Vertices);
             indices.AddRange(quad.Indices);
         }
+
+        return new()
+        {
+            Bounds = bounds
+        };
     }
 
     public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0)

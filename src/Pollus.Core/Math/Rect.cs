@@ -3,11 +3,12 @@ namespace Pollus.Mathematics;
 using Pollus.Core.Serialization;
 using Pollus.Utils;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Pollus.Graphics;
 
 [ShaderType, Reflect, Serialize]
 [DebuggerDisplay("Rect: {Min} {Max}")]
-public partial struct Rect
+public partial struct Rect : IEquatable<Rect>, IEqualityComparer<Rect>
 {
     public static readonly Rect Zero = new Rect();
 
@@ -44,6 +45,16 @@ public partial struct Rect
         return new Vec4f(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Max.Y);
     }
 
+    public static bool operator ==(Rect left, Rect right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Rect left, Rect right)
+    {
+        return !left.Equals(right);
+    }
+
     public void Scale(Vec2f scale)
     {
         Min *= scale;
@@ -61,6 +72,12 @@ public partial struct Rect
     {
         Min += offset;
         Max += offset;
+    }
+
+    public void Expand(Vec2f point)
+    {
+        Min = new Vec2f(Math.Min(Min.X, point.X), Math.Min(Min.Y, point.Y));
+        Max = new Vec2f(Math.Max(Max.X, point.X), Math.Max(Max.Y, point.Y));
     }
 
     public Vec2f Center()
@@ -162,6 +179,31 @@ public partial struct Rect
         {
             return dy < 0 ? Vec2f.Down : Vec2f.Up; // Bottom or Top side
         }
+    }
+
+    public override bool Equals([NotNullWhen(true)] object? obj)
+    {
+        return obj is Rect other && Equals(other);
+    }
+
+    public bool Equals(Rect other)
+    {
+        return Min == other.Min && Max == other.Max;
+    }
+
+    public bool Equals(Rect x, Rect y)
+    {
+        return x.Min == y.Min && x.Max == y.Max;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Min, Max);
+    }
+
+    public int GetHashCode(Rect obj)
+    {
+        return HashCode.Combine(obj.Min, obj.Max);
     }
 
     public override string ToString()

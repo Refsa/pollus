@@ -9,6 +9,8 @@ using Pollus.Utils;
 [DebuggerDisplay("Rect: {Min} {Max}")]
 public partial struct RectInt
 {
+    public static readonly RectInt Zero = new RectInt(Vec2<int>.Zero, Vec2<int>.Zero);
+
     public Vec2<int> Min;
     public Vec2<int> Max;
 
@@ -127,6 +129,7 @@ public partial struct RectInt
         {
             return new Vec2<int>(x1, y1);
         }
+
         return Vec2<int>.Zero;
     }
 
@@ -158,6 +161,21 @@ public partial struct RectInt
         else
         {
             return dy < 0 ? Vec2<int>.Down : Vec2<int>.Up; // Bottom or Top side
+        }
+    }
+
+    public void Expand(Vec2<int> point)
+    {
+        Min = new Vec2<int>(Math.Min(Min.X, point.X), Math.Min(Min.Y, point.Y));
+        Max = new Vec2<int>(Math.Max(Max.X, point.X), Math.Max(Max.Y, point.Y));
+    }
+
+    public void Expand(params ReadOnlySpan<Vec2<int>> points)
+    {
+        foreach (var point in points)
+        {
+            Min = new Vec2<int>(Math.Min(Min.X, point.X), Math.Min(Min.Y, point.Y));
+            Max = new Vec2<int>(Math.Max(Max.X, point.X), Math.Max(Max.Y, point.Y));
         }
     }
 

@@ -15,6 +15,8 @@ public partial class TextMeshAsset
     public required string Name { get; init; }
     public required ArrayList<TextBuilder.TextVertex> Vertices { get; init; }
     public required ArrayList<uint> Indices { get; init; }
+
+    public Rect Bounds { get; set; }
 }
 
 public class FontPlugin : IPlugin
@@ -64,8 +66,8 @@ public partial class FontSystemSet
     [System(nameof(BuildTextMesh))]
     static readonly SystemBuilderDescriptor BuildTextMeshDescriptor = new()
     {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem],
+        Stage = CoreStage.First,
+        RunsAfter = [PrepareFontDescriptor.Label],
     };
 
     [System(nameof(FontMaterialChanged))]
@@ -150,7 +152,8 @@ public partial class FontSystemSet
 
             tma.Vertices.Clear();
             tma.Indices.Clear();
-            TextBuilder.BuildMesh(draw.Text, fontAsset, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
+            var result = TextBuilder.BuildMesh(draw.Text, fontAsset, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
+            tma.Bounds = result.Bounds;
 
             draw.IsDirty = false;
             userData.meshes.Set(mesh.Mesh, tma);
