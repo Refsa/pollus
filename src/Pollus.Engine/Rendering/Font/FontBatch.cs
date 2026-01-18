@@ -54,6 +54,7 @@ public class FontBatches : RenderBatches<FontBatch, FontBatchKey>
 
         var material = renderAssets.Get<MaterialRenderData>(batch.Material);
         var textMesh = renderAssets.Get<FontMeshRenderData>(batch.TextMesh);
+        if (textMesh.VertexCount == 0 || textMesh.IndexCount == 0) return Draw.Empty;
 
         return Draw.Create(material.Pipeline)
             .SetVertexInfo(textMesh.VertexCount, 0)
