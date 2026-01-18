@@ -36,6 +36,7 @@ public static class ExampleRunner
             Log.Info("  font");
             Log.Info("  scene");
             Log.Info("  render-order");
+            Log.Info("  sprite-material");
             return;
         }
 
@@ -67,6 +68,7 @@ public static class ExampleRunner
             "font" => new FontExample(),
             "scene" => new SceneExample(),
             "render-order" => new RenderOrderExample(),
+            "sprite-material" => new SpriteMaterialExample(),
             _ => null
         };
 

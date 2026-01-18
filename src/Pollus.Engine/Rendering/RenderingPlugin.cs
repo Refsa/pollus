@@ -71,7 +71,7 @@ public class RenderingPlugin : IPlugin
                 {
                     var (time, qCamera) = param;
 
-                    uniform.Time = (float)time.DeltaTime;
+                    uniform.Time = (float)time.SecondsSinceStartup;
                     if (qCamera.EntityCount() == 0)
                     {
                         return;

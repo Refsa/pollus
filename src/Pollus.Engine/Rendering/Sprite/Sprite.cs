@@ -15,7 +15,7 @@ public partial struct Sprite : IComponent, IDefault<Sprite>
         Color = Color.WHITE,
     };
 
-    public required Handle<SpriteMaterial> Material;
+    public required Handle Material;
     public required Rect Slice;
     public Color Color;
 }
