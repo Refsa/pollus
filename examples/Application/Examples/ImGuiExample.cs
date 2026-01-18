@@ -16,11 +16,11 @@ public class ImGuiExample : IExample
         .AddPlugins([
             new ImguiPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", (Commands commands) =>
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Spawn", (Commands commands) =>
         {
             commands.Spawn(Camera2D.Bundle);
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("ImGui", () =>
+        .AddSystems(CoreStage.Update, FnSystem.Create("ImGui", () =>
         {
             ImGuiNET.ImGui.ShowDemoWindow();
         }))

@@ -25,7 +25,7 @@ public partial class CoroutineExample : IExample
                 new StatePlugin<TestState>(TestState.Second),
             ])
             .AddSystemSet<CoroutineSystemSet>()
-            .AddSystem(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
+            .AddSystems(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
                 {
                     Locals = [Local.From(1f)],
                 },
@@ -43,7 +43,7 @@ public partial class CoroutineExample : IExample
                         Log.Info("Exited First State");
                     }
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>
+            .AddSystems(CoreStage.Update, FnSystem.Create("Input", static (ButtonInput<Key> keyboard, State<TestState> state) =>
             {
                 if (keyboard.JustPressed(Key.Space))
                 {

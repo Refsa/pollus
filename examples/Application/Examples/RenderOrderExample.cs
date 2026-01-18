@@ -28,7 +28,7 @@ public partial class RenderOrderExample : IExample
         .AddPlugins([
             new RenderingPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupShapes",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("SetupShapes",
             static (World world, Commands commands, AssetServer assetServer, Assets<SpriteMaterial> spriteMaterials) =>
             {
                 Log.Info(world.Schedule.ToString());
@@ -78,7 +78,7 @@ public partial class RenderOrderExample : IExample
                     }
                 }
             }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("UpdateZIndex", static (Time time, Query<Transform2D, ZIndexSweep> query) =>
+        .AddSystems(CoreStage.Update, FnSystem.Create("UpdateZIndex", static (Time time, Query<Transform2D, ZIndexSweep> query) =>
         {
             query.ForEach(time.SecondsSinceStartup, static (in secondsSinceStartup, ref transform, ref zIndexSweep) =>
             {

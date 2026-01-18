@@ -124,7 +124,7 @@ public partial class ComputeExample : IExample
                 },
             ])
             .AddResource(new ComputeData())
-            .AddSystem(CoreStage.Init, FnSystem.Create("Setup",
+            .AddSystems(CoreStage.Init, FnSystem.Create("Setup",
                 static (Commands commands, Random random, IWindow window,
                     ComputeData computeData, RenderAssets renderAssets, AssetServer assetServer,
                     Assets<ComputeShader> computeShaders, Assets<ParticleMaterial> particleMaterials,
@@ -176,7 +176,7 @@ public partial class ComputeExample : IExample
                         ]
                     });
                 }))
-            .AddSystem(CoreStage.PreRender, FnSystem.Create(new("PrepareRender")
+            .AddSystems(CoreStage.PreRender, FnSystem.Create(new("PrepareRender")
                 {
                     RunsAfter = [FrameGraph2DPlugin.BeginFrame],
                 },

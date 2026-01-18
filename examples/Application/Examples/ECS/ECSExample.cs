@@ -37,16 +37,16 @@ public partial class ECSExample : IExample
     public void Stop() => application?.Shutdown();
 
     public void Run() => (application = Application.Builder
-        .AddPlugins([
-            new TimePlugin(),
-            new StatePlugin<TestState>(TestState.State3),
-        ])
-        .InitEvent<TestEvent>()
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
-        .AddSystemSet<ComponentSystemSet>()
-        .AddSystemSet<EventSystemSet>()
-        .AddSystemSet<StateSystemSet>()
-        .Build())
+            .AddPlugins([
+                new TimePlugin(),
+                new StatePlugin<TestState>(TestState.State3),
+            ])
+            .InitEvent<TestEvent>()
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("PrintSchedule", static (World world) => Log.Info(world.Schedule.ToString())))
+            .AddSystemSet<ComponentSystemSet>()
+            .AddSystemSet<EventSystemSet>()
+            .AddSystemSet<StateSystemSet>()
+            .Build())
         .Run();
 
     [SystemSet]

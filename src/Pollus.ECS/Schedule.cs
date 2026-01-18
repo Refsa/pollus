@@ -61,16 +61,18 @@ public class Schedule : IDisposable
     }
 
     public Schedule AddSystems(StageLabel stageLabel, params ISystem[] systems)
+    public Schedule AddSystems(StageLabel stageLabel, params ReadOnlySpan<ISystem> systems)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Value} not found");
         foreach (var system in systems)
         {
             stage.AddSystem(system);
         }
+
         return this;
     }
 
-    public Schedule AddSystems(StageLabel stageLabel, params ISystemBuilder[] builders)
+    public Schedule AddSystems(StageLabel stageLabel, params ReadOnlySpan<ISystemBuilder> builders)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Value} not found");
         foreach (var builder in builders)
@@ -78,6 +80,7 @@ public class Schedule : IDisposable
             var system = builder.Build();
             stage.AddSystem(system);
         }
+
         return this;
     }
 
@@ -113,6 +116,7 @@ public class Schedule : IDisposable
         {
             sb.AppendLine(stage.ToString());
         }
+
         return sb.ToString();
     }
 }

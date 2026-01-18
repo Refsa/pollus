@@ -36,7 +36,7 @@ public partial class SceneExample : IExample
                 },
                 new InputPlugin(),
             ])
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Init",
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("Init",
                 static (Commands commands, AssetServer assetServer) =>
                 {
                     Log.Info("""
@@ -52,7 +52,7 @@ public partial class SceneExample : IExample
                     _ = commands.SpawnScene(parentScene)
                         .AddComponent(new Root());
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
+            .AddSystems(CoreStage.Update, FnSystem.Create("SaveLoadUnload",
                 static (SceneSerializer sceneSerializer, World world, Commands commands, ButtonInput<Key> keyInputs, AssetServer assetServer, Query<Root> qSceneRoot) =>
                 {
                     if (keyInputs.JustPressed(Key.KeyS) && qSceneRoot.Any())
@@ -77,7 +77,7 @@ public partial class SceneExample : IExample
                         commands.DespawnHierarchy(qSceneRoot.Single().Entity);
                     }
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("Rotate::Update",
+            .AddSystems(CoreStage.Update, FnSystem.Create("Rotate::Update",
                 static (Time time, Query<Transform2D, Rotate> qRotate) => { qRotate.ForEach(time.DeltaTimeF, static (in deltaTime, ref transform, ref rotate) => { transform.Rotation += rotate.Speed * deltaTime; }); }))
             .Build())
         .Run();

@@ -31,7 +31,7 @@ public partial class CollisionExample : IExample
             new TransformPlugin<Transform2D>(),
             new ShapePlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
         static (Commands commands, AssetServer assetServer, Assets<ShapeMaterial> shapeMaterials, Assets<Shape> shapes) =>
         {
             commands.Spawn(Camera2D.Bundle);
@@ -71,7 +71,7 @@ public partial class CollisionExample : IExample
                 CollisionShape.Circle(32f)
             ));
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Update",
+        .AddSystems(CoreStage.Update, FnSystem.Create("Update",
         static (Query<Transform2D, MoveShape, ShapeDraw> qMoveShapes, Query<Transform2D, CollisionShape, ShapeDraw> qCollisions, Time time) =>
         {
             qMoveShapes.ForEach((ref Transform2D transform, ref MoveShape moveShape, ref ShapeDraw shapeDraw) =>

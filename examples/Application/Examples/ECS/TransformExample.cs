@@ -37,7 +37,7 @@ public partial class TransformExample : IExample
             new HierarchyPlugin(),
             new TransformPlugin<Transform2D>(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (
             Commands commands, AssetServer assetServer,
             Assets<Shape> shapes, Assets<ShapeMaterial> shapeMaterials
@@ -122,7 +122,7 @@ public partial class TransformExample : IExample
                     }
                 )).SetParent(child2);
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Move",
+        .AddSystems(CoreStage.Update, FnSystem.Create("Move",
         static (Time time, ButtonInput<Key> keys,
                 Query<Transform2D>.Filter<All<Base>> qRoots,
                 Query<Transform2D, Rotate> qRotate

@@ -19,7 +19,7 @@ public partial class HierarchyExample : IExample
             new HierarchyPlugin(),
             new InputPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Spawn",
         static (Commands commands) =>
         {
             var parent = commands.Spawn()
@@ -34,7 +34,7 @@ public partial class HierarchyExample : IExample
                 .AddChild(commands.Spawn().Entity)
                 .Entity;
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Print",
+        .AddSystems(CoreStage.Update, FnSystem.Create("Print",
         static (Local<float> logCD, Time time, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
         {
             logCD.Value -= time.DeltaTimeF;
@@ -53,7 +53,7 @@ public partial class HierarchyExample : IExample
             }
             Log.Info("");
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Destroy",
+        .AddSystems(CoreStage.Update, FnSystem.Create("Destroy",
         static (ButtonInput<Key> keys, Commands commands, Query<Parent>.Filter<None<Child>> qRoots, Query query) =>
         {
             if (!keys.JustPressed(Key.KeyQ)) return;

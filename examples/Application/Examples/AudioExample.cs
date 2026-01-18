@@ -17,22 +17,22 @@ public class AudioExample : IExample
             .AddPlugin(new AssetPlugin { RootPath = "assets" })
             .AddPlugin<TimePlugin>()
             .AddPlugin<AudioPlugin>()
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
-            static (World world, AssetServer assetServer) =>
-            {
-                Entity.With(
-                    new AudioSource
-                    {
-                        Gain = 1.0f,
-                        Pitch = 1.0f,
-                        Mode = PlaybackMode.Loop,
-                    },
-                    new AudioPlayback
-                    {
-                        Asset = assetServer.LoadAsync<AudioAsset>("sounds/test.wav"),
-                    }
-                ).Spawn(world);
-            }))
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
+                static (World world, AssetServer assetServer) =>
+                {
+                    Entity.With(
+                        new AudioSource
+                        {
+                            Gain = 1.0f,
+                            Pitch = 1.0f,
+                            Mode = PlaybackMode.Loop,
+                        },
+                        new AudioPlayback
+                        {
+                            Asset = assetServer.LoadAsync<AudioAsset>("sounds/test.wav"),
+                        }
+                    ).Spawn(world);
+                }))
             .Build();
         application.Run();
     }

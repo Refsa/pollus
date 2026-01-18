@@ -30,7 +30,7 @@ public partial class QueryFilterExample : IExample
                 new TimePlugin(),
                 new PerformanceTrackerPlugin(),
             ])
-            .AddSystem(CoreStage.PostInit, FnSystem.Create(new("Spawn"),
+            .AddSystems(CoreStage.PostInit, FnSystem.Create(new("Spawn"),
             static (World world, Commands commands) =>
             {
                 Log.Info(world.Schedule.ToString());
@@ -38,7 +38,7 @@ public partial class QueryFilterExample : IExample
                 commands.Spawn(Entity.With(new Component1 { Value = 0 }));
                 commands.Spawn(Entity.With(new Component1 { Value = 0 }, new Component2 { Value = 0 }));
             }))
-            .AddSystem(CoreStage.Update, FnSystem.Create(new("Filter"),
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("Filter"),
             static (Local<float> logCD, Time time, Query<Component1> query, Query<Component1>.Filter<None<Component2>> queryFiltered) =>
             {
                 logCD.Value -= time.DeltaTimeF;

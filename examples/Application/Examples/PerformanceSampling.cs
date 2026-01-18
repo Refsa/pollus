@@ -24,7 +24,7 @@ public class PerformanceSampling : IExample
                 new InputPlugin()
             ])
             .AddResource(new SpatialLooseGrid<Entity>(64, 64, 64))
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
             static (Commands commands) =>
             {
                 for (int x = 0; x < 32; x++)
@@ -37,7 +37,7 @@ public class PerformanceSampling : IExample
                             }));
                         }
             }))
-            .AddSystem(CoreStage.Update, FnSystem.Create(new("Update")
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("Update")
             {
                 Locals = [Local.From(256f)]
             },

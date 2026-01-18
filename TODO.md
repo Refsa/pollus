@@ -28,6 +28,10 @@
 	- [ ] multiple AssetIO in AssetServer
 		- supply prefix handling for 'asset://', 'userdata://', etc.
 	- [-] Hot reloading
+	- [ ] Preprocessor
+		- [ ] Preload assets before AssetLoader runs
+			- If an asset requires loading some other data
+			- ex. a shader with imports
 - Plugins
 	- [x] Defer applying plugins
 	- [x] Plugin dependency graph
@@ -136,10 +140,16 @@
 		- [ ] SDF drawing
 		- [ ] Handles/Interactions
 	- [ ] HDR surface formats
+	- [ ] Shaders
+		- [ ] WGSL AST
+			- required for dead-code elimination
+			- useful for pipeline validation
+			- useful for auto-setup of pipelines
+		- [ ] Shader includes (Similar to WESL)
 	- [ ] Compute Shaders
 		- [x] setup and run compute shaders
 		- [x] Compute commands
-		- [ ] on-demand dispatch
+		- [ ] on-demand dispatch (blocking dispatch)
 	- [ ] Culling
 	- [ ] MSAA
 	- [ ] Per-Camera frame graphs/rendering

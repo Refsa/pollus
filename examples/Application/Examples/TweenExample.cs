@@ -38,7 +38,7 @@ public partial class TweenExample : IExample
                 .Register<Transform2D>(),
             new PerformanceTrackerPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
         static (Commands commands, AssetServer assetServer, Assets<Shape> shapes, Assets<ShapeMaterial> shapeMaterials) =>
         {
             commands.Spawn(Camera2D.Bundle);
@@ -59,7 +59,7 @@ public partial class TweenExample : IExample
                     SpawnAndTween(commands, Vec2f.One * 50f + new Vec2f(x * scale * 3f, y * scale * 3f), shapeMaterial, shape);
                 }
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create(new()
+        .AddSystems(CoreStage.Update, FnSystem.Create(new()
         {
             Label = "Print",
             Locals = [

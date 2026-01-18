@@ -16,7 +16,7 @@ public class InputExample : IExample
     {
         application = Application.Builder
             .AddPlugin<InputPlugin>()
-            .AddSystem(CoreStage.Update, FnSystem.Create("Update",
+            .AddSystems(CoreStage.Update, FnSystem.Create("Update",
                 static (EventReader<ButtonEvent<Key>> eKeys, ButtonInput<Key> directInput) =>
                 {
                     foreach (var key in eKeys.Read())

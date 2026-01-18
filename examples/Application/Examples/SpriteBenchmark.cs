@@ -39,7 +39,7 @@ public class SpriteBenchmark : IExample
                 new RandomPlugin(),
             ])
             .AddResource(new SharedAssets())
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("SpriteBenchmark::Setup",
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("SpriteBenchmark::Setup",
                 static (Commands commands, AssetServer assetServer, SharedAssets sharedAssets, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
                 {
                     commands.Spawn(Camera2D.Bundle);
@@ -51,7 +51,7 @@ public class SpriteBenchmark : IExample
                         Sampler = samplers.Add(SamplerDescriptor.Nearest),
                     });
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("SpriteBenchmark::Update",
+            .AddSystems(CoreStage.Update, FnSystem.Create("SpriteBenchmark::Update",
                 static (Commands commands, SharedAssets sharedAssets, Time time, IWindow window, Random random, Local<FPS> fps, Query.Filter<All<Sprite>> qSprites) =>
                 {
                     fps.Value.Frames++;

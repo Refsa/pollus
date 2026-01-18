@@ -24,7 +24,7 @@ public partial class ECSSpawnExample : IExample
                 new TimePlugin(),
                 new PerformanceTrackerPlugin(),
             ])
-            .AddSystem(CoreStage.First, FnSystem.Create(new("Spawn")
+            .AddSystems(CoreStage.First, FnSystem.Create(new("Spawn")
             {
                 Locals = [Local.From(new Tracker(0.0f, true))],
             },

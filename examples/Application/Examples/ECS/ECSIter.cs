@@ -19,14 +19,14 @@ public partial class ECSIter : IExample
             new TimePlugin(),
             new PerformanceTrackerPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("Spawn", static (Commands commands) =>
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("Spawn", static (Commands commands) =>
         {
             for (int i = 0; i < 1_000_000; i++)
             {
                 commands.Spawn(Entity.With(new Component1()));
             }
         }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("Iter", static (Query<Component1> query) =>
+        .AddSystems(CoreStage.Update, FnSystem.Create("Iter", static (Query<Component1> query) =>
         {
             query.ForEach(static (ref Component1 c) =>
             {

@@ -45,7 +45,7 @@ public class FrameGraphExample : IExample
                 new RenderingPlugin(),
                 new PerformanceTrackerPlugin(),
             ])
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
                 static (Commands commands, AssetServer assetServer, Assets<SpriteMaterial> materials, Assets<SamplerAsset> samplers) =>
                 {
                     var spriteMaterial = materials.Add(new SpriteMaterial
@@ -69,7 +69,7 @@ public class FrameGraphExample : IExample
                         }
                     ));
                 }))
-            .AddSystem(CoreStage.Render, FnSystem.Create("FrameGraph",
+            .AddSystems(CoreStage.Render, FnSystem.Create("FrameGraph",
                 static (RenderContext renderContext, RenderAssets renderAssets, Resources resources, DrawGroups2D renderSteps, IWindow window) =>
                 {
                     using var frameGraph = new FrameGraph<FrameGraphParam>();

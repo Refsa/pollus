@@ -24,7 +24,7 @@ public class ShapesExample : IExample
         new TransformPlugin<Transform2D>(),
         new ShapePlugin(),
     ])
-    .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupShapes",
+    .AddSystems(CoreStage.PostInit, FnSystem.Create("SetupShapes",
     static (Commands commands, AssetServer assetServer, Assets<Shape> shapes, Assets<ShapeMaterial> shapeMaterials) =>
     {
         commands.Spawn(Camera2D.Bundle);

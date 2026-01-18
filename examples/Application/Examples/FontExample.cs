@@ -28,7 +28,7 @@ public partial class FontExample : IExample
         application = Application.Builder
             .AddPlugin<FontPlugin>()
             .AddPlugin<PerformanceTrackerPlugin>()
-            .AddSystem(CoreStage.PostInit, FnSystem.Create("Setup",
+            .AddSystems(CoreStage.PostInit, FnSystem.Create("Setup",
                 static (World world, AssetServer assetServer) =>
                 {
                     world.Spawn(Camera2D.Bundle);
@@ -72,7 +72,7 @@ public partial class FontExample : IExample
                         .With(new Counter())
                     );
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create("Rotate",
+            .AddSystems(CoreStage.Update, FnSystem.Create("Rotate",
                 static (Time time, PerformanceTrackerPlugin.PerformanceMetrics perf, Query<TextDraw>.Filter<All<Counter>> query) =>
                 {
                     foreach (var entity in query)

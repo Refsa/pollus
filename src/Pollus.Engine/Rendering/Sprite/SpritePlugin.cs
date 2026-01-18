@@ -6,6 +6,8 @@ using Transform;
 
 public class SpritePlugin : IPlugin
 {
+    public static SpritePlugin Default => new();
+
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<RenderingPlugin>(),

@@ -41,7 +41,7 @@ public partial class MeshRenderingExample : IExample
             new InputPlugin(),
             new PerformanceTrackerPlugin(),
         ])
-        .AddSystem(CoreStage.PostInit, FnSystem.Create("SetupEntities",
+        .AddSystems(CoreStage.PostInit, FnSystem.Create("SetupEntities",
             static (Commands commands, AssetServer assetServer, PrimitiveMeshes primitives, Assets<Material> materials, Assets<SamplerAsset> samplers) =>
             {
                 Handle[] materialHandles =
@@ -94,7 +94,7 @@ public partial class MeshRenderingExample : IExample
 
                 commands.Spawn(Camera2D.Bundle);
             }))
-        .AddSystem(CoreStage.Update, FnSystem.Create("PlayerUpdate",
+        .AddSystems(CoreStage.Update, FnSystem.Create("PlayerUpdate",
             static (InputManager input, Time time,
                 Query<Transform2D, OrthographicProjection>.Filter<All<Camera2D>> qCamera,
                 Query<Transform2D, RotateMe> qRotateMe) =>

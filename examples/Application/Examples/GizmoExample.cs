@@ -31,13 +31,13 @@ public class GizmoExample : IExample
                 new GizmoPlugin(),
                 new PerformanceTrackerPlugin(),
             ])
-            .AddSystem(CoreStage.PostInit, FnSystem.Create(new("GizmoExample::Prepare"),
+            .AddSystems(CoreStage.PostInit, FnSystem.Create(new("GizmoExample::Prepare"),
                 static (Commands commands, ExampleData exampleData, AssetServer assetServer) =>
                 {
                     exampleData.Texture = assetServer.LoadAsync<Texture2D>("textures/test.png");
                     commands.Spawn(Camera2D.Bundle);
                 }))
-            .AddSystem(CoreStage.Update, FnSystem.Create(new("GizmoExample::Update")
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("GizmoExample::Update")
                 {
                     Locals = [Local.From(new Queue<float>())]
                 },
