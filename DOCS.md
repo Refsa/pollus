@@ -3,6 +3,7 @@ __A brief overview of each aspect of the engine.__
 **This engine uses Source Generators for many parts of the engine. When you see `partial` as part of the type definition then parts of that type is source generated**
 
 - [Engine architecture](#engine-architecture)
+- [Dos and Donts](#dos-and-donts)
 - [ECS](#ecs)
     - [Components](#components)
     - [Queries](#queries)
@@ -35,6 +36,23 @@ __A brief overview of each aspect of the engine.__
 - Plugin system to handle different features
 - Resource container to handle shared data
 - AssetServer to handle loading of assets
+
+## Dos and Donts
+### Do
+- Use partial when defining components and assets
+    - Pollus.Generators auto-generates the rest of the type
+- Use `Handle<T>`/`Handle` when storing assets in components
+    - Components are unmanaged/blittable, Handle is an indirect way to store a reference to an asset
+
+### Dont
+- Dont alias Resources in other objects
+    - Pollus makes use of system parameters to define dependencies for systems. By aliasing a resource and using it from a context where the system scheduler does not know about it might lead to undefined behavior.
+- Dont alias Assets in other objects
+    - The AssetServer is responsible for the lifetime of assets
+    - `Handle` is used to keep a reference to assets
+- Dont use non-static methods in Query.ForEach methods
+    - ForEach methods should not reference objects directly from the outside to avoid GC allocations
+    - Use the `ForEach(userData, predicate)` variant to pass data to the ForEach method
 
 ## ECS
 - Archetype based ECS with chunked storage

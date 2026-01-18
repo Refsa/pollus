@@ -38,6 +38,12 @@ public class WorldBuilder
         return this;
     }
 
+    public WorldBuilder AddSystem(StageLabel label, ISystemBuilder builder)
+    {
+        onBuild.Add(() => world.Schedule.AddSystem(label, builder));
+        return this;
+    }
+
     public WorldBuilder AddSystems(StageLabel stage, params ISystemBuilder[] builders)
     {
         onBuild.Add(() => world.Schedule.AddSystems(stage, builders));
@@ -65,7 +71,7 @@ public class WorldBuilder
         return this;
     }
 
-    public WorldBuilder AddPlugins(params IPlugin[] plugins)
+    public WorldBuilder AddPlugins(params ReadOnlySpan<IPlugin> plugins)
     {
         foreach (var plugin in plugins)
         {

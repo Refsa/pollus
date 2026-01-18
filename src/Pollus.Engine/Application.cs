@@ -92,6 +92,12 @@ public class ApplicationBuilder
         return this;
     }
 
+    public ApplicationBuilder AddSystem(StageLabel label, ISystemBuilder builder)
+    {
+        worldBuilder.AddSystem(label, builder);
+        return this;
+    }
+
     public ApplicationBuilder AddSystems(StageLabel stage, params ISystemBuilder[] builders)
     {
         worldBuilder.AddSystems(stage, builders);

@@ -60,7 +60,20 @@ public class Schedule : IDisposable
         return stages.Find(s => s.Label == label);
     }
 
-    public Schedule AddSystems(StageLabel stageLabel, params ISystem[] systems)
+    public Schedule AddSystem(StageLabel label, ISystem system)
+    {
+        var stage = GetStage(label) ?? throw new ArgumentException($"Stage {label.Value} not found");
+        stage.AddSystem(system);
+        return this;
+    }
+
+    public Schedule AddSystem(StageLabel label, ISystemBuilder builder)
+    {
+        var stage = GetStage(label) ?? throw new ArgumentException($"Stage {label.Value} not found");
+        stage.AddSystem(builder.Build());
+        return this;
+    }
+
     public Schedule AddSystems(StageLabel stageLabel, params ReadOnlySpan<ISystem> systems)
     {
         var stage = GetStage(stageLabel) ?? throw new ArgumentException($"Stage {stageLabel.Value} not found");
