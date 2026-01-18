@@ -5,7 +5,7 @@ using Pollus.Collections;
 
 public partial record struct Entity(int ID, int Version = 0)
 {
-    public static readonly Entity NULL = new Entity(0, -1);
+    public static readonly Entity Null = new Entity(0, -1);
 
     public bool IsNull => ID <= 0 && Version < 0;
     public override int GetHashCode() => ID;
@@ -17,7 +17,7 @@ public class Entities
     public struct EntityInfo
     {
         public bool IsAlive = false;
-        public Entity Entity = Entity.NULL;
+        public Entity Entity = Entity.Null;
         public int ArchetypeIndex = -1;
         public int ChunkIndex = -1;
         public int RowIndex = -1;
@@ -54,6 +54,7 @@ public class Entities
         {
             target[i] = Create();
         }
+
         Interlocked.Add(ref aliveCount, target.Length);
     }
 

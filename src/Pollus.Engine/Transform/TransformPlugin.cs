@@ -77,7 +77,7 @@ public partial class TransformPlugin<TTransform> : IPlugin
     {
         {
             ref var child = ref query.TryGet<Child>(current, out var hasChild);
-            if (hasChild && child.NextSibling != Entity.NULL)
+            if (hasChild && child.NextSibling != Entity.Null)
             {
                 Propagate(child.NextSibling, query, parentTransform);
             }

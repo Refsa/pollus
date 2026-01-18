@@ -30,8 +30,8 @@ public class HierarchyTests
 
             Assert.Equal(childEntity, parent.FirstChild);
             Assert.Equal(parentEntity, child.Parent);
-            Assert.Equal(Entity.NULL, child.NextSibling);
-            Assert.Equal(Entity.NULL, child.PreviousSibling);
+            Assert.Equal(Entity.Null, child.NextSibling);
+            Assert.Equal(Entity.Null, child.PreviousSibling);
         }
     }
 
@@ -63,17 +63,17 @@ public class HierarchyTests
 
         Assert.Equal(child1, root_parent.FirstChild);
         Assert.Equal(child2, child1_child.NextSibling);
-        Assert.Equal(Entity.NULL, child1_child.PreviousSibling);
+        Assert.Equal(Entity.Null, child1_child.PreviousSibling);
 
         Assert.Equal(child2, root_parent.LastChild);
         Assert.Equal(child1, child2_child.PreviousSibling);
-        Assert.Equal(Entity.NULL, child2_child.NextSibling);
+        Assert.Equal(Entity.Null, child2_child.NextSibling);
 
         Assert.Equal(child1, child1_1_child.Parent);
         Assert.Equal(child1_1, child1_parent.FirstChild);
         Assert.Equal(child1_1, child1_parent.LastChild);
-        Assert.Equal(Entity.NULL, child1_1_child.NextSibling);
-        Assert.Equal(Entity.NULL, child1_1_child.PreviousSibling);
+        Assert.Equal(Entity.Null, child1_1_child.NextSibling);
+        Assert.Equal(Entity.Null, child1_1_child.PreviousSibling);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class HierarchyTests
 
         var child1_child = world.Store.GetComponent<Child>(child1);
         Assert.Equal(child2, child1_child.NextSibling);
-        Assert.Equal(Entity.NULL, child1_child.PreviousSibling);
+        Assert.Equal(Entity.Null, child1_child.PreviousSibling);
 
         var child2_child = world.Store.GetComponent<Child>(child2);
         Assert.Equal(child3, child2_child.NextSibling);
@@ -109,7 +109,7 @@ public class HierarchyTests
         Assert.Equal(child2, child3_child.PreviousSibling);
 
         var child4_child = world.Store.GetComponent<Child>(child4);
-        Assert.Equal(Entity.NULL, child4_child.NextSibling);
+        Assert.Equal(Entity.Null, child4_child.NextSibling);
         Assert.Equal(child3, child4_child.PreviousSibling);
     }
 

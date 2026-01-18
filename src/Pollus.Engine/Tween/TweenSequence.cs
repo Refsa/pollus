@@ -21,7 +21,7 @@ public struct TweenSequenceBuilder
         this.sequenceCommands = commands.Spawn();
         sequence = new()
         {
-            Current = Entity.NULL,
+            Current = Entity.Null,
             Flags = TweenFlag.None,
         };
     }
@@ -39,7 +39,7 @@ public struct TweenSequenceBuilder
         var tweenEntity = tween.Append(commands, false);
         sequenceCommands = sequenceCommands.AddChild(tweenEntity);
 
-        if (sequence.Current == Entity.NULL)
+        if (sequence.Current == Entity.Null)
         {
             sequence.Current = tweenEntity;
         }
@@ -73,7 +73,7 @@ public partial class TweenSequenceSystemSet
             if (entityRef.Get<TweenData>().Progress < 1f) return;
 
             ref var child = ref entityRef.Get<Child>();
-            if (child.NextSibling == Entity.NULL)
+            if (child.NextSibling == Entity.Null)
             {
                 if (sequence.Flags.HasFlag(TweenFlag.OneShot))
                 {

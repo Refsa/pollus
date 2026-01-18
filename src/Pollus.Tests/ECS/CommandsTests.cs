@@ -9,7 +9,7 @@ public class CommandsTests
     public void Commands_AddComponent_OnExisting()
     {
         using var world = new World();
-        var entity = Entity.NULL;
+        var entity = Entity.Null;
         {
             var commands = world.GetCommands();
             entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 5 })).Entity;
@@ -130,7 +130,7 @@ public class CommandsTests
     public void Commands_SetComponent()
     {
         using var world = new World();
-        var entity = Entity.NULL;
+        var entity = Entity.Null;
 
         {
             var commands = world.GetCommands();

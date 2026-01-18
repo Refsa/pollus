@@ -2,8 +2,8 @@ namespace Pollus.ECS;
 
 public partial record struct Parent : IComponent
 {
-    public Entity FirstChild = Entity.NULL;
-    public Entity LastChild = Entity.NULL;
+    public Entity FirstChild = Entity.Null;
+    public Entity LastChild = Entity.Null;
     public int ChildCount = 0;
 
     public Parent()
@@ -13,9 +13,9 @@ public partial record struct Parent : IComponent
 
 public partial record struct Child : IComponent
 {
-    public Entity Parent = Entity.NULL;
-    public Entity NextSibling = Entity.NULL;
-    public Entity PreviousSibling = Entity.NULL;
+    public Entity Parent = Entity.Null;
+    public Entity NextSibling = Entity.Null;
+    public Entity PreviousSibling = Entity.Null;
 
     public Child()
     {
@@ -76,7 +76,7 @@ public ref struct HierarchyEnumerator
 
     public bool MoveNext()
     {
-        if (currentEntity.Entity == Entity.NULL) return false;
+        if (currentEntity.Entity == Entity.Null) return false;
         var entityRef = query.GetEntity(currentEntity.Entity);
 
         if (entityRef.Has<Parent>())
@@ -87,7 +87,7 @@ public ref struct HierarchyEnumerator
         }
 
         ref var cChild = ref entityRef.Get<Child>();
-        if (cChild.NextSibling != Entity.NULL)
+        if (cChild.NextSibling != Entity.Null)
         {
             currentEntity.Entity = cChild.NextSibling;
             return true;
@@ -97,7 +97,7 @@ public ref struct HierarchyEnumerator
 
         currentEntity.Entity = query.Get<Child>(cChild.Parent).NextSibling;
         currentEntity.Depth--;
-        return currentEntity.Entity != Entity.NULL;
+        return currentEntity.Entity != Entity.Null;
     }
 
     public ref struct CurrentEntity(Entity entity, int depth)

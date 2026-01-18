@@ -78,7 +78,7 @@ public class ArchetypeTests
 
         Assert.Equal(999, chunk1.Count);
         Assert.Equal(1, chunk2.Count);
-        Assert.Equal(Entity.NULL, chunk1.entities[999]);
+        Assert.Equal(Entity.Null, chunk1.entities[999]);
 
         for (int i = 0; i < 999; i++)
         {

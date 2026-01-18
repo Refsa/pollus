@@ -42,6 +42,7 @@ public partial class Archetype : IDisposable
             var cinfo = Component.GetInfo(cid);
             rowStride += cinfo.SizeInBytes;
         }
+
         var rowsPerChunk = rowStride switch
         {
             > 0 => chunkSize / rowStride,
@@ -63,6 +64,7 @@ public partial class Archetype : IDisposable
         {
             chunk.Dispose();
         }
+
         chunks.Dispose();
     }
 
@@ -84,13 +86,13 @@ public partial class Archetype : IDisposable
 
     public Entity RemoveEntity(int chunkIndex, int rowIndex)
     {
-        if (entityCount == 0 || lastChunkIndex == -1) return Entity.NULL;
+        if (entityCount == 0 || lastChunkIndex == -1) return Entity.Null;
         entityCount = int.Max(0, entityCount - 1);
 
         ref var chunk = ref chunks[chunkIndex];
         ref var lastChunk = ref chunks[lastChunkIndex];
 
-        var movedEntity = Entity.NULL;
+        var movedEntity = Entity.Null;
         if (chunkIndex == lastChunkIndex && rowIndex == chunk.Count - 1)
         {
             lastChunk.RemoveEntity(rowIndex);
@@ -167,6 +169,7 @@ public partial class Archetype : IDisposable
         {
             if (chunkInfo.ComponentIDs[i].ID == cid.ID) return true;
         }
+
         return false;
     }
 
@@ -177,6 +180,7 @@ public partial class Archetype : IDisposable
         {
             if (HasComponent(cid) is false) return false;
         }
+
         return true;
     }
 
@@ -187,6 +191,7 @@ public partial class Archetype : IDisposable
         {
             if (HasComponent(cid)) return true;
         }
+
         return false;
     }
 
@@ -239,6 +244,7 @@ public partial class Archetype : IDisposable
                 lastChunkIndex = chunks.Length - 1;
             }
         }
+
         return ref chunks[lastChunkIndex];
     }
 

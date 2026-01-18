@@ -87,7 +87,7 @@ public ref struct SceneWriter : IWriter, IDisposable
                 if (!parentExists) throw new Exception($"Entity {root} has no parent");
 
                 var currentEntity = parent.FirstChild;
-                while (currentEntity != Entity.NULL)
+                while (currentEntity != Entity.Null)
                 {
                     WriteEntityData(world, currentEntity);
                     currentEntity = world.GetEntityRef(currentEntity).Get<Child>().NextSibling;
@@ -122,7 +122,7 @@ public ref struct SceneWriter : IWriter, IDisposable
         {
             var parent = archetype.Chunks[entityInfo.ChunkIndex].GetComponent<Parent>(entityInfo.RowIndex);
             var child = parent.FirstChild;
-            while (child != Entity.NULL)
+            while (child != Entity.Null)
             {
                 CollectTypes(world, child, types);
                 child = world.GetEntityRef(child).Get<Child>().NextSibling;
@@ -185,7 +185,7 @@ public ref struct SceneWriter : IWriter, IDisposable
             writer.WriteStartArray("Children");
             ref var parent = ref chunk.GetComponent<Parent>(entityInfo.RowIndex);
             var current = parent.FirstChild;
-            while (current != Entity.NULL)
+            while (current != Entity.Null)
             {
                 WriteEntityData(world, current);
                 current = world.GetEntityRef(current).Get<Child>().NextSibling;

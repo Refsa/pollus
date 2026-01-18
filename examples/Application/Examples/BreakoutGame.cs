@@ -352,7 +352,7 @@ public partial class BreakoutGame : IExample
                         {
                             eCollision.Write(new()
                             {
-                                EntityA = Entity.NULL,
+                                EntityA = Entity.Null,
                                 EntityB = ball.Entity,
                                 Intersection = new Intersection2D
                                 {
@@ -366,7 +366,7 @@ public partial class BreakoutGame : IExample
                         {
                             eCollision.Write(new()
                             {
-                                EntityA = Entity.NULL,
+                                EntityA = Entity.Null,
                                 EntityB = ball.Entity,
                                 Intersection = new Intersection2D
                                 {

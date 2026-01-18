@@ -192,7 +192,7 @@ public struct ArchetypeChunk : IDisposable
     {
         if (row < 0 || row >= count) return;
 
-        entities[row] = Entity.NULL;
+        entities[row] = Entity.Null;
         count = int.Max(0, count - 1);
     }
 
@@ -201,7 +201,7 @@ public struct ArchetypeChunk : IDisposable
     {
         var swapFromRow = --swapFrom.count;
         entities[srcRow] = swapFrom.entities[swapFromRow];
-        swapFrom.entities[swapFromRow] = Entity.NULL;
+        swapFrom.entities[swapFromRow] = Entity.Null;
 
         foreach (var cid in componentsLookup.Keys)
         {
