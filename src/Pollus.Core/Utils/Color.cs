@@ -158,6 +158,26 @@ public partial struct Color
         this.color = new Vec4f(rgb.R, rgb.G, rgb.B, a);
     }
 
+    public static Color From(float r, float g, float b, float a = 1f)
+    {
+        return new(r, g, b, a);
+    }
+
+    public static Color From(Hex hex, float a = 1)
+    {
+        return new(hex, a);
+    }
+
+    public static Color From(RGB rgb, float a = 1)
+    {
+        return new(rgb, a);
+    }
+
+    public static Color From(HSV hsv, float a = 1)
+    {
+        return new(hsv, a);
+    }
+
     public static implicit operator Color(Vec4<float> vec4)
     {
         return new Color(vec4.X, vec4.Y, vec4.Z, vec4.W);
@@ -242,6 +262,11 @@ public partial struct Color
             Value = value;
         }
 
+        public static Hex From(uint value)
+        {
+            return new(value);
+        }
+
         public static implicit operator RGB(Hex hex)
         {
             return new RGB(hex.R, hex.G, hex.B);
@@ -274,6 +299,11 @@ public partial struct Color
             H = h;
             S = s;
             V = v;
+        }
+
+        public static HSV From(float h, float s, float v)
+        {
+            return new(h, s, v);
         }
 
         public static implicit operator Color(HSV hsv)
@@ -315,6 +345,11 @@ public partial struct Color
             R = r;
             G = g;
             B = b;
+        }
+
+        public static RGB From(float r, float g, float b)
+        {
+            return new(r, g, b);
         }
 
         public static implicit operator Color(RGB rgb)
