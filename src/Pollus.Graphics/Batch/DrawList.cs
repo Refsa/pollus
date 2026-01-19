@@ -2,6 +2,7 @@ namespace Pollus.Graphics;
 
 using System.Runtime.CompilerServices;
 using Pollus.Graphics.Rendering;
+using Pollus.Mathematics;
 using Pollus.Utils;
 
 public class DrawList
@@ -80,6 +81,7 @@ public class DrawGroup<TGroup>
         Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[Draw.MAX_VERTEX_BUFFERS] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
         Handle<GPUBuffer> indexBufferHandle = Handle<GPUBuffer>.Null;
         Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
+        RectInt? scissorRect = null;
 
         // TODO: Sort commands by resource usage
         foreach (scoped ref readonly var command in drawLists.Commands)
@@ -114,6 +116,16 @@ public class DrawGroup<TGroup>
                 }
 
                 idx++;
+            }
+
+            if (!Equals(command.ScissorRect, scissorRect))
+            {
+                scissorRect = command.ScissorRect;
+                if (scissorRect.HasValue)
+                {
+                    var rect = scissorRect.Value;
+                    encoder.SetScissorRect((uint)rect.Min.X, (uint)rect.Min.Y, (uint)rect.Width, (uint)rect.Height);
+                }
             }
 
             if (command.IndexBuffer != Handle<GPUBuffer>.Null)

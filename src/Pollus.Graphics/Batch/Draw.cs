@@ -2,6 +2,7 @@ namespace Pollus.Graphics;
 
 using System.Runtime.CompilerServices;
 using Pollus.Graphics.Rendering;
+using Pollus.Mathematics;
 using Pollus.Utils;
 
 public record struct Draw
@@ -41,6 +42,8 @@ public record struct Draw
 
     public uint InstanceCount = 1;
     public uint InstanceOffset;
+
+    public RectInt? ScissorRect;
 
     public bool IsEmpty => Pipeline == Handle<GPURenderPipeline>.Null;
 
@@ -114,6 +117,12 @@ public record struct Draw
     {
         InstanceCount = instanceCount;
         InstanceOffset = instanceOffset;
+        return this;
+    }
+
+    public Draw SetScissorRect(RectInt? rect)
+    {
+        ScissorRect = rect;
         return this;
     }
 }
