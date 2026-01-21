@@ -122,7 +122,7 @@ public class FrameGraph2DPlugin : IPlugin
                         });
 
                         var stage = param.DrawGroups.Groups[RenderStep2D.UI];
-                        stage.Execute(passEncoder, param.RenderAssets);
+                        stage.Execute(passEncoder, param.RenderAssets, param.BackbufferSize);
                     });
 
                 frameGraph.AddPass(RenderStep2D.Last, param,

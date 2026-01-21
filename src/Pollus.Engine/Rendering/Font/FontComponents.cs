@@ -5,8 +5,16 @@ using ECS;
 using Transform;
 using Utils;
 
+public interface ITextDraw
+{
+    public bool IsDirty { get; set; }
+    public NativeUtf8 Text { get; set; }
+    public float Size { get; set; }
+    public Color Color { get; set; }
+}
+
 [Required<TextMesh>, Required<TextFont>, Required<GlobalTransform>]
-public partial struct TextDraw : IComponent, IDefault<TextDraw>
+public partial struct TextDraw : IComponent, IDefault<TextDraw>, ITextDraw
 {
     public static readonly EntityBuilder<TextDraw, TextMesh, TextFont, Transform2D, GlobalTransform> Bundle = Entity.With(
         TextDraw.Default,
@@ -23,9 +31,9 @@ public partial struct TextDraw : IComponent, IDefault<TextDraw>
         Text = NativeUtf8.Null,
     };
 
-    public required Color Color;
-    public required float Size;
-    public bool IsDirty = false;
+    public required Color Color { get; set; }
+    public required float Size { get; set; }
+    public bool IsDirty { get; set; }
 
     NativeUtf8 text;
 

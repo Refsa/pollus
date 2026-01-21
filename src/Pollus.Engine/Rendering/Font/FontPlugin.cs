@@ -44,6 +44,7 @@ public class FontPlugin : IPlugin
         }
 
         world.AddPlugin(MaterialPlugin<FontMaterial>.Default);
+        world.AddPlugin(TextDrawPlugin<TextDraw>.Default);
 
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractTextDrawSystem(),
@@ -57,21 +58,14 @@ public class FontPlugin : IPlugin
 public partial class FontSystemSet
 {
     [System(nameof(PrepareFont))]
-    static readonly SystemBuilderDescriptor PrepareFontDescriptor = new()
+    public static readonly SystemBuilderDescriptor PrepareFontDescriptor = new()
     {
         Stage = CoreStage.First,
         RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
     };
 
-    [System(nameof(BuildTextMesh))]
-    static readonly SystemBuilderDescriptor BuildTextMeshDescriptor = new()
-    {
-        Stage = CoreStage.First,
-        RunsAfter = [PrepareFontDescriptor.Label],
-    };
-
     [System(nameof(FontMaterialChanged))]
-    static readonly SystemBuilderDescriptor FontMaterialChangedDescriptor = new()
+    public static readonly SystemBuilderDescriptor FontMaterialChangedDescriptor = new()
     {
         Stage = CoreStage.PreRender,
         RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<FontMaterial>.PrepareSystem],
@@ -79,13 +73,13 @@ public partial class FontSystemSet
     };
 
     [System(nameof(Cleanup))]
-    static readonly SystemBuilderDescriptor CleanupDescriptor = new()
+    public static readonly SystemBuilderDescriptor CleanupDescriptor = new()
     {
         Stage = CoreStage.Last,
     };
 
     [System(nameof(PrepareTextMesh))]
-    static readonly SystemBuilderDescriptor PrepareTextMeshDescriptor = new()
+    public static readonly SystemBuilderDescriptor PrepareTextMeshDescriptor = new()
     {
         Stage = CoreStage.PreRender,
         RunsAfter = [RenderingPlugin.BeginFrameSystem],
@@ -125,41 +119,6 @@ public partial class FontSystemSet
         }
     }
 
-    static void BuildTextMesh(Commands commands, Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<TextDraw, TextMesh, TextFont> query)
-    {
-        query.ForEach((fonts, meshes), static (in userData, ref draw, ref mesh, ref font) =>
-        {
-            if (!draw.IsDirty) return;
-
-            var fontAsset = userData.fonts.Get(font.Font);
-            if (fontAsset == null) return;
-
-            TextMeshAsset tma;
-            if (mesh.Mesh == Handle<TextMeshAsset>.Null)
-            {
-                tma = new TextMeshAsset
-                {
-                    Name = $"TextMesh-{Guid.NewGuid()}",
-                    Vertices = new(),
-                    Indices = new(),
-                };
-                mesh.Mesh = userData.meshes.Add(tma);
-            }
-            else
-            {
-                tma = userData.meshes.Get(mesh.Mesh) ?? throw new InvalidOperationException("Text mesh asset not found");
-            }
-
-            tma.Vertices.Clear();
-            tma.Indices.Clear();
-            var result = TextBuilder.BuildMesh(draw.Text, fontAsset, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
-            tma.Bounds = result.Bounds;
-
-            draw.IsDirty = false;
-            userData.meshes.Set(mesh.Mesh, tma);
-        });
-    }
-
     static void PrepareTextMesh(IWGPUContext gpuContext, RenderAssets renderAssets, AssetServer assetServer, Assets<TextMeshAsset> meshes, EventReader<AssetEvent<TextMeshAsset>> textMeshAssetEvents)
     {
         foreach (scoped ref readonly var textMeshAssetEvent in textMeshAssetEvents.Read())
@@ -173,17 +132,69 @@ public partial class FontSystemSet
         }
     }
 
-    static void Cleanup(Assets<TextMeshAsset> meshes, RemovedTracker<TextMesh> textMeshTracker, RemovedTracker<TextDraw> textDrawTracker)
+    static void Cleanup(Assets<TextMeshAsset> meshes, RemovedTracker<TextMesh> textMeshTracker)
     {
         foreach (var entity in textMeshTracker)
         {
             if (entity.Component.Mesh == Handle<TextMeshAsset>.Null) continue;
             meshes.Remove(entity.Component.Mesh);
         }
+    }
+}
 
-        foreach (var entity in textDrawTracker)
-        {
-            entity.Component.Text.Dispose();
-        }
+public class TextDrawPlugin<C> : IPlugin
+    where C : unmanaged, IComponent, ITextDraw
+{
+    public static TextDrawPlugin<C> Default => new();
+
+    public void Apply(World world)
+    {
+        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create($"TextDrawPlugin::{typeof(C).Name}::Cleanup",
+            static (RemovedTracker<C> textDrawTracker) =>
+            {
+                foreach (var entity in textDrawTracker)
+                {
+                    entity.Component.Text.Dispose();
+                }
+            }));
+
+        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new($"TextDrawPlugin::{typeof(C).Name}::BuildTextMesh")
+            {
+                RunsAfter = [FontSystemSet.PrepareFontDescriptor.Label],
+            },
+            static (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<C, TextMesh, TextFont> query) =>
+            {
+                query.ForEach((fonts, meshes), static (in userData, ref draw, ref mesh, ref font) =>
+                {
+                    if (!draw.IsDirty) return;
+
+                    var fontAsset = userData.fonts.Get(font.Font);
+                    if (fontAsset == null) return;
+
+                    TextMeshAsset tma;
+                    if (mesh.Mesh == Handle<TextMeshAsset>.Null)
+                    {
+                        tma = new TextMeshAsset
+                        {
+                            Name = $"TextMesh-{Guid.NewGuid()}",
+                            Vertices = new(),
+                            Indices = new(),
+                        };
+                        mesh.Mesh = userData.meshes.Add(tma);
+                    }
+                    else
+                    {
+                        tma = userData.meshes.Get(mesh.Mesh) ?? throw new InvalidOperationException("Text mesh asset not found");
+                    }
+
+                    tma.Vertices.Clear();
+                    tma.Indices.Clear();
+                    var result = TextBuilder.BuildMesh(draw.Text, fontAsset, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
+                    tma.Bounds = result.Bounds;
+
+                    draw.IsDirty = false;
+                    userData.meshes.Set(mesh.Mesh, tma);
+                });
+            }));
     }
 }
