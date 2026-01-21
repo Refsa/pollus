@@ -75,7 +75,7 @@ public class DrawGroup<TGroup>
         commandLists.Clear();
     }
 
-    public void Execute(in GPURenderPassEncoder encoder, IRenderAssets renderAssets)
+    public void Execute(in GPURenderPassEncoder encoder, IRenderAssets renderAssets, Vec2<uint>? viewport = null)
     {
         Span<Handle<GPUBindGroup>> bindGroupHandles = stackalloc Handle<GPUBindGroup>[Draw.MAX_BIND_GROUPS] { Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null, Handle<GPUBindGroup>.Null };
         Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[Draw.MAX_VERTEX_BUFFERS] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
@@ -125,6 +125,11 @@ public class DrawGroup<TGroup>
                 {
                     var rect = scissorRect.Value;
                     encoder.SetScissorRect((uint)rect.Min.X, (uint)rect.Min.Y, (uint)rect.Width, (uint)rect.Height);
+                }
+                else if (viewport.HasValue)
+                {
+                    // Reset scissor to full viewport when clip rect is removed
+                    encoder.SetScissorRect(0, 0, viewport.Value.X, viewport.Value.Y);
                 }
             }
 
