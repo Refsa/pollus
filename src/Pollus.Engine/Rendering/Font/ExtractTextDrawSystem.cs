@@ -16,7 +16,7 @@ public class ExtractTextDrawSystem : ExtractDrawSystem<FontBatches, FontBatch, Q
         {
             if (textMesh.Mesh == Handle<TextMeshAsset>.Null || textFont.Material == Handle.Null) return;
 
-            var batch = data.GetOrCreate(new FontBatchKey(textMesh.Mesh, textFont.Material, textFont.RenderStep));
+            var batch = data.GetOrCreate(new FontBatchKey(textMesh.Mesh, textFont.Material));
             var sortKey = RenderingUtils.CreateSortKey2D(transform.Value.Col3.Z, batch.Key);
             batch.Draw(sortKey, transform.Value, textDraw.Color);
         });

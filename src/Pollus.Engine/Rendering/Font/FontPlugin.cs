@@ -145,11 +145,14 @@ public partial class FontSystemSet
 public class TextDrawPlugin<C> : IPlugin
     where C : unmanaged, IComponent, ITextDraw
 {
+    public static readonly string CleanupSystem = $"TextDrawPlugin::{typeof(C).Name}::Cleanup";
+    public static readonly string BuildTextMeshSystem = $"TextDrawPlugin::{typeof(C).Name}::BuildTextMesh";
+
     public static TextDrawPlugin<C> Default => new();
 
     public void Apply(World world)
     {
-        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create($"TextDrawPlugin::{typeof(C).Name}::Cleanup",
+        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(CleanupSystem,
             static (RemovedTracker<C> textDrawTracker) =>
             {
                 foreach (var entity in textDrawTracker)
@@ -158,7 +161,7 @@ public class TextDrawPlugin<C> : IPlugin
                 }
             }));
 
-        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new($"TextDrawPlugin::{typeof(C).Name}::BuildTextMesh")
+        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new(BuildTextMeshSystem)
             {
                 RunsAfter = [FontSystemSet.PrepareFontDescriptor.Label],
             },

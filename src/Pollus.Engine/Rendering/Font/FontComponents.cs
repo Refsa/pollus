@@ -60,12 +60,10 @@ public partial struct TextFont : IComponent, IDefault<TextFont>
     {
         Font = Handle<FontAsset>.Null,
         Material = Handle.Null,
-        RenderStep = RenderStep2D.Main,
     };
 
     public required Handle<FontAsset> Font;
     public required Handle Material;
-    public required RenderStep2D RenderStep;
 }
 
 public partial struct TextMesh : IComponent, IDefault<TextMesh>
