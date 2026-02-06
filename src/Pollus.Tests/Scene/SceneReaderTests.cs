@@ -623,7 +623,7 @@ public class SceneReaderTests
 
         var spriteComp = components[0];
         var sprite = MemoryMarshal.AsRef<Sprite>(spriteComp.Data);
-        Assert.NotEqual(Handle<SpriteMaterial>.Null, sprite.Material);
+        Assert.NotEqual((Handle)Handle<SpriteMaterial>.Null, sprite.Material);
 
         var material = context.AssetServer.GetAssets<SpriteMaterial>().Get(sprite.Material);
         Assert.NotNull(material);

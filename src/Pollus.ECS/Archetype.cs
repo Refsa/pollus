@@ -159,7 +159,7 @@ public partial class Archetype : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool HasComponent(int cid)
     {
-        return HasComponent(cid);
+        return HasComponent((ComponentID)cid);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

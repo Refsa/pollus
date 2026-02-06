@@ -54,8 +54,6 @@ public class Entities
         {
             target[i] = Create();
         }
-
-        Interlocked.Add(ref aliveCount, target.Length);
     }
 
     public void Free(in Entity entity)
@@ -69,7 +67,8 @@ public class Entities
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool IsAlive(in Entity entity)
     {
-        return Volatile.Read(ref aliveCount) > 0 && entities[entity.ID].IsAlive;
+        ref readonly var otherEntity = ref entities[entity.ID];
+        return Volatile.Read(ref aliveCount) > 0 && otherEntity.IsAlive && entity.Version == otherEntity.Entity.Version;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]

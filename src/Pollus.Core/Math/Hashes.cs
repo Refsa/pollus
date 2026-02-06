@@ -64,4 +64,25 @@ public static class Hashes
         long temp = value + 2147483648;
         return (uint)temp;
     }
+
+    public static int Mix(int key)
+    {
+        key ^= key >> 16;
+        key *= unchecked((int)0x85ebca6b);
+        key ^= key >> 13;
+        key *= unchecked((int)0xc2b2ae35);
+        key ^= key >> 16;
+        return key;
+    }
+
+    public static int ZobristHash(int id)
+    {
+        unchecked
+        {
+            long x = id + (long)0x9e3779b97f4a7c15L;
+            x = (x ^ (x >> 30)) * (long)0xbf58476d1ce4e5b9L;
+            x = (x ^ (x >> 27)) * (long)0x94d049bb133111ebL;
+            return (int)(x ^ (x >> 31));
+        }
+    }
 }

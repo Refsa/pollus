@@ -26,6 +26,27 @@ public class EntityTests
     }
 
     [Fact]
+    public void Entities_CreateMany_AliveCount()
+    {
+        var entities = new Entities();
+        var entitiesArray = new Entity[10];
+        entities.Create(entitiesArray);
+        Assert.Equal(10, entities.AliveCount);
+    }
+
+    [Fact]
+    public void Entities_StaleHandle_IsNotAlive()
+    {
+        var entities = new Entities();
+        var original = entities.Create(); // ID=0, Version=0
+        entities.Free(original);
+        var recycled = entities.Create(); // ID=0, Version=1
+
+        Assert.True(entities.IsAlive(recycled));
+        Assert.False(entities.IsAlive(original));
+    }
+
+    [Fact]
     public void Entities_Free_IsReused()
     {
         var entities = new Entities();

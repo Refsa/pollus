@@ -193,6 +193,15 @@ public class ArchetypeTests
     }
 
     [Fact]
+    public void Archetype_HasComponent_ByIntId_DoesNotStackOverflow()
+    {
+        Span<ComponentID> cids = [Component.GetInfo<TestComponent1>().ID];
+        using var archetype = new Archetype(ArchetypeID.Create(cids), cids);
+        var cid = Component.GetInfo<TestComponent1>().ID.ID;
+        Assert.True(archetype.HasComponent(cid));
+    }
+
+    [Fact]
     public void ArchetypeStore_CreateEntity_Many()
     {
         using var world = new World();
@@ -532,6 +541,18 @@ public class ArchetypeTests
             Assert.Equal(i, c1.Value);
             Assert.Equal(i + 1, c2.Value);
         }
+    }
+
+    [Fact]
+    public void ArchetypeID_SameComponents_DifferentOrder_SameId()
+    {
+        var a = Component.GetInfo<TestComponent1>().ID;
+        var b = Component.GetInfo<TestComponent2>().ID;
+
+        var id1 = ArchetypeID.Create([a, b]);
+        var id2 = ArchetypeID.Create([b, a]);
+
+        Assert.Equal(id1, id2);
     }
 }
 #pragma warning restore CA1416

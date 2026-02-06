@@ -52,10 +52,14 @@ public class CommandBuffer<TCommand> : ICommandBuffer
 
 public class Commands
 {
+    readonly record struct BufferEntry(ICommandBuffer Buffer, Type BufferType);
+
     bool needsSort = false;
     readonly Entities entities;
-    readonly List<ICommandBuffer> commandBuffers = [];
+    readonly List<BufferEntry> commandBuffers = [];
     readonly Dictionary<Type, int> commandBuffersLookup = [];
+
+    internal int CommandBufferCount => commandBuffers.Count;
 
     public Commands()
     {
@@ -73,12 +77,12 @@ public class Commands
         ICommandBuffer? buffer;
         if (commandBuffersLookup.TryGetValue(typeof(TCommand), out var idx))
         {
-            buffer = commandBuffers[idx];
+            buffer = commandBuffers[idx].Buffer;
         }
         else
         {
             buffer = new CommandBuffer<TCommand>();
-            commandBuffers.Add(buffer);
+            commandBuffers.Add(new BufferEntry(buffer, typeof(TCommand)));
             commandBuffersLookup.Add(typeof(TCommand), commandBuffers.Count - 1);
             needsSort = true;
         }
@@ -91,20 +95,20 @@ public class Commands
         if (needsSort)
         {
             needsSort = false;
-            commandBuffers.Sort(static (a, b) => b.Priority.CompareTo(a.Priority));
+            commandBuffers.Sort(static (a, b) => b.Buffer.Priority.CompareTo(a.Buffer.Priority));
             commandBuffersLookup.Clear();
             for (int i = 0; i < commandBuffers.Count; i++)
             {
-                commandBuffersLookup[commandBuffers[i].GetType()] = i;
+                commandBuffersLookup[commandBuffers[i].BufferType] = i;
             }
         }
 
-        foreach (var buffer in new ListEnumerable<ICommandBuffer>(commandBuffers))
+        foreach (var buffer in new ListEnumerable<BufferEntry>(commandBuffers))
         {
-            if (buffer.Count == 0) continue;
+            if (buffer.Buffer.Count == 0) continue;
 
-            buffer.Execute(world);
-            buffer.Clear();
+            buffer.Buffer.Execute(world);
+            buffer.Buffer.Clear();
         }
     }
 
@@ -300,7 +304,7 @@ public struct SetComponentCommand<C> : ICommand
 public struct AddComponentCommand : ICommand
 {
     public static int Priority => 90;
-    
+
     Entity entity;
     ComponentID componentID;
     byte[] data;

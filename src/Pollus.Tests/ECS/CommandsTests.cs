@@ -212,6 +212,7 @@ public class CommandsTests
         {
             entities.Add(commands.Spawn(Entity.With(new TestComponent1 { Value = i })).Entity);
         }
+
         world.Update();
 
         commands = world.GetCommands();
@@ -219,12 +220,49 @@ public class CommandsTests
         {
             commands.Despawn(entity);
         }
+
         world.Update();
 
         foreach (var entity in entities)
         {
             Assert.False(world.Store.EntityExists(entity));
         }
+    }
+
+    [Fact]
+    public void Commands_MultipleCommandTypes_NoDuplicateBuffers()
+    {
+        using var world = new World();
+
+        var commands = world.GetCommands();
+        var e1 = commands.Spawn(Entity.With(new TestComponent1 { Value = 1 })).Entity;
+        commands.Despawn(e1);
+        world.Update();
+
+        commands = world.GetCommands();
+        var e2 = commands.Spawn(Entity.With(new TestComponent1 { Value = 2 })).Entity;
+        commands.Despawn(e2);
+        world.Update();
+
+        Assert.Equal(0, world.Store.EntityCount);
+    }
+
+    [Fact]
+    public void Commands_BufferCount_StableAcrossFrames()
+    {
+        using var world = new World();
+
+        var commands = world.GetCommands();
+        var entity = commands.Spawn(Entity.With(new TestComponent1 { Value = 1 })).Entity;
+        commands.Despawn(entity);
+        world.Update();
+
+        commands = world.GetCommands();
+        int countBeforeCommands = commands.CommandBufferCount; // should be 2
+        commands.Spawn(Entity.With(new TestComponent1 { Value = 2 }));
+        commands.Despawn(entity);
+
+        Assert.Equal(countBeforeCommands, commands.CommandBufferCount);
     }
 }
 #pragma warning restore CA1416
