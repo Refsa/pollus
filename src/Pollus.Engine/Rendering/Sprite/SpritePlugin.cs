@@ -33,5 +33,7 @@ public class SpritePlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.PreRender, [
             new ExtractSpritesSystem(),
         ]);
+
+        world.Schedule.AddSystemSet<SpriteAnimationSystems>();
     }
 }
