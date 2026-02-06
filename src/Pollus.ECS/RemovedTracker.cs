@@ -129,7 +129,7 @@ public class RemovedTracker<C> : IRemovedTracker
             return;
         }
 
-        var removed = tracker.Get(entity.ID);
+        ref var removed = ref tracker.Get(entity.ID);
         removed.Component = component;
         removed.Version = version;
     }

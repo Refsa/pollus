@@ -694,4 +694,24 @@ public class StageGraphTests
             Assert.Equal(firstResult, secondResult);
         }
     }
+
+    [Fact]
+    public void Schedule_AddStage_Before_NonExistentLabel_ThrowsUnhelpfulError()
+    {
+        using var schedule = Schedule.CreateDefault();
+        var testStage = new Stage(new StageLabel("TestStage"));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            schedule.AddStage(testStage, new StageLabel("NonExistent"), null));
+    }
+
+    [Fact]
+    public void Schedule_AddStage_After_NonExistentLabel_ThrowsUnhelpfulError()
+    {
+        using var schedule = Schedule.CreateDefault();
+        var testStage = new Stage(new StageLabel("TestStage"));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            schedule.AddStage(testStage, null, new StageLabel("NonExistent")));
+    }
 }

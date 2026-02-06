@@ -175,6 +175,7 @@ public class ArchetypeStore : IDisposable
         clonedInfo.ArchetypeIndex = entityInfo.ArchetypeIndex;
         clonedInfo.ChunkIndex = chunkIndex;
         clonedInfo.RowIndex = rowIndex;
+        ref var clonedChunk = ref archetype.GetChunk(chunkIndex);
 
         var chunkInfo = archetype.GetChunkInfo();
         ref var chunk = ref archetype.GetChunk(entityInfo.ChunkIndex);
@@ -182,7 +183,7 @@ public class ArchetypeStore : IDisposable
         {
             var cid = chunkInfo.ComponentIDs[i];
             var component = chunk.GetComponent(entityInfo.RowIndex, cid);
-            chunk.SetComponent(rowIndex, cid, component);
+            clonedChunk.SetComponent(rowIndex, cid, component);
         }
 
         return new(cloned, archetype, chunkIndex, rowIndex);

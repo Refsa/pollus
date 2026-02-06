@@ -28,7 +28,11 @@ public class SparseSet<TIndex, TValue>
     public void Remove(TIndex item)
     {
         var idx = sparseSet.Remove(item);
-        if (idx != -1) values[idx] = default!;
+        if (idx != -1)
+        {
+            values[idx] = values[Length];
+            values[Length] = default!;
+        }
     }
 
     public bool Contains(TIndex item)

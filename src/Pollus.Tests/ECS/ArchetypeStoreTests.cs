@@ -100,4 +100,56 @@ public class ArchetypeStoreTests
             }
         }
     }
+
+    [Fact]
+    public void CloneEntity_WrongChunk_WhenCrossingChunkBoundary()
+    {
+        using var world = new World();
+
+        var sentinel = Entity.With(
+            new TestComponent1 { Value = 999 },
+            new TestComponent2 { Value = 888 },
+            new TestComponent3 { Value = 777 }
+        ).Spawn(world);
+
+        var sentinelInfo = world.Store.GetEntityInfo(sentinel);
+        var archetype = world.Store.GetArchetype(sentinelInfo.ArchetypeIndex);
+        var rowsPerChunk = archetype.GetChunkInfo().RowsPerChunk;
+
+        var target = Entity.With(
+            new TestComponent1 { Value = 42 },
+            new TestComponent2 { Value = 43 },
+            new TestComponent3 { Value = 44 }
+        ).Spawn(world);
+
+        for (int i = 2; i < rowsPerChunk; i++)
+        {
+            Entity.With(
+                new TestComponent1 { Value = i },
+                new TestComponent2 { Value = i * 10 },
+                new TestComponent3 { Value = i * 100 }
+            ).Spawn(world);
+        }
+
+        Assert.Equal(rowsPerChunk, archetype.Chunks[0].Count);
+
+        var cloneEntity = world.Spawn();
+        world.Clone(target, cloneEntity);
+
+        var cloneC1 = world.Store.GetComponent<TestComponent1>(cloneEntity);
+        var cloneC2 = world.Store.GetComponent<TestComponent2>(cloneEntity);
+        var cloneC3 = world.Store.GetComponent<TestComponent3>(cloneEntity);
+
+        Assert.Equal(42, cloneC1.Value);
+        Assert.Equal(43, cloneC2.Value);
+        Assert.Equal(44, cloneC3.Value);
+
+        var sentinelC1 = world.Store.GetComponent<TestComponent1>(sentinel);
+        var sentinelC2 = world.Store.GetComponent<TestComponent2>(sentinel);
+        var sentinelC3 = world.Store.GetComponent<TestComponent3>(sentinel);
+
+        Assert.Equal(999, sentinelC1.Value);
+        Assert.Equal(888, sentinelC2.Value);
+        Assert.Equal(777, sentinelC3.Value);
+    }
 }

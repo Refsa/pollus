@@ -213,8 +213,9 @@ public struct RemoveChildrenCommand : ICommand
         var current = cParent.FirstChild;
         while (!current.IsNull)
         {
+            var next = world.Store.GetComponent<Child>(current).NextSibling;
             world.Store.RemoveComponent<Child>(current);
-            current = world.Store.GetComponent<Child>(current).NextSibling;
+            current = next;
         }
 
         world.Store.RemoveComponent<Parent>(Parent);

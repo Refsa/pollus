@@ -144,7 +144,7 @@ public class HierarchyTests
         var child = commands.Spawn(Entity.With(new Transform2D(), new GlobalTransform())).Entity;
         commands.AddChild(parent, child);
         world.Update();
-        
+
         ref var cParent = ref world.Store.GetComponent<Parent>(parent);
         Assert.Equal(1, cParent.ChildCount);
 
@@ -153,6 +153,37 @@ public class HierarchyTests
         world.Update();
 
         Assert.Equal(0, cParent.ChildCount);
+    }
+
+    [Fact]
+    public void RemoveChildrenCommand_RemovesAllChildren()
+    {
+        using var world = new World();
+        var commands = world.GetCommands();
+
+        var parent = commands.Spawn(Entity.With(new TestComponent1())).Entity;
+        var child1 = commands.Spawn(Entity.With(new TestComponent1())).Entity;
+        var child2 = commands.Spawn(Entity.With(new TestComponent1())).Entity;
+        var child3 = commands.Spawn(Entity.With(new TestComponent1())).Entity;
+
+        commands.AddChild(parent, child1);
+        commands.AddChild(parent, child2);
+        commands.AddChild(parent, child3);
+        world.Update();
+
+        commands = world.GetCommands();
+        commands.RemoveChildren(parent);
+        world.Update();
+
+        Assert.False(world.Store.HasComponent<Parent>(parent));
+
+        Assert.False(world.Store.HasComponent<Child>(child1));
+        Assert.False(world.Store.HasComponent<Child>(child2));
+        Assert.False(world.Store.HasComponent<Child>(child3));
+
+        Assert.True(world.Store.EntityExists(child1));
+        Assert.True(world.Store.EntityExists(child2));
+        Assert.True(world.Store.EntityExists(child3));
     }
 }
 #pragma warning restore CA1416

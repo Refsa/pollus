@@ -109,11 +109,21 @@ public class Schedule : IDisposable
         if (before is not null)
         {
             var index = stages.FindIndex(s => s.Label == before);
+            if (index == -1)
+            {
+                throw new ArgumentOutOfRangeException($"before Stage ({before}) not found");
+            }
+
             stages.Insert(index, stage);
         }
         else if (after is not null)
         {
             var index = stages.FindIndex(s => s.Label == after);
+            if (index == -1)
+            {
+                throw new ArgumentOutOfRangeException($"after Stage ({after}) not found");
+            }
+
             stages.Insert(index + 1, stage);
         }
         else

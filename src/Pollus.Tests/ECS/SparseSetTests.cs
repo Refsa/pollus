@@ -129,4 +129,61 @@ public class SparseSetTests
 
         Assert.False(sparseSet.Contains(1u));
     }
+
+    [Fact]
+    public void SparseSet_Remove_DestroysSwappedValue()
+    {
+        var set = new SparseSet<int, int>(32);
+        set.Add(0, 100);
+        set.Add(1, 200);
+        set.Add(2, 300);
+
+        set.Remove(0);
+
+        Assert.True(set.Contains(1));
+        Assert.True(set.Contains(2));
+        Assert.False(set.Contains(0));
+
+        Assert.Equal(200, set.Get(1));
+
+        Assert.Equal(300, set.Get(2));
+    }
+
+    [Fact]
+    public void SparseSet_Remove_MiddleElement_PreservesRemainingValues()
+    {
+        var set = new SparseSet<int, int>(32);
+        set.Add(10, 1000);
+        set.Add(20, 2000);
+        set.Add(30, 3000);
+        set.Add(40, 4000);
+
+        set.Remove(20);
+
+        Assert.Equal(3, set.Length);
+        Assert.Equal(1000, set.Get(10));
+        Assert.Equal(3000, set.Get(30));
+        Assert.Equal(4000, set.Get(40));
+    }
+
+    [Fact]
+    public void SparseSet_Remove_First_ThenIterate_ValuesIntact()
+    {
+        var set = new SparseSet<int, int>(32);
+        set.Add(0, 10);
+        set.Add(1, 20);
+        set.Add(2, 30);
+
+        set.Remove(0);
+
+        var values = new List<int>();
+        foreach (ref var value in set)
+        {
+            values.Add(value);
+        }
+
+        Assert.Equal(2, values.Count);
+        Assert.Contains(20, values);
+        Assert.Contains(30, values);
+    }
 }
