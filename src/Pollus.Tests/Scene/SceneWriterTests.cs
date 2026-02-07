@@ -3,6 +3,7 @@
 namespace Pollus.Tests.Scene;
 
 using System.Text.Json;
+using Core.Assets;
 using Engine.Serialization;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -438,5 +439,96 @@ public class SceneWriterTests
                 ]);
             },
         ]);
+    }
+
+    [Fact]
+    public void Write_WithUntypedHandle_Inline()
+    {
+        using var world = CreateWorld();
+        var server = world.Resources.Get<AssetServer>();
+        server.InitAssets<SimpleTestAsset>();
+
+        Handle<SimpleTestAsset> assetHandle = server.GetAssets<SimpleTestAsset>()
+            .Add(new SimpleTestAsset { Data = 42 });
+
+        var entity = world.Spawn(Entity.With(new TestComponentWithUntypedHandle
+        {
+            UntypedHandle = assetHandle,
+            Value = 10,
+        }));
+
+        using var writer = new SceneWriter(new() { WriteRoot = true });
+        var data = writer.Write(world, entity);
+        var json = ParseJson(data);
+
+        var root = json.RootElement;
+        var entityData = root.GetProperty("Entities")[0];
+        var components = entityData.GetProperty("Components");
+        var comp = components.GetProperty("TestComponentWithUntypedHandle");
+
+        Assert.Equal(10, comp.GetProperty("Value").GetInt32());
+
+        var handleProp = comp.GetProperty("UntypedHandle");
+        Assert.True(handleProp.TryGetProperty("$type", out var typeVal));
+        Assert.Contains("SimpleTestAsset", typeVal.GetString());
+        Assert.False(handleProp.TryGetProperty("$path", out _));
+    }
+
+    [Fact]
+    public void Write_WithUntypedHandle_PathBacked()
+    {
+        using var world = CreateWorld();
+        var server = world.Resources.Get<AssetServer>();
+        server.InitAssets<SimpleTestAsset>();
+
+        Handle<SimpleTestAsset> assetHandle = server.GetAssets<SimpleTestAsset>()
+            .Add(new SimpleTestAsset { Data = 99 }, new AssetPath("test/my-asset.dat"));
+
+        var entity = world.Spawn(Entity.With(new TestComponentWithUntypedHandle
+        {
+            UntypedHandle = assetHandle,
+            Value = 7,
+        }));
+
+        using var writer = new SceneWriter(new() { WriteRoot = true });
+        var data = writer.Write(world, entity);
+        var json = ParseJson(data);
+
+        var root = json.RootElement;
+        var entityData = root.GetProperty("Entities")[0];
+        var comp = entityData.GetProperty("Components").GetProperty("TestComponentWithUntypedHandle");
+
+        Assert.Equal(7, comp.GetProperty("Value").GetInt32());
+
+        var handleProp = comp.GetProperty("UntypedHandle");
+        Assert.True(handleProp.TryGetProperty("$type", out var typeVal));
+        Assert.Contains("SimpleTestAsset", typeVal.GetString());
+        Assert.True(handleProp.TryGetProperty("$path", out var pathVal));
+        Assert.Equal("test/my-asset.dat", pathVal.GetString());
+    }
+
+    [Fact]
+    public void Write_WithUntypedHandle_Null()
+    {
+        using var world = CreateWorld();
+
+        var entity = world.Spawn(Entity.With(new TestComponentWithUntypedHandle
+        {
+            UntypedHandle = Handle.Null,
+            Value = 3,
+        }));
+
+        using var writer = new SceneWriter(new() { WriteRoot = true });
+        var data = writer.Write(world, entity);
+        var json = ParseJson(data);
+
+        var root = json.RootElement;
+        var entityData = root.GetProperty("Entities")[0];
+        var comp = entityData.GetProperty("Components").GetProperty("TestComponentWithUntypedHandle");
+
+        Assert.Equal(3, comp.GetProperty("Value").GetInt32());
+
+        var handleProp = comp.GetProperty("UntypedHandle");
+        Assert.False(handleProp.TryGetProperty("$type", out _));
     }
 }

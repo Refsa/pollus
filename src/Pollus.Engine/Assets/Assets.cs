@@ -21,6 +21,7 @@ public interface IAssetStorage : IDisposable
     void ClearEvents();
 
     IAssetInfo? GetInfo(Handle handle);
+    IAsset? GetAsset(Handle handle);
 
     event Action<Handle, AssetPath?, IAsset> OnAdded;
     event Action<Handle, AssetPath?, IAsset> OnModified;
@@ -230,6 +231,11 @@ public class Assets<T> : IAssetStorage
         }
 
         return null;
+    }
+
+    IAsset? IAssetStorage.GetAsset(Handle handle)
+    {
+        return Get(handle);
     }
 
     public AssetInfo<T>? GetInfo(Handle handle)

@@ -81,6 +81,12 @@ public class AssetsContainer : IDisposable
         return ((Assets<TAsset>)storage).Get(handle);
     }
 
+    public IAsset? GetAsset(Handle handle)
+    {
+        if (!TryGetAssets(handle.Type, out var storage)) return null;
+        return storage.GetAsset(handle);
+    }
+
     public IAssetInfo? GetInfo(Handle handle)
     {
         if (!TryGetAssets(handle.Type, out var storage)) throw new InvalidOperationException($"Asset storage with type ID {handle.Type} not found");

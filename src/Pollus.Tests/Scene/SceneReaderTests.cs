@@ -82,6 +82,18 @@ public partial struct TestComponentWithEnum : IComponent
     public TestEnum EnumValue { get; set; }
 }
 
+[Serialize, Asset]
+public partial class SimpleTestAsset
+{
+    public int Data { get; set; }
+}
+
+public partial struct TestComponentWithUntypedHandle : IComponent
+{
+    public Handle UntypedHandle { get; set; }
+    public int Value { get; set; }
+}
+
 public class TestFileTypeMigration : ISceneFileTypeMigration
 {
     public int FromVersion => 1;
@@ -577,6 +589,7 @@ public class SceneReaderTests
     {
         using var parser = new SceneReader();
         var spriteType = typeof(Sprite).AssemblyQualifiedName!;
+        var materialType = typeof(SpriteMaterial).AssemblyQualifiedName!;
         var json =
             $$"""
               {
@@ -589,6 +602,7 @@ public class SceneReaderTests
                     "components": {
                       "Sprite": {
                         "Material": {
+                          "$type": "{{materialType}}",
                           "ShaderSource": "shaders/builtin/sprite.wgsl",
                           "Texture": { "Image": "sprites/test_sheet.png", "Visibility": "Fragment" },
                           "Sampler": { "Sampler": "nearest", "Visibility": "Fragment" }
@@ -628,6 +642,146 @@ public class SceneReaderTests
         var material = context.AssetServer.GetAssets<SpriteMaterial>().Get(sprite.Material);
         Assert.NotNull(material);
         Assert.NotEqual(Handle<SamplerAsset>.Null, material.Sampler.Sampler);
+    }
+
+    [Fact]
+    public void Parse_UntypedHandle_MissingType_Throws()
+    {
+        using var parser = new SceneReader();
+        var spriteType = typeof(Sprite).AssemblyQualifiedName!;
+        var json =
+            $$"""
+              {
+                "types": {
+                  "Sprite": "{{spriteType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "Sprite": {
+                        "Material": {
+                          "ShaderSource": "shaders/builtin/sprite.wgsl"
+                        },
+                        "Slice": {
+                          "Min": [0, 0],
+                          "Max": [1, 1]
+                        },
+                        "Color": [1, 1, 1, 1]
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
+        var context = CreateContext();
+        context.AssetServer.InitAssets<SpriteMaterial>();
+
+        InvalidOperationException? caught = null;
+        try
+        {
+            parser.Parse(context, Encoding.UTF8.GetBytes(json));
+        }
+        catch (InvalidOperationException ex)
+        {
+            caught = ex;
+        }
+        Assert.NotNull(caught);
+        Assert.Contains("$type", caught.Message);
+    }
+
+    [Fact]
+    public void Parse_UntypedHandle_InvalidType_Throws()
+    {
+        using var parser = new SceneReader();
+        var spriteType = typeof(Sprite).AssemblyQualifiedName!;
+        var json =
+            $$"""
+              {
+                "types": {
+                  "Sprite": "{{spriteType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "Sprite": {
+                        "Material": {
+                          "$type": "This.Type.Does.Not.Exist",
+                          "ShaderSource": "shaders/builtin/sprite.wgsl"
+                        },
+                        "Slice": {
+                          "Min": [0, 0],
+                          "Max": [1, 1]
+                        },
+                        "Color": [1, 1, 1, 1]
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
+        var context = CreateContext();
+        context.AssetServer.InitAssets<SpriteMaterial>();
+
+        InvalidOperationException? caught = null;
+        try
+        {
+            parser.Parse(context, Encoding.UTF8.GetBytes(json));
+        }
+        catch (InvalidOperationException ex)
+        {
+            caught = ex;
+        }
+        Assert.NotNull(caught);
+        Assert.Contains("Could not resolve type", caught.Message);
+    }
+
+    [Fact]
+    public void Parse_UntypedHandle_NonAssetType_Throws()
+    {
+        using var parser = new SceneReader();
+        var spriteType = typeof(Sprite).AssemblyQualifiedName!;
+        var nonAssetType = typeof(Vec2).AssemblyQualifiedName!;
+        var json =
+            $$"""
+              {
+                "types": {
+                  "Sprite": "{{spriteType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "Sprite": {
+                        "Material": {
+                          "$type": "{{nonAssetType}}",
+                          "X": 1, "Y": 2
+                        },
+                        "Slice": {
+                          "Min": [0, 0],
+                          "Max": [1, 1]
+                        },
+                        "Color": [1, 1, 1, 1]
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
+        var context = CreateContext();
+
+        InvalidOperationException? caught = null;
+        try
+        {
+            parser.Parse(context, Encoding.UTF8.GetBytes(json));
+        }
+        catch (InvalidOperationException ex)
+        {
+            caught = ex;
+        }
+        Assert.NotNull(caught);
+        Assert.Contains("does not implement IAsset", caught.Message);
     }
 
     [Fact]
@@ -679,5 +833,93 @@ public class SceneReaderTests
         Assert.Equal(typeof(TestComponent), scene.Types["TestComponent"]);
         Assert.Equal(1, scene.FormatVersion);
         Assert.Equal(1, scene.TypesVersion);
+    }
+
+    [Fact]
+    public void Parse_UntypedHandle_InlineAsset()
+    {
+        using var parser = new SceneReader();
+        var compType = typeof(TestComponentWithUntypedHandle).AssemblyQualifiedName!;
+        var assetType = typeof(SimpleTestAsset).AssemblyQualifiedName!;
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponentWithUntypedHandle": "{{compType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponentWithUntypedHandle": {
+                        "UntypedHandle": {
+                          "$type": "{{assetType}}",
+                          "Data": 42
+                        },
+                        "Value": 10
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
+        var context = CreateContext();
+        context.AssetServer.InitAssets<SimpleTestAsset>();
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
+
+        Assert.Single(scene.Entities);
+        var comp = MemoryMarshal.AsRef<TestComponentWithUntypedHandle>(scene.Entities[0].Components![0].Data);
+        Assert.Equal(10, comp.Value);
+        Assert.False(comp.UntypedHandle.IsNull());
+
+        var asset = context.AssetServer.GetAssets<SimpleTestAsset>().Get(comp.UntypedHandle);
+        Assert.NotNull(asset);
+        Assert.Equal(42, asset.Data);
+    }
+
+    [Fact]
+    public void Parse_UntypedHandle_PathBacked()
+    {
+        using var parser = new SceneReader();
+        var compType = typeof(TestComponentWithUntypedHandle).AssemblyQualifiedName!;
+        var assetType = typeof(TextAsset).AssemblyQualifiedName!;
+        var json =
+            $$"""
+              {
+                "types": {
+                  "TestComponentWithUntypedHandle": "{{compType}}"
+                },
+                "entities": [
+                  {
+                    "name": "Entity1",
+                    "components": {
+                      "TestComponentWithUntypedHandle": {
+                        "UntypedHandle": {
+                          "$type": "{{assetType}}",
+                          "$path": "path/to/asset.txt"
+                        },
+                        "Value": 5
+                      }
+                    }
+                  }
+                ]
+              }
+              """;
+        var assetIO = new TestAssetIO("assets")
+            .AddFile("path/to/asset.txt", "test content"u8.ToArray());
+        var context = CreateContext(assetIO);
+        context.AssetServer.AddLoader<TextAssetLoader>();
+        context.AssetServer.InitAssets<TextAsset>();
+
+        var scene = parser.Parse(context, Encoding.UTF8.GetBytes(json));
+
+        var comp = MemoryMarshal.AsRef<TestComponentWithUntypedHandle>(scene.Entities[0].Components![0].Data);
+        Assert.Equal(5, comp.Value);
+        Assert.False(comp.UntypedHandle.IsNull());
+
+        var asset = context.AssetServer.GetAssets<TextAsset>().Get(comp.UntypedHandle);
+        Assert.NotNull(asset);
+        Assert.Equal("test content", asset.Content);
     }
 }

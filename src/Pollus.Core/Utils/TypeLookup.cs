@@ -40,14 +40,21 @@ public static class TypeLookup
                 AssemblyQualifiedName = typeof(T).AssemblyQualifiedName ?? throw new InvalidOperationException($"Type {typeof(T)} has no assembly qualified name")
             };
             lookup.TryAdd(ID, Info);
+            reverseLookup.TryAdd(typeof(T), ID);
         }
     }
 
     static readonly ConcurrentDictionary<TypeID, Info> lookup = new();
+    static readonly ConcurrentDictionary<Type, TypeID> reverseLookup = new();
     static volatile int counter;
 
     public static int ID<T>() => Type<T>.ID;
     public static string Name<T>() => Type<T>.Name;
+
+    public static TypeID? ID(Type type)
+    {
+        return reverseLookup.TryGetValue(type, out var id) ? id : null;
+    }
 
     public static Info? GetInfo(TypeID typeId)
     {
