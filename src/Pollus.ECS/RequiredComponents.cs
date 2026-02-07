@@ -85,4 +85,9 @@ public static class RequiredComponents
             throw new KeyNotFoundException($"Component {id} is not registered");
         return container;
     }
+
+    public static bool TryGet(ComponentID id, out IContainer container)
+    {
+        return containers.TryGetValue(id, out container!);
+    }
 }

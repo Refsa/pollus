@@ -9,9 +9,10 @@
       "id": 1,
       "name": "entity 1",
       "components": {
-        "Transform2D": { "Position": [ 128, 128 ], "Scale": [ 64, 64 ], "Rotation": 0 },
+        "Transform2D": { "Position": [ 256, 256 ], "Scale": [ 6, 6 ], "Rotation": 0 },
         "Sprite": {
           "Material": {
+            "$type": "Pollus.Engine.Rendering.SpriteMaterial",
             "ShaderSource": "shaders/builtin/sprite.wgsl",
             "Texture": { "Image": "sprites/test_sheet.png", "Visibility": "Fragment" },
             "Sampler": { "Sampler": "nearest", "Visibility": "Fragment" }

@@ -37,9 +37,29 @@ public static class SceneHelper
         var entityCommands = commands.Spawn();
         if (sceneEntity.Components is { Count: > 0 })
         {
-            foreach (scoped ref readonly var t in CollectionsMarshal.AsSpan(sceneEntity.Components))
+            var components = CollectionsMarshal.AsSpan(sceneEntity.Components);
+            foreach (scoped ref readonly var t in components)
             {
                 entityCommands.AddComponent(t.ComponentID, t.Data);
+            }
+
+            foreach (scoped ref readonly var t in components)
+            {
+                if (!RequiredComponents.TryGet(t.ComponentID, out var required)) continue;
+
+                foreach (var kvp in required.Defaults)
+                {
+                    if (kvp.Key == t.ComponentID) continue;
+
+                    bool alreadyInScene = false;
+                    foreach (scoped ref readonly var s in components)
+                    {
+                        if (s.ComponentID == kvp.Key) { alreadyInScene = true; break; }
+                    }
+                    if (alreadyInScene) continue;
+
+                    entityCommands.AddComponent(kvp.Key, kvp.Value);
+                }
             }
         }
 
