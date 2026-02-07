@@ -8,14 +8,36 @@ using Pollus.Utils;
 [Asset]
 public partial class TextureAtlas
 {
-    Rect[] slices;
-    Dictionary<string, int> sliceNames;
+    readonly Rect[] slices;
+    readonly Dictionary<string, int>? sliceNames;
 
-    public required string Name { get; init; }
-    public required Handle<Texture2D> TextureHandle { get; init; }
+    public string Name { get; }
+    public Handle<Texture2D> TextureHandle { get; }
+    public int Count => slices.Length;
+
+    TextureAtlas(string name, Handle<Texture2D> textureHandle, Rect[] slices, Dictionary<string, int>? sliceNames)
+    {
+        Name = name;
+        TextureHandle = textureHandle;
+        this.slices = slices;
+        this.sliceNames = sliceNames;
+    }
 
     public Rect GetRect(int index) => slices[index];
-    public Rect GetRect(string name) => slices[sliceNames[name]];
+    public Rect GetRect(string name) => sliceNames is not null && sliceNames.TryGetValue(name, out var idx)
+        ? slices[idx]
+        : throw new KeyNotFoundException($"TextureAtlas '{Name}' has no slice named '{name}'");
+
+    public bool TryGetRect(string name, out Rect rect)
+    {
+        if (sliceNames is not null && sliceNames.TryGetValue(name, out var idx))
+        {
+            rect = slices[idx];
+            return true;
+        }
+        rect = default;
+        return false;
+    }
 
     public static TextureAtlas From(string name, Handle<Texture2D> texture, params ReadOnlySpan<(string name, Rect rect)> slicesByName)
     {
@@ -28,13 +50,7 @@ public partial class TextureAtlas
             slices[idx++] = kvp.rect;
         }
 
-        return new()
-        {
-            Name = name,
-            TextureHandle = texture,
-            slices = slices,
-            sliceNames = sliceNames
-        };
+        return new(name, texture, slices, sliceNames);
     }
 
     public static TextureAtlas FromGrid(string name, Handle<Texture2D> texture, int rows, int cols, Vec2<int> size)
@@ -51,12 +67,6 @@ public partial class TextureAtlas
             }
         }
 
-        return new()
-        {
-            Name = name,
-            TextureHandle = texture,
-            slices = slices,
-            sliceNames = Enumerable.Range(0, slices.Length).ToDictionary(s => s.ToString(), s => s),
-        };
+        return new(name, texture, slices, null);
     }
 }

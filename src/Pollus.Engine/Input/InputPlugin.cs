@@ -11,6 +11,8 @@ public class InputPlugin : IPlugin
     public const string UpdateSystem = "Input::Update";
     public const string UpdateCurrentDeviceSystem = "Input::UpdateCurrentDevice";
 
+    public static InputPlugin Default => new();
+
     static InputPlugin()
     {
         ResourceFetch<InputManager>.Register();

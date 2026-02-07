@@ -138,9 +138,9 @@ public struct EventWriter<TEvent>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    public void Write(in TEvent e) => queue.AddEvent(e);
+    public readonly void Write(in TEvent e) => queue.AddEvent(e);
 
-    public void Append(ReadOnlySpan<TEvent> events)
+    public readonly void Append(ReadOnlySpan<TEvent> events)
     {
         queue.AppendEvents(events);
     }

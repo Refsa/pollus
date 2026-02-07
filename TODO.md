@@ -105,7 +105,7 @@
 		- [x] cleanup source files
 	- [ ] 2D Pipeline
 		- [x] Sprites
-		- [ ] Animated Sprites
+		- [-] Animated Sprites
 		- [ ] Custom Materials
 		- [-] Post Processing
 		- [x] Polygons/Shapes

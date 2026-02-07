@@ -13,10 +13,10 @@ You can find the Breakout clone example running [here](https://refsa.github.io/p
     - Other WGPU supported backends on native
 - Simple audio plugin
 - Simple input plugin
-- Build to Windows and Browser (WASM)
+- Build to Windows, Linux and Browser (WASM)
 - Dear ImGui renderer, which is the only form of UI right now
 
-Currently requires `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.  
+Currently requires `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.
 
 ## WIP
 This project is still very early in development and any api surface and underlying features might change at any point.  

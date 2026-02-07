@@ -34,6 +34,8 @@ public class SpritePlugin : IPlugin
             new ExtractSpritesSystem(),
         ]);
 
-        world.Schedule.AddSystemSet<SpriteAnimationSystems>();
+        world.AddPlugins(true, [
+            SpriteAnimatorPlugin.Default,
+        ]);
     }
 }

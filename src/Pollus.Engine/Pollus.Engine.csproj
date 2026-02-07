@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Pollus.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="./Rendering/**/*.wgsl" Exclude="**/bin/**;**/obj/**">
       <Link>assets/shaders/builtin/%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
