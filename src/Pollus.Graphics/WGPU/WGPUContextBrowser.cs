@@ -74,6 +74,8 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             resources[i].Dispose();
         }
 
+        if (swapChain != null) wgpu.SwapChainRelease(swapChain);
+
         if (queue != null) wgpu.QueueRelease(queue);
         if (device != null)
         {
@@ -82,6 +84,8 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         }
         if (adapter != null) wgpu.AdapterRelease(adapter);
         if (surface != null) wgpu.SurfaceRelease(surface);
+
+        _instance = null;
     }
 
     public void Setup()
@@ -260,6 +264,8 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         if (size.X == 0 || size.Y == 0) return;
         if (!IsReady) return;
         if (size.X == window.Size.X && size.Y == window.Size.Y && swapChain != null) return;
+
+        if (swapChain != null) wgpu.SwapChainRelease(swapChain);
 
         swapChain = wgpu.DeviceCreateSwapChain(device, surface, new Emscripten.WGPU.WGPUSwapChainDescriptor()
         {

@@ -118,6 +118,11 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         return new NativeHandle<InstanceTag>((nint)instance);
     }
 
+    public void ReleaseInstance(NativeHandle<InstanceTag> instance)
+    {
+        wgpu.InstanceRelease(instance.As<Pollus.Emscripten.WGPU.WGPUInstance>());
+    }
+
     public NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label)
     {
         var native = new Pollus.Emscripten.WGPU.WGPUBufferDescriptor

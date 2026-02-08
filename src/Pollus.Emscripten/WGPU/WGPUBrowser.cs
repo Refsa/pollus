@@ -1219,4 +1219,8 @@ public partial class WGPUBrowser : IDisposable
     {
         return WGPUBrowserNative.SwapChainGetCurrentTextureView(swapChain);
     }
+    public unsafe void SwapChainRelease(WGPU.WGPUSwapChain* swapChain)
+    {
+        WGPUBrowserNative.SwapChainRelease(swapChain);
+    }
 }

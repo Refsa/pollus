@@ -23,6 +23,11 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         return new NativeHandle<InstanceTag>((nint)instance);
     }
 
+    public void ReleaseInstance(NativeHandle<InstanceTag> instance)
+    {
+        wgpu.InstanceRelease(instance.As<Silk.NET.WebGPU.Instance>());
+    }
+
     public NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label)
     {
         var nativeDescriptor = new Silk.NET.WebGPU.BufferDescriptor(

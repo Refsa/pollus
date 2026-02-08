@@ -227,6 +227,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
+        if (entityInfo.Entity.Version != entity.Version) return false;
         return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
     }
 
@@ -235,6 +236,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         entityInfo = world.Store.GetEntityInfo(entity);
+        if (entityInfo.Entity.Version != entity.Version) return false;
         return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
     }
 
@@ -249,6 +251,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
+        if (entityInfo.Entity.Version != entity.Version) return false;
         return world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].HasFlag<C>(entityInfo.RowIndex, ComponentFlags.Added);
     }
 
@@ -263,6 +266,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
+        if (entityInfo.Entity.Version != entity.Version) return false;
         return world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].HasFlag<C>(entityInfo.RowIndex, ComponentFlags.Changed);
     }
 
@@ -277,6 +281,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         where C : unmanaged, IComponent
     {
         var entityInfo = world.Store.GetEntityInfo(entity);
+        if (entityInfo.Entity.Version != entity.Version) return;
         world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Changed);
     }
 

@@ -7,6 +7,7 @@ using Pollus.Graphics.Rendering;
 public interface IWgpuBackend : IDisposable
 {
     NativeHandle<InstanceTag> CreateInstance();
+    void ReleaseInstance(NativeHandle<InstanceTag> instance);
     NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label);
     void BufferDestroy(in NativeHandle<BufferTag> buffer);
     void BufferRelease(in NativeHandle<BufferTag> buffer);

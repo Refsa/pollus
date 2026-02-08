@@ -19,6 +19,10 @@ public class DesktopRunner : IAppRunner
         {
             gpu = gc.CreateContext("main", window);
             gpu.Setup();
+
+            world.Resources.Add(window);
+            world.Resources.Add(gc);
+            world.Resources.Add(gpu);
         }
         catch
         {
@@ -27,9 +31,6 @@ public class DesktopRunner : IAppRunner
             window.Dispose();
             throw;
         }
-        world.Resources.Add(window);
-        world.Resources.Add(gc);
-        world.Resources.Add(gpu);
     }
 
     public void Run(World world, Func<bool> isRunning, Action requestShutdown)

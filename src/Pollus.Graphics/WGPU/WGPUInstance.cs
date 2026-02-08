@@ -28,6 +28,7 @@ unsafe public partial class WGPUInstance : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
 
+        backend.ReleaseInstance(instance);
         instance = new NativeHandle<InstanceTag>(0);
     }
 }

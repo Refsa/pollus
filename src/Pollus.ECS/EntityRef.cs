@@ -46,21 +46,21 @@ public ref struct EntityRef
         chunk.SetFlag<C>(row, ComponentFlags.Changed);
     }
 
-    public readonly void Added<C>()
+    public readonly bool Added<C>()
         where C : unmanaged, IComponent
     {
-        chunk.HasFlag<C>(row, ComponentFlags.Added);
+        return chunk.HasFlag<C>(row, ComponentFlags.Added);
     }
 
-    public readonly void Changed<C>()
+    public readonly bool Changed<C>()
         where C : unmanaged, IComponent
     {
-        chunk.HasFlag<C>(row, ComponentFlags.Changed);
+        return chunk.HasFlag<C>(row, ComponentFlags.Changed);
     }
 
-    public readonly void Removed<C>()
+    public readonly bool Removed<C>()
         where C : unmanaged, IComponent
     {
-        chunk.HasFlag<C>(row, ComponentFlags.Removed);
+        return chunk.HasFlag<C>(row, ComponentFlags.Removed);
     }
 }
