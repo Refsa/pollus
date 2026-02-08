@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 public static class Guard
 {
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsTrue(bool condition, string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (condition) return;
@@ -17,7 +17,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsTrue(bool condition, FormattableString message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (condition) return;
@@ -25,7 +25,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsFalse(bool condition, string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (!condition) return;
@@ -35,7 +35,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsFalse(bool condition, FormattableString message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (condition) return;
@@ -43,7 +43,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsNotNull<T>([NotNull] T? obj, string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (obj is not null) return;
@@ -52,7 +52,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsNotNull<T>([NotNull] T? obj, FormattableString message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (obj is not null) return;
@@ -60,7 +60,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsNull<T>(T? obj, string message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (obj is null) return;
@@ -69,7 +69,7 @@ public static class Guard
     }
 
     [Conditional("DEBUG")]
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void IsNull<T>(T? obj, FormattableString message, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "")
     {
         if (obj is null) return;

@@ -55,7 +55,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
             Array.Fill(Cells, new LooseCell());
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
             for (int i = 0; i < Cells.Length; i++) Cells[i].Clear();
@@ -75,14 +75,14 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
             elements = new int[count];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
             Count = 0;
             LayerMask = 0;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Insert(int element, uint layer)
         {
             if (Count == elements.Length) Array.Resize(ref elements, elements.Length * 2);
@@ -141,7 +141,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         grid = new TightGrid(tightColCount, tightRowCount);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         for (int i = 0; i < rows.Length; i++) rows[i].Clear();
@@ -230,19 +230,19 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         return count;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<TData> results) where TLayer : unmanaged, Enum
     {
         return Query(position, radius, Unsafe.As<TLayer, uint>(ref layer), results);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert<TLayer>(TData data, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
     {
         Insert(data, position, radius, Unsafe.As<TLayer, uint>(ref layer));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var content = new Content { Data = data, Layer = layer, Position = position, Radius = radius };
@@ -268,7 +268,7 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void InsertToGrid(ref LooseCell cell, int cellRow, int cellCol, uint layer)
     {
         var minX = PosToTightCol(cell.BottomLeftX);
@@ -329,28 +329,28 @@ public class SpatialLooseGrid<TData> : ISpatialContainer<TData>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int PosToTightRow(float y)
     {
         if (y <= 0) return 0;
         return int.Min((int)(y * invTightHeight), tightRowCount - 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int PosToTightCol(float x)
     {
         if (x <= 0) return 0;
         return int.Min((int)(x * invTightWidth), tightColCount - 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int PosToCellRow(float y)
     {
         if (y <= 0) return 0;
         return int.Min((int)(y * invCellHeight), rowCount - 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int PosToCellCol(float x)
     {
         if (x <= 0) return 0;

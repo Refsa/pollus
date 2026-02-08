@@ -34,7 +34,7 @@ public struct VertexData : IBufferData
         get => data.AsSpan().Slice((int)(index * stride), (int)stride);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public VertexData(uint capacity, uint stride, ReadOnlySpan<Attribute> attributes)
     {
         this.stride = stride;
@@ -43,32 +43,32 @@ public struct VertexData : IBufferData
         data = new byte[(int)(capacity * stride)];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<byte> AsSpan()
     {
         return data.AsSpan();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<byte> Slice(int start)
     {
         return data.AsSpan().Slice(start * (int)stride);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<byte> Slice(int start, int length)
     {
         return data.AsSpan().Slice(start * (int)stride, length * (int)stride);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0>(int index, in T0 value, int elementIndex = 0)
         where T0 : unmanaged
     {
         MemoryMarshal.Write(this[index][attributes[elementIndex].Offset..], value);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0>(int offset, ReadOnlySpan<T0> values)
         where T0 : unmanaged
     {
@@ -76,7 +76,7 @@ public struct VertexData : IBufferData
         values.CopyTo(dst);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1>(int index, in T0 value0, in T1 value1)
         where T0 : unmanaged
         where T1 : unmanaged
@@ -85,7 +85,7 @@ public struct VertexData : IBufferData
         Write(index, value1, 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1>(int offset, ReadOnlySpan<(T0, T1)> values)
         where T0 : unmanaged
         where T1 : unmanaged
@@ -93,7 +93,7 @@ public struct VertexData : IBufferData
         Write<(T0, T1)>(offset, values);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1, T2>(int index, in T0 value0, in T1 value1, in T2 value2)
         where T0 : unmanaged
         where T1 : unmanaged
@@ -104,7 +104,7 @@ public struct VertexData : IBufferData
         Write(index, value2, 2);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1, T2>(int offset, ReadOnlySpan<(T0, T1, T2)> values)
         where T0 : unmanaged
         where T1 : unmanaged
@@ -113,7 +113,7 @@ public struct VertexData : IBufferData
         Write<(T0, T1, T2)>(offset, values);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1, T2, T3>(int index, in T0 value0, in T1 value1, in T2 value2, in T3 value3)
         where T0 : unmanaged
         where T1 : unmanaged
@@ -126,7 +126,7 @@ public struct VertexData : IBufferData
         Write(index, value3, 3);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write<T0, T1, T2, T3>(int offset, ReadOnlySpan<(T0, T1, T2, T3)> values)
         where T0 : unmanaged
         where T1 : unmanaged

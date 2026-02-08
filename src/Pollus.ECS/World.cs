@@ -50,7 +50,7 @@ public class World : IDisposable
         Schedule.Dispose();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Prepare()
     {
         Resources.Add(this);
@@ -59,32 +59,32 @@ public class World : IDisposable
         Schedule.Prepare(this);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn()
     {
         return Store.CreateEntity();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Despawn(in Entity entity)
     {
         Store.DestroyEntity(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
         return builder.Spawn(this);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Despawn(Entity entity)
     {
         Store.DestroyEntity(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityRef GetEntityRef(in Entity entity)
     {
         var entityInfo = Store.GetEntityInfo(entity);
@@ -93,13 +93,13 @@ public class World : IDisposable
         return new EntityRef(in entity, entityInfo.RowIndex, ref chunk);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clone(in Entity toClone, in Entity cloned)
     {
         Store.CloneEntity(toClone, cloned);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Preallocate<TBuilder>(in TBuilder _, int count)
         where TBuilder : IEntityBuilder
     {
@@ -149,7 +149,7 @@ public class World : IDisposable
         return this;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Commands GetCommands()
     {
         var commands = commandBuffers.Rent();

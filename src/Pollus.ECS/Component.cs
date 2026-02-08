@@ -106,19 +106,19 @@ public static class Component
         return info;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Info GetInfo(Type type)
     {
         return componentIDs[type];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Info GetInfo(ComponentID cid)
     {
         return componentInfos[cid];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Info GetInfo<T>() where T : unmanaged, IComponent
     {
         return Lookup<T>.Info;

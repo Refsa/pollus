@@ -26,7 +26,7 @@ public interface ISpatialContainer<TData>
 
 public static class SpatialQueryUtils
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void TryInsert<TData>(scoped in Span<QueryResult<TData>> results, ref int cursor, in TData data, float distanceSqr)
         where TData : unmanaged
     {

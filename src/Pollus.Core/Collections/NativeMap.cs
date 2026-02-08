@@ -56,14 +56,14 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         values.Dispose();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly int Hash(scoped in TKey key, int capacity)
     {
         var hash = key.GetHashCode();
         return hash & 0x7FFFFFFF & (capacity - 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Resize(int newCapacity)
     {
         NativeArray<KeyEntry> newKeys = new(newCapacity);
@@ -96,7 +96,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         capacity = newCapacity;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(TKey key, TValue value)
     {
         if (count >= capacity * 0.75f)
@@ -126,19 +126,19 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Has(scoped in TKey key)
     {
         return !Unsafe.IsNullRef(ref GetEntry(key, Hash(key, capacity)));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref TValue Get(scoped in TKey key)
     {
         return ref GetValue(key, Hash(key, capacity));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetValue(scoped in TKey key, out TValue value)
     {
         ref var val = ref GetValue(key, Hash(key, capacity));
@@ -151,7 +151,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Remove(scoped in TKey key)
     {
         ref var entry = ref GetEntry(key, Hash(key, capacity));
@@ -162,7 +162,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly ref TValue GetValue(scoped in TKey key, int hash)
     {
         var keySpan = keys.AsSpan();
@@ -178,7 +178,7 @@ unsafe public struct NativeMap<TKey, TValue> : IDisposable
         return ref Unsafe.NullRef<TValue>();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ref KeyEntry GetEntry(scoped in TKey key, int hash)
     {
         var keySpan = keys.AsSpan();

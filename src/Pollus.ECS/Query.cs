@@ -222,7 +222,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if it has component</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Has<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -231,7 +231,7 @@ public struct Query : IQuery, IQueryCreate<Query>
         return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Has<C>(scoped in Entity entity, out Entities.EntityInfo entityInfo)
         where C : unmanaged, IComponent
     {
@@ -246,7 +246,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if it was added</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Added<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -261,7 +261,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if was changes</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Changed<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -276,7 +276,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// </summary>
     /// <param name="entity">entity to mark</param>
     /// <typeparam name="C">component to mark</typeparam>
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetChanged<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -291,28 +291,28 @@ public struct Query : IQuery, IQueryCreate<Query>
     /// <param name="entity">entity to check</param>
     /// <typeparam name="C">component to check</typeparam>
     /// <returns>true if component was removed</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool Removed<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         return world.Store.Removed.WasRemoved<C>(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref C Get<C>(scoped in Entity entity)
         where C : unmanaged, IComponent
     {
         return ref Get<C>(world.Store.GetEntityInfo(entity));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref C Get<C>(scoped in Entities.EntityInfo entityInfo)
         where C : unmanaged, IComponent
     {
         return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref C TryGet<C>(in Entity entity, out bool exists)
         where C : unmanaged, IComponent
     {

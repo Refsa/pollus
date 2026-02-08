@@ -26,7 +26,7 @@ public static class TupleEntityBuilder
 }";
             const string METHOD_TEMPLATE =
                 @"
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static EntityBuilder<$gen_args$> Builder<$gen_args$>(this in ($tuple_params$) tuple)
         $gen_constraints$
     {
@@ -69,7 +69,7 @@ public static class TupleEntityBuilder
         {
             const string TEMPLATE =
                 @"
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static EntityBuilder<$gen_args$> With<$gen_args$>($parameters$)
         $gen_constraints$
     {
@@ -164,14 +164,14 @@ $set_fields$
         return new($tuple_set$);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn(World world)
     {
         var entity = world.Store.Entities.Create();
         return Spawn(world, entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn(World world, in Entity entity)
     {
         var entityRef = world.Store.InsertEntity<EntityBuilder<$gen_args$>>(entity);
@@ -193,7 +193,7 @@ $set_method$
 }";
 
         static readonly string WITH_METHOD_TEMPLATE = @"
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityBuilder<$gen_args$, $next_gen_arg$> With<$next_gen_arg$>(scoped in $next_gen_arg$ $next_gen_arg_name$)
         where $next_gen_arg$ : unmanaged, IComponent
     {
@@ -201,7 +201,7 @@ $set_method$
     }";
 
         const string SET_METHOD_TEMPLATE = @"
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityBuilder<$gen_args$> Set(in $gen_arg$ comp)
     {
         Component$gen_idx$ = comp;

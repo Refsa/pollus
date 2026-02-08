@@ -25,7 +25,7 @@ public static class WorldSpawnExtensions
 
             const string METHOD_TEMPLATE =
 @"
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Entity Spawn<$gen_args$>(this World world, $parameters$)
         $gen_constraints$
     {

@@ -36,7 +36,7 @@ $multi$
     public object? this[int index] => null;
     public int Length => $length$;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasAny(componentIDs) is false;
@@ -55,7 +55,7 @@ $multi$
     public object? this[int index] => null;
     public int Length => $length$;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasAll(componentIDs) is true;
@@ -74,7 +74,7 @@ $multi$
     public object? this[int index] => null;
     public int Length => $length$;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasAny(componentIDs) is true;

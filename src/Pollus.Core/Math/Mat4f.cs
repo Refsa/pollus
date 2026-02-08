@@ -57,7 +57,7 @@ public partial record struct Mat4f
         Col3 = new(m30, m31, m32, m33);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f operator *(in Mat4f left, in Mat4f right)
     {
         if (!Sse.IsSupported)

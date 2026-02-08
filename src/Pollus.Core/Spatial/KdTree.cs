@@ -37,7 +37,7 @@ public class KdTree<T>
         size = 0;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         size = 0;
@@ -97,21 +97,21 @@ public class KdTree<T>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Resize()
     {
         capacity *= 2;
         Array.Resize(ref nodes, capacity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int RangeSearch(Vec2f target, float range, uint layerMask, ArrayList<T> results)
     {
         RangeSearch(0, target, range, range * range, 0, layerMask, results);
         return results.Count;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void RangeSearch(int nodeIndex, Vec2f target, float range, float rangeSqr, int depth, uint layerMask, ArrayList<T> results)
     {
         if (nodeIndex == -1 || nodeIndex >= size)

@@ -48,7 +48,7 @@ public class ArchetypeStore : IDisposable
         archetypeLookup.Dispose();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public (Archetype archetype, int index)? GetArchetype(in ArchetypeID aid)
     {
         if (archetypeLookup.TryGetValue(aid, out var index))
@@ -59,13 +59,13 @@ public class ArchetypeStore : IDisposable
         return null;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Archetype GetArchetype(int index)
     {
         return archetypes[index];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ArchetypeInfo GetOrCreateArchetype(in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
     {
         if (archetypeLookup.TryGetValue(aid, out var index))
@@ -85,7 +85,7 @@ public class ArchetypeStore : IDisposable
         return new(archetype, archetypes.Count - 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity CreateEntity()
     {
         var entity = entityHandler.Create();
@@ -97,7 +97,7 @@ public class ArchetypeStore : IDisposable
         return entity;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityChange CreateEntity<TBuilder>()
         where TBuilder : struct, IEntityBuilder
     {
@@ -105,21 +105,21 @@ public class ArchetypeStore : IDisposable
         return InsertEntity<TBuilder>(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityChange CreateEntity(in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
     {
         var entity = entityHandler.Create();
         return InsertEntity(entity, aid, cids);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityChange InsertEntity<TBuilder>(in Entity entity)
         where TBuilder : struct, IEntityBuilder
     {
         return InsertEntity(entity, TBuilder.ArchetypeID, TBuilder.ComponentIDs);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityChange InsertEntity(in Entity entity, in ArchetypeID aid, scoped in ReadOnlySpan<ComponentID> cids)
     {
         var archetypeInfo = GetOrCreateArchetype(aid, cids);
@@ -163,7 +163,7 @@ public class ArchetypeStore : IDisposable
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityChange CloneEntity(in Entity toClone, in Entity cloned)
     {
         ref var entityInfo = ref entityHandler.GetEntityInfo(toClone);
@@ -189,7 +189,7 @@ public class ArchetypeStore : IDisposable
         return new(cloned, archetype, chunkIndex, rowIndex);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -202,7 +202,7 @@ public class ArchetypeStore : IDisposable
         return archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref C GetComponent<C>(in Entity entity)
         where C : unmanaged, IComponent
     {
@@ -303,7 +303,7 @@ public class ArchetypeStore : IDisposable
         nextArchetype.Chunks[nextInfo.ChunkIndex].SetFlag<C>(nextInfo.RowIndex, ComponentFlags.Removed);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetComponent<C>(in Entity entity, scoped in C component)
         where C : unmanaged, IComponent
     {
@@ -315,19 +315,19 @@ public class ArchetypeStore : IDisposable
         archetype.SetComponent(entityInfo.ChunkIndex, entityInfo.RowIndex, component);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EntityExists(in Entity entity)
     {
         return entityHandler.IsAlive(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref Entities.EntityInfo GetEntityInfo(in Entity entity)
     {
         return ref entityHandler.GetEntityInfo(entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Tick(ulong version)
     {
         this.version = version;

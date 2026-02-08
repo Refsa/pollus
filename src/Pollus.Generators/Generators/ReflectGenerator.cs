@@ -69,10 +69,10 @@ public class ReflectGenerator : IIncrementalGenerator
                   };
                   public static byte[] Fields => reflectFields;
 
-                  [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+                  [MethodImpl(MethodImplOptions.AggressiveInlining)]
                   public void SetValue<TField>(byte field, TField value) => SetValue((ReflectField)field, value);
 
-                  [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+                  [MethodImpl(MethodImplOptions.AggressiveInlining)]
                   public void SetValue<TField>(ReflectField field, TField value)
                   {
                       switch (field)
@@ -82,7 +82,7 @@ public class ReflectGenerator : IIncrementalGenerator
                       }
                   }
 
-                  [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+                  [MethodImpl(MethodImplOptions.AggressiveInlining)]
                   public static byte GetFieldIndex<TField>(Expression<Func<{{model.TypeInfo.FullClassName}}, TField>> property)
                   {
                       string? fieldName = null;
@@ -96,7 +96,7 @@ public class ReflectGenerator : IIncrementalGenerator
                       return GetFieldIndex(fieldName);
                   }
 
-                  [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+                  [MethodImpl(MethodImplOptions.AggressiveInlining)]
                   public static byte GetFieldIndex(string fieldName)
                   {
                       if (string.IsNullOrEmpty(fieldName)) throw new ArgumentException("Invalid property expression", fieldName);

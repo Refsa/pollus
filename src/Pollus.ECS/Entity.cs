@@ -32,7 +32,7 @@ public class Entities
 
     public int AliveCount => aliveCount;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity ReserveId()
     {
         if (freeList.TryPop(out var recycled))
@@ -42,7 +42,7 @@ public class Entities
         return new Entity(id, 0);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Activate(in Entity entity)
     {
         if (entity.ID >= entities.Length)
@@ -54,7 +54,7 @@ public class Entities
         aliveCount++;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Create()
     {
         var entity = ReserveId();
@@ -62,7 +62,7 @@ public class Entities
         return entity;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Create(in Span<Entity> target)
     {
         for (int i = 0; i < target.Length; i++)
@@ -79,14 +79,14 @@ public class Entities
         aliveCount--;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAlive(in Entity entity)
     {
         ref readonly var otherEntity = ref entities[entity.ID];
         return aliveCount > 0 && otherEntity.IsAlive && entity.Version == otherEntity.Entity.Version;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref EntityInfo GetEntityInfo(in Entity entity)
     {
         return ref entities[entity.ID];
@@ -104,6 +104,7 @@ public class Entities
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Append(scoped in EntityInfo insert)
     {
         if (insert.Entity.ID >= entities.Length) Array.Resize(ref entities, insert.Entity.ID * 2);

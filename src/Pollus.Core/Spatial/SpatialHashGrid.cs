@@ -21,7 +21,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         public float Radius;
         public Vec2f Position;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool HasLayer(uint layer) => (Layer & layer) != 0;
     }
 
@@ -44,7 +44,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
 
         public ref CellEntry this[int index] => ref entries[index];
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(TData data, Vec2f position, uint layer, float radius)
         {
             layerMask |= layer;
@@ -59,7 +59,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
             };
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool HasLayer(uint layer) => (layerMask & layer) != 0;
     }
 
@@ -80,7 +80,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         for (int i = 0; i < cells.Length; i++) cells[i] = new Cell();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         biggestRadius = 0f;
@@ -92,19 +92,19 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Prepare()
     {
         Clear();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert<TLayer>(TData data, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
     {
         Insert(data, position, radius, Unsafe.As<TLayer, uint>(ref layer));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(TData data, Vec2f position, float radius, uint layer)
     {
         var cellIdx = GetCell(position);
@@ -113,7 +113,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         biggestRadius = float.Max(biggestRadius, radius);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int GetCell(Vec2f position)
     {
         int x = (int)(position.X / cellSize);
@@ -122,7 +122,7 @@ public class SpatialHashGrid<TData> : ISpatialContainer<TData>
         return x + y * width;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<TData> results) where TLayer : unmanaged, Enum
     {
         return Query(position, radius, Unsafe.As<TLayer, uint>(ref layer), results);

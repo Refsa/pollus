@@ -15,7 +15,7 @@ public class SpatialQuery : ISpatialContainer<Entity>
         this.inner = query;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
         inner.Clear();
@@ -26,25 +26,25 @@ public class SpatialQuery : ISpatialContainer<Entity>
         inner.Prepare();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert(Entity entity, Vec2f position, float radius, uint layer)
     {
         inner.Insert(entity, position, radius, layer);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Query(Vec2f position, float radius, uint layer, Span<Entity> results)
     {
         return inner.Query(position, radius, layer, results);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Insert<TLayer>(Entity entity, Vec2f position, float radius, TLayer layer) where TLayer : unmanaged, Enum
     {
         inner.Insert(entity, position, radius, layer);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Query<TLayer>(Vec2f position, float radius, TLayer layer, Span<Entity> results) where TLayer : unmanaged, Enum
     {
         return inner.Query(position, radius, layer, results);

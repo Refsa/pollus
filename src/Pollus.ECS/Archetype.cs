@@ -134,7 +134,7 @@ public partial class Archetype : IDisposable
         chunk.SetFlag(rowIndex, componentID, ComponentFlags.Changed);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetComponent<C>(int chunkIndex, int rowIndex, scoped in C component) where C : unmanaged, IComponent
     {
         ref var chunk = ref chunks[chunkIndex];
@@ -142,27 +142,27 @@ public partial class Archetype : IDisposable
         chunk.SetFlag<C>(rowIndex, ComponentFlags.Changed);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref C GetComponent<C>(int chunkIndex, int rowIndex) where C : unmanaged, IComponent
     {
         ref var chunk = ref chunks[chunkIndex];
         return ref chunk.GetComponent<C>(rowIndex);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasComponent<C>()
         where C : unmanaged, IComponent
     {
         return HasComponent(Component.GetInfo<C>().ID);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasComponent(int cid)
     {
         return HasComponent((ComponentID)cid);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasComponent(in ComponentID cid)
     {
         for (int i = 0; i < chunkInfo.ComponentIDs.Length; i++)
@@ -173,7 +173,7 @@ public partial class Archetype : IDisposable
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasAll(scoped in ReadOnlySpan<ComponentID> componentIDs)
     {
         foreach (var cid in componentIDs)
@@ -184,7 +184,7 @@ public partial class Archetype : IDisposable
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool HasAny(scoped in ReadOnlySpan<ComponentID> componentIDs)
     {
         foreach (var cid in componentIDs)
@@ -195,7 +195,7 @@ public partial class Archetype : IDisposable
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref ArchetypeChunk GetChunk(int chunkIndex)
     {
         return ref chunks[chunkIndex];
@@ -226,7 +226,7 @@ public partial class Archetype : IDisposable
         chunks.Resize(lastChunkIndex + 1);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ref ArchetypeChunk GetVacantChunk()
     {
         if (lastChunkIndex == -1 || chunks[lastChunkIndex].Count >= chunkInfo.RowsPerChunk)

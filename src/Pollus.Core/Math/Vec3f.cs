@@ -41,80 +41,80 @@ public partial record struct Vec3f
     public readonly Vec2f XZ => new(X, Z);
     public readonly Vec2f YZ => new(Y, Z);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Vec3f(in (float x, float y, float z) tuple)
     {
         return new Vec3f(tuple.x, tuple.y, tuple.z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Vec3f(in System.Numerics.Vector3 vector3)
     {
         return new Vec3f(vector3.X, vector3.Y, vector3.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator System.Numerics.Vector3(in Vec3f vector3)
     {
         return new System.Numerics.Vector3(vector3.X, vector3.Y, vector3.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator +(in Vec3f left, in Vec3f right)
     {
         return new Vec3f(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator -(in Vec3f left, in Vec3f right)
     {
         return new Vec3f(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator -(in Vec3f vec)
     {
         return new Vec3f(-vec.X, -vec.Y, -vec.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator *(in Vec3f left, float right)
     {
         return new Vec3f(left.X * right, left.Y * right, left.Z * right);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator *(float right, in Vec3f left)
     {
         return new Vec3f(left.X * right, left.Y * right, left.Z * right);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec3f operator *(in Vec3f left, in Vec3f right)
     {
         return new Vec3f(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Length()
     {
         return float.Sqrt(X * X + Y * Y + Z * Z);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vec3f Normalized()
     {
         float length = Length();
         return new Vec3f(X / length, Y / length, Z / length);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Dot(Vec3f other)
     {
         return X * other.X + Y * other.Y + Z * other.Z;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Vec3f Cross(Vec3f other)
     {
         return new Vec3f(

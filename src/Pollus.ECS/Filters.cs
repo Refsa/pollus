@@ -43,7 +43,7 @@ public class None<C0>() : IFilter
     public object? this[int index] => null;
     public int Length => 1;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasComponent(componentIDs[0]) is false;
@@ -61,7 +61,7 @@ public class All<C0>() : IFilter
     public object? this[int index] => null;
     public int Length => 1;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasComponent(componentIDs[0]) is true;
@@ -80,7 +80,7 @@ public class Any<C0, C1>() : IFilter
     public object? this[int index] => null;
     public int Length => 2;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Filter(Archetype archetype)
     {
         return archetype.HasAny(componentIDs) is true;
@@ -236,7 +236,7 @@ public static class FilterHelpers
         return filters;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool RunArchetypeFilters(Archetype archetype, IFilter[] filters)
     {
         for (int i = 0; i < filters.Length; i++)
@@ -246,7 +246,7 @@ public static class FilterHelpers
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool RunChunkFilters(in ArchetypeChunk chunk, IFilter[] filters)
     {
         for (int i = 0; i < filters.Length; i++)

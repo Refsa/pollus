@@ -60,7 +60,7 @@ public class QueryBenchmarks
     public int Query_One_ForEach_Delegate()
     {
         var q = new Query<Component1>(oneComponentWorld);
-        q.ForEach(static (ref Component1 c) => c.First++);
+        q.ForEach(static (ref c) => c.First++);
         return 0;
     }
 
@@ -68,7 +68,7 @@ public class QueryBenchmarks
     public int Query_One_ForEach_Delegate_UserData()
     {
         var q = new Query<Component1>(oneComponentWorld);
-        q.ForEach(1, static (in int inc, ref Component1 c) => c.First += inc);
+        q.ForEach(1, static (in inc, ref c) => c.First += inc);
         return 0;
     }
 
@@ -120,7 +120,7 @@ public class QueryBenchmarks
 
     struct ForEachOne : IForEach<Component1>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Execute(scoped in Entity e, scoped ref Component1 c)
         {
             c.First++;
@@ -129,7 +129,7 @@ public class QueryBenchmarks
 
     struct ForEachTwo : IForEach<Component1, Component2>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Execute(scoped in Entity e, scoped ref Component1 c1, scoped ref Component2 c2)
         {
             c1.First += c2.First;
@@ -138,7 +138,7 @@ public class QueryBenchmarks
 
     struct ChunkForEachOne : IChunkForEach<Component1>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Execute(scoped in ReadOnlySpan<Entity> entities, scoped in Span<Component1> chunk0)
         {
             for (int i = 0; i < chunk0.Length; i++)

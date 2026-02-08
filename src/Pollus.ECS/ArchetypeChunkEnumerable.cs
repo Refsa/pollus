@@ -38,7 +38,7 @@ public ref struct ArchetypeChunkEnumerable
 
         public Archetype Current => archetypes[index];
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
             while (++index < archetypes.Count)
@@ -69,7 +69,7 @@ public ref struct ArchetypeChunkEnumerable
             enumerator = new(in filter);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
             if (Unsafe.IsNullRef(ref current) || !Unsafe.IsAddressLessThan(ref current, ref end))
