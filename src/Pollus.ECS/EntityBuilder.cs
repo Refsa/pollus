@@ -73,14 +73,14 @@ public struct EntityBuilder<C0> : IEntityBuilder
         return new EntityBuilder<C0>(c0);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn(World world)
     {
         var entity = world.Store.Entities.Create();
         return Spawn(world, entity);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Entity Spawn(World world, in Entity entity)
     {
         var entityRef = world.Store.InsertEntity<EntityBuilder<C0>>(entity);
@@ -96,12 +96,14 @@ public struct EntityBuilder<C0> : IEntityBuilder
         return entityRef.Entity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityBuilder<C0, C1> With<C1>(scoped in C1 c1)
         where C1 : unmanaged, IComponent
     {
         return new(Component0, c1);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityBuilder<C0> Set(in C0 c0)
     {
         Component0 = c0;

@@ -29,10 +29,11 @@ public static class WorldSpawnExtensions
     public static Entity Spawn<$gen_args$>(this World world, $parameters$)
         $gen_constraints$
     {
-        var entityRef = world.Store.CreateEntity<EntityBuilder<$gen_args$>>();
-        ref var chunk = ref entityRef.Archetype.GetChunk(entityRef.ChunkIndex);
-        $set_components$
-        return entityRef.Entity;
+        var builder = new EntityBuilder<$gen_args$>()
+        {
+            $set_components$
+        };
+        return builder.Spawn(world);
     }";
 
             var sb = new StringBuilder(TEMPLATE);
@@ -40,14 +41,14 @@ public static class WorldSpawnExtensions
             var gen_args = "C0, ";
             var gen_constraints = "where C0 : unmanaged, IComponent\n";
             var parameters = "in C0 c0, ";
-            var set_components = "chunk.SetComponent(entityRef.RowIndex, c0);\n";
+            var set_components = "Component0 = c0,\n";
 
             for (int i = 1; i < 15; i++)
             {
                 gen_args += $"C{i}";
                 gen_constraints += $"where C{i} : unmanaged, IComponent";
                 parameters += $"in C{i} c{i}";
-                set_components += $"chunk.SetComponent(entityRef.RowIndex, c{i});";
+                set_components += $"Component{i} = c{i},";
 
                 methods.AppendLine(METHOD_TEMPLATE
                     .Replace("$gen_args$", gen_args)
