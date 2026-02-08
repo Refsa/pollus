@@ -59,10 +59,14 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             resources[i].Dispose();
         }
 
-        wgpu.QueueRelease(queue);
-        wgpu.DeviceRelease(device);
-        wgpu.DeviceDestroy(device);
-        wgpu.AdapterRelease(adapter);
+        if (queue != null) wgpu.QueueRelease(queue);
+        if (device != null)
+        {
+            wgpu.DeviceRelease(device);
+            wgpu.DeviceDestroy(device);
+        }
+        if (adapter != null) wgpu.AdapterRelease(adapter);
+        if (surface != null) wgpu.SurfaceRelease(surface);
     }
 
     [MemberNotNull(nameof(surface), nameof(adapter), nameof(device), nameof(queue))]

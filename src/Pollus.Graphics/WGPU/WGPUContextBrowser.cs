@@ -74,10 +74,14 @@ unsafe public class WGPUContextBrowser : IWGPUContext
             resources[i].Dispose();
         }
 
-        wgpu.QueueRelease(queue);
-        wgpu.DeviceRelease(device);
-        wgpu.DeviceDestroy(device);
-        wgpu.AdapterRelease(adapter);
+        if (queue != null) wgpu.QueueRelease(queue);
+        if (device != null)
+        {
+            wgpu.DeviceRelease(device);
+            wgpu.DeviceDestroy(device);
+        }
+        if (adapter != null) wgpu.AdapterRelease(adapter);
+        if (surface != null) wgpu.SurfaceRelease(surface);
     }
 
     public void Setup()
@@ -253,6 +257,18 @@ unsafe public class WGPUContextBrowser : IWGPUContext
 
     public void ResizeSurface(Vec2<uint> size)
     {
+        if (size.X == 0 || size.Y == 0) return;
+        if (!IsReady) return;
+        if (size.X == window.Size.X && size.Y == window.Size.Y && swapChain != null) return;
+
+        swapChain = wgpu.DeviceCreateSwapChain(device, surface, new Emscripten.WGPU.WGPUSwapChainDescriptor()
+        {
+            Format = (Emscripten.WGPU.WGPUTextureFormat)preferredFormat,
+            PresentMode = Emscripten.WGPU.WGPUPresentMode.Fifo,
+            Usage = (Emscripten.WGPU.WGPUTextureUsage)TextureUsage.RenderAttachment,
+            Width = size.X,
+            Height = size.Y,
+        });
     }
 
     public bool TryAcquireNextTextureView(in TextureViewDescriptor descriptor, out GPUTextureView textureView, out NativeHandle<TextureTag> textureHandle)
