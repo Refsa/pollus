@@ -6,123 +6,117 @@ using System.Runtime.CompilerServices;
 public class MinHeap<T>
     where T : INumber<T>
 {
+    SpinLock spin = new(enableThreadOwnerTracking: false);
     T[] heap;
     int size;
-    SpinWait spin = new();
 
-    public MinHeap(int initialCapacity = 1024)
+    public int Count { get { bool taken = false; spin.Enter(ref taken); var c = size; spin.Exit(); return c; } }
+    public bool HasFree { get { bool taken = false; spin.Enter(ref taken); var r = size > 0; spin.Exit(); return r; } }
+    public bool IsEmpty { get { bool taken = false; spin.Enter(ref taken); var r = size == 0; spin.Exit(); return r; } }
+
+    public MinHeap(int initialCapacity = 16)
     {
         heap = new T[initialCapacity];
         size = 0;
     }
 
-    public bool HasFree => Volatile.Read(ref size) > 0;
-    public bool IsEmpty => Volatile.Read(ref size) == 0;
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryPop(out T value)
     {
-        Unsafe.SkipInit(out value);
-        if (IsEmpty) return false;
+        bool taken = false;
+        spin.Enter(ref taken);
 
-        value = Pop();
+        if (size == 0)
+        {
+            spin.Exit();
+            Unsafe.SkipInit(out value);
+            return false;
+        }
+
+        value = PopCore();
+        spin.Exit();
         return true;
     }
 
     public T Pop()
     {
-        while (true)
+        bool taken = false;
+        spin.Enter(ref taken);
+
+        if (size == 0)
         {
-            int currentSize = Volatile.Read(ref size);
-            if (currentSize == 0) throw new InvalidOperationException("Heap is empty");
-
-            var minEntity = heap[0];
-            var lastEntity = heap[currentSize - 1];
-
-            if (Interlocked.CompareExchange(ref size, currentSize - 1, currentSize) != currentSize)
-            {
-                spin.SpinOnce();
-                continue;
-            }
-
-            if (currentSize > 1)
-            {
-                heap[0] = lastEntity;
-                HeapifyDown(0, currentSize - 1);
-            }
-
-            return minEntity;
-        }
-    }
-
-    public void Push(T id)
-    {
-        while (true)
-        {
-            int currentSize = Volatile.Read(ref size);
-            if (currentSize >= heap.Length)
-            {
-                GrowHeap();
-                continue;
-            }
-
-            heap[currentSize] = id;
-            if (Interlocked.CompareExchange(ref size, currentSize + 1, currentSize) == currentSize)
-            {
-                HeapifyUp(currentSize);
-                break;
-            }
-
-            spin.SpinOnce();
-        }
-    }
-
-    void GrowHeap()
-    {
-        var newHeap = new T[heap.Length * 2];
-        Array.Copy(heap, newHeap, heap.Length);
-        Interlocked.CompareExchange(ref heap, newHeap, heap);
-    }
-
-    void HeapifyUp(int index)
-    {
-        T newEntity = heap[index];
-        while (index > 0)
-        {
-            int parentIndex = (index - 1) / 2;
-            T parent = heap[parentIndex];
-            if (parent <= newEntity)
-                break;
-            heap[index] = parent;
-            index = parentIndex;
+            spin.Exit();
+            throw new InvalidOperationException("Heap is empty");
         }
 
-        heap[index] = newEntity;
+        var value = PopCore();
+        spin.Exit();
+        return value;
     }
 
-    void HeapifyDown(int index, int heapSize)
+    public void Push(T value)
     {
-        T topEntity = heap[index];
-        while (true)
-        {
-            int leftChild = 2 * index + 1;
-            if (leftChild >= heapSize)
-                break;
+        bool taken = false;
+        spin.Enter(ref taken);
 
-            int rightChild = leftChild + 1;
-            int minChild = (rightChild < heapSize && heap[rightChild] < heap[leftChild]) ? rightChild : leftChild;
+        if (size >= heap.Length)
+            Array.Resize(ref heap, heap.Length * 2);
 
-            if (topEntity <= heap[minChild])
-                break;
+        heap[size] = value;
+        SiftUp(size);
+        size++;
 
-            heap[index] = heap[minChild];
-            index = minChild;
-        }
-
-        heap[index] = topEntity;
+        spin.Exit();
     }
 
     public void Clear()
     {
-        Volatile.Write(ref size, 0);
+        bool taken = false;
+        spin.Enter(ref taken);
+        size = 0;
+        spin.Exit();
+    }
+
+    T PopCore()
+    {
+        var min = heap[0];
+        size--;
+
+        if (size > 0)
+        {
+            heap[0] = heap[size];
+            SiftDown(0);
+        }
+
+        return min;
+    }
+
+    void SiftUp(int index)
+    {
+        T item = heap[index];
+        while (index > 0)
+        {
+            int parent = (index - 1) / 2;
+            if (heap[parent] <= item) break;
+            heap[index] = heap[parent];
+            index = parent;
+        }
+        heap[index] = item;
+    }
+
+    void SiftDown(int index)
+    {
+        T item = heap[index];
+        while (true)
+        {
+            int left = 2 * index + 1;
+            if (left >= size) break;
+            int right = left + 1;
+            int min = (right < size && heap[right] < heap[left]) ? right : left;
+            if (item <= heap[min]) break;
+            heap[index] = heap[min];
+            index = min;
+        }
+        heap[index] = item;
     }
 }

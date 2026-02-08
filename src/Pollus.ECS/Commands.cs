@@ -120,14 +120,14 @@ public class Commands
     public EntityCommands Spawn<TBuilder>(in TBuilder builder)
         where TBuilder : IEntityBuilder
     {
-        var entity = entities.Create();
+        var entity = entities.ReserveId();
         AddCommand(SpawnEntityCommand<TBuilder>.From(builder, entity));
         return new EntityCommands(this, entity);
     }
 
     public EntityCommands Spawn()
     {
-        var entity = entities.Create();
+        var entity = entities.ReserveId();
         AddCommand(SpawnEntityCommand<EntityBuilder>.From(new EntityBuilder(), entity));
         return new EntityCommands(this, entity);
     }
@@ -167,7 +167,7 @@ public class Commands
 
     public EntityCommands Clone(in Entity entity)
     {
-        var cloned = entities.Create();
+        var cloned = entities.ReserveId();
         AddCommand(CloneEntityCommand.From(entity, cloned));
         return new EntityCommands(this, cloned);
     }
@@ -257,6 +257,7 @@ public struct SpawnEntityCommand<TBuilder> : ICommand
 
     public void Execute(World world)
     {
+        world.Store.Entities.Activate(entity);
         builder.Spawn(world, entity);
     }
 }
@@ -403,6 +404,7 @@ public struct CloneEntityCommand : ICommand
 
     public void Execute(World world)
     {
+        world.Store.Entities.Activate(cloned);
         world.Clone(entity, cloned);
     }
 }

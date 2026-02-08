@@ -1,7 +1,7 @@
 namespace Pollus.ECS;
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Pollus.Collections;
 
 public partial record struct Entity(int ID, int Version = 0)
 {
@@ -25,26 +25,41 @@ public class Entities
         public EntityInfo() { }
     }
 
-    volatile int counter = -1;
+    int counter = -1;
     int aliveCount = 0;
     EntityInfo[] entities = new EntityInfo[64];
-    MinHeap<int> freeList = new();
+    ConcurrentStack<Entity> freeList = new();
 
-    public int AliveCount => Volatile.Read(ref aliveCount);
+    public int AliveCount => aliveCount;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public Entity ReserveId()
+    {
+        if (freeList.TryPop(out var recycled))
+            return new Entity(recycled.ID, recycled.Version + 1);
+
+        var id = Interlocked.Increment(ref counter);
+        return new Entity(id, 0);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Activate(in Entity entity)
+    {
+        if (entity.ID >= entities.Length)
+            Array.Resize(ref entities, (entity.ID + 1) * 2);
+
+        ref var info = ref entities[entity.ID];
+        info.Entity = entity;
+        info.IsAlive = true;
+        aliveCount++;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Create()
     {
-        ref var entityInfo = ref Unsafe.NullRef<EntityInfo>();
-
-        if (freeList.TryPop(out var entityId)) entityInfo = ref entities[entityId];
-        else entityInfo = ref NewEntity();
-
-        entityInfo.Entity.Version++;
-        entityInfo.IsAlive = true;
-        Interlocked.Increment(ref aliveCount);
-
-        return entityInfo.Entity;
+        var entity = ReserveId();
+        Activate(entity);
+        return entity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
@@ -60,33 +75,21 @@ public class Entities
     {
         ref var entityInfo = ref GetEntityInfo(entity);
         entityInfo.IsAlive = false;
-        freeList.Push(entity.ID);
-        Interlocked.Decrement(ref aliveCount);
+        freeList.Push(entity);
+        aliveCount--;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public bool IsAlive(in Entity entity)
     {
         ref readonly var otherEntity = ref entities[entity.ID];
-        return Volatile.Read(ref aliveCount) > 0 && otherEntity.IsAlive && entity.Version == otherEntity.Entity.Version;
+        return aliveCount > 0 && otherEntity.IsAlive && entity.Version == otherEntity.Entity.Version;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public ref EntityInfo GetEntityInfo(in Entity entity)
     {
         return ref entities[entity.ID];
-    }
-
-    ref EntityInfo NewEntity()
-    {
-        var id = Interlocked.Increment(ref counter);
-        if (id >= entities.Length) Array.Resize(ref entities, id * 2);
-        ref var entityInfo = ref entities[id];
-
-        entityInfo.Entity.ID = id;
-        entityInfo.Entity.Version = -1;
-
-        return ref entityInfo;
     }
 
     public void Append(ReadOnlySpan<EntityInfo> insert)
@@ -118,7 +121,7 @@ public class Entities
             entities[i].Entity.ID = i;
             if (!entities[i].IsAlive)
             {
-                freeList.Push(i);
+                freeList.Push(entities[i].Entity);
             }
         }
     }

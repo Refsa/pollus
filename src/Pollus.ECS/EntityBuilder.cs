@@ -1,5 +1,6 @@
 namespace Pollus.ECS;
 
+using System.Runtime.CompilerServices;
 using Utils;
 
 public interface IEntityBuilder
@@ -72,12 +73,14 @@ public struct EntityBuilder<C0> : IEntityBuilder
         return new EntityBuilder<C0>(c0);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world)
     {
         var entity = world.Store.Entities.Create();
         return Spawn(world, entity);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public Entity Spawn(World world, in Entity entity)
     {
         var entityRef = world.Store.InsertEntity<EntityBuilder<C0>>(entity);
