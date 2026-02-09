@@ -45,6 +45,9 @@ public partial struct FrameGraph<TParam> : IDisposable
 
     public FrameGraphRunner<TParam> Compile()
     {
+        if (passNodes.Count > 256)
+            throw new InvalidOperationException($"Frame graph supports at most 256 passes, got {passNodes.Count}");
+
         Span<BitSet256> adjacencyMatrix = stackalloc BitSet256[passNodes.Count];
         passNodes.Nodes.Sort();
 
@@ -55,7 +58,22 @@ public partial struct FrameGraph<TParam> : IDisposable
             {
                 if (current.Index == other.Index) continue;
 
-                if (current.Writes.HasAny(other.Reads)) edges.Set(other.Index);
+                if (current.Pass.PassOrder < other.Pass.PassOrder)
+                {
+                    if (current.Writes.HasAny(other.Reads)
+                     || current.Reads.HasAny(other.Writes)
+                     || current.Writes.HasAny(other.Writes))
+                    {
+                        edges.Set(other.Index);
+                    }
+                }
+                else if (current.Pass.PassOrder == other.Pass.PassOrder)
+                {
+                    if (current.Writes.HasAny(other.Reads))
+                    {
+                        edges.Set(other.Index);
+                    }
+                }
             }
         }
 
