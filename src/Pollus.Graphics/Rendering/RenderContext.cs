@@ -5,7 +5,7 @@ using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
 using Pollus.Graphics.Platform;
 
-public class RenderContext
+public class RenderContext : IDisposable
 {
     readonly ArrayList<GPUCommandEncoder> commandEncoders = new();
     readonly ArrayList<GPUCommandBuffer> commandBuffers = new();
@@ -18,8 +18,15 @@ public class RenderContext
     public RenderResourceCache Resources => resources;
     public bool SkipFrame { get; private set; }
 
+    public void Dispose()
+    {
+        resources.Cleanup();
+        CleanupFrame();
+    }
+
     public bool PrepareFrame()
     {
+        SkipFrame = false;
         var nextSurfaceTexture = GPUContext.CreateSurfaceTexture();
         if (!nextSurfaceTexture.Prepare())
         {

@@ -48,7 +48,7 @@ public struct RenderCommands : IDisposable
 
     public void Dispose()
     {
-        commands.AsSpan(0, count).Clear();
+        commands.AsSpan(0, cursor).Clear();
         ArrayPool<byte>.Shared.Return(commands);
     }
 
@@ -76,7 +76,7 @@ public struct RenderCommands : IDisposable
 
     public void WriteCommand<TCommand>(in TCommand command) where TCommand : unmanaged, IRenderCommand
     {
-        EnsureSize<SetViewportCommand>();
+        EnsureSize<TCommand>();
         MemoryMarshal.Write(commands.AsSpan(cursor), in command);
         cursor += TCommand.SizeInBytes;
         count++;
