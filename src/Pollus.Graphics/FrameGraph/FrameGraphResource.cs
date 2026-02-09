@@ -92,10 +92,11 @@ public struct ResourceContainer<TResource> : IDisposable
     public ResourceHandle<TResource> Add(int id, in TResource resource)
     {
         if (count == resources.Length) Resize();
-        resources[count++] = resource;
+        var idx = count++;
+        resources[idx] = resource;
 
-        ref var res = ref resources[count - 1];
-        res.Handle = new ResourceHandle<TResource>(id, count, resource.Hash);
+        ref var res = ref resources[idx];
+        res.Handle = new ResourceHandle<TResource>(id, idx, resource.Hash);
         return res.Handle;
     }
 

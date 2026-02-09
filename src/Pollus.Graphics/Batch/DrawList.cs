@@ -26,7 +26,7 @@ public class DrawList
 
     public void Clear()
     {
-        foreach (var command in commands) command.Clear();
+        for (int i = 0; i < count; i++) commands[i].Clear();
         count = 0;
     }
 }

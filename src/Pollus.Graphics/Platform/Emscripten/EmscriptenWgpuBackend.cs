@@ -547,6 +547,10 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             native.Vertex = v;
         }
 
+        var targets = stackalloc Pollus.Emscripten.WGPU.WGPUColorTargetState[8];
+        var blends = stackalloc Pollus.Emscripten.WGPU.WGPUBlendState[8];
+        int targetsCount = 0;
+        int blendsCount = 0;
         if (descriptor.FragmentState is FragmentState fragmentState)
         {
             var entry = pins.PinString(fragmentState.EntryPoint);
@@ -579,12 +583,13 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
 
             if (fragmentState.ColorTargets is ColorTargetState[] colorTargets && colorTargets.Length > 0)
             {
-                var targets = stackalloc Pollus.Emscripten.WGPU.WGPUColorTargetState[colorTargets.Length];
-                var blends = stackalloc Pollus.Emscripten.WGPU.WGPUBlendState[colorTargets.Length];
                 for (int i = 0; i < colorTargets.Length; i++)
                 {
+                    var targetIdx = targetsCount++;
+                    var blendIdx = blendsCount++;
+
                     var ct = colorTargets[i];
-                    targets[i] = new Pollus.Emscripten.WGPU.WGPUColorTargetState
+                    targets[targetIdx] = new Pollus.Emscripten.WGPU.WGPUColorTargetState
                     {
                         NextInChain = null,
                         Format = (Pollus.Emscripten.WGPU.WGPUTextureFormat)ct.Format,
@@ -593,7 +598,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                     };
                     if (ct.Blend is BlendState b)
                     {
-                        blends[i] = new Pollus.Emscripten.WGPU.WGPUBlendState
+                        blends[blendIdx] = new Pollus.Emscripten.WGPU.WGPUBlendState
                         {
                             Color = new Pollus.Emscripten.WGPU.WGPUBlendComponent
                             {
@@ -608,7 +613,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                                 DstFactor = Map(b.Alpha.DstFactor)
                             }
                         };
-                        targets[i].Blend = &blends[i];
+                        targets[targetIdx].Blend = &blends[blendIdx];
                     }
                 }
 
@@ -619,9 +624,10 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             native.Fragment = &f;
         }
 
+        Pollus.Emscripten.WGPU.WGPUDepthStencilState depthStencilStateTmp;
         if (descriptor.DepthStencilState is DepthStencilState ds)
         {
-            var temp = new Pollus.Emscripten.WGPU.WGPUDepthStencilState
+            depthStencilStateTmp = new Pollus.Emscripten.WGPU.WGPUDepthStencilState
             {
                 NextInChain = null,
                 Format = (Pollus.Emscripten.WGPU.WGPUTextureFormat)ds.Format,
@@ -647,7 +653,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 DepthBiasSlopeScale = ds.DepthBiasSlopeScale,
                 DepthBiasClamp = ds.DepthBiasClamp
             };
-            native.DepthStencil = &temp;
+            native.DepthStencil = &depthStencilStateTmp;
         }
 
         if (descriptor.MultisampleState is MultisampleState ms)

@@ -93,6 +93,8 @@ public struct ComputeCommands : IDisposable
                     DispatchCommand dispatchCommand = ReadCommand<DispatchCommand>(ref offset);
                     dispatchCommand.Apply(computePassEncoder, renderAssets);
                     break;
+                default:
+                    throw new NotImplementedException($"Unknown command type: {type}");
             }
         }
     }

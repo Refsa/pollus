@@ -63,6 +63,7 @@ public record struct Draw
     {
         Pipeline = Handle<GPURenderPipeline>.Null;
         IndexBuffer = Handle<GPUBuffer>.Null;
+        ScissorRect = null;
         IndexCount = 0;
         IndexOffset = 0;
         VertexCount = 0;

@@ -12,7 +12,7 @@ public interface IGPUResource<TResource, TDescriptor>
     public ResourceHandle Handle { get; set; }
 }
 
-public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>
+public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>, IDisposable
 {
     public int Hash { get; set; }
     public ResourceHandle Handle { get; set; }
@@ -28,9 +28,15 @@ public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>
         Descriptor = descriptor;
         Hash = descriptor.GetHashCode();
     }
+
+    public void Dispose()
+    {
+        Resource?.Dispose();
+        TextureView.Dispose();
+    }
 }
 
-public struct BufferGPUResource : IGPUResource<GPUBuffer, BufferDescriptor>
+public struct BufferGPUResource : IGPUResource<GPUBuffer, BufferDescriptor>, IDisposable
 {
     public int Hash { get; set; }
     public ResourceHandle Handle { get; set; }
@@ -42,6 +48,11 @@ public struct BufferGPUResource : IGPUResource<GPUBuffer, BufferDescriptor>
         Resource = resource;
         Descriptor = descriptor;
         Hash = descriptor.GetHashCode();
+    }
+
+    public void Dispose()
+    {
+        Resource?.Dispose();
     }
 }
 
@@ -66,11 +77,11 @@ public class RenderResourceCache
     {
         foreach (scoped ref var texture in textures.AsSpan())
         {
-            texture.Resource?.Dispose();
+            texture.Dispose();
         }
         foreach (scoped ref var buffer in buffers.AsSpan())
         {
-            buffer.Resource?.Dispose();
+            buffer.Dispose();
         }
         textures.Clear();
         buffers.Clear();
@@ -81,24 +92,26 @@ public class RenderResourceCache
     {
         if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
 
-        textures[meta.Index].Resource?.Dispose();
-        textures.RemoveAt(meta.Index);
-        lookup.Remove(handle);
+        textures[meta.Index].Dispose();
+        RemoveTexture(handle);
     }
 
     public void ReleaseBuffer(ResourceHandle handle)
     {
         if (!lookup.TryGetValue(handle, out var meta)) throw new Exception("Resource not found");
 
-        buffers[meta.Index].Resource?.Dispose();
-        buffers.RemoveAt(meta.Index);
-        lookup.Remove(handle);
+        buffers[meta.Index].Dispose();
+        RemoveBuffer(handle);
     }
 
     public ResourceHandle SetTexture(ResourceHandle handle, TextureGPUResource resource)
     {
         if (lookup.TryGetValue(handle, out var meta))
         {
+            if (textures[meta.Index].Handle.Type != ResourceType.Unknown)
+            {
+                textures[meta.Index].Dispose();
+            }
             textures[meta.Index] = resource;
         }
         else
@@ -121,6 +134,10 @@ public class RenderResourceCache
     {
         if (lookup.TryGetValue(handle, out var meta))
         {
+            if (buffers[meta.Index].Handle.Type != ResourceType.Unknown)
+            {
+                buffers[meta.Index].Dispose();
+            }
             buffers[meta.Index] = resource;
         }
         else

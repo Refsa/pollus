@@ -50,6 +50,7 @@ public class ShapeBatches : RenderBatches<ShapeBatch, ShapeBatchKey>
     public override Draw GetDrawCall(int batchID, int start, int count, IRenderAssets renderAssets)
     {
         var batch = GetBatch(batchID);
+        if (!batch.HasRequiredResources(renderAssets)) return Draw.Empty;
         var material = renderAssets.Get<MaterialRenderData>(batch.Material);
         var shape = renderAssets.Get<ShapeRenderData>(batch.Shape);
 
