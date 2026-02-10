@@ -228,6 +228,118 @@ public class UILayoutSystemTests
     }
 
     [Fact]
+    public void PaddedRoot_ChildFillsInnerArea_NoOverflow()
+    {
+        // A flex-grow child in a padded root should fill exactly the
+        // content area: its right/bottom edge should stop at
+        // (parent.Size - parent.PaddingRight/Bottom).
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                FlexDirection = FlexDirection.Column,
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(16), LengthPercentage.Px(16),
+                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } }
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var rootC = world.Store.GetComponent<ComputedNode>(root);
+        var childC = world.Store.GetComponent<ComputedNode>(child);
+
+        // Child position already includes parent padding (flex convention)
+        Assert.Equal(16f, childC.Position.X);
+        Assert.Equal(16f, childC.Position.Y);
+
+        // Child fills exactly the inner area — no overflow
+        float childRightEdge = childC.Position.X + childC.Size.X;
+        float childBottomEdge = childC.Position.Y + childC.Size.Y;
+        Assert.Equal(rootC.Size.X - 16f, childRightEdge);
+        Assert.Equal(rootC.Size.Y - 16f, childBottomEdge);
+
+        // Absolute screen position = parentPos + childPos (no contentOffset)
+        // because the flex layout already includes parent padding in Position.
+        Vec2f rootAbsPos = new(rootC.Position.X, rootC.Position.Y);
+        Vec2f childAbsScreen = rootAbsPos + new Vec2f(childC.Position.X, childC.Position.Y);
+        Assert.Equal(16f, childAbsScreen.X);
+        Assert.Equal(16f, childAbsScreen.Y);
+    }
+
+    [Fact]
+    public void NestedPadding_AbsolutePositionAccountsForAllLevels()
+    {
+        // For nested containers, each child's Position includes its
+        // direct parent's padding.  Absolute screen position is computed
+        // by summing positions up the tree — no extra contentOffset.
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(10), LengthPercentage.Px(10),
+                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(400, 300) }
+        )).Entity;
+
+        var container = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(8), LengthPercentage.Px(8),
+                    LengthPercentage.Px(8), LengthPercentage.Px(8)),
+            }}
+        )).Entity;
+
+        var leaf = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, container);
+        commands.AddChild(container, leaf);
+        world.Update();
+
+        var rootC = world.Store.GetComponent<ComputedNode>(root);
+        var containerC = world.Store.GetComponent<ComputedNode>(container);
+        var leafC = world.Store.GetComponent<ComputedNode>(leaf);
+
+        // Container is offset by root's padding
+        Assert.Equal(10f, containerC.Position.X);
+        Assert.Equal(10f, containerC.Position.Y);
+
+        // Leaf is offset by container's padding
+        Assert.Equal(8f, leafC.Position.X);
+        Assert.Equal(8f, leafC.Position.Y);
+
+        // Absolute screen position = sum of all Position values up the tree
+        float leafAbsX = rootC.Position.X + containerC.Position.X + leafC.Position.X;
+        float leafAbsY = rootC.Position.Y + containerC.Position.Y + leafC.Position.Y;
+        Assert.Equal(18f, leafAbsX);  // 0 + 10 + 8
+        Assert.Equal(18f, leafAbsY);  // 0 + 10 + 8
+    }
+
+    [Fact]
     public void NestedHierarchy_PositionsCorrect()
     {
         using var world = CreateWorld();
@@ -328,6 +440,175 @@ public class UILayoutSystemTests
         world.Update();
 
         Assert.Equal(400f, world.Store.GetComponent<ComputedNode>(child).Size.X);
+    }
+
+    [Fact]
+    public void RootWithPadding_OuterSizeEqualsViewport()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(16), LengthPercentage.Px(16),
+                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        world.Update();
+
+        var computed = world.Store.GetComponent<ComputedNode>(root);
+        Assert.Equal(800f, computed.Size.X);
+        Assert.Equal(600f, computed.Size.Y);
+    }
+
+    [Fact]
+    public void RootWithPadding_FlexGrowChildFillsInnerSpace()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(20), LengthPercentage.Px(20),
+                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(400, 300) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } }
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var childComputed = world.Store.GetComponent<ComputedNode>(child);
+        // Inner width = 400 - 20 - 20 = 360
+        Assert.Equal(360f, childComputed.Size.X);
+        // Inner height = 300 - 10 - 10 = 280
+        Assert.Equal(280f, childComputed.Size.Y);
+    }
+
+    [Fact]
+    public void RootWithPaddingAndBorder_OuterSizeEqualsViewport()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(10), LengthPercentage.Px(10),
+                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
+                Border = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(2), LengthPercentage.Px(2),
+                    LengthPercentage.Px(2), LengthPercentage.Px(2)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(500, 400) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } }
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var rootComputed = world.Store.GetComponent<ComputedNode>(root);
+        Assert.Equal(500f, rootComputed.Size.X);
+        Assert.Equal(400f, rootComputed.Size.Y);
+
+        var childComputed = world.Store.GetComponent<ComputedNode>(child);
+        // Inner = 500 - 2*10 - 2*2 = 476
+        Assert.Equal(476f, childComputed.Size.X);
+        // Inner = 400 - 2*10 - 2*2 = 376
+        Assert.Equal(376f, childComputed.Size.Y);
+    }
+
+    [Fact]
+    public void RootContentBox_PaddingAddsToOuterSize()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                BoxSizing = BoxSizing.ContentBox,
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(20), LengthPercentage.Px(20),
+                    LengthPercentage.Px(20), LengthPercentage.Px(20)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(400, 300) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } }
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var rootComputed = world.Store.GetComponent<ComputedNode>(root);
+        // Content-box: outer = viewport + padding = 400+40, 300+40
+        Assert.Equal(440f, rootComputed.Size.X);
+        Assert.Equal(340f, rootComputed.Size.Y);
+
+        var childComputed = world.Store.GetComponent<ComputedNode>(child);
+        // Inner content area = full viewport dimensions
+        Assert.Equal(400f, childComputed.Size.X);
+        Assert.Equal(300f, childComputed.Size.Y);
+    }
+
+    [Fact]
+    public void ViewportResize_WithPaddedRoot_RelayoutsCorrectly()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Padding = new Rect<LengthPercentage>(
+                    LengthPercentage.Px(16), LengthPercentage.Px(16),
+                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+            }},
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } }
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        Assert.Equal(800f, world.Store.GetComponent<ComputedNode>(root).Size.X);
+        Assert.Equal(768f, world.Store.GetComponent<ComputedNode>(child).Size.X);
+
+        // Resize viewport
+        ref var layoutRoot = ref world.Store.GetComponent<UILayoutRoot>(root);
+        layoutRoot.Size = new Size<float>(400, 300);
+        world.Update();
+
+        Assert.Equal(400f, world.Store.GetComponent<ComputedNode>(root).Size.X);
+        Assert.Equal(368f, world.Store.GetComponent<ComputedNode>(child).Size.X);
     }
 
     [Fact]
