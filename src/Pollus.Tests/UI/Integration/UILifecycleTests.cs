@@ -128,6 +128,45 @@ public class UILifecycleTests
     }
 
     [Fact]
+    public void StyleChange_AfterAddedFlagExpires_StillRelayouts()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+            }}
+        )).Entity;
+        commands.AddChild(root, child);
+
+        // Burn through frames until Added flag expires (2-tick window)
+        world.Update();
+        world.Update();
+        world.Update();
+        world.Update();
+        Assert.Equal(100f, world.Store.GetComponent<ComputedNode>(child).Size.X);
+
+        // Modify style via ref mutation (does NOT set ECS Changed flag)
+        ref var style = ref world.Store.GetComponent<UIStyle>(child);
+        style.Value = LayoutStyle.Default with
+        {
+            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(80)),
+        };
+        world.Update();
+
+        var computed = world.Store.GetComponent<ComputedNode>(child);
+        Assert.Equal(200f, computed.Size.X);
+        Assert.Equal(80f, computed.Size.Y);
+    }
+
+    [Fact]
     public void EmptyTree_NoCrash()
     {
         using var world = CreateWorld();
@@ -166,12 +205,11 @@ public class UILifecycleTests
 
         Assert.Equal(100f, world.Store.GetComponent<ComputedNode>(child2).Position.X);
 
-        // Despawn child1
+        // Remove child1 from hierarchy (fixes linked list), then despawn.
+        // RemoveChild (priority 19) executes before Despawn (priority 0).
         commands = world.GetCommands();
+        commands.RemoveChild(root, child1);
         commands.Despawn(child1);
-        // Two updates needed: first flushes despawn + hierarchy cleanup at Last stage,
-        // second SyncTree sees the cleaned-up hierarchy
-        world.Update();
         world.Update();
 
         var c2 = world.Store.GetComponent<ComputedNode>(child2);

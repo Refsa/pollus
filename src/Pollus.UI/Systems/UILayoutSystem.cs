@@ -31,6 +31,12 @@ public static class UILayoutSystem
                 float width = layoutRoot.Size.Width;
                 float height = layoutRoot.Size.Height;
 
+                // Check for viewport resize — marks entire subtree dirty
+                if (adapter.CheckAndUpdateRootSize(rootEntity, layoutRoot.Size))
+                {
+                    adapter.MarkSubtreeDirty(rootNodeId);
+                }
+
                 var input = new LayoutInput
                 {
                     RunMode = RunMode.PerformLayout,

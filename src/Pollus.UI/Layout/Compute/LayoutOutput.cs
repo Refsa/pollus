@@ -5,6 +5,7 @@ public record struct LayoutOutput
     public Size<float> Size;
     public Size<float> ContentSize;
     public Point<float?> FirstBaselines;
+    public Size<float> ScrollbarSize;
 
     public static readonly LayoutOutput Zero = default;
 
