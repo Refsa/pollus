@@ -37,12 +37,24 @@ public static class UILayoutSystem
                     adapter.MarkSubtreeDirty(rootNodeId);
                 }
 
+                // KnownDimensions is treated as the inner (content) size by
+                // the flex algorithm.  For border-box roots we must subtract
+                // padding+border so the outer size equals the viewport.
+                ref readonly var rootStyle = ref adapter.GetStyle(rootNodeId);
+                var parentSz = new Size<float?>(width, height);
+                var adj = LayoutHelpers.ContentBoxAdjustment(
+                    rootStyle.BoxSizing,
+                    LayoutHelpers.ResolvePadding(rootStyle, parentSz),
+                    LayoutHelpers.ResolveBorder(rootStyle, parentSz));
+                float innerW = width + (adj.Width ?? 0f);
+                float innerH = height + (adj.Height ?? 0f);
+
                 var input = new LayoutInput
                 {
                     RunMode = RunMode.PerformLayout,
                     SizingMode = SizingMode.InherentSize,
                     Axis = RequestedAxis.Both,
-                    KnownDimensions = new Size<float?>(width, height),
+                    KnownDimensions = new Size<float?>(innerW, innerH),
                     ParentSize = new Size<float?>(width, height),
                     AvailableSpace = new Size<AvailableSpace>(
                         AvailableSpace.Definite(width),
@@ -52,17 +64,21 @@ public static class UILayoutSystem
 
                 var output = adapter.ComputeChildLayout(rootNodeId, input);
 
-                ref var rootLayout = ref adapter.GetLayout(rootNodeId);
-                rootLayout.Size = output.Size;
-                rootLayout.ContentSize = output.ContentSize;
+                // ComputeFlexbox doesn't write the root's own layout — resolve here.
+                var rootPadding = LayoutHelpers.ResolvePadding(rootStyle, parentSz);
+                var rootBorder = LayoutHelpers.ResolveBorder(rootStyle, parentSz);
 
-                // ComputeFlexbox returns root size but doesn't write its own
-                // padding/border/margin — resolve them here for WriteBack.
-                ref readonly var rootStyle = ref adapter.GetStyle(rootNodeId);
-                var parentSize = new Size<float?>(width, height);
-                rootLayout.Padding = LayoutHelpers.ResolvePadding(rootStyle, parentSize);
-                rootLayout.Border = LayoutHelpers.ResolveBorder(rootStyle, parentSize);
-                rootLayout.Margin = LayoutHelpers.ResolveMargin(rootStyle, parentSize);
+                ref var rootLayout = ref adapter.GetLayout(rootNodeId);
+                // The root outer size = inner + padding + border.  We compute
+                // this explicitly because the empty-node path in FlexLayout
+                // returns the inner (KnownDimensions) value, not the outer.
+                rootLayout.Size = new Size<float>(
+                    innerW + rootPadding.HorizontalAxisSum() + rootBorder.HorizontalAxisSum(),
+                    innerH + rootPadding.VerticalAxisSum() + rootBorder.VerticalAxisSum());
+                rootLayout.ContentSize = output.ContentSize;
+                rootLayout.Padding = rootPadding;
+                rootLayout.Border = rootBorder;
+                rootLayout.Margin = LayoutHelpers.ResolveMargin(rootStyle, parentSz);
 
                 // Snapshot unrounded layout before RoundLayout modifies it
                 adapter.GetUnroundedLayout(rootNodeId) = rootLayout;

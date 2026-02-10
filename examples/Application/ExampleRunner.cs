@@ -38,6 +38,7 @@ public static class ExampleRunner
             Log.Info("  render-order");
             Log.Info("  sprite-material");
             Log.Info("  sprite-animation");
+            Log.Info("  ui-rect");
             return;
         }
 
@@ -71,6 +72,7 @@ public static class ExampleRunner
             "render-order" => new RenderOrderExample(),
             "sprite-material" => new SpriteMaterialExample(),
             "sprite-animation" => new SpriteAnimationExample(),
+            "ui-rect" => new UIRectExample(),
             _ => null
         };
 

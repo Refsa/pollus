@@ -84,12 +84,23 @@ public class TestLayoutTree : ILayoutTree
     /// Convenience: compute layout for root and return results.
     public NodeLayout ComputeRoot(int rootId, float width, float height)
     {
+        // Subtract padding+border for border-box roots so the outer size
+        // equals the requested dimensions (mirrors UILayoutSystem logic).
+        ref readonly var rootStyle = ref GetStyle(rootId);
+        var parentSz = new Size<float?>(width, height);
+        var adj = LayoutHelpers.ContentBoxAdjustment(
+            rootStyle.BoxSizing,
+            LayoutHelpers.ResolvePadding(rootStyle, parentSz),
+            LayoutHelpers.ResolveBorder(rootStyle, parentSz));
+        float innerW = width + (adj.Width ?? 0f);
+        float innerH = height + (adj.Height ?? 0f);
+
         var input = new LayoutInput
         {
             RunMode = RunMode.PerformLayout,
             SizingMode = SizingMode.InherentSize,
             Axis = RequestedAxis.Both,
-            KnownDimensions = new Size<float?>(width, height),
+            KnownDimensions = new Size<float?>(innerW, innerH),
             ParentSize = new Size<float?>(width, height),
             AvailableSpace = new Size<AvailableSpace>(
                 AvailableSpace.Definite(width),
@@ -98,10 +109,17 @@ public class TestLayoutTree : ILayoutTree
         };
         var self = this;
         var output = FlexLayout.ComputeFlexbox(ref self, rootId, input);
+
         // Write root layout (ComputeFlexbox writes children, not itself)
+        var rootPadding = LayoutHelpers.ResolvePadding(rootStyle, parentSz);
+        var rootBorder = LayoutHelpers.ResolveBorder(rootStyle, parentSz);
         ref var rootLayout = ref GetLayout(rootId);
-        rootLayout.Size = output.Size;
+        rootLayout.Size = new Size<float>(
+            innerW + rootPadding.HorizontalAxisSum() + rootBorder.HorizontalAxisSum(),
+            innerH + rootPadding.VerticalAxisSum() + rootBorder.VerticalAxisSum());
         rootLayout.ContentSize = output.ContentSize;
+        rootLayout.Padding = rootPadding;
+        rootLayout.Border = rootBorder;
         rootLayout.ScrollbarSize = output.ScrollbarSize;
         return rootLayout;
     }
