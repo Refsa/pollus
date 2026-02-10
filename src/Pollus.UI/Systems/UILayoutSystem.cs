@@ -37,8 +37,6 @@ public static class UILayoutSystem
                     adapter.MarkSubtreeDirty(rootNodeId);
                 }
 
-                // KnownDimensions is treated as the inner (content) size by
-                // the flex algorithm.  For border-box roots we must subtract
                 // padding+border so the outer size equals the viewport.
                 ref readonly var rootStyle = ref adapter.GetStyle(rootNodeId);
                 var parentSz = new Size<float?>(width, height);
@@ -69,9 +67,6 @@ public static class UILayoutSystem
                 var rootBorder = LayoutHelpers.ResolveBorder(rootStyle, parentSz);
 
                 ref var rootLayout = ref adapter.GetLayout(rootNodeId);
-                // The root outer size = inner + padding + border.  We compute
-                // this explicitly because the empty-node path in FlexLayout
-                // returns the inner (KnownDimensions) value, not the outer.
                 rootLayout.Size = new Size<float>(
                     innerW + rootPadding.HorizontalAxisSum() + rootBorder.HorizontalAxisSum(),
                     innerH + rootPadding.VerticalAxisSum() + rootBorder.VerticalAxisSum());
