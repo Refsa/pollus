@@ -5,6 +5,7 @@ using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
+using Pollus.Engine.UI;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.UI;
@@ -24,6 +25,7 @@ public class UIRectExample : IExample
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
             new UIRenderPlugin(),
+            new UIWidgetPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",
             static (Commands commands, Resources resources, AssetServer assetServer, Assets<UIRectMaterial> materials, IWindow window) =>
@@ -90,7 +92,7 @@ public class UIRectExample : IExample
                     }
                 )).Entity;
 
-                // Sidebar
+                // Sidebar with interactive buttons
                 var sidebar = commands.Spawn(Entity.With(
                     new UINode(),
                     new UIStyle
@@ -99,14 +101,72 @@ public class UIRectExample : IExample
                         {
                             Size = new Size<Dimension>(Dimension.Px(200), Dimension.Auto),
                             FlexGrow = 0f,
+                            FlexDirection = FlexDirection.Column,
                             Padding = new Rect<LengthPercentage>(
                                 LengthPercentage.Px(12), LengthPercentage.Px(12),
                                 LengthPercentage.Px(12), LengthPercentage.Px(12)),
+                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
                         }
                     },
                     new BackgroundColor { Color = new Color(0.18f, 0.18f, 0.22f, 1f) },
                     new BorderRadius { TopLeft = 8, TopRight = 8, BottomLeft = 8, BottomRight = 8 }
                 )).Entity;
+
+                // Sidebar buttons - hover/press to see color change
+                string[] buttonLabels = ["Dashboard", "Settings", "Profile"];
+                for (int i = 0; i < buttonLabels.Length; i++)
+                {
+                    var btn = commands.Spawn(Entity.With(
+                        new UINode(),
+                        new UIInteraction { Focusable = true },
+                        new UIButton
+                        {
+                            NormalColor = new Color(0.25f, 0.25f, 0.30f, 1f),
+                            HoverColor = new Color(0.30f, 0.35f, 0.50f, 1f),
+                            PressedColor = new Color(0.20f, 0.25f, 0.45f, 1f),
+                            DisabledColor = new Color(0.20f, 0.20f, 0.22f, 0.5f),
+                        },
+                        new BackgroundColor { Color = new Color(0.25f, 0.25f, 0.30f, 1f) },
+                        new UIStyle
+                        {
+                            Value = LayoutStyle.Default with
+                            {
+                                Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+                                Padding = new Rect<LengthPercentage>(
+                                    LengthPercentage.Px(12), LengthPercentage.Px(12),
+                                    LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            }
+                        },
+                        new BorderRadius { TopLeft = 6, TopRight = 6, BottomLeft = 6, BottomRight = 6 }
+                    )).Entity;
+
+                    commands.Entity(sidebar).AddChild(btn);
+                }
+
+                // Toggle in sidebar
+                var toggle = commands.Spawn(Entity.With(
+                    new UINode(),
+                    new UIInteraction { Focusable = true },
+                    new UIToggle
+                    {
+                        IsOn = false,
+                        OnColor = new Color(0.2f, 0.7f, 0.3f, 1f),
+                        OffColor = new Color(0.4f, 0.2f, 0.2f, 1f),
+                    },
+                    new BackgroundColor { Color = new Color(0.4f, 0.2f, 0.2f, 1f) },
+                    new UIStyle
+                    {
+                        Value = LayoutStyle.Default with
+                        {
+                            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+                            Padding = new Rect<LengthPercentage>(
+                                LengthPercentage.Px(12), LengthPercentage.Px(12),
+                                LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                        }
+                    },
+                    new BorderRadius { TopLeft = 6, TopRight = 6, BottomLeft = 6, BottomRight = 6 }
+                )).Entity;
+                commands.Entity(sidebar).AddChild(toggle);
 
                 // Main panel with border
                 var mainPanel = commands.Spawn(Entity.With(
@@ -138,7 +198,7 @@ public class UIRectExample : IExample
                     new BorderRadius { TopLeft = 12, TopRight = 12, BottomLeft = 12, BottomRight = 12 }
                 )).Entity;
 
-                // Cards inside main panel
+                // Interactive cards - hover/press to see color feedback
                 Color[] cardColors =
                 [
                     new(0.9f, 0.3f, 0.3f, 1f),
@@ -149,8 +209,26 @@ public class UIRectExample : IExample
 
                 for (int i = 0; i < 3; i++)
                 {
+                    var baseColor = new Color(0.2f, 0.2f, 0.25f, 1f);
                     var card = commands.Spawn(Entity.With(
                         new UINode(),
+                        new UIInteraction { Focusable = true },
+                        new UIButton
+                        {
+                            NormalColor = baseColor,
+                            HoverColor = new Color(
+                                baseColor.R * 0.7f + cardColors[i].R * 0.3f,
+                                baseColor.G * 0.7f + cardColors[i].G * 0.3f,
+                                baseColor.B * 0.7f + cardColors[i].B * 0.3f,
+                                1f),
+                            PressedColor = new Color(
+                                cardColors[i].R * 0.6f,
+                                cardColors[i].G * 0.6f,
+                                cardColors[i].B * 0.6f,
+                                1f),
+                            DisabledColor = new Color(0.15f, 0.15f, 0.15f, 0.5f),
+                        },
+                        new BackgroundColor { Color = baseColor },
                         new UIStyle
                         {
                             Value = LayoutStyle.Default with
@@ -161,7 +239,6 @@ public class UIRectExample : IExample
                                     LengthPercentage.Px(2), LengthPercentage.Px(2)),
                             }
                         },
-                        new BackgroundColor { Color = new Color(0.2f, 0.2f, 0.25f, 1f) },
                         new BorderColor
                         {
                             Top = cardColors[i],

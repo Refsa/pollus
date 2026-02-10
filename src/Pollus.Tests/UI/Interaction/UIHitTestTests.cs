@@ -1,0 +1,364 @@
+using Pollus.ECS;
+using Pollus.Engine.UI;
+using Pollus.Mathematics;
+using Pollus.UI;
+using Pollus.UI.Layout;
+using LayoutStyle = Pollus.UI.Layout.Style;
+
+namespace Pollus.Tests.UI.Interaction;
+
+public class UIHitTestTests
+{
+    static World CreateWorld()
+    {
+        var world = new World();
+        world.AddPlugin(new UIPlugin(), addDependencies: true);
+        world.Resources.Add(new UIHitTestResult());
+        world.Resources.Add(new UIFocusState());
+        world.Prepare();
+        return world;
+    }
+
+    [Fact]
+    public void MouseOverSingleNode_HoveredEntitySet()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        // Child at (0,0) size 200x100 (flex row, first child)
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+
+        Assert.Equal(child, hitResult.HoveredEntity);
+    }
+
+    [Fact]
+    public void MouseOutsideAllNodes_HoveredEntityIsNull()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
+
+        Assert.True(hitResult.HoveredEntity.IsNull);
+    }
+
+    [Fact]
+    public void OverlappingSiblings_LastSiblingWins()
+    {
+        // Use absolute positioning so both siblings overlap at origin
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        // First sibling: 200x200 at origin
+        var sibling1 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+                Position = Position.Absolute,
+                Inset = new Rect<LengthPercentageAuto>(
+                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto,
+                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto
+                ),
+            }}
+        )).Entity;
+
+        // Second sibling: 200x200 at origin (overlaps first)
+        var sibling2 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+                Position = Position.Absolute,
+                Inset = new Rect<LengthPercentageAuto>(
+                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto,
+                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto
+                ),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, sibling1);
+        commands.AddChild(root, sibling2);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+
+        // Last sibling in DFS order (painter's order) wins
+        Assert.Equal(sibling2, hitResult.HoveredEntity);
+    }
+
+    [Fact]
+    public void NestedChild_ChildWinsOverParent()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var parent = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+            }}
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, parent);
+        commands.AddChild(parent, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+
+        Assert.Equal(child, hitResult.HoveredEntity);
+    }
+
+    [Fact]
+    public void DisabledNode_NotHittable()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { State = InteractionState.Disabled },
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+
+        Assert.True(hitResult.HoveredEntity.IsNull);
+    }
+
+    [Fact]
+    public void NodeWithoutUIInteraction_Ignored()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        // No UIInteraction component
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+
+        Assert.True(hitResult.HoveredEntity.IsNull);
+    }
+
+    [Fact]
+    public void ZeroSizeNode_Ignored()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(0), Dimension.Px(0)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(0, 0));
+
+        Assert.True(hitResult.HoveredEntity.IsNull);
+    }
+
+    [Fact]
+    public void FocusableEntities_CollectedInFocusOrder()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexDirection = FlexDirection.Column } },
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child1 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { Focusable = true },
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+        )).Entity;
+
+        var child2 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { Focusable = true },
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+        )).Entity;
+
+        var child3 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { Focusable = false },
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+        )).Entity;
+
+        commands.AddChild(root, child1);
+        commands.AddChild(root, child2);
+        commands.AddChild(root, child3);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, Vec2f.Zero);
+
+        Assert.Equal(2, focusState.FocusOrder.Count);
+        Assert.Contains(child1, focusState.FocusOrder);
+        Assert.Contains(child2, focusState.FocusOrder);
+        Assert.DoesNotContain(child3, focusState.FocusOrder);
+    }
+
+    [Fact]
+    public void PreviousHoveredEntity_TrackedCorrectly()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        // First hit: hover child
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
+        Assert.Equal(child, hitResult.HoveredEntity);
+
+        // Second hit: move outside
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
+        Assert.True(hitResult.HoveredEntity.IsNull);
+        Assert.Equal(child, hitResult.PreviousHoveredEntity);
+    }
+}
