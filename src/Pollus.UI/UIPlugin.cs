@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 
@@ -9,6 +10,10 @@ public class UIPlugin : IPlugin
 
     public void Apply(World world)
     {
+        // Force ContentSize static constructor before systems access it
+        // through Lookup<T>, avoiding circular static initialization.
+        RuntimeHelpers.RunClassConstructor(typeof(ContentSize).TypeHandle);
+
         world.Resources.Add(new UITreeAdapter());
 
         world.Schedule.AddSystems(CoreStage.PostUpdate,

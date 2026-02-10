@@ -11,6 +11,7 @@ public class TestLayoutTree : ILayoutTree
     private readonly List<NodeLayout> _layouts = [];
     private readonly List<bool> _hasMeasure = [];
     private readonly List<Func<LayoutInput, LayoutOutput>?> _measureFuncs = [];
+    private readonly List<LayoutCache> _caches = [];
 
     public int AddNode(LayoutStyle style)
     {
@@ -20,6 +21,7 @@ public class TestLayoutTree : ILayoutTree
         _layouts.Add(NodeLayout.Zero);
         _hasMeasure.Add(false);
         _measureFuncs.Add(null);
+        _caches.Add(new LayoutCache());
         return id;
     }
 
@@ -70,6 +72,15 @@ public class TestLayoutTree : ILayoutTree
     public LayoutOutput Measure(int nodeId, in LayoutInput input) =>
         _measureFuncs[nodeId]?.Invoke(input) ?? LayoutOutput.Zero;
 
+    public bool TryCacheGet(int nodeId, in LayoutInput input, out LayoutOutput output)
+        => _caches[nodeId].TryGet(in input, out output);
+
+    public void CacheStore(int nodeId, in LayoutInput input, in LayoutOutput output)
+        => _caches[nodeId].Store(in input, in output);
+
+    public void MarkDirty(int nodeId)
+        => _caches[nodeId].Clear();
+
     /// Convenience: compute layout for root and return results.
     public NodeLayout ComputeRoot(int rootId, float width, float height)
     {
@@ -91,6 +102,7 @@ public class TestLayoutTree : ILayoutTree
         ref var rootLayout = ref GetLayout(rootId);
         rootLayout.Size = output.Size;
         rootLayout.ContentSize = output.ContentSize;
+        rootLayout.ScrollbarSize = output.ScrollbarSize;
         return rootLayout;
     }
 

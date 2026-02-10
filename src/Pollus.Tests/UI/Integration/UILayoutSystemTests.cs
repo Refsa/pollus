@@ -1,6 +1,7 @@
 using Pollus.ECS;
 using Pollus.UI;
 using Pollus.UI.Layout;
+using Pollus.Mathematics;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
 namespace Pollus.Tests.UI.Integration;
@@ -327,5 +328,140 @@ public class UILayoutSystemTests
         world.Update();
 
         Assert.Equal(400f, world.Store.GetComponent<ComputedNode>(child).Size.X);
+    }
+
+    [Fact]
+    public void ContentSize_LeafUsesIntrinsicMeasurement()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+        var adapter = world.Resources.Get<UITreeAdapter>();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                AlignItems = AlignItems.FlexStart,
+            }},
+            new UILayoutRoot { Size = new Size<float>(400, 300) }
+        )).Entity;
+
+        var leaf = commands.Spawn(Entity.With(
+            new UINode(),
+            new ContentSize()
+        )).Entity;
+
+        commands.AddChild(root, leaf);
+
+        adapter.SetMeasureFunc(leaf, (known, avail) =>
+            new Size<float>(120, 30));
+
+        world.Update();
+
+        var computed = world.Store.GetComponent<ComputedNode>(leaf);
+        Assert.Equal(120f, computed.Size.X);
+        Assert.Equal(30f, computed.Size.Y);
+    }
+
+    [Fact]
+    public void ContentSize_WithFlexGrow_ExpandsBeyondIntrinsic()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+        var adapter = world.Resources.Get<UITreeAdapter>();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                FlexDirection = FlexDirection.Row,
+                AlignItems = AlignItems.FlexStart,
+            }},
+            new UILayoutRoot { Size = new Size<float>(400, 200) }
+        )).Entity;
+
+        var measured = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexGrow = 1f } },
+            new ContentSize()
+        )).Entity;
+
+        var fixedChild = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto),
+            }}
+        )).Entity;
+
+        commands.AddChild(root, measured);
+        commands.AddChild(root, fixedChild);
+
+        adapter.SetMeasureFunc(measured, (known, avail) =>
+            new Size<float>(50, 25));
+
+        world.Update();
+
+        var measuredComputed = world.Store.GetComponent<ComputedNode>(measured);
+        // Intrinsic 50, fixed 100, remaining 250 → measured gets 300
+        Assert.Equal(300f, measuredComputed.Size.X);
+    }
+
+    [Fact]
+    public void ContentSize_TextWrapping_HeightDependsOnWidth()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+        var adapter = world.Resources.Get<UITreeAdapter>();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { FlexDirection = FlexDirection.Column } },
+            new UILayoutRoot { Size = new Size<float>(200, 400) }
+        )).Entity;
+
+        var text = commands.Spawn(Entity.With(
+            new UINode(),
+            new ContentSize()
+        )).Entity;
+
+        commands.AddChild(root, text);
+
+        // Simulate 500px of text content at 20px line height
+        adapter.SetMeasureFunc(text, (known, avail) =>
+        {
+            float w = known.Width ?? avail.Width.UnwrapOr(float.MaxValue);
+            float lines = MathF.Ceiling(500f / w);
+            return new Size<float>(MathF.Min(500f, w), lines * 20f);
+        });
+
+        world.Update();
+
+        var computed = world.Store.GetComponent<ComputedNode>(text);
+        Assert.Equal(200f, computed.Size.X);
+        Assert.Equal(60f, computed.Size.Y); // 500/200 = 3 lines * 20 = 60
+    }
+
+    [Fact]
+    public void ContentSize_WithoutMeasureFunc_SizesAsEmpty()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(400, 300) }
+        )).Entity;
+
+        var leaf = commands.Spawn(Entity.With(
+            new UINode(),
+            new ContentSize()
+        )).Entity;
+
+        commands.AddChild(root, leaf);
+        world.Update();
+
+        var computed = world.Store.GetComponent<ComputedNode>(leaf);
+        Assert.Equal(0f, computed.Size.X);
     }
 }
