@@ -269,8 +269,11 @@ public static class UIInteractionSystem
         while (!childEntity.IsNull)
         {
             var childRef = query.GetEntity(childEntity);
-            ref var childComputed = ref childRef.Get<ComputedNode>();
-            HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, absPos, mousePos);
+            if (childRef.Has<ComputedNode>())
+            {
+                ref var childComputed = ref childRef.Get<ComputedNode>();
+                HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, absPos, mousePos);
+            }
 
             if (childRef.Has<Child>())
                 childEntity = childRef.Get<Child>().NextSibling;

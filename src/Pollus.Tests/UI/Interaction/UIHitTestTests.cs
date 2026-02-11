@@ -1,8 +1,11 @@
+using Pollus.Collections;
 using Pollus.ECS;
+using Pollus.Engine.Rendering;
 using Pollus.Engine.UI;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
+using Pollus.Utils;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
 namespace Pollus.Tests.UI.Interaction;
@@ -360,5 +363,75 @@ public class UIHitTestTests
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
         Assert.True(hitResult.HoveredEntity.IsNull);
         Assert.Equal(child, hitResult.PreviousHoveredEntity);
+    }
+
+    [Fact]
+    public void HitTest_WithTextChild_DoesNotCrash()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var button = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)),
+            }}
+        )).Entity;
+
+        // UIText child — gets UINode+ComputedNode via Required chain
+        var textChild = commands.Spawn(Entity.With(
+            new UIText { Text = new NativeUtf8("Click me"), Size = 14f, Color = Color.WHITE },
+            new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+            new UITextFont { Font = Handle<FontAsset>.Null },
+            new UIStyle { Value = LayoutStyle.Default }
+        )).Entity;
+
+        commands.AddChild(root, button);
+        commands.AddChild(button, textChild);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        var query = new Query(world);
+
+        // Should not throw — text child is walked during DFS
+        UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
+
+        Assert.Equal(button, hitResult.HoveredEntity);
+    }
+
+    [Fact]
+    public void UIText_SpawnedEntity_HasComputedNode()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        var textEntity = commands.Spawn(Entity.With(
+            new UIText { Text = new NativeUtf8("Hello"), Size = 16f, Color = Color.WHITE },
+            new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+            new UITextFont { Font = Handle<FontAsset>.Null },
+            new UIStyle { Value = LayoutStyle.Default }
+        )).Entity;
+
+        commands.AddChild(root, textEntity);
+        world.Update();
+
+        // UIText requires UINode, which requires UIStyle + ComputedNode
+        var query = new Query(world);
+        Assert.True(query.Has<UINode>(textEntity), "UIText entity should have UINode via Required chain");
+        Assert.True(query.Has<ComputedNode>(textEntity), "UIText entity should have ComputedNode via Required chain");
+        Assert.True(query.Has<ContentSize>(textEntity), "UIText entity should have ContentSize via Required chain");
     }
 }

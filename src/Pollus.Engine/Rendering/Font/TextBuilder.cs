@@ -5,6 +5,12 @@ using Pollus.Collections;
 using Pollus.Graphics;
 using Pollus.Mathematics;
 
+public enum TextCoordinateMode : byte
+{
+    YUp = 0,
+    YDown = 1,
+}
+
 public partial class TextBuilder
 {
     [ShaderType]
@@ -27,10 +33,11 @@ public partial class TextBuilder
         Vec4f color,
         float size,
         ArrayList<TextVertex> vertices,
-        ArrayList<uint> indices)
+        ArrayList<uint> indices,
+        TextCoordinateMode mode = TextCoordinateMode.YUp)
     {
         var bounds = Rect.Zero;
-        foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count))
+        foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count, mode))
         {
             foreach (scoped ref readonly var point in quad.Vertices) bounds.Expand(point.Position);
 
@@ -44,9 +51,48 @@ public partial class TextBuilder
         };
     }
 
-    public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0)
+    public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp)
     {
-        return new Enumerable(text, font, startPos, color, size, indexOffset);
+        return new Enumerable(text, font, startPos, color, size, indexOffset, mode);
+    }
+
+    public static Vec2f MeasureText(NativeUtf8 text, FontAsset font, float size)
+    {
+        var sizePow = ((uint)size).Clamp(8u, 128u).Snap(4u);
+        var scale = size / sizePow;
+        var glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
+
+        float cursorX = 0f;
+        float maxLineWidth = 0f;
+        float lineHeight = 0f;
+        int lineCount = 0;
+
+        foreach (var c in text)
+        {
+            if (lineCount == 0) lineCount = 1;
+
+            if (c == '\n')
+            {
+                maxLineWidth = float.Max(maxLineWidth, cursorX);
+                cursorX = 0f;
+                lineCount++;
+                continue;
+            }
+
+            glyphKey.Character = c;
+            if (!font.Glyphs.TryGetValue(glyphKey, out var glyph))
+            {
+                continue;
+            }
+
+            if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
+            cursorX += glyph.Advance * scale;
+        }
+
+        if (lineCount == 0) return Vec2f.Zero;
+
+        maxLineWidth = float.Max(maxLineWidth, cursorX);
+        return new Vec2f(maxLineWidth, lineCount * lineHeight);
     }
 
     public struct CharQuad
@@ -87,13 +133,15 @@ public partial class TextBuilder
         readonly Vec4f color;
         readonly float size;
         readonly uint indexOffset;
+        readonly TextCoordinateMode mode;
 
         public Enumerable(NativeUtf8 text,
             FontAsset font,
             Vec2f startPos,
             Vec4f color,
             float size,
-            uint indexOffset = 0
+            uint indexOffset = 0,
+            TextCoordinateMode mode = TextCoordinateMode.YUp
         )
         {
             this.text = text;
@@ -102,11 +150,12 @@ public partial class TextBuilder
             this.color = color;
             this.size = size;
             this.indexOffset = indexOffset;
+            this.mode = mode;
         }
 
         public BuilderEnumerator GetEnumerator()
         {
-            return new BuilderEnumerator(text, font, startPos, color, size, indexOffset);
+            return new BuilderEnumerator(text, font, startPos, color, size, indexOffset, mode);
         }
     }
 
@@ -117,6 +166,7 @@ public partial class TextBuilder
         readonly Vec4f color;
         readonly Vec2f startPos;
         readonly float size;
+        readonly TextCoordinateMode mode;
 
         GlyphKey glyphKey;
         float cursorX;
@@ -134,7 +184,8 @@ public partial class TextBuilder
             Vec2f startPos,
             Vec4f color,
             float size,
-            uint indexOffset = 0
+            uint indexOffset = 0,
+            TextCoordinateMode mode = TextCoordinateMode.YUp
         )
         {
             this.startPos = startPos;
@@ -143,6 +194,7 @@ public partial class TextBuilder
             this.font = font;
             this.size = size;
             this.indexOffset = indexOffset;
+            this.mode = mode;
 
             cursorX = startPos.X;
             cursorY = startPos.Y;
@@ -163,7 +215,19 @@ public partial class TextBuilder
                 if (c == '\n')
                 {
                     cursorX = startPos.X;
-                    cursorY -= size + 2f;
+                    if (mode == TextCoordinateMode.YDown)
+                    {
+                        // Find line height from any glyph
+                        glyphKey.Character = 'A';
+                        if (font.Glyphs.TryGetValue(glyphKey, out var lhGlyph))
+                            cursorY += lhGlyph.LineHeight * scale;
+                        else
+                            cursorY += size + 2f;
+                    }
+                    else
+                    {
+                        cursorY -= size + 2f;
+                    }
                     continue;
                 }
 
@@ -174,7 +238,6 @@ public partial class TextBuilder
                 }
 
                 float x = float.Round(cursorX + (glyph.BearingX * scale));
-                float y = float.Round(cursorY + (glyph.BearingY * scale));
                 float w = float.Round(glyph.Bounds.Width * scale);
                 float h = float.Round(glyph.Bounds.Height * scale);
 
@@ -184,10 +247,22 @@ public partial class TextBuilder
                 float u1 = (glyphOrigin.X + glyph.Bounds.Width) / texWidth;
                 float v1 = (glyphOrigin.Y + glyph.Bounds.Height) / texHeight;
 
-                current.Vertices[0] = new TextVertex { Position = new Vec2f(x, y), UV = new Vec2f(u0, v0), Color = color };
-                current.Vertices[1] = new TextVertex { Position = new Vec2f(x + w, y), UV = new Vec2f(u1, v0), Color = color };
-                current.Vertices[2] = new TextVertex { Position = new Vec2f(x, y - h), UV = new Vec2f(u0, v1), Color = color };
-                current.Vertices[3] = new TextVertex { Position = new Vec2f(x + w, y - h), UV = new Vec2f(u1, v1), Color = color };
+                if (mode == TextCoordinateMode.YDown)
+                {
+                    float y = float.Round(cursorY + (glyph.Ascender - glyph.BearingY) * scale);
+                    current.Vertices[0] = new TextVertex { Position = new Vec2f(x, y), UV = new Vec2f(u0, v0), Color = color };
+                    current.Vertices[1] = new TextVertex { Position = new Vec2f(x + w, y), UV = new Vec2f(u1, v0), Color = color };
+                    current.Vertices[2] = new TextVertex { Position = new Vec2f(x, y + h), UV = new Vec2f(u0, v1), Color = color };
+                    current.Vertices[3] = new TextVertex { Position = new Vec2f(x + w, y + h), UV = new Vec2f(u1, v1), Color = color };
+                }
+                else
+                {
+                    float y = float.Round(cursorY + (glyph.BearingY * scale));
+                    current.Vertices[0] = new TextVertex { Position = new Vec2f(x, y), UV = new Vec2f(u0, v0), Color = color };
+                    current.Vertices[1] = new TextVertex { Position = new Vec2f(x + w, y), UV = new Vec2f(u1, v0), Color = color };
+                    current.Vertices[2] = new TextVertex { Position = new Vec2f(x, y - h), UV = new Vec2f(u0, v1), Color = color };
+                    current.Vertices[3] = new TextVertex { Position = new Vec2f(x + w, y - h), UV = new Vec2f(u1, v1), Color = color };
+                }
 
                 current.Indices[0] = indexOffset + 0;
                 current.Indices[1] = indexOffset + 1;

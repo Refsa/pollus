@@ -151,6 +151,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
             while (Unsafe.IsAddressLessThan(ref curr, ref end))
             {
                 pred(in userData, ref curr);
+                curr = ref Unsafe.Add(ref curr, 1);
             }
         }
     }
