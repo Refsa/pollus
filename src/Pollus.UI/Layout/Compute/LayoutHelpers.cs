@@ -28,6 +28,7 @@ public static class LayoutHelpers
         );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Rect<float> ResolveMargin(in Style style, Size<float?> parentSize)
     {
         float parentWidth = parentSize.Width ?? 0f;
@@ -39,6 +40,7 @@ public static class LayoutHelpers
         );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Rect<float?> ResolveInset(in Style style, Size<float?> parentSize)
     {
         float pw = parentSize.Width ?? 0f;
