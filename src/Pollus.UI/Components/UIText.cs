@@ -46,6 +46,7 @@ public partial struct UIText() : IComponent, IDefault<UIText>
     }
 
     public bool IsDirty { get; set; }
+    public float LastBuildMaxWidth { get; set; } = -1f;
 
     NativeUtf8 text;
     float size;

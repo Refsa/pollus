@@ -204,4 +204,162 @@ public class TextBuilderTests
 
         text.Dispose();
     }
+
+    // --- Word wrapping: MeasureText tests ---
+
+    [Fact]
+    public void MeasureText_SingleWord_FitsWithinMaxWidth_NoWrap()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 30f);
+
+        // "AB" = 20, fits within 30 → no wrap
+        Assert.Equal(20f, size.X);
+        Assert.Equal(20f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_TwoWords_SecondWraps()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB AB");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 25f);
+
+        // "AB " = 25, "AB" wraps to line 2
+        // Width = max(25, 20) = 25, Height = 2 * 20 = 40
+        Assert.Equal(25f, size.X);
+        Assert.Equal(40f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_LongWord_ExceedsMaxWidth_NoCharBreak()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("ABBA");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 15f);
+
+        // "ABBA" = 40, exceeds 15 but no word break possible → stays 1 line
+        Assert.Equal(40f, size.X);
+        Assert.Equal(20f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_MultipleWordsWrap()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("A B A B");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 15f);
+
+        // "A " = 15, "B " wraps → "B " = 15, "A " wraps → "A " = 15, "B" wraps → "B" = 10
+        // 4 lines, maxWidth = 15, height = 80
+        Assert.Equal(15f, size.X);
+        Assert.Equal(80f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_MaxWidthZero_NoWrap()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB AB");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 0f);
+
+        // maxWidth=0 means no wrapping → "AB AB" = 10+10+5+10+10 = 45, 1 line
+        Assert.Equal(45f, size.X);
+        Assert.Equal(20f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_ExplicitNewline_PlusWordWrap()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB\nAB AB");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 25f);
+
+        // Line 1: "AB" = 20 (explicit \n)
+        // Line 2: "AB " = 25, then "AB" wraps to line 3
+        // 3 lines, maxWidth = 25, height = 60
+        Assert.Equal(25f, size.X);
+        Assert.Equal(60f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_WordAtExactMaxWidth_Wraps()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB AB");
+
+        var size = TextBuilder.MeasureText(text, font, 16f, maxWidth: 25f);
+
+        // "AB " = 25, exactly at maxWidth → "AB" wraps to line 2
+        // 2 lines
+        Assert.Equal(25f, size.X);
+        Assert.Equal(40f, size.Y);
+
+        text.Dispose();
+    }
+
+    // --- Word wrapping: BuildMesh tests ---
+
+    [Fact]
+    public void BuildMesh_WordWrap_YDown_SecondWordOnNewLine()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("AB AB");
+        var verts = new ArrayList<TextBuilder.TextVertex>();
+        var indices = new ArrayList<uint>();
+
+        TextBuilder.BuildMesh(text, font, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 25f);
+
+        // 5 chars produce quads (A, B, space, A, B): 5 * 4 = 20 verts
+        // verts[0..3]=A, [4..7]=B, [8..11]=space, [12..15]=A, [16..19]=B
+        // First line: A at Y=2, B at Y=2
+        // Second line (after wrap): A at Y=22 (cursorY=20, + (16-14)=2), B at Y=22
+        Assert.Equal(2f, verts[0].Position.Y);   // first 'A' line 1
+        Assert.Equal(2f, verts[4].Position.Y);   // 'B' line 1
+        Assert.Equal(22f, verts[12].Position.Y);  // second 'A' line 2
+        Assert.Equal(22f, verts[16].Position.Y);  // second 'B' line 2
+
+        // X positions: second 'A' should reset to startPos.X + bearingX = 0 + 1 = 1
+        Assert.Equal(1f, verts[12].Position.X);
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void BuildMesh_WordWrap_YDown_LongWord_StaysOnLine()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var text = new NativeUtf8("ABBA");
+        var verts = new ArrayList<TextBuilder.TextVertex>();
+        var indices = new ArrayList<uint>();
+
+        TextBuilder.BuildMesh(text, font, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 15f);
+
+        // All 4 chars on same line since no word break possible
+        Assert.Equal(2f, verts[0].Position.Y);   // A
+        Assert.Equal(2f, verts[4].Position.Y);   // B
+        Assert.Equal(2f, verts[8].Position.Y);   // B
+        Assert.Equal(2f, verts[12].Position.Y);  // A
+
+        text.Dispose();
+    }
 }

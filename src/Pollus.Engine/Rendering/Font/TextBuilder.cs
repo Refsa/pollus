@@ -34,10 +34,11 @@ public partial class TextBuilder
         float size,
         ArrayList<TextVertex> vertices,
         ArrayList<uint> indices,
-        TextCoordinateMode mode = TextCoordinateMode.YUp)
+        TextCoordinateMode mode = TextCoordinateMode.YUp,
+        float maxWidth = 0f)
     {
         var bounds = Rect.Zero;
-        foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count, mode))
+        foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count, mode, maxWidth))
         {
             foreach (scoped ref readonly var point in quad.Vertices) bounds.Expand(point.Position);
 
@@ -51,18 +52,19 @@ public partial class TextBuilder
         };
     }
 
-    public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp)
+    public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp, float maxWidth = 0f)
     {
-        return new Enumerable(text, font, startPos, color, size, indexOffset, mode);
+        return new Enumerable(text, font, startPos, color, size, indexOffset, mode, maxWidth);
     }
 
-    public static Vec2f MeasureText(NativeUtf8 text, FontAsset font, float size)
+    public static Vec2f MeasureText(NativeUtf8 text, FontAsset font, float size, float maxWidth = 0f)
     {
         var sizePow = ((uint)size).Clamp(8u, 128u).Snap(4u);
         var scale = size / sizePow;
         var glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
 
         float cursorX = 0f;
+        float wordStartX = 0f;
         float maxLineWidth = 0f;
         float lineHeight = 0f;
         int lineCount = 0;
@@ -75,6 +77,7 @@ public partial class TextBuilder
             {
                 maxLineWidth = float.Max(maxLineWidth, cursorX);
                 cursorX = 0f;
+                wordStartX = 0f;
                 lineCount++;
                 continue;
             }
@@ -86,7 +89,29 @@ public partial class TextBuilder
             }
 
             if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
-            cursorX += glyph.Advance * scale;
+
+            float advance = glyph.Advance * scale;
+
+            if (c == ' ')
+            {
+                cursorX += advance;
+                wordStartX = cursorX;
+            }
+            else
+            {
+                if (maxWidth > 0f && cursorX + advance > maxWidth && wordStartX > 0f)
+                {
+                    // Wrap: current word moves to new line
+                    maxLineWidth = float.Max(maxLineWidth, wordStartX);
+                    cursorX = (cursorX - wordStartX) + advance;
+                    wordStartX = 0f;
+                    lineCount++;
+                }
+                else
+                {
+                    cursorX += advance;
+                }
+            }
         }
 
         if (lineCount == 0) return Vec2f.Zero;
@@ -134,6 +159,7 @@ public partial class TextBuilder
         readonly float size;
         readonly uint indexOffset;
         readonly TextCoordinateMode mode;
+        readonly float maxWidth;
 
         public Enumerable(NativeUtf8 text,
             FontAsset font,
@@ -141,7 +167,8 @@ public partial class TextBuilder
             Vec4f color,
             float size,
             uint indexOffset = 0,
-            TextCoordinateMode mode = TextCoordinateMode.YUp
+            TextCoordinateMode mode = TextCoordinateMode.YUp,
+            float maxWidth = 0f
         )
         {
             this.text = text;
@@ -151,22 +178,26 @@ public partial class TextBuilder
             this.size = size;
             this.indexOffset = indexOffset;
             this.mode = mode;
+            this.maxWidth = maxWidth;
         }
 
         public BuilderEnumerator GetEnumerator()
         {
-            return new BuilderEnumerator(text, font, startPos, color, size, indexOffset, mode);
+            return new BuilderEnumerator(text, font, startPos, color, size, indexOffset, mode, maxWidth);
         }
     }
 
-    public ref struct BuilderEnumerator
+    public unsafe ref struct BuilderEnumerator
     {
-        NativeUtf8.Enumerator text;
+        readonly byte* textData;
+        readonly int textLength;
+        int textIndex;
         readonly FontAsset font;
         readonly Vec4f color;
         readonly Vec2f startPos;
         readonly float size;
         readonly TextCoordinateMode mode;
+        readonly float maxWidth;
 
         GlyphKey glyphKey;
         float cursorX;
@@ -175,6 +206,7 @@ public partial class TextBuilder
         readonly float texWidth;
         readonly float texHeight;
         readonly float scale;
+        bool atWordStart;
 
         CharQuad current;
         public ref readonly CharQuad Current => ref Unsafe.AsRef(ref current);
@@ -185,16 +217,20 @@ public partial class TextBuilder
             Vec4f color,
             float size,
             uint indexOffset = 0,
-            TextCoordinateMode mode = TextCoordinateMode.YUp
+            TextCoordinateMode mode = TextCoordinateMode.YUp,
+            float maxWidth = 0f
         )
         {
             this.startPos = startPos;
             this.color = color;
-            this.text = text.GetEnumerator();
+            this.textData = text.Pointer;
+            this.textLength = text.AsSpan().Length;
+            this.textIndex = 0;
             this.font = font;
             this.size = size;
             this.indexOffset = indexOffset;
             this.mode = mode;
+            this.maxWidth = maxWidth;
 
             cursorX = startPos.X;
             cursorY = startPos.Y;
@@ -205,19 +241,19 @@ public partial class TextBuilder
 
             glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
             current = new CharQuad();
+            atWordStart = true;
         }
 
         public bool MoveNext()
         {
-            while (text.MoveNext())
+            while (DecodeNext(out var c))
             {
-                var c = text.Current;
                 if (c == '\n')
                 {
                     cursorX = startPos.X;
+                    atWordStart = true;
                     if (mode == TextCoordinateMode.YDown)
                     {
-                        // Find line height from any glyph
                         glyphKey.Character = 'A';
                         if (font.Glyphs.TryGetValue(glyphKey, out var lhGlyph))
                             cursorY += lhGlyph.LineHeight * scale;
@@ -228,7 +264,13 @@ public partial class TextBuilder
                     {
                         cursorY -= size + 2f;
                     }
+                    cursorY = float.Round(cursorY);
                     continue;
+                }
+
+                if (c == ' ')
+                {
+                    atWordStart = true;
                 }
 
                 glyphKey.Character = c;
@@ -237,9 +279,34 @@ public partial class TextBuilder
                     continue;
                 }
 
-                float x = float.Round(cursorX + (glyph.BearingX * scale));
-                float w = float.Round(glyph.Bounds.Width * scale);
-                float h = float.Round(glyph.Bounds.Height * scale);
+                // Word wrapping: at word boundary, measure full word and wrap if needed
+                if (maxWidth > 0f && c != ' ' && atWordStart)
+                {
+                    float wordWidth = glyph.Advance * scale + MeasureRemainingWord();
+                    if (cursorX + wordWidth > maxWidth && cursorX > startPos.X)
+                    {
+                        cursorX = startPos.X;
+                        if (mode == TextCoordinateMode.YDown)
+                        {
+                            glyphKey.Character = 'A';
+                            if (font.Glyphs.TryGetValue(glyphKey, out var lhGlyph2))
+                                cursorY += lhGlyph2.LineHeight * scale;
+                            else
+                                cursorY += size + 2f;
+                            glyphKey.Character = c;
+                        }
+                        else
+                        {
+                            cursorY -= size + 2f;
+                        }
+                        cursorY = float.Round(cursorY);
+                    }
+                    atWordStart = false;
+                }
+
+                float x = cursorX + glyph.BearingX * scale;
+                float w = glyph.Bounds.Width * scale;
+                float h = glyph.Bounds.Height * scale;
 
                 var glyphOrigin = glyph.Bounds.TopLeft();
                 float u0 = glyphOrigin.X / texWidth;
@@ -249,7 +316,7 @@ public partial class TextBuilder
 
                 if (mode == TextCoordinateMode.YDown)
                 {
-                    float y = float.Round(cursorY + (glyph.Ascender - glyph.BearingY) * scale);
+                    float y = cursorY + (glyph.Ascender - glyph.BearingY) * scale;
                     current.Vertices[0] = new TextVertex { Position = new Vec2f(x, y), UV = new Vec2f(u0, v0), Color = color };
                     current.Vertices[1] = new TextVertex { Position = new Vec2f(x + w, y), UV = new Vec2f(u1, v0), Color = color };
                     current.Vertices[2] = new TextVertex { Position = new Vec2f(x, y + h), UV = new Vec2f(u0, v1), Color = color };
@@ -257,7 +324,7 @@ public partial class TextBuilder
                 }
                 else
                 {
-                    float y = float.Round(cursorY + (glyph.BearingY * scale));
+                    float y = cursorY + glyph.BearingY * scale;
                     current.Vertices[0] = new TextVertex { Position = new Vec2f(x, y), UV = new Vec2f(u0, v0), Color = color };
                     current.Vertices[1] = new TextVertex { Position = new Vec2f(x + w, y), UV = new Vec2f(u1, v0), Color = color };
                     current.Vertices[2] = new TextVertex { Position = new Vec2f(x, y - h), UV = new Vec2f(u0, v1), Color = color };
@@ -274,13 +341,109 @@ public partial class TextBuilder
 
                 current.IndexOffset = indexOffset;
 
-                cursorX += glyph.Advance * scale;
+                cursorX = float.Round(cursorX + glyph.Advance * scale);
                 indexOffset += 4;
 
                 return true;
             }
 
             return false;
+        }
+
+        bool DecodeNext(out char c)
+        {
+            if (textIndex >= textLength)
+            {
+                c = '\0';
+                return false;
+            }
+
+            var b = textData[textIndex];
+            if (b == 0)
+            {
+                c = '\0';
+                return false;
+            }
+
+            if ((b & 0x80) == 0)
+            {
+                c = (char)b;
+                textIndex++;
+                return true;
+            }
+
+            if ((b & 0xE0) == 0xC0)
+            {
+                c = (char)(((b & 0x1F) << 6) | (textData[textIndex + 1] & 0x3F));
+                textIndex += 2;
+                return true;
+            }
+
+            if ((b & 0xF0) == 0xE0)
+            {
+                c = (char)(((b & 0x0F) << 12) | ((textData[textIndex + 1] & 0x3F) << 6) | (textData[textIndex + 2] & 0x3F));
+                textIndex += 3;
+                return true;
+            }
+
+            if ((b & 0xF8) == 0xF0)
+            {
+                c = '?';
+                textIndex += 4;
+                return true;
+            }
+
+            c = '\0';
+            textIndex++;
+            return false;
+        }
+
+        float MeasureRemainingWord()
+        {
+            float width = 0f;
+            int i = textIndex;
+
+            while (i < textLength)
+            {
+                var b = textData[i];
+                if (b == 0) break;
+
+                char c;
+                if ((b & 0x80) == 0)
+                {
+                    c = (char)b;
+                    i++;
+                }
+                else if ((b & 0xE0) == 0xC0)
+                {
+                    c = (char)(((b & 0x1F) << 6) | (textData[i + 1] & 0x3F));
+                    i += 2;
+                }
+                else if ((b & 0xF0) == 0xE0)
+                {
+                    c = (char)(((b & 0x0F) << 12) | ((textData[i + 1] & 0x3F) << 6) | (textData[i + 2] & 0x3F));
+                    i += 3;
+                }
+                else if ((b & 0xF8) == 0xF0)
+                {
+                    c = '?';
+                    i += 4;
+                }
+                else
+                {
+                    break;
+                }
+
+                if (c == ' ' || c == '\n') break;
+
+                glyphKey.Character = c;
+                if (font.Glyphs.TryGetValue(glyphKey, out var glyph))
+                {
+                    width += glyph.Advance * scale;
+                }
+            }
+
+            return width;
         }
     }
 }
