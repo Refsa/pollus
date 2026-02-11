@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Engine.Assets;
@@ -25,6 +26,7 @@ public class UIRectExample : IExample
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
             new UIRenderPlugin(),
+            new UITextPlugin(),
             new UIWidgetPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",
@@ -38,6 +40,8 @@ public class UIRectExample : IExample
                     ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_rect.wgsl"),
                 });
                 resources.Add(new UIRenderResources { Material = material });
+
+                var fontHandle = assetServer.LoadAsync<FontAsset>("fonts/SpaceMono-Regular.ttf");
 
                 var viewportW = (float)window.Size.X;
                 var viewportH = (float)window.Size.Y;
@@ -72,11 +76,21 @@ public class UIRectExample : IExample
                             Padding = new Rect<LengthPercentage>(
                                 LengthPercentage.Px(20), LengthPercentage.Px(20),
                                 LengthPercentage.Px(20), LengthPercentage.Px(20)),
+                            AlignItems = AlignItems.Center,
                         }
                     },
                     new BackgroundColor { Color = new Color(0.2f, 0.4f, 0.8f, 1f) },
                     new BorderRadius { TopLeft = 8, TopRight = 8, BottomLeft = 8, BottomRight = 8 }
                 )).Entity;
+
+                // Header text
+                var headerText = commands.Spawn(Entity.With(
+                    new UIText { Text = new NativeUtf8("UI Demo"), Size = 20f, Color = Color.WHITE },
+                    new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+                    new UITextFont { Font = fontHandle },
+                    new UIStyle { Value = LayoutStyle.Default }
+                )).Entity;
+                commands.Entity(header).AddChild(headerText);
 
                 // Content row: sidebar + main
                 var contentRow = commands.Spawn(Entity.With(
@@ -135,10 +149,20 @@ public class UIRectExample : IExample
                                 Padding = new Rect<LengthPercentage>(
                                     LengthPercentage.Px(12), LengthPercentage.Px(12),
                                     LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                                AlignItems = AlignItems.Center,
                             }
                         },
                         new BorderRadius { TopLeft = 6, TopRight = 6, BottomLeft = 6, BottomRight = 6 }
                     )).Entity;
+
+                    // Button label text
+                    var btnText = commands.Spawn(Entity.With(
+                        new UIText { Text = new NativeUtf8(buttonLabels[i]), Size = 14f, Color = Color.WHITE },
+                        new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+                        new UITextFont { Font = fontHandle },
+                        new UIStyle { Value = LayoutStyle.Default }
+                    )).Entity;
+                    commands.Entity(btn).AddChild(btnText);
 
                     commands.Entity(sidebar).AddChild(btn);
                 }
@@ -162,10 +186,20 @@ public class UIRectExample : IExample
                             Padding = new Rect<LengthPercentage>(
                                 LengthPercentage.Px(12), LengthPercentage.Px(12),
                                 LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            AlignItems = AlignItems.Center,
                         }
                     },
                     new BorderRadius { TopLeft = 6, TopRight = 6, BottomLeft = 6, BottomRight = 6 }
                 )).Entity;
+
+                // Toggle label
+                var toggleText = commands.Spawn(Entity.With(
+                    new UIText { Text = new NativeUtf8("Toggle"), Size = 14f, Color = Color.WHITE },
+                    new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+                    new UITextFont { Font = fontHandle },
+                    new UIStyle { Value = LayoutStyle.Default }
+                )).Entity;
+                commands.Entity(toggle).AddChild(toggleText);
                 commands.Entity(sidebar).AddChild(toggle);
 
                 // Main panel with border
@@ -198,13 +232,14 @@ public class UIRectExample : IExample
                     new BorderRadius { TopLeft = 12, TopRight = 12, BottomLeft = 12, BottomRight = 12 }
                 )).Entity;
 
-                // Interactive cards - hover/press to see color feedback
+                // Interactive cards with text
                 Color[] cardColors =
                 [
                     new(0.9f, 0.3f, 0.3f, 1f),
                     new(0.3f, 0.8f, 0.4f, 1f),
                     new(0.3f, 0.5f, 0.9f, 1f),
                 ];
+                string[] cardLabels = ["Card A", "Card B", "Card C"];
                 float[] cardRadii = [4, 12, 24];
 
                 for (int i = 0; i < 3; i++)
@@ -234,9 +269,14 @@ public class UIRectExample : IExample
                             Value = LayoutStyle.Default with
                             {
                                 Size = new Size<Dimension>(Dimension.Px(160), Dimension.Px(120)),
+                                FlexDirection = FlexDirection.Column,
+                                Padding = new Rect<LengthPercentage>(
+                                    LengthPercentage.Px(12), LengthPercentage.Px(12),
+                                    LengthPercentage.Px(12), LengthPercentage.Px(12)),
                                 Border = new Rect<LengthPercentage>(
                                     LengthPercentage.Px(2), LengthPercentage.Px(2),
                                     LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                                // Overflow = new Point<Overflow>(Overflow.Clip, Overflow.Clip),
                             }
                         },
                         new BorderColor
@@ -254,6 +294,32 @@ public class UIRectExample : IExample
                             BottomRight = cardRadii[i],
                         }
                     )).Entity;
+
+                    // Card title text
+                    var cardTitle = commands.Spawn(Entity.With(
+                        new UIText { Text = new NativeUtf8(cardLabels[i]), Size = 16f, Color = cardColors[i] },
+                        new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+                        new UITextFont { Font = fontHandle },
+                        new UIStyle { Value = LayoutStyle.Default }
+                    )).Entity;
+                    commands.Entity(card).AddChild(cardTitle);
+
+                    // Card body text (demonstrates overflow clipping)
+                    var cardBody = commands.Spawn(Entity.With(
+                        new UIText { Text = new NativeUtf8("This is a card with text that may overflow the container bounds."), Size = 12f, Color = new Color(0.7f, 0.7f, 0.7f, 1f) },
+                        new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
+                        new UITextFont { Font = fontHandle },
+                        new UIStyle
+                        {
+                            Value = LayoutStyle.Default with
+                            {
+                                Margin = new Rect<LengthPercentageAuto>(
+                                LengthPercentageAuto.Zero, LengthPercentageAuto.Zero,
+                                LengthPercentageAuto.Px(8), LengthPercentageAuto.Zero),
+                            }
+                        }
+                    )).Entity;
+                    commands.Entity(card).AddChild(cardBody);
 
                     commands.Entity(mainPanel).AddChild(card);
                 }

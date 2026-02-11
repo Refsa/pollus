@@ -45,6 +45,7 @@ public static class ExtractUIRectsSystem
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
+        var nodeIndex = sortIndex++;
 
         if (size.X > 0 && size.Y > 0)
         {
@@ -81,7 +82,7 @@ public static class ExtractUIRectsSystem
 
             if (hasBg || hasBorder)
             {
-                var sortKey = (ulong)sortIndex;
+                var sortKey = (ulong)nodeIndex * 2;
                 batch.Draw(sortKey, new UIRectBatch.InstanceData
                 {
                     PosSize = new Vec4f(absPos.X, absPos.Y, size.X, size.Y),
@@ -90,7 +91,6 @@ public static class ExtractUIRectsSystem
                     BorderRadius = borderRadius,
                     BorderWidths = borderWidths,
                 });
-                sortIndex++;
             }
         }
 
