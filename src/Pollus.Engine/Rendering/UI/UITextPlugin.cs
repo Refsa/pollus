@@ -114,22 +114,28 @@ public class UITextPlugin : IPlugin
 
                 adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
                 {
-                    var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize);
+                    float maxWidth = knownDimensions.Width
+                        ?? availableSpace.Width.AsDefinite()
+                        ?? 0f;
+                    var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
                     return new Size<float>(measured.X, measured.Y);
                 });
             }
         }));
 
         // BuildUITextMesh: Build text mesh for dirty UIText entities
-        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new(BuildUITextMeshSystem)
+        // Runs in CoreStage.Last so ComputedNode is populated from layout (CoreStage.PostUpdate)
+        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(new(BuildUITextMeshSystem),
+        static (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont, ComputedNode> query) =>
         {
-            RunsAfter = [RegisterMeasureFuncsSystem, FontSystemSet.PrepareFontDescriptor.Label],
-        },
-        static (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont> query) =>
-        {
-            query.ForEach((fonts, meshes), static (in (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes) data, ref UIText uiText, ref TextMesh mesh, ref UITextFont textFont) =>
+            query.ForEach((fonts, meshes), static (in (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes) data, ref UIText uiText, ref TextMesh mesh, ref UITextFont textFont, ref ComputedNode computed) =>
             {
-                if (!uiText.IsDirty) return;
+                float maxWidth = computed.Size.X - computed.PaddingLeft - computed.PaddingRight
+                                 - computed.BorderLeft - computed.BorderRight;
+                if (maxWidth < 0f) maxWidth = 0f;
+
+                bool widthChanged = uiText.LastBuildMaxWidth != maxWidth;
+                if (!uiText.IsDirty && !widthChanged) return;
 
                 var fontAsset = data.fonts.Get(textFont.Font);
                 if (fontAsset == null) return;
@@ -152,10 +158,11 @@ public class UITextPlugin : IPlugin
 
                 tma.Vertices.Clear();
                 tma.Indices.Clear();
-                var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown);
+                var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
                 tma.Bounds = result.Bounds;
 
                 uiText.IsDirty = false;
+                uiText.LastBuildMaxWidth = maxWidth;
                 data.meshes.Set(mesh.Mesh, tma);
             });
         }));
@@ -164,7 +171,10 @@ public class UITextPlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.PreRender, ExtractUITextSystem.Create());
 
         // Cleanup: Dispose NativeUtf8 and remove measure funcs
-        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(CleanupSystem,
+        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(new(CleanupSystem)
+        {
+            RunsAfter = [BuildUITextMeshSystem],
+        },
             static (UITreeAdapter adapter, RemovedTracker<UIText> tracker) =>
             {
                 foreach (var removed in tracker)
