@@ -53,7 +53,9 @@ public static class FlexLayout
 
         public bool CrossSizeIsAuto;
 
-        public Style Style;
+        public Dimension FlexBasisStyle;
+        public Size<Dimension> SizeStyle;
+        public AlignSelf? AlignSelf;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float MarginMainAxisSum(FlexDirection dir) => Margin.MainAxisSum(dir);
@@ -222,6 +224,7 @@ public static class FlexLayout
 
         var flexItemsArray = ArrayPool<FlexItem>.Shared.Rent(childCount);
         var absoluteItemIds = ArrayPool<int>.Shared.Rent(childCount);
+        var absoluteItemOrders = ArrayPool<int>.Shared.Rent(childCount);
         int flexItemCount = 0;
         int absoluteCount = 0;
 
@@ -240,6 +243,7 @@ public static class FlexLayout
 
                 if (childStyle.Position == Position.Absolute)
                 {
+                    absoluteItemOrders[absoluteCount] = i;
                     absoluteItemIds[absoluteCount++] = childId;
                     continue;
                 }
@@ -311,7 +315,9 @@ public static class FlexLayout
                     MarginMainEndAuto = marginMainEndAuto,
                     MarginCrossStartAuto = marginCrossStartAuto,
                     MarginCrossEndAuto = marginCrossEndAuto,
-                    Style = childStyle,
+                    FlexBasisStyle = childStyle.FlexBasis,
+                    SizeStyle = childStyle.Size,
+                    AlignSelf = childStyle.AlignSelf,
                 };
             }
 
@@ -325,19 +331,18 @@ public static class FlexLayout
             for (int i = 0; i < flexItems.Length; i++)
             {
                 ref var item = ref flexItems[i];
-                ref readonly var childStyle = ref item.Style;
 
                 float pbMain = item.PaddingBorderMainAxisSum(dir);
 
-                float? flexBasisResolved = childStyle.FlexBasis.IsAuto()
+                float? flexBasisResolved = item.FlexBasisStyle.IsAuto()
                     ? null
                     : LayoutHelpers.MaybeAdd(
-                        childStyle.FlexBasis.Resolve(childContainerMainInnerSize ?? 0f),
+                        item.FlexBasisStyle.Resolve(childContainerMainInnerSize ?? 0f),
                         item.ContentBoxMainAdj);
 
                 float? styledMainSize = flexBasisResolved
                     ?? LayoutHelpers.MaybeAdd(
-                        childStyle.Size.Main(dir).Resolve(childContainerMainInnerSize ?? 0f),
+                        item.SizeStyle.Main(dir).Resolve(childContainerMainInnerSize ?? 0f),
                         item.ContentBoxMainAdj);
 
                 float flexBasis;
@@ -349,7 +354,7 @@ public static class FlexLayout
                 {
                     var childAvailCross = availableSpaceCross
                         .MaybeSet(LayoutHelpers.MaybeAdd(
-                            childStyle.Size.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
+                            item.SizeStyle.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
                             item.ContentBoxCrossAdj));
 
                     var measureInput = new LayoutInput
@@ -376,64 +381,73 @@ public static class FlexLayout
             #endregion
             #region Phase 4: Collect items into flex lines
 
-            var linesArray = ArrayPool<FlexLine>.Shared.Rent(Math.Max(flexItemCount, 1));
+            FlexLine[]? linesArray = null;
             int lineCount = 0;
+            scoped Span<FlexLine> lines;
+
+            // Single-line fast path: stackalloc avoids ArrayPool overhead (~95% of cases)
+            Span<FlexLine> singleLineBuffer = stackalloc FlexLine[1];
+
+            if (flexItemCount == 0)
+            {
+                singleLineBuffer[0] = new FlexLine { StartIndex = 0, Count = 0 };
+                lines = singleLineBuffer;
+                lineCount = 1;
+            }
+            else if (!isWrap)
+            {
+                singleLineBuffer[0] = new FlexLine { StartIndex = 0, Count = flexItemCount };
+                lines = singleLineBuffer;
+                lineCount = 1;
+            }
+            else
+            {
+                linesArray = ArrayPool<FlexLine>.Shared.Rent(flexItemCount);
+                float? mainAvailForWrap = availableSpaceMain.AsDefinite();
+                int lineStart = 0;
+                float lineMainSize = 0f;
+
+                for (int i = 0; i < flexItemCount; i++)
+                {
+                    ref var item = ref flexItems[i];
+                    float outerBasis = item.InnerFlexBasis + item.MarginMainAxisSum(dir)
+                        + item.PaddingBorderMainAxisSum(dir);
+
+                    if (i > lineStart)
+                    {
+                        float gapForItem = mainGap;
+                        float newSize = lineMainSize + gapForItem + outerBasis;
+
+                        if (mainAvailForWrap.HasValue && newSize > mainAvailForWrap.Value)
+                        {
+                            linesArray[lineCount++] = new FlexLine
+                            {
+                                StartIndex = lineStart,
+                                Count = i - lineStart,
+                            };
+                            lineStart = i;
+                            lineMainSize = outerBasis;
+                            continue;
+                        }
+
+                        lineMainSize = newSize;
+                    }
+                    else
+                    {
+                        lineMainSize = outerBasis;
+                    }
+                }
+
+                linesArray[lineCount++] = new FlexLine
+                {
+                    StartIndex = lineStart,
+                    Count = flexItemCount - lineStart,
+                };
+                lines = linesArray.AsSpan(0, lineCount);
+            }
 
             try
             {
-                if (flexItemCount == 0)
-                {
-                    linesArray[lineCount++] = new FlexLine { StartIndex = 0, Count = 0 };
-                }
-                else if (!isWrap)
-                {
-                    linesArray[lineCount++] = new FlexLine { StartIndex = 0, Count = flexItemCount };
-                }
-                else
-                {
-                    float? mainAvailForWrap = availableSpaceMain.AsDefinite();
-                    int lineStart = 0;
-                    float lineMainSize = 0f;
-
-                    for (int i = 0; i < flexItemCount; i++)
-                    {
-                        ref var item = ref flexItems[i];
-                        float outerBasis = item.InnerFlexBasis + item.MarginMainAxisSum(dir)
-                            + item.PaddingBorderMainAxisSum(dir);
-
-                        if (i > lineStart)
-                        {
-                            float gapForItem = mainGap;
-                            float newSize = lineMainSize + gapForItem + outerBasis;
-
-                            if (mainAvailForWrap.HasValue && newSize > mainAvailForWrap.Value)
-                            {
-                                linesArray[lineCount++] = new FlexLine
-                                {
-                                    StartIndex = lineStart,
-                                    Count = i - lineStart,
-                                };
-                                lineStart = i;
-                                lineMainSize = outerBasis;
-                                continue;
-                            }
-
-                            lineMainSize = newSize;
-                        }
-                        else
-                        {
-                            lineMainSize = outerBasis;
-                        }
-                    }
-
-                    linesArray[lineCount++] = new FlexLine
-                    {
-                        StartIndex = lineStart,
-                        Count = flexItemCount - lineStart,
-                    };
-                }
-
-                var lines = linesArray.AsSpan(0, lineCount);
 
                 #endregion
                 #region Phase 5: Resolve flexible lengths
@@ -451,10 +465,9 @@ public static class FlexLayout
                 for (int i = 0; i < flexItems.Length; i++)
                 {
                     ref var item = ref flexItems[i];
-                    ref readonly var childStyle = ref item.Style;
 
                     float? childCrossStyleSize = LayoutHelpers.MaybeAdd(
-                        childStyle.Size.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
+                        item.SizeStyle.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
                         item.ContentBoxCrossAdj);
 
                     float? childCrossKnown = childCrossStyleSize;
@@ -521,7 +534,7 @@ public static class FlexLayout
                     for (int i = 0; i < lineItems.Length; i++)
                     {
                         ref var item = ref lineItems[i];
-                        var itemAlign = ToAlignItems(item.Style.AlignSelf) ?? lineDefaultAlign;
+                        var itemAlign = ToAlignItems(item.AlignSelf) ?? lineDefaultAlign;
 
                         if (itemAlign != AlignItems.Baseline) continue;
 
@@ -586,7 +599,7 @@ public static class FlexLayout
                     for (int i = 0; i < lineItems.Length; i++)
                     {
                         ref var item = ref lineItems[i];
-                        var itemAlign = ToAlignItems(item.Style.AlignSelf) ?? defaultAlignItems;
+                        var itemAlign = ToAlignItems(item.AlignSelf) ?? defaultAlignItems;
 
                         if (itemAlign == AlignItems.Stretch && item.CrossSizeIsAuto
                             && !item.MarginCrossStartAuto && !item.MarginCrossEndAuto)
@@ -838,7 +851,7 @@ public static class FlexLayout
                     for (int i = 0; i < lineItems.Length; i++)
                     {
                         ref var item = ref lineItems[i];
-                        var itemAlign = ToAlignItems(item.Style.AlignSelf) ?? defaultAlignItems;
+                        var itemAlign = ToAlignItems(item.AlignSelf) ?? defaultAlignItems;
 
                         float itemOuterCross = item.TargetCrossSize
                             + item.MarginCrossAxisSum(dir)
@@ -1105,11 +1118,7 @@ public static class FlexLayout
                         absY = paddingBorder.Top + childMargin.Top + alignOffsetY;
                     }
 
-                    uint absOrder = 0;
-                    for (int ci = 0; ci < childIds.Length; ci++)
-                    {
-                        if (childIds[ci] == childId) { absOrder = (uint)ci; break; }
-                    }
+                    uint absOrder = (uint)absoluteItemOrders[ai];
 
                     var absLayout = new NodeLayout
                     {
@@ -1148,13 +1157,15 @@ public static class FlexLayout
             }
             finally
             {
-                ArrayPool<FlexLine>.Shared.Return(linesArray);
+                if (linesArray is not null)
+                    ArrayPool<FlexLine>.Shared.Return(linesArray);
             }
         }
         finally
         {
             ArrayPool<FlexItem>.Shared.Return(flexItemsArray);
             ArrayPool<int>.Shared.Return(absoluteItemIds);
+            ArrayPool<int>.Shared.Return(absoluteItemOrders);
         }
 
         #endregion
@@ -1502,6 +1513,7 @@ public static class FlexLayout
         return MathF.Max(value.Value, 0f);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetCrossMarginStart(ref FlexItem item, FlexDirection dir, float value)
     {
         if (dir.IsRow())
@@ -1510,6 +1522,7 @@ public static class FlexLayout
             item.Margin.Left = value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void SetCrossMarginEnd(ref FlexItem item, FlexDirection dir, float value)
     {
         if (dir.IsRow())
@@ -1524,16 +1537,54 @@ public static class FlexLayout
 
     private static void StableSort(Span<FlexItem> items)
     {
-        for (int i = 1; i < items.Length; i++)
+        if (items.Length <= 1) return;
+
+        // Early exit: skip sort when all CssOrder == 0 (common case)
+        bool needsSort = false;
+        for (int i = 0; i < items.Length; i++)
         {
-            var key = items[i];
+            if (items[i].CssOrder != 0) { needsSort = true; break; }
+        }
+        if (!needsSort) return;
+
+        // Sort an index array (4 bytes per swap) instead of FlexItem structs
+        Span<int> indices = items.Length <= 64
+            ? stackalloc int[items.Length]
+            : new int[items.Length];
+
+        for (int i = 0; i < indices.Length; i++) indices[i] = i;
+
+        // Insertion sort on indices
+        for (int i = 1; i < indices.Length; i++)
+        {
+            int key = indices[i];
             int j = i - 1;
-            while (j >= 0 && CompareOrder(items[j], key) > 0)
+            while (j >= 0 && CompareOrder(in items[indices[j]], in items[key]) > 0)
             {
-                items[j + 1] = items[j];
+                indices[j + 1] = indices[j];
                 j--;
             }
-            items[j + 1] = key;
+            indices[j + 1] = key;
+        }
+
+        // Apply permutation in-place using cycle sort
+        Span<bool> placed = items.Length <= 64
+            ? stackalloc bool[items.Length]
+            : new bool[items.Length];
+        placed.Clear();
+        for (int i = 0; i < indices.Length; i++)
+        {
+            if (placed[i] || indices[i] == i) continue;
+            var temp = items[i];
+            int j = i;
+            while (indices[j] != i)
+            {
+                items[j] = items[indices[j]];
+                placed[j] = true;
+                j = indices[j];
+            }
+            items[j] = temp;
+            placed[j] = true;
         }
     }
 

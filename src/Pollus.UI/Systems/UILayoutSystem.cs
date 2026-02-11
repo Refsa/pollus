@@ -12,9 +12,9 @@ public static class UILayoutSystem
 
     public static SystemBuilder SyncTree() => FnSystem.Create(
         new(SyncTreeLabel),
-        static (UITreeAdapter adapter, Query query) =>
+        static (UITreeAdapter adapter, Query<UINode> uiNodeQuery, Query query) =>
         {
-            adapter.SyncFull(query);
+            adapter.SyncFull(uiNodeQuery, query);
         }
     );
 
@@ -22,6 +22,8 @@ public static class UILayoutSystem
         new(ComputeLayoutLabel) { RunsAfter = [SyncTreeLabel] },
         static (UITreeAdapter adapter, Query query) =>
         {
+            if (!adapter.IsDirty) return;
+
             foreach (var rootNodeId in adapter.Roots)
             {
                 var rootEntity = adapter.GetEntity(rootNodeId);
@@ -30,12 +32,6 @@ public static class UILayoutSystem
                 ref readonly var layoutRoot = ref query.Get<UILayoutRoot>(rootEntity);
                 float width = layoutRoot.Size.Width;
                 float height = layoutRoot.Size.Height;
-
-                // Check for viewport resize — marks entire subtree dirty
-                if (adapter.CheckAndUpdateRootSize(rootEntity, layoutRoot.Size))
-                {
-                    adapter.MarkSubtreeDirty(rootNodeId);
-                }
 
                 // padding+border so the outer size equals the viewport.
                 ref readonly var rootStyle = ref adapter.GetStyle(rootNodeId);
@@ -88,10 +84,12 @@ public static class UILayoutSystem
         new(WriteBackLabel) { RunsAfter = [ComputeLayoutLabel] },
         static (UITreeAdapter adapter, Query query) =>
         {
-            for (int nodeId = 0; nodeId < adapter.NodeCapacity; nodeId++)
+            if (!adapter.IsDirty) return;
+
+            var enumerator = adapter.GetActiveNodes();
+            while (enumerator.MoveNext())
             {
-                var entity = adapter.GetEntity(nodeId);
-                if (entity.IsNull) continue;
+                var (entity, nodeId) = enumerator.Current;
                 if (!query.Has<ComputedNode>(entity)) continue;
 
                 ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);
@@ -116,6 +114,8 @@ public static class UILayoutSystem
                 computed.UnroundedSize = new Vec2f(unrounded.Size.Width, unrounded.Size.Height);
                 computed.UnroundedPosition = new Vec2f(unrounded.Location.X, unrounded.Location.Y);
             }
+
+            adapter.ClearDirty();
         }
     );
 }

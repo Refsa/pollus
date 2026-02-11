@@ -73,13 +73,13 @@ public class TestLayoutTree : ILayoutTree
         _measureFuncs[nodeId]?.Invoke(input) ?? LayoutOutput.Zero;
 
     public bool TryCacheGet(int nodeId, in LayoutInput input, out LayoutOutput output)
-        => _caches[nodeId].TryGet(in input, out output);
+        => System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_caches)[nodeId].TryGet(in input, out output);
 
     public void CacheStore(int nodeId, in LayoutInput input, in LayoutOutput output)
-        => _caches[nodeId].Store(in input, in output);
+        => System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_caches)[nodeId].Store(in input, in output);
 
     public void MarkDirty(int nodeId)
-        => _caches[nodeId].Clear();
+        => System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_caches)[nodeId].Clear();
 
     /// Convenience: compute layout for root and return results.
     public NodeLayout ComputeRoot(int rootId, float width, float height)

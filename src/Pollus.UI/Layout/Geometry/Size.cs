@@ -27,6 +27,7 @@ public record struct Size<T>
     public readonly Size<T> WithCross(FlexDirection direction, T value) =>
         direction.IsRow() ? new(Width, value) : new(value, Height);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Size<T> FromMainCross(FlexDirection direction, T main, T cross) =>
         direction.IsRow() ? new(main, cross) : new(cross, main);
 
@@ -35,6 +36,7 @@ public record struct Size<T>
 
 public static class SizeExtensions
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Size<float> MaybeResolve(this Size<Dimension> self, Size<float?> parentSize)
     {
         return new Size<float>(
@@ -43,6 +45,7 @@ public static class SizeExtensions
         );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Size<float?> MaybeResolveNullable(this Size<Dimension> self, Size<float?> parentSize)
     {
         return new Size<float?>(
