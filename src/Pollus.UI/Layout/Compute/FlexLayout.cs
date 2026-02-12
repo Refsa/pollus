@@ -370,7 +370,9 @@ public static class FlexLayout
                     };
 
                     var measured = tree.ComputeChildLayout(item.NodeId, measureInput);
-                    flexBasis = measured.Size.Main(dir);
+                    // ComputeFlexbox returns outer sizes for non-leaf nodes.
+                    // Convert to content size since PaddingBorder is added back later.
+                    flexBasis = MathF.Max(measured.Size.Main(dir) - pbMain, 0f);
                 }
 
                 item.FlexBasisContent = flexBasis;
@@ -494,7 +496,16 @@ public static class FlexLayout
                     var measured = tree.ComputeChildLayout(item.NodeId, measureInput);
                     float crossMeasured = measured.Size.Cross(dir);
 
-                    item.HypotheticalCrossSize = MathF.Max(MathF.Min(crossMeasured, item.MaxCross), item.MinCross);
+                    // ComputeFlexbox returns outer sizes (content + padding + border) for
+                    // non-leaf nodes. Convert to content size to avoid double-counting when
+                    // PaddingBorder is added back in Phase 7 and Phase 11.
+                    // When the child has an explicit cross size, use the already-resolved
+                    // content size directly. Otherwise subtract padding+border from the
+                    // measured outer size.
+                    float crossContent = childCrossKnown
+                        ?? MathF.Max(crossMeasured - item.PaddingBorderCrossAxisSum(dir), 0f);
+
+                    item.HypotheticalCrossSize = MathF.Max(MathF.Min(crossContent, item.MaxCross), item.MinCross);
                     item.TargetCrossSize = item.HypotheticalCrossSize;
 
                     item.FirstBaseline = measured.FirstBaselines.Cross(dir);
@@ -1191,7 +1202,10 @@ public static class FlexLayout
         if (items.Length > 1)
             usedMain += mainGap * (items.Length - 1);
 
-        float availMain = containerMainSize ?? availableSpaceMain.UnwrapOr(usedMain);
+        // When the container has no definite main size (auto height/width), items should
+        // not be shrunk — the container will grow to fit its content. Only constrain items
+        // when the container has a definite main size (explicit or from known dimensions).
+        float availMain = containerMainSize ?? usedMain;
         float initialFreeSpace = availMain - usedMain;
         bool isGrowing = initialFreeSpace > 0f;
 

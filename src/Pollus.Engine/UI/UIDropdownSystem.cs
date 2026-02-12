@@ -11,7 +11,11 @@ public static class UIDropdownSystem
     public const string Label = "UIDropdownSystem::Update";
 
     public static SystemBuilder Create() => FnSystem.Create(
-        new(Label) { RunsAfter = [UIInteractionSystem.UpdateStateLabel] },
+        new(Label)
+        {
+            RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+            RunsBefore = [UILayoutSystem.SyncTreeLabel],
+        },
         static (
             EventReader<UIInteractionEvents.UIClickEvent> clickReader,
             EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,

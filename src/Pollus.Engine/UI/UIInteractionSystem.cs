@@ -1,9 +1,11 @@
 namespace Pollus.Engine.UI;
 
+using System.Collections.Generic;
 using Pollus.ECS;
 using Pollus.Engine.Input;
 using Pollus.Mathematics;
 using Pollus.UI;
+using Pollus.UI.Layout;
 
 public static class UIInteractionSystem
 {
@@ -12,7 +14,7 @@ public static class UIInteractionSystem
     public const string FocusNavigationLabel = "UIInteractionSystem::FocusNavigation";
 
     public static SystemBuilder HitTest() => FnSystem.Create(
-        new(HitTestLabel) { RunsAfter = [UILayoutSystem.WriteBackLabel] },
+        new(HitTestLabel),
         static (
             CurrentDevice<Mouse> currentMouse,
             UIHitTestResult hitResult,
@@ -33,11 +35,21 @@ public static class UIInteractionSystem
         hitResult.MousePosition = mousePos;
         focusState.FocusOrder.Clear();
 
+        var deferred = new List<(Entity entity, Vec2f parentAbsPos)>();
+
         foreach (var rootEntity in query.Filtered<All<UILayoutRoot>>())
         {
             if (!query.Has<ComputedNode>(rootEntity)) continue;
             ref readonly var computed = ref query.Get<ComputedNode>(rootEntity);
-            HitTestNode(query, ref hitResult.HoveredEntity, focusState, rootEntity, computed, Vec2f.Zero, mousePos);
+            HitTestNode(query, ref hitResult.HoveredEntity, focusState, rootEntity, computed, Vec2f.Zero, mousePos, deferred);
+        }
+
+        // Hit-test deferred absolute-positioned nodes last so they win over normal flow
+        foreach (var (deferredEntity, parentAbsPos) in deferred)
+        {
+            if (!query.Has<ComputedNode>(deferredEntity)) continue;
+            ref readonly var computed = ref query.Get<ComputedNode>(deferredEntity);
+            HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, computed, parentAbsPos, mousePos, null);
         }
     }
 
@@ -260,7 +272,8 @@ public static class UIInteractionSystem
 
     internal static void HitTestNode(
         Query query, ref Entity hitEntity, UIFocusState focusState,
-        Entity entity, in ComputedNode computed, Vec2f parentAbsPos, Vec2f mousePos)
+        Entity entity, in ComputedNode computed, Vec2f parentAbsPos, Vec2f mousePos,
+        List<(Entity entity, Vec2f parentAbsPos)>? deferred)
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
@@ -285,6 +298,9 @@ public static class UIInteractionSystem
             }
         }
 
+        // Skip children of zero-size nodes (e.g. Display.None containers)
+        if (size.X <= 0 && size.Y <= 0) return;
+
         if (!entRef.Has<Parent>()) return;
 
         var childEntity = entRef.Get<Parent>().FirstChild;
@@ -293,8 +309,17 @@ public static class UIInteractionSystem
             var childRef = query.GetEntity(childEntity);
             if (childRef.Has<ComputedNode>())
             {
-                ref var childComputed = ref childRef.Get<ComputedNode>();
-                HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, absPos, mousePos);
+                // Defer absolute-positioned children so they win hit tests over normal flow
+                if (deferred != null && childRef.Has<UIStyle>()
+                    && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
+                {
+                    deferred.Add((childEntity, absPos));
+                }
+                else
+                {
+                    ref var childComputed = ref childRef.Get<ComputedNode>();
+                    HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, absPos, mousePos, deferred);
+                }
             }
 
             if (childRef.Has<Child>())

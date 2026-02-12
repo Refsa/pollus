@@ -688,16 +688,62 @@ public class UIRectExample : IExample
 
                 commands.Entity(dropdown).AddChild(dropdownDisplayText);
 
-                // Dropdown trigger comes first in the column, options appear below when open
+                // Dropdown trigger comes first in the column, options float below when open
                 commands.Entity(dropdownSection).AddChild(dropdown);
 
-                // Dropdown options (tag entities, hidden by default)
+                // Options panel: absolutely positioned below the trigger
+                var optionsPanel = commands.Spawn(Entity.With(
+                    new UINode(),
+                    new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = -1 },
+                    new BackgroundColor { Color = new Color(0.18f, 0.18f, 0.22f, 1f) },
+                    new BorderColor
+                    {
+                        Top = new Color(0.35f, 0.35f, 0.45f, 1f),
+                        Right = new Color(0.35f, 0.35f, 0.45f, 1f),
+                        Bottom = new Color(0.35f, 0.35f, 0.45f, 1f),
+                        Left = new Color(0.35f, 0.35f, 0.45f, 1f),
+                    },
+                    new BorderRadius { TopLeft = 4, TopRight = 4, BottomLeft = 4, BottomRight = 4 },
+                    new UIStyle
+                    {
+                        Value = LayoutStyle.Default with
+                        {
+                            Display = Display.None,
+                            Position = Position.Absolute,
+                            Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Hidden),
+                            Inset = new Rect<LengthPercentageAuto>(
+                                LengthPercentageAuto.Px(0),
+                                LengthPercentageAuto.Auto,
+                                LengthPercentageAuto.Px(40), // below trigger (32px) + gap (8px)
+                                LengthPercentageAuto.Auto),
+                            FlexDirection = FlexDirection.Column,
+                            MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(200)),
+                            Padding = new Rect<LengthPercentage>(
+                                LengthPercentage.Px(2), LengthPercentage.Px(2),
+                                LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                            Border = new Rect<LengthPercentage>(
+                                LengthPercentage.Px(1), LengthPercentage.Px(1),
+                                LengthPercentage.Px(1), LengthPercentage.Px(1)),
+                        }
+                    }
+                )).Entity;
+                commands.Entity(dropdownSection).AddChild(optionsPanel);
+
+                // Dropdown options (hidden by default via panel)
                 for (int i = 0; i < optionLabels.Length; i++)
                 {
                     var opt = commands.Spawn(Entity.With(
                         new UINode(),
                         new UIInteraction { Focusable = true },
                         new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = i },
+                        new UIButton
+                        {
+                            NormalColor = new Color(0.20f, 0.20f, 0.25f, 1f),
+                            HoverColor = new Color(0.30f, 0.30f, 0.38f, 1f),
+                            PressedColor = new Color(0.15f, 0.15f, 0.20f, 1f),
+                            DisabledColor = new Color(0.20f, 0.20f, 0.22f, 0.5f),
+                        },
                         new BackgroundColor { Color = new Color(0.20f, 0.20f, 0.25f, 1f) },
                         new UIStyle
                         {
@@ -714,7 +760,7 @@ public class UIRectExample : IExample
                     )).Entity;
 
                     commands.Entity(opt).AddChild(SpawnLabel(optionLabels[i], 12f));
-                    commands.Entity(dropdownSection).AddChild(opt);
+                    commands.Entity(optionsPanel).AddChild(opt);
                 }
                 commands.Entity(mainPanel).AddChild(dropdownSection);
 
