@@ -118,8 +118,12 @@ public class UITextPlugin : IPlugin
                         ?? availableSpace.Width.AsDefinite()
                         ?? 0f;
                     var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
-                    return new Size<float>(measured.X, measured.Y);
+                    return new Size<float>(
+                        knownDimensions.Width ?? measured.X,
+                        knownDimensions.Height ?? measured.Y);
                 });
+
+                uiText.IsDirty = false;
             }
         }));
 
@@ -161,7 +165,6 @@ public class UITextPlugin : IPlugin
                 var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
                 tma.Bounds = result.Bounds;
 
-                uiText.IsDirty = false;
                 uiText.LastBuildMaxWidth = maxWidth;
                 data.meshes.Set(mesh.Mesh, tma);
             });

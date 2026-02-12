@@ -54,7 +54,7 @@ public static class ExtractUITextSystem
                 {
                     var batchKey = new UIFontBatchKey(textMesh.Mesh, textFont.Material);
                     var batch = batches.GetOrCreate(batchKey);
-                    var sortKey = (ulong)nodeIndex * 2 + 1;
+                    var sortKey = (ulong)nodeIndex * 4 + 3;
 
                     // Content offset: text starts inside padding+border
                     var contentOffset = new Vec2f(

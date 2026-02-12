@@ -67,6 +67,7 @@ public static class UIInteractionSystem
         var clickWriter = events.GetWriter<UIInteractionEvents.UIClickEvent>();
         var focusWriter = events.GetWriter<UIInteractionEvents.UIFocusEvent>();
         var blurWriter = events.GetWriter<UIInteractionEvents.UIBlurEvent>();
+        var dragWriter = events.GetWriter<UIInteractionEvents.UIDragEvent>();
 
         var hovered = hitResult.HoveredEntity;
         var prevHovered = hitResult.PreviousHoveredEntity;
@@ -106,11 +107,29 @@ public static class UIInteractionSystem
                 {
                     interaction.State |= InteractionState.Pressed;
                     hitResult.PressedEntity = hovered;
+                    hitResult.CapturedEntity = hovered;
                     pressWriter.Write(new UIInteractionEvents.UIPressEvent { Entity = hovered });
 
                     // Set focus
                     SetFocus(query, focusState, events, hovered);
                 }
+            }
+        }
+
+        // Drag (pointer move while captured)
+        if (!hitResult.CapturedEntity.IsNull && !mouseDown && !mouseUp)
+        {
+            var delta = hitResult.MousePosition - hitResult.PreviousMousePosition;
+            if (delta.X != 0 || delta.Y != 0)
+            {
+                dragWriter.Write(new UIInteractionEvents.UIDragEvent
+                {
+                    Entity = hitResult.CapturedEntity,
+                    PositionX = hitResult.MousePosition.X,
+                    PositionY = hitResult.MousePosition.Y,
+                    DeltaX = delta.X,
+                    DeltaY = delta.Y,
+                });
             }
         }
 
@@ -135,6 +154,7 @@ public static class UIInteractionSystem
                 }
 
                 hitResult.PressedEntity = Entity.Null;
+                hitResult.CapturedEntity = Entity.Null;
             }
         }
 
@@ -143,6 +163,8 @@ public static class UIInteractionSystem
         {
             ClearFocus(query, focusState, events);
         }
+
+        hitResult.PreviousMousePosition = hitResult.MousePosition;
     }
 
     internal static void SetFocus(Query query, UIFocusState focusState, Events events, Entity entity)

@@ -17,6 +17,7 @@ public partial class UIRectMaterial : IMaterial
             VertexFormat.Float32x4, // BorderColor
             VertexFormat.Float32x4, // BorderRadius
             VertexFormat.Float32x4, // BorderWidths
+            VertexFormat.Float32x4, // Extra (x=ShapeType, yzw=reserved)
         ]),
     ];
 

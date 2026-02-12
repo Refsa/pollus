@@ -1,6 +1,7 @@
 namespace Pollus.Engine.Input;
 
 using System.Runtime.InteropServices;
+using System.Text;
 using Pollus.Collections;
 using Pollus.Debugging;
 using Pollus.ECS;
@@ -58,6 +59,7 @@ public class InputManager : IDisposable
         foreach (var @event in platform.Events)
         {
             HandleKeyboardEvent(@event);
+            HandleTextInputEvent(@event);
             HandleMouseEvent(@event);
             if (!isBrowser) HandleGameControllerEvent(@event);
             HandleJoyDeviceEvent(@event);
@@ -77,6 +79,28 @@ public class InputManager : IDisposable
             if (@event.Key.Repeat == 0)
             {
                 keyboard?.SetKeyState(key, @event.Key.State == 1);
+            }
+        }
+    }
+
+    void HandleTextInputEvent(Silk.NET.SDL.Event @event)
+    {
+        if (@event.Type is (int)Silk.NET.SDL.EventType.Textinput)
+        {
+            unsafe
+            {
+                var textSpan = new Span<byte>(@event.Text.Text, 32);
+                int nullIndex = textSpan.IndexOf((byte)0);
+                if (nullIndex <= 0) return;
+                textSpan = textSpan[..nullIndex];
+
+                Span<char> textInput = stackalloc char[32];
+                int count = Encoding.UTF8.GetChars(textSpan, textInput);
+                var text = new string(textInput[..count]);
+                if (text.Length > 0)
+                {
+                    keyboard.EnqueueTextInput(text);
+                }
             }
         }
     }

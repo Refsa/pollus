@@ -15,6 +15,12 @@ public struct ButtonEvent<TButton>
     }
 }
 
+public struct TextInputEvent
+{
+    public required Guid DeviceId { get; init; }
+    public required string Text { get; init; }
+}
+
 public struct AxisEvent<TAxis>
     where TAxis : Enum
 {

@@ -20,6 +20,10 @@ public class UIInteractionPlugin : IPlugin
         world.Events.InitEvent<UIInteractionEvents.UIReleaseEvent>();
         world.Events.InitEvent<UIInteractionEvents.UIFocusEvent>();
         world.Events.InitEvent<UIInteractionEvents.UIBlurEvent>();
+        world.Events.InitEvent<UIInteractionEvents.UIKeyDownEvent>();
+        world.Events.InitEvent<UIInteractionEvents.UIKeyUpEvent>();
+        world.Events.InitEvent<UIInteractionEvents.UITextInputEvent>();
+        world.Events.InitEvent<UIInteractionEvents.UIDragEvent>();
 
         world.Resources.Add(new UIHitTestResult());
         world.Resources.Add(new UIFocusState());
@@ -27,7 +31,8 @@ public class UIInteractionPlugin : IPlugin
         world.Schedule.AddSystems(CoreStage.PostUpdate,
             UIInteractionSystem.HitTest(),
             UIInteractionSystem.UpdateState(),
-            UIInteractionSystem.FocusNavigation()
+            UIInteractionSystem.FocusNavigation(),
+            UIKeyboardRoutingSystem.Create()
         );
     }
 }

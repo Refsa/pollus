@@ -7,6 +7,7 @@ struct VertexInput {
     @location(2) i_border_color: vec4f,   // border RGBA
     @location(3) i_border_radius: vec4f,  // topLeft, topRight, bottomRight, bottomLeft
     @location(4) i_border_widths: vec4f,  // top, right, bottom, left
+    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), yzw=reserved
 };
 
 struct VertexOutput {
@@ -17,6 +18,7 @@ struct VertexOutput {
     @location(3) @interpolate(flat) border_color: vec4f,
     @location(4) @interpolate(flat) border_radius: vec4f,
     @location(5) @interpolate(flat) border_widths: vec4f,
+    @location(6) @interpolate(flat) extra: vec4f,
 };
 
 struct UIViewportUniform {
@@ -45,6 +47,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     out.border_color = input.i_border_color;
     out.border_radius = input.i_border_radius;
     out.border_widths = input.i_border_widths;
+    out.extra = input.i_extra;
     return out;
 }
 
@@ -68,6 +71,48 @@ fn sd_rounded_box(p: vec2f, b: vec2f, r: vec4f) -> f32 {
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2f(0.0))) - radius;
 }
 
+// SDF for a circle
+fn sd_circle(p: vec2f, r: f32) -> f32 {
+    return length(p) - r;
+}
+
+// SDF for a checkmark (two line segments)
+fn sd_checkmark(p: vec2f, size: f32) -> f32 {
+    let s = size * 0.4;
+    // Segment 1: bottom-left to bottom-center (the short leg)
+    let a1 = vec2f(-s, 0.0);
+    let b1 = vec2f(-s * 0.2, s * 0.7);
+    // Segment 2: bottom-center to top-right (the long leg)
+    let a2 = vec2f(-s * 0.2, s * 0.7);
+    let b2 = vec2f(s, -s * 0.5);
+
+    let d1 = sd_segment(p, a1, b1);
+    let d2 = sd_segment(p, a2, b2);
+    return min(d1, d2);
+}
+
+// SDF for a line segment
+fn sd_segment(p: vec2f, a: vec2f, b: vec2f) -> f32 {
+    let pa = p - a;
+    let ba = b - a;
+    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
+// SDF for a down arrow (chevron/triangle)
+fn sd_down_arrow(p: vec2f, size: f32) -> f32 {
+    let s = size * 0.3;
+    // Two line segments forming a V pointing down
+    let a1 = vec2f(-s, -s * 0.4);
+    let b1 = vec2f(0.0, s * 0.4);
+    let a2 = vec2f(0.0, s * 0.4);
+    let b2 = vec2f(s, -s * 0.4);
+
+    let d1 = sd_segment(p, a1, b1);
+    let d2 = sd_segment(p, a2, b2);
+    return min(d1, d2);
+}
+
 struct FragmentOutput {
     @location(0) color: vec4f,
 };
@@ -76,9 +121,50 @@ struct FragmentOutput {
 fn fs_main(input: VertexOutput) -> FragmentOutput {
     let size = input.size;
     let half_size = size * 0.5;
+    let shape_type = u32(input.extra.x);
 
     // Position relative to box center
     let p = input.local_pos - half_size;
+
+    if (shape_type == 1u) {
+        // Circle
+        let r = min(half_size.x, half_size.y);
+        let d = sd_circle(p, r);
+        let aa = max(fwidth(d), 0.5);
+        let alpha = 1.0 - smoothstep(-aa, aa, d);
+        if (alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        return out;
+    }
+
+    if (shape_type == 2u) {
+        // Checkmark
+        let s = min(half_size.x, half_size.y);
+        let d = sd_checkmark(p, s);
+        let thickness = s * 0.15;
+        let aa = max(fwidth(d), 0.5);
+        let alpha = 1.0 - smoothstep(thickness - aa, thickness + aa, d);
+        if (alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        return out;
+    }
+
+    if (shape_type == 3u) {
+        // Down arrow
+        let s = min(half_size.x, half_size.y);
+        let d = sd_down_arrow(p, s);
+        let thickness = s * 0.12;
+        let aa = max(fwidth(d), 0.5);
+        let alpha = 1.0 - smoothstep(thickness - aa, thickness + aa, d);
+        if (alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        return out;
+    }
+
+    // Default: RoundedRect (shape_type == 0)
 
     // Clamp radii so they don't exceed half the box dimension
     let max_radius = min(half_size.x, half_size.y);

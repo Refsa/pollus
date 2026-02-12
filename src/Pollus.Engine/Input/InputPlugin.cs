@@ -31,6 +31,7 @@ public class InputPlugin : IPlugin
         world.Events.InitEvent<ButtonEvent<GamepadButton>>();
         world.Events.InitEvent<AxisEvent<GamepadAxis>>();
         world.Events.InitEvent<ButtonEvent<Key>>();
+        world.Events.InitEvent<TextInputEvent>();
         world.Events.InitEvent<MouseMovedEvent>();
 
         world.Resources.Add(new InputManager());
