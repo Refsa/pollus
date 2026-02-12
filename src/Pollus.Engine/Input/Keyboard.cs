@@ -127,7 +127,13 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
 
     Dictionary<Key, ButtonState> buttons = new();
     HashSet<Key> changed = new();
+    List<string> pendingTextInput = new();
     bool isActive;
+
+    public void EnqueueTextInput(string text)
+    {
+        pendingTextInput.Add(text);
+    }
 
     public void SetKeyState(Key key, bool isPressed)
     {
@@ -191,8 +197,19 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
             });
         }
 
-        isActive = changed.Count > 0;
+        var textEvents = events.GetWriter<TextInputEvent>();
+        foreach (var text in pendingTextInput)
+        {
+            textEvents.Write(new TextInputEvent
+            {
+                DeviceId = Id,
+                Text = text,
+            });
+        }
+
+        isActive = changed.Count > 0 || pendingTextInput.Count > 0;
         changed.Clear();
+        pendingTextInput.Clear();
     }
 
     public ButtonState GetKeyState(Key key)

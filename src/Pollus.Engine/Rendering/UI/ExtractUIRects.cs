@@ -80,9 +80,15 @@ public static class ExtractUIRectsSystem
                 borderRadius = new Vec4f(br.TopLeft, br.TopRight, br.BottomRight, br.BottomLeft);
             }
 
+            float shapeType = 0f;
+            if (entityRef.Has<UIShape>())
+            {
+                shapeType = (float)entityRef.Get<UIShape>().Type;
+            }
+
             if (hasBg || hasBorder)
             {
-                var sortKey = (ulong)nodeIndex * 2;
+                var sortKey = (ulong)nodeIndex * 4;
                 batch.Draw(sortKey, new UIRectBatch.InstanceData
                 {
                     PosSize = new Vec4f(absPos.X, absPos.Y, size.X, size.Y),
@@ -90,6 +96,81 @@ public static class ExtractUIRectsSystem
                     BorderColor = borderColor,
                     BorderRadius = borderRadius,
                     BorderWidths = borderWidths,
+                    Extra = new Vec4f(shapeType, 0f, 0f, 0f),
+                });
+            }
+
+            // Text input caret - position relative to the text child entity
+            if (entityRef.Has<UITextInput>() && entityRef.Has<UIInteraction>())
+            {
+                ref readonly var input = ref entityRef.Get<UITextInput>();
+                ref readonly var interaction = ref entityRef.Get<UIInteraction>();
+
+                if (interaction.IsFocused && input.CaretVisible && input.CaretHeight > 0
+                    && !input.TextEntity.IsNull)
+                {
+                    var textRef = query.GetEntity(input.TextEntity);
+                    if (textRef.Has<ComputedNode>())
+                    {
+                        ref readonly var textComputed = ref textRef.Get<ComputedNode>();
+                        // Text entity position is relative to this parent
+                        var textAbsX = absPos.X + textComputed.Position.X;
+                        var textAbsY = absPos.Y + textComputed.Position.Y;
+
+                        var caretW = 2f;
+                        var caretH = input.CaretHeight;
+                        var caretX = textAbsX + input.CaretXOffset;
+                        // Vertically center the caret within the text entity
+                        var caretY = textAbsY + (textComputed.Size.Y - caretH) * 0.5f;
+
+                        batch.Draw((ulong)nodeIndex * 4 + 1, new UIRectBatch.InstanceData
+                        {
+                            PosSize = new Vec4f(caretX, caretY, caretW, caretH),
+                            BackgroundColor = new Vec4f(1f, 1f, 1f, 1f),
+                            BorderColor = Vec4f.Zero,
+                            BorderRadius = Vec4f.Zero,
+                            BorderWidths = Vec4f.Zero,
+                            Extra = Vec4f.Zero,
+                        });
+                    }
+                }
+            }
+
+            // Slider fill bar + thumb knob (use sub-keys within this node's
+            // sort range so the shared sortIndex stays in sync with ExtractUIText)
+            if (entityRef.Has<UISlider>())
+            {
+                ref readonly var slider = ref entityRef.Get<UISlider>();
+                var range = slider.Max - slider.Min;
+                var ratio = range > 0 ? Math.Clamp((slider.Value - slider.Min) / range, 0f, 1f) : 0f;
+
+                // Fill bar
+                var fillW = size.X * ratio;
+                if (fillW > 0.5f)
+                {
+                    batch.Draw((ulong)nodeIndex * 4 + 1, new UIRectBatch.InstanceData
+                    {
+                        PosSize = new Vec4f(absPos.X, absPos.Y, fillW, size.Y),
+                        BackgroundColor = (Vec4f)slider.FillColor,
+                        BorderColor = Vec4f.Zero,
+                        BorderRadius = borderRadius,
+                        BorderWidths = Vec4f.Zero,
+                        Extra = Vec4f.Zero,
+                    });
+                }
+
+                // Thumb knob (circle, slightly taller than track)
+                var thumbDiameter = size.Y * 1.4f;
+                var thumbX = absPos.X + size.X * ratio - thumbDiameter * 0.5f;
+                var thumbY = absPos.Y + (size.Y - thumbDiameter) * 0.5f;
+                batch.Draw((ulong)nodeIndex * 4 + 2, new UIRectBatch.InstanceData
+                {
+                    PosSize = new Vec4f(thumbX, thumbY, thumbDiameter, thumbDiameter),
+                    BackgroundColor = (Vec4f)slider.ThumbColor,
+                    BorderColor = Vec4f.Zero,
+                    BorderRadius = Vec4f.Zero,
+                    BorderWidths = Vec4f.Zero,
+                    Extra = new Vec4f(1f, 0f, 0f, 0f), // Circle shape
                 });
             }
         }
