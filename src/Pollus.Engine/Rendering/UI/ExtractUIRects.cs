@@ -1,8 +1,10 @@
 namespace Pollus.Engine.Rendering;
 
+using System.Collections.Generic;
 using Pollus.ECS;
 using Pollus.Mathematics;
 using Pollus.UI;
+using Pollus.UI.Layout;
 using Pollus.Utils;
 
 public record struct UIRenderResources
@@ -30,18 +32,30 @@ public static class ExtractUIRectsSystem
             var batchKey = new UIRectBatchKey(resources.Material);
             var batch = batches.GetOrCreate(batchKey);
             uint sortIndex = 0;
+            var deferred = new List<(Entity entity, Vec2f parentAbsPos)>();
 
             foreach (var root in qRoots)
             {
                 var rootEntity = root.Entity;
                 ref readonly var rootComputed = ref root.Component1;
 
-                EmitNode(batch, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero);
+                EmitNode(batch, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, deferred);
+            }
+
+            // Render deferred absolute-positioned nodes on top of normal flow
+            foreach (var (deferredEntity, parentAbsPos) in deferred)
+            {
+                var entRef = query.GetEntity(deferredEntity);
+                if (entRef.Has<ComputedNode>())
+                {
+                    ref var computed = ref entRef.Get<ComputedNode>();
+                    EmitNode(batch, ref sortIndex, query, deferredEntity, computed, parentAbsPos, null);
+                }
             }
         }
     );
 
-    static void EmitNode(UIRectBatch batch, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos)
+    static void EmitNode(UIRectBatch batch, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, List<(Entity entity, Vec2f parentAbsPos)>? deferred)
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
@@ -175,6 +189,9 @@ public static class ExtractUIRectsSystem
             }
         }
 
+        // Skip children of zero-size nodes (e.g. Display.None containers)
+        if (size.X <= 0 && size.Y <= 0) return;
+
         // Walk children via Parent/Child linked list
         var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
@@ -186,17 +203,25 @@ public static class ExtractUIRectsSystem
         while (!childEntity.IsNull)
         {
             var childRef = query.GetEntity(childEntity);
-            ref var childComputed = ref childRef.Get<ComputedNode>();
-            EmitNode(batch, ref sortIndex, query, childEntity, childComputed, absPos);
+            if (childRef.Has<ComputedNode>())
+            {
+                // Defer absolute-positioned children to render on top of normal flow
+                if (deferred != null && childRef.Has<UIStyle>()
+                    && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
+                {
+                    deferred.Add((childEntity, absPos));
+                }
+                else
+                {
+                    ref var childComputed = ref childRef.Get<ComputedNode>();
+                    EmitNode(batch, ref sortIndex, query, childEntity, childComputed, absPos, deferred);
+                }
+            }
 
             if (childRef.Has<Child>())
-            {
                 childEntity = childRef.Get<Child>().NextSibling;
-            }
             else
-            {
                 break;
-            }
         }
     }
 }

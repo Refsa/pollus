@@ -398,8 +398,8 @@ public class UITreeAdapter : ILayoutTree
         _globalDirty = true;
         while (nodeId >= 0)
         {
-            if (_caches[nodeId].IsDirty) return;
-            _caches[nodeId].Clear();
+            if (!_caches[nodeId].IsDirty)
+                _caches[nodeId].Clear();
             nodeId = _parentNode[nodeId];
         }
     }
