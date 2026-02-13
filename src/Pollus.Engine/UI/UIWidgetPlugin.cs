@@ -30,7 +30,8 @@ public class UIWidgetPlugin : IPlugin
             UICaretSystem.Create(),
             UINumberInputSystem.Create(),
             UISliderSystem.Create(),
-            UIDropdownSystem.Create()
+            UIDropdownSystem.Create(),
+            UIScrollSystem.Create()
         );
     }
 }

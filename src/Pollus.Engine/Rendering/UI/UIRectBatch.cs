@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public readonly record struct UIRectBatchKey(Handle Material, RenderStep2D RenderStep = RenderStep2D.UI)
+public readonly record struct UIRectBatchKey(Handle Material, RectInt? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(Material.ID, 0);
 }
@@ -23,11 +23,13 @@ public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>
     }
 
     public Handle Material { get; init; }
+    public RectInt? ScissorRect { get; init; }
     public override Handle[] RequiredResources { get; }
 
     public UIRectBatch(in UIRectBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
+        ScissorRect = key.ScissorRect;
         RenderStep = (int)key.RenderStep;
         RequiredResources = [Material];
     }
@@ -44,7 +46,8 @@ public class UIRectBatches : RenderBatches<UIRectBatch, UIRectBatchKey>
             .SetVertexInfo(6, 0)
             .SetInstanceInfo((uint)count, (uint)start)
             .SetVertexBuffer(0, batch.InstanceBufferHandle)
-            .SetBindGroups(material.BindGroups);
+            .SetBindGroups(material.BindGroups)
+            .SetScissorRect(batch.ScissorRect);
     }
 
     protected override UIRectBatch CreateBatch(in UIRectBatchKey key)

@@ -202,9 +202,11 @@ public class UIRectExample : IExample
                 commands.Entity(toggle).AddChild(toggleText);
                 commands.Entity(sidebar).AddChild(toggle);
 
-                // Main panel with border - column layout for sections
+                // Main panel with border - column layout for sections (scrollable)
                 var mainPanel = commands.Spawn(Entity.With(
                     new UINode(),
+                    new UIScrollOffset(),
+                    new UIInteraction(),
                     new UIStyle
                     {
                         Value = LayoutStyle.Default with
@@ -218,6 +220,7 @@ public class UIRectExample : IExample
                             Border = new Rect<LengthPercentage>(
                                 LengthPercentage.Px(2), LengthPercentage.Px(2),
                                 LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                            Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Scroll),
                         }
                     },
                     new BackgroundColor { Color = new Color(0.15f, 0.15f, 0.19f, 1f) },

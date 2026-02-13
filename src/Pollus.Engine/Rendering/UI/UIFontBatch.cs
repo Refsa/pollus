@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public record struct UIFontBatchKey(Handle<TextMeshAsset> TextMesh, Handle Material, RenderStep2D RenderStep = RenderStep2D.UI)
+public record struct UIFontBatchKey(Handle<TextMeshAsset> TextMesh, Handle Material, RectInt? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(TextMesh.ID, Material.ID);
 }
@@ -20,12 +20,14 @@ public partial class UIFontBatch : RenderBatch<UIFontBatch.InstanceData>
 
     public Handle Material { get; }
     public Handle<TextMeshAsset> TextMesh { get; }
+    public RectInt? ScissorRect { get; }
     public override Handle[] RequiredResources { get; }
 
     public UIFontBatch(in UIFontBatchKey key) : base(key.SortKey)
     {
         Material = key.Material;
         TextMesh = key.TextMesh;
+        ScissorRect = key.ScissorRect;
         RenderStep = (int)key.RenderStep;
         RequiredResources = [Material, TextMesh];
     }
@@ -57,7 +59,8 @@ public class UIFontBatches : RenderBatches<UIFontBatch, UIFontBatchKey>
             .SetVertexBuffer(0, textMesh.VertexBuffer)
             .SetVertexBuffer(1, batch.InstanceBufferHandle)
             .SetIndexBuffer(textMesh.IndexBuffer, textMesh.IndexFormat, (uint)textMesh.IndexCount, 0)
-            .SetBindGroups(material.BindGroups);
+            .SetBindGroups(material.BindGroups)
+            .SetScissorRect(batch.ScissorRect);
     }
 
     protected override UIFontBatch CreateBatch(in UIFontBatchKey key)
