@@ -303,6 +303,14 @@ public static class UIInteractionSystem
 
         if (!entRef.Has<Parent>()) return;
 
+        // Apply scroll offset for children hit testing
+        var childAbsPos = absPos;
+        if (entRef.Has<UIScrollOffset>())
+        {
+            ref readonly var scroll = ref entRef.Get<UIScrollOffset>();
+            childAbsPos = absPos - scroll.Offset;
+        }
+
         var childEntity = entRef.Get<Parent>().FirstChild;
         while (!childEntity.IsNull)
         {
@@ -313,12 +321,12 @@ public static class UIInteractionSystem
                 if (deferred != null && childRef.Has<UIStyle>()
                     && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
                 {
-                    deferred.Add((childEntity, absPos));
+                    deferred.Add((childEntity, childAbsPos));
                 }
                 else
                 {
                     ref var childComputed = ref childRef.Get<ComputedNode>();
-                    HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, absPos, mousePos, deferred);
+                    HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, childAbsPos, mousePos, deferred);
                 }
             }
 

@@ -572,7 +572,7 @@ public static class FlexLayout
 
                 if (lineCount == 1 && childContainerCrossInnerSize.HasValue)
                 {
-                    lines[0].CrossSize = MathF.Max(lines[0].CrossSize, childContainerCrossInnerSize.Value);
+                    lines[0].CrossSize = childContainerCrossInnerSize.Value;
                 }
 
                 #endregion

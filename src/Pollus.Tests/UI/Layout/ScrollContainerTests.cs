@@ -168,4 +168,84 @@ public class ScrollContainerTests
         // Grow child should get remaining space (at least 0, not negative)
         Assert.True(growLayout.Size.Height >= 0f);
     }
+
+    [Fact]
+    public void ScrollY_StretchedInRow_ContentSizeExceedsSize()
+    {
+        // Mimics UIRectExample: a Row container with a sidebar and a scroll panel.
+        // The scroll panel gets its height from stretch (cross axis of the Row).
+        // Its children overflow, so ContentSize.Height > Size.Height.
+        var tree = new TestLayoutTree();
+
+        // Root: Column, fixed viewport
+        var root = tree.AddNode(LayoutStyle.Default with
+        {
+            FlexDirection = FlexDirection.Column,
+            Size = new Size<Dimension>(Dimension.Px(800), Dimension.Px(400)),
+        });
+
+        // Header: fixed height
+        var header = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+        });
+
+        // ContentRow: Row, flex-grow
+        var contentRow = tree.AddNode(LayoutStyle.Default with
+        {
+            FlexGrow = 1f,
+            FlexDirection = FlexDirection.Row,
+        });
+
+        // Sidebar: fixed width
+        var sidebar = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Dimension>(Dimension.Px(150), Dimension.Auto),
+        });
+
+        // ScrollPanel: flex-grow, Column, Overflow.Scroll on Y
+        var scrollPanel = tree.AddNode(LayoutStyle.Default with
+        {
+            FlexGrow = 1f,
+            FlexDirection = FlexDirection.Column,
+            Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Scroll),
+        });
+
+        // Many children inside the scroll panel that exceed available height
+        for (int i = 0; i < 10; i++)
+        {
+            var section = tree.AddNode(LayoutStyle.Default with
+            {
+                Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(60)),
+            });
+            tree.AddChild(scrollPanel, section);
+        }
+        // Total children height = 10 * 60 = 600px, container ~360px
+
+        tree.AddChild(root, header);
+        tree.AddChild(root, contentRow);
+        tree.AddChild(contentRow, sidebar);
+        tree.AddChild(contentRow, scrollPanel);
+
+        tree.ComputeRoot(root, 800, 400);
+
+        var rootLayout = tree.GetNodeLayout(root);
+        var contentRowLayout = tree.GetNodeLayout(contentRow);
+        var scrollPanelLayout = tree.GetNodeLayout(scrollPanel);
+
+        // Root is 800x400
+        Assert.Equal(800f, rootLayout.Size.Width);
+        Assert.Equal(400f, rootLayout.Size.Height);
+
+        // ContentRow fills remaining height: 400 - 40 = 360
+        Assert.True(contentRowLayout.Size.Height > 300f,
+            $"ContentRow height ({contentRowLayout.Size.Height}) should be ~360");
+
+        // ScrollPanel is stretched to contentRow height (constrained, not inflated by content)
+        Assert.Equal(contentRowLayout.Size.Height, scrollPanelLayout.Size.Height);
+
+        // ContentSize should exceed Size (children overflow: 10*60=600 > ~360)
+        Assert.True(scrollPanelLayout.ContentSize.Height > scrollPanelLayout.Size.Height,
+            $"ContentSize.Height ({scrollPanelLayout.ContentSize.Height}) should exceed Size.Height ({scrollPanelLayout.Size.Height})");
+    }
 }

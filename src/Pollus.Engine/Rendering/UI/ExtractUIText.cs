@@ -24,30 +24,50 @@ public static class ExtractUITextSystem
             batches.Reset();
 
             uint sortIndex = 0;
-            var deferred = new List<(Entity entity, Vec2f parentAbsPos)>();
+            var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
 
             foreach (var root in qRoots)
             {
                 var rootEntity = root.Entity;
                 ref readonly var rootComputed = ref root.Component1;
 
-                EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, deferred);
+                EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
             }
 
             // Render deferred absolute-positioned text on top of normal flow
-            foreach (var (deferredEntity, parentAbsPos) in deferred)
+            foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
             {
                 var entRef = query.GetEntity(deferredEntity);
                 if (entRef.Has<ComputedNode>())
                 {
                     ref var computed = ref entRef.Get<ComputedNode>();
-                    EmitNode(batches, ref sortIndex, query, deferredEntity, computed, parentAbsPos, null);
+                    EmitNode(batches, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
                 }
             }
         }
     );
 
-    static void EmitNode(UIFontBatches batches, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, List<(Entity entity, Vec2f parentAbsPos)>? deferred)
+    static RectInt IntersectScissorRects(RectInt a, RectInt b)
+    {
+        var left = Math.Max(a.Min.X, b.Min.X);
+        var top = Math.Max(a.Min.Y, b.Min.Y);
+        var right = Math.Min(a.Max.X, b.Max.X);
+        var bottom = Math.Min(a.Max.Y, b.Max.Y);
+        return new RectInt(left, top, Math.Max(left, right), Math.Max(top, bottom));
+    }
+
+    static RectInt? ComputeChildScissor(RectInt? parentScissor, Vec2f absPos, Vec2f size)
+    {
+        var nodeRect = new RectInt(
+            (int)absPos.X, (int)absPos.Y,
+            (int)(absPos.X + size.X), (int)(absPos.Y + size.Y));
+
+        if (parentScissor.HasValue)
+            return IntersectScissorRects(parentScissor.Value, nodeRect);
+        return nodeRect;
+    }
+
+    static void EmitNode(UIFontBatches batches, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor, List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
@@ -66,7 +86,7 @@ public static class ExtractUITextSystem
 
                 if (textMesh.Mesh != Handle<TextMeshAsset>.Null && textFont.Material != Handle.Null)
                 {
-                    var batchKey = new UIFontBatchKey(textMesh.Mesh, textFont.Material);
+                    var batchKey = new UIFontBatchKey(textMesh.Mesh, textFont.Material, scissor);
                     var batch = batches.GetOrCreate(batchKey);
                     var sortKey = (ulong)nodeIndex * 4 + 3;
 
@@ -80,12 +100,30 @@ public static class ExtractUITextSystem
             }
         }
 
-        // Skip children of zero-size nodes (e.g. Display.None containers)
+        // Skip children of zero-size nodes
         if (size.X <= 0 && size.Y <= 0) return;
 
-        // Walk children via Parent/Child linked list
         var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
+
+        // Compute scissor rect for children if this node has overflow != Visible
+        var childScissor = scissor;
+        var childAbsPos = absPos;
+        if (entRef.Has<UIStyle>())
+        {
+            ref readonly var style = ref entRef.Get<UIStyle>();
+            if (style.Value.Overflow.X != Overflow.Visible || style.Value.Overflow.Y != Overflow.Visible)
+            {
+                childScissor = ComputeChildScissor(scissor, absPos, size);
+            }
+        }
+
+        // Apply scroll offset for children
+        if (entRef.Has<UIScrollOffset>())
+        {
+            ref readonly var scroll = ref entRef.Get<UIScrollOffset>();
+            childAbsPos = absPos - scroll.Offset;
+        }
 
         var childEntity = entRef.Get<Parent>().FirstChild;
         while (!childEntity.IsNull)
@@ -93,16 +131,15 @@ public static class ExtractUITextSystem
             var childRef = query.GetEntity(childEntity);
             if (childRef.Has<ComputedNode>())
             {
-                // Defer absolute-positioned children to render on top of normal flow
                 if (deferred != null && childRef.Has<UIStyle>()
                     && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
                 {
-                    deferred.Add((childEntity, absPos));
+                    deferred.Add((childEntity, childAbsPos, childScissor));
                 }
                 else
                 {
                     ref var childComputed = ref childRef.Get<ComputedNode>();
-                    EmitNode(batches, ref sortIndex, query, childEntity, childComputed, absPos, deferred);
+                    EmitNode(batches, ref sortIndex, query, childEntity, childComputed, childAbsPos, childScissor, deferred);
                 }
             }
 

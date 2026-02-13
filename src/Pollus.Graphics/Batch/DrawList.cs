@@ -124,7 +124,16 @@ public class DrawGroup<TGroup>
                 if (scissorRect.HasValue)
                 {
                     var rect = scissorRect.Value;
-                    encoder.SetScissorRect((uint)rect.Min.X, (uint)rect.Min.Y, (uint)rect.Width, (uint)rect.Height);
+                    var x = (uint)Math.Max(0, rect.Min.X);
+                    var y = (uint)Math.Max(0, rect.Min.Y);
+                    var w = (uint)Math.Max(0, rect.Width);
+                    var h = (uint)Math.Max(0, rect.Height);
+                    if (viewport.HasValue)
+                    {
+                        w = Math.Min(w, viewport.Value.X - Math.Min(x, viewport.Value.X));
+                        h = Math.Min(h, viewport.Value.Y - Math.Min(y, viewport.Value.Y));
+                    }
+                    encoder.SetScissorRect(x, y, w, h);
                 }
                 else if (viewport.HasValue)
                 {
