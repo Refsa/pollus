@@ -1,6 +1,6 @@
 namespace Pollus.Tests.Utils;
 
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Utils;
 
 public class TestAssetIO : AssetIO

@@ -3,7 +3,7 @@ namespace Pollus.Engine.Audio;
 using Pollus.Audio;
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Mathematics;
 using Pollus.Utils;
 

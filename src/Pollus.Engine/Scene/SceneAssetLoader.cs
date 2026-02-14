@@ -1,7 +1,6 @@
 namespace Pollus.Engine;
 
-using Pollus.Engine.Assets;
-using Pollus.Engine.Serialization;
+using Pollus.Assets;
 
 public class SceneAssetLoader : AssetLoader<Scene>
 {

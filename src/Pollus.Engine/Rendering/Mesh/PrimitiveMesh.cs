@@ -1,6 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Graphics;
 using Pollus.Utils;
 

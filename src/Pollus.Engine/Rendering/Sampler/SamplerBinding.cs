@@ -3,11 +3,10 @@ namespace Pollus.Engine.Rendering;
 using System.Runtime.CompilerServices;
 using Core.Assets;
 using Core.Serialization;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;
-using Serialization;
 
 [Asset]
 public partial class SamplerBinding : IBinding

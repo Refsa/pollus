@@ -14,7 +14,7 @@ public class TweenGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var pipeline = context.SyntaxProvider.ForAttributeWithMetadataName(
-            fullyQualifiedMetadataName: "Pollus.Engine.Tween.TweenAttribute",
+            fullyQualifiedMetadataName: "Pollus.Tween.TweenAttribute",
             predicate: static (syntaxNode, cancellationToken) =>
                 (syntaxNode is StructDeclarationSyntax structDecl && structDecl.Modifiers.Any(SyntaxKind.PartialKeyword))
                 || (syntaxNode is RecordDeclarationSyntax recordDecl && recordDecl.Modifiers.Any(SyntaxKind.PartialKeyword) && recordDecl.ClassOrStructKeyword.IsKind(SyntaxKind.StructKeyword)),
@@ -25,7 +25,7 @@ public class TweenGenerator : IIncrementalGenerator
         {
             var partialExt =
                 $$"""
-                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Engine.Tween.ITweenable
+                  {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Tween.ITweenable
                   {
                       {{GetTweenImpl(model)}}
                   } 
@@ -48,7 +48,7 @@ public class TweenGenerator : IIncrementalGenerator
                   using System.Runtime.CompilerServices;
                   using System.Linq.Expressions;
                   using System.Reflection;
-                  using Pollus.Engine.Tween;
+                  using Pollus.Tween;
                   using Pollus.ECS;
 
                   {{partialExt}}

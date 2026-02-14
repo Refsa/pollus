@@ -10,7 +10,7 @@ using Pollus.Utils;
 using Utf8StringInterpolation;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Rendering;
 
 public partial class FontExample : IExample

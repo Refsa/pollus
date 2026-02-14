@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
 using ECS;
-using Assets;
+using Pollus.Assets;
 
 [SystemSet]
 public partial class SpriteAnimationSystems

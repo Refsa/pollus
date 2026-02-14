@@ -3,7 +3,7 @@ namespace Pollus.Tests.Assets;
 using System.Diagnostics;
 using Core.Assets;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Tests.Utils;
 using Pollus.Utils;
 

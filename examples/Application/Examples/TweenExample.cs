@@ -4,14 +4,14 @@ using System.Text;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Input;
 using Pollus.Input;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
-using Pollus.Engine.Tween;
+using Pollus.Tween;
 using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
@@ -22,6 +22,7 @@ public partial class TweenExample : IExample
 
     IApplication? app;
 
+    [Tween]
     partial struct Test : IComponent
     {
         public float Float;

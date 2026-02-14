@@ -2,7 +2,7 @@ namespace Pollus.Examples;
 
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;

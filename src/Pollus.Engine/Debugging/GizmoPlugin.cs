@@ -4,7 +4,7 @@ using Graphics;
 using Graphics.Rendering;
 using Graphics.Windowing;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.WGPU;
 

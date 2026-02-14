@@ -3,7 +3,7 @@ namespace Pollus.Tests.Scene;
 using System.Runtime.InteropServices;
 using System.Text;
 using Engine;
-using Engine.Assets;
+using Pollus.Assets;
 using Pollus.Utils;
 using Utils;
 

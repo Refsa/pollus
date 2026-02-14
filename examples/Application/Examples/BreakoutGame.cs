@@ -5,7 +5,7 @@ using Pollus.Coroutine;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Audio;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;

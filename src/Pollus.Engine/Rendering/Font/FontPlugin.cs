@@ -5,7 +5,7 @@ using Graphics;
 using Pollus.Graphics.WGPU;
 using Pollus.Collections;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Mathematics;
 using Pollus.Utils;
 

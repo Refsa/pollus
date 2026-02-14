@@ -2,7 +2,9 @@ namespace Pollus.Engine.Transform;
 
 using Pollus.ECS;
 using Pollus.Mathematics;
+using Pollus.Tween;
 
+[Tween]
 public partial struct Transform2D : ITransform, IComponent, IDefault<Transform2D>
 {
     public static EntityBuilder<Transform2D, GlobalTransform> Bundle => new(

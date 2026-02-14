@@ -54,7 +54,9 @@ public class ComponentGenerator : IIncrementalGenerator
             const string worldSerializationContextType = "WorldSerializationContext";
 
             var reflectImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
-            var tweenImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Engine.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
+            // Tween impl is handled entirely by TweenGenerator for [Tween]-attributed types.
+            // Non-attributed components don't get tween code to avoid a hard dependency on Pollus.Tween.
+            string? tweenImpl = null;
 
             var serializeImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Core.Serialization.SerializeAttribute")
                 ? null
@@ -69,7 +71,7 @@ public class ComponentGenerator : IIncrementalGenerator
 
             List<string> interfaces = [];
             if (!string.IsNullOrEmpty(reflectImpl)) interfaces.Add($"Pollus.Utils.IReflect<{model.TypeInfo.FullClassName}>");
-            if (!string.IsNullOrEmpty(tweenImpl)) interfaces.Add("Pollus.Engine.Tween.ITweenable");
+            if (!string.IsNullOrEmpty(tweenImpl)) interfaces.Add("Pollus.Tween.ITweenable");
             if (!string.IsNullOrEmpty(serializeImpl)) interfaces.Add($"Pollus.Core.Serialization.ISerializable<{worldSerializationContextType}>");
             if (!string.IsNullOrEmpty(defaultImpl)) interfaces.Add($"Pollus.ECS.IDefault<{model.TypeInfo.FullClassName}>");
 
@@ -109,19 +111,24 @@ public class ComponentGenerator : IIncrementalGenerator
                       """;
             }
 
+            var usings = new StringBuilder();
+            usings.AppendLine("using System.Runtime.CompilerServices;");
+            usings.AppendLine("using System.Linq.Expressions;");
+            usings.AppendLine("using System.Reflection;");
+            usings.AppendLine("using Pollus.ECS;");
+            usings.AppendLine("using Pollus.Utils;");
+            usings.AppendLine("using Pollus.Core.Serialization;");
+            usings.AppendLine("using Pollus.Assets;");
+            if (!string.IsNullOrEmpty(tweenImpl))
+            {
+                usings.AppendLine("using Pollus.Tween;");
+            }
+
             var indentedTextWriter = new IndentedTextWriter(new StringWriter(), "  ");
             indentedTextWriter.Write(
                 $$"""
                   namespace {{model.TypeInfo.Namespace}};
-                  using System.Runtime.CompilerServices;
-                  using System.Linq.Expressions;
-                  using System.Reflection;
-                  using Pollus.ECS;
-                  using Pollus.Utils;
-                  using Pollus.Core.Serialization;
-                  using Pollus.Engine.Tween;
-                  using Pollus.Engine.Serialization;
-
+                  {{usings}}
                   {{partialExt}}
                   """);
 

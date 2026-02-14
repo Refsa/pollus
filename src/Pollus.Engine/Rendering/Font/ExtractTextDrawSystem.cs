@@ -1,6 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
-using Assets;
+using Pollus.Assets;
 using ECS;
 using Graphics.WGPU;
 using Transform;
