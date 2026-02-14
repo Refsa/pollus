@@ -1,6 +1,6 @@
 namespace Pollus.Engine.Camera;
 
-using Pollus.Engine.Window;
+using Pollus.Platform.Window;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;

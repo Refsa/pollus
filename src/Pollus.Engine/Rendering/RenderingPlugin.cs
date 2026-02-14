@@ -1,8 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
-using Debugging;
 using Pollus.Graphics;
-using Pollus.Engine.Window;
+using Pollus.Platform.Window;
 using Pollus.ECS;
 using Pollus.Assets;
 using Pollus.Engine.Camera;

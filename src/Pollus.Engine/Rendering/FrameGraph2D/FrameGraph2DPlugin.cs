@@ -5,7 +5,7 @@ using Graphics;
 using Graphics.Rendering;
 using Graphics.Windowing;
 using Utils;
-using Window;
+using Pollus.Platform.Window;
 
 public class FrameGraph2DPlugin : IPlugin
 {

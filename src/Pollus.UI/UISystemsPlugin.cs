@@ -1,12 +1,14 @@
 namespace Pollus.UI;
 
 using System.Runtime.CompilerServices;
+using Input;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 
 public class UISystemsPlugin : IPlugin
 {
     public PluginDependency[] Dependencies => [
+        PluginDependency.From<InputPlugin>(),
         PluginDependency.From<HierarchyPlugin>(),
         PluginDependency.From<TimePlugin>(),
     ];

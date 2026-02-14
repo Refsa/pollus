@@ -1,7 +1,8 @@
 namespace Pollus.Engine;
 
 using Pollus.ECS;
-using Pollus.Engine.Runners;
+using Pollus.Platform;
+using Pollus.Platform.Runners;
 using Pollus.Graphics.Windowing;
 
 public class ApplicationBuilder

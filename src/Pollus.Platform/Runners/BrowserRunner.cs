@@ -1,4 +1,4 @@
-namespace Pollus.Engine.Runners;
+namespace Pollus.Platform.Runners;
 
 using Pollus.ECS;
 using Pollus.Graphics;

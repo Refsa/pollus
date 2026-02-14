@@ -1,8 +1,8 @@
-namespace Pollus.Engine.Runners;
+namespace Pollus.Platform.Runners;
 
 using Pollus.ECS;
 
-public class HeadlessRunner : IAppRunner
+public class AndroidRunner : IAppRunner
 {
     public bool IsBlocking => true;
 
@@ -10,9 +10,6 @@ public class HeadlessRunner : IAppRunner
 
     public void Run(World world, Func<bool> isRunning, Action requestShutdown)
     {
-        while (isRunning())
-        {
-            world.Update();
-        }
+        throw new NotImplementedException("Android runner not yet implemented.");
     }
 }

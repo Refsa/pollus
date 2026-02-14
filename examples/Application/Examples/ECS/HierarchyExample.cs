@@ -3,7 +3,7 @@ namespace Pollus.Examples;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Input;
+using Pollus.Input;
 using Pollus.Input;
 
 public partial class HierarchyExample : IExample

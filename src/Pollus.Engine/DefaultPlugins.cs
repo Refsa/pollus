@@ -1,8 +1,8 @@
 namespace Pollus.Engine;
 
 using Pollus.ECS;
-using Pollus.Engine.Platform;
-using Pollus.Engine.Window;
+using Pollus.Platform;
+using Pollus.Platform.Window;
 
 public static class DefaultPlugins
 {

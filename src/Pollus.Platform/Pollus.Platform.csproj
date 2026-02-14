@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,14 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+    <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
+    <ProjectReference Include="..\Pollus.Graphics\Pollus.Graphics.csproj" />
     <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
-    <ProjectReference Include="..\Pollus.Platform\Pollus.Platform.csproj" />
+    <ProjectReference Include="..\Pollus.Generators\Pollus.Generators.csproj"
+      OutputItemType="Analyzer"
+      ReferenceOutputAssembly="false" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Silk.NET.SDL" Version="2.22.0" />
-  </ItemGroup>
-
 </Project>
