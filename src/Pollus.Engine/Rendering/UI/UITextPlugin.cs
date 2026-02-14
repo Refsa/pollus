@@ -10,13 +10,6 @@ using Pollus.Utils;
 
 public class UITextPlugin : IPlugin
 {
-    public const string PrepareUIFontSystem = "UITextPlugin::PrepareUIFont";
-    public const string PropagateUIFontMaterialSystem = "UITextPlugin::PropagateUIFontMaterial";
-    public const string RegisterMeasureFuncsSystem = "UITextPlugin::RegisterMeasureFuncs";
-    public const string BuildUITextMeshSystem = "UITextPlugin::BuildUITextMesh";
-    public const string CaretMeasureSystem = "UITextPlugin::CaretMeasure";
-    public const string CleanupSystem = "UITextPlugin::Cleanup";
-
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<UIRenderPlugin>(),
@@ -39,212 +32,229 @@ public class UITextPlugin : IPlugin
 
         world.Resources.Add(new UITextResources());
 
-        // PrepareUIFont: Create UIFontMaterial per font on FontAsset load
-        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new(PrepareUIFontSystem)
-        {
-            RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
-        },
-        static (AssetServer assetServer, UITextResources uiTextResources,
-            EventReader<AssetEvent<FontAsset>> fontEvents,
-            Assets<FontAsset> fonts, Assets<UIFontMaterial> materials, Assets<SamplerAsset> samplers) =>
-        {
-            foreach (scoped ref readonly var fontEvent in fontEvents.Read())
-            {
-                if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
-                var font = fonts.Get(fontEvent.Handle);
-                if (font is null) continue;
+        world.Schedule.AddSystemSet<UITextSystemSet>();
+        world.Schedule.AddSystemSet<ExtractUITextSystem>();
+    }
+}
 
-                var mat = materials.Add(new UIFontMaterial()
-                {
-                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_font.wgsl"),
-                    Sampler = assetServer.Load<SamplerAsset>("internal://samplers/linear"),
-                    Texture = font.Atlas,
-                });
-                uiTextResources.SetMaterial(fontEvent.Handle, mat);
-            }
-        }));
+[SystemSet]
+public partial class UITextSystemSet
+{
+    [System(nameof(PrepareUIFont))]
+    public static readonly SystemBuilderDescriptor PrepareUIFontDescriptor = new()
+    {
+        Stage = CoreStage.First,
+        RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
+    };
 
-        // PropagateUIFontMaterial: Set UITextFont.Material from UITextResources
-        world.Schedule.AddSystem(CoreStage.PreRender, FnSystem.Create(new(PropagateUIFontMaterialSystem)
+    [System(nameof(PropagateUIFontMaterial))]
+    public static readonly SystemBuilderDescriptor PropagateUIFontMaterialDescriptor = new()
+    {
+        Stage = CoreStage.PreRender,
+        RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<UIFontMaterial>.PrepareSystem],
+    };
+
+    [System(nameof(RegisterMeasureFuncs))]
+    public static readonly SystemBuilderDescriptor RegisterMeasureFuncsDescriptor = new()
+    {
+        Stage = CoreStage.First,
+        RunsAfter = [PrepareUIFontDescriptor.Label],
+    };
+
+    [System(nameof(BuildUITextMesh))]
+    public static readonly SystemBuilderDescriptor BuildUITextMeshDescriptor = new()
+    {
+        Stage = CoreStage.Last,
+    };
+
+    [System(nameof(CaretMeasure))]
+    public static readonly SystemBuilderDescriptor CaretMeasureDescriptor = new()
+    {
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = ["UICaretSystem::Update"],
+    };
+
+    [System(nameof(Cleanup))]
+    public static readonly SystemBuilderDescriptor CleanupDescriptor = new()
+    {
+        Stage = CoreStage.Last,
+        RunsAfter = [BuildUITextMeshDescriptor.Label],
+    };
+
+    static void PrepareUIFont(AssetServer assetServer, UITextResources uiTextResources,
+        EventReader<AssetEvent<FontAsset>> fontEvents,
+        Assets<FontAsset> fonts, Assets<UIFontMaterial> materials, Assets<SamplerAsset> samplers)
+    {
+        foreach (scoped ref readonly var fontEvent in fontEvents.Read())
         {
-            RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<UIFontMaterial>.PrepareSystem],
-        },
-        static (UITextResources uiTextResources, Query<UITextFont> query) =>
-        {
-            query.ForEach(uiTextResources, static (in UITextResources res, ref UITextFont textFont) =>
+            if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
+            var font = fonts.Get(fontEvent.Handle);
+            if (font is null) continue;
+
+            var mat = materials.Add(new UIFontMaterial()
             {
-                if (textFont.Font == Handle<FontAsset>.Null) return;
-                var mat = res.GetMaterial(textFont.Font);
-                if (mat != Handle<UIFontMaterial>.Null)
-                {
-                    textFont.Material = mat;
-                }
+                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_font.wgsl"),
+                Sampler = assetServer.Load<SamplerAsset>("internal://samplers/linear"),
+                Texture = font.Atlas,
             });
-        }));
+            uiTextResources.SetMaterial(fontEvent.Handle, mat);
+        }
+    }
 
-        // RegisterMeasureFuncs: Register measure delegates for UIText entities
-        world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new(RegisterMeasureFuncsSystem)
+    static void PropagateUIFontMaterial(UITextResources uiTextResources, Query<UITextFont> query)
+    {
+        query.ForEach(uiTextResources, static (in UITextResources res, ref UITextFont textFont) =>
         {
-            RunsAfter = [PrepareUIFontSystem],
-        },
-        static (UITreeAdapter adapter, Assets<FontAsset> fonts, Query<UIText, ContentSize, UITextFont> query) =>
-        {
-            foreach (var row in query)
-            {
-                ref var uiText = ref row.Component0;
-                ref var textFont = ref row.Component2;
-                var entity = row.Entity;
-
-                if (!uiText.IsDirty && adapter.GetNodeId(entity) >= 0)
-                {
-                    // Already registered and not dirty, skip
-                    continue;
-                }
-
-                if (textFont.Font == Handle<FontAsset>.Null) continue;
-                var fontAsset = fonts.Get(textFont.Font);
-                if (fontAsset is null) continue;
-
-                // Capture current text/size/font for the measure delegate
-                var capturedText = uiText.Text;
-                var capturedSize = uiText.Size;
-                var capturedFont = fontAsset;
-
-                adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
-                {
-                    float maxWidth = knownDimensions.Width
-                        ?? availableSpace.Width.AsDefinite()
-                        ?? 0f;
-                    var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
-                    return new Size<float>(
-                        knownDimensions.Width ?? measured.X,
-                        knownDimensions.Height ?? measured.Y);
-                });
-
-                uiText.IsDirty = false;
-            }
-        }));
-
-        // BuildUITextMesh: Build text mesh for dirty UIText entities
-        // Runs in CoreStage.Last so ComputedNode is populated from layout (CoreStage.PostUpdate)
-        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(new(BuildUITextMeshSystem),
-        static (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont, ComputedNode> query) =>
-        {
-            query.ForEach((fonts, meshes), static (in (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes) data, ref UIText uiText, ref TextMesh mesh, ref UITextFont textFont, ref ComputedNode computed) =>
-            {
-                float maxWidth = computed.Size.X - computed.PaddingLeft - computed.PaddingRight
-                                 - computed.BorderLeft - computed.BorderRight;
-                if (maxWidth < 0f) maxWidth = 0f;
-
-                bool widthChanged = uiText.LastBuildMaxWidth != maxWidth;
-                if (!uiText.IsDirty && !widthChanged) return;
-
-                var fontAsset = data.fonts.Get(textFont.Font);
-                if (fontAsset == null) return;
-
-                TextMeshAsset tma;
-                if (mesh.Mesh == Handle<TextMeshAsset>.Null)
-                {
-                    tma = new TextMeshAsset
-                    {
-                        Name = $"UITextMesh-{Guid.NewGuid()}",
-                        Vertices = new(),
-                        Indices = new(),
-                    };
-                    mesh.Mesh = data.meshes.Add(tma);
-                }
-                else
-                {
-                    tma = data.meshes.Get(mesh.Mesh) ?? throw new InvalidOperationException("Text mesh asset not found");
-                }
-
-                tma.Vertices.Clear();
-                tma.Indices.Clear();
-                var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
-                tma.Bounds = result.Bounds;
-
-                uiText.LastBuildMaxWidth = maxWidth;
-                data.meshes.Set(mesh.Mesh, tma);
-            });
-        }));
-
-        // CaretMeasure: Compute caret position using font glyph metrics
-        world.Schedule.AddSystem(CoreStage.PostUpdate, FnSystem.Create(new(CaretMeasureSystem)
-        {
-            RunsAfter = ["UICaretSystem::Update"],
-        },
-        static (UIFocusState focusState, UITextBuffers textBuffers, Assets<FontAsset> fonts, Query query) =>
-        {
-            var focused = focusState.FocusedEntity;
-            if (focused.IsNull) return;
-            if (!query.Has<UITextInput>(focused)) return;
-
-            ref var input = ref query.Get<UITextInput>(focused);
-
-            if (input.TextEntity.IsNull) return;
-            if (!query.Has<UITextFont>(input.TextEntity)) return;
-
-            ref readonly var textFont = ref query.Get<UITextFont>(input.TextEntity);
             if (textFont.Font == Handle<FontAsset>.Null) return;
-
-            var fontAsset = fonts.Get(textFont.Font);
-            if (fontAsset is null) return;
-
-            float fontSize = 14f;
-            if (query.Has<UIText>(input.TextEntity))
+            var mat = res.GetMaterial(textFont.Font);
+            if (mat != Handle<UIFontMaterial>.Null)
             {
-                fontSize = query.Get<UIText>(input.TextEntity).Size;
+                textFont.Material = mat;
             }
+        });
+    }
 
-            var text = textBuffers.Get(focused);
-            var cursorPos = Math.Min(input.CursorPosition, text.Length);
-
-            // Use same sizing logic as TextBuilder.BuildMesh
-            var sizePow = ((uint)fontSize).Clamp(8u, 128u).Snap(4u);
-            var scale = fontSize / sizePow;
-            var glyphKey = new GlyphKey(fontAsset.Handle, sizePow, '\0');
-
-            // Compute X offset matching BuildMesh rounding behavior
-            float cursorX = 0f;
-            float lineHeight = 0f;
-            for (int i = 0; i < cursorPos; i++)
-            {
-                glyphKey.Character = text[i];
-                if (!fontAsset.Glyphs.TryGetValue(glyphKey, out var glyph))
-                    continue;
-                if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
-                cursorX = float.Round(cursorX + glyph.Advance * scale);
-            }
-
-            // Get line height if we had no characters to measure
-            if (lineHeight == 0f)
-            {
-                glyphKey.Character = ' ';
-                if (fontAsset.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
-                    lineHeight = spaceGlyph.LineHeight * scale;
-                else
-                    lineHeight = fontSize;
-            }
-
-            input.CaretXOffset = cursorX;
-            input.CaretHeight = lineHeight;
-        }));
-
-        // ExtractUIText
-        world.Schedule.AddSystems(CoreStage.PreRender, ExtractUITextSystem.Create());
-
-        // Cleanup: Dispose NativeUtf8 and remove measure funcs
-        world.Schedule.AddSystem(CoreStage.Last, FnSystem.Create(new(CleanupSystem)
+    static void RegisterMeasureFuncs(UITreeAdapter adapter, Assets<FontAsset> fonts, Query<UIText, ContentSize, UITextFont> query)
+    {
+        foreach (var row in query)
         {
-            RunsAfter = [BuildUITextMeshSystem],
-        },
-            static (UITreeAdapter adapter, RemovedTracker<UIText> tracker) =>
+            ref var uiText = ref row.Component0;
+            ref var textFont = ref row.Component2;
+            var entity = row.Entity;
+
+            if (!uiText.IsDirty && adapter.GetNodeId(entity) >= 0)
             {
-                foreach (var removed in tracker)
+                // Already registered and not dirty, skip
+                continue;
+            }
+
+            if (textFont.Font == Handle<FontAsset>.Null) continue;
+            var fontAsset = fonts.Get(textFont.Font);
+            if (fontAsset is null) continue;
+
+            // Capture current text/size/font for the measure delegate
+            var capturedText = uiText.Text;
+            var capturedSize = uiText.Size;
+            var capturedFont = fontAsset;
+
+            adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
+            {
+                float maxWidth = knownDimensions.Width
+                                 ?? availableSpace.Width.AsDefinite()
+                                 ?? 0f;
+                var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
+                return new Size<float>(
+                    knownDimensions.Width ?? measured.X,
+                    knownDimensions.Height ?? measured.Y);
+            });
+
+            uiText.IsDirty = false;
+        }
+    }
+
+    static void BuildUITextMesh(Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont, ComputedNode> query)
+    {
+        query.ForEach((fonts, meshes), static (in (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes) data, ref UIText uiText, ref TextMesh mesh, ref UITextFont textFont, ref ComputedNode computed) =>
+        {
+            float maxWidth = computed.Size.X - computed.PaddingLeft - computed.PaddingRight
+                             - computed.BorderLeft - computed.BorderRight;
+            if (maxWidth < 0f) maxWidth = 0f;
+
+            bool widthChanged = uiText.LastBuildMaxWidth != maxWidth;
+            if (!uiText.IsDirty && !widthChanged) return;
+
+            var fontAsset = data.fonts.Get(textFont.Font);
+            if (fontAsset == null) return;
+
+            TextMeshAsset tma;
+            if (mesh.Mesh == Handle<TextMeshAsset>.Null)
+            {
+                tma = new TextMeshAsset
                 {
-                    removed.Component.Text.Dispose();
-                    adapter.RemoveMeasureFunc(new Entity(removed.Entity));
-                }
-            }));
+                    Name = $"UITextMesh-{Guid.NewGuid()}",
+                    Vertices = new(),
+                    Indices = new(),
+                };
+                mesh.Mesh = data.meshes.Add(tma);
+            }
+            else
+            {
+                tma = data.meshes.Get(mesh.Mesh) ?? throw new InvalidOperationException("Text mesh asset not found");
+            }
+
+            tma.Vertices.Clear();
+            tma.Indices.Clear();
+            var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
+            tma.Bounds = result.Bounds;
+
+            uiText.LastBuildMaxWidth = maxWidth;
+            data.meshes.Set(mesh.Mesh, tma);
+        });
+    }
+
+    static void CaretMeasure(UIFocusState focusState, UITextBuffers textBuffers, Assets<FontAsset> fonts, Query query)
+    {
+        var focused = focusState.FocusedEntity;
+        if (focused.IsNull) return;
+        if (!query.Has<UITextInput>(focused)) return;
+
+        ref var input = ref query.Get<UITextInput>(focused);
+
+        if (input.TextEntity.IsNull) return;
+        if (!query.Has<UITextFont>(input.TextEntity)) return;
+
+        ref readonly var textFont = ref query.Get<UITextFont>(input.TextEntity);
+        if (textFont.Font == Handle<FontAsset>.Null) return;
+
+        var fontAsset = fonts.Get(textFont.Font);
+        if (fontAsset is null) return;
+
+        float fontSize = 14f;
+        if (query.Has<UIText>(input.TextEntity))
+        {
+            fontSize = query.Get<UIText>(input.TextEntity).Size;
+        }
+
+        var text = textBuffers.Get(focused);
+        var cursorPos = Math.Min(input.CursorPosition, text.Length);
+
+        // Use same sizing logic as TextBuilder.BuildMesh
+        var sizePow = ((uint)fontSize).Clamp(8u, 128u).Snap(4u);
+        var scale = fontSize / sizePow;
+        var glyphKey = new GlyphKey(fontAsset.Handle, sizePow, '\0');
+
+        // Compute X offset matching BuildMesh rounding behavior
+        float cursorX = 0f;
+        float lineHeight = 0f;
+        for (int i = 0; i < cursorPos; i++)
+        {
+            glyphKey.Character = text[i];
+            if (!fontAsset.Glyphs.TryGetValue(glyphKey, out var glyph))
+                continue;
+            if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
+            cursorX = float.Round(cursorX + glyph.Advance * scale);
+        }
+
+        // Get line height if we had no characters to measure
+        if (lineHeight == 0f)
+        {
+            glyphKey.Character = ' ';
+            if (fontAsset.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
+                lineHeight = spaceGlyph.LineHeight * scale;
+            else
+                lineHeight = fontSize;
+        }
+
+        input.CaretXOffset = cursorX;
+        input.CaretHeight = lineHeight;
+    }
+
+    static void Cleanup(UITreeAdapter adapter, RemovedTracker<UIText> tracker)
+    {
+        foreach (var removed in tracker)
+        {
+            removed.Component.Text.Dispose();
+            adapter.RemoveMeasureFunc(new Entity(removed.Entity));
+        }
     }
 }

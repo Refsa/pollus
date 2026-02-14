@@ -7,45 +7,45 @@ using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Utils;
 
-public static class ExtractUITextSystem
+[SystemSet]
+public partial class ExtractUITextSystem
 {
-    public const string Label = "ExtractUIText";
+    [System(nameof(ExtractUIText))]
+    public static readonly SystemBuilderDescriptor ExtractUITextDescriptor = new()
+    {
+        Stage = CoreStage.PreRender,
+        RunsAfter = [ExtractUIRectsSystem.ExtractUIRectsDescriptor.Label],
+    };
 
-    public static ISystemBuilder Create() => FnSystem.Create(
-        new(Label)
+    static void ExtractUIText(
+        UIFontBatches batches,
+        Query query,
+        Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots)
+    {
+        batches.Reset();
+
+        uint sortIndex = 0;
+        var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
+
+        foreach (var root in qRoots)
         {
-            RunsAfter = [ExtractUIRectsSystem.Label],
-        },
-        static (
-            UIFontBatches batches,
-            Query query,
-            Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots) =>
+            var rootEntity = root.Entity;
+            ref readonly var rootComputed = ref root.Component1;
+
+            EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
+        }
+
+        // Render deferred absolute-positioned text on top of normal flow
+        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
         {
-            batches.Reset();
-
-            uint sortIndex = 0;
-            var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
-
-            foreach (var root in qRoots)
+            var entRef = query.GetEntity(deferredEntity);
+            if (entRef.Has<ComputedNode>())
             {
-                var rootEntity = root.Entity;
-                ref readonly var rootComputed = ref root.Component1;
-
-                EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
-            }
-
-            // Render deferred absolute-positioned text on top of normal flow
-            foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
-            {
-                var entRef = query.GetEntity(deferredEntity);
-                if (entRef.Has<ComputedNode>())
-                {
-                    ref var computed = ref entRef.Get<ComputedNode>();
-                    EmitNode(batches, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
-                }
+                ref var computed = ref entRef.Get<ComputedNode>();
+                EmitNode(batches, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
             }
         }
-    );
+    }
 
     static RectInt IntersectScissorRects(RectInt a, RectInt b)
     {
