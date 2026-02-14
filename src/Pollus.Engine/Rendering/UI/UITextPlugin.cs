@@ -171,7 +171,7 @@ public class UITextPlugin : IPlugin
         // CaretMeasure: Compute caret position using font glyph metrics
         world.Schedule.AddSystem(CoreStage.PostUpdate, FnSystem.Create(new(CaretMeasureSystem)
         {
-            RunsAfter = [UICaretSystem.Label],
+            RunsAfter = ["UICaretSystem::Update"],
         },
         static (UIFocusState focusState, UITextBuffers textBuffers, Assets<FontAsset> fonts, Query query) =>
         {

@@ -3,31 +3,15 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Input;
 
-public class UIKeyboardRoutingSystem : ISystemSet
+[SystemSet]
+public partial class UIKeyboardRoutingSystem
 {
-    public const string Label = "UIKeyboardRoutingSystem::RouteKeys";
-
-    public static readonly SystemBuilderDescriptor RouteKeysDescriptor = new()
+    [System(nameof(PerformRouting))]
+    static readonly SystemBuilderDescriptor RouteKeysDescriptor = new()
     {
-        Label = new SystemLabel(Label),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UIInteractionSystem.FocusNavigationLabel],
+        RunsAfter = ["UIInteractionSystem::FocusNavigation"],
     };
-
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(RouteKeysDescriptor.Stage, FnSystem.Create(RouteKeysDescriptor,
-            (SystemDelegate<EventReader<ButtonEvent<Key>>, EventReader<TextInputEvent>, UIFocusState, Events>)RouteKeys));
-    }
-
-    public static void RouteKeys(
-        EventReader<ButtonEvent<Key>> keyReader,
-        EventReader<TextInputEvent> textReader,
-        UIFocusState focusState,
-        Events events)
-    {
-        PerformRouting(keyReader, textReader, focusState, events);
-    }
 
     internal static void PerformRouting(
         EventReader<ButtonEvent<Key>> keyReader,

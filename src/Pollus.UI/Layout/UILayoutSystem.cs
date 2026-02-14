@@ -4,48 +4,35 @@ using Pollus.UI.Layout;
 
 namespace Pollus.UI;
 
-public class UILayoutSystem : ISystemSet
+[SystemSet]
+public partial class UILayoutSystem
 {
-    public const string SyncTreeLabel = "UILayoutSystem::SyncTree";
-    public const string ComputeLayoutLabel = "UILayoutSystem::ComputeLayout";
-    public const string WriteBackLabel = "UILayoutSystem::WriteBack";
-
-    public static readonly SystemBuilderDescriptor SyncTreeDescriptor = new()
+    [System(nameof(SyncTree))]
+    static readonly SystemBuilderDescriptor SyncTreeDescriptor = new()
     {
-        Label = new SystemLabel(SyncTreeLabel),
         Stage = CoreStage.PostUpdate,
     };
 
-    public static readonly SystemBuilderDescriptor ComputeLayoutDescriptor = new()
+    [System(nameof(ComputeLayout))]
+    static readonly SystemBuilderDescriptor ComputeLayoutDescriptor = new()
     {
-        Label = new SystemLabel(ComputeLayoutLabel),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [SyncTreeLabel],
+        RunsAfter = ["UILayoutSystem::SyncTree"],
     };
 
-    public static readonly SystemBuilderDescriptor WriteBackDescriptor = new()
+    [System(nameof(WriteBack))]
+    static readonly SystemBuilderDescriptor WriteBackDescriptor = new()
     {
-        Label = new SystemLabel(WriteBackLabel),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [ComputeLayoutLabel],
+        RunsAfter = ["UILayoutSystem::ComputeLayout"],
     };
 
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(SyncTreeDescriptor.Stage, FnSystem.Create(SyncTreeDescriptor,
-            (SystemDelegate<UITreeAdapter, Query<UINode>, Query>)SyncTree));
-        schedule.AddSystems(ComputeLayoutDescriptor.Stage, FnSystem.Create(ComputeLayoutDescriptor,
-            (SystemDelegate<UITreeAdapter, Query>)ComputeLayout));
-        schedule.AddSystems(WriteBackDescriptor.Stage, FnSystem.Create(WriteBackDescriptor,
-            (SystemDelegate<UITreeAdapter, Query>)WriteBack));
-    }
-
-    public static void SyncTree(UITreeAdapter adapter, Query<UINode> uiNodeQuery, Query query)
+    static void SyncTree(UITreeAdapter adapter, Query<UINode> uiNodeQuery, Query query)
     {
         adapter.SyncFull(uiNodeQuery, query);
     }
 
-    public static void ComputeLayout(UITreeAdapter adapter, Query query)
+    static void ComputeLayout(UITreeAdapter adapter, Query query)
     {
         if (!adapter.IsDirty) return;
 
@@ -104,7 +91,7 @@ public class UILayoutSystem : ISystemSet
         }
     }
 
-    public static void WriteBack(UITreeAdapter adapter, Query query)
+    static void WriteBack(UITreeAdapter adapter, Query query)
     {
         if (!adapter.IsDirty) return;
 

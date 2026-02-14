@@ -3,30 +3,15 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Input;
 
-public class UINumberInputSystem : ISystemSet
+[SystemSet]
+public partial class UINumberInputSystem
 {
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(PerformUpdate))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel("UINumberInputSystem::Update"),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UITextInputSystem.Label],
+        RunsAfter = ["UITextInputSystem::Update"],
     };
-
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<EventReader<UIInteractionEvents.UIKeyDownEvent>, EventReader<UITextInputEvents.UITextInputValueChanged>, UITextBuffers, Events, Query>)Update));
-    }
-
-    public static void Update(
-        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-        EventReader<UITextInputEvents.UITextInputValueChanged> textChangedReader,
-        UITextBuffers textBuffers,
-        Events events,
-        Query query)
-    {
-        PerformUpdate(query, textBuffers, keyDownReader, textChangedReader, events);
-    }
 
     internal static void PerformUpdate(
         Query query,

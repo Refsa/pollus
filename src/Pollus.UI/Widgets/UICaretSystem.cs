@@ -2,24 +2,17 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 
-public class UICaretSystem : ISystemSet
+[SystemSet]
+public partial class UICaretSystem
 {
-    public const string Label = "UICaretSystem::Update";
-
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(Update))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel(Label),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UITextInputSystem.Label],
+        RunsAfter = ["UITextInputSystem::Update"],
     };
 
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<Time, UIFocusState, Query>)Update));
-    }
-
-    public static void Update(
+    static void Update(
         Time time,
         UIFocusState focusState,
         Query query)

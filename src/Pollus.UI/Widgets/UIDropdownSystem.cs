@@ -5,30 +5,16 @@ using Pollus.ECS;
 using Pollus.Input;
 using Pollus.UI.Layout;
 
-public class UIDropdownSystem : ISystemSet
+[SystemSet]
+public partial class UIDropdownSystem
 {
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(PerformUpdate))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel("UIDropdownSystem::Update"),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
-        RunsBefore = [UILayoutSystem.SyncTreeLabel],
+        RunsAfter = ["UIInteractionSystem::UpdateState"],
+        RunsBefore = ["UILayoutSystem::SyncTree"],
     };
-
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, EventReader<UIInteractionEvents.UIKeyDownEvent>, Events, Query>)Update));
-    }
-
-    public static void Update(
-        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-        Events events,
-        Query query)
-    {
-        PerformUpdate(query, clickReader, keyDownReader, events);
-    }
 
     internal static void PerformUpdate(
         Query query,
@@ -115,7 +101,7 @@ public class UIDropdownSystem : ISystemSet
     internal static void SyncOptionVisibility(Query query)
     {
         query.Filtered<All<UIDropdownOptionTag, UIStyle>>().ForEach(query,
-            static (in Query q, in Entity entity) =>
+            static (in q, in entity) =>
             {
                 ref readonly var option = ref q.Get<UIDropdownOptionTag>(entity);
                 var dropdownEntity = option.DropdownEntity;

@@ -3,26 +3,20 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
-using Pollus.UI.Layout;
 
-public class UIScrollSystem : ISystemSet
+[SystemSet]
+public partial class UIScrollSystem
 {
     const float ScrollSpeed = 30f;
 
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(Update))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel("UIScrollSystem::Update"),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UIInteractionSystem.HitTestLabel],
+        RunsAfter = ["UIInteractionSystem::HitTest"],
     };
 
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<CurrentDevice<Mouse>, UIHitTestResult, Query, Query<UIScrollOffset, ComputedNode>>)Update));
-    }
-
-    public static void Update(
+    static void Update(
         CurrentDevice<Mouse> currentMouse,
         UIHitTestResult hitResult,
         Query query,
