@@ -1,7 +1,7 @@
 namespace Pollus.Tests.Input;
 
 using Pollus.ECS;
-using Pollus.Engine.Input;
+using Pollus.Input;
 
 public class InputTests
 {

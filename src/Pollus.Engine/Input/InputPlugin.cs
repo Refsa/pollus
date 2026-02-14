@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Engine.Platform;
+using Pollus.Input;
 
 public class InputPlugin : IPlugin
 {
@@ -67,7 +68,7 @@ public class InputPlugin : IPlugin
                 ButtonInput<Key> kButtons
             ) =>
             {
-                input.Update(platform, events);
+                input.Update(platform.Events, events);
 
                 foreach (var device in input.Devices)
                 {

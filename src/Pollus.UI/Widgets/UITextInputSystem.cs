@@ -1,9 +1,8 @@
-namespace Pollus.Engine.UI;
+namespace Pollus.UI;
 
 using Pollus.Collections;
 using Pollus.ECS;
-using Pollus.Engine.Input;
-using Pollus.UI;
+using Pollus.Input;
 
 public static class UITextInputSystem
 {

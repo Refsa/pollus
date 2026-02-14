@@ -6,7 +6,6 @@ using Pollus.Engine;
 using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
-using Pollus.Engine.UI;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.UI;
@@ -27,7 +26,7 @@ public class UIRectExample : IExample
             new RenderingPlugin(),
             new UIRenderPlugin(),
             new UITextPlugin(),
-            new UIWidgetPlugin(),
+            new UIPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",
             static (Commands commands, Resources resources, AssetServer assetServer, Assets<UIRectMaterial> materials, IWindow window) =>

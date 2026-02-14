@@ -1,8 +1,8 @@
+namespace Pollus.UI;
+
 using Pollus.ECS;
 using Pollus.Mathematics;
 using Pollus.Utils;
-
-namespace Pollus.UI;
 
 public partial record struct UIButton() : IComponent, IDefault<UIButton>
 {

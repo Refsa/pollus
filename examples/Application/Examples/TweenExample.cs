@@ -8,6 +8,7 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Input;
+using Pollus.Input;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Engine.Tween;

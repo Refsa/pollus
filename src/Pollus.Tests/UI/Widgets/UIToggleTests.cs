@@ -1,5 +1,4 @@
 using Pollus.ECS;
-using Pollus.Engine.UI;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
@@ -14,16 +13,6 @@ public class UIToggleTests
     {
         var world = new World();
         world.AddPlugin(new UIPlugin(), addDependencies: true);
-        world.Resources.Add(new UIHitTestResult());
-        world.Resources.Add(new UIFocusState());
-        world.Events.InitEvent<UIInteractionEvents.UIClickEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverEnterEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverExitEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIPressEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIReleaseEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIFocusEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIBlurEvent>();
-        world.Events.InitEvent<UIToggleEvents.UIToggleEvent>();
         world.Prepare();
         return world;
     }
@@ -58,7 +47,7 @@ public class UIToggleTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var toggleReader = world.Events.GetReader<UIToggleEvents.UIToggleEvent>()!;
 
-        UIWidgetSystems.UpdateToggles(query, clickReader, world.Events);
+        UIToggleSystem.UpdateToggles(query, clickReader, world.Events);
 
         var toggleState = world.Store.GetComponent<UIToggle>(toggle);
         Assert.True(toggleState.IsOn);
@@ -101,7 +90,7 @@ public class UIToggleTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var toggleReader = world.Events.GetReader<UIToggleEvents.UIToggleEvent>()!;
 
-        UIWidgetSystems.UpdateToggles(query, clickReader, world.Events);
+        UIToggleSystem.UpdateToggles(query, clickReader, world.Events);
 
         var toggleState = world.Store.GetComponent<UIToggle>(toggle);
         Assert.False(toggleState.IsOn);
@@ -144,14 +133,14 @@ public class UIToggleTests
         var query = new Query(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIWidgetSystems.UpdateToggles(query, clickReader, world.Events);
+        UIToggleSystem.UpdateToggles(query, clickReader, world.Events);
 
         var bg = world.Store.GetComponent<BackgroundColor>(toggle);
         Assert.Equal(new Color(0f, 1f, 0f, 1f), bg.Color);
 
         // Second click → off
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = toggle });
-        UIWidgetSystems.UpdateToggles(query, clickReader, world.Events);
+        UIToggleSystem.UpdateToggles(query, clickReader, world.Events);
 
         bg = world.Store.GetComponent<BackgroundColor>(toggle);
         Assert.Equal(new Color(1f, 0f, 0f, 1f), bg.Color);
