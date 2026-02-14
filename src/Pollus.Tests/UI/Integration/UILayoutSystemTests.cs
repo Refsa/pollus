@@ -1,4 +1,5 @@
 using Pollus.ECS;
+using Pollus.Input;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Mathematics;
@@ -12,6 +13,9 @@ public class UILayoutSystemTests
     {
         var world = new World();
         world.AddPlugin(new UISystemsPlugin(), addDependencies: true);
+        world.Resources.Add(new CurrentDevice<Mouse>());
+        world.Resources.Add(new ButtonInput<MouseButton>());
+        world.Resources.Add(new ButtonInput<Key>());
         world.Prepare();
         return world;
     }
