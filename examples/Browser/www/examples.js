@@ -28,7 +28,8 @@ export function setupExampleButtons() {
         "scene",
         "render-order",
         "sprite-material",
-        "sprite-animation"
+        "sprite-animation",
+        "ui"
     ];
 
     for (const example of examples) {

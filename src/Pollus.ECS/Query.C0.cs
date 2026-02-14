@@ -47,21 +47,21 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEach<TForEach>(TForEach iter)
-                where TForEach : struct, IForEach<C0>
+            where TForEach : struct, IForEach<C0>
         {
             query.ForEach(iter);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEachChunk<TForEach>(TForEach pred)
-                where TForEach : struct, IChunkForEach<C0>
+            where TForEach : struct, IChunkForEach<C0>
         {
             query.ForEachChunk(pred);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEachRawChunk<TForEach>(TForEach pred)
-                where TForEach : struct, IRawChunkForEach
+            where TForEach : struct, IRawChunkForEach
         {
             query.ForEachRawChunk(pred);
         }
@@ -76,6 +76,20 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         public int EntityCount()
         {
             return query.EntityCount();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref C Get<C>(in Entity entity)
+            where C : unmanaged, IComponent
+        {
+            return ref query.Get<C>(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has<C>(in Entity entity)
+            where C : unmanaged, IComponent
+        {
+            return query.Has<C>(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -311,6 +325,25 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         }
 
         throw new InvalidOperationException("No entities found");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool Has<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly ref C Get<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var cinfo = Component.GetInfo<C>();
+        if (!cids.Contains(cinfo.ID)) return ref Unsafe.NullRef<C>();
+
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return ref world.Store.Archetypes[entityInfo.ArchetypeIndex].Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex, cinfo.ID);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

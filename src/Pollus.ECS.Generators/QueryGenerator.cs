@@ -82,6 +82,26 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has<C>(in Entity entity)
+            where C : unmanaged, IComponent
+        {
+            return query.Has<C>(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref C Get<C>(in Entity entity)
+            where C : unmanaged, IComponent
+        {
+            return ref query.Get<C>(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EntityRow Get(in Entity entity)
+        {
+            return query.Get(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int EntityCount()
         {
             return query.EntityCount();
@@ -323,6 +343,36 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool Has<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return world.Store.Archetypes[entityInfo.ArchetypeIndex].HasComponent<C>();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly ref C Get<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var cinfo = Component.GetInfo<C>();
+        if (!cids.Contains(cinfo.ID)) return ref Unsafe.NullRef<C>();
+
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return ref world.Store.Archetypes[entityInfo.ArchetypeIndex].Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex, cinfo.ID);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly EntityRow Get(in Entity entity)
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        return new()
+        {
+            entity = entity,
+            $get_entity_row_components$
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Enumerator GetEnumerator()
     {
         return new Enumerator(this);
@@ -382,6 +432,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             var chunk_spans = "scoped var comp0 = chunk.GetComponents<C0>(cids[0]);";
             var chunk_args = "comp0";
             var set_entity_row = "Component0 = ref chunk.GetComponents<C0>(cids[0])[0],";
+            var get_entity_row_components = "Component0 = world.Store.Archetypes[entityInfo.ArchetypeIndex].GetComponent<C0>(entityInfo.ChunkIndex, entityInfo.RowIndex),";
             var entity_row_fields = "public ref C0 Component0;";
             var enumerator_set_fields = "currentRow.Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];";
             var enumerator_move_next = "currentRow.Component0 = ref Unsafe.Add(ref currentRow.Component0, 1);";
@@ -398,6 +449,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 chunk_spans += $"\nscoped var comp{i} = chunk.GetComponents<C{i}>(cids[{i}]);";
                 chunk_args += $", comp{i}";
                 set_entity_row += $"\n                    Component{i} = ref chunk.GetComponents<C{i}>(cids[{i}])[0],";
+                get_entity_row_components += $"\n            Component{i} = world.Store.Archetypes[entityInfo.ArchetypeIndex].GetComponent<C{i}>(entityInfo.ChunkIndex, entityInfo.RowIndex),";
                 entity_row_fields += $"\n        public ref C{i} Component{i};";
                 enumerator_set_fields += $"\n            currentRow.Component{i} = ref currentChunk.GetComponents<C{i}>(cids[{i}])[0];";
                 enumerator_move_next += $"\n            currentRow.Component{i} = ref Unsafe.Add(ref currentRow.Component{i}, 1);";
@@ -414,6 +466,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                     .Replace("$comp_args$", comp_args)
                     .Replace("$chunk_args$", chunk_args)
                     .Replace("$set_entity_row$", set_entity_row)
+                    .Replace("$get_entity_row_components$", get_entity_row_components)
                     .Replace("$entity_row_fields$", entity_row_fields)
                     .Replace("$enumerator_set_fields$", enumerator_set_fields)
                     .Replace("$enumerator_move_next$", enumerator_move_next);
