@@ -2,6 +2,7 @@ namespace Pollus.Tests;
 
 using Pollus.ECS;
 using Pollus.Engine;
+using Pollus.Platform;
 
 public class ApplicationLifecycleTests
 {

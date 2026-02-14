@@ -17,7 +17,7 @@
     <ProjectReference Include="..\Pollus.Assets\Pollus.Assets.csproj" />
     <ProjectReference Include="..\Pollus.Serialization\Pollus.Serialization.csproj" />
     <ProjectReference Include="..\Pollus.Tween\Pollus.Tween.csproj" />
-    <ProjectReference Include="..\Pollus.Emscripten\Pollus.Emscripten.csproj" />
+    <ProjectReference Include="..\Pollus.Platform\Pollus.Platform.csproj" />
     <ProjectReference Include="..\Pollus.Input\Pollus.Input.csproj" />
     <ProjectReference Include="..\Pollus.UI\Pollus.UI.csproj" />
 

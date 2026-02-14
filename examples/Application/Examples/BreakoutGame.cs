@@ -10,7 +10,7 @@ using Pollus.Engine.Audio;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
 using Pollus.Engine.Imgui;
-using Pollus.Engine.Input;
+using Pollus.Input;
 using Pollus.Input;
 using Pollus.Engine.Physics;
 using Pollus.Engine.Rendering;

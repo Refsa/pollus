@@ -1,4 +1,4 @@
-namespace Pollus.Engine;
+namespace Pollus.Platform;
 
 using Pollus.ECS;
 

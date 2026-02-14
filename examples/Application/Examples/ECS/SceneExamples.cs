@@ -3,7 +3,7 @@ namespace Pollus.Examples;
 using System.Text;
 using Pollus.Assets;
 using Engine.Camera;
-using Engine.Input;
+using Pollus.Input;
 using Pollus.Input;
 using Engine.Rendering;
 using Engine.Transform;

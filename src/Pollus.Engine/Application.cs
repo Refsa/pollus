@@ -2,8 +2,8 @@ namespace Pollus.Engine;
 
 using Pollus.Debugging;
 using Pollus.ECS;
-using Pollus.Engine.Platform;
-using Pollus.Engine.Runners;
+using Pollus.Platform;
+using Pollus.Platform.Runners;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
 

@@ -1,6 +1,6 @@
 namespace Pollus.Engine.Debug;
 
-using Pollus.Engine.Window;
+using Pollus.Platform.Window;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;

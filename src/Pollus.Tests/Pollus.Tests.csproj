@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Engine\Pollus.Engine.csproj" />
+    <ProjectReference Include="..\Pollus.Platform\Pollus.Platform.csproj" />
     <ProjectReference Include="..\Pollus.Assets\Pollus.Assets.csproj" />
     <ProjectReference Include="..\Pollus.Serialization\Pollus.Serialization.csproj" />
     <ProjectReference Include="..\Pollus.Tween\Pollus.Tween.csproj" />

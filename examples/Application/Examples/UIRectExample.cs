@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using Engine.UI;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -11,6 +10,7 @@ using Pollus.Graphics.Windowing;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using Pollus.Engine.UI;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
 public class UIRectExample : IExample
@@ -323,8 +323,8 @@ public class UIRectExample : IExample
                             Value = LayoutStyle.Default with
                             {
                                 Margin = new Rect<LengthPercentageAuto>(
-                                LengthPercentageAuto.Zero, LengthPercentageAuto.Zero,
-                                LengthPercentageAuto.Px(8), LengthPercentageAuto.Zero),
+                                    LengthPercentageAuto.Zero, LengthPercentageAuto.Zero,
+                                    LengthPercentageAuto.Px(8), LengthPercentageAuto.Zero),
                             }
                         }
                     )).Entity;
@@ -332,6 +332,7 @@ public class UIRectExample : IExample
 
                     commands.Entity(cardsRow).AddChild(card);
                 }
+
                 commands.Entity(mainPanel).AddChild(cardsRow);
 
                 // --- Helper: spawn a section label ---
@@ -395,6 +396,7 @@ public class UIRectExample : IExample
                     commands.Entity(row).AddChild(SpawnLabel(checkLabels[i], 13f));
                     commands.Entity(checkSection).AddChild(row);
                 }
+
                 commands.Entity(mainPanel).AddChild(checkSection);
 
                 // --- RadioButton section ---
@@ -447,6 +449,7 @@ public class UIRectExample : IExample
                     commands.Entity(row).AddChild(SpawnLabel(radioLabels[i], 13f));
                     commands.Entity(radioSection).AddChild(row);
                 }
+
                 commands.Entity(mainPanel).AddChild(radioSection);
 
                 // --- Slider section ---
@@ -762,6 +765,7 @@ public class UIRectExample : IExample
                     commands.Entity(opt).AddChild(SpawnLabel(optionLabels[i], 12f));
                     commands.Entity(optionsPanel).AddChild(opt);
                 }
+
                 commands.Entity(mainPanel).AddChild(dropdownSection);
 
                 // --- SDF Shapes demo ---
