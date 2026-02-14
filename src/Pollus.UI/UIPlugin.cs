@@ -1,9 +1,9 @@
+namespace Pollus.UI;
+
 using System.Runtime.CompilerServices;
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.UI.Layout;
-
-namespace Pollus.UI;
 
 public class UIPlugin : IPlugin
 {
@@ -37,11 +37,7 @@ public class UIPlugin : IPlugin
         world.Events.InitEvent<TextInputEvent>();
 
         // Layout
-        world.Schedule.AddSystems(CoreStage.PostUpdate,
-            UILayoutSystem.SyncTree(),
-            UILayoutSystem.ComputeLayout(),
-            UILayoutSystem.WriteBack()
-        );
+        world.Schedule.AddSystemSet<UILayoutSystem>();
 
         // Interaction events
         world.Events.InitEvent<UIInteractionEvents.UIClickEvent>();
@@ -61,12 +57,8 @@ public class UIPlugin : IPlugin
         world.Resources.Add(new UIFocusState());
 
         // Interaction systems
-        world.Schedule.AddSystems(CoreStage.PostUpdate,
-            UIInteractionSystem.HitTest(),
-            UIInteractionSystem.UpdateState(),
-            UIInteractionSystem.FocusNavigation(),
-            UIKeyboardRoutingSystem.Create()
-        );
+        world.Schedule.AddSystemSet<UIInteractionSystem>();
+        world.Schedule.AddSystemSet<UIKeyboardRoutingSystem>();
 
         // Widget events
         world.Events.InitEvent<UIToggleEvents.UIToggleEvent>();
@@ -81,17 +73,15 @@ public class UIPlugin : IPlugin
         world.Resources.Add(new UITextBuffers());
 
         // Widget systems
-        world.Schedule.AddSystems(CoreStage.PostUpdate,
-            UIButtonSystem.ButtonVisual(),
-            UIToggleSystem.Create(),
-            UICheckBoxSystem.Create(),
-            UIRadioButtonSystem.Create(),
-            UITextInputSystem.Create(),
-            UICaretSystem.Create(),
-            UINumberInputSystem.Create(),
-            UISliderSystem.Create(),
-            UIDropdownSystem.Create(),
-            UIScrollSystem.Create()
-        );
+        world.Schedule.AddSystemSet<UIButtonSystem>();
+        world.Schedule.AddSystemSet<UIToggleSystem>();
+        world.Schedule.AddSystemSet<UICheckBoxSystem>();
+        world.Schedule.AddSystemSet<UIRadioButtonSystem>();
+        world.Schedule.AddSystemSet<UITextInputSystem>();
+        world.Schedule.AddSystemSet<UICaretSystem>();
+        world.Schedule.AddSystemSet<UINumberInputSystem>();
+        world.Schedule.AddSystemSet<UISliderSystem>();
+        world.Schedule.AddSystemSet<UIDropdownSystem>();
+        world.Schedule.AddSystemSet<UIScrollSystem>();
     }
 }

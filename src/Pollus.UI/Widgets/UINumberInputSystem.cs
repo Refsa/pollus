@@ -3,22 +3,30 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Input;
 
-public static class UINumberInputSystem
+public class UINumberInputSystem : ISystemSet
 {
-    public const string Label = "UINumberInputSystem::Update";
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel("UINumberInputSystem::Update"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UITextInputSystem.Label],
+    };
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(Label) { RunsAfter = [UITextInputSystem.Label] },
-        static (
-            EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-            EventReader<UITextInputEvents.UITextInputValueChanged> textChangedReader,
-            UITextBuffers textBuffers,
-            Events events,
-            Query query) =>
-        {
-            PerformUpdate(query, textBuffers, keyDownReader, textChangedReader, events);
-        }
-    );
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIKeyDownEvent>, EventReader<UITextInputEvents.UITextInputValueChanged>, UITextBuffers, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
+        EventReader<UITextInputEvents.UITextInputValueChanged> textChangedReader,
+        UITextBuffers textBuffers,
+        Events events,
+        Query query)
+    {
+        PerformUpdate(query, textBuffers, keyDownReader, textChangedReader, events);
+    }
 
     internal static void PerformUpdate(
         Query query,

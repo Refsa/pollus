@@ -117,9 +117,9 @@ public class ComponentGenerator : IIncrementalGenerator
                   using System.Linq.Expressions;
                   using System.Reflection;
                   using Pollus.ECS;
-                  using Pollus.Engine.Tween;
                   using Pollus.Utils;
                   using Pollus.Core.Serialization;
+                  using Pollus.Engine.Tween;
                   using Pollus.Engine.Serialization;
 
                   {{partialExt}}

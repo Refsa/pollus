@@ -7,7 +7,6 @@ using Pollus.Engine.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Windowing;
-using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Utils;

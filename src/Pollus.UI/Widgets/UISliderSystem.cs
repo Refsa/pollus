@@ -4,23 +4,31 @@ using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
 
-public static class UISliderSystem
+public class UISliderSystem : ISystemSet
 {
-    public const string Label = "UISliderSystem::Update";
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel("UISliderSystem::Update"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+    };
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(Label) { RunsAfter = [UIInteractionSystem.UpdateStateLabel] },
-        static (
-            EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-            EventReader<UIInteractionEvents.UIDragEvent> dragReader,
-            EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-            UIHitTestResult hitResult,
-            Events events,
-            Query query) =>
-        {
-            PerformUpdate(query, clickReader, dragReader, keyDownReader, hitResult, events);
-        }
-    );
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, EventReader<UIInteractionEvents.UIDragEvent>, EventReader<UIInteractionEvents.UIKeyDownEvent>, UIHitTestResult, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
+        EventReader<UIInteractionEvents.UIDragEvent> dragReader,
+        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
+        UIHitTestResult hitResult,
+        Events events,
+        Query query)
+    {
+        PerformUpdate(query, clickReader, dragReader, keyDownReader, hitResult, events);
+    }
 
     internal static void PerformUpdate(
         Query query,

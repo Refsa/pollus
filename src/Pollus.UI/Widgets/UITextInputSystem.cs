@@ -4,22 +4,32 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Input;
 
-public static class UITextInputSystem
+public class UITextInputSystem : ISystemSet
 {
     public const string Label = "UITextInputSystem::Update";
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(Label) { RunsAfter = [UIKeyboardRoutingSystem.Label] },
-        static (
-            EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-            EventReader<UIInteractionEvents.UITextInputEvent> textInputReader,
-            UITextBuffers textBuffers,
-            Events events,
-            Query query) =>
-        {
-            PerformTextInput(query, textBuffers, keyDownReader, textInputReader, events);
-        }
-    );
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel(Label),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIKeyboardRoutingSystem.Label],
+    };
+
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIKeyDownEvent>, EventReader<UIInteractionEvents.UITextInputEvent>, UITextBuffers, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
+        EventReader<UIInteractionEvents.UITextInputEvent> textInputReader,
+        UITextBuffers textBuffers,
+        Events events,
+        Query query)
+    {
+        PerformTextInput(query, textBuffers, keyDownReader, textInputReader, events);
+    }
 
     internal static void PerformTextInput(
         Query query,
