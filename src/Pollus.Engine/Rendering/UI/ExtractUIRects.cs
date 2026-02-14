@@ -73,13 +73,14 @@ public partial class ExtractUIRectsSystem
         return nodeRect;
     }
 
-    static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor, List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
+    static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor,
+        List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
         var nodeIndex = sortIndex++;
 
-        if (size.X > 0 && size.Y > 0)
+        if (size is { X: > 0, Y: > 0 })
         {
             var entityRef = query.GetEntity(entity);
 
@@ -132,143 +133,6 @@ public partial class ExtractUIRectsSystem
                     Extra = new Vec4f(shapeType, 0f, 0f, 0f),
                 });
             }
-
-            // Text input caret
-            if (entityRef.Has<UITextInput>() && entityRef.Has<UIInteraction>())
-            {
-                ref readonly var input = ref entityRef.Get<UITextInput>();
-                ref readonly var interaction = ref entityRef.Get<UIInteraction>();
-
-                if (interaction.IsFocused && input.CaretVisible && input.CaretHeight > 0
-                    && !input.TextEntity.IsNull)
-                {
-                    var textRef = query.GetEntity(input.TextEntity);
-                    if (textRef.Has<ComputedNode>())
-                    {
-                        ref readonly var textComputed = ref textRef.Get<ComputedNode>();
-                        var textAbsX = absPos.X + textComputed.Position.X;
-                        var textAbsY = absPos.Y + textComputed.Position.Y;
-
-                        var caretW = 2f;
-                        var caretH = input.CaretHeight;
-                        var caretX = textAbsX + input.CaretXOffset;
-                        var caretY = textAbsY + (textComputed.Size.Y - caretH) * 0.5f;
-
-                        var batchKey = new UIRectBatchKey(material, scissor);
-                        var batch = batches.GetOrCreate(batchKey);
-                        batch.Draw((ulong)nodeIndex * 4 + 1, new UIRectBatch.InstanceData
-                        {
-                            PosSize = new Vec4f(caretX, caretY, caretW, caretH),
-                            BackgroundColor = new Vec4f(1f, 1f, 1f, 1f),
-                            BorderColor = Vec4f.Zero,
-                            BorderRadius = Vec4f.Zero,
-                            BorderWidths = Vec4f.Zero,
-                            Extra = Vec4f.Zero,
-                        });
-                    }
-                }
-            }
-
-            // Slider fill bar + thumb knob
-            if (entityRef.Has<UISlider>())
-            {
-                ref readonly var slider = ref entityRef.Get<UISlider>();
-                var range = slider.Max - slider.Min;
-                var ratio = range > 0 ? Math.Clamp((slider.Value - slider.Min) / range, 0f, 1f) : 0f;
-
-                var batchKey = new UIRectBatchKey(material, scissor);
-                var batch = batches.GetOrCreate(batchKey);
-
-                var fillW = size.X * ratio;
-                if (fillW > 0.5f)
-                {
-                    batch.Draw((ulong)nodeIndex * 4 + 1, new UIRectBatch.InstanceData
-                    {
-                        PosSize = new Vec4f(absPos.X, absPos.Y, fillW, size.Y),
-                        BackgroundColor = (Vec4f)slider.FillColor,
-                        BorderColor = Vec4f.Zero,
-                        BorderRadius = borderRadius,
-                        BorderWidths = Vec4f.Zero,
-                        Extra = Vec4f.Zero,
-                    });
-                }
-
-                var thumbDiameter = size.Y * 1.4f;
-                var thumbX = absPos.X + size.X * ratio - thumbDiameter * 0.5f;
-                var thumbY = absPos.Y + (size.Y - thumbDiameter) * 0.5f;
-                batch.Draw((ulong)nodeIndex * 4 + 2, new UIRectBatch.InstanceData
-                {
-                    PosSize = new Vec4f(thumbX, thumbY, thumbDiameter, thumbDiameter),
-                    BackgroundColor = (Vec4f)slider.ThumbColor,
-                    BorderColor = Vec4f.Zero,
-                    BorderRadius = Vec4f.Zero,
-                    BorderWidths = Vec4f.Zero,
-                    Extra = new Vec4f(1f, 0f, 0f, 0f),
-                });
-            }
-
-            // Scrollbar indicators
-            if (entityRef.Has<UIScrollOffset>() && entityRef.Has<UIStyle>())
-            {
-                ref readonly var scroll = ref entityRef.Get<UIScrollOffset>();
-                ref readonly var scrollStyle = ref entityRef.Get<UIStyle>();
-
-                const float scrollbarThickness = 6f;
-                const float scrollbarPadding = 2f;
-                var scrollbarColor = new Vec4f(1f, 1f, 1f, 0.3f);
-
-                // Vertical scrollbar (right edge)
-                if (scrollStyle.Value.Overflow.Y == Overflow.Scroll && computed.ContentSize.Y > size.Y)
-                {
-                    float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
-                        - computed.BorderTop - computed.BorderBottom;
-                    float contentH = computed.ContentSize.Y;
-                    float thumbH = Math.Max(20f, (innerH / contentH) * innerH);
-                    float maxScroll = contentH - innerH;
-                    float scrollRatio = maxScroll > 0 ? scroll.Offset.Y / maxScroll : 0f;
-                    float trackH = innerH - thumbH;
-                    float thumbYPos = absPos.Y + computed.BorderTop + computed.PaddingTop + scrollRatio * trackH;
-                    float thumbXPos = absPos.X + size.X - scrollbarThickness - scrollbarPadding - computed.BorderRight;
-
-                    var batchKey = new UIRectBatchKey(material, scissor);
-                    var batch = batches.GetOrCreate(batchKey);
-                    batch.Draw((ulong)nodeIndex * 4 + 3, new UIRectBatch.InstanceData
-                    {
-                        PosSize = new Vec4f(thumbXPos, thumbYPos, scrollbarThickness, thumbH),
-                        BackgroundColor = scrollbarColor,
-                        BorderColor = Vec4f.Zero,
-                        BorderRadius = new Vec4f(3f, 3f, 3f, 3f),
-                        BorderWidths = Vec4f.Zero,
-                        Extra = Vec4f.Zero,
-                    });
-                }
-
-                // Horizontal scrollbar (bottom edge)
-                if (scrollStyle.Value.Overflow.X == Overflow.Scroll && computed.ContentSize.X > size.X)
-                {
-                    float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
-                        - computed.BorderLeft - computed.BorderRight;
-                    float contentW = computed.ContentSize.X;
-                    float thumbW = Math.Max(20f, (innerW / contentW) * innerW);
-                    float maxScroll = contentW - innerW;
-                    float scrollRatio = maxScroll > 0 ? scroll.Offset.X / maxScroll : 0f;
-                    float trackW = innerW - thumbW;
-                    float thumbXPos = absPos.X + computed.BorderLeft + computed.PaddingLeft + scrollRatio * trackW;
-                    float thumbYPos = absPos.Y + size.Y - scrollbarThickness - scrollbarPadding - computed.BorderBottom;
-
-                    var batchKey = new UIRectBatchKey(material, scissor);
-                    var batch = batches.GetOrCreate(batchKey);
-                    batch.Draw((ulong)nodeIndex * 4 + 3, new UIRectBatch.InstanceData
-                    {
-                        PosSize = new Vec4f(thumbXPos, thumbYPos, thumbW, scrollbarThickness),
-                        BackgroundColor = scrollbarColor,
-                        BorderColor = Vec4f.Zero,
-                        BorderRadius = new Vec4f(3f, 3f, 3f, 3f),
-                        BorderWidths = Vec4f.Zero,
-                        Extra = Vec4f.Zero,
-                    });
-                }
-            }
         }
 
         // Skip children of zero-size nodes
@@ -303,7 +167,7 @@ public partial class ExtractUIRectsSystem
             if (childRef.Has<ComputedNode>())
             {
                 if (deferred != null && childRef.Has<UIStyle>()
-                    && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
+                                     && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
                 {
                     deferred.Add((childEntity, childAbsPos, childScissor));
                 }
