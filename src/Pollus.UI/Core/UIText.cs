@@ -1,8 +1,8 @@
+namespace Pollus.UI;
+
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Utils;
-
-namespace Pollus.UI;
 
 [Required<UINode>, Required<ContentSize>]
 public partial struct UIText() : IComponent, IDefault<UIText>
@@ -13,22 +13,6 @@ public partial struct UIText() : IComponent, IDefault<UIText>
         Size = 16f,
         Text = NativeUtf8.Null,
     };
-
-    static UIText()
-    {
-        Component.Register<UIText>();
-        RequiredComponents.Init<UIText>();
-    }
-
-    public static void CollectRequired(Dictionary<ComponentID, byte[]> collector)
-    {
-        var selfId = Component.GetInfo<UIText>().ID;
-        if (collector.ContainsKey(selfId)) return;
-        collector[selfId] = CollectionUtils.GetBytes(Default);
-
-        UINode.CollectRequired(collector);
-        ContentSize.CollectRequired(collector);
-    }
 
     public required Color Color { get; set; }
 

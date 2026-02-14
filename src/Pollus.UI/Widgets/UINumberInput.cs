@@ -8,10 +8,8 @@ public enum NumberInputType
     Int = 1,
 }
 
-public partial record struct UINumberInput() : IComponent, IDefault<UINumberInput>
+public partial record struct UINumberInput() : IComponent
 {
-    public static UINumberInput Default => new();
-
     public float Value;
     public float Min = float.MinValue;
     public float Max = float.MaxValue;

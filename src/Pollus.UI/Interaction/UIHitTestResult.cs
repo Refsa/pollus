@@ -1,7 +1,7 @@
+namespace Pollus.UI;
+
 using Pollus.ECS;
 using Pollus.Mathematics;
-
-namespace Pollus.UI;
 
 public class UIHitTestResult
 {

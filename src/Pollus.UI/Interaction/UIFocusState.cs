@@ -1,6 +1,6 @@
-using Pollus.ECS;
-
 namespace Pollus.UI;
+
+using Pollus.ECS;
 
 public class UIFocusState
 {

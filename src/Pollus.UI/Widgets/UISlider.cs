@@ -3,10 +3,8 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Utils;
 
-public partial record struct UISlider() : IComponent, IDefault<UISlider>
+public partial record struct UISlider() : IComponent
 {
-    public static UISlider Default => new();
-
     public float Value;
     public float Min;
     public float Max = 1f;

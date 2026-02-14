@@ -3,10 +3,8 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Utils;
 
-public partial record struct UIRadioButton() : IComponent, IDefault<UIRadioButton>
+public partial record struct UIRadioButton() : IComponent
 {
-    public static UIRadioButton Default => new();
-
     public int GroupId;
     public bool IsSelected;
     public Color SelectedColor = new(0.2f, 0.6f, 1.0f, 1f);
