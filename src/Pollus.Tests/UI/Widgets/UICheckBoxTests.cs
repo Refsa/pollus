@@ -12,7 +12,7 @@ public class UICheckBoxTests
     static World CreateWorld()
     {
         var world = new World();
-        world.AddPlugin(new UIPlugin(), addDependencies: true);
+        world.AddPlugin(new UISystemsPlugin(), addDependencies: true);
         world.Prepare();
         return world;
     }

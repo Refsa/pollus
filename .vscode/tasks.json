@@ -20,6 +20,17 @@
                 "--project",
                 "${workspaceFolder}/examples/Desktop/Pollus.Examples.Desktop.csproj"
             ],
+        },
+        {
+            "label": "run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/examples/Desktop/Pollus.Examples.Desktop.csproj",
+                "ui-rect"
+            ],
         }
     ]
 }

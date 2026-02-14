@@ -2,10 +2,9 @@ namespace Pollus.UI;
 
 using System.Runtime.CompilerServices;
 using Pollus.ECS;
-using Pollus.Input;
 using Pollus.UI.Layout;
 
-public class UIPlugin : IPlugin
+public class UISystemsPlugin : IPlugin
 {
     public PluginDependency[] Dependencies => [
         PluginDependency.From<HierarchyPlugin>(),
@@ -14,27 +13,9 @@ public class UIPlugin : IPlugin
 
     public void Apply(World world)
     {
-        // Force ContentSize static constructor before systems access it
-        // through Lookup<T>, avoiding circular static initialization.
         RuntimeHelpers.RunClassConstructor(typeof(ContentSize).TypeHandle);
 
         world.Resources.Add(new UITreeAdapter());
-
-        // Ensure input resources exist for interaction systems.
-        // InputPlugin normally provides these; add defaults so UI works
-        // standalone in tests or minimal setups.
-        if (!world.Resources.Has<CurrentDevice<Mouse>>())
-            world.Resources.Add(new CurrentDevice<Mouse>());
-        if (!world.Resources.Has<CurrentDevice<Keyboard>>())
-            world.Resources.Add(new CurrentDevice<Keyboard>());
-        if (!world.Resources.Has<ButtonInput<MouseButton>>())
-            world.Resources.Add(new ButtonInput<MouseButton>());
-        if (!world.Resources.Has<ButtonInput<Key>>())
-            world.Resources.Add(new ButtonInput<Key>());
-
-        // Input events used by keyboard routing
-        world.Events.InitEvent<ButtonEvent<Key>>();
-        world.Events.InitEvent<TextInputEvent>();
 
         // Layout
         world.Schedule.AddSystemSet<UILayoutSystem>();
