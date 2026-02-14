@@ -11,7 +11,7 @@ public class UILayoutOptimizationTests
     static World CreateWorld()
     {
         var world = new World();
-        world.AddPlugin(new UIPlugin(), addDependencies: true);
+        world.AddPlugin(new UISystemsPlugin(), addDependencies: true);
         world.Resources.Add(new CurrentDevice<Mouse>());
         world.Resources.Add(new ButtonInput<MouseButton>());
         world.Resources.Add(new ButtonInput<Key>());

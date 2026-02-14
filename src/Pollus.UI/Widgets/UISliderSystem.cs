@@ -4,31 +4,15 @@ using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
 
-public class UISliderSystem : ISystemSet
+[SystemSet]
+public partial class UISliderSystem
 {
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(PerformUpdate))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel("UISliderSystem::Update"),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+        RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
-
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, EventReader<UIInteractionEvents.UIDragEvent>, EventReader<UIInteractionEvents.UIKeyDownEvent>, UIHitTestResult, Events, Query>)Update));
-    }
-
-    public static void Update(
-        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-        EventReader<UIInteractionEvents.UIDragEvent> dragReader,
-        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-        UIHitTestResult hitResult,
-        Events events,
-        Query query)
-    {
-        PerformUpdate(query, clickReader, dragReader, keyDownReader, hitResult, events);
-    }
 
     internal static void PerformUpdate(
         Query query,

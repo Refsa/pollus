@@ -2,29 +2,15 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 
-public class UIToggleSystem : ISystemSet
+[SystemSet]
+public partial class UIToggleSystem
 {
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    [System(nameof(UpdateToggles))]
+    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
-        Label = new SystemLabel("UIToggleSystem::Update"),
         Stage = CoreStage.PostUpdate,
-        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+        RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
-
-    public static void AddToSchedule(Schedule schedule)
-    {
-        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
-            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, Events, Query>)Update));
-    }
-
-    public static void Update(
-        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-        Events events,
-        Query query)
-    {
-        UpdateToggles(query, clickReader, events);
-    }
-
     internal static void UpdateToggles(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var toggleWriter = events.GetWriter<UIToggleEvents.UIToggleEvent>();
