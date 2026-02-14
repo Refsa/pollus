@@ -16,19 +16,19 @@ public class FlexWrapTests
         var root = tree.AddNode(DefaultStyle with
         {
             FlexWrap = FlexWrap.Wrap,
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(40f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(40f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(40f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -63,19 +63,19 @@ public class FlexWrapTests
         {
             FlexWrap = FlexWrap.Wrap,
             AlignContent = AlignContent.FlexStart,
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(80f), Length.Auto),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(60f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(60f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(150f), Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -101,15 +101,15 @@ public class FlexWrapTests
         {
             FlexWrap = FlexWrap.WrapReverse,
             AlignContent = AlignContent.FlexStart,
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(150f), Length.Px(40f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(150f), Length.Px(40f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -132,19 +132,19 @@ public class FlexWrapTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(100f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(100f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(100f), Length.Px(50f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(100f), Length.Px(50f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(100f), Length.Px(50f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);

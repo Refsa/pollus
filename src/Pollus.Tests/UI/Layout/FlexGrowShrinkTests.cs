@@ -64,7 +64,7 @@ public class FlexGrowShrinkTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(50f), Length.Auto),
         });
         var child2 = tree.AddNode(DefaultStyle with { FlexGrow = 1f });
         tree.AddChild(root, child1);
@@ -84,11 +84,11 @@ public class FlexGrowShrinkTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -107,12 +107,12 @@ public class FlexGrowShrinkTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
             FlexShrink = 0f,
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);

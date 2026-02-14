@@ -51,7 +51,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                            Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                             FlexDirection = FlexDirection.Column,
                             Padding = new Rect<Length>(
                                 Length.Px(16), Length.Px(16),
@@ -69,7 +69,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(60)),
+                            Size = new Size<Length>(Length.Auto, Length.Px(60)),
                             Padding = new Rect<Length>(
                                 Length.Px(20), Length.Px(20),
                                 Length.Px(20), Length.Px(20)),
@@ -110,7 +110,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Auto),
+                            Size = new Size<Length>(Length.Px(200), Length.Auto),
                             FlexGrow = 0f,
                             FlexDirection = FlexDirection.Column,
                             Padding = new Rect<Length>(
@@ -142,7 +142,7 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+                                Size = new Size<Length>(Length.Auto, Length.Px(40)),
                                 Padding = new Rect<Length>(
                                     Length.Px(12), Length.Px(12),
                                     Length.Px(8), Length.Px(8)),
@@ -179,7 +179,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+                            Size = new Size<Length>(Length.Auto, Length.Px(40)),
                             Padding = new Rect<Length>(
                                 Length.Px(12), Length.Px(12),
                                 Length.Px(8), Length.Px(8)),
@@ -280,7 +280,7 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Size = new Size<Dimension>(Dimension.Px(160), Dimension.Px(120)),
+                                Size = new Size<Length>(Length.Px(160), Length.Px(120)),
                                 FlexDirection = FlexDirection.Column,
                                 Padding = new Rect<Length>(
                                     Length.Px(12), Length.Px(12),
@@ -322,9 +322,9 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Margin = new Rect<LengthAuto>(
-                                    LengthAuto.Zero, LengthAuto.Zero,
-                                    LengthAuto.Px(8), LengthAuto.Zero),
+                                Margin = new Rect<Length>(
+                                    Length.Zero, Length.Zero,
+                                    Length.Px(8), Length.Zero),
                             }
                         }
                     )).Entity;
@@ -386,7 +386,7 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Size = new Size<Dimension>(Dimension.Px(22), Dimension.Px(22)),
+                                Size = new Size<Length>(Length.Px(22), Length.Px(22)),
                             }
                         },
                         new BorderRadius { TopLeft = 4, TopRight = 4, BottomLeft = 4, BottomRight = 4 }
@@ -440,7 +440,7 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Size = new Size<Dimension>(Dimension.Px(22), Dimension.Px(22)),
+                                Size = new Size<Length>(Length.Px(22), Length.Px(22)),
                             }
                         }
                     )).Entity;
@@ -476,7 +476,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(16)),
+                            Size = new Size<Length>(Length.Px(300), Length.Px(16)),
                         }
                     },
                     new BorderRadius { TopLeft = 8, TopRight = 8, BottomLeft = 8, BottomRight = 8 }
@@ -509,7 +509,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                            Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                         }
                     }
                 )).Entity;
@@ -523,7 +523,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(32)),
+                            Size = new Size<Length>(Length.Px(300), Length.Px(32)),
                             Padding = new Rect<Length>(
                                 Length.Px(8), Length.Px(8),
                                 Length.Px(6), Length.Px(6)),
@@ -571,7 +571,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                            Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                         }
                     }
                 )).Entity;
@@ -585,7 +585,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(120), Dimension.Px(32)),
+                            Size = new Size<Length>(Length.Px(120), Length.Px(32)),
                             Padding = new Rect<Length>(
                                 Length.Px(8), Length.Px(8),
                                 Length.Px(6), Length.Px(6)),
@@ -614,7 +614,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(120), Dimension.Px(32)),
+                            Size = new Size<Length>(Length.Px(120), Length.Px(32)),
                         }
                     }
                 )).Entity;
@@ -648,7 +648,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                            Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                         }
                     }
                 )).Entity;
@@ -669,7 +669,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(32)),
+                            Size = new Size<Length>(Length.Px(200), Length.Px(32)),
                             Padding = new Rect<Length>(
                                 Length.Px(10), Length.Px(10),
                                 Length.Px(6), Length.Px(6)),
@@ -714,13 +714,13 @@ public class UIExample : IExample
                             Display = Display.None,
                             Position = Position.Absolute,
                             Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Hidden),
-                            Inset = new Rect<LengthAuto>(
-                                LengthAuto.Px(0),
-                                LengthAuto.Auto,
-                                LengthAuto.Px(40), // below trigger (32px) + gap (8px)
-                                LengthAuto.Auto),
+                            Inset = new Rect<Length>(
+                                Length.Px(0),
+                                Length.Auto,
+                                Length.Px(40), // below trigger (32px) + gap (8px)
+                                Length.Auto),
                             FlexDirection = FlexDirection.Column,
-                            MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(200)),
+                            MaxSize = new Size<Length>(Length.Auto, Length.Px(200)),
                             Padding = new Rect<Length>(
                                 Length.Px(2), Length.Px(2),
                                 Length.Px(2), Length.Px(2)),
@@ -753,7 +753,7 @@ public class UIExample : IExample
                             Value = LayoutStyle.Default with
                             {
                                 Display = Display.None,
-                                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                                Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                                 Padding = new Rect<Length>(
                                     Length.Px(10), Length.Px(10),
                                     Length.Px(4), Length.Px(4)),
@@ -804,7 +804,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(48), Dimension.Px(48)),
+                            Size = new Size<Length>(Length.Px(48), Length.Px(48)),
                         }
                     },
                     new BorderRadius { TopLeft = 8, TopRight = 8, BottomLeft = 8, BottomRight = 8 }
@@ -820,7 +820,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(48), Dimension.Px(48)),
+                            Size = new Size<Length>(Length.Px(48), Length.Px(48)),
                         }
                     }
                 )).Entity;
@@ -835,7 +835,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(48), Dimension.Px(48)),
+                            Size = new Size<Length>(Length.Px(48), Length.Px(48)),
                         }
                     }
                 )).Entity;
@@ -850,7 +850,7 @@ public class UIExample : IExample
                     {
                         Value = LayoutStyle.Default with
                         {
-                            Size = new Size<Dimension>(Dimension.Px(48), Dimension.Px(48)),
+                            Size = new Size<Length>(Length.Px(48), Length.Px(48)),
                         }
                     }
                 )).Entity;

@@ -53,7 +53,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
 
@@ -104,7 +104,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root1, child1);
@@ -141,7 +141,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root, child);
@@ -167,7 +167,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         var hidden = commands.Spawn(Entity.With(
@@ -175,7 +175,7 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Display = Display.None,
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
 
@@ -213,7 +213,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 
@@ -305,7 +305,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
                 Padding = new Rect<Length>(
                     Length.Px(8), Length.Px(8),
                     Length.Px(8), Length.Px(8)),
@@ -316,7 +316,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 
@@ -358,7 +358,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
                 Padding = new Rect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(10), Length.Px(10)
@@ -370,7 +370,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 
@@ -403,7 +403,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(33.33f), Dimension.Px(20)),
+                Size = new Size<Length>(Length.Px(33.33f), Length.Px(20)),
             }}
         )).Entity;
 
@@ -675,7 +675,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto),
+                Size = new Size<Length>(Length.Px(100), Length.Auto),
             }}
         )).Entity;
 

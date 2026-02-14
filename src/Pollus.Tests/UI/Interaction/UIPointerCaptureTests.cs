@@ -33,7 +33,7 @@ public class UIPointerCaptureTests
         var child = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, child);

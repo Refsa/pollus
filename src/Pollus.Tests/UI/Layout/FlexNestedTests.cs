@@ -15,11 +15,11 @@ public class FlexNestedTests
         var child1 = tree.AddNode(DefaultStyle with
         {
             FlexDirection = FlexDirection.Column,
-            Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(100f), Length.Auto),
         });
         var grandchild = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(child1, grandchild);
@@ -43,11 +43,11 @@ public class FlexNestedTests
         });
         var grandchild1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Auto, Length.Px(30f)),
         });
         var grandchild2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Auto, Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(child1, grandchild1);

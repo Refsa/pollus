@@ -17,7 +17,7 @@ public class FlexPaddingBorderTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -39,7 +39,7 @@ public class FlexPaddingBorderTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -62,7 +62,7 @@ public class FlexPaddingBorderTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -80,7 +80,7 @@ public class FlexPaddingBorderTests
         var child = tree.AddNode(DefaultStyle with
         {
             BoxSizing = BoxSizing.BorderBox,
-            Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Px(100f)),
+            Size = new Size<Length>(Length.Px(100f), Length.Px(100f)),
             Padding = Rect<Length>.All(Length.Px(10f)),
         });
         tree.AddChild(root, child);
@@ -101,7 +101,7 @@ public class FlexPaddingBorderTests
         var child = tree.AddNode(DefaultStyle with
         {
             BoxSizing = BoxSizing.ContentBox,
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(60f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(60f)),
             Padding = Rect<Length>.All(Length.Px(10f)),
             Border = Rect<Length>.All(Length.Px(2f)),
         });

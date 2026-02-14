@@ -55,7 +55,7 @@ public class UILayoutOptimizationTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 
@@ -70,7 +70,7 @@ public class UILayoutOptimizationTests
         ref var style = ref world.Store.GetComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(60)),
+            Size = new Size<Length>(Length.Px(100), Length.Px(60)),
         };
         world.Update();
 
@@ -95,7 +95,7 @@ public class UILayoutOptimizationTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 
@@ -109,7 +109,7 @@ public class UILayoutOptimizationTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(60), Dimension.Px(40)),
+                Size = new Size<Length>(Length.Px(60), Length.Px(40)),
             }}
         )).Entity;
         commands.AddChild(root, child2);
@@ -167,7 +167,7 @@ public class UILayoutOptimizationTests
                 new UINode(),
                 new UIStyle { Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(30), Dimension.Px(20)),
+                    Size = new Size<Length>(Length.Px(30), Length.Px(20)),
                 }}
             )).Entity;
             commands.AddChild(root, child);
@@ -200,7 +200,7 @@ public class UILayoutOptimizationTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
 

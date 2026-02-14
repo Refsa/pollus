@@ -9,16 +9,16 @@ public record struct Style
     public Point<Overflow> Overflow;
 
     // Sizing
-    public Size<Dimension> Size;
-    public Size<Dimension> MinSize;
-    public Size<Dimension> MaxSize;
+    public Size<Length> Size;
+    public Size<Length> MinSize;
+    public Size<Length> MaxSize;
     public float? AspectRatio;
 
     // Spacing
-    public Rect<LengthAuto> Margin;
+    public Rect<Length> Margin;
     public Rect<Length> Padding;
     public Rect<Length> Border;
-    public Rect<LengthAuto> Inset;
+    public Rect<Length> Inset;
 
     // Flex container
     public FlexDirection FlexDirection;
@@ -28,7 +28,7 @@ public record struct Style
     // Flex item
     public float FlexGrow;
     public float FlexShrink;
-    public Dimension FlexBasis;
+    public Length FlexBasis;
 
     // Alignment (nullable = "not set", distinct from "set to default")
     public AlignItems? AlignItems;
@@ -45,25 +45,25 @@ public record struct Style
         Position = Position.Relative,
         BoxSizing = BoxSizing.BorderBox,
         Overflow = new Point<Overflow>(Layout.Overflow.Visible, Layout.Overflow.Visible),
-        Size = new Size<Dimension>(Dimension.Auto, Dimension.Auto),
-        MinSize = new Size<Dimension>(Dimension.Auto, Dimension.Auto),
-        MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Auto),
+        Size = new Size<Length>(Length.Auto, Length.Auto),
+        MinSize = new Size<Length>(Length.Auto, Length.Auto),
+        MaxSize = new Size<Length>(Length.Auto, Length.Auto),
         AspectRatio = null,
-        Margin = Rect<LengthAuto>.Zero,
+        Margin = Rect<Length>.Zero,
         Padding = Rect<Length>.Zero,
         Border = Rect<Length>.Zero,
-        Inset = new Rect<LengthAuto>(
-            LengthAuto.Auto,
-            LengthAuto.Auto,
-            LengthAuto.Auto,
-            LengthAuto.Auto
+        Inset = new Rect<Length>(
+            Length.Auto,
+            Length.Auto,
+            Length.Auto,
+            Length.Auto
         ),
         FlexDirection = FlexDirection.Row,
         FlexWrap = FlexWrap.NoWrap,
         Gap = Size<Length>.Zero,
         FlexGrow = 0f,
         FlexShrink = 1f,
-        FlexBasis = Dimension.Auto,
+        FlexBasis = Length.Auto,
         AlignItems = null,
         AlignSelf = null,
         AlignContent = null,

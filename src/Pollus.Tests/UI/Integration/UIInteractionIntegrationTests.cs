@@ -36,7 +36,7 @@ public class UIInteractionIntegrationTests
             new UIInteraction { Focusable = true },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(80)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(80)),
             }}
         )).Entity;
 
@@ -98,7 +98,7 @@ public class UIInteractionIntegrationTests
             new UIInteraction { Focusable = true },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(50)),
             }}
         )).Entity;
 
@@ -107,7 +107,7 @@ public class UIInteractionIntegrationTests
             new UIInteraction { Focusable = true },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(50)),
             }}
         )).Entity;
 
@@ -164,13 +164,13 @@ public class UIInteractionIntegrationTests
         var btn1 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(50)) } }
         )).Entity;
 
         var btn2 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, btn1);

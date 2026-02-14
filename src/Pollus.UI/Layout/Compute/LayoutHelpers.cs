@@ -9,10 +9,10 @@ public static class LayoutHelpers
     {
         float parentWidth = parentSize.Width ?? 0f;
         return new Rect<float>(
-            style.Padding.Left.Resolve(parentWidth),
-            style.Padding.Right.Resolve(parentWidth),
-            style.Padding.Top.Resolve(parentWidth),
-            style.Padding.Bottom.Resolve(parentWidth)
+            style.Padding.Left.ResolveOr(parentWidth, 0f),
+            style.Padding.Right.ResolveOr(parentWidth, 0f),
+            style.Padding.Top.ResolveOr(parentWidth, 0f),
+            style.Padding.Bottom.ResolveOr(parentWidth, 0f)
         );
     }
 
@@ -21,10 +21,10 @@ public static class LayoutHelpers
     {
         float parentWidth = parentSize.Width ?? 0f;
         return new Rect<float>(
-            style.Border.Left.Resolve(parentWidth),
-            style.Border.Right.Resolve(parentWidth),
-            style.Border.Top.Resolve(parentWidth),
-            style.Border.Bottom.Resolve(parentWidth)
+            style.Border.Left.ResolveOr(parentWidth, 0f),
+            style.Border.Right.ResolveOr(parentWidth, 0f),
+            style.Border.Top.ResolveOr(parentWidth, 0f),
+            style.Border.Bottom.ResolveOr(parentWidth, 0f)
         );
     }
 

@@ -14,7 +14,7 @@ public class FlexPercentageTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Percent(0.5f), Dimension.Auto),
+            Size = new Size<Length>(Length.Percent(0.5f), Length.Auto),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -33,7 +33,7 @@ public class FlexPercentageTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Auto, Dimension.Percent(0.25f)),
+            Size = new Size<Length>(Length.Auto, Length.Percent(0.25f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -55,7 +55,7 @@ public class FlexPercentageTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -71,10 +71,10 @@ public class FlexPercentageTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
-            Margin = new Rect<LengthAuto>(
-                LengthAuto.Percent(0.1f), LengthAuto.Zero,
-                LengthAuto.Zero, LengthAuto.Zero
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
+            Margin = new Rect<Length>(
+                Length.Percent(0.1f), Length.Zero,
+                Length.Zero, Length.Zero
             ),
         });
         tree.AddChild(root, child);

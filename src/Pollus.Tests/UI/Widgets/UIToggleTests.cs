@@ -37,7 +37,7 @@ public class UIToggleTests
             new UIInteraction { Focusable = true },
             new UIToggle { IsOn = false, OnColor = new Color(0f, 1f, 0f, 1f), OffColor = new Color(1f, 0f, 0f, 1f) },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, toggle);
@@ -81,7 +81,7 @@ public class UIToggleTests
             new UIInteraction { Focusable = true },
             new UIToggle { IsOn = true, OnColor = new Color(0f, 1f, 0f, 1f), OffColor = new Color(1f, 0f, 0f, 1f) },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, toggle);
@@ -124,7 +124,7 @@ public class UIToggleTests
             new UIInteraction(),
             new UIToggle { IsOn = false, OnColor = new Color(0f, 1f, 0f, 1f), OffColor = new Color(1f, 0f, 0f, 1f) },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, toggle);

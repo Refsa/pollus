@@ -14,7 +14,7 @@ public class FlexBasicTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -33,11 +33,11 @@ public class FlexBasicTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(80f), Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -60,11 +60,11 @@ public class FlexBasicTests
         var root = tree.AddNode(DefaultStyle with { FlexDirection = FlexDirection.Column });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(40f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -84,16 +84,16 @@ public class FlexBasicTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
             Display = Display.None,
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -127,11 +127,11 @@ public class FlexBasicTests
         var root = tree.AddNode(DefaultStyle with
         {
             AlignItems = AlignItems.Stretch,
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(100f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(100f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(50f), Length.Auto),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 100f);

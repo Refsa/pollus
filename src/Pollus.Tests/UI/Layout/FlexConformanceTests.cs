@@ -7,8 +7,8 @@ public class FlexConformanceTests
 {
     static LayoutStyle S => LayoutStyle.Default;
 
-    static Size<Dimension> Px(float w, float h) =>
-        new(Dimension.Px(w), Dimension.Px(h));
+    static Size<Length> Px(float w, float h) =>
+        new(Length.Px(w), Length.Px(h));
 
     static Rect<Length> PadAll(float v) =>
         new(Length.Px(v), Length.Px(v),
@@ -20,13 +20,13 @@ public class FlexConformanceTests
 
     static Rect<Length> BorderAll(float v) => PadAll(v);
 
-    static Rect<LengthAuto> MarginAll(float v) =>
-        new(LengthAuto.Px(v), LengthAuto.Px(v),
-            LengthAuto.Px(v), LengthAuto.Px(v));
+    static Rect<Length> MarginAll(float v) =>
+        new(Length.Px(v), Length.Px(v),
+            Length.Px(v), Length.Px(v));
 
-    static Rect<LengthAuto> MarginLRTB(float l, float r, float t, float b) =>
-        new(LengthAuto.Px(l), LengthAuto.Px(r),
-            LengthAuto.Px(t), LengthAuto.Px(b));
+    static Rect<Length> MarginLRTB(float l, float r, float t, float b) =>
+        new(Length.Px(l), Length.Px(r),
+            Length.Px(t), Length.Px(b));
 
     static TestLayoutTree Compute(LayoutStyle rootStyle, float w, float h,
         params (LayoutStyle style, (LayoutStyle style, LayoutStyle[]? grandchildren)[]? children)[] children)
@@ -176,7 +176,7 @@ public class FlexConformanceTests
     public void Grow_ClampedByMaxWidth()
     {
         var tree = ComputeFlat(S, 300, 100,
-            S with { FlexGrow = 1, MaxSize = new Size<Dimension>(Dimension.Px(100), Dimension.Auto) },
+            S with { FlexGrow = 1, MaxSize = new Size<Length>(Length.Px(100), Length.Auto) },
             S with { FlexGrow = 1 });
 
         // First child clamped to 100, remaining 200 goes to second
@@ -213,7 +213,7 @@ public class FlexConformanceTests
     public void Shrink_ClampedByMinWidth()
     {
         var tree = ComputeFlat(S, 200, 100,
-            S with { Size = Px(150, 50), FlexShrink = 1, MinSize = new Size<Dimension>(Dimension.Px(120), Dimension.Auto) },
+            S with { Size = Px(150, 50), FlexShrink = 1, MinSize = new Size<Length>(Length.Px(120), Length.Auto) },
             S with { Size = Px(150, 50), FlexShrink = 1 });
 
         // First clamped at 120 (min), second gets remaining: 200-120=80
@@ -225,7 +225,7 @@ public class FlexConformanceTests
     public void FlexBasis_Px_OverridesSize()
     {
         var tree = ComputeFlat(S, 300, 100,
-            S with { Size = Px(50, 50), FlexBasis = Dimension.Px(100) });
+            S with { Size = Px(50, 50), FlexBasis = Length.Px(100) });
 
         AssertLayout(tree, 1, 0, 0, 100, 50);
     }
@@ -234,7 +234,7 @@ public class FlexConformanceTests
     public void FlexBasis_Percent_ResolvesAgainstContainer()
     {
         var tree = ComputeFlat(S, 400, 100,
-            S with { FlexBasis = Dimension.Percent(0.5f) });
+            S with { FlexBasis = Length.Percent(0.5f) });
 
         AssertLayout(tree, 1, 0, 0, 200, 100);
     }
@@ -243,9 +243,9 @@ public class FlexConformanceTests
     public void FlexBasis_Zero_WithGrow_EqualDistribution()
     {
         var tree = ComputeFlat(S, 300, 100,
-            S with { FlexBasis = Dimension.Px(0), FlexGrow = 1 },
-            S with { FlexBasis = Dimension.Px(0), FlexGrow = 1 },
-            S with { FlexBasis = Dimension.Px(0), FlexGrow = 1 });
+            S with { FlexBasis = Length.Px(0), FlexGrow = 1 },
+            S with { FlexBasis = Length.Px(0), FlexGrow = 1 },
+            S with { FlexBasis = Length.Px(0), FlexGrow = 1 });
 
         AssertLayout(tree, 1, 0, 0, 100, 100);
         AssertLayout(tree, 2, 100, 0, 100, 100);
@@ -340,7 +340,7 @@ public class FlexConformanceTests
     public void AlignItems_Stretch_FillsCrossAxis()
     {
         var tree = ComputeFlat(S with { AlignItems = AlignItems.Stretch }, 200, 100,
-            S with { Size = new Size<Dimension>(Dimension.Px(50), Dimension.Auto) });
+            S with { Size = new Size<Length>(Length.Px(50), Length.Auto) });
 
         AssertLayout(tree, 1, 0, 0, 50, 100);
     }
@@ -524,7 +524,7 @@ public class FlexConformanceTests
     public void PercentWidth_ResolvesAgainstParent()
     {
         var tree = ComputeFlat(S, 400, 200,
-            S with { Size = new Size<Dimension>(Dimension.Percent(0.5f), Dimension.Px(50)) });
+            S with { Size = new Size<Length>(Length.Percent(0.5f), Length.Px(50)) });
 
         AssertLayout(tree, 1, 0, 0, 200, 50);
     }
@@ -533,7 +533,7 @@ public class FlexConformanceTests
     public void PercentHeight_ResolvesAgainstParent()
     {
         var tree = ComputeFlat(S with { FlexDirection = FlexDirection.Column }, 200, 400,
-            S with { Size = new Size<Dimension>(Dimension.Px(50), Dimension.Percent(0.25f)) });
+            S with { Size = new Size<Length>(Length.Px(50), Length.Percent(0.25f)) });
 
         AssertLayout(tree, 1, 0, 0, 50, 100);
     }
@@ -560,7 +560,7 @@ public class FlexConformanceTests
     public void MinWidth_PreventsUndersize()
     {
         var tree = ComputeFlat(S, 200, 100,
-            S with { Size = Px(30, 50), MinSize = new Size<Dimension>(Dimension.Px(50), Dimension.Auto) });
+            S with { Size = Px(30, 50), MinSize = new Size<Length>(Length.Px(50), Length.Auto) });
 
         AssertLayout(tree, 1, 0, 0, 50, 50);
     }
@@ -569,7 +569,7 @@ public class FlexConformanceTests
     public void MaxWidth_PreventsOversize()
     {
         var tree = ComputeFlat(S, 200, 100,
-            S with { Size = Px(150, 50), MaxSize = new Size<Dimension>(Dimension.Px(100), Dimension.Auto) });
+            S with { Size = Px(150, 50), MaxSize = new Size<Length>(Length.Px(100), Length.Auto) });
 
         AssertLayout(tree, 1, 0, 0, 100, 50);
     }
@@ -582,8 +582,8 @@ public class FlexConformanceTests
             200, 50,
             S with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Auto),
-                MinSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(80)),
+                Size = new Size<Length>(Length.Px(50), Length.Auto),
+                MinSize = new Size<Length>(Length.Auto, Length.Px(80)),
             });
 
         var layout = tree.GetNodeLayout(1);
@@ -620,9 +620,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Px(10), LengthAuto.Auto,
-                    LengthAuto.Px(20), LengthAuto.Auto),
+                Inset = new Rect<Length>(
+                    Length.Px(10), Length.Auto,
+                    Length.Px(20), Length.Auto),
                 Size = Px(50, 50),
             });
 
@@ -636,9 +636,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Auto, LengthAuto.Px(10),
-                    LengthAuto.Auto, LengthAuto.Px(20)),
+                Inset = new Rect<Length>(
+                    Length.Auto, Length.Px(10),
+                    Length.Auto, Length.Px(20)),
                 Size = Px(50, 50),
             });
 
@@ -652,9 +652,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Px(0), LengthAuto.Auto,
-                    LengthAuto.Px(0), LengthAuto.Auto),
+                Inset = new Rect<Length>(
+                    Length.Px(0), Length.Auto,
+                    Length.Px(0), Length.Auto),
                 Size = Px(50, 50),
             },
             S with { Size = Px(80, 40) });
@@ -670,9 +670,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Px(10), LengthAuto.Px(10),
-                    LengthAuto.Px(20), LengthAuto.Px(20)),
+                Inset = new Rect<Length>(
+                    Length.Px(10), Length.Px(10),
+                    Length.Px(20), Length.Px(20)),
             });
 
         AssertLayout(tree, 1, 10, 20, 180, 160);
@@ -683,7 +683,7 @@ public class FlexConformanceTests
     {
         var tree = new TestLayoutTree();
         int root = tree.AddNode(S with { FlexDirection = FlexDirection.Column });
-        int row = tree.AddNode(S with { Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(50)) });
+        int row = tree.AddNode(S with { Size = new Size<Length>(Length.Auto, Length.Px(50)) });
         int a = tree.AddNode(S with { Size = Px(30, 30) });
         int b = tree.AddNode(S with { Size = Px(30, 30) });
         tree.AddChild(root, row);
@@ -831,13 +831,13 @@ public class FlexConformanceTests
         // Classic "holy grail" layout: header, footer, left sidebar, right sidebar, main content
         var tree = new TestLayoutTree();
         int root = tree.AddNode(S with { FlexDirection = FlexDirection.Column });
-        int header = tree.AddNode(S with { Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(50)) });
+        int header = tree.AddNode(S with { Size = new Size<Length>(Length.Auto, Length.Px(50)) });
         int body = tree.AddNode(S with { FlexGrow = 1 });
-        int footer = tree.AddNode(S with { Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(50)) });
+        int footer = tree.AddNode(S with { Size = new Size<Length>(Length.Auto, Length.Px(50)) });
 
-        int left = tree.AddNode(S with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto) });
+        int left = tree.AddNode(S with { Size = new Size<Length>(Length.Px(100), Length.Auto) });
         int main = tree.AddNode(S with { FlexGrow = 1 });
-        int right = tree.AddNode(S with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto) });
+        int right = tree.AddNode(S with { Size = new Size<Length>(Length.Px(100), Length.Auto) });
 
         tree.AddChild(root, header);
         tree.AddChild(root, body);

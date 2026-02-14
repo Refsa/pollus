@@ -34,7 +34,7 @@ public class UIInteractionStateTests
             new UIInteraction { Focusable = true },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(w), Dimension.Px(h)),
+                Size = new Size<Length>(Length.Px(w), Length.Px(h)),
             }}
         )).Entity;
 
@@ -184,7 +184,7 @@ public class UIInteractionStateTests
             new UIInteraction { State = InteractionState.Disabled },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
 

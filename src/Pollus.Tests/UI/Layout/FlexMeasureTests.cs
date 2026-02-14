@@ -11,7 +11,7 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(300), Length.Px(200)),
         });
         var leaf = tree.AddNode(LayoutStyle.Default);
         tree.AddChild(root, leaf);
@@ -35,7 +35,7 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(400), Dimension.Px(300)),
+            Size = new Size<Length>(Length.Px(400), Length.Px(300)),
             FlexDirection = FlexDirection.Row,
         });
         var leaf = tree.AddNode(LayoutStyle.Default);
@@ -61,18 +61,18 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(400), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(400), Length.Px(200)),
             FlexDirection = FlexDirection.Row,
         });
 
         // Two children: one with measure func, one with fixed size
         var measured = tree.AddNode(LayoutStyle.Default with
         {
-            FlexBasis = Dimension.Auto,
+            FlexBasis = Length.Auto,
         });
         var fixedChild = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(100), Length.Auto),
         });
         tree.AddChild(root, measured);
         tree.AddChild(root, fixedChild);
@@ -96,7 +96,7 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(400), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(400), Length.Px(200)),
             FlexDirection = FlexDirection.Row,
         });
 
@@ -106,7 +106,7 @@ public class FlexMeasureTests
         });
         var fixedChild = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(100), Length.Auto),
         });
         tree.AddChild(root, measured);
         tree.AddChild(root, fixedChild);
@@ -129,12 +129,12 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(300), Length.Px(200)),
         });
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
-            MinSize = new Size<Dimension>(Dimension.Px(120), Dimension.Auto),
-            MaxSize = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)),
+            MinSize = new Size<Length>(Length.Px(120), Length.Auto),
+            MaxSize = new Size<Length>(Length.Px(200), Length.Px(50)),
         });
         tree.AddChild(root, leaf);
 
@@ -158,12 +158,12 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(300), Length.Px(200)),
             FlexDirection = FlexDirection.Row,
         });
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(80), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(80), Length.Auto),
         });
         tree.AddChild(root, leaf);
 
@@ -192,7 +192,7 @@ public class FlexMeasureTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(400)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(400)),
             FlexDirection = FlexDirection.Column,
         });
         var text = tree.AddNode(LayoutStyle.Default);

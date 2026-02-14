@@ -40,7 +40,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
 
@@ -72,7 +72,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
 
@@ -106,11 +106,11 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Px(0), LengthAuto.Auto,
-                    LengthAuto.Px(0), LengthAuto.Auto
+                Inset = new Rect<Length>(
+                    Length.Px(0), Length.Auto,
+                    Length.Px(0), Length.Auto
                 ),
             }}
         )).Entity;
@@ -121,11 +121,11 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<LengthAuto>(
-                    LengthAuto.Px(0), LengthAuto.Auto,
-                    LengthAuto.Px(0), LengthAuto.Auto
+                Inset = new Rect<Length>(
+                    Length.Px(0), Length.Auto,
+                    Length.Px(0), Length.Auto
                 ),
             }}
         )).Entity;
@@ -160,7 +160,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(200)),
             }}
         )).Entity;
 
@@ -169,7 +169,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(100)),
             }}
         )).Entity;
 
@@ -202,7 +202,7 @@ public class UIHitTestTests
             new UIInteraction { State = InteractionState.Disabled },
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
 
@@ -234,7 +234,7 @@ public class UIHitTestTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
 
@@ -266,7 +266,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(0), Dimension.Px(0)),
+                Size = new Size<Length>(Length.Px(0), Length.Px(0)),
             }}
         )).Entity;
 
@@ -297,19 +297,19 @@ public class UIHitTestTests
         var child1 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         var child2 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         var child3 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = false },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, child1);
@@ -345,7 +345,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
 
@@ -382,7 +382,7 @@ public class UIHitTestTests
             new UIInteraction(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(50)),
             }}
         )).Entity;
 
