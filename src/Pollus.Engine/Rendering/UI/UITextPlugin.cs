@@ -103,7 +103,7 @@ public partial class UITextSystemSet
 
     static void PropagateUIFontMaterial(UITextResources uiTextResources, Query<UITextFont> query)
     {
-        query.ForEach(uiTextResources, static (in UITextResources res, ref UITextFont textFont) =>
+        query.ForEach(uiTextResources, static (in res, ref textFont) =>
         {
             if (textFont.Font == Handle<FontAsset>.Null) return;
             var mat = res.GetMaterial(textFont.Font);
@@ -154,7 +154,7 @@ public partial class UITextSystemSet
 
     static void BuildUITextMesh(Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont, ComputedNode> query)
     {
-        query.ForEach((fonts, meshes), static (in (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes) data, ref UIText uiText, ref TextMesh mesh, ref UITextFont textFont, ref ComputedNode computed) =>
+        query.ForEach((fonts, meshes), static (in data, ref uiText, ref mesh, ref textFont, ref computed) =>
         {
             float maxWidth = computed.Size.X - computed.PaddingLeft - computed.PaddingRight
                              - computed.BorderLeft - computed.BorderRight;

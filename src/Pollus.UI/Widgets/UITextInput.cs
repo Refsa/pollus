@@ -20,6 +20,7 @@ public partial record struct UITextInput() : IComponent
     public Entity TextEntity = Entity.Null;
     public float CaretXOffset;
     public float CaretHeight;
+    public Entity CaretEntity = Entity.Null;
 }
 
 /// <summary>

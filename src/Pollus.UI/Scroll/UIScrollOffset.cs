@@ -8,4 +8,6 @@ public partial record struct UIScrollOffset() : IComponent, IDefault<UIScrollOff
     public static UIScrollOffset Default => default;
 
     public Vec2f Offset; // positive = content scrolled up/left
+    public Entity VerticalThumbEntity = Entity.Null;
+    public Entity HorizontalThumbEntity = Entity.Null;
 }

@@ -14,6 +14,13 @@ public partial class UISliderSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
+    [System(nameof(UpdateVisuals))]
+    static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
+    {
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = ["UILayoutSystem::WriteBack", "UISliderSystem::PerformUpdate"],
+    };
+
     internal static void PerformUpdate(
         Query query,
         EventReader<UIInteractionEvents.UIClickEvent> clickReader,
@@ -150,5 +157,102 @@ public partial class UISliderSystem
         }
 
         return Math.Clamp(value, slider.Min, slider.Max);
+    }
+
+    internal static void UpdateVisuals(
+        Commands commands,
+        Query query,
+        Query<UISlider, ComputedNode> qSliders)
+    {
+        foreach (var row in qSliders)
+        {
+            var entity = row.Entity;
+            ref var slider = ref row.Component0;
+            ref readonly var computed = ref row.Component1;
+
+            var width = computed.Size.X;
+            var height = computed.Size.Y;
+
+            bool justSpawned = false;
+
+            // Spawn fill entity if needed
+            if (slider.FillEntity.IsNull)
+            {
+                var fill = commands.Spawn(Entity.With(
+                    new ComputedNode(),
+                    new BackgroundColor { Color = slider.FillColor }
+                )).Entity;
+                commands.AddChild(entity, fill);
+                slider.FillEntity = fill;
+                justSpawned = true;
+            }
+
+            // Spawn thumb entity if needed
+            if (slider.ThumbEntity.IsNull)
+            {
+                var thumb = commands.Spawn(Entity.With(
+                    new ComputedNode(),
+                    new BackgroundColor { Color = slider.ThumbColor },
+                    new UIShape { Type = UIShapeType.Circle }
+                )).Entity;
+                commands.AddChild(entity, thumb);
+                slider.ThumbEntity = thumb;
+                justSpawned = true;
+            }
+
+            // Entities are not materialized until commands flush — skip positioning on spawn frame
+            if (justSpawned) continue;
+
+            // Compute ratio
+            var range = slider.Max - slider.Min;
+            var ratio = range > 0 ? Math.Clamp((slider.Value - slider.Min) / range, 0f, 1f) : 0f;
+
+            // Update fill entity
+            if (query.Has<ComputedNode>(slider.FillEntity))
+            {
+                ref var fillComputed = ref query.Get<ComputedNode>(slider.FillEntity);
+                var fillW = width * ratio;
+                if (fillW >= 0.5f)
+                {
+                    fillComputed.Position = Vec2f.Zero;
+                    fillComputed.Size = new Vec2f(fillW, height);
+                }
+                else
+                {
+                    fillComputed.Size = Vec2f.Zero;
+                }
+
+                // Copy parent's border radius
+                if (query.Has<BorderRadius>(entity))
+                {
+                    var parentBr = query.Get<BorderRadius>(entity);
+                    if (query.Has<BorderRadius>(slider.FillEntity))
+                        query.Get<BorderRadius>(slider.FillEntity) = parentBr;
+                    else
+                        commands.AddComponent(slider.FillEntity, parentBr);
+                }
+
+                // Sync fill color
+                if (query.Has<BackgroundColor>(slider.FillEntity))
+                {
+                    query.Get<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
+                }
+            }
+
+            // Update thumb entity
+            if (query.Has<ComputedNode>(slider.ThumbEntity))
+            {
+                ref var thumbComputed = ref query.Get<ComputedNode>(slider.ThumbEntity);
+                var d = height * 1.4f;
+                thumbComputed.Position = new Vec2f(width * ratio - d * 0.5f, (height - d) * 0.5f);
+                thumbComputed.Size = new Vec2f(d, d);
+
+                // Sync thumb color
+                if (query.Has<BackgroundColor>(slider.ThumbEntity))
+                {
+                    query.Get<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
+                }
+            }
+        }
     }
 }
