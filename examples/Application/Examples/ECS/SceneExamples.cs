@@ -1,7 +1,7 @@
 namespace Pollus.Examples;
 
 using System.Text;
-using Engine.Assets;
+using Pollus.Assets;
 using Engine.Camera;
 using Engine.Input;
 using Pollus.Input;

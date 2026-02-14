@@ -4,7 +4,7 @@ using Engine.UI;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
 using Pollus.Graphics.Windowing;

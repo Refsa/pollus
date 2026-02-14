@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.WGPU;
 using Pollus.Mathematics;

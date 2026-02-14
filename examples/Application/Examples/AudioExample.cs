@@ -3,7 +3,7 @@ namespace Pollus.Examples;
 using Pollus.Engine;
 using Pollus.ECS;
 using Pollus.Engine.Audio;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 
 public class AudioExample : IExample
 {

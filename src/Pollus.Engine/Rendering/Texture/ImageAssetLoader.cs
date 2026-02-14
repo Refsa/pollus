@@ -1,7 +1,7 @@
 namespace Pollus.Engine.Rendering;
 
 using StbImageSharp;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Graphics.Rendering;
 
 public class ImageAssetLoader : AssetLoader<Texture2D>

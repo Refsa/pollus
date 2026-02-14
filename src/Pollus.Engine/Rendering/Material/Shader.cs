@@ -2,7 +2,7 @@ namespace Pollus.Engine.Rendering;
 
 using System.Text;
 using Core.Assets;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 
 [Asset]
 public partial class ShaderAsset

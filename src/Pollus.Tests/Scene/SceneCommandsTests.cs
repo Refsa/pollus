@@ -1,7 +1,7 @@
 namespace Pollus.Tests.Scene;
 
 using Engine;
-using Engine.Assets;
+using Pollus.Assets;
 using Engine.Transform;
 using Pollus.ECS;
 using Utils;

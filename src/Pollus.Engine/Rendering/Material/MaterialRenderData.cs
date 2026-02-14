@@ -3,7 +3,7 @@ namespace Pollus.Engine.Rendering;
 using Core.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Utils;
 
 public class MaterialRenderData

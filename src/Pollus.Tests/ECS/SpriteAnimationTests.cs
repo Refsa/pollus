@@ -2,7 +2,7 @@
 namespace Pollus.Tests.ECS;
 
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;

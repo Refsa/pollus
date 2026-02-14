@@ -3,7 +3,7 @@ namespace Pollus.Engine.Rendering;
 using System.Collections.ObjectModel;
 using Core.Assets;
 using Core.Serialization;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
 using Pollus.Utils;

@@ -4,7 +4,7 @@ using Debugging;
 using Pollus.Graphics;
 using Pollus.Engine.Window;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Transform;
 using Pollus.Graphics.Rendering;

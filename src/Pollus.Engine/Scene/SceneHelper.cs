@@ -1,7 +1,7 @@
 namespace Pollus.Engine;
 
 using System.Runtime.InteropServices;
-using Assets;
+using Pollus.Assets;
 using Debugging;
 using ECS;
 using Utils;

@@ -1,6 +1,6 @@
 namespace Pollus.Engine;
 
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.ECS;
 using Utils;
 using System.Runtime.CompilerServices;

@@ -1,6 +1,6 @@
 namespace Pollus.Engine;
 
-using Assets;
+using Pollus.Assets;
 using ECS;
 using Utils;
 

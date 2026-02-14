@@ -4,10 +4,10 @@ namespace Pollus.Tests.Scene;
 
 using System.Text.Json;
 using Core.Assets;
-using Engine.Serialization;
+using Pollus.Serialization;
 using Pollus.ECS;
 using Pollus.Engine;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Utils;
 using Xunit;
 using Pollus.Core.Serialization;

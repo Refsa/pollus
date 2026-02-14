@@ -3,8 +3,8 @@ namespace Pollus.Tests.ECS;
 
 using Pollus.Core.Serialization;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
-using Pollus.Engine.Serialization;
+using Pollus.Assets;
+using Pollus.Serialization;
 
 public class SerializationTests
 {

@@ -2,7 +2,7 @@ namespace Pollus.Engine.Rendering;
 
 using Graphics.WGPU;
 using Pollus.ECS;
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
 

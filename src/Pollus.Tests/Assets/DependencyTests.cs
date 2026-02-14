@@ -1,6 +1,6 @@
 namespace Pollus.Tests.Assets;
 
-using Pollus.Engine.Assets;
+using Pollus.Assets;
 using Pollus.Core.Assets;
 using Pollus.Utils;
 

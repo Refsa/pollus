@@ -6,7 +6,7 @@ using System.Text.Json;
 using ECS;
 using Pollus.Core.Assets;
 using Pollus.Core.Serialization;
-using Pollus.Engine.Serialization;
+using Pollus.Assets;
 using Utils;
 
 public ref struct SceneReader : IReader, IDisposable

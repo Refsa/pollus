@@ -1,8 +1,8 @@
 namespace Pollus.Tests.Scene;
 
 using Pollus.Tests.Utils;
-using Pollus.Engine.Assets;
-using Pollus.Engine.Serialization;
+using Pollus.Assets;
+using Pollus.Serialization;
 using System.Runtime.InteropServices;
 using Pollus.Utils;
 using Xunit;
