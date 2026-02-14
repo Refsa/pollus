@@ -13,9 +13,9 @@ using Pollus.Utils;
 using Pollus.Engine.UI;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UIRectExample : IExample
+public class UIExample : IExample
 {
-    public string Name => "ui-rect";
+    public string Name => "ui";
     IApplication? app;
 
     public void Stop() => app?.Shutdown();

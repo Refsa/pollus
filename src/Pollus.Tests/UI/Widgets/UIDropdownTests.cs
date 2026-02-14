@@ -1,3 +1,4 @@
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
@@ -75,11 +76,13 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -104,11 +107,13 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt1 });
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.Equal(1, dd.SelectedIndex);
@@ -124,18 +129,85 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt0 });
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var ddReader = world.Events.GetReader<UIDropdownEvents.UIDropdownSelectionChanged>()!;
 
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         var events = ddReader.Read();
         Assert.Equal(1, events.Length);
         Assert.Equal(dropdown, events[0].Entity);
         Assert.Equal(0, events[0].SelectedIndex);
         Assert.Equal(-1, events[0].PreviousIndex);
+    }
+
+    [Fact]
+    public void ClickOption_UpdatesDisplayText()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+
+        // Display text entity for the dropdown trigger
+        var displayText = commands.Spawn(Entity.With(
+            new UINode(),
+            new ContentSize(),
+            new UIText { Color = Color.WHITE, Size = 16f, Text = new NativeUtf8("Select...") }
+        )).Entity;
+
+        var dropdown = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { Focusable = true },
+            new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText },
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+        )).Entity;
+
+        // Option with a text child
+        var opt0 = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction { Focusable = true },
+            new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = 0 },
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+        )).Entity;
+
+        var opt0Text = commands.Spawn(Entity.With(
+            new UINode(),
+            new ContentSize(),
+            new UIText { Color = Color.WHITE, Size = 16f, Text = new NativeUtf8("Option A") }
+        )).Entity;
+
+        commands.AddChild(opt0, opt0Text);
+        commands.AddChild(root, dropdown);
+        commands.AddChild(root, displayText);
+        commands.AddChild(root, opt0);
+        world.Update();
+
+        // Open dropdown, then click option 0
+        ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
+        dd.IsOpen = true;
+
+        var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
+        clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt0 });
+
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
+        var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
+        var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
+
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+
+        // Display text should be updated from option's child text
+        var updatedText = world.Store.GetComponent<UIText>(displayText);
+        Assert.Equal("Option A", updatedText.Text.ToString().TrimEnd('\0'));
     }
 
     [Fact]
@@ -150,11 +222,13 @@ public class UIDropdownTests
         var keyWriter = world.Events.GetWriter<UIInteractionEvents.UIKeyDownEvent>();
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = dropdown, Key = (int)Key.Escape });
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(dd.IsOpen);
@@ -166,18 +240,20 @@ public class UIDropdownTests
         using var world = CreateWorld();
         var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
         // Sync initial state - options hidden
-        UIDropdownSystem.SyncOptionVisibility(query);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
 
         // Click to open
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -187,7 +263,7 @@ public class UIDropdownTests
 
         // Click to close
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(state.IsOpen);
@@ -202,10 +278,11 @@ public class UIDropdownTests
         using var world = CreateWorld();
         var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
 
         // Dropdown starts closed - sync should hide options
-        UIDropdownSystem.SyncOptionVisibility(query);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
 
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
@@ -221,8 +298,9 @@ public class UIDropdownTests
         ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
         dd.IsOpen = true;
 
-        var query = new Query(world);
-        UIDropdownSystem.SyncOptionVisibility(query);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
 
         Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
         Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
@@ -243,11 +321,13 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt1 });
 
-        var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         // Options should be hidden after selection closes dropdown
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
@@ -513,6 +593,9 @@ public class UIDropdownTests
         var adapter = world.Resources.Get<UITreeAdapter>();
         var uiNodeQuery = new Query<UINode>(world);
         var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
         adapter.SyncFull(uiNodeQuery, query);
 
         // Run initial compute + writeback
@@ -529,7 +612,7 @@ public class UIDropdownTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         // Verify IsOpen toggled
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
@@ -618,22 +701,6 @@ public class UIDropdownTests
         adapter.ClearDirty();
     }
 
-    [Fact]
-    public void DropdownOptions_ResourceWorks()
-    {
-        var options = new UIDropdownOptions();
-        options.Add("Option A");
-        options.Add("Option B");
-        options.Add("Option C");
-
-        Assert.Equal(3, options.Count);
-        Assert.Equal("Option A", options.Get(0));
-        Assert.Equal("Option B", options.Get(1));
-        Assert.Equal("Option C", options.Get(2));
-        Assert.Equal("", options.Get(-1));
-        Assert.Equal("", options.Get(5));
-    }
-
     /// Simulates the exact system execution order and verifies that the rendering
     /// tree walk would emit draw calls for option entities after the dropdown opens.
     [Fact]
@@ -707,6 +774,9 @@ public class UIDropdownTests
         var adapter = world.Resources.Get<UITreeAdapter>();
         var uiNodeQuery = new Query<UINode>(world);
         var query = new Query(world);
+        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        var qText = new Query<UIText, Parent>(world);
 
         // === Frame 1: Initial layout (options hidden) ===
         adapter.SyncFull(uiNodeQuery, query);
@@ -730,7 +800,7 @@ public class UIDropdownTests
         // Step 3: DropdownSystem processes click
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(query, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         // Verify state changes
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);

@@ -126,12 +126,53 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     // Position relative to box center
     let p = input.local_pos - half_size;
 
+    // --- Compute ALL SDF values and fwidth in uniform control flow ---
+    // (WebGPU forbids fwidth inside non-uniform branches)
+
+    // Circle SDF
+    let circle_r = min(half_size.x, half_size.y);
+    let d_circle = sd_circle(p, circle_r);
+    let aa_circle = max(fwidth(d_circle), 0.5);
+
+    // Checkmark SDF
+    let check_s = min(half_size.x, half_size.y);
+    let d_check = sd_checkmark(p, check_s);
+    let check_thickness = check_s * 0.15;
+    let aa_check = max(fwidth(d_check), 0.5);
+
+    // Down arrow SDF
+    let arrow_s = min(half_size.x, half_size.y);
+    let d_arrow = sd_down_arrow(p, arrow_s);
+    let arrow_thickness = arrow_s * 0.12;
+    let aa_arrow = max(fwidth(d_arrow), 0.5);
+
+    // Rounded rect SDF (outer + inner)
+    let max_radius = min(half_size.x, half_size.y);
+    let radii = min(input.border_radius, vec4f(max_radius));
+    let d_outer = sd_rounded_box(p, half_size, radii);
+    let aa_outer = max(fwidth(d_outer), 0.5);
+
+    let border = input.border_widths;
+    let inner_min = vec2f(border.w, border.x);
+    let inner_max = vec2f(border.y, border.z);
+    let inner_size = size - inner_min - inner_max;
+    let inner_half = max(inner_size * 0.5, vec2f(0.0));
+    let inner_center = (inner_min + (size - inner_max)) * 0.5;
+    let inner_p = input.local_pos - inner_center;
+    let inner_radii = max(radii - vec4f(
+        max(border.w, border.x),
+        max(border.y, border.x),
+        max(border.y, border.z),
+        max(border.w, border.z),
+    ), vec4f(0.0));
+    let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
+    let aa_inner = max(fwidth(d_inner), 0.5);
+
+    // --- Now branch on shape_type (no derivative calls below) ---
+
     if (shape_type == 1u) {
         // Circle
-        let r = min(half_size.x, half_size.y);
-        let d = sd_circle(p, r);
-        let aa = max(fwidth(d), 0.5);
-        let alpha = 1.0 - smoothstep(-aa, aa, d);
+        let alpha = 1.0 - smoothstep(-aa_circle, aa_circle, d_circle);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
@@ -140,11 +181,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
     if (shape_type == 2u) {
         // Checkmark
-        let s = min(half_size.x, half_size.y);
-        let d = sd_checkmark(p, s);
-        let thickness = s * 0.15;
-        let aa = max(fwidth(d), 0.5);
-        let alpha = 1.0 - smoothstep(thickness - aa, thickness + aa, d);
+        let alpha = 1.0 - smoothstep(check_thickness - aa_check, check_thickness + aa_check, d_check);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
@@ -153,11 +190,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
     if (shape_type == 3u) {
         // Down arrow
-        let s = min(half_size.x, half_size.y);
-        let d = sd_down_arrow(p, s);
-        let thickness = s * 0.12;
-        let aa = max(fwidth(d), 0.5);
-        let alpha = 1.0 - smoothstep(thickness - aa, thickness + aa, d);
+        let alpha = 1.0 - smoothstep(arrow_thickness - aa_arrow, arrow_thickness + aa_arrow, d_arrow);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
@@ -165,42 +198,14 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     }
 
     // Default: RoundedRect (shape_type == 0)
-
-    // Clamp radii so they don't exceed half the box dimension
-    let max_radius = min(half_size.x, half_size.y);
-    let radii = min(input.border_radius, vec4f(max_radius));
-
-    // Outer SDF + anti-aliased alpha
-    let d_outer = sd_rounded_box(p, half_size, radii);
-    let aa_outer = max(fwidth(d_outer), 0.5);
     let outer_alpha = 1.0 - smoothstep(-aa_outer, aa_outer, d_outer);
 
     if (outer_alpha < 0.001) {
         discard;
     }
 
-    // Inner SDF (shrink by border widths)
-    let border = input.border_widths; // top, right, bottom, left
-    let inner_min = vec2f(border.w, border.x);         // left, top
-    let inner_max = vec2f(border.y, border.z);         // right, bottom
-    let inner_size = size - inner_min - inner_max;
-    let inner_half = max(inner_size * 0.5, vec2f(0.0));
-    let inner_center = (inner_min + (size - inner_max)) * 0.5;
-    let inner_p = input.local_pos - inner_center;
-
-    // Shrink radii by border widths for inner shape
-    let inner_radii = max(radii - vec4f(
-        max(border.w, border.x),  // topLeft: max(left, top)
-        max(border.y, border.x),  // topRight: max(right, top)
-        max(border.y, border.z),  // bottomRight: max(right, bottom)
-        max(border.w, border.z),  // bottomLeft: max(left, bottom)
-    ), vec4f(0.0));
-
-    let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
-    let aa_inner = max(fwidth(d_inner), 0.5);
     let inner_alpha = 1.0 - smoothstep(-aa_inner, aa_inner, d_inner);
 
-    // Composite: lerp between border color and background using inner mask
     let has_border = step(0.001, border.x + border.y + border.z + border.w);
     let blended = mix(input.border_color, input.bg_color, inner_alpha);
     let pixel_color = mix(input.bg_color, blended, has_border);

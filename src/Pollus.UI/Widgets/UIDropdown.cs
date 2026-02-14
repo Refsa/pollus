@@ -10,15 +10,6 @@ public partial record struct UIDropdown() : IComponent
     public Entity DisplayTextEntity = Entity.Null;
 }
 
-public class UIDropdownOptions
-{
-    public List<string> Labels { get; } = [];
-
-    public void Add(string label) => Labels.Add(label);
-    public string Get(int index) => index >= 0 && index < Labels.Count ? Labels[index] : "";
-    public int Count => Labels.Count;
-}
-
 public partial record struct UIDropdownOptionTag() : IComponent
 {
     public Entity DropdownEntity = Entity.Null;
