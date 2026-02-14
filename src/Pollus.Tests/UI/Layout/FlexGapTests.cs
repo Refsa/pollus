@@ -14,7 +14,7 @@ public class FlexGapTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Gap = new Size<LengthPercentage>(LengthPercentage.Px(10f), LengthPercentage.Zero),
+            Gap = new Size<Length>(Length.Px(10f), Length.Zero),
             Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(100f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
@@ -44,7 +44,7 @@ public class FlexGapTests
         var root = tree.AddNode(DefaultStyle with
         {
             FlexDirection = FlexDirection.Column,
-            Gap = new Size<LengthPercentage>(LengthPercentage.Zero, LengthPercentage.Px(10f)),
+            Gap = new Size<Length>(Length.Zero, Length.Px(10f)),
             Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
@@ -73,7 +73,7 @@ public class FlexGapTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Gap = new Size<LengthPercentage>(LengthPercentage.Px(20f), LengthPercentage.Zero),
+            Gap = new Size<Length>(Length.Px(20f), Length.Zero),
             Size = new Size<Dimension>(Dimension.Px(300f), Dimension.Px(100f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
@@ -114,7 +114,7 @@ public class FlexGapTests
         var root = tree.AddNode(DefaultStyle with
         {
             FlexWrap = FlexWrap.Wrap,
-            Gap = new Size<LengthPercentage>(LengthPercentage.Zero, LengthPercentage.Px(20f)),
+            Gap = new Size<Length>(Length.Zero, Length.Px(20f)),
             AlignContent = AlignContent.FlexStart,
             Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
         });

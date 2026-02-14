@@ -108,9 +108,9 @@ public class UIHitTestTests
             {
                 Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto,
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Px(0), LengthAuto.Auto,
+                    LengthAuto.Px(0), LengthAuto.Auto
                 ),
             }}
         )).Entity;
@@ -123,9 +123,9 @@ public class UIHitTestTests
             {
                 Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto,
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Px(0), LengthAuto.Auto,
+                    LengthAuto.Px(0), LengthAuto.Auto
                 ),
             }}
         )).Entity;

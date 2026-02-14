@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Pollus.UI.Layout;
 
-public readonly record struct LengthPercentage
+public readonly record struct Length
 {
     public enum Kind : byte { Px, Percent }
 
@@ -10,12 +10,12 @@ public readonly record struct LengthPercentage
     public float Value { get; init; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LengthPercentage Px(float v) => new() { Tag = Kind.Px, Value = v };
+    public static Length Px(float v) => new() { Tag = Kind.Px, Value = v };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LengthPercentage Percent(float v) => new() { Tag = Kind.Percent, Value = v };
+    public static Length Percent(float v) => new() { Tag = Kind.Percent, Value = v };
 
-    public static readonly LengthPercentage Zero = Px(0f);
+    public static readonly Length Zero = Px(0f);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public float Resolve(float parentSize) => Tag switch
@@ -26,7 +26,7 @@ public readonly record struct LengthPercentage
     };
 }
 
-public readonly record struct LengthPercentageAuto
+public readonly record struct LengthAuto
 {
     public enum Kind : byte { Px, Percent, Auto }
 
@@ -34,13 +34,13 @@ public readonly record struct LengthPercentageAuto
     public float Value { get; init; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LengthPercentageAuto Px(float v) => new() { Tag = Kind.Px, Value = v };
+    public static LengthAuto Px(float v) => new() { Tag = Kind.Px, Value = v };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static LengthPercentageAuto Percent(float v) => new() { Tag = Kind.Percent, Value = v };
+    public static LengthAuto Percent(float v) => new() { Tag = Kind.Percent, Value = v };
 
-    public static readonly LengthPercentageAuto Auto = new() { Tag = Kind.Auto };
-    public static readonly LengthPercentageAuto Zero = Px(0f);
+    public static readonly LengthAuto Auto = new() { Tag = Kind.Auto };
+    public static readonly LengthAuto Zero = Px(0f);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAuto() => Tag == Kind.Auto;
@@ -57,7 +57,7 @@ public readonly record struct LengthPercentageAuto
     public float ResolveOr(float parentSize, float fallback) => Resolve(parentSize) ?? fallback;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator LengthPercentageAuto(LengthPercentage lp) =>
+    public static implicit operator LengthAuto(Length lp) =>
         new() { Tag = (Kind)lp.Tag, Value = lp.Value };
 }
 

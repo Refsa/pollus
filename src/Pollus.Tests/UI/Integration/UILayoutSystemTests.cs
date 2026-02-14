@@ -201,9 +201,9 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(10), LengthPercentage.Px(10),
-                    LengthPercentage.Px(20), LengthPercentage.Px(20)
+                Padding = new Rect<Length>(
+                    Length.Px(10), Length.Px(10),
+                    Length.Px(20), Length.Px(20)
                 ),
             }},
             new UILayoutRoot { Size = new Size<float>(400, 300) }
@@ -245,9 +245,9 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 FlexDirection = FlexDirection.Column,
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(16), LengthPercentage.Px(16),
-                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                Padding = new Rect<Length>(
+                    Length.Px(16), Length.Px(16),
+                    Length.Px(16), Length.Px(16)),
             }},
             new UILayoutRoot { Size = new Size<float>(800, 600) }
         )).Entity;
@@ -294,9 +294,9 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(10), LengthPercentage.Px(10),
-                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
+                Padding = new Rect<Length>(
+                    Length.Px(10), Length.Px(10),
+                    Length.Px(10), Length.Px(10)),
             }},
             new UILayoutRoot { Size = new Size<float>(400, 300) }
         )).Entity;
@@ -306,9 +306,9 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(8), LengthPercentage.Px(8),
-                    LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                Padding = new Rect<Length>(
+                    Length.Px(8), Length.Px(8),
+                    Length.Px(8), Length.Px(8)),
             }}
         )).Entity;
 
@@ -359,9 +359,9 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(10), LengthPercentage.Px(10),
-                    LengthPercentage.Px(10), LengthPercentage.Px(10)
+                Padding = new Rect<Length>(
+                    Length.Px(10), Length.Px(10),
+                    Length.Px(10), Length.Px(10)
                 ),
             }}
         )).Entity;
@@ -456,9 +456,9 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(16), LengthPercentage.Px(16),
-                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                Padding = new Rect<Length>(
+                    Length.Px(16), Length.Px(16),
+                    Length.Px(16), Length.Px(16)),
             }},
             new UILayoutRoot { Size = new Size<float>(800, 600) }
         )).Entity;
@@ -480,9 +480,9 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(20), LengthPercentage.Px(20),
-                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
+                Padding = new Rect<Length>(
+                    Length.Px(20), Length.Px(20),
+                    Length.Px(10), Length.Px(10)),
             }},
             new UILayoutRoot { Size = new Size<float>(400, 300) }
         )).Entity;
@@ -512,12 +512,12 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(10), LengthPercentage.Px(10),
-                    LengthPercentage.Px(10), LengthPercentage.Px(10)),
-                Border = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(2), LengthPercentage.Px(2),
-                    LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                Padding = new Rect<Length>(
+                    Length.Px(10), Length.Px(10),
+                    Length.Px(10), Length.Px(10)),
+                Border = new Rect<Length>(
+                    Length.Px(2), Length.Px(2),
+                    Length.Px(2), Length.Px(2)),
             }},
             new UILayoutRoot { Size = new Size<float>(500, 400) }
         )).Entity;
@@ -552,9 +552,9 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 BoxSizing = BoxSizing.ContentBox,
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(20), LengthPercentage.Px(20),
-                    LengthPercentage.Px(20), LengthPercentage.Px(20)),
+                Padding = new Rect<Length>(
+                    Length.Px(20), Length.Px(20),
+                    Length.Px(20), Length.Px(20)),
             }},
             new UILayoutRoot { Size = new Size<float>(400, 300) }
         )).Entity;
@@ -588,9 +588,9 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Px(16), LengthPercentage.Px(16),
-                    LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                Padding = new Rect<Length>(
+                    Length.Px(16), Length.Px(16),
+                    Length.Px(16), Length.Px(16)),
             }},
             new UILayoutRoot { Size = new Size<float>(800, 600) }
         )).Entity;
