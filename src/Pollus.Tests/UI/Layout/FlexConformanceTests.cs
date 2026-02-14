@@ -10,23 +10,23 @@ public class FlexConformanceTests
     static Size<Dimension> Px(float w, float h) =>
         new(Dimension.Px(w), Dimension.Px(h));
 
-    static Rect<LengthPercentage> PadAll(float v) =>
-        new(LengthPercentage.Px(v), LengthPercentage.Px(v),
-            LengthPercentage.Px(v), LengthPercentage.Px(v));
+    static Rect<Length> PadAll(float v) =>
+        new(Length.Px(v), Length.Px(v),
+            Length.Px(v), Length.Px(v));
 
-    static Rect<LengthPercentage> PadLRTB(float l, float r, float t, float b) =>
-        new(LengthPercentage.Px(l), LengthPercentage.Px(r),
-            LengthPercentage.Px(t), LengthPercentage.Px(b));
+    static Rect<Length> PadLRTB(float l, float r, float t, float b) =>
+        new(Length.Px(l), Length.Px(r),
+            Length.Px(t), Length.Px(b));
 
-    static Rect<LengthPercentage> BorderAll(float v) => PadAll(v);
+    static Rect<Length> BorderAll(float v) => PadAll(v);
 
-    static Rect<LengthPercentageAuto> MarginAll(float v) =>
-        new(LengthPercentageAuto.Px(v), LengthPercentageAuto.Px(v),
-            LengthPercentageAuto.Px(v), LengthPercentageAuto.Px(v));
+    static Rect<LengthAuto> MarginAll(float v) =>
+        new(LengthAuto.Px(v), LengthAuto.Px(v),
+            LengthAuto.Px(v), LengthAuto.Px(v));
 
-    static Rect<LengthPercentageAuto> MarginLRTB(float l, float r, float t, float b) =>
-        new(LengthPercentageAuto.Px(l), LengthPercentageAuto.Px(r),
-            LengthPercentageAuto.Px(t), LengthPercentageAuto.Px(b));
+    static Rect<LengthAuto> MarginLRTB(float l, float r, float t, float b) =>
+        new(LengthAuto.Px(l), LengthAuto.Px(r),
+            LengthAuto.Px(t), LengthAuto.Px(b));
 
     static TestLayoutTree Compute(LayoutStyle rootStyle, float w, float h,
         params (LayoutStyle style, (LayoutStyle style, LayoutStyle[]? grandchildren)[]? children)[] children)
@@ -408,7 +408,7 @@ public class FlexConformanceTests
     [Fact]
     public void RowGap_SpaceBetweenItems()
     {
-        var tree = ComputeFlat(S with { Gap = new Size<LengthPercentage>(LengthPercentage.Px(10), LengthPercentage.Px(0)) }, 300, 100,
+        var tree = ComputeFlat(S with { Gap = new Size<Length>(Length.Px(10), Length.Px(0)) }, 300, 100,
             S with { Size = Px(50, 50) },
             S with { Size = Px(50, 50) },
             S with { Size = Px(50, 50) });
@@ -422,7 +422,7 @@ public class FlexConformanceTests
     public void ColumnGap_SpaceBetweenItems()
     {
         var tree = ComputeFlat(
-            S with { FlexDirection = FlexDirection.Column, Gap = new Size<LengthPercentage>(LengthPercentage.Px(0), LengthPercentage.Px(20)) },
+            S with { FlexDirection = FlexDirection.Column, Gap = new Size<Length>(Length.Px(0), Length.Px(20)) },
             100, 300,
             S with { Size = Px(50, 50) },
             S with { Size = Px(50, 50) });
@@ -439,7 +439,7 @@ public class FlexConformanceTests
             {
                 FlexWrap = FlexWrap.Wrap,
                 AlignContent = AlignContent.FlexStart,
-                Gap = new Size<LengthPercentage>(LengthPercentage.Px(10), LengthPercentage.Px(20)),
+                Gap = new Size<Length>(Length.Px(10), Length.Px(20)),
             },
             100, 300,
             S with { Size = Px(60, 30) },
@@ -544,9 +544,9 @@ public class FlexConformanceTests
         var tree = ComputeFlat(
             S with
             {
-                Padding = new Rect<LengthPercentage>(
-                    LengthPercentage.Percent(0.1f), LengthPercentage.Percent(0.1f),
-                    LengthPercentage.Percent(0.1f), LengthPercentage.Percent(0.1f)),
+                Padding = new Rect<Length>(
+                    Length.Percent(0.1f), Length.Percent(0.1f),
+                    Length.Percent(0.1f), Length.Percent(0.1f)),
             },
             400, 200,
             S with { Size = Px(50, 30) });
@@ -620,9 +620,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Px(10), LengthPercentageAuto.Auto,
-                    LengthPercentageAuto.Px(20), LengthPercentageAuto.Auto),
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Px(10), LengthAuto.Auto,
+                    LengthAuto.Px(20), LengthAuto.Auto),
                 Size = Px(50, 50),
             });
 
@@ -636,9 +636,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Auto, LengthPercentageAuto.Px(10),
-                    LengthPercentageAuto.Auto, LengthPercentageAuto.Px(20)),
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Auto, LengthAuto.Px(10),
+                    LengthAuto.Auto, LengthAuto.Px(20)),
                 Size = Px(50, 50),
             });
 
@@ -652,9 +652,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto,
-                    LengthPercentageAuto.Px(0), LengthPercentageAuto.Auto),
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Px(0), LengthAuto.Auto,
+                    LengthAuto.Px(0), LengthAuto.Auto),
                 Size = Px(50, 50),
             },
             S with { Size = Px(80, 40) });
@@ -670,9 +670,9 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<LengthPercentageAuto>(
-                    LengthPercentageAuto.Px(10), LengthPercentageAuto.Px(10),
-                    LengthPercentageAuto.Px(20), LengthPercentageAuto.Px(20)),
+                Inset = new Rect<LengthAuto>(
+                    LengthAuto.Px(10), LengthAuto.Px(10),
+                    LengthAuto.Px(20), LengthAuto.Px(20)),
             });
 
         AssertLayout(tree, 1, 10, 20, 180, 160);
@@ -887,7 +887,7 @@ public class FlexConformanceTests
             {
                 FlexWrap = FlexWrap.Wrap,
                 AlignContent = AlignContent.FlexStart,
-                Gap = new Size<LengthPercentage>(LengthPercentage.Px(10), LengthPercentage.Px(10)),
+                Gap = new Size<Length>(Length.Px(10), Length.Px(10)),
             },
             400, 400,
             S with { Size = Px(150, 100) },

@@ -15,15 +15,15 @@ public record struct Style
     public float? AspectRatio;
 
     // Spacing
-    public Rect<LengthPercentageAuto> Margin;
-    public Rect<LengthPercentage> Padding;
-    public Rect<LengthPercentage> Border;
-    public Rect<LengthPercentageAuto> Inset;
+    public Rect<LengthAuto> Margin;
+    public Rect<Length> Padding;
+    public Rect<Length> Border;
+    public Rect<LengthAuto> Inset;
 
     // Flex container
     public FlexDirection FlexDirection;
     public FlexWrap FlexWrap;
-    public Size<LengthPercentage> Gap;
+    public Size<Length> Gap;
 
     // Flex item
     public float FlexGrow;
@@ -49,18 +49,18 @@ public record struct Style
         MinSize = new Size<Dimension>(Dimension.Auto, Dimension.Auto),
         MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Auto),
         AspectRatio = null,
-        Margin = Rect<LengthPercentageAuto>.Zero,
-        Padding = Rect<LengthPercentage>.Zero,
-        Border = Rect<LengthPercentage>.Zero,
-        Inset = new Rect<LengthPercentageAuto>(
-            LengthPercentageAuto.Auto,
-            LengthPercentageAuto.Auto,
-            LengthPercentageAuto.Auto,
-            LengthPercentageAuto.Auto
+        Margin = Rect<LengthAuto>.Zero,
+        Padding = Rect<Length>.Zero,
+        Border = Rect<Length>.Zero,
+        Inset = new Rect<LengthAuto>(
+            LengthAuto.Auto,
+            LengthAuto.Auto,
+            LengthAuto.Auto,
+            LengthAuto.Auto
         ),
         FlexDirection = FlexDirection.Row,
         FlexWrap = FlexWrap.NoWrap,
-        Gap = Size<LengthPercentage>.Zero,
+        Gap = Size<Length>.Zero,
         FlexGrow = 0f,
         FlexShrink = 1f,
         FlexBasis = Dimension.Auto,

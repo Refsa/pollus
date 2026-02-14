@@ -19,11 +19,11 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(50f, 50f),
-            Inset = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Px(10f),
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Px(20f),
-                LengthPercentageAuto.Auto
+            Inset = new Rect<LengthAuto>(
+                LengthAuto.Px(10f),
+                LengthAuto.Auto,
+                LengthAuto.Px(20f),
+                LengthAuto.Auto
             ),
         });
         tree.AddChild(root, child);
@@ -45,11 +45,11 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(50f, 50f),
-            Inset = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Px(10f),
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Px(20f)
+            Inset = new Rect<LengthAuto>(
+                LengthAuto.Auto,
+                LengthAuto.Px(10f),
+                LengthAuto.Auto,
+                LengthAuto.Px(20f)
             ),
         });
         tree.AddChild(root, child);
@@ -70,11 +70,11 @@ public class FlexAbsoluteTests
         var child = tree.AddNode(DefaultStyle with
         {
             Position = Position.Absolute,
-            Inset = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Px(10f),
-                LengthPercentageAuto.Px(10f),
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Auto
+            Inset = new Rect<LengthAuto>(
+                LengthAuto.Px(10f),
+                LengthAuto.Px(10f),
+                LengthAuto.Auto,
+                LengthAuto.Auto
             ),
         });
         tree.AddChild(root, child);
@@ -94,11 +94,11 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(100f, 100f),
-            Inset = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Px(0f),
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Px(0f),
-                LengthPercentageAuto.Auto
+            Inset = new Rect<LengthAuto>(
+                LengthAuto.Px(0f),
+                LengthAuto.Auto,
+                LengthAuto.Px(0f),
+                LengthAuto.Auto
             ),
         });
         var flowChild = tree.AddNode(DefaultStyle with
@@ -216,11 +216,11 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(50f)),
-            Inset = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Px(10f),
-                LengthPercentageAuto.Px(20f),
-                LengthPercentageAuto.Auto,
-                LengthPercentageAuto.Auto
+            Inset = new Rect<LengthAuto>(
+                LengthAuto.Px(10f),
+                LengthAuto.Px(20f),
+                LengthAuto.Auto,
+                LengthAuto.Auto
             ),
         });
         tree.AddChild(root, child);

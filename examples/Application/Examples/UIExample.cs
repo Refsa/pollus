@@ -53,10 +53,10 @@ public class UIExample : IExample
                         {
                             Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
                             FlexDirection = FlexDirection.Column,
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(16), LengthPercentage.Px(16),
-                                LengthPercentage.Px(16), LengthPercentage.Px(16)),
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                            Padding = new Rect<Length>(
+                                Length.Px(16), Length.Px(16),
+                                Length.Px(16), Length.Px(16)),
+                            Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
                         }
                     },
                     new BackgroundColor { Color = new Color(0.12f, 0.12f, 0.15f, 1f) }
@@ -70,9 +70,9 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(60)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(20), LengthPercentage.Px(20),
-                                LengthPercentage.Px(20), LengthPercentage.Px(20)),
+                            Padding = new Rect<Length>(
+                                Length.Px(20), Length.Px(20),
+                                Length.Px(20), Length.Px(20)),
                             AlignItems = AlignItems.Center,
                         }
                     },
@@ -98,7 +98,7 @@ public class UIExample : IExample
                         {
                             FlexGrow = 1f,
                             FlexDirection = FlexDirection.Row,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                            Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
                         }
                     }
                 )).Entity;
@@ -113,10 +113,10 @@ public class UIExample : IExample
                             Size = new Size<Dimension>(Dimension.Px(200), Dimension.Auto),
                             FlexGrow = 0f,
                             FlexDirection = FlexDirection.Column,
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(12), LengthPercentage.Px(12),
-                                LengthPercentage.Px(12), LengthPercentage.Px(12)),
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Padding = new Rect<Length>(
+                                Length.Px(12), Length.Px(12),
+                                Length.Px(12), Length.Px(12)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     },
                     new BackgroundColor { Color = new Color(0.18f, 0.18f, 0.22f, 1f) },
@@ -143,9 +143,9 @@ public class UIExample : IExample
                             Value = LayoutStyle.Default with
                             {
                                 Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
-                                Padding = new Rect<LengthPercentage>(
-                                    LengthPercentage.Px(12), LengthPercentage.Px(12),
-                                    LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                                Padding = new Rect<Length>(
+                                    Length.Px(12), Length.Px(12),
+                                    Length.Px(8), Length.Px(8)),
                                 AlignItems = AlignItems.Center,
                             }
                         },
@@ -180,9 +180,9 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(12), LengthPercentage.Px(12),
-                                LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Padding = new Rect<Length>(
+                                Length.Px(12), Length.Px(12),
+                                Length.Px(8), Length.Px(8)),
                             AlignItems = AlignItems.Center,
                         }
                     },
@@ -210,13 +210,13 @@ public class UIExample : IExample
                         {
                             FlexGrow = 1f,
                             FlexDirection = FlexDirection.Column,
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(16), LengthPercentage.Px(16),
-                                LengthPercentage.Px(16), LengthPercentage.Px(16)),
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(16), LengthPercentage.Px(16)),
-                            Border = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(2), LengthPercentage.Px(2),
-                                LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                            Padding = new Rect<Length>(
+                                Length.Px(16), Length.Px(16),
+                                Length.Px(16), Length.Px(16)),
+                            Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
+                            Border = new Rect<Length>(
+                                Length.Px(2), Length.Px(2),
+                                Length.Px(2), Length.Px(2)),
                             Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Scroll),
                         }
                     },
@@ -240,7 +240,7 @@ public class UIExample : IExample
                         {
                             FlexDirection = FlexDirection.Row,
                             FlexWrap = FlexWrap.Wrap,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(12), LengthPercentage.Px(12)),
+                            Gap = new Size<Length>(Length.Px(12), Length.Px(12)),
                         }
                     }
                 )).Entity;
@@ -282,12 +282,12 @@ public class UIExample : IExample
                             {
                                 Size = new Size<Dimension>(Dimension.Px(160), Dimension.Px(120)),
                                 FlexDirection = FlexDirection.Column,
-                                Padding = new Rect<LengthPercentage>(
-                                    LengthPercentage.Px(12), LengthPercentage.Px(12),
-                                    LengthPercentage.Px(12), LengthPercentage.Px(12)),
-                                Border = new Rect<LengthPercentage>(
-                                    LengthPercentage.Px(2), LengthPercentage.Px(2),
-                                    LengthPercentage.Px(2), LengthPercentage.Px(2)),
+                                Padding = new Rect<Length>(
+                                    Length.Px(12), Length.Px(12),
+                                    Length.Px(12), Length.Px(12)),
+                                Border = new Rect<Length>(
+                                    Length.Px(2), Length.Px(2),
+                                    Length.Px(2), Length.Px(2)),
                             }
                         },
                         new BorderColor
@@ -322,9 +322,9 @@ public class UIExample : IExample
                         {
                             Value = LayoutStyle.Default with
                             {
-                                Margin = new Rect<LengthPercentageAuto>(
-                                    LengthPercentageAuto.Zero, LengthPercentageAuto.Zero,
-                                    LengthPercentageAuto.Px(8), LengthPercentageAuto.Zero),
+                                Margin = new Rect<LengthAuto>(
+                                    LengthAuto.Zero, LengthAuto.Zero,
+                                    LengthAuto.Px(8), LengthAuto.Zero),
                             }
                         }
                     )).Entity;
@@ -354,7 +354,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -372,7 +372,7 @@ public class UIExample : IExample
                             {
                                 FlexDirection = FlexDirection.Row,
                                 AlignItems = AlignItems.Center,
-                                Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                                Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                             }
                         }
                     )).Entity;
@@ -407,7 +407,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -425,7 +425,7 @@ public class UIExample : IExample
                             {
                                 FlexDirection = FlexDirection.Row,
                                 AlignItems = AlignItems.Center,
-                                Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                                Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                             }
                         }
                     )).Entity;
@@ -460,7 +460,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -493,7 +493,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -524,13 +524,13 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(32)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(8), LengthPercentage.Px(8),
-                                LengthPercentage.Px(6), LengthPercentage.Px(6)),
+                            Padding = new Rect<Length>(
+                                Length.Px(8), Length.Px(8),
+                                Length.Px(6), Length.Px(6)),
                             AlignItems = AlignItems.Center,
-                            Border = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(1), LengthPercentage.Px(1),
-                                LengthPercentage.Px(1), LengthPercentage.Px(1)),
+                            Border = new Rect<Length>(
+                                Length.Px(1), Length.Px(1),
+                                Length.Px(1), Length.Px(1)),
                         }
                     },
                     new BorderColor
@@ -555,7 +555,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -586,13 +586,13 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             Size = new Size<Dimension>(Dimension.Px(120), Dimension.Px(32)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(8), LengthPercentage.Px(8),
-                                LengthPercentage.Px(6), LengthPercentage.Px(6)),
+                            Padding = new Rect<Length>(
+                                Length.Px(8), Length.Px(8),
+                                Length.Px(6), Length.Px(6)),
                             AlignItems = AlignItems.Center,
-                            Border = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(1), LengthPercentage.Px(1),
-                                LengthPercentage.Px(1), LengthPercentage.Px(1)),
+                            Border = new Rect<Length>(
+                                Length.Px(1), Length.Px(1),
+                                Length.Px(1), Length.Px(1)),
                         }
                     },
                     new BorderColor
@@ -631,7 +631,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -670,13 +670,13 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(32)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(10), LengthPercentage.Px(10),
-                                LengthPercentage.Px(6), LengthPercentage.Px(6)),
+                            Padding = new Rect<Length>(
+                                Length.Px(10), Length.Px(10),
+                                Length.Px(6), Length.Px(6)),
                             AlignItems = AlignItems.Center,
-                            Border = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(1), LengthPercentage.Px(1),
-                                LengthPercentage.Px(1), LengthPercentage.Px(1)),
+                            Border = new Rect<Length>(
+                                Length.Px(1), Length.Px(1),
+                                Length.Px(1), Length.Px(1)),
                         }
                     },
                     new BorderColor
@@ -714,20 +714,20 @@ public class UIExample : IExample
                             Display = Display.None,
                             Position = Position.Absolute,
                             Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Hidden),
-                            Inset = new Rect<LengthPercentageAuto>(
-                                LengthPercentageAuto.Px(0),
-                                LengthPercentageAuto.Auto,
-                                LengthPercentageAuto.Px(40), // below trigger (32px) + gap (8px)
-                                LengthPercentageAuto.Auto),
+                            Inset = new Rect<LengthAuto>(
+                                LengthAuto.Px(0),
+                                LengthAuto.Auto,
+                                LengthAuto.Px(40), // below trigger (32px) + gap (8px)
+                                LengthAuto.Auto),
                             FlexDirection = FlexDirection.Column,
                             MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(200)),
-                            Padding = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(2), LengthPercentage.Px(2),
-                                LengthPercentage.Px(2), LengthPercentage.Px(2)),
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(2), LengthPercentage.Px(2)),
-                            Border = new Rect<LengthPercentage>(
-                                LengthPercentage.Px(1), LengthPercentage.Px(1),
-                                LengthPercentage.Px(1), LengthPercentage.Px(1)),
+                            Padding = new Rect<Length>(
+                                Length.Px(2), Length.Px(2),
+                                Length.Px(2), Length.Px(2)),
+                            Gap = new Size<Length>(Length.Px(2), Length.Px(2)),
+                            Border = new Rect<Length>(
+                                Length.Px(1), Length.Px(1),
+                                Length.Px(1), Length.Px(1)),
                         }
                     }
                 )).Entity;
@@ -754,9 +754,9 @@ public class UIExample : IExample
                             {
                                 Display = Display.None,
                                 Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
-                                Padding = new Rect<LengthPercentage>(
-                                    LengthPercentage.Px(10), LengthPercentage.Px(10),
-                                    LengthPercentage.Px(4), LengthPercentage.Px(4)),
+                                Padding = new Rect<Length>(
+                                    Length.Px(10), Length.Px(10),
+                                    Length.Px(4), Length.Px(4)),
                                 AlignItems = AlignItems.Center,
                             }
                         }
@@ -776,7 +776,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Column,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(8), LengthPercentage.Px(8)),
+                            Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
                         }
                     }
                 )).Entity;
@@ -790,7 +790,7 @@ public class UIExample : IExample
                         Value = LayoutStyle.Default with
                         {
                             FlexDirection = FlexDirection.Row,
-                            Gap = new Size<LengthPercentage>(LengthPercentage.Px(16), LengthPercentage.Px(16)),
+                            Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
                             AlignItems = AlignItems.Center,
                         }
                     }

@@ -48,9 +48,9 @@ public class FlexPercentageTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = new Rect<LengthPercentage>(
-                LengthPercentage.Percent(0.1f), LengthPercentage.Zero,
-                LengthPercentage.Zero, LengthPercentage.Zero
+            Padding = new Rect<Length>(
+                Length.Percent(0.1f), Length.Zero,
+                Length.Zero, Length.Zero
             ),
         });
         var child = tree.AddNode(DefaultStyle with
@@ -72,9 +72,9 @@ public class FlexPercentageTests
         var child = tree.AddNode(DefaultStyle with
         {
             Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
-            Margin = new Rect<LengthPercentageAuto>(
-                LengthPercentageAuto.Percent(0.1f), LengthPercentageAuto.Zero,
-                LengthPercentageAuto.Zero, LengthPercentageAuto.Zero
+            Margin = new Rect<LengthAuto>(
+                LengthAuto.Percent(0.1f), LengthAuto.Zero,
+                LengthAuto.Zero, LengthAuto.Zero
             ),
         });
         tree.AddChild(root, child);

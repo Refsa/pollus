@@ -8,21 +8,21 @@ public class ValTests
     [Fact]
     public void LengthPercentage_Px_Resolves()
     {
-        var val = LengthPercentage.Px(50f);
+        var val = Length.Px(50f);
         Assert.Equal(50f, val.Resolve(1000f));
     }
 
     [Fact]
     public void LengthPercentage_Percent_Resolves()
     {
-        var val = LengthPercentage.Percent(0.5f);
+        var val = Length.Percent(0.5f);
         Assert.Equal(500f, val.Resolve(1000f));
     }
 
     [Fact]
     public void LengthPercentage_Zero()
     {
-        var val = LengthPercentage.Zero;
+        var val = Length.Zero;
         Assert.Equal(0f, val.Resolve(1000f));
     }
 
@@ -30,21 +30,21 @@ public class ValTests
     [Fact]
     public void LengthPercentageAuto_Px_Resolves()
     {
-        var val = LengthPercentageAuto.Px(50f);
+        var val = LengthAuto.Px(50f);
         Assert.Equal(50f, val.Resolve(1000f));
     }
 
     [Fact]
     public void LengthPercentageAuto_Percent_Resolves()
     {
-        var val = LengthPercentageAuto.Percent(0.25f);
+        var val = LengthAuto.Percent(0.25f);
         Assert.Equal(250f, val.Resolve(1000f));
     }
 
     [Fact]
     public void LengthPercentageAuto_Auto_ResolvesNull()
     {
-        var val = LengthPercentageAuto.Auto;
+        var val = LengthAuto.Auto;
         Assert.Null(val.Resolve(1000f));
         Assert.True(val.IsAuto());
     }
@@ -52,15 +52,15 @@ public class ValTests
     [Fact]
     public void LengthPercentageAuto_ResolveOr()
     {
-        Assert.Equal(50f, LengthPercentageAuto.Px(50f).ResolveOr(1000f, 99f));
-        Assert.Equal(99f, LengthPercentageAuto.Auto.ResolveOr(1000f, 99f));
+        Assert.Equal(50f, LengthAuto.Px(50f).ResolveOr(1000f, 99f));
+        Assert.Equal(99f, LengthAuto.Auto.ResolveOr(1000f, 99f));
     }
 
     [Fact]
     public void LengthPercentageAuto_ImplicitConversion()
     {
-        LengthPercentage lp = LengthPercentage.Px(42f);
-        LengthPercentageAuto lpa = lp;
+        Length lp = Length.Px(42f);
+        LengthAuto lpa = lp;
         Assert.Equal(42f, lpa.Resolve(0f));
     }
 

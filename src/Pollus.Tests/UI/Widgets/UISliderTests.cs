@@ -128,9 +128,9 @@ public class UISliderTests
                 Value = LayoutStyle.Default with
                 {
                     Size = new Size<Dimension>(Dimension.Px(800), Dimension.Px(600)),
-                    Padding = new Rect<LengthPercentage>(
-                        LengthPercentage.Px(100), LengthPercentage.Px(100),
-                        LengthPercentage.Px(50), LengthPercentage.Px(50)),
+                    Padding = new Rect<Length>(
+                        Length.Px(100), Length.Px(100),
+                        Length.Px(50), Length.Px(50)),
                 }
             }
         )).Entity;

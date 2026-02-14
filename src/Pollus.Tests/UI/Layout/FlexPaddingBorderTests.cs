@@ -13,7 +13,7 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = Rect<LengthPercentage>.All(LengthPercentage.Px(10f)),
+            Padding = Rect<Length>.All(Length.Px(10f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -35,7 +35,7 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Border = Rect<LengthPercentage>.All(LengthPercentage.Px(5f)),
+            Border = Rect<Length>.All(Length.Px(5f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -57,8 +57,8 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = Rect<LengthPercentage>.All(LengthPercentage.Px(10f)),
-            Border = Rect<LengthPercentage>.All(LengthPercentage.Px(5f)),
+            Padding = Rect<Length>.All(Length.Px(10f)),
+            Border = Rect<Length>.All(Length.Px(5f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -81,7 +81,7 @@ public class FlexPaddingBorderTests
         {
             BoxSizing = BoxSizing.BorderBox,
             Size = new Size<Dimension>(Dimension.Px(100f), Dimension.Px(100f)),
-            Padding = Rect<LengthPercentage>.All(LengthPercentage.Px(10f)),
+            Padding = Rect<Length>.All(Length.Px(10f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -102,8 +102,8 @@ public class FlexPaddingBorderTests
         {
             BoxSizing = BoxSizing.ContentBox,
             Size = new Size<Dimension>(Dimension.Px(80f), Dimension.Px(60f)),
-            Padding = Rect<LengthPercentage>.All(LengthPercentage.Px(10f)),
-            Border = Rect<LengthPercentage>.All(LengthPercentage.Px(2f)),
+            Padding = Rect<Length>.All(Length.Px(10f)),
+            Border = Rect<Length>.All(Length.Px(2f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 300f, 300f);
