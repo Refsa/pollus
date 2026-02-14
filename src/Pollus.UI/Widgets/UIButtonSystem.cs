@@ -2,31 +2,39 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 
-public static class UIButtonSystem
+public class UIButtonSystem : ISystemSet
 {
-    public const string ButtonVisualLabel = "UIButtonSystem::ButtonVisual";
+    public static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
+    {
+        Label = new SystemLabel("UIButtonSystem::UpdateVisuals"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+    };
 
-    public static SystemBuilder ButtonVisual() => FnSystem.Create(
-        new(ButtonVisualLabel) { RunsAfter = [UIInteractionSystem.UpdateStateLabel] },
-        static (Query<UIButton, UIInteraction, BackgroundColor> qButtons) =>
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateVisualsDescriptor.Stage, FnSystem.Create(UpdateVisualsDescriptor,
+            (SystemDelegate<Query<UIButton, UIInteraction, BackgroundColor>>)UpdateVisuals));
+    }
+
+    public static void UpdateVisuals(Query<UIButton, UIInteraction, BackgroundColor> qButtons)
+    {
+        qButtons.ForEach(static (ref UIButton button, ref UIInteraction interaction, ref BackgroundColor bg) =>
         {
-            qButtons.ForEach(static (ref UIButton button, ref UIInteraction interaction, ref BackgroundColor bg) =>
-            {
-                bg.Color = GetButtonColor(button, interaction);
-            });
-        }
-    );
+            bg.Color = GetButtonColor(button, interaction);
+        });
+    }
 
     internal static void UpdateButtonVisuals(Query query)
     {
-        query.Filtered<All<UIButton>>().ForEach(query, static (in Query q, in Entity entity) =>
-        {
-            var entRef = q.GetEntity(entity);
-            ref var button = ref entRef.Get<UIButton>();
-            ref var interaction = ref entRef.Get<UIInteraction>();
-            ref var bg = ref entRef.Get<BackgroundColor>();
-            bg.Color = GetButtonColor(button, interaction);
-        });
+        query.Filtered<All<UIButton, UIInteraction, BackgroundColor>>().ForEach(query,
+            static (in Query q, in Entity entity) =>
+            {
+                ref readonly var button = ref q.Get<UIButton>(entity);
+                ref readonly var interaction = ref q.Get<UIInteraction>(entity);
+                ref var bg = ref q.Get<BackgroundColor>(entity);
+                bg.Color = GetButtonColor(button, interaction);
+            });
     }
 
     static Pollus.Utils.Color GetButtonColor(in UIButton button, in UIInteraction interaction)

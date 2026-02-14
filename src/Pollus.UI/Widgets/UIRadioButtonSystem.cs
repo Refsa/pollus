@@ -2,20 +2,28 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 
-public static class UIRadioButtonSystem
+public class UIRadioButtonSystem : ISystemSet
 {
-    public const string RadioButtonLabel = "UIRadioButtonSystem::Create";
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel("UIRadioButtonSystem::Update"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+    };
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(RadioButtonLabel) { RunsAfter = [UIInteractionSystem.UpdateStateLabel] },
-        static (
-            EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-            Events events,
-            Query query) =>
-        {
-            UpdateRadioButtons(query, clickReader, events);
-        }
-    );
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
+        Events events,
+        Query query)
+    {
+        UpdateRadioButtons(query, clickReader, events);
+    }
 
     internal static void UpdateRadioButtons(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {

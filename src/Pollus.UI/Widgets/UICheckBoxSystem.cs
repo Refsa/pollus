@@ -2,20 +2,28 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 
-public static class UICheckBoxSystem
+public class UICheckBoxSystem : ISystemSet
 {
-    public const string CheckBoxLabel = "UICheckBoxSystem::Create";
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel("UICheckBoxSystem::Update"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+    };
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(CheckBoxLabel) { RunsAfter = [UIInteractionSystem.UpdateStateLabel] },
-        static (
-            EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-            Events events,
-            Query query) =>
-        {
-            UpdateCheckBoxes(query, clickReader, events);
-        }
-    );
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
+        Events events,
+        Query query)
+    {
+        UpdateCheckBoxes(query, clickReader, events);
+    }
 
     internal static void UpdateCheckBoxes(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {

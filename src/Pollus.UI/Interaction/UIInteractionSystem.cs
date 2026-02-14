@@ -6,26 +6,53 @@ using Pollus.Input;
 using Pollus.Mathematics;
 using Pollus.UI.Layout;
 
-public static class UIInteractionSystem
+public class UIInteractionSystem : ISystemSet
 {
     public const string HitTestLabel = "UIInteractionSystem::HitTest";
     public const string UpdateStateLabel = "UIInteractionSystem::UpdateState";
     public const string FocusNavigationLabel = "UIInteractionSystem::FocusNavigation";
 
-    public static SystemBuilder HitTest() => FnSystem.Create(
-        new(HitTestLabel),
-        static (
-            CurrentDevice<Mouse> currentMouse,
-            UIHitTestResult hitResult,
-            UIFocusState focusState,
-            Query query,
-            Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots) =>
-        {
-            var mouse = currentMouse.Value;
-            var mousePos = mouse != null ? new Vec2f(mouse.Position.X, mouse.Position.Y) : Vec2f.Zero;
-            PerformHitTest(query, hitResult, focusState, mousePos);
-        }
-    );
+    public static readonly SystemBuilderDescriptor HitTestDescriptor = new()
+    {
+        Label = new SystemLabel(HitTestLabel),
+        Stage = CoreStage.PostUpdate,
+    };
+
+    public static readonly SystemBuilderDescriptor UpdateStateDescriptor = new()
+    {
+        Label = new SystemLabel(UpdateStateLabel),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [HitTestLabel],
+    };
+
+    public static readonly SystemBuilderDescriptor FocusNavigationDescriptor = new()
+    {
+        Label = new SystemLabel(FocusNavigationLabel),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UpdateStateLabel],
+    };
+
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(HitTestDescriptor.Stage, FnSystem.Create(HitTestDescriptor,
+            (SystemDelegate<CurrentDevice<Mouse>, UIHitTestResult, UIFocusState, Query, Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>>>)HitTest));
+        schedule.AddSystems(UpdateStateDescriptor.Stage, FnSystem.Create(UpdateStateDescriptor,
+            (SystemDelegate<ButtonInput<MouseButton>, UIHitTestResult, UIFocusState, Events, Query>)UpdateState));
+        schedule.AddSystems(FocusNavigationDescriptor.Stage, FnSystem.Create(FocusNavigationDescriptor,
+            (SystemDelegate<ButtonInput<Key>, UIHitTestResult, UIFocusState, Events, Query>)FocusNavigation));
+    }
+
+    public static void HitTest(
+        CurrentDevice<Mouse> currentMouse,
+        UIHitTestResult hitResult,
+        UIFocusState focusState,
+        Query query,
+        Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots)
+    {
+        var mouse = currentMouse.Value;
+        var mousePos = mouse != null ? new Vec2f(mouse.Position.X, mouse.Position.Y) : Vec2f.Zero;
+        PerformHitTest(query, hitResult, focusState, mousePos);
+    }
 
     internal static void PerformHitTest(Query query, UIHitTestResult hitResult, UIFocusState focusState, Vec2f mousePos)
     {
@@ -52,20 +79,17 @@ public static class UIInteractionSystem
         }
     }
 
-    public static SystemBuilder UpdateState() => FnSystem.Create(
-        new(UpdateStateLabel) { RunsAfter = [HitTestLabel] },
-        static (
-            ButtonInput<MouseButton> mouse,
-            UIHitTestResult hitResult,
-            UIFocusState focusState,
-            Events events,
-            Query query) =>
-        {
-            bool mouseDown = mouse.JustPressed(MouseButton.Left);
-            bool mouseUp = mouse.JustReleased(MouseButton.Left);
-            PerformUpdateState(query, hitResult, focusState, events, mouseDown, mouseUp);
-        }
-    );
+    public static void UpdateState(
+        ButtonInput<MouseButton> mouse,
+        UIHitTestResult hitResult,
+        UIFocusState focusState,
+        Events events,
+        Query query)
+    {
+        bool mouseDown = mouse.JustPressed(MouseButton.Left);
+        bool mouseUp = mouse.JustReleased(MouseButton.Left);
+        PerformUpdateState(query, hitResult, focusState, events, mouseDown, mouseUp);
+    }
 
     internal static void PerformUpdateState(
         Query query, UIHitTestResult hitResult, UIFocusState focusState,
@@ -223,21 +247,18 @@ public static class UIInteractionSystem
         }
     }
 
-    public static SystemBuilder FocusNavigation() => FnSystem.Create(
-        new(FocusNavigationLabel) { RunsAfter = [UpdateStateLabel] },
-        static (
-            ButtonInput<Key> keyboard,
-            UIHitTestResult hitResult,
-            UIFocusState focusState,
-            Events events,
-            Query query) =>
-        {
-            bool tabPressed = keyboard.JustPressed(Key.Tab);
-            bool shiftHeld = keyboard.Pressed(Key.LeftShift) || keyboard.Pressed(Key.RightShift);
-            bool activatePressed = keyboard.JustPressed(Key.Enter) || keyboard.JustPressed(Key.Space);
-            PerformFocusNavigation(query, focusState, events, tabPressed && !shiftHeld, tabPressed && shiftHeld, activatePressed);
-        }
-    );
+    public static void FocusNavigation(
+        ButtonInput<Key> keyboard,
+        UIHitTestResult hitResult,
+        UIFocusState focusState,
+        Events events,
+        Query query)
+    {
+        bool tabPressed = keyboard.JustPressed(Key.Tab);
+        bool shiftHeld = keyboard.Pressed(Key.LeftShift) || keyboard.Pressed(Key.RightShift);
+        bool activatePressed = keyboard.JustPressed(Key.Enter) || keyboard.JustPressed(Key.Space);
+        PerformFocusNavigation(query, focusState, events, tabPressed && !shiftHeld, tabPressed && shiftHeld, activatePressed);
+    }
 
     internal static void PerformFocusNavigation(
         Query query, UIFocusState focusState, Events events,

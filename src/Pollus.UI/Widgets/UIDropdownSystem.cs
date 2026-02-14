@@ -5,25 +5,30 @@ using Pollus.ECS;
 using Pollus.Input;
 using Pollus.UI.Layout;
 
-public static class UIDropdownSystem
+public class UIDropdownSystem : ISystemSet
 {
-    public const string Label = "UIDropdownSystem::Update";
+    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
+    {
+        Label = new SystemLabel("UIDropdownSystem::Update"),
+        Stage = CoreStage.PostUpdate,
+        RunsAfter = [UIInteractionSystem.UpdateStateLabel],
+        RunsBefore = [UILayoutSystem.SyncTreeLabel],
+    };
 
-    public static SystemBuilder Create() => FnSystem.Create(
-        new(Label)
-        {
-            RunsAfter = [UIInteractionSystem.UpdateStateLabel],
-            RunsBefore = [UILayoutSystem.SyncTreeLabel],
-        },
-        static (
-            EventReader<UIInteractionEvents.UIClickEvent> clickReader,
-            EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
-            Events events,
-            Query query) =>
-        {
-            PerformUpdate(query, clickReader, keyDownReader, events);
-        }
-    );
+    public static void AddToSchedule(Schedule schedule)
+    {
+        schedule.AddSystems(UpdateDescriptor.Stage, FnSystem.Create(UpdateDescriptor,
+            (SystemDelegate<EventReader<UIInteractionEvents.UIClickEvent>, EventReader<UIInteractionEvents.UIKeyDownEvent>, Events, Query>)Update));
+    }
+
+    public static void Update(
+        EventReader<UIInteractionEvents.UIClickEvent> clickReader,
+        EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
+        Events events,
+        Query query)
+    {
+        PerformUpdate(query, clickReader, keyDownReader, events);
+    }
 
     internal static void PerformUpdate(
         Query query,
