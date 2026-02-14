@@ -36,7 +36,7 @@ public class IncrementalSyncTests
                 new UINode(),
                 new UIStyle { Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(30), Dimension.Px(20)),
+                    Size = new Size<Length>(Length.Px(30), Length.Px(20)),
                 }}
             )).Entity;
             commands.AddChild(root, child);
@@ -73,7 +73,7 @@ public class IncrementalSyncTests
                 new UINode(),
                 new UIStyle { Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(10), Dimension.Px(10)),
+                    Size = new Size<Length>(Length.Px(10), Length.Px(10)),
                 }}
             )).Entity;
             commands.AddChild(root, children[i]);
@@ -85,7 +85,7 @@ public class IncrementalSyncTests
         ref var style = ref world.Store.GetComponent<UIStyle>(children[25]);
         style.Value = LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(20), Dimension.Px(20)),
+            Size = new Size<Length>(Length.Px(20), Length.Px(20)),
         };
         world.Update();
 
@@ -109,7 +109,7 @@ public class IncrementalSyncTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
         commands.AddChild(root, child1);
@@ -122,7 +122,7 @@ public class IncrementalSyncTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(40), Dimension.Px(25)),
+                Size = new Size<Length>(Length.Px(40), Length.Px(25)),
             }}
         )).Entity;
         commands.AddChild(root, child2);
@@ -149,14 +149,14 @@ public class IncrementalSyncTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
         var child2 = commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(40), Dimension.Px(25)),
+                Size = new Size<Length>(Length.Px(40), Length.Px(25)),
             }}
         )).Entity;
         commands.AddChild(root, child1);
@@ -193,7 +193,7 @@ public class IncrementalSyncTests
                 new UINode(),
                 new UIStyle { Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                    Size = new Size<Length>(Length.Px(50), Length.Px(30)),
                 }}
             )).Entity;
             commands.AddChild(root, children[i]);

@@ -15,15 +15,15 @@ public class FlexGapTests
         var root = tree.AddNode(DefaultStyle with
         {
             Gap = new Size<Length>(Length.Px(10f), Length.Zero),
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(100f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(100f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -45,15 +45,15 @@ public class FlexGapTests
         {
             FlexDirection = FlexDirection.Column,
             Gap = new Size<Length>(Length.Zero, Length.Px(10f)),
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -74,19 +74,19 @@ public class FlexGapTests
         var root = tree.AddNode(DefaultStyle with
         {
             Gap = new Size<Length>(Length.Px(20f), Length.Zero),
-            Size = new Size<Dimension>(Dimension.Px(300f), Dimension.Px(100f)),
+            Size = new Size<Length>(Length.Px(300f), Length.Px(100f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -116,15 +116,15 @@ public class FlexGapTests
             FlexWrap = FlexWrap.Wrap,
             Gap = new Size<Length>(Length.Zero, Length.Px(20f)),
             AlignContent = AlignContent.FlexStart,
-            Size = new Size<Dimension>(Dimension.Px(200f), Dimension.Px(200f)),
+            Size = new Size<Length>(Length.Px(200f), Length.Px(200f)),
         });
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(150f), Length.Px(40f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Px(40f)),
+            Size = new Size<Length>(Length.Px(150f), Length.Px(40f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);

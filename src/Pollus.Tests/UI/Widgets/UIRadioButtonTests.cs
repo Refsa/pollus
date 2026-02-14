@@ -35,7 +35,7 @@ public class UIRadioButtonTests
             new UIInteraction { Focusable = true },
             new UIRadioButton { GroupId = groupId, IsSelected = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         var r2 = commands.Spawn(Entity.With(
@@ -43,7 +43,7 @@ public class UIRadioButtonTests
             new UIInteraction { Focusable = true },
             new UIRadioButton { GroupId = groupId, IsSelected = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         var r3 = commands.Spawn(Entity.With(
@@ -51,7 +51,7 @@ public class UIRadioButtonTests
             new UIInteraction { Focusable = true },
             new UIRadioButton { GroupId = groupId, IsSelected = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, r1);
@@ -120,7 +120,7 @@ public class UIRadioButtonTests
             new UIInteraction { Focusable = true },
             new UIRadioButton { GroupId = 1, IsSelected = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         var g2r1 = commands.Spawn(Entity.With(
@@ -128,7 +128,7 @@ public class UIRadioButtonTests
             new UIInteraction { Focusable = true },
             new UIRadioButton { GroupId = 2, IsSelected = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, g1r1);

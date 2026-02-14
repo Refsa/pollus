@@ -37,16 +37,16 @@ public record struct Size<T>
 public static class SizeExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Size<float> MaybeResolve(this Size<Dimension> self, Size<float?> parentSize)
+    public static Size<float> MaybeResolve(this Size<Length> self, Size<float?> parentSize)
     {
         return new Size<float>(
-            self.Width.Resolve(parentSize.Width ?? 0f).GetValueOrDefault(0f),
-            self.Height.Resolve(parentSize.Height ?? 0f).GetValueOrDefault(0f)
+            self.Width.ResolveOr(parentSize.Width ?? 0f, 0f),
+            self.Height.ResolveOr(parentSize.Height ?? 0f, 0f)
         );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Size<float?> MaybeResolveNullable(this Size<Dimension> self, Size<float?> parentSize)
+    public static Size<float?> MaybeResolveNullable(this Size<Length> self, Size<float?> parentSize)
     {
         return new Size<float?>(
             self.Width.Resolve(parentSize.Width ?? 0f),

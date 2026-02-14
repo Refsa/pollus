@@ -59,7 +59,7 @@ public class FlexBaselineTests
         var stretchChild = tree.AddNode(LayoutStyle.Default with
         {
             AlignSelf = AlignSelf.Stretch,
-            Size = new Size<Dimension>(Dimension.Px(80), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(80), Length.Auto),
         });
         tree.AddChild(root, baselineChild);
         tree.AddChild(root, stretchChild);
@@ -91,7 +91,7 @@ public class FlexBaselineTests
         var withBaseline = tree.AddNode(LayoutStyle.Default);
         var withoutBaseline = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(80), Dimension.Px(30)),
+            Size = new Size<Length>(Length.Px(80), Length.Px(30)),
         });
         tree.AddChild(root, withBaseline);
         tree.AddChild(root, withoutBaseline);

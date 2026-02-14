@@ -11,11 +11,11 @@ public class FlexCacheTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(200)),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(100), Length.Px(50)),
         });
         tree.AddChild(root, child);
 
@@ -49,11 +49,11 @@ public class FlexCacheTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(200)),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(100), Length.Px(50)),
         });
         tree.AddChild(root, child);
 
@@ -85,11 +85,11 @@ public class FlexCacheTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(200)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(200)),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(100), Length.Px(50)),
         });
         tree.AddChild(root, child);
 
@@ -122,14 +122,14 @@ public class FlexCacheTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(400), Dimension.Px(300)),
+            Size = new Size<Length>(Length.Px(400), Length.Px(300)),
             FlexDirection = FlexDirection.Row,
         });
         var a = tree.AddNode(LayoutStyle.Default with { FlexGrow = 1 });
         var b = tree.AddNode(LayoutStyle.Default with { FlexGrow = 2 });
         var c = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(50), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(50), Length.Auto),
         });
         tree.AddChild(root, a);
         tree.AddChild(root, b);
@@ -165,7 +165,7 @@ public class FlexCacheTests
         var mid = tree.AddNode(LayoutStyle.Default);
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+            Size = new Size<Length>(Length.Px(50), Length.Px(30)),
         });
         tree.AddChild(root, mid);
         tree.AddChild(mid, leaf);

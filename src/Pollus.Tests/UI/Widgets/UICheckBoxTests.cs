@@ -37,7 +37,7 @@ public class UICheckBoxTests
             new UIInteraction { Focusable = true },
             new UICheckBox { IsChecked = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, checkBox);
@@ -71,7 +71,7 @@ public class UICheckBoxTests
             new UIInteraction { Focusable = true },
             new UICheckBox { IsChecked = true },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, checkBox);
@@ -105,7 +105,7 @@ public class UICheckBoxTests
             new UIInteraction { Focusable = true },
             new UICheckBox { IsChecked = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, checkBox);
@@ -145,7 +145,7 @@ public class UICheckBoxTests
             new UIInteraction { Focusable = true },
             new UICheckBox { IsChecked = false, CheckedColor = checkedColor, UncheckedColor = uncheckedColor },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, checkBox);
@@ -179,7 +179,7 @@ public class UICheckBoxTests
             new UIInteraction { Focusable = true, State = InteractionState.Disabled },
             new UICheckBox { IsChecked = false },
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(24), Dimension.Px(24)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(24), Length.Px(24)) } }
         )).Entity;
 
         commands.AddChild(root, checkBox);

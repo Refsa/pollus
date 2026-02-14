@@ -14,7 +14,7 @@ public class FlexRoundingTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -43,7 +43,7 @@ public class FlexRoundingTests
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(30f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(30f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -75,15 +75,15 @@ public class FlexRoundingTests
         // Three children each 33.33px wide in a 100px container
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(33.33f), Dimension.Px(20f)),
+            Size = new Size<Length>(Length.Px(33.33f), Length.Px(20f)),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(33.33f), Dimension.Px(20f)),
+            Size = new Size<Length>(Length.Px(33.33f), Length.Px(20f)),
         });
         var child3 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(33.34f), Dimension.Px(20f)),
+            Size = new Size<Length>(Length.Px(33.34f), Length.Px(20f)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -118,11 +118,11 @@ public class FlexRoundingTests
         var root = tree.AddNode(DefaultStyle);
         var parent = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(100.5f), Dimension.Px(100.5f)),
+            Size = new Size<Length>(Length.Px(100.5f), Length.Px(100.5f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50.5f), Dimension.Px(50.5f)),
+            Size = new Size<Length>(Length.Px(50.5f), Length.Px(50.5f)),
         });
         tree.AddChild(root, parent);
         tree.AddChild(parent, child);
@@ -152,11 +152,11 @@ public class FlexRoundingTests
         var hidden = tree.AddNode(DefaultStyle with
         {
             Display = Display.None,
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         var visible = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(50f), Dimension.Px(50f)),
+            Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
         });
         tree.AddChild(root, hidden);
         tree.AddChild(root, visible);

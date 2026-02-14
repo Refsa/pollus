@@ -14,12 +14,12 @@ public class FlexConstraintTests
         var root = tree.AddNode(DefaultStyle);
         var child1 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
-            MinSize = new Size<Dimension>(Dimension.Px(80f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
+            MinSize = new Size<Length>(Length.Px(80f), Length.Auto),
         });
         var child2 = tree.AddNode(DefaultStyle with
         {
-            Size = new Size<Dimension>(Dimension.Px(150f), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150f), Length.Auto),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -37,7 +37,7 @@ public class FlexConstraintTests
         var child = tree.AddNode(DefaultStyle with
         {
             FlexGrow = 1f,
-            MaxSize = new Size<Dimension>(Dimension.Px(80f), Dimension.Auto),
+            MaxSize = new Size<Length>(Length.Px(80f), Length.Auto),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -53,7 +53,7 @@ public class FlexConstraintTests
         var root = tree.AddNode(DefaultStyle with { FlexDirection = FlexDirection.Column });
         var child = tree.AddNode(DefaultStyle with
         {
-            MinSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(100f)),
+            MinSize = new Size<Length>(Length.Auto, Length.Px(100f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -70,7 +70,7 @@ public class FlexConstraintTests
         var child = tree.AddNode(DefaultStyle with
         {
             FlexGrow = 1f,
-            MaxSize = new Size<Dimension>(Dimension.Auto, Dimension.Px(30f)),
+            MaxSize = new Size<Length>(Length.Auto, Length.Px(30f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -86,7 +86,7 @@ public class FlexConstraintTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            FlexBasis = Dimension.Px(100f),
+            FlexBasis = Length.Px(100f),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -102,7 +102,7 @@ public class FlexConstraintTests
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with
         {
-            FlexBasis = Dimension.Percent(0.5f),
+            FlexBasis = Length.Percent(0.5f),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);

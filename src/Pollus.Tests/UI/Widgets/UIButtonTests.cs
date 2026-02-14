@@ -41,7 +41,7 @@ public class UIButtonTests
             new UIInteraction(),
             button,
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, btn);
@@ -71,7 +71,7 @@ public class UIButtonTests
             new UIInteraction { State = InteractionState.Hovered },
             button,
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, btn);
@@ -101,7 +101,7 @@ public class UIButtonTests
             new UIInteraction { State = InteractionState.Pressed | InteractionState.Hovered },
             button,
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, btn);
@@ -131,7 +131,7 @@ public class UIButtonTests
             new UIInteraction { State = InteractionState.Disabled },
             button,
             new BackgroundColor(),
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(100), Length.Px(50)) } }
         )).Entity;
 
         commands.AddChild(root, btn);

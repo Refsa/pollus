@@ -33,13 +33,13 @@ public class UINumberInputTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UITextInput { Filter = type == NumberInputType.Int ? UIInputFilterType.Integer : UIInputFilterType.Decimal },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         var numberInput = commands.Spawn(Entity.With(
             new UINode(),
             new UINumberInput { Min = min, Max = max, Step = step, Type = type, TextInputEntity = textInput },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         commands.AddChild(root, numberInput);

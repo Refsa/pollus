@@ -33,7 +33,7 @@ public class UISliderTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UISlider { Min = min, Max = max, Step = step },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(20)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(20)) } }
         )).Entity;
 
         commands.AddChild(root, slider);
@@ -117,7 +117,7 @@ public class UISliderTests
         var root = commands.Spawn(Entity.With(
             new UINode(),
             new UILayoutRoot { Size = new Size<float>(800, 600) },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(800), Dimension.Px(600)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(800), Length.Px(600)) } }
         )).Entity;
 
         // Container with padding that offsets children
@@ -127,7 +127,7 @@ public class UISliderTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(800), Dimension.Px(600)),
+                    Size = new Size<Length>(Length.Px(800), Length.Px(600)),
                     Padding = new Rect<Length>(
                         Length.Px(100), Length.Px(100),
                         Length.Px(50), Length.Px(50)),
@@ -139,7 +139,7 @@ public class UISliderTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UISlider { Min = 0, Max = 100, Step = 0 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(20)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(20)) } }
         )).Entity;
 
         commands.AddChild(root, container);

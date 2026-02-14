@@ -55,11 +55,11 @@ public class LayoutHelpersTests
     public void ResolveMargin_Px()
     {
         var style = LayoutStyle.Default;
-        style.Margin = new Rect<LengthAuto>(
-            LengthAuto.Px(5f),
-            LengthAuto.Px(10f),
-            LengthAuto.Px(15f),
-            LengthAuto.Px(20f)
+        style.Margin = new Rect<Length>(
+            Length.Px(5f),
+            Length.Px(10f),
+            Length.Px(15f),
+            Length.Px(20f)
         );
         var result = LayoutHelpers.ResolveMargin(style, new Size<float?>(100f, 100f));
         Assert.Equal(5f, result.Left);
@@ -72,7 +72,7 @@ public class LayoutHelpersTests
     public void ResolveMargin_Auto_ResolvesToZero()
     {
         var style = LayoutStyle.Default;
-        style.Margin = Rect<LengthAuto>.All(LengthAuto.Auto);
+        style.Margin = Rect<Length>.All(Length.Auto);
         var result = LayoutHelpers.ResolveMargin(style, new Size<float?>(100f, 100f));
         Assert.Equal(0f, result.Left);
         Assert.Equal(0f, result.Right);
@@ -84,11 +84,11 @@ public class LayoutHelpersTests
     public void ResolveInset_Px()
     {
         var style = LayoutStyle.Default;
-        style.Inset = new Rect<LengthAuto>(
-            LengthAuto.Px(10f),
-            LengthAuto.Px(20f),
-            LengthAuto.Px(30f),
-            LengthAuto.Px(40f)
+        style.Inset = new Rect<Length>(
+            Length.Px(10f),
+            Length.Px(20f),
+            Length.Px(30f),
+            Length.Px(40f)
         );
         var result = LayoutHelpers.ResolveInset(style, new Size<float?>(100f, 200f));
         Assert.Equal(10f, result.Left);

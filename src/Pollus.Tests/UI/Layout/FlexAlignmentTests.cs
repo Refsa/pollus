@@ -7,8 +7,8 @@ public class FlexAlignmentTests
 {
     static LayoutStyle DefaultStyle => LayoutStyle.Default;
 
-    static Size<Dimension> FixedSize(float w, float h) =>
-        new(Dimension.Px(w), Dimension.Px(h));
+    static Size<Length> FixedSize(float w, float h) =>
+        new(Length.Px(w), Length.Px(h));
 
     [Fact]
     public void JustifyContent_Center()

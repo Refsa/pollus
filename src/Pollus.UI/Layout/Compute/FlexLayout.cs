@@ -51,8 +51,8 @@ public static partial class FlexLayout
 
         public bool CrossSizeIsAuto;
 
-        public Dimension FlexBasisStyle;
-        public Size<Dimension> SizeStyle;
+        public Length FlexBasisStyle;
+        public Size<Length> SizeStyle;
         public AlignSelf? AlignSelf;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -167,8 +167,8 @@ public static partial class FlexLayout
         var childContainerMainInnerSize = scrollMain ? null : containerMainInnerSize;
         var childContainerCrossInnerSize = scrollCross ? null : containerCrossInnerSize;
 
-        float mainGap = style.Gap.Main(dir).Resolve(childContainerMainInnerSize ?? 0f);
-        float crossGap = style.Gap.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f);
+        float mainGap = style.Gap.Main(dir).ResolveOr(childContainerMainInnerSize ?? 0f, 0f);
+        float crossGap = style.Gap.Cross(dir).ResolveOr(childContainerCrossInnerSize ?? 0f, 0f);
 
         #endregion
         #region Phase 2: Generate flex items

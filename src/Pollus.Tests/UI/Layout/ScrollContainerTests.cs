@@ -11,12 +11,12 @@ public class ScrollContainerTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             Overflow = new Point<Overflow>(Overflow.Visible, Overflow.Scroll),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(180), Dimension.Px(300)),
+            Size = new Size<Length>(Length.Px(180), Length.Px(300)),
         });
         tree.AddChild(root, child);
 
@@ -40,17 +40,17 @@ public class ScrollContainerTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             Overflow = new Point<Overflow>(Overflow.Scroll, Overflow.Visible),
         });
         // Two children that together exceed the container width
         var child1 = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(150), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(150), Length.Px(50)),
         });
         var child2 = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(150), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(150), Length.Px(50)),
         });
         tree.AddChild(root, child1);
         tree.AddChild(root, child2);
@@ -71,12 +71,12 @@ public class ScrollContainerTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             Overflow = new Point<Overflow>(Overflow.Visible, Overflow.Scroll),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(180), Dimension.Px(300)),
+            Size = new Size<Length>(Length.Px(180), Length.Px(300)),
         });
         tree.AddChild(root, child);
 
@@ -95,11 +95,11 @@ public class ScrollContainerTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(100)),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(180), Dimension.Px(50)),
+            Size = new Size<Length>(Length.Px(180), Length.Px(50)),
         });
         tree.AddChild(root, child);
 
@@ -116,12 +116,12 @@ public class ScrollContainerTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(100), Length.Px(100)),
             Overflow = new Point<Overflow>(Overflow.Scroll, Overflow.Scroll),
         });
         var child = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(300), Dimension.Px(400)),
+            Size = new Size<Length>(Length.Px(300), Length.Px(400)),
         });
         tree.AddChild(root, child);
 
@@ -144,16 +144,16 @@ public class ScrollContainerTests
         var root = tree.AddNode(LayoutStyle.Default with
         {
             FlexDirection = FlexDirection.Column,
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             Overflow = new Point<Overflow>(Overflow.Visible, Overflow.Scroll),
         });
         var fixedChild = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(60)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(60)),
         });
         var growChild = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(200), Length.Auto),
             FlexGrow = 1f,
         });
         tree.AddChild(root, fixedChild);
@@ -181,13 +181,13 @@ public class ScrollContainerTests
         var root = tree.AddNode(LayoutStyle.Default with
         {
             FlexDirection = FlexDirection.Column,
-            Size = new Size<Dimension>(Dimension.Px(800), Dimension.Px(400)),
+            Size = new Size<Length>(Length.Px(800), Length.Px(400)),
         });
 
         // Header: fixed height
         var header = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(40)),
+            Size = new Size<Length>(Length.Auto, Length.Px(40)),
         });
 
         // ContentRow: Row, flex-grow
@@ -200,7 +200,7 @@ public class ScrollContainerTests
         // Sidebar: fixed width
         var sidebar = tree.AddNode(LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(150), Dimension.Auto),
+            Size = new Size<Length>(Length.Px(150), Length.Auto),
         });
 
         // ScrollPanel: flex-grow, Column, Overflow.Scroll on Y
@@ -216,7 +216,7 @@ public class ScrollContainerTests
         {
             var section = tree.AddNode(LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Auto, Dimension.Px(60)),
+                Size = new Size<Length>(Length.Auto, Length.Px(60)),
             });
             tree.AddChild(scrollPanel, section);
         }

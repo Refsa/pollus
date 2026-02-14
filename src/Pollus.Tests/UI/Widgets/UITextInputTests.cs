@@ -33,7 +33,7 @@ public class UITextInputTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UITextInput { Filter = filter },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         commands.AddChild(root, textInput);

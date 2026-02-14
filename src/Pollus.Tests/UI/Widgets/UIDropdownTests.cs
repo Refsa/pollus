@@ -35,28 +35,28 @@ public class UIDropdownTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdown { SelectedIndex = -1 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         var opt0 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = 0 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         var opt1 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = 1 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         var opt2 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = 2 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         commands.AddChild(root, dropdown);
@@ -167,7 +167,7 @@ public class UIDropdownTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         // Option with a text child
@@ -175,7 +175,7 @@ public class UIDropdownTests
             new UINode(),
             new UIInteraction { Focusable = true },
             new UIDropdownOptionTag { DropdownEntity = dropdown, OptionIndex = 0 },
-            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)) } }
+            new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
         var opt0Text = commands.Spawn(Entity.With(
@@ -350,7 +350,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -378,7 +378,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(32)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(32)),
                 }
             }
         )).Entity;
@@ -394,11 +394,11 @@ public class UIDropdownTests
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<LengthAuto>(
-                        LengthAuto.Px(0),
-                        LengthAuto.Auto,
-                        LengthAuto.Px(40),
-                        LengthAuto.Auto),
+                    Inset = new Rect<Length>(
+                        Length.Px(0),
+                        Length.Auto,
+                        Length.Px(40),
+                        Length.Auto),
                     FlexDirection = FlexDirection.Column,
                     Padding = new Rect<Length>(
                         Length.Px(2), Length.Px(2),
@@ -425,7 +425,7 @@ public class UIDropdownTests
                     Value = LayoutStyle.Default with
                     {
                         Display = Display.None,
-                        Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                        Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                         Padding = new Rect<Length>(
                             Length.Px(10), Length.Px(10),
                             Length.Px(4), Length.Px(4)),
@@ -444,7 +444,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(100)),
                 }
             }
         )).Entity;
@@ -535,7 +535,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -549,7 +549,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(30)),
                 }
             }
         )).Entity;
@@ -564,7 +564,7 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Display = Display.None,
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
@@ -579,7 +579,7 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Display = Display.None,
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
@@ -716,7 +716,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -731,7 +731,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(30)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(30)),
                 }
             }
         )).Entity;
@@ -746,7 +746,7 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Display = Display.None,
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
@@ -761,7 +761,7 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Display = Display.None,
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
@@ -849,7 +849,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -878,7 +878,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(32)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(32)),
                 }
             }
         )).Entity;
@@ -894,11 +894,11 @@ public class UIDropdownTests
                 {
                     Display = Display.Flex,
                     Position = Position.Absolute,
-                    Inset = new Rect<LengthAuto>(
-                        LengthAuto.Px(0),
-                        LengthAuto.Auto,
-                        LengthAuto.Px(40),
-                        LengthAuto.Auto),
+                    Inset = new Rect<Length>(
+                        Length.Px(0),
+                        Length.Auto,
+                        Length.Px(40),
+                        Length.Auto),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -918,7 +918,7 @@ public class UIDropdownTests
                     Value = LayoutStyle.Default with
                     {
                         Display = Display.Flex,
-                        Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                        Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                     }
                 }
             )).Entity;
@@ -933,7 +933,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(100)),
                 }
             }
         )).Entity;
@@ -1111,7 +1111,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     FlexDirection = FlexDirection.Column,
                 }
             }
@@ -1138,7 +1138,7 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(32)),
+                    Size = new Size<Length>(Length.Px(200), Length.Px(32)),
                 }
             }
         )).Entity;
@@ -1152,11 +1152,11 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Position = Position.Absolute,
-                    Inset = new Rect<LengthAuto>(
-                        LengthAuto.Px(0),
-                        LengthAuto.Auto,
-                        LengthAuto.Px(40),
-                        LengthAuto.Auto),
+                    Inset = new Rect<Length>(
+                        Length.Px(0),
+                        Length.Auto,
+                        Length.Px(40),
+                        Length.Auto),
                     FlexDirection = FlexDirection.Column,
                     Padding = new Rect<Length>(
                         Length.Px(2), Length.Px(2),
@@ -1181,7 +1181,7 @@ public class UIDropdownTests
                 {
                     Value = LayoutStyle.Default with
                     {
-                        Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(28)),
+                        Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                         Padding = new Rect<Length>(
                             Length.Px(10), Length.Px(10),
                             Length.Px(4), Length.Px(4)),
@@ -1197,7 +1197,7 @@ public class UIDropdownTests
                 {
                     Value = LayoutStyle.Default with
                     {
-                        Size = new Size<Dimension>(Dimension.Percent(1f), Dimension.Percent(1f)),
+                        Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
                     }
                 }
             )).Entity;

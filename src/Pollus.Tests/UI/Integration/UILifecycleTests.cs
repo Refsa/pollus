@@ -33,7 +33,7 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root, child);
@@ -45,7 +45,7 @@ public class UILifecycleTests
         ref var style = ref world.Store.GetComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(80)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(80)),
         };
         world.Update();
 
@@ -68,7 +68,7 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root, child1);
@@ -82,7 +82,7 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(80), Dimension.Px(40)),
+                Size = new Size<Length>(Length.Px(80), Length.Px(40)),
             }}
         )).Entity;
         commands.AddChild(root, child2);
@@ -111,7 +111,7 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root, child);
@@ -145,7 +145,7 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         commands.AddChild(root, child);
@@ -161,7 +161,7 @@ public class UILifecycleTests
         ref var style = ref world.Store.GetComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
-            Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(80)),
+            Size = new Size<Length>(Length.Px(200), Length.Px(80)),
         };
         world.Update();
 
@@ -193,14 +193,14 @@ public class UILifecycleTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(100), Dimension.Px(50)),
+                Size = new Size<Length>(Length.Px(100), Length.Px(50)),
             }}
         )).Entity;
         var child2 = commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(80), Dimension.Px(40)),
+                Size = new Size<Length>(Length.Px(80), Length.Px(40)),
             }}
         )).Entity;
         commands.AddChild(root, child1);
@@ -235,14 +235,14 @@ public class UILifecycleTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Display = Display.None,
-                Size = new Size<Dimension>(Dimension.Px(200), Dimension.Px(100)),
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
             }}
         )).Entity;
         var child = commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Size = new Size<Dimension>(Dimension.Px(50), Dimension.Px(30)),
+                Size = new Size<Length>(Length.Px(50), Length.Px(30)),
             }}
         )).Entity;
         commands.AddChild(root, hiddenParent);
