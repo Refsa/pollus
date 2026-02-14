@@ -1,9 +1,8 @@
-namespace Pollus.Engine.UI;
+namespace Pollus.UI;
 
 using Pollus.ECS;
-using Pollus.Engine.Input;
+using Pollus.Input;
 using Pollus.Mathematics;
-using Pollus.UI;
 
 public static class UISliderSystem
 {

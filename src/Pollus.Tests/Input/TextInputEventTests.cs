@@ -1,5 +1,5 @@
 using Pollus.ECS;
-using Pollus.Engine.Input;
+using Pollus.Input;
 
 namespace Pollus.Tests.Input;
 

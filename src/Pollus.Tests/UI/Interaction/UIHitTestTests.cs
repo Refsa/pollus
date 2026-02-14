@@ -1,7 +1,6 @@
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine.Rendering;
-using Pollus.Engine.UI;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
@@ -16,8 +15,6 @@ public class UIHitTestTests
     {
         var world = new World();
         world.AddPlugin(new UIPlugin(), addDependencies: true);
-        world.Resources.Add(new UIHitTestResult());
-        world.Resources.Add(new UIFocusState());
         world.Prepare();
         return world;
     }

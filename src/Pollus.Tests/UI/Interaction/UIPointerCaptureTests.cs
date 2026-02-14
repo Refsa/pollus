@@ -1,5 +1,4 @@
 using Pollus.ECS;
-using Pollus.Engine.UI;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
@@ -13,16 +12,6 @@ public class UIPointerCaptureTests
     {
         var world = new World();
         world.AddPlugin(new UIPlugin(), addDependencies: true);
-        world.Resources.Add(new UIHitTestResult());
-        world.Resources.Add(new UIFocusState());
-        world.Events.InitEvent<UIInteractionEvents.UIClickEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverEnterEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverExitEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIPressEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIReleaseEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIFocusEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIBlurEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIDragEvent>();
         world.Prepare();
         return world;
     }

@@ -1,8 +1,7 @@
-namespace Pollus.Engine.UI;
+namespace Pollus.UI;
 
 using Pollus.ECS;
-using Pollus.Engine.Input;
-using Pollus.UI;
+using Pollus.Input;
 
 public static class UIKeyboardRoutingSystem
 {

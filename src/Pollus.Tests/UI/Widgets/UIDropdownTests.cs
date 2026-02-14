@@ -1,6 +1,5 @@
 using Pollus.ECS;
-using Pollus.Engine.Input;
-using Pollus.Engine.UI;
+using Pollus.Input;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
@@ -15,17 +14,6 @@ public class UIDropdownTests
     {
         var world = new World();
         world.AddPlugin(new UIPlugin(), addDependencies: true);
-        world.Resources.Add(new UIHitTestResult());
-        world.Resources.Add(new UIFocusState());
-        world.Events.InitEvent<UIInteractionEvents.UIClickEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverEnterEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverExitEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIPressEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIReleaseEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIFocusEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIBlurEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIKeyDownEvent>();
-        world.Events.InitEvent<UIDropdownEvents.UIDropdownSelectionChanged>();
         world.Prepare();
         return world;
     }

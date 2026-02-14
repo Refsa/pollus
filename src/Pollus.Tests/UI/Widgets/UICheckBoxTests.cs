@@ -1,5 +1,4 @@
 using Pollus.ECS;
-using Pollus.Engine.UI;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
@@ -14,16 +13,6 @@ public class UICheckBoxTests
     {
         var world = new World();
         world.AddPlugin(new UIPlugin(), addDependencies: true);
-        world.Resources.Add(new UIHitTestResult());
-        world.Resources.Add(new UIFocusState());
-        world.Events.InitEvent<UIInteractionEvents.UIClickEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverEnterEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIHoverExitEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIPressEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIReleaseEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIFocusEvent>();
-        world.Events.InitEvent<UIInteractionEvents.UIBlurEvent>();
-        world.Events.InitEvent<UICheckBoxEvents.UICheckBoxEvent>();
         world.Prepare();
         return world;
     }
@@ -56,7 +45,7 @@ public class UICheckBoxTests
         var query = new Query(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIWidgetSystems.UpdateCheckBoxes(query, clickReader, world.Events);
+        UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
 
         var state = world.Store.GetComponent<UICheckBox>(checkBox);
         Assert.True(state.IsChecked);
@@ -90,7 +79,7 @@ public class UICheckBoxTests
         var query = new Query(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIWidgetSystems.UpdateCheckBoxes(query, clickReader, world.Events);
+        UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
 
         var state = world.Store.GetComponent<UICheckBox>(checkBox);
         Assert.False(state.IsChecked);
@@ -125,7 +114,7 @@ public class UICheckBoxTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var cbReader = world.Events.GetReader<UICheckBoxEvents.UICheckBoxEvent>()!;
 
-        UIWidgetSystems.UpdateCheckBoxes(query, clickReader, world.Events);
+        UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
 
         var events = cbReader.Read();
         Assert.Equal(1, events.Length);
@@ -164,7 +153,7 @@ public class UICheckBoxTests
         var query = new Query(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIWidgetSystems.UpdateCheckBoxes(query, clickReader, world.Events);
+        UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
 
         var bg = world.Store.GetComponent<BackgroundColor>(checkBox);
         Assert.Equal(checkedColor, bg.Color);
@@ -198,7 +187,7 @@ public class UICheckBoxTests
         var query = new Query(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIWidgetSystems.UpdateCheckBoxes(query, clickReader, world.Events);
+        UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
 
         var state = world.Store.GetComponent<UICheckBox>(checkBox);
         Assert.False(state.IsChecked);
