@@ -39,6 +39,6 @@ public class UIRenderPlugin : IPlugin
             }
         });
 
-        world.Schedule.AddSystems(CoreStage.PreRender, ExtractUIRectsSystem.Create());
+        world.Schedule.AddSystemSet<ExtractUIRectsSystem>();
     }
 }

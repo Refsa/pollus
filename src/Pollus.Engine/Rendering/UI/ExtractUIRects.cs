@@ -12,46 +12,46 @@ public record struct UIRenderResources
     public Handle<UIRectMaterial> Material;
 }
 
-public static class ExtractUIRectsSystem
+[SystemSet]
+public partial class ExtractUIRectsSystem
 {
-    public const string Label = "ExtractUIRects";
+    [System(nameof(ExtractUIRects))]
+    public static readonly SystemBuilderDescriptor ExtractUIRectsDescriptor = new()
+    {
+        Stage = CoreStage.PreRender,
+        RunsAfter = [RenderingPlugin.BeginFrameSystem],
+    };
 
-    public static ISystemBuilder Create() => FnSystem.Create(
-        new(Label)
+    static void ExtractUIRects(
+        UIRectBatches batches,
+        UIRenderResources resources,
+        Query query,
+        Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots)
+    {
+        batches.Reset();
+
+        uint sortIndex = 0;
+        var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
+
+        foreach (var root in qRoots)
         {
-            RunsAfter = [RenderingPlugin.BeginFrameSystem],
-        },
-        static (
-            UIRectBatches batches,
-            UIRenderResources resources,
-            Query query,
-            Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots) =>
+            var rootEntity = root.Entity;
+            ref readonly var rootComputed = ref root.Component1;
+
+            EmitNode(batches, resources.Material, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
+        }
+
+        // Render deferred absolute-positioned nodes on top of normal flow
+        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
         {
-            batches.Reset();
-
-            uint sortIndex = 0;
-            var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
-
-            foreach (var root in qRoots)
+            var entRef = query.GetEntity(deferredEntity);
+            if (entRef.Has<ComputedNode>())
             {
-                var rootEntity = root.Entity;
-                ref readonly var rootComputed = ref root.Component1;
-
-                EmitNode(batches, resources.Material, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
-            }
-
-            // Render deferred absolute-positioned nodes on top of normal flow
-            foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
-            {
-                var entRef = query.GetEntity(deferredEntity);
-                if (entRef.Has<ComputedNode>())
-                {
-                    ref var computed = ref entRef.Get<ComputedNode>();
-                    EmitNode(batches, resources.Material, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
-                }
+                ref var computed = ref entRef.Get<ComputedNode>();
+                EmitNode(batches, resources.Material, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
             }
         }
-    );
+    }
 
     static RectInt IntersectScissorRects(RectInt a, RectInt b)
     {
