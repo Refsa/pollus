@@ -1,7 +1,7 @@
+namespace Pollus.UI.Layout;
+
 using System.Buffers;
 using System.Runtime.CompilerServices;
-
-namespace Pollus.UI.Layout;
 
 public static partial class FlexLayout
 {

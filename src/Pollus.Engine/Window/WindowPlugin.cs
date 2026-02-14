@@ -3,9 +3,7 @@ namespace Pollus.Engine.Window;
 using Pollus.Mathematics;
 using Pollus.ECS;
 using Pollus.Engine.Platform;
-using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Windowing;
-using Pollus.Debugging;
 
 public static class WindowEvent
 {

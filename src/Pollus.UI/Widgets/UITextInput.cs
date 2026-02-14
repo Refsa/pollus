@@ -10,10 +10,8 @@ public enum UIInputFilterType
     Alphanumeric = 3,
 }
 
-public partial record struct UITextInput() : IComponent, IDefault<UITextInput>
+public partial record struct UITextInput() : IComponent
 {
-    public static UITextInput Default => new();
-
     public int CursorPosition;
     public UIInputFilterType Filter = UIInputFilterType.Any;
     public float CaretBlinkTimer;

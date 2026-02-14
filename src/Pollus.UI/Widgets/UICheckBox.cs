@@ -3,10 +3,8 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Utils;
 
-public partial record struct UICheckBox() : IComponent, IDefault<UICheckBox>
+public partial record struct UICheckBox() : IComponent
 {
-    public static UICheckBox Default => new();
-
     public bool IsChecked;
     public Color CheckedColor = new(0.2f, 0.6f, 1.0f, 1f);
     public Color UncheckedColor = new(0.8f, 0.8f, 0.8f, 1f);

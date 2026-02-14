@@ -1,12 +1,9 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
-using Pollus.Utils;
 
-public partial record struct UIDropdown() : IComponent, IDefault<UIDropdown>
+public partial record struct UIDropdown() : IComponent
 {
-    public static UIDropdown Default => new();
-
     public int SelectedIndex = -1;
     public bool IsOpen;
     public Entity PopupRootEntity = Entity.Null;
@@ -22,10 +19,8 @@ public class UIDropdownOptions
     public int Count => Labels.Count;
 }
 
-public partial record struct UIDropdownOptionTag() : IComponent, IDefault<UIDropdownOptionTag>
+public partial record struct UIDropdownOptionTag() : IComponent
 {
-    public static UIDropdownOptionTag Default => new();
-
     public Entity DropdownEntity = Entity.Null;
     public int OptionIndex;
 }
