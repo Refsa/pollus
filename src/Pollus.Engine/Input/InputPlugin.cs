@@ -1,9 +1,8 @@
 namespace Pollus.Engine.Input;
 
-using System.Diagnostics;
-using Pollus.ECS;
-using Pollus.Emscripten;
-using Pollus.Engine.Platform;
+using ECS;
+using Emscripten;
+using Platform;
 using Pollus.Input;
 
 public class InputPlugin : IPlugin
@@ -19,7 +18,8 @@ public class InputPlugin : IPlugin
         ResourceFetch<InputManager>.Register();
     }
 
-    public PluginDependency[] Dependencies => [
+    public PluginDependency[] Dependencies =>
+    [
         PluginDependency.From<PlatformEventsPlugin>(),
     ];
 

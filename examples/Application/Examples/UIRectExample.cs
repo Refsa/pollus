@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Engine.UI;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Engine;
@@ -23,8 +24,6 @@ public class UIRectExample : IExample
         .AddPlugins([
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
-            new UIRenderPlugin(),
-            new UITextPlugin(),
             new UIPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",

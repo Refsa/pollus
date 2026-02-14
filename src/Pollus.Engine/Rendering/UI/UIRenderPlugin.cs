@@ -11,7 +11,7 @@ public class UIRenderPlugin : IPlugin
     public PluginDependency[] Dependencies =>
     [
         PluginDependency.From<RenderingPlugin>(),
-        PluginDependency.From<UIPlugin>(),
+        PluginDependency.From<UISystemsPlugin>(),
     ];
 
     public void Apply(World world)

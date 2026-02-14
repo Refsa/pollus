@@ -1,7 +1,6 @@
 namespace Pollus.Engine.Platform;
 
 using Pollus.Collections;
-using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Emscripten;
 using Pollus.Graphics.SDL;
