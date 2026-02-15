@@ -1,7 +1,9 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
+using Pollus.UI.Layout;
 using Pollus.Utils;
+using LayoutStyle = Pollus.UI.Layout.Style;
 
 public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
 {
@@ -38,6 +40,22 @@ public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
         interactable = true;
         backgroundColor ??= new Color();
 
+        var indicatorColor = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
+        var indicator = commands.Spawn(Entity.With(
+            new UINode(),
+            new BackgroundColor { Color = indicatorColor },
+            new UIShape { Type = UIShapeType.Checkmark },
+            new UIStyle
+            {
+                Value = LayoutStyle.Default with
+                {
+                    Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
+                }
+            }
+        )).Entity;
+
+        checkBox.IndicatorEntity = indicator;
+
         var entity = commands.Spawn(Entity.With(
             new UINode(),
             checkBox,
@@ -45,6 +63,7 @@ public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
         )).Entity;
 
         Setup(entity);
+        commands.AddChild(entity, indicator);
 
         return entity;
     }

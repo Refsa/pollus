@@ -1,6 +1,7 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
+using Pollus.Utils;
 
 [SystemSet]
 public partial class UICheckBoxSystem
@@ -33,6 +34,12 @@ public partial class UICheckBoxSystem
             {
                 ref var bg = ref query.Get<BackgroundColor>(entity);
                 bg.Color = checkBox.IsChecked ? checkBox.CheckedColor : checkBox.UncheckedColor;
+            }
+
+            if (!checkBox.IndicatorEntity.IsNull && query.Has<BackgroundColor>(checkBox.IndicatorEntity))
+            {
+                ref var indicatorBg = ref query.Get<BackgroundColor>(checkBox.IndicatorEntity);
+                indicatorBg.Color = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
             }
 
             checkBoxWriter.Write(new UICheckBoxEvents.UICheckBoxEvent { Entity = entity, IsChecked = checkBox.IsChecked });

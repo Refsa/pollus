@@ -7,8 +7,10 @@ public partial record struct UIRadioButton() : IComponent
 {
     public int GroupId;
     public bool IsSelected;
+    public Entity IndicatorEntity = Entity.Null;
     public Color SelectedColor = new(0.2f, 0.6f, 1.0f, 1f);
     public Color UnselectedColor = new(0.8f, 0.8f, 0.8f, 1f);
+    public Color IndicatorColor = new(1f, 1f, 1f, 1f);
 }
 
 public static class UIRadioButtonEvents
