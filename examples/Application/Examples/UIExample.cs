@@ -717,10 +717,11 @@ public class UIExample : IExample
                             Inset = new Rect<Length>(
                                 Length.Px(0),
                                 Length.Auto,
-                                Length.Px(40), // below trigger (32px) + gap (8px)
+                                Length.Px(68),
                                 Length.Auto),
                             FlexDirection = FlexDirection.Column,
-                            MaxSize = new Size<Length>(Length.Auto, Length.Px(200)),
+                            MaxSize = new Size<Length>(Length.Px(200), Length.Px(300)),
+                            Size = new Size<Length>(Length.Auto, Length.Auto),
                             Padding = new Rect<Length>(
                                 Length.Px(2), Length.Px(2),
                                 Length.Px(2), Length.Px(2)),

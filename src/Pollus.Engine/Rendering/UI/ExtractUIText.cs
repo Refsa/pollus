@@ -35,7 +35,6 @@ public partial class ExtractUITextSystem
             EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
         }
 
-        // Render deferred absolute-positioned text on top of normal flow
         foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
         {
             var entRef = query.GetEntity(deferredEntity);
@@ -100,13 +99,11 @@ public partial class ExtractUITextSystem
             }
         }
 
-        // Skip children of zero-size nodes
-        if (size.X <= 0 && size.Y <= 0) return;
+        if (size is { X: <= 0, Y: <= 0 }) return;
 
         var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
 
-        // Compute scissor rect for children if this node has overflow != Visible
         var childScissor = scissor;
         var childAbsPos = absPos;
         if (entRef.Has<UIStyle>())
@@ -118,7 +115,6 @@ public partial class ExtractUITextSystem
             }
         }
 
-        // Apply scroll offset for children
         if (entRef.Has<UIScrollOffset>())
         {
             ref readonly var scroll = ref entRef.Get<UIScrollOffset>();
