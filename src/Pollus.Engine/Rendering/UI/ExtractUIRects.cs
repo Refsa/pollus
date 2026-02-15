@@ -15,14 +15,21 @@ public record struct UIRenderResources
 [SystemSet]
 public partial class ExtractUIRectsSystem
 {
+    class LocalData
+    {
+        public List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)> Deferred = new();
+    }
+
     [System(nameof(ExtractUIRects))]
     public static readonly SystemBuilderDescriptor ExtractUIRectsDescriptor = new()
     {
         Stage = CoreStage.PreRender,
         RunsAfter = [RenderingPlugin.BeginFrameSystem],
+        Locals = [Local.From(new LocalData())],
     };
 
     static void ExtractUIRects(
+        Local<LocalData> localData,
         UIRectBatches batches,
         UIRenderResources resources,
         Query query,
@@ -31,17 +38,16 @@ public partial class ExtractUIRectsSystem
         batches.Reset();
 
         uint sortIndex = 0;
-        var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
 
         foreach (var root in qRoots)
         {
             var rootEntity = root.Entity;
             ref readonly var rootComputed = ref root.Component1;
 
-            EmitNode(batches, resources.Material, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
+            EmitNode(batches, resources.Material, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, localData.Value.Deferred);
         }
 
-        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
+        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in localData.Value.Deferred)
         {
             var entRef = query.GetEntity(deferredEntity);
             if (entRef.Has<ComputedNode>())
@@ -50,6 +56,8 @@ public partial class ExtractUIRectsSystem
                 EmitNode(batches, resources.Material, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
             }
         }
+
+        localData.Value.Deferred.Clear();
     }
 
     static RectInt IntersectScissorRects(RectInt a, RectInt b)
@@ -78,11 +86,10 @@ public partial class ExtractUIRectsSystem
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
         var nodeIndex = sortIndex++;
+        var entRef = query.GetEntity(entity);
 
         if (size is { X: > 0, Y: > 0 })
         {
-            var entityRef = query.GetEntity(entity);
-
             var bgColor = Vec4f.Zero;
             var borderColor = Vec4f.Zero;
             var borderRadius = Vec4f.Zero;
@@ -91,30 +98,30 @@ public partial class ExtractUIRectsSystem
             bool hasBg = false;
             bool hasBorder = false;
 
-            if (entityRef.Has<BackgroundColor>())
+            if (entRef.Has<BackgroundColor>())
             {
-                var bg = entityRef.Get<BackgroundColor>();
+                var bg = entRef.Get<BackgroundColor>();
                 bgColor = bg.Color;
                 hasBg = true;
             }
 
-            if (entityRef.Has<BorderColor>())
+            if (entRef.Has<BorderColor>())
             {
-                var bc = entityRef.Get<BorderColor>();
+                var bc = entRef.Get<BorderColor>();
                 borderColor = ((Vec4f)bc.Top + (Vec4f)bc.Right + (Vec4f)bc.Bottom + (Vec4f)bc.Left) * 0.25f;
                 hasBorder = true;
             }
 
-            if (entityRef.Has<BorderRadius>())
+            if (entRef.Has<BorderRadius>())
             {
-                var br = entityRef.Get<BorderRadius>();
+                var br = entRef.Get<BorderRadius>();
                 borderRadius = new Vec4f(br.TopLeft, br.TopRight, br.BottomRight, br.BottomLeft);
             }
 
             float shapeType = 0f;
-            if (entityRef.Has<UIShape>())
+            if (entRef.Has<UIShape>())
             {
-                shapeType = (float)entityRef.Get<UIShape>().Type;
+                shapeType = (float)entRef.Get<UIShape>().Type;
             }
 
             if (hasBg || hasBorder)
@@ -135,8 +142,6 @@ public partial class ExtractUIRectsSystem
         }
 
         if (size is { X: <= 0, Y: <= 0 }) return;
-
-        var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
 
         var childScissor = scissor;

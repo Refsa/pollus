@@ -1,11 +1,11 @@
+namespace Pollus.Tests.UI.Widgets;
+
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using LayoutStyle = Pollus.UI.Layout.Style;
-
-namespace Pollus.Tests.UI.Widgets;
 
 public class UISliderTests
 {
@@ -48,15 +48,15 @@ public class UISliderTests
         var slider = new UISlider { Min = 0, Max = 100, Step = 0 };
 
         // Click at midpoint
-        var value = UISliderSystem.ComputeValueFromPosition(100f, 0f, 200f, slider);
+        var value = LayoutHelpers.ComputeValueFromPosition(100f, 0f, 200f, slider);
         Assert.Equal(50f, value, 0.5f);
 
         // Click at start
-        value = UISliderSystem.ComputeValueFromPosition(0f, 0f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(0f, 0f, 200f, slider);
         Assert.Equal(0f, value, 0.5f);
 
         // Click at end
-        value = UISliderSystem.ComputeValueFromPosition(200f, 0f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(200f, 0f, 200f, slider);
         Assert.Equal(100f, value, 0.5f);
     }
 
@@ -66,11 +66,11 @@ public class UISliderTests
         var slider = new UISlider { Min = 0, Max = 100, Step = 0 };
 
         // Beyond right edge
-        var value = UISliderSystem.ComputeValueFromPosition(300f, 0f, 200f, slider);
+        var value = LayoutHelpers.ComputeValueFromPosition(300f, 0f, 200f, slider);
         Assert.Equal(100f, value, 0.5f);
 
         // Beyond left edge
-        value = UISliderSystem.ComputeValueFromPosition(-50f, 0f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(-50f, 0f, 200f, slider);
         Assert.Equal(0f, value, 0.5f);
     }
 
@@ -80,11 +80,11 @@ public class UISliderTests
         var slider = new UISlider { Min = 0, Max = 100, Step = 10 };
 
         // Click at 33% → should snap to 30
-        var value = UISliderSystem.ComputeValueFromPosition(66f, 0f, 200f, slider);
+        var value = LayoutHelpers.ComputeValueFromPosition(66f, 0f, 200f, slider);
         Assert.Equal(30f, value, 5f);
 
         // Click at 75% → should snap to 70 or 80
-        value = UISliderSystem.ComputeValueFromPosition(150f, 0f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(150f, 0f, 200f, slider);
         Assert.True(value is 70f or 80f, $"Expected 70 or 80, got {value}");
     }
 
@@ -95,15 +95,15 @@ public class UISliderTests
         var slider = new UISlider { Min = 0, Max = 100, Step = 0 };
 
         // Click at absolute X=400 → midpoint of the track → should be 50
-        var value = UISliderSystem.ComputeValueFromPosition(400f, 300f, 200f, slider);
+        var value = LayoutHelpers.ComputeValueFromPosition(400f, 300f, 200f, slider);
         Assert.Equal(50f, value, 0.5f);
 
         // Click at absolute X=300 → start of the track → should be 0
-        value = UISliderSystem.ComputeValueFromPosition(300f, 300f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(300f, 300f, 200f, slider);
         Assert.Equal(0f, value, 0.5f);
 
         // Click at absolute X=500 → end of the track → should be 100
-        value = UISliderSystem.ComputeValueFromPosition(500f, 300f, 200f, slider);
+        value = LayoutHelpers.ComputeValueFromPosition(500f, 300f, 200f, slider);
         Assert.Equal(100f, value, 0.5f);
     }
 

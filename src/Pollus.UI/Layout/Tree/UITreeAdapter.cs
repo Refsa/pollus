@@ -1,8 +1,9 @@
+namespace Pollus.UI.Layout;
+
 using System.Buffers;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Pollus.ECS;
-
-namespace Pollus.UI.Layout;
 
 public struct SyncStats
 {
@@ -12,7 +13,7 @@ public struct SyncStats
     public int HierarchyRebuilds;
 }
 
-public class UITreeAdapter : ILayoutTree
+public sealed class UITreeAdapter : ILayoutTree
 {
     const int InitialCapacity = 16;
 
@@ -32,7 +33,13 @@ public class UITreeAdapter : ILayoutTree
 
     int _nodeCapacity;
 
-    readonly Dictionary<Entity, int> _entityToNode = [];
+    // Entity.ID → nodeId mapping (-1 = unmapped). Replaces Dictionary for O(1) array lookup.
+    int[] _entityMap = new int[InitialCapacity];
+    int _entityMapCapacity = InitialCapacity;
+
+    // Ordered list of active entities for fast iteration (replaces dictionary enumeration)
+    readonly List<Entity> _activeEntities = [];
+
     readonly Dictionary<Entity, MeasureFunc> _entityMeasureFuncs = [];
 
     readonly List<int> _roots = [];
@@ -40,6 +47,7 @@ public class UITreeAdapter : ILayoutTree
 
     // Reusable temp collections to avoid per-frame allocation
     readonly HashSet<Entity> _tempAlive = [];
+    readonly List<Entity> _tempAliveList = [];
     readonly List<Entity> _tempRemove = [];
 
     readonly Dictionary<Entity, Size<float>> _lastRootSizes = [];
@@ -56,13 +64,16 @@ public class UITreeAdapter : ILayoutTree
     /// Clears the global dirty flag after layout has been computed and written back.
     public void ClearDirty() => _globalDirty = false;
 
-    public ReadOnlySpan<int> Roots => System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_roots);
+    public ReadOnlySpan<int> Roots => CollectionsMarshal.AsSpan(_roots);
+
+    public ReadOnlySpan<Entity> ActiveEntities => CollectionsMarshal.AsSpan(_activeEntities);
 
     public UITreeAdapter()
     {
         // Initialize all parent nodes to -1 and entities to Null
         Array.Fill(_parentNode, -1);
         Array.Fill(_nodeToEntity, Entity.Null);
+        Array.Fill(_entityMap, -1);
         for (int i = 0; i < InitialCapacity; i++)
             _caches[i] = new LayoutCache();
     }
@@ -106,6 +117,21 @@ public class UITreeAdapter : ILayoutTree
         Array.Copy(old, array, old.Length);
     }
 
+    void EnsureEntityMapCapacity(int minCapacity)
+    {
+        if (minCapacity <= _entityMapCapacity) return;
+        int newCap = Math.Max(_entityMapCapacity * 2, minCapacity);
+        var old = _entityMap;
+        _entityMap = new int[newCap];
+        Array.Copy(old, _entityMap, old.Length);
+        Array.Fill(_entityMap, -1, old.Length, newCap - old.Length);
+        _entityMapCapacity = newCap;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    bool HasEntityMapping(Entity entity) =>
+        entity.ID >= 0 && entity.ID < _entityMapCapacity && _entityMap[entity.ID] >= 0;
+
     int AllocateNode()
     {
         int id = _nodeCapacity;
@@ -139,6 +165,7 @@ public class UITreeAdapter : ILayoutTree
             _childCounts[nodeId] = 0;
             return nodeId;
         }
+
         return AllocateNode();
     }
 
@@ -158,101 +185,111 @@ public class UITreeAdapter : ILayoutTree
         _syncStats = default;
 
         // Phase 1: Discover currently alive UINode entities
-        // Uses typed Query<UINode> — only iterates archetypes containing UINode
+        // Collect into both HashSet (for O(1) Contains) and List (for fast iteration)
         _tempAlive.Clear();
-        uiNodeQuery.ForEach((in Entity entity, ref UINode _) =>
-        {
-            _tempAlive.Add(entity);
-        });
+        _tempAliveList.Clear();
+        uiNodeQuery.ForEach((_tempAlive, _tempAliveList),
+            static (in (HashSet<Entity> set, List<Entity> list) ctx, in Entity entity, ref UINode _) =>
+            {
+                ctx.set.Add(entity);
+                ctx.list.Add(entity);
+            });
 
         // Phase 2: Remove nodes for despawned entities
         _tempRemove.Clear();
-        foreach (var (entity, _) in _entityToNode)
+        var activeSpan = CollectionsMarshal.AsSpan(_activeEntities);
+        for (int i = 0; i < activeSpan.Length; i++)
         {
-            if (!_tempAlive.Contains(entity))
-                _tempRemove.Add(entity);
+            if (!_tempAlive.Contains(activeSpan[i]))
+                _tempRemove.Add(activeSpan[i]);
         }
+
         foreach (var entity in _tempRemove)
         {
-            int nodeId = _entityToNode[entity];
+            int nodeId = _entityMap[entity.ID];
 
             // Mark old parent dirty — its children list is changing
             int oldParentId = _parentNode[nodeId];
             if (oldParentId >= 0)
                 MarkDirtyWithAncestors(oldParentId);
 
-            _entityToNode.Remove(entity);
+            _entityMap[entity.ID] = -1;
             _lastRootSizes.Remove(entity);
             FreeNode(nodeId);
             _syncStats.NodesRemoved++;
             _hierarchyDirty = true;
         }
 
-        // Phase 3: Add nodes for new entities
-        foreach (var entity in _tempAlive)
+        // Phase 3+4 merged: Add new entities and sync styles in one pass
+        // Rebuild _activeEntities from the alive list
+        _activeEntities.Clear();
+        var aliveSpan = CollectionsMarshal.AsSpan(_tempAliveList);
+        for (int ai = 0; ai < aliveSpan.Length; ai++)
         {
-            if (_entityToNode.ContainsKey(entity)) continue;
+            var entity = aliveSpan[ai];
+            _activeEntities.Add(entity);
 
-            int nodeId = AllocateOrReuseNode();
-            _nodeToEntity[nodeId] = entity;
-            _entityToNode[entity] = nodeId;
-
-            if (query.Has<UIStyle>(entity))
-                _styles[nodeId] = query.Get<UIStyle>(entity).Value;
-
-            if (query.Has<ContentSize>(entity)
-                && _entityMeasureFuncs.TryGetValue(entity, out var measureFunc))
+            if (!HasEntityMapping(entity))
             {
-                _hasMeasure[nodeId] = true;
-                _nodeMeasureFuncs[nodeId] = measureFunc;
-            }
+                // New entity — allocate node and set initial state
+                int nodeId = AllocateOrReuseNode();
+                _nodeToEntity[nodeId] = entity;
+                EnsureEntityMapCapacity(entity.ID + 1);
+                _entityMap[entity.ID] = nodeId;
 
-            MarkDirtyWithAncestors(nodeId);
-            _syncStats.NodesAdded++;
-            _hierarchyDirty = true;
-        }
+                if (query.Has<UIStyle>(entity))
+                    _styles[nodeId] = query.Get<UIStyle>(entity).Value;
 
-        // Phase 4: Sync styles for existing entities (structural comparison)
-        foreach (var entity in _tempAlive)
-        {
-            int nodeId = _entityToNode[entity];
-
-            if (query.Has<UIStyle>(entity))
-            {
-                var ecsStyle = query.Get<UIStyle>(entity).Value;
-                if (!_styles[nodeId].Equals(ecsStyle))
+                if (query.Has<ContentSize>(entity)
+                    && _entityMeasureFuncs.TryGetValue(entity, out var measureFunc))
                 {
-                    _styles[nodeId] = ecsStyle;
-                    MarkDirtyWithAncestors(nodeId);
-                    _syncStats.StylesCopied++;
+                    _hasMeasure[nodeId] = true;
+                    _nodeMeasureFuncs[nodeId] = measureFunc;
                 }
+
+                MarkDirtyWithAncestors(nodeId);
+                _syncStats.NodesAdded++;
+                _hierarchyDirty = true;
+                continue;
             }
 
-            _entityMeasureFuncs.TryGetValue(entity, out var mf);
-            bool shouldHaveMeasure = query.Has<ContentSize>(entity) && mf is not null;
-            if (shouldHaveMeasure != _hasMeasure[nodeId])
+            // Existing entity — sync style, measure func, and detect hierarchy changes
             {
-                _hasMeasure[nodeId] = shouldHaveMeasure;
-                _nodeMeasureFuncs[nodeId] = shouldHaveMeasure ? mf : null;
-                MarkDirtyWithAncestors(nodeId);
-            }
-            else if (shouldHaveMeasure && _nodeMeasureFuncs[nodeId] != mf)
-            {
-                _nodeMeasureFuncs[nodeId] = mf;
-                MarkDirtyWithAncestors(nodeId);
-            }
-        }
+                int nodeId = _entityMap[entity.ID];
 
-        // Phase 4b: Detect ECS hierarchy changes that need a rebuild
-        if (!_hierarchyDirty)
-        {
-            foreach (var (entity, _) in _entityToNode)
-            {
-                if ((query.Has<Parent>(entity) && query.Changed<Parent>(entity))
-                    || (query.Has<Child>(entity) && query.Changed<Child>(entity)))
+                if (query.Has<UIStyle>(entity))
                 {
-                    _hierarchyDirty = true;
-                    break;
+                    var ecsStyle = query.Get<UIStyle>(entity).Value;
+                    if (!_styles[nodeId].Equals(ecsStyle))
+                    {
+                        _styles[nodeId] = ecsStyle;
+                        MarkDirtyWithAncestors(nodeId);
+                        _syncStats.StylesCopied++;
+                    }
+                }
+
+                _entityMeasureFuncs.TryGetValue(entity, out var mf);
+                bool shouldHaveMeasure = query.Has<ContentSize>(entity) && mf is not null;
+                if (shouldHaveMeasure != _hasMeasure[nodeId])
+                {
+                    _hasMeasure[nodeId] = shouldHaveMeasure;
+                    _nodeMeasureFuncs[nodeId] = shouldHaveMeasure ? mf : null;
+                    MarkDirtyWithAncestors(nodeId);
+                }
+                else if (shouldHaveMeasure && _nodeMeasureFuncs[nodeId] != mf)
+                {
+                    _nodeMeasureFuncs[nodeId] = mf;
+                    MarkDirtyWithAncestors(nodeId);
+                }
+
+                // Hierarchy change detection (needs to run before hierarchy rebuild)
+                if (!_hierarchyDirty)
+                {
+                    if ((query.Has<Parent>(entity) && query.Changed<Parent>(entity))
+                        || (query.Has<Child>(entity) && query.Changed<Child>(entity)))
+                    {
+                        _hierarchyDirty = true;
+                    }
                 }
             }
         }
@@ -272,15 +309,18 @@ public class UITreeAdapter : ILayoutTree
                 Array.Fill(_childCounts, 0, 0, capacity);
 
                 // Pass 1: count children per parent
-                foreach (var (entity, nodeId) in _entityToNode)
+                activeSpan = CollectionsMarshal.AsSpan(_activeEntities);
+                for (int i = 0; i < activeSpan.Length; i++)
                 {
+                    var entity = activeSpan[i];
+                    int nodeId = _entityMap[entity.ID];
                     if (!query.Has<Parent>(entity)) continue;
 
                     ref readonly var parent = ref query.Get<Parent>(entity);
                     var childEntity = parent.FirstChild;
                     while (!childEntity.IsNull)
                     {
-                        if (_entityToNode.ContainsKey(childEntity))
+                        if (HasEntityMapping(childEntity))
                             _childCounts[nodeId]++;
 
                         if (!query.Has<Child>(childEntity)) break;
@@ -304,16 +344,19 @@ public class UITreeAdapter : ILayoutTree
                 Array.Fill(_childCounts, 0, 0, capacity);
 
                 // Pass 2: write child IDs into flat buffer
-                foreach (var (entity, nodeId) in _entityToNode)
+                for (int i = 0; i < activeSpan.Length; i++)
                 {
+                    var entity = activeSpan[i];
+                    int nodeId = _entityMap[entity.ID];
                     if (!query.Has<Parent>(entity)) continue;
 
                     ref readonly var parent = ref query.Get<Parent>(entity);
                     var childEntity = parent.FirstChild;
                     while (!childEntity.IsNull)
                     {
-                        if (_entityToNode.TryGetValue(childEntity, out int childNodeId))
+                        if (HasEntityMapping(childEntity))
                         {
+                            int childNodeId = _entityMap[childEntity.ID];
                             _childBuffer[_childOffsets[nodeId] + _childCounts[nodeId]] = childNodeId;
                             _childCounts[nodeId]++;
                         }
@@ -354,10 +397,13 @@ public class UITreeAdapter : ILayoutTree
         }
 
         // Phase 6+7 merged: Detect roots and mark dirty from ECS flags
-        // Root detection must always run (roots list was cleared or may change)
         _roots.Clear();
-        foreach (var (entity, nodeId) in _entityToNode)
+        activeSpan = CollectionsMarshal.AsSpan(_activeEntities);
+        for (int i = 0; i < activeSpan.Length; i++)
         {
+            var entity = activeSpan[i];
+            int nodeId = _entityMap[entity.ID];
+
             // Root detection
             bool isRoot;
             if (!query.Has<Child>(entity))
@@ -367,7 +413,7 @@ public class UITreeAdapter : ILayoutTree
             else
             {
                 ref readonly var child = ref query.Get<Child>(entity);
-                isRoot = child.Parent.IsNull || !_entityToNode.ContainsKey(child.Parent);
+                isRoot = child.Parent.IsNull || !HasEntityMapping(child.Parent);
             }
 
             if (isRoot)
@@ -422,13 +468,10 @@ public class UITreeAdapter : ILayoutTree
         {
             return false;
         }
+
         _lastRootSizes[rootEntity] = newSize;
         return true;
     }
-
-    /// Enumerates active (entity, nodeId) pairs for write-back.
-    public Dictionary<Entity, int>.Enumerator GetActiveNodes() =>
-        _entityToNode.GetEnumerator();
 
     public Entity GetEntity(int nodeId) => _nodeToEntity[nodeId];
 
@@ -438,11 +481,12 @@ public class UITreeAdapter : ILayoutTree
     public ref NodeLayout GetUnroundedLayout(int nodeId) =>
         ref _unroundedLayouts[nodeId];
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetNodeId(Entity entity) =>
-        _entityToNode.TryGetValue(entity, out int id) ? id : -1;
+        entity.ID >= 0 && entity.ID < _entityMapCapacity ? _entityMap[entity.ID] : -1;
 
     public int NodeCapacity => _nodeCapacity;
-    public int ActiveNodeCount => _entityToNode.Count;
+    public int ActiveNodeCount => _activeEntities.Count;
 
     public int ChildCount(int nodeId) => _childCounts[nodeId];
 
@@ -463,8 +507,8 @@ public class UITreeAdapter : ILayoutTree
 
     public LayoutOutput ComputeChildLayout(int nodeId, in LayoutInput input)
     {
-        var self = this;
-        return FlexLayout.ComputeFlexbox(ref self, nodeId, input);
+        var treeRef = new UITreeRef(this);
+        return FlexLayout.ComputeFlexbox(ref treeRef, nodeId, input);
     }
 
     public void SetMeasureFunc(Entity entity, MeasureFunc func)

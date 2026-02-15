@@ -44,7 +44,15 @@ public partial class UITextInputSystem
             {
                 if (PassesFilter(ch, input.Filter, text, input.CursorPosition))
                 {
-                    text = text.Insert(input.CursorPosition, ch.ToString());
+                    // Single allocation via string.Create instead of ch.ToString() + string.Insert()
+                    int pos = input.CursorPosition;
+                    text = string.Create(text.Length + 1, (text, pos, ch),
+                        static (span, state) =>
+                        {
+                            state.text.AsSpan(0, state.pos).CopyTo(span);
+                            span[state.pos] = state.ch;
+                            state.text.AsSpan(state.pos).CopyTo(span[(state.pos + 1)..]);
+                        });
                     input.CursorPosition++;
                     changed = true;
                 }

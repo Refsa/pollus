@@ -1,8 +1,8 @@
+namespace Pollus.UI;
+
 using Pollus.ECS;
 using Pollus.Mathematics;
 using Pollus.UI.Layout;
-
-namespace Pollus.UI;
 
 [SystemSet]
 public partial class UILayoutSystem
@@ -68,7 +68,9 @@ public partial class UILayoutSystem
                 ),
             };
 
-            var output = adapter.ComputeChildLayout(rootNodeId, input);
+            // Use UITreeRef struct for AOT-friendly devirtualized layout calls
+            var treeRef = new UITreeRef(adapter);
+            var output = FlexLayout.ComputeFlexbox(ref treeRef, rootNodeId, input);
 
             // ComputeFlexbox doesn't write the root's own layout -- resolve here.
             var rootPadding = LayoutHelpers.ResolvePadding(rootStyle, parentSz);
@@ -86,8 +88,8 @@ public partial class UILayoutSystem
             // Snapshot unrounded layout before RoundLayout modifies it
             adapter.GetUnroundedLayout(rootNodeId) = rootLayout;
 
-            var tree = adapter;
-            RoundLayout.Round(ref tree, rootNodeId);
+            treeRef = new UITreeRef(adapter);
+            RoundLayout.Round(ref treeRef, rootNodeId);
         }
     }
 
@@ -95,10 +97,10 @@ public partial class UILayoutSystem
     {
         if (!adapter.IsDirty) return;
 
-        var enumerator = adapter.GetActiveNodes();
-        while (enumerator.MoveNext())
+        foreach (var entity in adapter.ActiveEntities)
         {
-            var (entity, nodeId) = enumerator.Current;
+            int nodeId = adapter.GetNodeId(entity);
+            if (nodeId < 0) continue;
             if (!query.Has<ComputedNode>(entity)) continue;
 
             ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);

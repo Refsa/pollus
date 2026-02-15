@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using Engine.Debug;
 using Pollus.ECS;
 using Pollus.Engine;
 using Pollus.Assets;
@@ -23,6 +24,7 @@ public class UIExample : IExample
             new AssetPlugin { RootPath = "assets" },
             new RenderingPlugin(),
             new UIPlugin(),
+            new PerformanceTrackerPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",
             static (Commands commands, Resources resources, AssetServer assetServer, Assets<UIRectMaterial> materials, IWindow window) =>

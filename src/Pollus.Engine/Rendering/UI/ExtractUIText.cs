@@ -10,14 +10,21 @@ using Pollus.Utils;
 [SystemSet]
 public partial class ExtractUITextSystem
 {
+    class LocalData
+    {
+        public List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)> Deferred = new();
+    }
+
     [System(nameof(ExtractUIText))]
     public static readonly SystemBuilderDescriptor ExtractUITextDescriptor = new()
     {
         Stage = CoreStage.PreRender,
         RunsAfter = [ExtractUIRectsSystem.ExtractUIRectsDescriptor.Label],
+        Locals = [Local.From(new LocalData())],
     };
 
     static void ExtractUIText(
+        Local<LocalData> localData,
         UIFontBatches batches,
         Query query,
         Query<UILayoutRoot, ComputedNode>.Filter<All<UINode>> qRoots)
@@ -25,17 +32,16 @@ public partial class ExtractUITextSystem
         batches.Reset();
 
         uint sortIndex = 0;
-        var deferred = new List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>();
 
         foreach (var root in qRoots)
         {
             var rootEntity = root.Entity;
             ref readonly var rootComputed = ref root.Component1;
 
-            EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
+            EmitNode(batches, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, localData.Value.Deferred);
         }
 
-        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
+        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in localData.Value.Deferred)
         {
             var entRef = query.GetEntity(deferredEntity);
             if (entRef.Has<ComputedNode>())
@@ -44,6 +50,8 @@ public partial class ExtractUITextSystem
                 EmitNode(batches, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
             }
         }
+
+        localData.Value.Deferred.Clear();
     }
 
     static RectInt IntersectScissorRects(RectInt a, RectInt b)
@@ -71,17 +79,16 @@ public partial class ExtractUITextSystem
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
         var nodeIndex = sortIndex++;
+        var entRef = query.GetEntity(entity);
 
         if (size.X > 0 && size.Y > 0)
         {
-            var entityRef = query.GetEntity(entity);
-
             // Emit text if entity has UIText + TextMesh + UITextFont
-            if (entityRef.Has<UIText>() && entityRef.Has<TextMesh>() && entityRef.Has<UITextFont>())
+            if (entRef.Has<UIText>() && entRef.Has<TextMesh>() && entRef.Has<UITextFont>())
             {
-                ref readonly var textMesh = ref entityRef.Get<TextMesh>();
-                ref readonly var textFont = ref entityRef.Get<UITextFont>();
-                ref readonly var uiText = ref entityRef.Get<UIText>();
+                ref readonly var textMesh = ref entRef.Get<TextMesh>();
+                ref readonly var textFont = ref entRef.Get<UITextFont>();
+                ref readonly var uiText = ref entRef.Get<UIText>();
 
                 if (textMesh.Mesh != Handle<TextMeshAsset>.Null && textFont.Material != Handle.Null)
                 {
@@ -100,8 +107,6 @@ public partial class ExtractUITextSystem
         }
 
         if (size is { X: <= 0, Y: <= 0 }) return;
-
-        var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
 
         var childScissor = scissor;
