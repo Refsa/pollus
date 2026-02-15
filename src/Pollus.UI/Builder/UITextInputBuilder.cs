@@ -70,13 +70,12 @@ public class UITextInputBuilder : UINodeBuilder<UITextInputBuilder>
 
         textInput.TextEntity = textEntity;
 
+        interactable = true;
+        backgroundColor ??= new Color();
+
         var entity = commands.Spawn(Entity.With(
             new UINode(),
-            new UIInteraction { Focusable = focusable },
             textInput,
-            backgroundColor.HasValue
-                ? new BackgroundColor { Color = backgroundColor.Value }
-                : new BackgroundColor(),
             new UIStyle { Value = style }
         )).Entity;
 
@@ -91,23 +90,7 @@ public class UITextInputBuilder : UINodeBuilder<UITextInputBuilder>
             bufs.Set(capturedEntity, capturedText);
         });
 
-        if (borderColor.HasValue)
-            commands.AddComponent(entity, borderColor.Value);
-
-        if (borderRadius.HasValue)
-            commands.AddComponent(entity, borderRadius.Value);
-
-        if (boxShadow.HasValue)
-            commands.AddComponent(entity, boxShadow.Value);
-
-        if (parentEntity.HasValue)
-            commands.AddChild(parentEntity.Value, entity);
-
-        if (children != null)
-        {
-            foreach (var child in children)
-                commands.AddChild(entity, child);
-        }
+        Setup(entity);
 
         return new TextInputResult { Entity = entity, TextEntity = textEntity };
     }

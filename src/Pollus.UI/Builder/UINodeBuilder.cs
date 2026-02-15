@@ -308,20 +308,29 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
             new UIStyle { Value = style }
         )).Entity;
 
+        Setup(entity);
+
+        return entity;
+    }
+
+    protected void Setup(Entity entity)
+    {
+        AddComponents(entity);
+        AddVisualComponents(entity);
+        SetupHierarchy(entity);
+    }
+
+    protected void AddComponents(Entity entity)
+    {
         if (interactable)
         {
-            commands.AddComponent(entity, new UIInteraction());
+            commands.AddComponent(entity, new UIInteraction { Focusable = focusable });
         }
 
         if (style.Overflow.X is Layout.Overflow.Scroll || style.Overflow.Y is Layout.Overflow.Scroll)
         {
             commands.AddComponent(entity, new UIScrollOffset());
         }
-
-        AddVisualComponents(entity);
-        SetupHierarchy(entity);
-
-        return entity;
     }
 
     protected void AddVisualComponents(Entity entity)

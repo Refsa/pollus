@@ -48,26 +48,16 @@ public class UISliderBuilder : UINodeBuilder<UISliderBuilder>
 
     public new SliderResult Spawn()
     {
+        interactable = true;
+        backgroundColor ??= new Color();
+
         var entity = commands.Spawn(Entity.With(
             new UINode(),
-            new UIInteraction { Focusable = focusable },
             slider,
-            backgroundColor.HasValue
-                ? new BackgroundColor { Color = backgroundColor.Value }
-                : new BackgroundColor(),
             new UIStyle { Value = style }
         )).Entity;
 
-        if (borderColor.HasValue)
-            commands.AddComponent(entity, borderColor.Value);
-
-        if (borderRadius.HasValue)
-            commands.AddComponent(entity, borderRadius.Value);
-
-        if (boxShadow.HasValue)
-            commands.AddComponent(entity, boxShadow.Value);
-
-        SetupHierarchy(entity);
+        Setup(entity);
 
         return new SliderResult { Entity = entity };
     }
