@@ -182,32 +182,20 @@ public class UIExample : IExample
                 }
 
                 // --- CheckBox section ---
-                var checkSection = UI.Panel(commands)
+                _ = UI.Panel(commands)
                     .FlexColumn().Gap(8)
                     .ChildOf(mainPanel)
                     .Children(
-                        UI.Text(commands, "Checkboxes", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn()
+                        UI.Text(commands, "Checkboxes", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                        UI.CheckBoxGroup(commands, fontHandle)
+                            .FlexColumn().Gap(6)
+                            .Checked(1)
+                            .Option("Enable notifications")
+                            .Option("Dark mode")
+                            .Option("Auto-save")
+                            .Spawn()
                     )
                     .Spawn();
-
-                string[] checkLabels = ["Enable notifications", "Dark mode", "Auto-save"];
-                for (int i = 0; i < checkLabels.Length; i++)
-                {
-                    _ = UI.Panel(commands)
-                        .FlexRow().AlignItems(AlignItems.Center).Gap(8)
-                        .ChildOf(checkSection)
-                        .Children(
-                            UI.CheckBox(commands)
-                                .IsChecked(i == 2)
-                                .Size(22, 22)
-                                .Background(i == 2 ? new Color(0.2f, 0.6f, 1.0f, 1f) : new Color(0.8f, 0.8f, 0.8f, 1f))
-                                .Focusable()
-                                .BorderRadius(4)
-                                .Spawn(),
-                            UI.Text(commands, checkLabels[i], fontHandle).FontSize(13f).Spawn()
-                        )
-                        .Spawn();
-                }
 
                 // --- RadioButton section ---
                 _ = UI.Panel(commands)
@@ -215,13 +203,12 @@ public class UIExample : IExample
                     .ChildOf(mainPanel)
                     .Children(
                         UI.Text(commands, "Priority", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
-                        UI.RadioGroup(commands, 0, fontHandle)
+                        UI.RadioGroup(commands, fontHandle)
+                            .FlexColumn().Gap(6)
                             .Option("Low")
                             .Option("Medium")
                             .Option("High")
                             .Selected(1)
-                            .FlexColumn()
-                            .Gap(6)
                             .Spawn()
                     )
                     .Spawn();

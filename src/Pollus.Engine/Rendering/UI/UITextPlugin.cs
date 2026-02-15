@@ -148,12 +148,9 @@ public partial class UITextSystemSet
             var capturedText = uiText.Text;
             var capturedSize = uiText.Size;
             var capturedFont = fontAsset;
-
             adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
             {
-                float maxWidth = knownDimensions.Width
-                                 ?? availableSpace.Width.AsDefinite()
-                                 ?? 0f;
+                float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
                 var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
                 return new Size<float>(
                     knownDimensions.Width ?? measured.X,

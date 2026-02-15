@@ -94,7 +94,7 @@ public partial class TextBuilder
 
             if (c == ' ')
             {
-                cursorX += advance;
+                cursorX = float.Round(cursorX + advance);
                 wordStartX = cursorX;
             }
             else
@@ -103,13 +103,13 @@ public partial class TextBuilder
                 {
                     // Wrap: current word moves to new line
                     maxLineWidth = float.Max(maxLineWidth, wordStartX);
-                    cursorX = (cursorX - wordStartX) + advance;
+                    cursorX = float.Round((cursorX - wordStartX) + advance);
                     wordStartX = 0f;
                     lineCount++;
                 }
                 else
                 {
-                    cursorX += advance;
+                    cursorX = float.Round(cursorX + advance);
                 }
             }
         }
@@ -282,8 +282,8 @@ public partial class TextBuilder
                 // Word wrapping: at word boundary, measure full word and wrap if needed
                 if (maxWidth > 0f && c != ' ' && atWordStart)
                 {
-                    float wordWidth = glyph.Advance * scale + MeasureRemainingWord();
-                    if (cursorX + wordWidth > maxWidth && cursorX > startPos.X)
+                    float wordEnd = MeasureWordEnd(cursorX, glyph.Advance * scale);
+                    if (wordEnd > maxWidth && cursorX > startPos.X)
                     {
                         cursorX = startPos.X;
                         if (mode == TextCoordinateMode.YDown)
@@ -398,9 +398,11 @@ public partial class TextBuilder
             return false;
         }
 
-        float MeasureRemainingWord()
+        /// Predicts the cursor position after rendering the current word,
+        /// using the same float.Round accumulation as the actual rendering.
+        float MeasureWordEnd(float cursor, float firstAdvance)
         {
-            float width = 0f;
+            cursor = float.Round(cursor + firstAdvance);
             int i = textIndex;
 
             while (i < textLength)
@@ -439,11 +441,11 @@ public partial class TextBuilder
                 glyphKey.Character = c;
                 if (font.Glyphs.TryGetValue(glyphKey, out var glyph))
                 {
-                    width += glyph.Advance * scale;
+                    cursor = float.Round(cursor + glyph.Advance * scale);
                 }
             }
 
-            return width;
+            return cursor;
         }
     }
 }

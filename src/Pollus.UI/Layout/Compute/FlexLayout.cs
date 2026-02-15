@@ -617,7 +617,7 @@ public static partial class FlexLayout
                     KnownDimensions = Size<float?>.Zero,
                     ParentSize = nodeInnerSize,
                     AvailableSpace = Size<AvailableSpace>.FromMainCross(dir,
-                        availableSpaceMain,
+                        AvailableSpace.MaxContent,
                         childAvailCross),
                 };
 

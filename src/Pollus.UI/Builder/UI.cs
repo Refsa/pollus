@@ -17,11 +17,15 @@ public static class UI
 
     public static UICheckBoxBuilder CheckBox(Commands commands) => new(commands);
 
-    public static UIRadioButtonBuilder RadioButton(Commands commands, int groupId) => new(commands, groupId);
+    public static UICheckBoxGroupBuilder CheckBoxGroup(Commands commands) => new(commands);
 
-    public static UIRadioGroupBuilder RadioGroup(Commands commands, int groupId) => new(commands, groupId);
+    public static UICheckBoxGroupBuilder CheckBoxGroup(Commands commands, Handle font) => new UICheckBoxGroupBuilder(commands).Font(font);
 
-    public static UIRadioGroupBuilder RadioGroup(Commands commands, int groupId, Handle font) => new UIRadioGroupBuilder(commands, groupId).Font(font);
+    public static UIRadioButtonBuilder RadioButton(Commands commands, int? groupId = null) => new(commands, groupId);
+
+    public static UIRadioGroupBuilder RadioGroup(Commands commands, int? groupId = null) => new(commands, groupId);
+
+    public static UIRadioGroupBuilder RadioGroup(Commands commands, Handle font, int? groupId = null) => new UIRadioGroupBuilder(commands, groupId).Font(font);
 
     public static UISliderBuilder Slider(Commands commands) => new(commands);
 

@@ -6,75 +6,75 @@ using Pollus.UI.Layout;
 using Pollus.Utils;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
+public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
 {
-    static volatile int groupIdCounter = -1;
-
-    readonly int groupId;
     readonly List<string?> options = [];
-    int selectedIndex = -1;
-    Color? selectedColor;
-    Color? unselectedColor;
+    readonly HashSet<int> checkedIndices = [];
+    Color? checkedColor;
+    Color? uncheckedColor;
+    Color? checkmarkColor;
     float fontSize = 16f;
     Color textColor = Color.WHITE;
     Handle font = Handle.Null;
 
-    public UIRadioGroupBuilder(Commands commands, int? groupId) : base(commands)
-    {
-        this.groupId = groupId ?? Interlocked.Increment(ref groupIdCounter);
-    }
+    public UICheckBoxGroupBuilder(Commands commands) : base(commands) { }
 
-    public UIRadioGroupBuilder Option()
+    public UICheckBoxGroupBuilder Option()
     {
         options.Add(null);
         return this;
     }
 
-    public UIRadioGroupBuilder Option(string label)
+    public UICheckBoxGroupBuilder Option(string label)
     {
         options.Add(label);
         return this;
     }
 
-    public UIRadioGroupBuilder Selected(int index)
+    public UICheckBoxGroupBuilder Checked(int index)
     {
-        selectedIndex = index;
+        checkedIndices.Add(index);
         return this;
     }
 
-    public UIRadioGroupBuilder SelectedColor(Color color)
+    public UICheckBoxGroupBuilder CheckedColor(Color color)
     {
-        selectedColor = color;
+        checkedColor = color;
         return this;
     }
 
-    public UIRadioGroupBuilder UnselectedColor(Color color)
+    public UICheckBoxGroupBuilder UncheckedColor(Color color)
     {
-        unselectedColor = color;
+        uncheckedColor = color;
         return this;
     }
 
-    public UIRadioGroupBuilder FontSize(float size)
+    public UICheckBoxGroupBuilder CheckmarkColor(Color color)
+    {
+        checkmarkColor = color;
+        return this;
+    }
+
+    public UICheckBoxGroupBuilder FontSize(float size)
     {
         fontSize = size;
         return this;
     }
 
-    public UIRadioGroupBuilder TextColor(Color color)
+    public UICheckBoxGroupBuilder TextColor(Color color)
     {
         textColor = color;
         return this;
     }
 
-    public UIRadioGroupBuilder Font(Handle font)
+    public UICheckBoxGroupBuilder Font(Handle font)
     {
         this.font = font;
         return this;
     }
 
-    public new RadioGroupResult Spawn()
+    public new CheckBoxGroupResult Spawn()
     {
-        // 1. Create container panel
         var container = commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle { Value = style }
@@ -82,31 +82,31 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
 
         Setup(container);
 
-        // 2. Create option entities
         var optionEntities = new Entity[options.Count];
         for (int i = 0; i < options.Count; i++)
         {
             var hasLabel = options[i] != null;
 
-            var radioButton = new UIRadioButton
+            var checkBox = new UICheckBox
             {
-                GroupId = groupId,
-                IsSelected = i == selectedIndex,
+                IsChecked = checkedIndices.Contains(i),
             };
-            if (selectedColor.HasValue)
-                radioButton.SelectedColor = selectedColor.Value;
-            if (unselectedColor.HasValue)
-                radioButton.UnselectedColor = unselectedColor.Value;
+            if (checkedColor.HasValue)
+                checkBox.CheckedColor = checkedColor.Value;
+            if (uncheckedColor.HasValue)
+                checkBox.UncheckedColor = uncheckedColor.Value;
+            if (checkmarkColor.HasValue)
+                checkBox.CheckmarkColor = checkmarkColor.Value;
 
-            var initialColor = radioButton.IsSelected ? radioButton.SelectedColor : radioButton.UnselectedColor;
-            var rbStyle = LayoutStyle.Default with
+            var initialColor = checkBox.IsChecked ? checkBox.CheckedColor : checkBox.UncheckedColor;
+            var cbStyle = LayoutStyle.Default with
             {
                 Size = new Size<Length>(Length.Px(18), Length.Px(18)),
+                MinSize = new Size<Length>(Length.Px(18), Length.Px(18)),
             };
 
             if (hasLabel)
             {
-                // Create a row container for the radio button + text
                 var row = commands.Spawn(Entity.With(
                     new UINode(),
                     new UIStyle
@@ -120,17 +120,14 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                     }
                 )).Entity;
 
-                // Radio button entity
-                var rbEntity = commands.Spawn(Entity.With(
+                var cbEntity = commands.Spawn(Entity.With(
                     new UINode(),
-                    radioButton,
+                    checkBox,
                     new UIInteraction(),
                     new BackgroundColor { Color = initialColor },
-                    new UIStyle { Value = rbStyle },
-                    new UIShape { Type = UIShapeType.Circle }
+                    new UIStyle { Value = cbStyle }
                 )).Entity;
 
-                // Text label entity
                 var textEntity = commands.Spawn(Entity.With(
                     new UINode(),
                     new ContentSize(),
@@ -148,29 +145,27 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 if (!font.IsNull())
                     commands.AddComponent(textEntity, new UITextFont { Font = font });
 
-                commands.AddChild(row, rbEntity);
+                commands.AddChild(row, cbEntity);
                 commands.AddChild(row, textEntity);
                 commands.AddChild(container, row);
                 optionEntities[i] = row;
             }
             else
             {
-                // Bare radio button - direct child of container
-                var rbEntity = commands.Spawn(Entity.With(
+                var cbEntity = commands.Spawn(Entity.With(
                     new UINode(),
-                    radioButton,
+                    checkBox,
                     new UIInteraction(),
                     new BackgroundColor { Color = initialColor },
-                    new UIStyle { Value = rbStyle },
-                    new UIShape { Type = UIShapeType.Circle }
+                    new UIStyle { Value = cbStyle }
                 )).Entity;
 
-                commands.AddChild(container, rbEntity);
-                optionEntities[i] = rbEntity;
+                commands.AddChild(container, cbEntity);
+                optionEntities[i] = cbEntity;
             }
         }
 
-        return new RadioGroupResult
+        return new CheckBoxGroupResult
         {
             Entity = container,
             OptionEntities = optionEntities,
