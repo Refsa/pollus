@@ -1,19 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
-using Pollus.ECS;
 using Pollus.Utils;
-
-public partial struct UITextFont : IComponent, IDefault<UITextFont>
-{
-    public static UITextFont Default { get; } = new()
-    {
-        Font = Handle<FontAsset>.Null,
-        Material = Handle.Null,
-    };
-
-    public required Handle<FontAsset> Font;
-    public Handle Material;
-}
 
 public class UITextResources
 {
