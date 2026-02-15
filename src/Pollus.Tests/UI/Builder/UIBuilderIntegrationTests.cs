@@ -1,3 +1,5 @@
+namespace Pollus.Tests.UI.Builder;
+
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
@@ -6,8 +8,6 @@ using Pollus.UI.Layout;
 using Pollus.Utils;
 using LayoutStyle = Pollus.UI.Layout.Style;
 using static Pollus.UI.UI;
-
-namespace Pollus.Tests.UI.Builder;
 
 public class UIBuilderIntegrationTests
 {
@@ -155,10 +155,10 @@ public class UIBuilderIntegrationTests
             }
 
             // WriteBack
-            var enumerator = adapter.GetActiveNodes();
-            while (enumerator.MoveNext())
+            foreach (var entity in adapter.ActiveEntities)
             {
-                var (entity, nodeId) = enumerator.Current;
+                int nodeId = adapter.GetNodeId(entity);
+                if (nodeId < 0) continue;
                 if (!query.Has<ComputedNode>(entity)) continue;
                 ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);
                 ref var computed = ref query.Get<ComputedNode>(entity);
@@ -206,7 +206,7 @@ public class UIBuilderIntegrationTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         // Dropdown should be open
         var dd = world.Store.GetComponent<UIDropdown>(result.Entity);

@@ -201,9 +201,7 @@ public partial class UISliderSystem
 
                 // Sync fill color
                 if (query.Has<BackgroundColor>(slider.FillEntity))
-                {
                     query.Get<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
-                }
             }
 
             // Update thumb entity
@@ -216,9 +214,7 @@ public partial class UISliderSystem
 
                 // Sync thumb color
                 if (query.Has<BackgroundColor>(slider.ThumbEntity))
-                {
                     query.Get<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
-                }
             }
         }
     }

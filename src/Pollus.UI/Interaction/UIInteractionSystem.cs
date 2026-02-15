@@ -48,7 +48,7 @@ public partial class UIInteractionSystem
         hitResult.MousePosition = mousePos;
         focusState.FocusOrder.Clear();
 
-        var deferred = new List<(Entity entity, Vec2f parentAbsPos)>();
+        var deferred = hitResult.DeferredBuffer;
 
         foreach (var rootEntity in query.Filtered<All<UILayoutRoot>>())
         {
@@ -64,6 +64,8 @@ public partial class UIInteractionSystem
             ref readonly var computed = ref query.Get<ComputedNode>(deferredEntity);
             HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, computed, parentAbsPos, mousePos, null);
         }
+
+        deferred.Clear();
     }
 
     static void UpdateState(
