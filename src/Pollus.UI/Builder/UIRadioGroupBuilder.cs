@@ -15,6 +15,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
     int selectedIndex = -1;
     Color? selectedColor;
     Color? unselectedColor;
+    Color? indicatorColor;
     float fontSize = 16f;
     Color textColor = Color.WHITE;
     Handle font = Handle.Null;
@@ -51,6 +52,12 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
     public UIRadioGroupBuilder UnselectedColor(Color color)
     {
         unselectedColor = color;
+        return this;
+    }
+
+    public UIRadioGroupBuilder IndicatorColor(Color color)
+    {
+        indicatorColor = color;
         return this;
     }
 
@@ -97,12 +104,31 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 radioButton.SelectedColor = selectedColor.Value;
             if (unselectedColor.HasValue)
                 radioButton.UnselectedColor = unselectedColor.Value;
+            if (indicatorColor.HasValue)
+                radioButton.IndicatorColor = indicatorColor.Value;
 
             var initialColor = radioButton.IsSelected ? radioButton.SelectedColor : radioButton.UnselectedColor;
+            var indicatorBgColor = radioButton.IsSelected ? radioButton.IndicatorColor : Color.TRANSPARENT;
             var rbStyle = LayoutStyle.Default with
             {
                 Size = new Size<Length>(Length.Px(18), Length.Px(18)),
             };
+
+            var indicator = commands.Spawn(Entity.With(
+                new UINode(),
+                new BackgroundColor { Color = indicatorBgColor },
+                new UIShape { Type = UIShapeType.Circle },
+                new UIStyle
+                {
+                    Value = LayoutStyle.Default with
+                    {
+                        Size = new Size<Length>(Length.Percent(0.5f), Length.Percent(0.5f)),
+                        Margin = Rect<Length>.All(Length.Auto),
+                    }
+                }
+            )).Entity;
+
+            radioButton.IndicatorEntity = indicator;
 
             if (hasLabel)
             {
@@ -129,6 +155,8 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                     new UIStyle { Value = rbStyle },
                     new UIShape { Type = UIShapeType.Circle }
                 )).Entity;
+
+                commands.AddChild(rbEntity, indicator);
 
                 // Text label entity
                 var textEntity = commands.Spawn(Entity.With(
@@ -165,6 +193,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                     new UIShape { Type = UIShapeType.Circle }
                 )).Entity;
 
+                commands.AddChild(rbEntity, indicator);
                 commands.AddChild(container, rbEntity);
                 optionEntities[i] = rbEntity;
             }

@@ -99,11 +99,27 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                 checkBox.CheckmarkColor = checkmarkColor.Value;
 
             var initialColor = checkBox.IsChecked ? checkBox.CheckedColor : checkBox.UncheckedColor;
+            var indicatorColor = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
             var cbStyle = LayoutStyle.Default with
             {
                 Size = new Size<Length>(Length.Px(18), Length.Px(18)),
                 MinSize = new Size<Length>(Length.Px(18), Length.Px(18)),
             };
+
+            var indicator = commands.Spawn(Entity.With(
+                new UINode(),
+                new BackgroundColor { Color = indicatorColor },
+                new UIShape { Type = UIShapeType.Checkmark },
+                new UIStyle
+                {
+                    Value = LayoutStyle.Default with
+                    {
+                        Size = new Size<Length>(Length.Percent(1f), Length.Percent(1f)),
+                    }
+                }
+            )).Entity;
+
+            checkBox.IndicatorEntity = indicator;
 
             if (hasLabel)
             {
@@ -127,6 +143,8 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                     new BackgroundColor { Color = initialColor },
                     new UIStyle { Value = cbStyle }
                 )).Entity;
+
+                commands.AddChild(cbEntity, indicator);
 
                 var textEntity = commands.Spawn(Entity.With(
                     new UINode(),
@@ -160,6 +178,7 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                     new UIStyle { Value = cbStyle }
                 )).Entity;
 
+                commands.AddChild(cbEntity, indicator);
                 commands.AddChild(container, cbEntity);
                 optionEntities[i] = cbEntity;
             }

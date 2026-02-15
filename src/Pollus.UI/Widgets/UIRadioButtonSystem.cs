@@ -1,6 +1,7 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
+using Pollus.Utils;
 
 [SystemSet]
 public partial class UIRadioButtonSystem
@@ -40,6 +41,11 @@ public partial class UIRadioButtonSystem
                         ref var bg = ref ctx.q.Get<BackgroundColor>(e);
                         bg.Color = r.UnselectedColor;
                     }
+                    if (!r.IndicatorEntity.IsNull && ctx.q.Has<BackgroundColor>(r.IndicatorEntity))
+                    {
+                        ref var indicatorBg = ref ctx.q.Get<BackgroundColor>(r.IndicatorEntity);
+                        indicatorBg.Color = Color.TRANSPARENT;
+                    }
                 });
 
             // Select this one
@@ -48,6 +54,11 @@ public partial class UIRadioButtonSystem
             {
                 ref var bg = ref query.Get<BackgroundColor>(entity);
                 bg.Color = radio.SelectedColor;
+            }
+            if (!radio.IndicatorEntity.IsNull && query.Has<BackgroundColor>(radio.IndicatorEntity))
+            {
+                ref var indicatorBg = ref query.Get<BackgroundColor>(radio.IndicatorEntity);
+                indicatorBg.Color = radio.IndicatorColor;
             }
 
             radioWriter.Write(new UIRadioButtonEvents.UIRadioButtonEvent
