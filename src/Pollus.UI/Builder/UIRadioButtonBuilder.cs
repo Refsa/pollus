@@ -6,12 +6,13 @@ using Pollus.Utils;
 public class UIRadioButtonBuilder : UINodeBuilder<UIRadioButtonBuilder>
 {
     static volatile int groupIdCounter = -1;
+    public static int NextGroupId => Interlocked.Increment(ref groupIdCounter);
 
     UIRadioButton radioButton = new();
 
     public UIRadioButtonBuilder(Commands commands, int? groupId) : base(commands)
     {
-        radioButton.GroupId = groupId ?? Interlocked.Increment(ref groupIdCounter);
+        radioButton.GroupId = groupId ?? NextGroupId;
     }
 
     public UIRadioButtonBuilder IsSelected(bool value = true)

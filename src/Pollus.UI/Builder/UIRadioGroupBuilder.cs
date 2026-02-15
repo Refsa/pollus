@@ -8,8 +8,6 @@ using LayoutStyle = Pollus.UI.Layout.Style;
 
 public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
 {
-    static volatile int groupIdCounter = -1;
-
     readonly int groupId;
     readonly List<string?> options = [];
     int selectedIndex = -1;
@@ -22,7 +20,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
 
     public UIRadioGroupBuilder(Commands commands, int? groupId) : base(commands)
     {
-        this.groupId = groupId ?? Interlocked.Increment(ref groupIdCounter);
+        this.groupId = groupId ?? UIRadioButtonBuilder.NextGroupId;
     }
 
     public UIRadioGroupBuilder Option()

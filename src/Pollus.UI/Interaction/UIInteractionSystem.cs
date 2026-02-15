@@ -159,25 +159,22 @@ public partial class UIInteractionSystem
         if (mouseUp && !hitResult.PressedEntity.IsNull)
         {
             var pressed = hitResult.PressedEntity;
-            if (!pressed.IsNull)
+            if (query.Has<UIInteraction>(pressed))
             {
-                if (query.Has<UIInteraction>(pressed))
-                {
-                    ref var interaction = ref query.Get<UIInteraction>(pressed);
-                    interaction.State &= ~InteractionState.Pressed;
-                }
-
-                releaseWriter.Write(new UIInteractionEvents.UIReleaseEvent { Entity = pressed });
-
-                // Click if released on same entity
-                if (pressed == hovered)
-                {
-                    clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = pressed });
-                }
-
-                hitResult.PressedEntity = Entity.Null;
-                hitResult.CapturedEntity = Entity.Null;
+                ref var interaction = ref query.Get<UIInteraction>(pressed);
+                interaction.State &= ~InteractionState.Pressed;
             }
+
+            releaseWriter.Write(new UIInteractionEvents.UIReleaseEvent { Entity = pressed });
+
+            // Click if released on same entity
+            if (pressed == hovered)
+            {
+                clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = pressed });
+            }
+
+            hitResult.PressedEntity = Entity.Null;
+            hitResult.CapturedEntity = Entity.Null;
         }
 
         // Click on empty space clears focus
@@ -202,6 +199,7 @@ public partial class UIInteractionSystem
                 ref var prevInteraction = ref query.Get<UIInteraction>(focusState.FocusedEntity);
                 prevInteraction.State &= ~InteractionState.Focused;
             }
+
             blurWriter.Write(new UIInteractionEvents.UIBlurEvent { Entity = focusState.FocusedEntity });
         }
 
@@ -229,6 +227,7 @@ public partial class UIInteractionSystem
                 ref var interaction = ref query.Get<UIInteraction>(focusState.FocusedEntity);
                 interaction.State &= ~InteractionState.Focused;
             }
+
             blurWriter.Write(new UIInteractionEvents.UIBlurEvent { Entity = focusState.FocusedEntity });
             focusState.FocusedEntity = Entity.Null;
         }
@@ -326,7 +325,7 @@ public partial class UIInteractionSystem
             {
                 // Defer absolute-positioned children so they win hit tests over normal flow
                 if (deferred != null && childRef.Has<UIStyle>()
-                    && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
+                                     && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
                 {
                     deferred.Add((childEntity, childAbsPos));
                 }

@@ -232,7 +232,7 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
 
     public TSelf Interactable(bool value = true)
     {
-        interactable = true;
+        interactable = value;
         return (TSelf)this;
     }
 

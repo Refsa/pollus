@@ -22,6 +22,12 @@ public partial class UIRadioButtonSystem
             var entity = click.Entity;
             if (!query.Has<UIRadioButton>(entity)) continue;
 
+            if (query.Has<UIInteraction>(entity))
+            {
+                ref readonly var interaction = ref query.Get<UIInteraction>(entity);
+                if (interaction.IsDisabled) continue;
+            }
+
             ref var radio = ref query.Get<UIRadioButton>(entity);
             if (radio.IsSelected) continue; // Already selected, do nothing
 

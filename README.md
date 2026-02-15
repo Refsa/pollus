@@ -14,7 +14,8 @@ You can find the Breakout clone example running [here](https://refsa.github.io/p
 - Simple audio plugin
 - Simple input plugin
 - Build to Windows, Linux and Browser (WASM)
-- Dear ImGui renderer, which is the only form of UI right now
+- Dear ImGui renderer
+- UI based on taffy
 
 Currently requires `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.
 

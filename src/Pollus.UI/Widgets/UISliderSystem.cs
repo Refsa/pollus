@@ -1,5 +1,6 @@
 namespace Pollus.UI;
 
+using Layout;
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
@@ -40,10 +41,10 @@ public partial class UISliderSystem
 
             ref var slider = ref query.Get<UISlider>(entity);
             ref readonly var computed = ref query.Get<ComputedNode>(entity);
-            var absPos = ComputeAbsolutePosition(query, entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
 
             var prevValue = slider.Value;
-            slider.Value = ComputeValueFromPosition(hitResult.MousePosition.X, absPos.X, computed.Size.X, slider);
+            slider.Value = LayoutHelpers.ComputeValueFromPosition(hitResult.MousePosition.X, absPos.X, computed.Size.X, slider);
 
             if (slider.Value != prevValue)
             {
@@ -65,10 +66,10 @@ public partial class UISliderSystem
 
             ref var slider = ref query.Get<UISlider>(entity);
             ref readonly var computed = ref query.Get<ComputedNode>(entity);
-            var absPos = ComputeAbsolutePosition(query, entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
 
             var prevValue = slider.Value;
-            slider.Value = ComputeValueFromPosition(drag.PositionX, absPos.X, computed.Size.X, slider);
+            slider.Value = LayoutHelpers.ComputeValueFromPosition(drag.PositionX, absPos.X, computed.Size.X, slider);
 
             if (slider.Value != prevValue)
             {
@@ -123,40 +124,6 @@ public partial class UISliderSystem
                 });
             }
         }
-    }
-
-    internal static Vec2f ComputeAbsolutePosition(Query query, Entity entity)
-    {
-        var pos = Vec2f.Zero;
-        var current = entity;
-        while (!current.IsNull)
-        {
-            if (query.Has<ComputedNode>(current))
-                pos += query.Get<ComputedNode>(current).Position;
-
-            if (query.Has<Child>(current))
-                current = query.Get<Child>(current).Parent;
-            else
-                break;
-        }
-        return pos;
-    }
-
-    internal static float ComputeValueFromPosition(float mouseX, float trackAbsX, float trackWidth, in UISlider slider)
-    {
-        if (trackWidth <= 0) return slider.Min;
-
-        var relativeX = mouseX - trackAbsX;
-        var ratio = Math.Clamp(relativeX / trackWidth, 0f, 1f);
-        var value = slider.Min + ratio * (slider.Max - slider.Min);
-
-        // Snap to step
-        if (slider.Step > 0)
-        {
-            value = MathF.Round(value / slider.Step) * slider.Step;
-        }
-
-        return Math.Clamp(value, slider.Min, slider.Max);
     }
 
     internal static void UpdateVisuals(

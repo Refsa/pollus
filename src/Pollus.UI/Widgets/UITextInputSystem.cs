@@ -29,6 +29,12 @@ public partial class UITextInputSystem
             var entity = textEvent.Entity;
             if (!query.Has<UITextInput>(entity)) continue;
 
+            if (query.Has<UIInteraction>(entity))
+            {
+                ref readonly var interaction = ref query.Get<UIInteraction>(entity);
+                if (interaction.IsDisabled) continue;
+            }
+
             ref var input = ref query.Get<UITextInput>(entity);
             var text = textBuffers.Get(entity);
             var inputText = textEvent.Text;

@@ -17,6 +17,7 @@ public partial class UIDropdownSystem
     };
 
     internal static void PerformUpdate(
+        Query<UIInteraction> qInteractions,
         Query<UIDropdown> qDropdown,
         Query<UIDropdownOptionTag, UIStyle> qDropdownOptions,
         Query<UIText, Parent> qText,
@@ -32,6 +33,12 @@ public partial class UIDropdownSystem
         foreach (var click in clicks)
         {
             var entity = click.Entity;
+
+            if (qInteractions.Has<UIInteraction>(entity))
+            {
+                ref readonly var interaction = ref qInteractions.Get<UIInteraction>(entity);
+                if (interaction.IsDisabled) continue;
+            }
 
             if (qDropdown.Has<UIDropdown>(entity))
             {
@@ -89,7 +96,6 @@ public partial class UIDropdownSystem
 
         if (clicks.Length > 0)
         {
-            dirty = true;
             qDropdown.ForEach(clickedDropdown, static (in clickedDropdown, in entity, ref dropdown) =>
             {
                 if (entity == clickedDropdown) return;

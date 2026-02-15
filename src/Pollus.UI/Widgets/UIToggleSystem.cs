@@ -21,6 +21,12 @@ public partial class UIToggleSystem
             if (!query.Has<UIToggle>(entity)) continue;
             if (!query.Has<BackgroundColor>(entity)) continue;
 
+            if (query.Has<UIInteraction>(entity))
+            {
+                ref readonly var interaction = ref query.Get<UIInteraction>(entity);
+                if (interaction.IsDisabled) continue;
+            }
+
             ref var toggle = ref query.Get<UIToggle>(entity);
             toggle.IsOn = !toggle.IsOn;
 
