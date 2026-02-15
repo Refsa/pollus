@@ -41,7 +41,6 @@ public partial class ExtractUIRectsSystem
             EmitNode(batches, resources.Material, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, deferred);
         }
 
-        // Render deferred absolute-positioned nodes on top of normal flow
         foreach (var (deferredEntity, parentAbsPos, deferredScissor) in deferred)
         {
             var entRef = query.GetEntity(deferredEntity);
@@ -95,7 +94,7 @@ public partial class ExtractUIRectsSystem
             if (entityRef.Has<BackgroundColor>())
             {
                 var bg = entityRef.Get<BackgroundColor>();
-                bgColor = (Vec4f)bg.Color;
+                bgColor = bg.Color;
                 hasBg = true;
             }
 
@@ -135,13 +134,11 @@ public partial class ExtractUIRectsSystem
             }
         }
 
-        // Skip children of zero-size nodes
-        if (size.X <= 0 && size.Y <= 0) return;
+        if (size is { X: <= 0, Y: <= 0 }) return;
 
         var entRef = query.GetEntity(entity);
         if (!entRef.Has<Parent>()) return;
 
-        // Compute scissor rect for children if this node has overflow != Visible
         var childScissor = scissor;
         var childAbsPos = absPos;
         if (entRef.Has<UIStyle>())
@@ -153,7 +150,6 @@ public partial class ExtractUIRectsSystem
             }
         }
 
-        // Apply scroll offset for children
         if (entRef.Has<UIScrollOffset>())
         {
             ref readonly var scroll = ref entRef.Get<UIScrollOffset>();

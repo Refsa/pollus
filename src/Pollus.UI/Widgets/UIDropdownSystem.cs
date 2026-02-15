@@ -17,7 +17,7 @@ public partial class UIDropdownSystem
     };
 
     internal static void PerformUpdate(
-        Query<UIDropdown, UIDropdownOptionTag> qDropdown,
+        Query<UIDropdown> qDropdown,
         Query<UIDropdownOptionTag, UIStyle> qDropdownOptions,
         Query<UIText, Parent> qText,
         EventReader<UIInteractionEvents.UIClickEvent> clickReader,
@@ -26,8 +26,10 @@ public partial class UIDropdownSystem
     {
         var selectionWriter = events.GetWriter<UIDropdownEvents.UIDropdownSelectionChanged>();
         var dirty = false;
+        var clickedDropdown = Entity.Null;
+        var clicks = clickReader.Read();
 
-        foreach (var click in clickReader.Read())
+        foreach (var click in clicks)
         {
             var entity = click.Entity;
 
@@ -36,12 +38,13 @@ public partial class UIDropdownSystem
                 ref var dropdown = ref qDropdown.Get<UIDropdown>(entity);
                 dropdown.IsOpen = !dropdown.IsOpen;
                 dirty = true;
+                clickedDropdown = entity;
                 continue;
             }
 
-            if (qDropdown.Has<UIDropdownOptionTag>(entity))
+            if (qDropdownOptions.Has<UIDropdownOptionTag>(entity))
             {
-                ref readonly var option = ref qDropdown.Get<UIDropdownOptionTag>(entity);
+                ref readonly var option = ref qDropdownOptions.Get<UIDropdownOptionTag>(entity);
                 var dropdownEntity = option.DropdownEntity;
 
                 if (!qDropdown.Has<UIDropdown>(dropdownEntity)) continue;
@@ -64,6 +67,8 @@ public partial class UIDropdownSystem
                 }
 
                 dirty = true;
+                clickedDropdown = entity;
+                continue;
             }
         }
 
@@ -82,6 +87,17 @@ public partial class UIDropdownSystem
             }
         }
 
+        if (clicks.Length > 0)
+        {
+            dirty = true;
+            qDropdown.ForEach(clickedDropdown, static (in clickedDropdown, in entity, ref dropdown) =>
+            {
+                if (entity == clickedDropdown) return;
+
+                dropdown.IsOpen = false;
+            });
+        }
+
         if (dirty)
         {
             SyncOptionVisibility(qDropdownOptions, qDropdown);
@@ -89,7 +105,7 @@ public partial class UIDropdownSystem
     }
 
     internal static void UpdateDisplayText(
-        Query<UIDropdown, UIDropdownOptionTag> qDropdown,
+        Query<UIDropdown> qDropdown,
         Query<UIText, Parent> qText,
         Entity dropdownEntity, Entity optionEntity)
     {
@@ -106,7 +122,7 @@ public partial class UIDropdownSystem
         displayText.Text = new NativeUtf8(srcText.Text.ToString().TrimEnd('\0'));
     }
 
-    internal static void SyncOptionVisibility(Query<UIDropdownOptionTag, UIStyle> qDropdownOptions, Query<UIDropdown, UIDropdownOptionTag> qDropdown)
+    internal static void SyncOptionVisibility(Query<UIDropdownOptionTag, UIStyle> qDropdownOptions, Query<UIDropdown> qDropdown)
     {
         qDropdownOptions.ForEach(qDropdown,
             static (in q, ref option, ref style) =>
