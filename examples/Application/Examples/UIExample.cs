@@ -210,32 +210,21 @@ public class UIExample : IExample
                 }
 
                 // --- RadioButton section ---
-                var radioSection = UI.Panel(commands)
+                _ = UI.Panel(commands)
                     .FlexColumn().Gap(8)
                     .ChildOf(mainPanel)
                     .Children(
-                        UI.Text(commands, "Priority", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn()
+                        UI.Text(commands, "Priority", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                        UI.RadioGroup(commands, 0, fontHandle)
+                            .Option("Low")
+                            .Option("Medium")
+                            .Option("High")
+                            .Selected(1)
+                            .FlexColumn()
+                            .Gap(6)
+                            .Spawn()
                     )
                     .Spawn();
-
-                string[] radioLabels = ["Low", "Medium", "High"];
-                for (int i = 0; i < radioLabels.Length; i++)
-                {
-                    _ = UI.Panel(commands)
-                        .FlexRow().AlignItems(AlignItems.Center).Gap(8)
-                        .ChildOf(radioSection)
-                        .Children(
-                            UI.RadioButton(commands, 1)
-                                .IsSelected(i == 1)
-                                .Size(22, 22)
-                                .Background(i == 1 ? new Color(0.2f, 0.6f, 1.0f, 1f) : new Color(0.8f, 0.8f, 0.8f, 1f))
-                                .Focusable()
-                                .Shape(UIShapeType.Circle)
-                                .Spawn(),
-                            UI.Text(commands, radioLabels[i], fontHandle).FontSize(13f).Spawn()
-                        )
-                        .Spawn();
-                }
 
                 // --- Slider section ---
                 _ = UI.Panel(commands)

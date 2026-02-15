@@ -26,6 +26,14 @@ public readonly struct NumberInputResult
     public static implicit operator Entity(NumberInputResult result) => result.Entity;
 }
 
+public readonly struct RadioGroupResult
+{
+    public Entity Entity { get; init; }
+    public Entity[] OptionEntities { get; init; }
+
+    public static implicit operator Entity(RadioGroupResult result) => result.Entity;
+}
+
 public readonly struct DropdownResult
 {
     public Entity Entity { get; init; }
