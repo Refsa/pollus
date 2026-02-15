@@ -27,8 +27,7 @@ public class UIRootBuilder : UINodeBuilder<UIRootBuilder>
             new UIStyle { Value = style }
         )).Entity;
 
-        AddVisualComponents(entity);
-        SetupHierarchy(entity);
+        Setup(entity);
 
         return entity;
     }

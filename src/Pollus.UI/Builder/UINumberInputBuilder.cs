@@ -107,12 +107,11 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
 
         numberInput.TextInputEntity = textInputEntity;
 
+        backgroundColor ??= new Color();
+
         var entity = commands.Spawn(Entity.With(
             new UINode(),
             numberInput,
-            backgroundColor.HasValue
-                ? new BackgroundColor { Color = backgroundColor.Value }
-                : new BackgroundColor(),
             new UIStyle { Value = style }
         )).Entity;
 
@@ -127,23 +126,8 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
             bufs.Set(capturedTextInputEntity, capturedFormatted);
         });
 
-        if (borderColor.HasValue)
-            commands.AddComponent(entity, borderColor.Value);
-
-        if (borderRadius.HasValue)
-            commands.AddComponent(entity, borderRadius.Value);
-
-        if (boxShadow.HasValue)
-            commands.AddComponent(entity, boxShadow.Value);
-
-        if (parentEntity.HasValue)
-            commands.AddChild(parentEntity.Value, entity);
-
-        if (children != null)
-        {
-            foreach (var child in children)
-                commands.AddChild(entity, child);
-        }
+        AddVisualComponents(entity);
+        SetupHierarchy(entity);
 
         return new NumberInputResult
         {

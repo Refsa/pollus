@@ -46,8 +46,7 @@ public class UITextBuilder : UINodeBuilder<UITextBuilder>
         if (!font.IsNull())
             commands.AddComponent(entity, new UITextFont { Font = font });
 
-        AddVisualComponents(entity);
-        SetupHierarchy(entity);
+        Setup(entity);
 
         return entity;
     }

@@ -72,22 +72,19 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
             commands.AddComponent(displayText, new UITextFont { Font = font });
 
         // 2. Create trigger entity (the dropdown itself)
+        interactable = true;
+        focusable = true;
+        backgroundColor ??= new Color();
+
         var trigger = commands.Spawn(Entity.With(
             new UINode(),
-            new UIInteraction { Focusable = true },
             new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText },
-            backgroundColor.HasValue
-                ? new BackgroundColor { Color = backgroundColor.Value }
-                : new BackgroundColor(),
             new UIStyle { Value = style }
         )).Entity;
 
         commands.AddChild(trigger, displayText);
 
         // 3. Create absolute popup panel for options
-        // Position the panel right below the trigger. With border-box sizing,
-        // absY = paddingBorder.Top + insetTop, so to place at the trigger bottom:
-        // insetTop = outerHeight - padding.Top - border.Top
         var heightPx = style.Size.Height.Tag == Length.Kind.Px ? style.Size.Height.Value : 0f;
         var padTopPx = style.Padding.Top.Tag == Length.Kind.Px ? style.Padding.Top.Value : 0f;
         var borderTopPx = style.Border.Top.Tag == Length.Kind.Px ? style.Border.Top.Value : 0f;
@@ -169,26 +166,10 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
             optionTextEntities[i] = optionText;
         }
 
-        if (borderColor.HasValue)
-            commands.AddComponent(trigger, borderColor.Value);
-
-        if (borderRadius.HasValue)
-            commands.AddComponent(trigger, borderRadius.Value);
-
-        if (boxShadow.HasValue)
-            commands.AddComponent(trigger, boxShadow.Value);
-
-        // 5. Setup hierarchy: parent owns trigger; trigger owns popup panel
-        if (parentEntity.HasValue)
-            commands.AddChild(parentEntity.Value, trigger);
+        // 5. Apply visual components and hierarchy to trigger
+        Setup(trigger);
 
         commands.AddChild(trigger, popupPanel);
-
-        if (children != null)
-        {
-            foreach (var child in children)
-                commands.AddChild(trigger, child);
-        }
 
         // Set PopupRootEntity on the dropdown component
         commands.SetComponent(trigger, new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText, PopupRootEntity = popupPanel });
