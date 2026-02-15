@@ -7,7 +7,7 @@ using static Pollus.UI.UI;
 
 namespace Pollus.Tests.UI.Builder;
 
-public class UIRadioGroupBuilderTests
+public class UICheckBoxGroupBuilderTests
 {
     static World CreateWorld()
     {
@@ -21,12 +21,12 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_SpawnsContainerWithRequiredComponents()
+    public void CheckBoxGroup_SpawnsContainerWithRequiredComponents()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Spawn();
@@ -37,12 +37,12 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_CreatesCorrectNumberOfOptions()
+    public void CheckBoxGroup_CreatesCorrectNumberOfOptions()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Option()
@@ -53,12 +53,12 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_OptionEntitiesAreRadioButtons()
+    public void CheckBoxGroup_OptionEntitiesAreCheckBoxes()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 5)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Spawn();
@@ -66,70 +66,70 @@ public class UIRadioGroupBuilderTests
 
         foreach (var opt in result.OptionEntities)
         {
-            Assert.True(world.Store.HasComponent<UIRadioButton>(opt));
-            var rb = world.Store.GetComponent<UIRadioButton>(opt);
-            Assert.Equal(5, rb.GroupId);
+            Assert.True(world.Store.HasComponent<UICheckBox>(opt));
         }
     }
 
     [Fact]
-    public void RadioGroup_Selected_SetsInitialSelection()
+    public void CheckBoxGroup_Checked_SetsInitialCheckedState()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Option()
-            .Selected(1)
+            .Checked(0)
+            .Checked(2)
             .Spawn();
         world.Update();
 
-        var rb0 = world.Store.GetComponent<UIRadioButton>(result.OptionEntities[0]);
-        var rb1 = world.Store.GetComponent<UIRadioButton>(result.OptionEntities[1]);
-        var rb2 = world.Store.GetComponent<UIRadioButton>(result.OptionEntities[2]);
+        var cb0 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[0]);
+        var cb1 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[1]);
+        var cb2 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[2]);
 
-        Assert.False(rb0.IsSelected);
-        Assert.True(rb1.IsSelected);
-        Assert.False(rb2.IsSelected);
+        Assert.True(cb0.IsChecked);
+        Assert.False(cb1.IsChecked);
+        Assert.True(cb2.IsChecked);
     }
 
     [Fact]
-    public void RadioGroup_CustomColors_AppliedToAllButtons()
+    public void CheckBoxGroup_CustomColors_AppliedToAllCheckBoxes()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
-            .SelectedColor(Color.BLUE)
-            .UnselectedColor(Color.GRAY)
+            .CheckedColor(Color.BLUE)
+            .UncheckedColor(Color.GRAY)
+            .CheckmarkColor(Color.RED)
             .Spawn();
         world.Update();
 
         foreach (var opt in result.OptionEntities)
         {
-            var rb = world.Store.GetComponent<UIRadioButton>(opt);
-            Assert.Equal(Color.BLUE, rb.SelectedColor);
-            Assert.Equal(Color.GRAY, rb.UnselectedColor);
+            var cb = world.Store.GetComponent<UICheckBox>(opt);
+            Assert.Equal(Color.BLUE, cb.CheckedColor);
+            Assert.Equal(Color.GRAY, cb.UncheckedColor);
+            Assert.Equal(Color.RED, cb.CheckmarkColor);
         }
     }
 
     [Fact]
-    public void RadioGroup_OptionsAreChildrenOfContainer()
+    public void CheckBoxGroup_OptionsAreChildrenOfContainer()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Spawn();
         world.Update();
 
-        // Each option row should be a child of the container
         foreach (var opt in result.OptionEntities)
         {
             Assert.True(world.Store.HasComponent<Child>(opt));
@@ -138,7 +138,7 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_ChildOf_ParentsContainer()
+    public void CheckBoxGroup_ChildOf_ParentsContainer()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
@@ -148,7 +148,7 @@ public class UIRadioGroupBuilderTests
             new UILayoutRoot { Size = new Size<float>(800, 600) }
         )).Entity;
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .ChildOf(root)
@@ -160,12 +160,12 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_FlexColumn_SetsDirection()
+    public void CheckBoxGroup_FlexColumn_SetsDirection()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .FlexColumn()
             .Gap(4)
@@ -178,113 +178,78 @@ public class UIRadioGroupBuilderTests
     }
 
     [Fact]
-    public void RadioGroup_WithTextLabels_CreatesTextEntities()
+    public void CheckBoxGroup_WithTextLabels_CreatesTextEntities()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 1)
-            .Option("Small")
-            .Option("Large")
+        var result = CheckBoxGroup(commands)
+            .Option("Option A")
+            .Option("Option B")
             .Spawn();
         world.Update();
 
-        // Each option entity should be a row with a radio button child and a text child
         foreach (var opt in result.OptionEntities)
         {
             Assert.True(world.Store.HasComponent<Parent>(opt));
             var parent = world.Store.GetComponent<Parent>(opt);
 
-            // Walk children to find UIText
             bool hasText = false;
-            bool hasRadioButton = false;
+            bool hasCheckBox = false;
             var child = parent.FirstChild;
             while (!child.IsNull)
             {
                 if (world.Store.HasComponent<UIText>(child))
                     hasText = true;
-                if (world.Store.HasComponent<UIRadioButton>(child))
-                    hasRadioButton = true;
+                if (world.Store.HasComponent<UICheckBox>(child))
+                    hasCheckBox = true;
 
                 var childComp = world.Store.GetComponent<Child>(child);
                 child = childComp.NextSibling;
             }
 
-            Assert.True(hasRadioButton, "Option row should contain a radio button");
+            Assert.True(hasCheckBox, "Option row should contain a checkbox");
             Assert.True(hasText, "Option row should contain text");
         }
     }
 
     [Fact]
-    public void RadioGroup_WithTextLabels_RadioButtonsHaveCorrectGroupId()
+    public void CheckBoxGroup_BareOptions_CheckBoxIsDirectChild()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        var result = RadioGroup(commands, groupId: 7)
-            .Option("A")
-            .Option("B")
-            .Selected(0)
-            .Spawn();
-        world.Update();
-
-        // Find radio button children inside each option row
-        foreach (var opt in result.OptionEntities)
-        {
-            var parent = world.Store.GetComponent<Parent>(opt);
-            var child = parent.FirstChild;
-            while (!child.IsNull)
-            {
-                if (world.Store.HasComponent<UIRadioButton>(child))
-                {
-                    var rb = world.Store.GetComponent<UIRadioButton>(child);
-                    Assert.Equal(7, rb.GroupId);
-                    break;
-                }
-                var childComp = world.Store.GetComponent<Child>(child);
-                child = childComp.NextSibling;
-            }
-        }
-    }
-
-    [Fact]
-    public void RadioGroup_BareOptions_RadioButtonIsDirectChild()
-    {
-        using var world = CreateWorld();
-        var commands = world.GetCommands();
-
-        var result = RadioGroup(commands, groupId: 1)
+        var result = CheckBoxGroup(commands)
             .Option()
             .Option()
             .Spawn();
         world.Update();
 
-        // Bare options: the option entity IS the radio button entity
         foreach (var opt in result.OptionEntities)
         {
-            Assert.True(world.Store.HasComponent<UIRadioButton>(opt));
+            Assert.True(world.Store.HasComponent<UICheckBox>(opt));
         }
     }
 
     [Fact]
-    public void RadioGroup_ImplicitEntityConversion()
+    public void CheckBoxGroup_ImplicitEntityConversion()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        RadioGroupResult result = RadioGroup(commands, groupId: 1).Option().Spawn();
+        CheckBoxGroupResult result = CheckBoxGroup(commands).Option().Spawn();
         Entity entity = result;
         Assert.False(entity.IsNull);
     }
 
     [Fact]
-    public void RadioGroup_WithFont_AppliesFontToTextLabels()
+    public void CheckBoxGroup_WithFont_AppliesFontToTextLabels()
     {
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
         var font = new Handle(1, 42);
-        var result = RadioGroup(commands, font, groupId: 1)
+        var result = CheckBoxGroup(commands, font)
             .Option("A")
             .Option("B")
             .Spawn();
@@ -307,5 +272,33 @@ public class UIRadioGroupBuilderTests
                 child = childComp.NextSibling;
             }
         }
+    }
+
+    [Fact]
+    public void CheckBoxGroup_MultipleChecked_AllowsMultipleSelections()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var result = CheckBoxGroup(commands)
+            .Option()
+            .Option()
+            .Option()
+            .Option()
+            .Checked(0)
+            .Checked(1)
+            .Checked(3)
+            .Spawn();
+        world.Update();
+
+        var cb0 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[0]);
+        var cb1 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[1]);
+        var cb2 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[2]);
+        var cb3 = world.Store.GetComponent<UICheckBox>(result.OptionEntities[3]);
+
+        Assert.True(cb0.IsChecked);
+        Assert.True(cb1.IsChecked);
+        Assert.False(cb2.IsChecked);
+        Assert.True(cb3.IsChecked);
     }
 }

@@ -25,6 +25,12 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
     }
 
     // Layout: Size
+    public TSelf Size(Length width, Length height)
+    {
+        style = style with { Size = new Size<Length>(width, height) };
+        return (TSelf)this;
+    }
+
     public TSelf Size(float width, float height)
     {
         style = style with { Size = new Size<Length>(Length.Px(width), Length.Px(height)) };
@@ -61,9 +67,21 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
         return (TSelf)this;
     }
 
+    public TSelf MinSize(Length width, Length height)
+    {
+        style = style with { MinSize = new Size<Length>(width, height) };
+        return (TSelf)this;
+    }
+
     public TSelf MinSize(float width, float height)
     {
         style = style with { MinSize = new Size<Length>(Length.Px(width), Length.Px(height)) };
+        return (TSelf)this;
+    }
+
+    public TSelf MaxSize(Length width, Length height)
+    {
+        style = style with { MaxSize = new Size<Length>(width, height) };
         return (TSelf)this;
     }
 
