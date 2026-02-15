@@ -48,7 +48,7 @@ public partial class UIScrollSystem
             foreach (var row in qScroll)
             {
                 ref readonly var computed = ref row.Component1;
-                var absPos = ComputeAbsolutePosition(query, row.Entity);
+                var absPos = LayoutHelpers.ComputeAbsolutePosition(query, row.Entity);
                 if (mousePos.X >= absPos.X && mousePos.X < absPos.X + computed.Size.X &&
                     mousePos.Y >= absPos.Y && mousePos.Y < absPos.Y + computed.Size.Y)
                 {
@@ -56,6 +56,7 @@ public partial class UIScrollSystem
                     break;
                 }
             }
+
             if (target.IsNull) return;
         }
 
@@ -66,7 +67,7 @@ public partial class UIScrollSystem
         ref readonly var scrollComputed = ref query.Get<ComputedNode>(scrollEntity);
 
         var innerHeight = scrollComputed.Size.Y - scrollComputed.PaddingTop - scrollComputed.PaddingBottom
-            - scrollComputed.BorderTop - scrollComputed.BorderBottom;
+                          - scrollComputed.BorderTop - scrollComputed.BorderBottom;
         var maxScrollY = MathF.Max(0, scrollComputed.ContentSize.Y - innerHeight);
         scrollOffset.Offset.Y = Math.Clamp(scrollOffset.Offset.Y - scrollY * ScrollSpeed, 0f, maxScrollY);
     }
@@ -121,12 +122,12 @@ public partial class UIScrollSystem
 
             // Update vertical scrollbar
             if (needsVertical && !scroll.VerticalThumbEntity.IsNull
-                && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
+                              && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
                 ref var thumbComputed = ref query.Get<ComputedNode>(scroll.VerticalThumbEntity);
 
                 float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
-                    - computed.BorderTop - computed.BorderBottom;
+                               - computed.BorderTop - computed.BorderBottom;
                 float contentH = computed.ContentSize.Y;
                 float thumbH = MathF.Max(20f, (innerH / contentH) * innerH);
                 float maxScroll = contentH - innerH;
@@ -141,7 +142,7 @@ public partial class UIScrollSystem
                 thumbComputed.Size = new Vec2f(ScrollbarThickness, thumbH);
             }
             else if (!scroll.VerticalThumbEntity.IsNull
-                && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
+                     && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
                 // Not needed anymore — hide it
                 query.Get<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
@@ -149,12 +150,12 @@ public partial class UIScrollSystem
 
             // Update horizontal scrollbar
             if (needsHorizontal && !scroll.HorizontalThumbEntity.IsNull
-                && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
+                                && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
                 ref var thumbComputed = ref query.Get<ComputedNode>(scroll.HorizontalThumbEntity);
 
                 float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
-                    - computed.BorderLeft - computed.BorderRight;
+                               - computed.BorderLeft - computed.BorderRight;
                 float contentW = computed.ContentSize.X;
                 float thumbW = MathF.Max(20f, (innerW / contentW) * innerW);
                 float maxScroll = contentW - innerW;
@@ -168,28 +169,11 @@ public partial class UIScrollSystem
                 thumbComputed.Size = new Vec2f(thumbW, ScrollbarThickness);
             }
             else if (!scroll.HorizontalThumbEntity.IsNull
-                && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
+                     && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
                 query.Get<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
             }
         }
-    }
-
-    static Vec2f ComputeAbsolutePosition(Query query, Entity entity)
-    {
-        var pos = Vec2f.Zero;
-        var current = entity;
-        while (!current.IsNull)
-        {
-            if (query.Has<ComputedNode>(current))
-                pos += query.Get<ComputedNode>(current).Position;
-
-            if (query.Has<Child>(current))
-                current = query.Get<Child>(current).Parent;
-            else
-                break;
-        }
-        return pos;
     }
 
     static Entity FindScrollAncestor(Query query, Entity entity)
@@ -205,6 +189,7 @@ public partial class UIScrollSystem
             else
                 break;
         }
+
         return Entity.Null;
     }
 }
