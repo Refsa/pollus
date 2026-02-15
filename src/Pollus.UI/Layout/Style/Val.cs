@@ -19,6 +19,12 @@ public readonly record struct Length
     public static readonly Length Zero = Px(0f);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator Length(float px) => Px(px);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator Length(int px) => Px(px);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsAuto() => Tag == Kind.Auto;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

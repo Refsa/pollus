@@ -40,6 +40,12 @@ public class UITextPlugin : IPlugin
 [SystemSet]
 public partial class UITextSystemSet
 {
+    [System(nameof(EnsureTextMesh))]
+    public static readonly SystemBuilderDescriptor EnsureTextMeshDescriptor = new()
+    {
+        Stage = CoreStage.First,
+    };
+
     [System(nameof(PrepareUIFont))]
     public static readonly SystemBuilderDescriptor PrepareUIFontDescriptor = new()
     {
@@ -58,7 +64,7 @@ public partial class UITextSystemSet
     public static readonly SystemBuilderDescriptor RegisterMeasureFuncsDescriptor = new()
     {
         Stage = CoreStage.First,
-        RunsAfter = [PrepareUIFontDescriptor.Label],
+        RunsAfter = [EnsureTextMeshDescriptor.Label, PrepareUIFontDescriptor.Label],
     };
 
     [System(nameof(BuildUITextMesh))]
@@ -80,6 +86,12 @@ public partial class UITextSystemSet
         Stage = CoreStage.Last,
         RunsAfter = [BuildUITextMeshDescriptor.Label],
     };
+
+    static void EnsureTextMesh(Commands commands, Query<UITextFont>.Filter<None<TextMesh>> query)
+    {
+        foreach (var row in query)
+            commands.AddComponent(row.Entity, TextMesh.Default);
+    }
 
     static void PrepareUIFont(AssetServer assetServer, UITextResources uiTextResources,
         EventReader<AssetEvent<FontAsset>> fontEvents,
@@ -105,7 +117,7 @@ public partial class UITextSystemSet
     {
         query.ForEach(uiTextResources, static (in res, ref textFont) =>
         {
-            if (textFont.Font == Handle<FontAsset>.Null) return;
+            if (textFont.Font.IsNull()) return;
             var mat = res.GetMaterial(textFont.Font);
             if (mat != Handle<UIFontMaterial>.Null)
             {
@@ -128,7 +140,7 @@ public partial class UITextSystemSet
                 continue;
             }
 
-            if (textFont.Font == Handle<FontAsset>.Null) continue;
+            if (textFont.Font.IsNull()) continue;
             var fontAsset = fonts.Get(textFont.Font);
             if (fontAsset is null) continue;
 
@@ -204,7 +216,7 @@ public partial class UITextSystemSet
         if (!query.Has<UITextFont>(input.TextEntity)) return;
 
         ref readonly var textFont = ref query.Get<UITextFont>(input.TextEntity);
-        if (textFont.Font == Handle<FontAsset>.Null) return;
+        if (textFont.Font.IsNull()) return;
 
         var fontAsset = fonts.Get(textFont.Font);
         if (fontAsset is null) return;

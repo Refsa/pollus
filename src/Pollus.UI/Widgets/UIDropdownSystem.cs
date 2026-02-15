@@ -124,17 +124,18 @@ public partial class UIDropdownSystem
 
     internal static void SyncOptionVisibility(Query<UIDropdownOptionTag, UIStyle> qDropdownOptions, Query<UIDropdown> qDropdown)
     {
-        qDropdownOptions.ForEach(qDropdown,
-            static (in q, ref option, ref style) =>
+        // Toggle popup panel visibility via PopupRootEntity
+        qDropdown.ForEach(qDropdownOptions,
+            static (in qOpts, in entity, ref dropdown) =>
             {
-                var dropdownEntity = option.DropdownEntity;
-                if (!q.Has<UIDropdown>(dropdownEntity)) return;
-                scoped ref readonly var dropdown = ref q.Get<UIDropdown>(dropdownEntity);
+                if (dropdown.PopupRootEntity.IsNull) return;
+                if (!qOpts.Has<UIStyle>(dropdown.PopupRootEntity)) return;
 
+                ref var panelStyle = ref qOpts.Get<UIStyle>(dropdown.PopupRootEntity);
                 var display = dropdown.IsOpen ? Display.Flex : Display.None;
-                if (style.Value.Display != display)
+                if (panelStyle.Value.Display != display)
                 {
-                    ref var val = ref style.Value;
+                    ref var val = ref panelStyle.Value;
                     val.Display = display;
                 }
             });

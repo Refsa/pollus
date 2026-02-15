@@ -390,7 +390,7 @@ public class UIHitTestTests
         var textChild = commands.Spawn(Entity.With(
             new UIText { Text = new NativeUtf8("Click me"), Size = 14f, Color = Color.WHITE },
             new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
-            new UITextFont { Font = Handle<FontAsset>.Null },
+            new UITextFont { Font = Handle.Null },
             new UIStyle { Value = LayoutStyle.Default }
         )).Entity;
 
@@ -422,7 +422,7 @@ public class UIHitTestTests
         var textEntity = commands.Spawn(Entity.With(
             new UIText { Text = new NativeUtf8("Hello"), Size = 16f, Color = Color.WHITE },
             new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
-            new UITextFont { Font = Handle<FontAsset>.Null },
+            new UITextFont { Font = Handle.Null },
             new UIStyle { Value = LayoutStyle.Default }
         )).Entity;
 

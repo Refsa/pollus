@@ -89,7 +89,7 @@ public partial class UINumberInputSystem
         }
     }
 
-    internal static string FormatValue(float value, NumberInputType type)
+    public static string FormatValue(float value, NumberInputType type)
     {
         return type == NumberInputType.Int
             ? ((int)value).ToString()

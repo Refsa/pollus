@@ -22,7 +22,7 @@ public class UIDropdownTests
         return world;
     }
 
-    static (Entity dropdown, Entity opt0, Entity opt1, Entity opt2) SpawnDropdown(World world)
+    static (Entity dropdown, Entity popupPanel, Entity opt0, Entity opt1, Entity opt2) SpawnDropdown(World world)
     {
         var commands = world.GetCommands();
 
@@ -36,6 +36,21 @@ public class UIDropdownTests
             new UIInteraction { Focusable = true },
             new UIDropdown { SelectedIndex = -1 },
             new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
+        )).Entity;
+
+        var popupPanel = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle
+            {
+                Value = LayoutStyle.Default with
+                {
+                    Display = Display.None,
+                    Position = Position.Absolute,
+                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    FlexDirection = FlexDirection.Column,
+                    Size = new Size<Length>(Length.Px(200), Length.Auto),
+                }
+            }
         )).Entity;
 
         var opt0 = commands.Spawn(Entity.With(
@@ -59,24 +74,28 @@ public class UIDropdownTests
             new UIStyle { Value = LayoutStyle.Default with { Size = new Size<Length>(Length.Px(200), Length.Px(30)) } }
         )).Entity;
 
+        // Set PopupRootEntity on the dropdown
+        commands.SetComponent(dropdown, new UIDropdown { SelectedIndex = -1, PopupRootEntity = popupPanel });
+
         commands.AddChild(root, dropdown);
-        commands.AddChild(root, opt0);
-        commands.AddChild(root, opt1);
-        commands.AddChild(root, opt2);
+        commands.AddChild(dropdown, popupPanel);
+        commands.AddChild(popupPanel, opt0);
+        commands.AddChild(popupPanel, opt1);
+        commands.AddChild(popupPanel, opt2);
         world.Update();
-        return (dropdown, opt0, opt1, opt2);
+        return (dropdown, popupPanel, opt0, opt1, opt2);
     }
 
     [Fact]
     public void Click_OpensDropdownAndShowsOptions()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
+        var (dropdown, popupPanel, opt0, opt1, opt2) = SpawnDropdown(world);
 
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -87,17 +106,15 @@ public class UIDropdownTests
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
 
-        // Options should now be visible
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        // Popup panel should now be visible
+        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
 
     [Fact]
     public void ClickOption_SelectsAndCloses()
     {
         using var world = CreateWorld();
-        var (dropdown, _, opt1, _) = SpawnDropdown(world);
+        var (dropdown, _, _, opt1, _) = SpawnDropdown(world);
 
         // Open the dropdown first
         ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
@@ -107,7 +124,7 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt1 });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -124,12 +141,12 @@ public class UIDropdownTests
     public void UIDropdownSelectionChanged_Emitted()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, _, _) = SpawnDropdown(world);
+        var (dropdown, _, opt0, _, _) = SpawnDropdown(world);
 
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt0 });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -197,7 +214,7 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt0 });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -214,7 +231,7 @@ public class UIDropdownTests
     public void Escape_ClosesDropdown()
     {
         using var world = CreateWorld();
-        var (dropdown, _, _, _) = SpawnDropdown(world);
+        var (dropdown, _, _, _, _) = SpawnDropdown(world);
 
         ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
         dd.IsOpen = true;
@@ -222,7 +239,7 @@ public class UIDropdownTests
         var keyWriter = world.Events.GetWriter<UIInteractionEvents.UIKeyDownEvent>();
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = dropdown, Key = (int)Key.Escape });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -238,18 +255,18 @@ public class UIDropdownTests
     public void Click_TogglesOpenCloseAndVisibility()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
+        var (dropdown, popupPanel, _, _, _) = SpawnDropdown(world);
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        // Sync initial state - options hidden
+        // Sync initial state - popup panel hidden
         UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
+        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
 
         // Click to open
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
@@ -257,9 +274,7 @@ public class UIDropdownTests
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
 
         // Click to close
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
@@ -267,51 +282,45 @@ public class UIDropdownTests
 
         state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(state.IsOpen);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
 
     [Fact]
     public void Options_HiddenWhenClosed()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
+        var (dropdown, popupPanel, _, _, _) = SpawnDropdown(world);
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
 
-        // Dropdown starts closed - sync should hide options
+        // Dropdown starts closed - sync should hide popup panel
         UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
 
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
 
     [Fact]
     public void Options_VisibleWhenOpen()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
+        var (dropdown, popupPanel, _, _, _) = SpawnDropdown(world);
 
         ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
         dd.IsOpen = true;
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
 
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
 
     [Fact]
     public void ClickOption_HidesOptionsAfterSelection()
     {
         using var world = CreateWorld();
-        var (dropdown, opt0, opt1, opt2) = SpawnDropdown(world);
+        var (dropdown, popupPanel, _, opt1, _) = SpawnDropdown(world);
 
         // Open the dropdown
         ref var dd = ref world.Store.GetComponent<UIDropdown>(dropdown);
@@ -321,7 +330,7 @@ public class UIDropdownTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = opt1 });
 
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
@@ -329,10 +338,8 @@ public class UIDropdownTests
 
         UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
-        // Options should be hidden after selection closes dropdown
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
-        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(opt2).Value.Display);
+        // Popup panel should be hidden after selection closes dropdown
+        Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
 
     /// Simulates exactly the real dropdown: absolute panel + options start Display.None,
@@ -554,6 +561,21 @@ public class UIDropdownTests
             }
         )).Entity;
 
+        var popupPanel = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle
+            {
+                Value = LayoutStyle.Default with
+                {
+                    Display = Display.None,
+                    Position = Position.Absolute,
+                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    FlexDirection = FlexDirection.Column,
+                    Size = new Size<Length>(Length.Px(200), Length.Auto),
+                }
+            }
+        )).Entity;
+
         var opt0 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
@@ -563,7 +585,6 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Display = Display.None,
                     Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
@@ -578,22 +599,23 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Display = Display.None,
                     Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
 
+        commands.SetComponent(dropdown, new UIDropdown { SelectedIndex = -1, PopupRootEntity = popupPanel });
         commands.AddChild(root, dropdown);
-        commands.AddChild(root, opt0);
-        commands.AddChild(root, opt1);
+        commands.AddChild(dropdown, popupPanel);
+        commands.AddChild(popupPanel, opt0);
+        commands.AddChild(popupPanel, opt1);
         world.Update();
 
-        // Run layout pipeline (frame 0: initial layout with options hidden)
+        // Run layout pipeline (frame 0: initial layout with popup hidden)
         var adapter = world.Resources.Get<UITreeAdapter>();
         var uiNodeQuery = new Query<UINode>(world);
         var query = new Query(world);
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
         adapter.SyncFull(uiNodeQuery, query);
@@ -601,7 +623,7 @@ public class UIDropdownTests
         // Run initial compute + writeback
         RunLayout(adapter, query);
 
-        // Options should have zero size (Display.None)
+        // Options should have zero size (popup panel is Display.None)
         var opt0Computed = world.Store.GetComponent<ComputedNode>(opt0);
         Assert.Equal(0f, opt0Computed.Size.X);
         Assert.Equal(0f, opt0Computed.Size.Y);
@@ -616,9 +638,8 @@ public class UIDropdownTests
 
         // Verify IsOpen toggled
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
-        // Verify UIStyle.Display changed to Flex
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
+        // Verify popup panel Display changed to Flex
+        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
 
         // --- Next frame: layout picks up the change ---
         adapter.SyncFull(uiNodeQuery, query);
@@ -736,6 +757,22 @@ public class UIDropdownTests
             }
         )).Entity;
 
+        var popupPanel = commands.Spawn(Entity.With(
+            new UINode(),
+            new BackgroundColor { Color = new Color(0.2f, 0.2f, 0.25f, 1f) },
+            new UIStyle
+            {
+                Value = LayoutStyle.Default with
+                {
+                    Display = Display.None,
+                    Position = Position.Absolute,
+                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    FlexDirection = FlexDirection.Column,
+                    Size = new Size<Length>(Length.Px(200), Length.Auto),
+                }
+            }
+        )).Entity;
+
         var opt0 = commands.Spawn(Entity.With(
             new UINode(),
             new UIInteraction { Focusable = true },
@@ -745,7 +782,6 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Display = Display.None,
                     Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
@@ -760,29 +796,30 @@ public class UIDropdownTests
             {
                 Value = LayoutStyle.Default with
                 {
-                    Display = Display.None,
                     Size = new Size<Length>(Length.Px(200), Length.Px(28)),
                 }
             }
         )).Entity;
 
+        commands.SetComponent(dropdown, new UIDropdown { SelectedIndex = -1, PopupRootEntity = popupPanel });
         commands.AddChild(root, dropdown);
-        commands.AddChild(root, opt0);
-        commands.AddChild(root, opt1);
+        commands.AddChild(dropdown, popupPanel);
+        commands.AddChild(popupPanel, opt0);
+        commands.AddChild(popupPanel, opt1);
         world.Update();
 
         var adapter = world.Resources.Get<UITreeAdapter>();
         var uiNodeQuery = new Query<UINode>(world);
         var query = new Query(world);
-        var qDropdown = new Query<UIDropdown, UIDropdownOptionTag>(world);
+        var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
         var qText = new Query<UIText, Parent>(world);
 
-        // === Frame 1: Initial layout (options hidden) ===
+        // === Frame 1: Initial layout (popup hidden) ===
         adapter.SyncFull(uiNodeQuery, query);
         RunLayout(adapter, query);
 
-        // Verify options are zero-sized
+        // Verify options are zero-sized (popup panel is Display.None)
         Assert.Equal(0f, world.Store.GetComponent<ComputedNode>(opt0).Size.X);
         Assert.Equal(0f, world.Store.GetComponent<ComputedNode>(opt1).Size.X);
 
@@ -793,19 +830,16 @@ public class UIDropdownTests
         Assert.Contains(dropdown, drawCalls); // trigger renders
 
         // === Frame 2: Click to open dropdown ===
-        // Step 1-2: HitTest + UpdateState (simulated by directly writing click event)
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
 
-        // Step 3: DropdownSystem processes click
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         UIDropdownSystem.PerformUpdate(qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
 
         // Verify state changes
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt0).Value.Display);
-        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(opt1).Value.Display);
+        Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
 
         // Step 4: SyncTree detects style changes
         adapter.SyncFull(uiNodeQuery, query);
@@ -827,11 +861,6 @@ public class UIDropdownTests
         Assert.Contains(dropdown, drawCalls);
         Assert.Contains(opt0, drawCalls);
         Assert.Contains(opt1, drawCalls);
-
-        // Verify positions make sense (options below dropdown trigger)
-        var ddComputed = world.Store.GetComponent<ComputedNode>(dropdown);
-        Assert.True(opt0Computed.Position.Y >= ddComputed.Position.Y + ddComputed.Size.Y,
-            $"opt0 Y ({opt0Computed.Position.Y}) should be below dropdown bottom ({ddComputed.Position.Y + ddComputed.Size.Y})");
     }
 
     /// Verifies that dropdown options in an absolute Column panel get non-overlapping
