@@ -63,11 +63,13 @@ public partial class ExtractUITextSystem
         return new RectInt(left, top, Math.Max(left, right), Math.Max(top, bottom));
     }
 
-    static RectInt? ComputeChildScissor(RectInt? parentScissor, Vec2f absPos, Vec2f size)
+    static RectInt? ComputeChildScissor(RectInt? parentScissor, Vec2f absPos, Vec2f size, in ComputedNode computed)
     {
         var nodeRect = new RectInt(
-            (int)absPos.X, (int)absPos.Y,
-            (int)(absPos.X + size.X), (int)(absPos.Y + size.Y));
+            (int)(absPos.X + computed.BorderLeft),
+            (int)(absPos.Y + computed.BorderTop),
+            (int)(absPos.X + size.X - computed.BorderRight),
+            (int)(absPos.Y + size.Y - computed.BorderBottom));
 
         if (parentScissor.HasValue)
             return IntersectScissorRects(parentScissor.Value, nodeRect);
@@ -116,7 +118,7 @@ public partial class ExtractUITextSystem
             ref readonly var style = ref entRef.Get<UIStyle>();
             if (style.Value.Overflow.X != Overflow.Visible || style.Value.Overflow.Y != Overflow.Visible)
             {
-                childScissor = ComputeChildScissor(scissor, absPos, size);
+                childScissor = ComputeChildScissor(scissor, absPos, size, computed);
             }
         }
 

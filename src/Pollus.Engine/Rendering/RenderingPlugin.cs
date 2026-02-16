@@ -136,9 +136,9 @@ public class RenderingPlugin : IPlugin
             }
         ));
 
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new(WindowResizedSystem)
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(WindowResizedSystem)
             {
-                RunsAfter = [RenderStepsCleanupSystem],
+                RunsBefore = [BeginFrameSystem],
                 RunCriteria = EventRunCriteria<WindowEvent.Resized>.Create,
             },
             static (EventReader<WindowEvent.Resized> eWindowResized, RenderContext renderContext, RenderAssets renderAssets, IWGPUContext gpuContext) =>
