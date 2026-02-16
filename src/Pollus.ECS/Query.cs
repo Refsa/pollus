@@ -116,8 +116,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public void ForEach(ForEachEntityDelegate pred)
     {
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             var entities = chunk.GetEntities();
             for (int i = 0; i < chunk.Count; i++)
@@ -137,8 +136,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData> pred)
     {
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             var entities = chunk.GetEntities();
             for (int i = 0; i < chunk.Count; i++)
@@ -151,8 +149,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public void ForEachChunk<TForEach>(TForEach pred)
         where TForEach : IRawChunkForEach
     {
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             pred.Execute(in chunk);
         }
@@ -168,8 +165,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public Entity Single()
     {
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             return chunk.GetEntities()[0];
         }
@@ -188,8 +184,7 @@ public struct Query : IQuery, IQueryCreate<Query>
     public int EntityCount()
     {
         int count = 0;
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -207,8 +202,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
     public bool Any()
     {
-        scoped ReadOnlySpan<ComponentID> cids = stackalloc ComponentID[0];
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
         {
             if (chunk.Count > 0) return true;
         }
@@ -349,7 +343,7 @@ public struct Query : IQuery, IQueryCreate<Query>
 
         public Enumerator(scoped in Query query)
         {
-            var chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, [], query.filterArchetype, query.filterChunk);
+            var chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, query.filterArchetype, query.filterChunk);
             chunksEnumerator = chunks.GetEnumerator();
         }
 

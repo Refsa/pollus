@@ -95,6 +95,13 @@
 			- YAML/KDL might provide a more readable layout
 	- [-] Scene Spawning
 		- [ ] check for sub scene loops
+	- [ ] Prefab references
+		- [ ] Reference an entity by name
+		- [ ] Overrides
+			- allow overriding components
+		- [ ] Variants
+			- Allow defining variants for entities
+			- Variants can be selected when using a prefab
 - UI
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches
@@ -104,6 +111,7 @@
 		- [x] rendering
 		- [-] widgets
 		- [ ] reactive changes
+		- [ ] animations
 - Rendering
 	- [-] Text/Font
 		- [x] cleanup source files
