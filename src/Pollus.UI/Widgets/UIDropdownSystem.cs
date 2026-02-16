@@ -96,12 +96,12 @@ public partial class UIDropdownSystem
 
         if (clicks.Length > 0)
         {
-            qDropdown.ForEach(clickedDropdown, static (in clickedDropdown, in entity, ref dropdown) =>
+            foreach (var entity in qDropdown)
             {
-                if (entity == clickedDropdown) return;
-
-                dropdown.IsOpen = false;
-            });
+                if (entity.Entity == clickedDropdown) continue;
+                entity.Component0.IsOpen = false;
+                dirty = true;
+            }
         }
 
         if (dirty)

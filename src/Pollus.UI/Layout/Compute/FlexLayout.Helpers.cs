@@ -6,11 +6,11 @@ public static partial class FlexLayout
 {
     #region Resolve Flexible Lengths
 
-    private static void ResolveFlexibleLengths(
+    private static float ResolveFlexibleLengths(
         Span<FlexItem> items, FlexDirection dir, float mainGap,
         float? containerMainSize)
     {
-        if (items.Length == 0) return;
+        if (items.Length == 0) return 0f;
 
         float usedMain = 0f;
         for (int i = 0; i < items.Length; i++)
@@ -148,13 +148,18 @@ public static partial class FlexLayout
             }
         }
 
+        float lineMainSize = 0f;
         for (int i = 0; i < items.Length; i++)
         {
             items[i].TargetMainSize = MathF.Max(items[i].TargetMainSize, 0f);
             items[i].OuterTargetMainSize = items[i].TargetMainSize
                 + items[i].MarginMainAxisSum(dir)
                 + items[i].PaddingBorderMainAxisSum(dir);
+            lineMainSize += items[i].OuterTargetMainSize;
         }
+        if (items.Length > 1)
+            lineMainSize += mainGap * (items.Length - 1);
+        return lineMainSize;
     }
 
     #endregion

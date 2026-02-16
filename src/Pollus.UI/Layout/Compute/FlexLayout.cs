@@ -132,9 +132,9 @@ public static partial class FlexLayout
         );
 
         var nodeInnerWidth = knownDimensions.Width
-            ?? LayoutHelpers.MaybeClamp(adjustedStyleSize.Width, adjustedMinSize.Width, adjustedMaxSize.Width);
+                             ?? LayoutHelpers.MaybeClamp(adjustedStyleSize.Width, adjustedMinSize.Width, adjustedMaxSize.Width);
         var nodeInnerHeight = knownDimensions.Height
-            ?? LayoutHelpers.MaybeClamp(adjustedStyleSize.Height, adjustedMinSize.Height, adjustedMaxSize.Height);
+                              ?? LayoutHelpers.MaybeClamp(adjustedStyleSize.Height, adjustedMinSize.Height, adjustedMaxSize.Height);
 
         var nodeInnerSize = new Size<float?>(nodeInnerWidth, nodeInnerHeight);
         var nodeOuterSize = new Size<float?>(
@@ -171,6 +171,7 @@ public static partial class FlexLayout
         float crossGap = style.Gap.Cross(dir).ResolveOr(childContainerCrossInnerSize ?? 0f, 0f);
 
         #endregion
+
         #region Phase 2: Generate flex items
 
         var childIds = tree.GetChildIds(nodeId);
@@ -182,6 +183,7 @@ public static partial class FlexLayout
             {
                 tree.SetUnroundedLayout(childIds[i], NodeLayout.Zero);
             }
+
             tree.CacheStore(nodeId, in input, LayoutOutput.Zero);
             return LayoutOutput.Zero;
         }
@@ -254,14 +256,10 @@ public static partial class FlexLayout
                 var childMinSize = childStyle.MinSize.MaybeResolveNullable(nodeInnerSize);
                 var childMaxSize = childStyle.MaxSize.MaybeResolveNullable(nodeInnerSize);
 
-                float childMinMain = MathF.Max(0f,
-                    (LayoutHelpers.MaybeAdd(childMinSize.Main(dir), childContentBoxAdj.Main(dir))) ?? 0f);
-                float childMaxMain = (LayoutHelpers.MaybeAdd(childMaxSize.Main(dir), childContentBoxAdj.Main(dir)))
-                    ?? float.PositiveInfinity;
-                float childMinCross = MathF.Max(0f,
-                    (LayoutHelpers.MaybeAdd(childMinSize.Cross(dir), childContentBoxAdj.Cross(dir))) ?? 0f);
-                float childMaxCross = (LayoutHelpers.MaybeAdd(childMaxSize.Cross(dir), childContentBoxAdj.Cross(dir)))
-                    ?? float.PositiveInfinity;
+                float childMinMain = MathF.Max(0f, LayoutHelpers.MaybeAdd(childMinSize.Main(dir), childContentBoxAdj.Main(dir)) ?? 0f);
+                float childMaxMain = LayoutHelpers.MaybeAdd(childMaxSize.Main(dir), childContentBoxAdj.Main(dir)) ?? float.PositiveInfinity;
+                float childMinCross = MathF.Max(0f, LayoutHelpers.MaybeAdd(childMinSize.Cross(dir), childContentBoxAdj.Cross(dir)) ?? 0f);
+                float childMaxCross = LayoutHelpers.MaybeAdd(childMaxSize.Cross(dir), childContentBoxAdj.Cross(dir)) ?? float.PositiveInfinity;
 
                 bool crossIsAuto = childStyle.Size.Cross(dir).IsAuto();
 
@@ -321,6 +319,7 @@ public static partial class FlexLayout
             StableSort(flexItems);
 
             #endregion
+
             #region Phase 3: Determine flex base size
 
             DetermineFlexBaseSize(ref tree, flexItems, dir,
@@ -328,13 +327,13 @@ public static partial class FlexLayout
                 availableSpaceMain, availableSpaceCross, nodeInnerSize, isRow);
 
             #endregion
+
             #region Phase 4: Collect items into flex lines
 
             FlexLine[]? linesArray = null;
             int lineCount = 0;
             scoped Span<FlexLine> lines;
 
-            // Single-line fast path: stackalloc avoids ArrayPool overhead (~95% of cases)
             Span<FlexLine> singleLineBuffer = stackalloc FlexLine[1];
 
             if (flexItemCount == 0)
@@ -360,7 +359,7 @@ public static partial class FlexLayout
                 {
                     ref var item = ref flexItems[i];
                     float outerBasis = item.InnerFlexBasis + item.MarginMainAxisSum(dir)
-                        + item.PaddingBorderMainAxisSum(dir);
+                                                           + item.PaddingBorderMainAxisSum(dir);
 
                     if (i > lineStart)
                     {
@@ -395,70 +394,49 @@ public static partial class FlexLayout
                 lines = linesArray.AsSpan(0, lineCount);
             }
 
+            #endregion
+
+
             try
             {
-
-                #endregion
                 #region Phase 5: Resolve flexible lengths
 
-                for (int li = 0; li < lines.Length; li++)
-                {
-                    ref var line = ref lines[li];
-                    var lineItems = flexItems.Slice(line.StartIndex, line.Count);
-                    ResolveFlexibleLengths(lineItems, dir, mainGap, childContainerMainInnerSize);
-                }
-
-                #endregion
-                #region Phase 6: Determine hypothetical cross size
-
-                DetermineHypotheticalCrossSize(ref tree, flexItems, dir,
-                    childContainerCrossInnerSize, availableSpaceCross, nodeInnerSize, isRow);
-
-                #endregion
-                #region Phases 7 + 7b + 7c: Determine line cross sizes
-
-                var alignContent = style.AlignContent ?? (lineCount == 1 ? AlignContent.Stretch : AlignContent.FlexStart);
-                var defaultAlignItems = style.AlignItems ?? AlignItems.Stretch;
-
-                DetermineLineCrossSizes(lines, flexItems, dir,
-                    defaultAlignItems, alignContent, lineCount,
-                    childContainerCrossInnerSize, crossGap);
-
-                #endregion
-                #region Phase 8: Determine container size
                 float totalMainContent = 0f;
                 for (int li = 0; li < lines.Length; li++)
                 {
                     ref var line = ref lines[li];
                     var lineItems = flexItems.Slice(line.StartIndex, line.Count);
-
-                    float lineMain = 0f;
-                    for (int i = 0; i < lineItems.Length; i++)
-                        lineMain += lineItems[i].OuterTargetMainSize;
-                    if (lineItems.Length > 1)
-                        lineMain += mainGap * (lineItems.Length - 1);
-
+                    float lineMain = ResolveFlexibleLengths(lineItems, dir, mainGap, childContainerMainInnerSize);
                     if (lineMain > totalMainContent)
                         totalMainContent = lineMain;
                 }
 
-                float totalCrossContent = 0f;
-                for (int li = 0; li < lines.Length; li++)
-                    totalCrossContent += lines[li].CrossSize;
-                if (lineCount > 1)
-                    totalCrossContent += crossGap * (lineCount - 1);
+                #endregion
+
+                #region Phases 6 + 7: Determine cross sizes
+
+                var alignContent = style.AlignContent ?? (lineCount == 1 ? AlignContent.Stretch : AlignContent.FlexStart);
+                var defaultAlignItems = style.AlignItems ?? AlignItems.Stretch;
+
+                float totalCrossContent = DetermineCrossSizes(ref tree, lines, flexItems, dir,
+                    childContainerCrossInnerSize, availableSpaceCross, nodeInnerSize, isRow,
+                    defaultAlignItems, alignContent, lineCount, crossGap);
+
+                #endregion
+
+                #region Phase 8: Determine container size
 
                 float containerMainSize = containerMainInnerSize
-                    ?? MathF.Max(MathF.Min(
-                        totalMainContent,
-                        adjustedMaxSize.Main(dir) ?? float.PositiveInfinity),
-                        adjustedMinSize.Main(dir) ?? 0f);
+                                          ?? MathF.Max(MathF.Min(
+                                                  totalMainContent,
+                                                  adjustedMaxSize.Main(dir) ?? float.PositiveInfinity),
+                                              adjustedMinSize.Main(dir) ?? 0f);
 
                 float containerCrossSize = containerCrossInnerSize
-                    ?? MathF.Max(MathF.Min(
-                        totalCrossContent,
-                        adjustedMaxSize.Cross(dir) ?? float.PositiveInfinity),
-                        adjustedMinSize.Cross(dir) ?? 0f);
+                                           ?? MathF.Max(MathF.Min(
+                                                   totalCrossContent,
+                                                   adjustedMaxSize.Cross(dir) ?? float.PositiveInfinity),
+                                               adjustedMinSize.Cross(dir) ?? 0f);
 
                 var containerOuterMainSize = containerMainSize + paddingBorderSum.Main(dir);
                 var containerOuterCrossSize = containerCrossSize + paddingBorderSum.Cross(dir);
@@ -477,11 +455,11 @@ public static partial class FlexLayout
 
                     float? bx = firstItem.MeasuredFirstBaselines.X.HasValue
                         ? firstLoc.X + firstItem.Border.Left + firstItem.Padding.Left
-                            + firstItem.MeasuredFirstBaselines.X.Value
+                          + firstItem.MeasuredFirstBaselines.X.Value
                         : null;
                     float? by = firstItem.MeasuredFirstBaselines.Y.HasValue
                         ? firstLoc.Y + firstItem.Border.Top + firstItem.Padding.Top
-                            + firstItem.MeasuredFirstBaselines.Y.Value
+                          + firstItem.MeasuredFirstBaselines.Y.Value
                         : null;
                     containerFirstBaselines = new Point<float?>(bx, by);
                 }
@@ -502,27 +480,26 @@ public static partial class FlexLayout
                 }
 
                 #endregion
-                #region Phase 9: Position items on main axis (JustifyContent)
+
+                #region Phases 9 + 10: Position and align items
 
                 var justifyContent = style.JustifyContent ?? JustifyContent.FlexStart;
 
-                PositionItemsOnMainAxis(lines, flexItems, dir,
-                    justifyContent, containerMainSize, mainGap, paddingBorder);
-
-                #endregion
-                #region Phase 10: Align items on cross axis
-
-                AlignItemsOnCrossAxis(lines, flexItems, dir,
+                PositionAndAlignItems(lines, flexItems, dir,
+                    justifyContent, containerMainSize, mainGap,
                     alignContent, defaultAlignItems, lineCount,
-                    containerCrossSize, totalCrossContent, crossGap, paddingBorder, isWrapReverse);
+                    containerCrossSize, totalCrossContent, crossGap,
+                    paddingBorder, isWrapReverse);
 
                 #endregion
+
                 #region Phase 11: Perform final layout
 
                 PerformFinalLayout(ref tree, flexItems, dir, nodeInnerSize,
                     ref containerFirstBaselines, out float maxContentMain, out float maxContentCross);
 
                 #endregion
+
                 #region Phase 12: Absolutely-positioned children
 
                 LayoutAbsoluteChildren(ref tree, in style,
@@ -533,6 +510,7 @@ public static partial class FlexLayout
                     availableSpaceMain, availableSpaceCross);
 
                 #endregion
+
                 #region Phase 13: Final container size
 
                 var containerSize = Size<float>.FromMainCross(dir,
@@ -551,7 +529,6 @@ public static partial class FlexLayout
                 };
                 tree.CacheStore(nodeId, in input, in finalResult);
                 return finalResult;
-
             }
             finally
             {
@@ -593,9 +570,9 @@ public static partial class FlexLayout
                     item.ContentBoxMainAdj);
 
             float? styledMainSize = flexBasisResolved
-                ?? LayoutHelpers.MaybeAdd(
-                    item.SizeStyle.Main(dir).Resolve(childContainerMainInnerSize ?? 0f),
-                    item.ContentBoxMainAdj);
+                                    ?? LayoutHelpers.MaybeAdd(
+                                        item.SizeStyle.Main(dir).Resolve(childContainerMainInnerSize ?? 0f),
+                                        item.ContentBoxMainAdj);
 
             float flexBasis;
             if (styledMainSize.HasValue)
@@ -634,72 +611,17 @@ public static partial class FlexLayout
 
     #endregion
 
-    #region Phase 6: Determine hypothetical cross size
+    #region Phases 6 + 7: Determine cross sizes
 
-    private static void DetermineHypotheticalCrossSize<TTree>(
-        ref TTree tree, Span<FlexItem> flexItems, FlexDirection dir,
-        float? childContainerCrossInnerSize,
-        AvailableSpace availableSpaceCross,
-        Size<float?> nodeInnerSize, bool isRow)
+    private static float DetermineCrossSizes<TTree>(
+        ref TTree tree, Span<FlexLine> lines, Span<FlexItem> flexItems, FlexDirection dir,
+        float? childContainerCrossInnerSize, AvailableSpace availableSpaceCross,
+        Size<float?> nodeInnerSize, bool isRow,
+        AlignItems defaultAlignItems, AlignContent alignContent,
+        int lineCount, float crossGap)
         where TTree : ILayoutTree
     {
-        for (int i = 0; i < flexItems.Length; i++)
-        {
-            ref var item = ref flexItems[i];
-
-            float? childCrossKnown = LayoutHelpers.MaybeAdd(
-                item.SizeStyle.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
-                item.ContentBoxCrossAdj);
-
-            var childKnown = Size<float?>.FromMainCross(dir, item.TargetMainSize, childCrossKnown);
-
-            var childAvailMain = AvailableSpace.Definite(
-                item.TargetMainSize + item.PaddingBorderMainAxisSum(dir));
-            var childAvailCross = availableSpaceCross.MaybeSet(childCrossKnown.HasValue
-                ? childCrossKnown.Value + item.PaddingBorderCrossAxisSum(dir)
-                : null);
-
-            var measureInput = new LayoutInput
-            {
-                RunMode = RunMode.ComputeSize,
-                SizingMode = SizingMode.ContentSize,
-                Axis = isRow ? RequestedAxis.Vertical : RequestedAxis.Horizontal,
-                KnownDimensions = childKnown,
-                ParentSize = nodeInnerSize,
-                AvailableSpace = Size<AvailableSpace>.FromMainCross(dir,
-                    childAvailMain, childAvailCross),
-            };
-
-            var measured = tree.ComputeChildLayout(item.NodeId, measureInput);
-            float crossMeasured = measured.Size.Cross(dir);
-
-            // ComputeFlexbox returns outer sizes (content + padding + border) for
-            // non-leaf nodes. Convert to content size to avoid double-counting when
-            // PaddingBorder is added back in Phase 7 and Phase 11.
-            // When the child has an explicit cross size, use the already-resolved
-            // content size directly. Otherwise subtract padding+border from the
-            // measured outer size.
-            float crossContent = childCrossKnown
-                ?? MathF.Max(crossMeasured - item.PaddingBorderCrossAxisSum(dir), 0f);
-
-            item.HypotheticalCrossSize = MathF.Max(MathF.Min(crossContent, item.MaxCross), item.MinCross);
-            item.TargetCrossSize = item.HypotheticalCrossSize;
-
-            item.FirstBaseline = measured.FirstBaselines.Cross(dir);
-            item.MeasuredFirstBaselines = measured.FirstBaselines;
-        }
-    }
-
-    #endregion
-
-    #region Phases 7 + 7b + 7c: Determine line cross sizes
-
-    private static void DetermineLineCrossSizes(
-        Span<FlexLine> lines, Span<FlexItem> flexItems, FlexDirection dir,
-        AlignItems defaultAlignItems, AlignContent alignContent,
-        int lineCount, float? childContainerCrossInnerSize, float crossGap)
-    {
-        // Phase 7: Calculate line cross sizes (max-cross + baseline in single pass)
+        // Phase 6 + 7: Compute hypothetical cross sizes and line cross metrics in one pass
         for (int li = 0; li < lines.Length; li++)
         {
             ref var line = ref lines[li];
@@ -720,9 +642,46 @@ public static partial class FlexLayout
             {
                 ref var item = ref lineItems[i];
 
+                // --- Hypothetical cross size (was Phase 6) ---
+                float? childCrossKnown = LayoutHelpers.MaybeAdd(
+                    item.SizeStyle.Cross(dir).Resolve(childContainerCrossInnerSize ?? 0f),
+                    item.ContentBoxCrossAdj);
+
+                var childKnown = Size<float?>.FromMainCross(dir, item.TargetMainSize, childCrossKnown);
+
+                var childAvailMain = AvailableSpace.Definite(
+                    item.TargetMainSize + item.PaddingBorderMainAxisSum(dir));
+                var childAvailCross = availableSpaceCross.MaybeSet(childCrossKnown.HasValue
+                    ? childCrossKnown.Value + item.PaddingBorderCrossAxisSum(dir)
+                    : null);
+
+                var measureInput = new LayoutInput
+                {
+                    RunMode = RunMode.ComputeSize,
+                    SizingMode = SizingMode.ContentSize,
+                    Axis = isRow ? RequestedAxis.Vertical : RequestedAxis.Horizontal,
+                    KnownDimensions = childKnown,
+                    ParentSize = nodeInnerSize,
+                    AvailableSpace = Size<AvailableSpace>.FromMainCross(dir,
+                        childAvailMain, childAvailCross),
+                };
+
+                var measured = tree.ComputeChildLayout(item.NodeId, measureInput);
+                float crossMeasured = measured.Size.Cross(dir);
+
+                // Convert outer size to content size to avoid double-counting PaddingBorder
+                float crossContent = childCrossKnown
+                                     ?? MathF.Max(crossMeasured - item.PaddingBorderCrossAxisSum(dir), 0f);
+
+                item.HypotheticalCrossSize = MathF.Max(MathF.Min(crossContent, item.MaxCross), item.MinCross);
+                item.TargetCrossSize = item.HypotheticalCrossSize;
+                item.FirstBaseline = measured.FirstBaselines.Cross(dir);
+                item.MeasuredFirstBaselines = measured.FirstBaselines;
+
+                // --- Line cross metrics (was Phase 7) ---
                 float outerCross = item.HypotheticalCrossSize
-                    + item.MarginCrossAxisSum(dir)
-                    + item.PaddingBorderCrossAxisSum(dir);
+                                   + item.MarginCrossAxisSum(dir)
+                                   + item.PaddingBorderCrossAxisSum(dir);
                 if (outerCross > maxCross) maxCross = outerCross;
 
                 var itemAlign = ToAlignItems(item.AlignSelf) ?? defaultAlignItems;
@@ -730,10 +689,10 @@ public static partial class FlexLayout
                 {
                     float baseline = item.FirstBaseline ?? item.HypotheticalCrossSize;
                     float above = item.Margin.CrossStart(dir) + item.Border.CrossStart(dir)
-                        + item.Padding.CrossStart(dir) + baseline;
+                                                              + item.Padding.CrossStart(dir) + baseline;
                     float below = (item.HypotheticalCrossSize - baseline)
-                        + item.Padding.CrossEnd(dir) + item.Border.CrossEnd(dir)
-                        + item.Margin.CrossEnd(dir);
+                                  + item.Padding.CrossEnd(dir) + item.Border.CrossEnd(dir)
+                                  + item.Margin.CrossEnd(dir);
 
                     if (above > maxAbove) maxAbove = above;
                     if (below > maxBelow) maxBelow = below;
@@ -759,7 +718,7 @@ public static partial class FlexLayout
         // Phase 7b: Compute align-content stretch adjustment
         float lineCrossStretchAdj = 0f;
         if (childContainerCrossInnerSize.HasValue && lineCount > 1
-            && alignContent == AlignContent.Stretch)
+                                                  && alignContent == AlignContent.Stretch)
         {
             float totalLineCross = 0f;
             for (int li = 0; li < lines.Length; li++)
@@ -771,11 +730,13 @@ public static partial class FlexLayout
                 lineCrossStretchAdj = freeSpace / lineCount;
         }
 
-        // Phase 7b apply + 7c: Stretch items on cross axis
+        // Phase 7b apply + 7c: Stretch items, compute totalCrossContent
+        float totalCrossContent = 0f;
         for (int li = 0; li < lines.Length; li++)
         {
             ref var line = ref lines[li];
             line.CrossSize += lineCrossStretchAdj;
+            totalCrossContent += line.CrossSize;
 
             var lineItems = flexItems.Slice(line.StartIndex, line.Count);
             for (int i = 0; i < lineItems.Length; i++)
@@ -784,35 +745,75 @@ public static partial class FlexLayout
                 var itemAlign = ToAlignItems(item.AlignSelf) ?? defaultAlignItems;
 
                 if (itemAlign == AlignItems.Stretch && item.CrossSizeIsAuto
-                    && !item.MarginCrossStartAuto && !item.MarginCrossEndAuto)
+                                                    && !item.MarginCrossStartAuto && !item.MarginCrossEndAuto)
                 {
                     float stretchedCross = line.CrossSize
-                        - item.MarginCrossAxisSum(dir)
-                        - item.PaddingBorderCrossAxisSum(dir);
+                                           - item.MarginCrossAxisSum(dir)
+                                           - item.PaddingBorderCrossAxisSum(dir);
                     stretchedCross = MathF.Max(stretchedCross, 0f);
                     stretchedCross = MathF.Max(MathF.Min(stretchedCross, item.MaxCross), item.MinCross);
                     item.TargetCrossSize = stretchedCross;
                 }
             }
         }
+        if (lineCount > 1)
+            totalCrossContent += crossGap * (lineCount - 1);
+
+        return totalCrossContent;
     }
 
     #endregion
 
-    #region Phase 9: Position items on main axis
+    #region Phases 9 + 10: Position and align items
 
-    private static void PositionItemsOnMainAxis(
+    private static void PositionAndAlignItems(
         Span<FlexLine> lines, Span<FlexItem> flexItems, FlexDirection dir,
-        JustifyContent justifyContent, float containerMainSize,
-        float mainGap, Rect<float> paddingBorder)
+        JustifyContent justifyContent, float containerMainSize, float mainGap,
+        AlignContent alignContent, AlignItems defaultAlignItems,
+        int lineCount, float containerCrossSize, float totalLineCross,
+        float crossGap, Rect<float> paddingBorder, bool isWrapReverse)
     {
-        for (int li = 0; li < lines.Length; li++)
+        // Compute line cross offsets first (all lines needed before per-item pass)
+        float freeCross = MathF.Max(containerCrossSize - totalLineCross, 0f);
+
+        var ac = alignContent;
+        if (isWrapReverse)
+        {
+            ac = ac switch
+            {
+                AlignContent.FlexStart => AlignContent.FlexEnd,
+                AlignContent.FlexEnd => AlignContent.FlexStart,
+                _ => ac,
+            };
+        }
+
+        ComputeAlignContent(ac, freeCross, lineCount, crossGap,
+            out float crossInitialOffset, out float crossBetweenOffset);
+
+        float crossCursor = paddingBorder.CrossStart(dir) + crossInitialOffset;
+        for (int rawLi = 0; rawLi < lineCount; rawLi++)
+        {
+            int li = isWrapReverse ? (lineCount - 1 - rawLi) : rawLi;
+            ref var line = ref lines[li];
+
+            line.OffsetCross = crossCursor;
+            crossCursor += line.CrossSize;
+            if (rawLi < lineCount - 1)
+                crossCursor += crossBetweenOffset;
+        }
+
+        // Position on main axis + align on cross axis in one pass per line
+        bool isReverse = dir.IsReverse();
+        var jcBase = isReverse ? FlipJustify(justifyContent) : justifyContent;
+
+        for (int li = 0; li < lineCount; li++)
         {
             ref var line = ref lines[li];
             var lineItems = flexItems.Slice(line.StartIndex, line.Count);
 
             if (lineItems.Length == 0) continue;
 
+            // Pre-pass: usedMain + auto margin count
             float usedMain = 0f;
             int autoMarginCount = 0;
             for (int i = 0; i < lineItems.Length; i++)
@@ -821,6 +822,7 @@ public static partial class FlexLayout
                 if (lineItems[i].MarginMainStartAuto) autoMarginCount++;
                 if (lineItems[i].MarginMainEndAuto) autoMarginCount++;
             }
+
             if (lineItems.Length > 1)
                 usedMain += mainGap * (lineItems.Length - 1);
 
@@ -836,6 +838,7 @@ public static partial class FlexLayout
                     if (lineItems[i].MarginMainEndAuto)
                         SetMainMarginEnd(ref lineItems[i], dir, perAutoMargin);
                 }
+
                 freeMain = 0f;
             }
             else
@@ -843,99 +846,37 @@ public static partial class FlexLayout
                 freeMain = MathF.Max(freeMain, 0f);
             }
 
-            int itemCount = lineItems.Length;
-            float initialOffset;
-            float betweenOffset;
-
-            bool isReverse = dir.IsReverse();
-            var jc = isReverse ? FlipJustify(justifyContent) : justifyContent;
-
+            var jc = jcBase;
             if (autoMarginCount > 0)
             {
                 jc = isReverse ? JustifyContent.FlexEnd : JustifyContent.FlexStart;
                 freeMain = 0f;
             }
 
-            ComputeAlignment(jc, freeMain, itemCount, mainGap,
-                out initialOffset, out betweenOffset);
+            ComputeAlignment(jc, freeMain, lineItems.Length, mainGap,
+                out float initialOffset, out float betweenOffset);
 
+            // Main pass: set OffsetMain + OffsetCross per item
             float mainCursor = paddingBorder.MainStart(dir) + initialOffset;
             for (int i = 0; i < lineItems.Length; i++)
             {
                 int idx = isReverse ? (lineItems.Length - 1 - i) : i;
                 ref var item = ref lineItems[idx];
 
+                // Main axis
                 mainCursor += item.Margin.MainStart(dir);
                 item.OffsetMain = mainCursor + item.Border.MainStart(dir) + item.Padding.MainStart(dir);
-
                 mainCursor += item.PaddingBorderMainAxisSum(dir) + item.TargetMainSize
-                    + item.Margin.MainEnd(dir);
-
+                                                                 + item.Margin.MainEnd(dir);
                 if (i < lineItems.Length - 1)
                     mainCursor += betweenOffset;
-            }
-        }
-    }
 
-    #endregion
-
-    #region Phase 10: Align items on cross axis
-
-    private static void AlignItemsOnCrossAxis(
-        Span<FlexLine> lines, Span<FlexItem> flexItems, FlexDirection dir,
-        AlignContent alignContent, AlignItems defaultAlignItems,
-        int lineCount, float containerCrossSize, float totalLineCross,
-        float crossGap, Rect<float> paddingBorder, bool isWrapReverse)
-    {
-        float freeCross = containerCrossSize - totalLineCross;
-        freeCross = MathF.Max(freeCross, 0f);
-
-        float crossInitialOffset;
-        float crossBetweenOffset;
-
-        var ac = alignContent;
-        if (isWrapReverse)
-        {
-            ac = ac switch
-            {
-                AlignContent.FlexStart => AlignContent.FlexEnd,
-                AlignContent.FlexEnd => AlignContent.FlexStart,
-                _ => ac,
-            };
-        }
-
-        ComputeAlignContent(ac, freeCross, lineCount, crossGap,
-            out crossInitialOffset, out crossBetweenOffset);
-
-        float crossCursor = paddingBorder.CrossStart(dir) + crossInitialOffset;
-
-        for (int rawLi = 0; rawLi < lineCount; rawLi++)
-        {
-            int li = isWrapReverse ? (lineCount - 1 - rawLi) : rawLi;
-            ref var line = ref lines[li];
-
-            line.OffsetCross = crossCursor;
-            crossCursor += line.CrossSize;
-            if (rawLi < lineCount - 1)
-                crossCursor += crossBetweenOffset;
-        }
-
-        for (int li = 0; li < lineCount; li++)
-        {
-            ref var line = ref lines[li];
-            var lineItems = flexItems.Slice(line.StartIndex, line.Count);
-
-            for (int i = 0; i < lineItems.Length; i++)
-            {
-                ref var item = ref lineItems[i];
+                // Cross axis
                 var itemAlign = ToAlignItems(item.AlignSelf) ?? defaultAlignItems;
-
                 float itemOuterCross = item.TargetCrossSize
-                    + item.MarginCrossAxisSum(dir)
-                    + item.PaddingBorderCrossAxisSum(dir);
-
-                float lineFreeForItem = line.CrossSize - itemOuterCross;
-                lineFreeForItem = MathF.Max(lineFreeForItem, 0f);
+                                       + item.MarginCrossAxisSum(dir)
+                                       + item.PaddingBorderCrossAxisSum(dir);
+                float lineFreeForItem = MathF.Max(line.CrossSize - itemOuterCross, 0f);
 
                 float crossOffset = 0f;
                 if (item.MarginCrossStartAuto && item.MarginCrossEndAuto)
@@ -961,16 +902,16 @@ public static partial class FlexLayout
                         AlignItems.Center => lineFreeForItem / 2f,
                         AlignItems.Stretch => 0f,
                         AlignItems.Baseline => line.MaxAboveBaseline
-                            - item.Margin.CrossStart(dir) - item.Border.CrossStart(dir)
-                            - item.Padding.CrossStart(dir)
-                            - (item.FirstBaseline ?? item.TargetCrossSize),
+                                               - item.Margin.CrossStart(dir) - item.Border.CrossStart(dir)
+                                               - item.Padding.CrossStart(dir)
+                                               - (item.FirstBaseline ?? item.TargetCrossSize),
                         _ => 0f,
                     };
                 }
 
                 item.OffsetCross = line.OffsetCross + crossOffset
-                    + item.Margin.CrossStart(dir)
-                    + item.Border.CrossStart(dir) + item.Padding.CrossStart(dir);
+                                                    + item.Margin.CrossStart(dir)
+                                                    + item.Border.CrossStart(dir) + item.Padding.CrossStart(dir);
             }
         }
     }
@@ -1101,16 +1042,16 @@ public static partial class FlexLayout
 
             float? widthFromInset = null;
             float absContainerInnerW = nodeInnerWidth
-                ?? (isRow ? containerMainSize : containerCrossSize);
+                                       ?? (isRow ? containerMainSize : containerCrossSize);
             float absContainerInnerH = nodeInnerHeight
-                ?? (isRow ? containerCrossSize : containerMainSize);
+                                       ?? (isRow ? containerCrossSize : containerMainSize);
 
             if (childInset.Left.HasValue && childInset.Right.HasValue && !adjChildSize.Width.HasValue)
             {
                 widthFromInset = absContainerInnerW
-                    - childInset.Left.Value - childInset.Right.Value
-                    - childMargin.Left - childMargin.Right
-                    - childPbW;
+                                 - childInset.Left.Value - childInset.Right.Value
+                                 - childMargin.Left - childMargin.Right
+                                 - childPbW;
                 widthFromInset = MathF.Max(widthFromInset.Value, 0f);
             }
 
@@ -1118,9 +1059,9 @@ public static partial class FlexLayout
             if (childInset.Top.HasValue && childInset.Bottom.HasValue && !adjChildSize.Height.HasValue)
             {
                 heightFromInset = absContainerInnerH
-                    - childInset.Top.Value - childInset.Bottom.Value
-                    - childMargin.Top - childMargin.Bottom
-                    - childPbH;
+                                  - childInset.Top.Value - childInset.Bottom.Value
+                                  - childMargin.Top - childMargin.Bottom
+                                  - childPbH;
                 heightFromInset = MathF.Max(heightFromInset.Value, 0f);
             }
 
@@ -1168,7 +1109,7 @@ public static partial class FlexLayout
             else if (childInset.Right.HasValue)
             {
                 absX = absContainerOuterW - paddingBorder.Right - childInset.Right.Value
-                    - childMargin.Right - absOuterW;
+                       - childMargin.Right - absOuterW;
             }
             else
             {
@@ -1185,6 +1126,7 @@ public static partial class FlexLayout
                     var xAlign = ToAlignItems(childStyle.AlignSelf) ?? style.AlignItems ?? AlignItems.Stretch;
                     alignOffsetX = AbsAlignOffset(xAlign, freeX);
                 }
+
                 absX = paddingBorder.Left + childMargin.Left + alignOffsetX;
             }
 
@@ -1195,7 +1137,7 @@ public static partial class FlexLayout
             else if (childInset.Bottom.HasValue)
             {
                 absY = absContainerOuterH - paddingBorder.Bottom - childInset.Bottom.Value
-                    - childMargin.Bottom - absOuterH;
+                       - childMargin.Bottom - absOuterH;
             }
             else
             {
@@ -1212,6 +1154,7 @@ public static partial class FlexLayout
                     var yAlign = ToAlignItems(childStyle.AlignSelf) ?? style.AlignItems ?? AlignItems.Stretch;
                     alignOffsetY = AbsAlignOffset(yAlign, freeY);
                 }
+
                 absY = paddingBorder.Top + childMargin.Top + alignOffsetY;
             }
 
