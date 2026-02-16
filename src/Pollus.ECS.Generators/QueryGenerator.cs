@@ -26,7 +26,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         where TFilters : ITuple, new()
     {
         public static Component.Info[] Infos => infos;
-        public static Filter<TFilters> Create(World world) => new Filter<TFilters>(world);
+        public static Filter<TFilters> Create(World world) => new(world);
         public static implicit operator Query<$gen_args$>(in Filter<TFilters> filter) => filter.query;
         static Filter() => QueryFilterFetch<Filter<TFilters>>.Register();
 
@@ -44,19 +44,19 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
+        {
+            query.ForEach(userData, pred);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ForEach(ForEachEntityDelegate<$gen_args$> pred)
         {
             query.ForEach(pred);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
-        {
-            query.ForEach(userData, pred);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
+        public void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
         {
             query.ForEach(userData, pred);
         }
@@ -69,10 +69,17 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ForEachChunk<TForEach>(TForEach iter)
+        public void ForEachChunk<TForEach>(TForEach pred)
             where TForEach : struct, IChunkForEach<$gen_args$>
         {
-            query.ForEachChunk(iter);
+            query.ForEachChunk(pred);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForEachRawChunk<TForEach>(TForEach pred)
+            where TForEach : struct, IRawChunkForEach
+        {
+            query.ForEachRawChunk(pred);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,10 +89,9 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Has<C>(in Entity entity)
-            where C : unmanaged, IComponent
+        public int EntityCount()
         {
-            return query.Has<C>(entity);
+            return query.EntityCount();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,29 +102,26 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntityRow Get(in Entity entity)
+        public bool Has<C>(in Entity entity)
+            where C : unmanaged, IComponent
         {
-            return query.Get(entity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int EntityCount()
-        {
-            return query.EntityCount();
+            return query.Has<C>(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator()
         {
-            return query.GetEnumerator();
+            return new Enumerator(query);
         }
     }
 
     static readonly Component.Info[] infos = [$infos$];
     static readonly ComponentID[] cids = [$comp_ids$];
+    static readonly int cidsHash = ArchetypeID.Create(cids).Hash;
     public static Component.Info[] Infos => infos;
 
-    static Query<$gen_args$> IQueryCreate<Query<$gen_args$>>.Create(World world) => new Query<$gen_args$>(world);
+    static Query<$gen_args$> IQueryCreate<Query<$gen_args$>>.Create(World world) => new(world);
+
     static Query()
     {
         QueryFetch<Query<$gen_args$>>.Register();
@@ -135,6 +138,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         this.filterChunk = filterChunk;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Query<$gen_args$> Filtered<TFilters>()
         where TFilters : ITuple, new()
     {
@@ -155,11 +159,10 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach(ForEachDelegate<$gen_args$> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_refs$
-
             while (count-- > 0)
             {
                 pred($comp_args$);
@@ -169,14 +172,14 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void ForEach<TUserData>(in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
+    public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, $gen_args$> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_refs$
-
-            while (count-- > 0)
+            scoped ref var end = ref Unsafe.Add(ref comp0, count);
+            while (Unsafe.IsAddressLessThan(ref comp0, ref end))
             {
                 pred(in userData, $comp_args$);
                 $comp_increments$
@@ -196,12 +199,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach(ForEachEntityDelegate<$gen_args$> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_refs$
             scoped ref var entity = ref chunk.GetEntity(0);
-
             while (count-- > 0)
             {
                 pred(entity, $comp_args$);
@@ -212,14 +214,13 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void ForEach<TUserData>(in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
+    public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, $gen_args$> pred)
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_refs$
             scoped ref var entity = ref chunk.GetEntity(0);
-
             while (count-- > 0)
             {
                 pred(in userData, entity, $comp_args$);
@@ -243,12 +244,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : struct, IForEach<$gen_args$>
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             $comp_refs$
             scoped ref var entity = ref chunk.GetEntity(0);
-
             while (count-- > 0)
             {
                 iter.Execute(entity, $comp_args$);
@@ -272,10 +272,20 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public readonly void ForEachChunk<TForEach>(TForEach iter)
         where TForEach : struct, IChunkForEach<$gen_args$>
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             $chunk_spans$
             iter.Execute(chunk.GetEntities(), $chunk_args$);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ForEachRawChunk<TForEach>(TForEach pred)
+        where TForEach : IRawChunkForEach
+    {
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
+        {
+            pred.Execute(in chunk);
         }
     }
 
@@ -292,10 +302,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public int EntityCount()
     {
         int count = 0;
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
+
         return count;
     }
 
@@ -311,10 +322,11 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Any()
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             if (chunk.Count > 0) return true;
         }
+
         return false;
     }
 
@@ -330,7 +342,7 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityRow Single()
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             return new EntityRow
             {
@@ -362,17 +374,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly EntityRow Get(in Entity entity)
-    {
-        var entityInfo = world.Store.GetEntityInfo(entity);
-        return new()
-        {
-            entity = entity,
-            $get_entity_row_components$
-        };
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Enumerator GetEnumerator()
     {
         return new Enumerator(this);
@@ -385,13 +386,13 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         ref Entity endEntity;
         EntityRow currentRow;
 
+        public EntityRow Current => currentRow;
+
         public Enumerator(scoped in Query<$gen_args$> query)
         {
-            chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, cids, query.filterArchetype, query.filterChunk);
+            chunks = new ArchetypeChunkEnumerable(query.world.Store.GetMatchedArchetypes(cidsHash, cids), query.filterArchetype, query.filterChunk);
             chunksEnumerator = chunks.GetEnumerator();
         }
-
-        public EntityRow Current => currentRow;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
@@ -416,8 +417,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     public ref struct EntityRow
     {
         internal ref Entity entity;
-        public readonly ref readonly Entity Entity => ref entity;
         $entity_row_fields$
+        public readonly ref readonly Entity Entity => ref entity;
     }
 }";
 
@@ -432,9 +433,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             var chunk_spans = "scoped var comp0 = chunk.GetComponents<C0>(cids[0]);";
             var chunk_args = "comp0";
             var set_entity_row = "Component0 = ref chunk.GetComponents<C0>(cids[0])[0],";
-            var get_entity_row_components = "Component0 = world.Store.Archetypes[entityInfo.ArchetypeIndex].GetComponent<C0>(entityInfo.ChunkIndex, entityInfo.RowIndex),";
             var entity_row_fields = "public ref C0 Component0;";
-            var enumerator_set_fields = "currentRow.Component0 = ref currentChunk.GetComponents<C0>(cids[0])[0];";
+            var enumerator_set_fields = "currentRow.Component0 = ref currentChunk.GetComponent<C0>(0, cids[0]);";
             var enumerator_move_next = "currentRow.Component0 = ref Unsafe.Add(ref currentRow.Component0, 1);";
 
             for (int i = 1; i < 16; i++)
@@ -449,9 +449,8 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                 chunk_spans += $"\nscoped var comp{i} = chunk.GetComponents<C{i}>(cids[{i}]);";
                 chunk_args += $", comp{i}";
                 set_entity_row += $"\n                    Component{i} = ref chunk.GetComponents<C{i}>(cids[{i}])[0],";
-                get_entity_row_components += $"\n            Component{i} = world.Store.Archetypes[entityInfo.ArchetypeIndex].GetComponent<C{i}>(entityInfo.ChunkIndex, entityInfo.RowIndex),";
                 entity_row_fields += $"\n        public ref C{i} Component{i};";
-                enumerator_set_fields += $"\n            currentRow.Component{i} = ref currentChunk.GetComponents<C{i}>(cids[{i}])[0];";
+                enumerator_set_fields += $"\n            currentRow.Component{i} = ref currentChunk.GetComponent<C{i}>(0, cids[{i}]);";
                 enumerator_move_next += $"\n            currentRow.Component{i} = ref Unsafe.Add(ref currentRow.Component{i}, 1);";
 
                 sb.Clear().Append(TEMPLATE)
@@ -466,7 +465,6 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
                     .Replace("$comp_args$", comp_args)
                     .Replace("$chunk_args$", chunk_args)
                     .Replace("$set_entity_row$", set_entity_row)
-                    .Replace("$get_entity_row_components$", get_entity_row_components)
                     .Replace("$entity_row_fields$", entity_row_fields)
                     .Replace("$enumerator_set_fields$", enumerator_set_fields)
                     .Replace("$enumerator_move_next$", enumerator_move_next);

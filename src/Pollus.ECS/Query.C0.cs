@@ -1,6 +1,5 @@
 namespace Pollus.ECS;
 
-using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
 
 public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
@@ -101,6 +100,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
     static readonly Component.Info[] infos = [Component.Register<C0>()];
     static readonly ComponentID[] cids = [infos[0].ID];
+    static readonly int cidsHash = ArchetypeID.Create(cids).Hash;
     public static Component.Info[] Infos => infos;
 
     static Query<C0> IQueryCreate<Query<C0>>.Create(World world) => new(world);
@@ -142,7 +142,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach(ForEachDelegate<C0> pred)
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -157,7 +157,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachUserDataDelegate<TUserData, C0> pred)
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -182,7 +182,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach(ForEachEntityDelegate<C0> pred)
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -199,7 +199,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void ForEach<TUserData>(scoped in TUserData userData, ForEachEntityUserDataDelegate<TUserData, C0> pred)
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -227,7 +227,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public readonly void ForEach<TForEach>(TForEach iter)
         where TForEach : struct, IForEach<C0>
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             var count = chunk.Count;
             scoped ref var curr = ref chunk.GetComponent<C0>(0, cids[0]);
@@ -245,7 +245,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public readonly void ForEachChunk<TForEach>(TForEach iter)
         where TForEach : struct, IChunkForEach<C0>
     {
-        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (scoped ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             scoped var comp1 = chunk.GetComponents<C0>(cids[0]);
             iter.Execute(chunk.GetEntities(), comp1);
@@ -256,7 +256,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public void ForEachRawChunk<TForEach>(TForEach pred)
         where TForEach : IRawChunkForEach
     {
-        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             pred.Execute(in chunk);
         }
@@ -275,7 +275,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     public int EntityCount()
     {
         int count = 0;
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             count += chunk.Count;
         }
@@ -295,7 +295,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Any()
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             if (chunk.Count > 0) return true;
         }
@@ -315,7 +315,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public EntityRow Single()
     {
-        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, cids, filterArchetype, filterChunk))
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.GetMatchedArchetypes(cidsHash, cids), filterArchetype, filterChunk))
         {
             return new EntityRow
             {
@@ -363,7 +363,7 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
 
         public Enumerator(scoped in Query<C0> query)
         {
-            chunks = new ArchetypeChunkEnumerable(query.world.Store.Archetypes, cids, query.filterArchetype, query.filterChunk);
+            chunks = new ArchetypeChunkEnumerable(query.world.Store.GetMatchedArchetypes(cidsHash, cids), query.filterArchetype, query.filterChunk);
             chunksEnumerator = chunks.GetEnumerator();
         }
 

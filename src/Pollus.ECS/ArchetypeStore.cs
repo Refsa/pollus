@@ -17,6 +17,7 @@ public class ArchetypeStore : IDisposable
     NativeMap<ArchetypeID, int> archetypeLookup;
     readonly RemovedTracker removedTracker;
     Entities entityHandler;
+    readonly Dictionary<int, ArchetypeCache> matchedCaches = new();
 
     public List<Archetype> Archetypes => archetypes;
     public int EntityCount => entityHandler.AliveCount;
@@ -82,6 +83,12 @@ public class ArchetypeStore : IDisposable
         archetype.Tick(version);
         archetypes.Add(archetype);
         archetypeLookup.Add(aid, archetypes.Count - 1);
+
+        foreach (var cache in matchedCaches.Values)
+        {
+            cache.OnArchetypeAdded(archetype);
+        }
+
         return new(archetype, archetypes.Count - 1);
     }
 
@@ -328,6 +335,19 @@ public class ArchetypeStore : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public List<Archetype> GetMatchedArchetypes(int hash, ComponentID[] cids)
+    {
+        if (!matchedCaches.TryGetValue(hash, out var cache))
+        {
+            cache = new ArchetypeCache(cids);
+            matchedCaches[hash] = cache;
+            cache.ScanAll(archetypes);
+        }
+
+        return cache.Matched;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Tick(ulong version)
     {
         this.version = version;
@@ -336,5 +356,34 @@ public class ArchetypeStore : IDisposable
         {
             archetype.Tick(version);
         }
+    }
+}
+
+class ArchetypeCache
+{
+    readonly List<Archetype> matched = new();
+    readonly ComponentID[] cids;
+
+    public List<Archetype> Matched => matched;
+
+    public ArchetypeCache(ComponentID[] cids)
+    {
+        this.cids = cids;
+    }
+
+    public void ScanAll(List<Archetype> allArchetypes)
+    {
+        for (int i = 0; i < allArchetypes.Count; i++)
+        {
+            if (allArchetypes[i].HasAll(cids))
+                matched.Add(allArchetypes[i]);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnArchetypeAdded(Archetype archetype)
+    {
+        if (archetype.HasAll(cids))
+            matched.Add(archetype);
     }
 }

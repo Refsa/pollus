@@ -103,7 +103,7 @@ public class QueryBenchmarks
     public void Query_Two_ForEach_Delegate()
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
-        q.ForEach(static (ref Component1 c1, ref Component2 c2) => c1.First += c2.First);
+        q.ForEach(static (ref c1, ref c2) => c1.First += c2.First);
     }
 
     [Benchmark]

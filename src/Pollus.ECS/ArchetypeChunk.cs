@@ -291,6 +291,20 @@ public struct ArchetypeChunk : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    unsafe public readonly ref C GetComponentByIndex<C>(int row, int componentIndex)
+        where C : unmanaged, IComponent
+    {
+        var array = components[componentIndex];
+        return ref Unsafe.AsRef<C>(Unsafe.Add<C>(array.Data, row));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly int ResolveComponentIndex(scoped in ComponentID cid)
+    {
+        return componentsLookup.Get(cid.ID);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     unsafe public Span<byte> GetComponent(int row, scoped in ComponentID cid)
     {
         var idx = componentsLookup.Get(cid.ID);
