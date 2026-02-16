@@ -47,16 +47,18 @@ public class ComponentGenerator : IIncrementalGenerator
             }
         ).Where(static m => m is not null);
 
-        context.RegisterSourceOutput(pipeline, (context, model) =>
+        var hasTween = context.CompilationProvider.Select(static (compilation, _) =>
+            compilation.GetTypeByMetadataName("Pollus.Tween.ITweenable") is not null);
+
+        context.RegisterSourceOutput(pipeline.Combine(hasTween), (context, pair) =>
         {
+            var (model, hasTweenRef) = pair;
             if (model is null) return;
 
             const string worldSerializationContextType = "WorldSerializationContext";
 
             var reflectImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Utils.ReflectAttribute") ? null : ReflectGenerator.GetReflectImpl(model);
-            // Tween impl is handled entirely by TweenGenerator for [Tween]-attributed types.
-            // Non-attributed components don't get tween code to avoid a hard dependency on Pollus.Tween.
-            string? tweenImpl = null;
+            var tweenImpl = !hasTweenRef || model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Tween.TweenAttribute") ? null : TweenGenerator.GetTweenImpl(model);
 
             var serializeImpl = model.TypeInfo.Attributes.Any(e => e.Name == "Pollus.Core.Serialization.SerializeAttribute")
                 ? null
