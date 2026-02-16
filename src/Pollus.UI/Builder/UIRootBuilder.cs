@@ -19,6 +19,17 @@ public class UIRootBuilder : UINodeBuilder<UIRootBuilder>
         };
     }
 
+    bool autoResize;
+
+    /// <summary>
+    /// Automatically resize this root to match its target viewport (window by default).
+    /// </summary>
+    public UIRootBuilder AutoResize()
+    {
+        autoResize = true;
+        return this;
+    }
+
     public override Entity Spawn()
     {
         var entity = commands.Spawn(Entity.With(
@@ -26,6 +37,9 @@ public class UIRootBuilder : UINodeBuilder<UIRootBuilder>
             new UILayoutRoot { Size = new Size<float>(viewportWidth, viewportHeight) },
             new UIStyle { Value = style }
         )).Entity;
+
+        if (autoResize)
+            commands.Entity(entity).AddComponent(new UIAutoResize());
 
         Setup(entity);
 

@@ -45,6 +45,7 @@ public class UIExample : IExample
 
                 // Root container - dark background, fills viewport
                 var root = UI.Root(commands, viewportW, viewportH)
+                    .AutoResize()
                     .FlexColumn()
                     .Padding(16)
                     .Gap(16)

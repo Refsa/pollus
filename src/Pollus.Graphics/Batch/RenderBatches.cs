@@ -25,7 +25,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
     where TKey : notnull
 {
     readonly ArrayList<TBatch> batches = [];
-    readonly Dictionary<int, int> batchLookup = [];
+    readonly Dictionary<TKey, int> batchLookup = [];
     bool isDisposed;
 
     public RendererKey RendererKey { get; set; }
@@ -73,7 +73,7 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
 
     public bool TryGet(in TKey key, out TBatch batch)
     {
-        if (batchLookup.TryGetValue(key.GetHashCode(), out var batchIdx))
+        if (batchLookup.TryGetValue(key, out var batchIdx))
         {
             batch = batches[batchIdx];
             return true;
@@ -85,25 +85,23 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
 
     public TBatch GetOrCreate(in TKey key)
     {
-        var keyHash = key.GetHashCode();
-        if (batchLookup.TryGetValue(keyHash, out var batchIdx)) return batches[batchIdx];
+        if (batchLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
 
         var batch = CreateBatch(key);
         batch.BatchID = batches.Count;
-        batchLookup.Add(keyHash, batches.Count);
+        batchLookup.Add(key, batches.Count);
         batches.Add(batch);
         return batch;
     }
 
     public int GetIndex(in TKey key)
     {
-        var keyHash = key.GetHashCode();
-        if (batchLookup.TryGetValue(keyHash, out var batchIdx)) return batchIdx;
+        if (batchLookup.TryGetValue(key, out var batchIdx)) return batchIdx;
 
         var batch = CreateBatch(key);
         batchIdx = batches.Count;
         batch.BatchID = batchIdx;
-        batchLookup.Add(keyHash, batchIdx);
+        batchLookup.Add(key, batchIdx);
         batches.Add(batch);
         return batchIdx;
     }
