@@ -129,7 +129,7 @@ public partial class UIScrollSystem
                 float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
                                - computed.BorderTop - computed.BorderBottom;
                 float contentH = computed.ContentSize.Y;
-                float thumbH = MathF.Max(20f, (innerH / contentH) * innerH);
+                float thumbH = contentH > 0 ? MathF.Max(20f, (innerH / contentH) * innerH) : 20f;
                 float maxScroll = contentH - innerH;
                 float scrollRatio = maxScroll > 0 ? scroll.Offset.Y / maxScroll : 0f;
                 float trackH = innerH - thumbH;
@@ -157,7 +157,7 @@ public partial class UIScrollSystem
                 float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
                                - computed.BorderLeft - computed.BorderRight;
                 float contentW = computed.ContentSize.X;
-                float thumbW = MathF.Max(20f, (innerW / contentW) * innerW);
+                float thumbW = contentW > 0 ? MathF.Max(20f, (innerW / contentW) * innerW) : 20f;
                 float maxScroll = contentW - innerW;
                 float scrollRatio = maxScroll > 0 ? scroll.Offset.X / maxScroll : 0f;
                 float trackW = innerW - thumbW;

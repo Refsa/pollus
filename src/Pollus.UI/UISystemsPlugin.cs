@@ -55,6 +55,9 @@ public class UISystemsPlugin : IPlugin
         // Widget resources
         world.Resources.Add(new UITextBuffers());
 
+        // Cleanup (disposes native resources for removed UI entities)
+        world.Schedule.AddSystemSet<UICleanupSystem>();
+
         // Widget systems
         world.Schedule.AddSystemSet<UIButtonSystem>();
         world.Schedule.AddSystemSet<UIToggleSystem>();
