@@ -27,18 +27,18 @@ public partial class UICheckBoxSystem
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var checkBox = ref query.Get<UICheckBox>(entity);
+            ref var checkBox = ref query.GetTracked<UICheckBox>(entity);
             checkBox.IsChecked = !checkBox.IsChecked;
 
             if (query.Has<BackgroundColor>(entity))
             {
-                ref var bg = ref query.Get<BackgroundColor>(entity);
+                ref var bg = ref query.GetTracked<BackgroundColor>(entity);
                 bg.Color = checkBox.IsChecked ? checkBox.CheckedColor : checkBox.UncheckedColor;
             }
 
             if (!checkBox.IndicatorEntity.IsNull && query.Has<BackgroundColor>(checkBox.IndicatorEntity))
             {
-                ref var indicatorBg = ref query.Get<BackgroundColor>(checkBox.IndicatorEntity);
+                ref var indicatorBg = ref query.GetTracked<BackgroundColor>(checkBox.IndicatorEntity);
                 indicatorBg.Color = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
             }
 

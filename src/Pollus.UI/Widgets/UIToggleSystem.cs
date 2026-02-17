@@ -27,10 +27,10 @@ public partial class UIToggleSystem
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var toggle = ref query.Get<UIToggle>(entity);
+            ref var toggle = ref query.GetTracked<UIToggle>(entity);
             toggle.IsOn = !toggle.IsOn;
 
-            ref var bg = ref query.Get<BackgroundColor>(entity);
+            ref var bg = ref query.GetTracked<BackgroundColor>(entity);
             bg.Color = toggle.IsOn ? toggle.OnColor : toggle.OffColor;
 
             toggleWriter.Write(new UIToggleEvents.UIToggleEvent { Entity = entity, IsOn = toggle.IsOn });

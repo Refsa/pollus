@@ -63,7 +63,7 @@ public partial class UIScrollSystem
         var scrollEntity = FindScrollAncestor(query, target);
         if (scrollEntity.IsNull) return;
 
-        ref var scrollOffset = ref query.Get<UIScrollOffset>(scrollEntity);
+        ref var scrollOffset = ref query.GetTracked<UIScrollOffset>(scrollEntity);
         ref readonly var scrollComputed = ref query.Get<ComputedNode>(scrollEntity);
 
         var innerHeight = scrollComputed.Size.Y - scrollComputed.PaddingTop - scrollComputed.PaddingBottom
@@ -124,7 +124,7 @@ public partial class UIScrollSystem
             if (needsVertical && !scroll.VerticalThumbEntity.IsNull
                               && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
-                ref var thumbComputed = ref query.Get<ComputedNode>(scroll.VerticalThumbEntity);
+                ref var thumbComputed = ref query.GetTracked<ComputedNode>(scroll.VerticalThumbEntity);
 
                 float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
                                - computed.BorderTop - computed.BorderBottom;
@@ -145,14 +145,14 @@ public partial class UIScrollSystem
                      && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
                 // Not needed anymore — hide it
-                query.Get<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
+                query.GetTracked<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
             }
 
             // Update horizontal scrollbar
             if (needsHorizontal && !scroll.HorizontalThumbEntity.IsNull
                                 && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
-                ref var thumbComputed = ref query.Get<ComputedNode>(scroll.HorizontalThumbEntity);
+                ref var thumbComputed = ref query.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity);
 
                 float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
                                - computed.BorderLeft - computed.BorderRight;
@@ -171,7 +171,7 @@ public partial class UIScrollSystem
             else if (!scroll.HorizontalThumbEntity.IsNull
                      && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
-                query.Get<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
+                query.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
             }
         }
     }

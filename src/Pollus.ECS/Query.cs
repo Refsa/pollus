@@ -334,6 +334,38 @@ public struct Query : IQuery, IQueryCreate<Query>
         return ref Unsafe.NullRef<C>();
     }
 
+    /// <summary>
+    /// Check if any entity in the world has the Changed flag set for a component.
+    /// Uses chunk-level flags for a fast early exit without per-entity iteration.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool AnyChanged<C>()
+        where C : unmanaged, IComponent
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
+        {
+            if (chunk.Count > 0 && chunk.HasFlag<C>(-1, ComponentFlags.Changed))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Check if any entity in the world has the Added flag set for a component.
+    /// Uses chunk-level flags for a fast early exit without per-entity iteration.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool AnyAdded<C>()
+        where C : unmanaged, IComponent
+    {
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(world.Store.Archetypes, filterArchetype, filterChunk))
+        {
+            if (chunk.Count > 0 && chunk.HasFlag<C>(-1, ComponentFlags.Added))
+                return true;
+        }
+        return false;
+    }
+
     public readonly EntityRef GetEntity(in Entity entity)
     {
         return world.GetEntityRef(entity);

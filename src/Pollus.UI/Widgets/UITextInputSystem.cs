@@ -35,7 +35,7 @@ public partial class UITextInputSystem
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var input = ref query.Get<UITextInput>(entity);
+            ref var input = ref query.GetTracked<UITextInput>(entity);
             var text = textBuffers.Get(entity);
             var inputText = textEvent.Text;
 
@@ -73,7 +73,7 @@ public partial class UITextInputSystem
             var entity = keyEvent.Entity;
             if (!query.Has<UITextInput>(entity)) continue;
 
-            ref var input = ref query.Get<UITextInput>(entity);
+            ref var input = ref query.GetTracked<UITextInput>(entity);
             var key = (Key)keyEvent.Key;
             var text = textBuffers.Get(entity);
 
@@ -135,7 +135,7 @@ public partial class UITextInputSystem
     {
         if (input.TextEntity.IsNull) return;
         if (!query.Has<UIText>(input.TextEntity)) return;
-        ref var uiText = ref query.Get<UIText>(input.TextEntity);
+        ref var uiText = ref query.GetTracked<UIText>(input.TextEntity);
         uiText.Text = new NativeUtf8(text);
     }
 

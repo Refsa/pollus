@@ -101,7 +101,7 @@ public partial class UIInteractionSystem
         {
             if (query.Has<UIInteraction>(prevHovered))
             {
-                ref var prevInteraction = ref query.Get<UIInteraction>(prevHovered);
+                ref var prevInteraction = ref query.GetTracked<UIInteraction>(prevHovered);
                 prevInteraction.State &= ~InteractionState.Hovered;
                 hoverExitWriter.Write(new UIInteractionEvents.UIHoverExitEvent { Entity = prevHovered });
             }
@@ -112,7 +112,7 @@ public partial class UIInteractionSystem
         {
             if (query.Has<UIInteraction>(hovered))
             {
-                ref var interaction = ref query.Get<UIInteraction>(hovered);
+                ref var interaction = ref query.GetTracked<UIInteraction>(hovered);
                 if (!interaction.IsDisabled)
                 {
                     interaction.State |= InteractionState.Hovered;
@@ -126,7 +126,7 @@ public partial class UIInteractionSystem
         {
             if (query.Has<UIInteraction>(hovered))
             {
-                ref var interaction = ref query.Get<UIInteraction>(hovered);
+                ref var interaction = ref query.GetTracked<UIInteraction>(hovered);
                 if (!interaction.IsDisabled)
                 {
                     interaction.State |= InteractionState.Pressed;
@@ -163,7 +163,7 @@ public partial class UIInteractionSystem
             var pressed = hitResult.PressedEntity;
             if (query.Has<UIInteraction>(pressed))
             {
-                ref var interaction = ref query.Get<UIInteraction>(pressed);
+                ref var interaction = ref query.GetTracked<UIInteraction>(pressed);
                 interaction.State &= ~InteractionState.Pressed;
             }
 
@@ -198,7 +198,7 @@ public partial class UIInteractionSystem
         {
             if (query.Has<UIInteraction>(focusState.FocusedEntity))
             {
-                ref var prevInteraction = ref query.Get<UIInteraction>(focusState.FocusedEntity);
+                ref var prevInteraction = ref query.GetTracked<UIInteraction>(focusState.FocusedEntity);
                 prevInteraction.State &= ~InteractionState.Focused;
             }
 
@@ -208,7 +208,7 @@ public partial class UIInteractionSystem
         // Focus new
         if (query.Has<UIInteraction>(entity))
         {
-            ref var interaction = ref query.Get<UIInteraction>(entity);
+            ref var interaction = ref query.GetTracked<UIInteraction>(entity);
             if (interaction.Focusable && !interaction.IsDisabled)
             {
                 interaction.State |= InteractionState.Focused;
@@ -226,7 +226,7 @@ public partial class UIInteractionSystem
         {
             if (query.Has<UIInteraction>(focusState.FocusedEntity))
             {
-                ref var interaction = ref query.Get<UIInteraction>(focusState.FocusedEntity);
+                ref var interaction = ref query.GetTracked<UIInteraction>(focusState.FocusedEntity);
                 interaction.State &= ~InteractionState.Focused;
             }
 
