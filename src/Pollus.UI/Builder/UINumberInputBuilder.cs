@@ -111,9 +111,13 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
 
         var entity = commands.Spawn(Entity.With(
             new UINode(),
+            new Outline(),
             numberInput,
             new UIStyle { Value = style }
         )).Entity;
+
+        // Redirect focus outline from inner text input to outer container
+        commands.AddComponent(textInputEntity, new UIFocusVisual { Target = entity });
 
         commands.AddChild(entity, textInputEntity);
 

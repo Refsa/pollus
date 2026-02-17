@@ -141,6 +141,7 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
             var option = commands.Spawn(Entity.With(
                 new UINode(),
                 new UIInteraction { Focusable = true },
+                new Outline(),
                 new UIDropdownOptionTag { DropdownEntity = trigger, OptionIndex = i },
                 new UIButton
                 {

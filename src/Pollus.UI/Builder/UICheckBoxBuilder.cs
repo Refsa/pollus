@@ -38,6 +38,7 @@ public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
     public override Entity Spawn()
     {
         interactable = true;
+        focusable = true;
         backgroundColor ??= new Color();
 
         var indicatorColor = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;

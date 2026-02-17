@@ -25,6 +25,13 @@ public partial record struct BoxShadow() : IComponent
     public Color Color;
 }
 
+public partial record struct Outline() : IComponent
+{
+    public Color Color = Color.TRANSPARENT;
+    public float Width;
+    public float Offset;
+}
+
 public partial record struct BorderRadius() : IComponent
 {
     public float TopLeft;

@@ -7,18 +7,20 @@ struct VertexInput {
     @location(2) i_border_color: vec4f,   // border RGBA
     @location(3) i_border_radius: vec4f,  // topLeft, topRight, bottomRight, bottomLeft
     @location(4) i_border_widths: vec4f,  // top, right, bottom, left
-    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), yzw=reserved
+    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=reserved
+    @location(6) i_outline_color: vec4f,  // outline RGBA
 };
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
-    @location(0) local_pos: vec2f,         // position within rect [0, size]
-    @location(1) size: vec2f,
+    @location(0) local_pos: vec2f,         // position within expanded rect [0, expanded_size]
+    @location(1) size: vec2f,              // original element size (before expansion)
     @location(2) @interpolate(flat) bg_color: vec4f,
     @location(3) @interpolate(flat) border_color: vec4f,
     @location(4) @interpolate(flat) border_radius: vec4f,
     @location(5) @interpolate(flat) border_widths: vec4f,
     @location(6) @interpolate(flat) extra: vec4f,
+    @location(7) @interpolate(flat) outline_color: vec4f,
 };
 
 struct UIViewportUniform {
@@ -33,7 +35,14 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let u = f32(input.index & 0x1u);
     let v = f32((input.index & 0x2u) >> 1u);
 
-    let pixel_pos = input.i_pos_size.xy + vec2f(u, v) * input.i_pos_size.zw;
+    let outline_width = input.i_extra.y;
+    let outline_offset = input.i_extra.z;
+    let expand = outline_width + outline_offset;
+
+    // Expand quad outward so fragment shader has pixels for the outline
+    let expanded_size = input.i_pos_size.zw + vec2f(expand * 2.0);
+    let expanded_pos = input.i_pos_size.xy - vec2f(expand);
+    let pixel_pos = expanded_pos + vec2f(u, v) * expanded_size;
 
     // Convert screen pixels to NDC: x: [0, width] -> [-1, 1], y: [0, height] -> [1, -1]
     let ndc_x = pixel_pos.x / viewport.viewport_size.x * 2.0 - 1.0;
@@ -41,13 +50,16 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
     out.pos = vec4f(ndc_x, ndc_y, 0.0, 1.0);
-    out.local_pos = vec2f(u, v) * input.i_pos_size.zw;
+    // local_pos is in the expanded coordinate space
+    out.local_pos = vec2f(u, v) * expanded_size;
+    // size is the original element size (unchanged)
     out.size = input.i_pos_size.zw;
     out.bg_color = input.i_bg_color;
     out.border_color = input.i_border_color;
     out.border_radius = input.i_border_radius;
     out.border_widths = input.i_border_widths;
     out.extra = input.i_extra;
+    out.outline_color = input.i_outline_color;
     return out;
 }
 
@@ -122,9 +134,12 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let size = input.size;
     let half_size = size * 0.5;
     let shape_type = u32(input.extra.x);
+    let outline_width = input.extra.y;
+    let outline_offset = input.extra.z;
+    let expand = outline_width + outline_offset;
 
-    // Position relative to box center
-    let p = input.local_pos - half_size;
+    // Position relative to element center (accounting for the expansion)
+    let p = input.local_pos - vec2f(expand) - half_size;
 
     // --- Compute ALL SDF values and fwidth in uniform control flow ---
     // (WebGPU forbids fwidth inside non-uniform branches)
@@ -133,6 +148,12 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let circle_r = min(half_size.x, half_size.y);
     let d_circle = sd_circle(p, circle_r);
     let aa_circle = max(fwidth(d_circle), 0.5);
+
+    // Circle outline SDFs
+    let d_circle_outline_outer = sd_circle(p, circle_r + outline_offset + outline_width);
+    let aa_circle_outline_outer = max(fwidth(d_circle_outline_outer), 0.5);
+    let d_circle_outline_inner = sd_circle(p, circle_r + outline_offset);
+    let aa_circle_outline_inner = max(fwidth(d_circle_outline_inner), 0.5);
 
     // Checkmark SDF
     let check_s = min(half_size.x, half_size.y);
@@ -158,7 +179,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let inner_size = size - inner_min - inner_max;
     let inner_half = max(inner_size * 0.5, vec2f(0.0));
     let inner_center = (inner_min + (size - inner_max)) * 0.5;
-    let inner_p = input.local_pos - inner_center;
+    let inner_p = input.local_pos - vec2f(expand) - inner_center;
     let inner_radii = max(radii - vec4f(
         max(border.w, border.x),
         max(border.y, border.x),
@@ -168,14 +189,36 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
     let aa_inner = max(fwidth(d_inner), 0.5);
 
+    // Outline SDF: use the outer SDF offset outward by outline_offset
+    let outline_outer_radii = radii + vec4f(outline_offset + outline_width);
+    let d_outline_outer = sd_rounded_box(p, half_size + vec2f(outline_offset + outline_width), outline_outer_radii);
+    let aa_outline_outer = max(fwidth(d_outline_outer), 0.5);
+    let outline_inner_radii = radii + vec4f(outline_offset);
+    let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
+    let aa_outline_inner = max(fwidth(d_outline_inner), 0.5);
+
     // --- Now branch on shape_type (no derivative calls below) ---
 
     if (shape_type == 1u) {
         // Circle
-        let alpha = 1.0 - smoothstep(-aa_circle, aa_circle, d_circle);
-        if (alpha < 0.001) { discard; }
+        let element_a = (1.0 - smoothstep(-aa_circle, aa_circle, d_circle)) * input.bg_color.a;
+
+        // Circle outline band
+        let co_outer = 1.0 - smoothstep(-aa_circle_outline_outer, aa_circle_outline_outer, d_circle_outline_outer);
+        let co_inner = 1.0 - smoothstep(-aa_circle_outline_inner, aa_circle_outline_inner, d_circle_outline_inner);
+        let co_band = co_outer * (1.0 - co_inner) * input.outline_color.a;
+
+        let final_a = element_a + co_band * (1.0 - element_a);
+        if (final_a < 0.001) { discard; }
+
+        let final_rgb = select(
+            input.outline_color.rgb,
+            mix(input.outline_color.rgb, input.bg_color.rgb, element_a / final_a),
+            final_a > 0.001
+        );
+
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        out.color = vec4f(final_rgb, final_a);
         return out;
     }
 
@@ -200,17 +243,33 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     // Default: RoundedRect (shape_type == 0)
     let outer_alpha = 1.0 - smoothstep(-aa_outer, aa_outer, d_outer);
 
-    if (outer_alpha < 0.001) {
-        discard;
-    }
-
     let inner_alpha = 1.0 - smoothstep(-aa_inner, aa_inner, d_inner);
 
     let has_border = step(0.001, border.x + border.y + border.z + border.w);
     let blended = mix(input.border_color, input.bg_color, inner_alpha);
     let pixel_color = mix(input.bg_color, blended, has_border);
+    let element_alpha = pixel_color.a * outer_alpha;
+
+    // Outline band: between outline_inner and outline_outer SDFs
+    let outline_outer_alpha = 1.0 - smoothstep(-aa_outline_outer, aa_outline_outer, d_outline_outer);
+    let outline_inner_alpha = 1.0 - smoothstep(-aa_outline_inner, aa_outline_inner, d_outline_inner);
+    let outline_band = outline_outer_alpha * (1.0 - outline_inner_alpha);
+    let outline_alpha = outline_band * input.outline_color.a;
+
+    // Composite: element over outline (element is drawn on top in overlapping AA regions)
+    let final_alpha = element_alpha + outline_alpha * (1.0 - element_alpha);
+
+    if (final_alpha < 0.001) {
+        discard;
+    }
+
+    let final_rgb = select(
+        input.outline_color.rgb,
+        mix(input.outline_color.rgb, pixel_color.rgb, element_alpha / final_alpha),
+        final_alpha > 0.001
+    );
 
     var out: FragmentOutput;
-    out.color = vec4f(pixel_color.rgb, pixel_color.a * outer_alpha);
+    out.color = vec4f(final_rgb, final_alpha);
     return out;
 }

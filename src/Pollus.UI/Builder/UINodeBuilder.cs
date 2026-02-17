@@ -18,6 +18,8 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
     protected bool focusable;
     protected bool interactable;
     protected UIShapeType? shape;
+    protected Outline? outline;
+    protected bool noFocusVisual;
 
     public UINodeBuilder(Commands commands)
     {
@@ -304,6 +306,18 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
         return (TSelf)this;
     }
 
+    public TSelf Outline(Utils.Color color, float width, float offset = 0f)
+    {
+        outline = new Pollus.UI.Outline { Color = color, Width = width, Offset = offset };
+        return (TSelf)this;
+    }
+
+    public TSelf NoFocusVisual()
+    {
+        noFocusVisual = true;
+        return (TSelf)this;
+    }
+
     // Hierarchy
     public TSelf ChildOf(Entity parent)
     {
@@ -345,6 +359,16 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
             commands.AddComponent(entity, new UIInteraction { Focusable = focusable });
         }
 
+        if (focusable && !outline.HasValue)
+        {
+            commands.AddComponent(entity, new Pollus.UI.Outline());
+        }
+
+        if (noFocusVisual)
+        {
+            commands.AddComponent(entity, new UIFocusVisual { Disabled = true });
+        }
+
         if (style.Overflow.X is Layout.Overflow.Scroll || style.Overflow.Y is Layout.Overflow.Scroll)
         {
             commands.AddComponent(entity, new UIScrollOffset());
@@ -367,6 +391,9 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
 
         if (shape.HasValue)
             commands.AddComponent(entity, new UIShape { Type = shape.Value });
+
+        if (outline.HasValue)
+            commands.AddComponent(entity, outline.Value);
     }
 
     protected void SetupHierarchy(Entity entity)
