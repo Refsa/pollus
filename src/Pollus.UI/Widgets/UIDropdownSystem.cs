@@ -42,7 +42,7 @@ public partial class UIDropdownSystem
 
             if (qDropdown.Has<UIDropdown>(entity))
             {
-                ref var dropdown = ref qDropdown.Get<UIDropdown>(entity);
+                ref var dropdown = ref qDropdown.GetTracked<UIDropdown>(entity);
                 dropdown.IsOpen = !dropdown.IsOpen;
                 dirty = true;
                 clickedDropdown = entity;
@@ -56,7 +56,7 @@ public partial class UIDropdownSystem
 
                 if (!qDropdown.Has<UIDropdown>(dropdownEntity)) continue;
 
-                ref var dropdown = ref qDropdown.Get<UIDropdown>(dropdownEntity);
+                ref var dropdown = ref qDropdown.GetTracked<UIDropdown>(dropdownEntity);
                 var prevIndex = dropdown.SelectedIndex;
                 dropdown.SelectedIndex = option.OptionIndex;
                 dropdown.IsOpen = false;
@@ -86,7 +86,7 @@ public partial class UIDropdownSystem
             var entity = keyEvent.Entity;
             if (!qDropdown.Has<UIDropdown>(entity)) continue;
 
-            ref var dropdown = ref qDropdown.Get<UIDropdown>(entity);
+            ref var dropdown = ref qDropdown.GetTracked<UIDropdown>(entity);
             if (dropdown.IsOpen)
             {
                 dropdown.IsOpen = false;
@@ -124,7 +124,7 @@ public partial class UIDropdownSystem
         if (firstChild.IsNull || !qText.Has<UIText>(firstChild)) return;
 
         ref readonly var srcText = ref qText.Get<UIText>(firstChild);
-        ref var displayText = ref qText.Get<UIText>(dropdown.DisplayTextEntity);
+        ref var displayText = ref qText.GetTracked<UIText>(dropdown.DisplayTextEntity);
         displayText.Text = new NativeUtf8(srcText.Text.ToString().TrimEnd('\0'));
     }
 
@@ -137,7 +137,7 @@ public partial class UIDropdownSystem
                 if (dropdown.PopupRootEntity.IsNull) return;
                 if (!qOpts.Has<UIStyle>(dropdown.PopupRootEntity)) return;
 
-                ref var panelStyle = ref qOpts.Get<UIStyle>(dropdown.PopupRootEntity);
+                ref var panelStyle = ref qOpts.GetTracked<UIStyle>(dropdown.PopupRootEntity);
                 var display = dropdown.IsOpen ? Display.Flex : Display.None;
                 if (panelStyle.Value.Display != display)
                 {

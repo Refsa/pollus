@@ -29,7 +29,7 @@ public partial class UINumberInputSystem
             query.Filtered<All<UINumberInput>>().ForEach((query, textEvent, textBuffers, valueChangedWriter),
                 static (in (Query q, UITextInputEvents.UITextInputValueChanged evt, UITextBuffers bufs, EventWriter<UINumberInputEvents.UINumberInputValueChanged> writer) ctx, in Entity entity) =>
                 {
-                    ref var numInput = ref ctx.q.Get<UINumberInput>(entity);
+                    ref var numInput = ref ctx.q.GetTracked<UINumberInput>(entity);
                     if (numInput.TextInputEntity != ctx.evt.Entity) return;
 
                     var text = ctx.bufs.Get(ctx.evt.Entity);
@@ -59,7 +59,7 @@ public partial class UINumberInputSystem
             query.Filtered<All<UINumberInput>>().ForEach((query, keyEvent, key, textBuffers, valueChangedWriter),
                 static (in (Query q, UIInteractionEvents.UIKeyDownEvent evt, Key key, UITextBuffers bufs, EventWriter<UINumberInputEvents.UINumberInputValueChanged> writer) ctx, in Entity entity) =>
                 {
-                    ref var numInput = ref ctx.q.Get<UINumberInput>(entity);
+                    ref var numInput = ref ctx.q.GetTracked<UINumberInput>(entity);
                     if (numInput.TextInputEntity != ctx.evt.Entity) return;
 
                     var prevValue = numInput.Value;
@@ -74,7 +74,7 @@ public partial class UINumberInputSystem
 
                         if (ctx.q.Has<UITextInput>(numInput.TextInputEntity))
                         {
-                            ref var textInput = ref ctx.q.Get<UITextInput>(numInput.TextInputEntity);
+                            ref var textInput = ref ctx.q.GetTracked<UITextInput>(numInput.TextInputEntity);
                             textInput.CursorPosition = formatted.Length;
                         }
 

@@ -42,7 +42,7 @@ public class UILifecycleTests
         Assert.Equal(100f, world.Store.GetComponent<ComputedNode>(child).Size.X);
 
         // Modify style directly
-        ref var style = ref world.Store.GetComponent<UIStyle>(child);
+        ref var style = ref world.Store.GetTrackedComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
             Size = new Size<Length>(Length.Px(200), Length.Px(80)),
@@ -157,8 +157,8 @@ public class UILifecycleTests
         world.Update();
         Assert.Equal(100f, world.Store.GetComponent<ComputedNode>(child).Size.X);
 
-        // Modify style via ref mutation (does NOT set ECS Changed flag)
-        ref var style = ref world.Store.GetComponent<UIStyle>(child);
+        // Modify style via GetTracked (sets ECS Changed flag)
+        ref var style = ref world.Store.GetTrackedComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
             Size = new Size<Length>(Length.Px(200), Length.Px(80)),

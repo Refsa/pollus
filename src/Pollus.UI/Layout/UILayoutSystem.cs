@@ -106,7 +106,7 @@ public partial class UILayoutSystem
             ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);
             ref readonly var unrounded = ref adapter.GetUnroundedLayout(nodeId);
 
-            ref var computed = ref query.Get<ComputedNode>(entity);
+            ref var computed = ref query.GetTracked<ComputedNode>(entity);
             computed.Size = new Vec2f(rounded.Size.Width, rounded.Size.Height);
             computed.ContentSize = new Vec2f(rounded.ContentSize.Width, rounded.ContentSize.Height);
             computed.Position = new Vec2f(rounded.Location.X, rounded.Location.Y);

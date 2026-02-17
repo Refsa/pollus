@@ -82,7 +82,7 @@ public class IncrementalSyncTests
         world.Update();
         world.Update();
 
-        ref var style = ref world.Store.GetComponent<UIStyle>(children[25]);
+        ref var style = ref world.Store.GetTrackedComponent<UIStyle>(children[25]);
         style.Value = LayoutStyle.Default with
         {
             Size = new Size<Length>(Length.Px(20), Length.Px(20)),

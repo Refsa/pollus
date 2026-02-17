@@ -39,7 +39,7 @@ public partial class UISliderSystem
             if (!query.Has<UISlider>(entity)) continue;
             if (!query.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref query.Get<UISlider>(entity);
+            ref var slider = ref query.GetTracked<UISlider>(entity);
             ref readonly var computed = ref query.Get<ComputedNode>(entity);
             var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
 
@@ -64,7 +64,7 @@ public partial class UISliderSystem
             if (!query.Has<UISlider>(entity)) continue;
             if (!query.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref query.Get<UISlider>(entity);
+            ref var slider = ref query.GetTracked<UISlider>(entity);
             ref readonly var computed = ref query.Get<ComputedNode>(entity);
             var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
 
@@ -89,7 +89,7 @@ public partial class UISliderSystem
             if (!query.Has<UISlider>(entity)) continue;
 
             var key = (Key)keyEvent.Key;
-            ref var slider = ref query.Get<UISlider>(entity);
+            ref var slider = ref query.GetTracked<UISlider>(entity);
             var prevValue = slider.Value;
 
             switch (key)
@@ -177,7 +177,7 @@ public partial class UISliderSystem
             // Update fill entity
             if (query.Has<ComputedNode>(slider.FillEntity))
             {
-                ref var fillComputed = ref query.Get<ComputedNode>(slider.FillEntity);
+                ref var fillComputed = ref query.GetTracked<ComputedNode>(slider.FillEntity);
                 var fillW = width * ratio;
                 if (fillW >= 0.5f)
                 {
@@ -194,27 +194,27 @@ public partial class UISliderSystem
                 {
                     var parentBr = query.Get<BorderRadius>(entity);
                     if (query.Has<BorderRadius>(slider.FillEntity))
-                        query.Get<BorderRadius>(slider.FillEntity) = parentBr;
+                        query.GetTracked<BorderRadius>(slider.FillEntity) = parentBr;
                     else
                         commands.AddComponent(slider.FillEntity, parentBr);
                 }
 
                 // Sync fill color
                 if (query.Has<BackgroundColor>(slider.FillEntity))
-                    query.Get<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
+                    query.GetTracked<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
             }
 
             // Update thumb entity
             if (query.Has<ComputedNode>(slider.ThumbEntity))
             {
-                ref var thumbComputed = ref query.Get<ComputedNode>(slider.ThumbEntity);
+                ref var thumbComputed = ref query.GetTracked<ComputedNode>(slider.ThumbEntity);
                 var d = height * 1.4f;
                 thumbComputed.Position = new Vec2f(width * ratio - d * 0.5f, (height - d) * 0.5f);
                 thumbComputed.Size = new Vec2f(d, d);
 
                 // Sync thumb color
                 if (query.Has<BackgroundColor>(slider.ThumbEntity))
-                    query.Get<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
+                    query.GetTracked<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
             }
         }
     }

@@ -23,7 +23,7 @@ public partial class UICaretSystem
         if (focused.IsNull) return;
         if (!query.Has<UITextInput>(focused)) return;
 
-        ref var input = ref query.Get<UITextInput>(focused);
+        ref var input = ref query.GetTracked<UITextInput>(focused);
 
         // Tick blink timer
         input.CaretBlinkTimer += time.DeltaTimeF;
@@ -68,7 +68,7 @@ public partial class UICaretSystem
 
             if (!query.Has<ComputedNode>(input.CaretEntity)) continue;
 
-            ref var caretComputed = ref query.Get<ComputedNode>(input.CaretEntity);
+            ref var caretComputed = ref query.GetTracked<ComputedNode>(input.CaretEntity);
 
             bool isFocused = !focused.IsNull && focused == entity;
             if (isFocused && input.CaretVisible && input.CaretHeight > 0

@@ -67,7 +67,7 @@ public class UILayoutOptimizationTests
         Assert.False(adapter.IsDirty);
 
         // Mutate a style — should trigger dirty
-        ref var style = ref world.Store.GetComponent<UIStyle>(child);
+        ref var style = ref world.Store.GetTrackedComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
             Size = new Size<Length>(Length.Px(100), Length.Px(60)),

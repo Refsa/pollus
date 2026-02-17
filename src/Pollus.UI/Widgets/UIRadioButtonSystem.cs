@@ -28,7 +28,7 @@ public partial class UIRadioButtonSystem
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var radio = ref query.Get<UIRadioButton>(entity);
+            ref var radio = ref query.GetTracked<UIRadioButton>(entity);
             if (radio.IsSelected) continue; // Already selected, do nothing
 
             var groupId = radio.GroupId;
@@ -38,18 +38,18 @@ public partial class UIRadioButtonSystem
                 static (in (Query q, int gid, Entity clicked) ctx, in Entity e) =>
                 {
                     if (e == ctx.clicked) return;
-                    ref var r = ref ctx.q.Get<UIRadioButton>(e);
+                    ref var r = ref ctx.q.GetTracked<UIRadioButton>(e);
                     if (r.GroupId != ctx.gid || !r.IsSelected) return;
 
                     r.IsSelected = false;
                     if (ctx.q.Has<BackgroundColor>(e))
                     {
-                        ref var bg = ref ctx.q.Get<BackgroundColor>(e);
+                        ref var bg = ref ctx.q.GetTracked<BackgroundColor>(e);
                         bg.Color = r.UnselectedColor;
                     }
                     if (!r.IndicatorEntity.IsNull && ctx.q.Has<BackgroundColor>(r.IndicatorEntity))
                     {
-                        ref var indicatorBg = ref ctx.q.Get<BackgroundColor>(r.IndicatorEntity);
+                        ref var indicatorBg = ref ctx.q.GetTracked<BackgroundColor>(r.IndicatorEntity);
                         indicatorBg.Color = Color.TRANSPARENT;
                     }
                 });
@@ -58,12 +58,12 @@ public partial class UIRadioButtonSystem
             radio.IsSelected = true;
             if (query.Has<BackgroundColor>(entity))
             {
-                ref var bg = ref query.Get<BackgroundColor>(entity);
+                ref var bg = ref query.GetTracked<BackgroundColor>(entity);
                 bg.Color = radio.SelectedColor;
             }
             if (!radio.IndicatorEntity.IsNull && query.Has<BackgroundColor>(radio.IndicatorEntity))
             {
-                ref var indicatorBg = ref query.Get<BackgroundColor>(radio.IndicatorEntity);
+                ref var indicatorBg = ref query.GetTracked<BackgroundColor>(radio.IndicatorEntity);
                 indicatorBg.Color = radio.IndicatorColor;
             }
 

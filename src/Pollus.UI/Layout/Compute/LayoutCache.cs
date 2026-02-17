@@ -36,6 +36,12 @@ public struct LayoutCache
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGet(in LayoutInput input, out LayoutOutput output)
     {
+        if (_isDirty)
+        {
+            output = default;
+            return false;
+        }
+
         for (int i = 0; i < SlotCount; i++)
         {
             ref readonly var entry = ref _entries[i];
