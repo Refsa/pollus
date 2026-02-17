@@ -122,7 +122,7 @@ public class Keyboard : IInputDevice, IButtonInputDevice<Key>
     public nint ExternalId { get; }
     public Guid Id { get; } = new();
     public InputType Type => InputType.Keyboard;
-    public bool IsActive => true;
+    public bool IsActive => isActive;
 
     Dictionary<Key, ButtonState> buttons = new();
     HashSet<Key> changed = new();

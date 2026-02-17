@@ -49,6 +49,7 @@ public class UISliderBuilder : UINodeBuilder<UISliderBuilder>
     public new SliderResult Spawn()
     {
         interactable = true;
+        focusable = true;
         backgroundColor ??= new Color();
 
         var entity = commands.Spawn(Entity.With(

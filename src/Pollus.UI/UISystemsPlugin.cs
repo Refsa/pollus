@@ -38,10 +38,12 @@ public class UISystemsPlugin : IPlugin
         // Interaction resources
         world.Resources.Add(new UIHitTestResult());
         world.Resources.Add(new UIFocusState());
+        world.Resources.Add(new UIFocusVisualStyle());
 
         // Interaction systems
         world.Schedule.AddSystemSet<UIInteractionSystem>();
         world.Schedule.AddSystemSet<UIKeyboardRoutingSystem>();
+        world.Schedule.AddSystemSet<UIFocusVisualSystem>();
 
         // Widget events
         world.Events.InitEvent<UIToggleEvents.UIToggleEvent>();

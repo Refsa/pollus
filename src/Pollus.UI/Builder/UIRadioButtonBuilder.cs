@@ -36,6 +36,7 @@ public class UIRadioButtonBuilder : UINodeBuilder<UIRadioButtonBuilder>
     public override Entity Spawn()
     {
         interactable = true;
+        focusable = true;
         backgroundColor ??= new Color();
 
         var entity = commands.Spawn(Entity.With(

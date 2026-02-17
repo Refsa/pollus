@@ -126,7 +126,20 @@ public partial class ExtractUIRectsSystem
                 shapeType = (float)entRef.Get<UIShape>().Type;
             }
 
-            if (hasBg || hasBorder)
+            float outlineWidth = 0f;
+            float outlineOffset = 0f;
+            var outlineColor = Vec4f.Zero;
+            bool hasOutline = false;
+            if (entRef.Has<Outline>())
+            {
+                var outline = entRef.Get<Outline>();
+                outlineWidth = outline.Width;
+                outlineOffset = outline.Offset;
+                outlineColor = outline.Color;
+                hasOutline = outlineWidth > 0f && outline.Color.A > 0f;
+            }
+
+            if (hasBg || hasBorder || hasOutline)
             {
                 var batchKey = new UIRectBatchKey(material, scissor);
                 var batch = batches.GetOrCreate(batchKey);
@@ -138,7 +151,8 @@ public partial class ExtractUIRectsSystem
                     BorderColor = borderColor,
                     BorderRadius = borderRadius,
                     BorderWidths = borderWidths,
-                    Extra = new Vec4f(shapeType, 0f, 0f, 0f),
+                    Extra = new Vec4f(shapeType, outlineWidth, outlineOffset, 0f),
+                    OutlineColor = outlineColor,
                 });
             }
         }

@@ -148,7 +148,8 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 var rbEntity = commands.Spawn(Entity.With(
                     new UINode(),
                     radioButton,
-                    new UIInteraction(),
+                    new UIInteraction { Focusable = true },
+                    new Outline(),
                     new BackgroundColor { Color = initialColor },
                     new UIStyle { Value = rbStyle },
                     new UIShape { Type = UIShapeType.Circle }
@@ -185,7 +186,8 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 var rbEntity = commands.Spawn(Entity.With(
                     new UINode(),
                     radioButton,
-                    new UIInteraction(),
+                    new UIInteraction { Focusable = true },
+                    new Outline(),
                     new BackgroundColor { Color = initialColor },
                     new UIStyle { Value = rbStyle },
                     new UIShape { Type = UIShapeType.Circle }

@@ -135,6 +135,7 @@ public partial class UIInteractionSystem
                     pressWriter.Write(new UIInteractionEvents.UIPressEvent { Entity = hovered });
 
                     // Set focus
+                    focusState.FocusSource = FocusSource.Mouse;
                     SetFocus(query, focusState, events, hovered);
                 }
             }
@@ -179,10 +180,20 @@ public partial class UIInteractionSystem
             hitResult.CapturedEntity = Entity.Null;
         }
 
-        // Click on empty space clears focus
-        if (mouseDown && hovered.IsNull && !focusState.FocusedEntity.IsNull)
+        // Click on empty space or non-focusable element clears focus
+        if (mouseDown && !focusState.FocusedEntity.IsNull && focusState.FocusedEntity != hovered)
         {
-            ClearFocus(query, focusState, events);
+            bool hoveredIsFocusable = false;
+            if (!hovered.IsNull && query.Has<UIInteraction>(hovered))
+            {
+                ref readonly var hoveredInteraction = ref query.Get<UIInteraction>(hovered);
+                hoveredIsFocusable = hoveredInteraction.Focusable && !hoveredInteraction.IsDisabled;
+            }
+
+            if (!hoveredIsFocusable)
+            {
+                ClearFocus(query, focusState, events);
+            }
         }
 
         hitResult.PreviousMousePosition = hitResult.MousePosition;
@@ -259,6 +270,7 @@ public partial class UIInteractionSystem
                 : focusState.FocusOrder.IndexOf(focusState.FocusedEntity);
 
             int nextIndex = (currentIndex + 1) % focusState.FocusOrder.Count;
+            focusState.FocusSource = FocusSource.Keyboard;
             SetFocus(query, focusState, events, focusState.FocusOrder[nextIndex]);
         }
         else if (shiftTabPressed && focusState.FocusOrder.Count > 0)
@@ -268,6 +280,7 @@ public partial class UIInteractionSystem
                 : focusState.FocusOrder.IndexOf(focusState.FocusedEntity);
 
             int prevIndex = (currentIndex - 1 + focusState.FocusOrder.Count) % focusState.FocusOrder.Count;
+            focusState.FocusSource = FocusSource.Keyboard;
             SetFocus(query, focusState, events, focusState.FocusOrder[prevIndex]);
         }
 

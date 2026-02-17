@@ -30,6 +30,7 @@ public class UIToggleBuilder : UINodeBuilder<UIToggleBuilder>
     public override Entity Spawn()
     {
         interactable = true;
+        focusable = true;
         backgroundColor ??= new Color();
 
         var entity = commands.Spawn(Entity.With(

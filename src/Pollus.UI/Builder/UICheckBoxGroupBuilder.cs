@@ -139,7 +139,8 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                 var cbEntity = commands.Spawn(Entity.With(
                     new UINode(),
                     checkBox,
-                    new UIInteraction(),
+                    new UIInteraction { Focusable = true },
+                    new Outline(),
                     new BackgroundColor { Color = initialColor },
                     new UIStyle { Value = cbStyle }
                 )).Entity;
@@ -173,7 +174,8 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                 var cbEntity = commands.Spawn(Entity.With(
                     new UINode(),
                     checkBox,
-                    new UIInteraction(),
+                    new UIInteraction { Focusable = true },
+                    new Outline(),
                     new BackgroundColor { Color = initialColor },
                     new UIStyle { Value = cbStyle }
                 )).Entity;

@@ -19,7 +19,8 @@ public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>
         public required Vec4f BorderColor;
         public required Vec4f BorderRadius;
         public required Vec4f BorderWidths;
-        public required Vec4f Extra; // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), yzw=reserved
+        public required Vec4f Extra; // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=reserved
+        public required Vec4f OutlineColor;
     }
 
     public Handle Material { get; init; }
