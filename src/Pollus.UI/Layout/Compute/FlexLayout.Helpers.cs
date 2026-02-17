@@ -391,7 +391,7 @@ public static partial class FlexLayout
     {
         if (items.Length <= 1) return;
 
-        // Early exit: skip sort when all CssOrder == 0 (common case)
+        // Early exit: skip sort when all CssOrder == 0
         bool needsSort = false;
         for (int i = 0; i < items.Length; i++)
         {
@@ -399,14 +399,13 @@ public static partial class FlexLayout
         }
         if (!needsSort) return;
 
-        // Sort an index array (4 bytes per swap) instead of FlexItem structs
-        Span<int> indices = items.Length <= 64
-            ? stackalloc int[items.Length]
-            : new int[items.Length];
+        bool indicesFromArena = items.Length > 64;
+        Span<int> indices = indicesFromArena
+            ? Arena.Rent<int>(items.Length)
+            : stackalloc int[items.Length];
 
         for (int i = 0; i < indices.Length; i++) indices[i] = i;
 
-        // Insertion sort on indices
         for (int i = 1; i < indices.Length; i++)
         {
             int key = indices[i];
@@ -419,7 +418,7 @@ public static partial class FlexLayout
             indices[j + 1] = key;
         }
 
-        // Apply permutation in-place using cycle sort
+        // cycle sort
         for (int i = 0; i < indices.Length; i++)
         {
             if (indices[i] == i) continue;
@@ -435,6 +434,9 @@ public static partial class FlexLayout
             items[j] = temp;
             indices[j] = j;
         }
+
+        if (indicesFromArena)
+            Arena.Return<int>(items.Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

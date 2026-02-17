@@ -53,6 +53,11 @@ public sealed class UITreeAdapter : ILayoutTree
     bool hierarchyDirty = true;
     bool measureFuncsDirty;
 
+    // Tracks which nodes had their layout changed during the current compute pass.
+    // WriteBack only processes these nodes instead of all active entities.
+    bool[] layoutChanged = new bool[InitialCapacity];
+    readonly List<int> changedNodes = [];
+
     SyncStats syncStats;
     public SyncStats LastSyncStats => syncStats;
 
@@ -60,7 +65,17 @@ public sealed class UITreeAdapter : ILayoutTree
     public bool IsDirty => globalDirty;
 
     /// Clears the global dirty flag after layout has been computed and written back.
-    public void ClearDirty() => globalDirty = false;
+    public void ClearDirty()
+    {
+        globalDirty = false;
+        foreach (var nodeId in CollectionsMarshal.AsSpan(changedNodes))
+            layoutChanged[nodeId] = false;
+        changedNodes.Clear();
+    }
+
+    /// Returns true if a specific node's layout changed during the last compute pass.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool LayoutChanged(int nodeId) => layoutChanged[nodeId];
 
     public ReadOnlySpan<int> Roots => CollectionsMarshal.AsSpan(roots);
 
@@ -93,6 +108,7 @@ public sealed class UITreeAdapter : ILayoutTree
         Grow(ref nodeToEntity, newCap);
         Grow(ref childOffsets, newCap);
         Grow(ref childCounts, newCap);
+        Grow(ref layoutChanged, newCap);
 
         var oldCaches = caches;
         caches = new LayoutCache[newCap];
@@ -199,10 +215,25 @@ public sealed class UITreeAdapter : ILayoutTree
 
         if (!entitySetChanged)
         {
-            // Entity set unchanged — only sync styles and measure funcs
-            var activeSpan = CollectionsMarshal.AsSpan(activeEntities);
-            for (int i = 0; i < activeSpan.Length; i++)
-                SyncExistingEntity(query, activeSpan[i]);
+            if (anyStyleChanged)
+            {
+                query.ForEach<(UITreeAdapter Self, Query Q), Changed<UIStyle>>(
+                    (this, query),
+                    static (in (UITreeAdapter Self, Query Q) ctx, in Entity entity) =>
+                    {
+                        if (!ctx.Self.HasEntityMapping(entity)) return;
+                        // Chunk filter gives us the right chunks; still need per-entity check
+                        if (!ctx.Q.Changed<UIStyle>(entity)) return;
+                        int nodeId = ctx.Self.entityMap[entity.ID];
+                        ctx.Self.styles[nodeId] = ctx.Q.Get<UIStyle>(entity).Value;
+                        ctx.Self.MarkDirtyWithAncestors(nodeId);
+                        ctx.Self.syncStats.StylesCopied++;
+                    });
+            }
+
+            if (measureFuncsDirty)
+                SyncMeasureFuncs(query);
+
             measureFuncsDirty = false;
             return;
         }
@@ -408,6 +439,30 @@ public sealed class UITreeAdapter : ILayoutTree
         }
     }
 
+    void SyncMeasureFuncs(Query query)
+    {
+        var activeSpan = CollectionsMarshal.AsSpan(activeEntities);
+        for (int i = 0; i < activeSpan.Length; i++)
+        {
+            var entity = activeSpan[i];
+            int nodeId = entityMap[entity.ID];
+
+            entityMeasureFuncs.TryGetValue(entity, out var mf);
+            bool shouldHaveMeasure = query.Has<ContentSize>(entity) && mf is not null;
+            if (shouldHaveMeasure != hasMeasure[nodeId])
+            {
+                hasMeasure[nodeId] = shouldHaveMeasure;
+                nodeMeasureFuncs[nodeId] = shouldHaveMeasure ? mf : null;
+                MarkDirtyWithAncestors(nodeId);
+            }
+            else if (shouldHaveMeasure && nodeMeasureFuncs[nodeId] != mf)
+            {
+                nodeMeasureFuncs[nodeId] = mf;
+                MarkDirtyWithAncestors(nodeId);
+            }
+        }
+    }
+
     void SyncExistingEntity(Query query, Entity entity)
     {
         int nodeId = entityMap[entity.ID];
@@ -493,6 +548,11 @@ public sealed class UITreeAdapter : ILayoutTree
 
     public void SetUnroundedLayout(int nodeId, in NodeLayout layout)
     {
+        if (unroundedLayouts[nodeId] != layout)
+        {
+            layoutChanged[nodeId] = true;
+            changedNodes.Add(nodeId);
+        }
         unroundedLayouts[nodeId] = layout;
         layouts[nodeId] = layout;
     }

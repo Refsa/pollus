@@ -76,17 +76,17 @@ public partial class UILayoutSystem
             var rootPadding = LayoutHelpers.ResolvePadding(rootStyle, parentSz);
             var rootBorder = LayoutHelpers.ResolveBorder(rootStyle, parentSz);
 
-            ref var rootLayout = ref adapter.GetLayout(rootNodeId);
-            rootLayout.Size = new Size<float>(
-                innerW + rootPadding.HorizontalAxisSum() + rootBorder.HorizontalAxisSum(),
-                innerH + rootPadding.VerticalAxisSum() + rootBorder.VerticalAxisSum());
-            rootLayout.ContentSize = output.ContentSize;
-            rootLayout.Padding = rootPadding;
-            rootLayout.Border = rootBorder;
-            rootLayout.Margin = LayoutHelpers.ResolveMargin(rootStyle, parentSz);
-
-            // Snapshot unrounded layout before RoundLayout modifies it
-            adapter.GetUnroundedLayout(rootNodeId) = rootLayout;
+            var rootLayout = new NodeLayout
+            {
+                Size = new Size<float>(
+                    innerW + rootPadding.HorizontalAxisSum() + rootBorder.HorizontalAxisSum(),
+                    innerH + rootPadding.VerticalAxisSum() + rootBorder.VerticalAxisSum()),
+                ContentSize = output.ContentSize,
+                Padding = rootPadding,
+                Border = rootBorder,
+                Margin = LayoutHelpers.ResolveMargin(rootStyle, parentSz),
+            };
+            adapter.SetUnroundedLayout(rootNodeId, in rootLayout);
 
             treeRef = new UITreeRef(adapter);
             RoundLayout.Round(ref treeRef, rootNodeId);
@@ -101,6 +101,7 @@ public partial class UILayoutSystem
         {
             int nodeId = adapter.GetNodeId(entity);
             if (nodeId < 0) continue;
+            if (!adapter.LayoutChanged(nodeId)) continue;
             if (!query.Has<ComputedNode>(entity)) continue;
 
             ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);

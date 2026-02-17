@@ -47,27 +47,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Input", "src\Pollus.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Tween", "src\Pollus.Tween\Pollus.Tween.csproj", "{B1A2C3D4-E5F6-7890-ABCD-EF1234567890}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Assets", "src\Pollus.Assets\Pollus.Assets.csproj", "{C2B3D4E5-F6A7-8901-BCDE-F12345678901}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Serialization", "src\Pollus.Serialization\Pollus.Serialization.csproj", "{D3C4E5F6-A7B8-9012-CDEF-123456789012}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Platform", "src\Pollus.Platform\Pollus.Platform.csproj", "{E4F5A6B7-C8D9-0123-EFAB-456789ABCDEF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.UI", "src\Pollus.UI\Pollus.UI.csproj", "{AD4A90C5-F675-472D-97B7-187F566FA0E2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Assets", "src\Pollus.Assets\Pollus.Assets.csproj", "{7D86650F-AF1E-4062-9F4D-5230D1BCD50E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Emscripten.WGPUGenerator", "src\Pollus.Emscripten.WGPUGenerator\Pollus.Emscripten.WGPUGenerator.csproj", "{7AE32FA2-3462-4C5F-B1F7-5A438BA04B6C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Generators", "src\Pollus.Generators\Pollus.Generators.csproj", "{380C798F-5423-4EC2-83C2-17BB73992F8A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Input", "src\Pollus.Input\Pollus.Input.csproj", "{A3BCA6CD-35A8-4191-A6B0-29273719DE02}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Platform", "src\Pollus.Platform\Pollus.Platform.csproj", "{FA6790E9-987C-47F7-B6DF-2E0C08197376}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Serialization", "src\Pollus.Serialization\Pollus.Serialization.csproj", "{462121D7-A222-46F5-ACB0-18E3550AB25D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pollus.Tween", "src\Pollus.Tween\Pollus.Tween.csproj", "{E5F3359A-3F67-4365-86C5-BCE6244509EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
