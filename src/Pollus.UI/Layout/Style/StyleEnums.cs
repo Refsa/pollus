@@ -6,8 +6,8 @@ public enum Display : byte
 {
     Flex = 0,
     None = 1,
-    Block = 2,   // no-op milestone 1
-    Grid = 3,    // no-op milestone 1
+    Block = 2,
+    Grid = 3,
 }
 
 public enum FlexDirection : byte
@@ -36,7 +36,7 @@ public enum Overflow : byte
     Visible = 0,
     Clip = 1,
     Hidden = 2,
-    Scroll = 3,  // no-op milestone 1
+    Scroll = 3, // no-op milestone 1
 }
 
 public enum BoxSizing : byte

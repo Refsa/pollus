@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Pollus.Tests" />
+    <InternalsVisibleTo Include="Pollus.Benchmark" />
   </ItemGroup>
 
   <ItemGroup>

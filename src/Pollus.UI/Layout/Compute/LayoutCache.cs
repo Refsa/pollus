@@ -19,24 +19,24 @@ public struct LayoutCache
     [InlineArray(SlotCount)]
     private struct EntryBuffer { Entry _element0; }
 
-    private EntryBuffer _entries;
-    private int _nextSlot;
-    private bool _isDirty;
+    private EntryBuffer entries;
+    private int nextSlot;
+    private bool isDirty;
 
     /// True if this cache has been cleared/invalidated and has no valid entries.
-    public readonly bool IsDirty => _isDirty;
+    public readonly bool IsDirty => isDirty;
 
     public LayoutCache()
     {
-        _entries = default;
-        _nextSlot = 0;
-        _isDirty = true;
+        entries = default;
+        nextSlot = 0;
+        isDirty = true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGet(in LayoutInput input, out LayoutOutput output)
     {
-        if (_isDirty)
+        if (isDirty)
         {
             output = default;
             return false;
@@ -44,7 +44,7 @@ public struct LayoutCache
 
         for (int i = 0; i < SlotCount; i++)
         {
-            ref readonly var entry = ref _entries[i];
+            ref readonly var entry = ref entries[i];
             if (entry.Valid && InputsMatch(in entry, in input))
             {
                 output = entry.Output;
@@ -72,22 +72,22 @@ public struct LayoutCache
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Store(in LayoutInput input, in LayoutOutput output)
     {
-        ref var entry = ref _entries[_nextSlot];
+        ref var entry = ref entries[nextSlot];
         entry.Valid = true;
         entry.KnownDimensions = input.KnownDimensions;
         entry.ParentSize = input.ParentSize;
         entry.AvailableSpace = input.AvailableSpace;
         entry.RunMode = input.RunMode;
         entry.Output = output;
-        _nextSlot = (_nextSlot + 1) % SlotCount;
-        _isDirty = false;
+        nextSlot = (nextSlot + 1) % SlotCount;
+        isDirty = false;
     }
 
     public void Clear()
     {
         for (int i = 0; i < SlotCount; i++)
-            _entries[i].Valid = false;
-        _nextSlot = 0;
-        _isDirty = true;
+            entries[i].Valid = false;
+        nextSlot = 0;
+        isDirty = true;
     }
 }

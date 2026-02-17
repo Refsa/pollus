@@ -22,6 +22,7 @@
     <ProjectReference Include="..\Pollus.Graphics\Pollus.Graphics.csproj" />
     <ProjectReference Include="..\Pollus.Audio\Pollus.Audio.csproj" />
     <ProjectReference Include="..\Pollus.ECS\Pollus.ECS.csproj" />
+    <ProjectReference Include="..\Pollus.UI\Pollus.UI.csproj" />
   </ItemGroup>
 
 </Project>
