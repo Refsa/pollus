@@ -127,7 +127,7 @@ public class UIExample : IExample
                 var mainPanel = UI.Panel(commands)
                     .FlexGrow(1f).FlexColumn().Padding(16).Gap(16)
                     .Border(2)
-                    .Overflow(Overflow.Hidden, Overflow.Scroll)
+                    .Overflow(Overflow.Scroll, Overflow.Scroll)
                     .Background(new Color(0.15f, 0.15f, 0.19f, 1f))
                     .BorderColor(new Color(0.3f, 0.3f, 0.4f, 1f))
                     .BorderRadius(12)

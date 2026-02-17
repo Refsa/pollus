@@ -17,7 +17,7 @@ public partial class UIScrollSystem
     static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::HitTest"],
+        RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
     [System(nameof(UpdateVisuals))]
@@ -29,15 +29,33 @@ public partial class UIScrollSystem
 
     static void Update(
         CurrentDevice<Mouse> currentMouse,
+        CurrentDevice<Keyboard> currentKeyboard,
         UIHitTestResult hitResult,
+        EventReader<UIInteractionEvents.UIDragEvent> dragReader,
         Query query,
         Query<UIScrollOffset, ComputedNode> qScroll)
     {
+        // Handle drag events on scroll thumbs
+        foreach (var drag in dragReader.Read())
+        {
+            HandleThumbDrag(in drag, query, qScroll);
+        }
+
         var mouse = currentMouse.Value;
         if (mouse == null) return;
 
+        var scrollX = mouse.GetAxis(MouseAxis.ScrollX);
         var scrollY = mouse.GetAxis(MouseAxis.ScrollY);
-        if (scrollY == 0f) return;
+        if (scrollX == 0f && scrollY == 0f) return;
+
+        // Shift+scroll: vertical scroll acts as horizontal
+        var keyboard = currentKeyboard.Value;
+        if (scrollY != 0f && keyboard != null
+            && (keyboard.Pressed(Key.LeftShift) || keyboard.Pressed(Key.RightShift)))
+        {
+            scrollX = scrollY;
+            scrollY = 0f;
+        }
 
         // Find the nearest ancestor (or self) with UIScrollOffset starting from hovered entity
         var target = hitResult.HoveredEntity;
@@ -66,10 +84,21 @@ public partial class UIScrollSystem
         ref var scrollOffset = ref query.GetTracked<UIScrollOffset>(scrollEntity);
         ref readonly var scrollComputed = ref query.Get<ComputedNode>(scrollEntity);
 
-        var innerHeight = scrollComputed.Size.Y - scrollComputed.PaddingTop - scrollComputed.PaddingBottom
-                          - scrollComputed.BorderTop - scrollComputed.BorderBottom;
-        var maxScrollY = MathF.Max(0, scrollComputed.ContentSize.Y - innerHeight);
-        scrollOffset.Offset.Y = Math.Clamp(scrollOffset.Offset.Y - scrollY * ScrollSpeed, 0f, maxScrollY);
+        if (scrollY != 0f)
+        {
+            var innerHeight = scrollComputed.Size.Y - scrollComputed.PaddingTop - scrollComputed.PaddingBottom
+                              - scrollComputed.BorderTop - scrollComputed.BorderBottom;
+            var maxScrollY = MathF.Max(0, scrollComputed.ContentSize.Y - innerHeight);
+            scrollOffset.Offset.Y = Math.Clamp(scrollOffset.Offset.Y - scrollY * ScrollSpeed, 0f, maxScrollY);
+        }
+
+        if (scrollX != 0f)
+        {
+            var innerWidth = scrollComputed.Size.X - scrollComputed.PaddingLeft - scrollComputed.PaddingRight
+                             - scrollComputed.BorderLeft - scrollComputed.BorderRight;
+            var maxScrollX = MathF.Max(0, scrollComputed.ContentSize.X - innerWidth);
+            scrollOffset.Offset.X = Math.Clamp(scrollOffset.Offset.X - scrollX * ScrollSpeed, 0f, maxScrollX);
+        }
     }
 
     internal static void UpdateVisuals(
@@ -98,7 +127,8 @@ public partial class UIScrollSystem
                 var thumb = commands.Spawn(Entity.With(
                     new ComputedNode(),
                     new BackgroundColor { Color = scrollbarColor },
-                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f }
+                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f },
+                    new UIInteraction()
                 )).Entity;
                 commands.AddChild(entity, thumb);
                 scroll.VerticalThumbEntity = thumb;
@@ -111,7 +141,8 @@ public partial class UIScrollSystem
                 var thumb = commands.Spawn(Entity.With(
                     new ComputedNode(),
                     new BackgroundColor { Color = scrollbarColor },
-                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f }
+                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f },
+                    new UIInteraction()
                 )).Entity;
                 commands.AddChild(entity, thumb);
                 scroll.HorizontalThumbEntity = thumb;
@@ -173,6 +204,60 @@ public partial class UIScrollSystem
             {
                 query.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
             }
+        }
+    }
+
+    static void HandleThumbDrag(
+        in UIInteractionEvents.UIDragEvent drag,
+        Query query,
+        Query<UIScrollOffset, ComputedNode> qScroll)
+    {
+        foreach (var row in qScroll)
+        {
+            ref readonly var scroll = ref row.Component0;
+            ref readonly var computed = ref row.Component1;
+
+            bool isVertical = !scroll.VerticalThumbEntity.IsNull && scroll.VerticalThumbEntity == drag.Entity;
+            bool isHorizontal = !scroll.HorizontalThumbEntity.IsNull && scroll.HorizontalThumbEntity == drag.Entity;
+
+            if (!isVertical && !isHorizontal) continue;
+
+            ref var scrollTracked = ref query.GetTracked<UIScrollOffset>(row.Entity);
+            var size = computed.Size;
+
+            if (isVertical)
+            {
+                float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
+                               - computed.BorderTop - computed.BorderBottom;
+                float contentH = computed.ContentSize.Y;
+                float thumbH = contentH > 0 ? MathF.Max(20f, (innerH / contentH) * innerH) : 20f;
+                float trackH = innerH - thumbH;
+                float maxScroll = MathF.Max(0, contentH - innerH);
+
+                if (trackH > 0)
+                {
+                    float scrollDelta = drag.DeltaY * (maxScroll / trackH);
+                    scrollTracked.Offset.Y = Math.Clamp(scrollTracked.Offset.Y + scrollDelta, 0f, maxScroll);
+                }
+            }
+
+            if (isHorizontal)
+            {
+                float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
+                               - computed.BorderLeft - computed.BorderRight;
+                float contentW = computed.ContentSize.X;
+                float thumbW = contentW > 0 ? MathF.Max(20f, (innerW / contentW) * innerW) : 20f;
+                float trackW = innerW - thumbW;
+                float maxScroll = MathF.Max(0, contentW - innerW);
+
+                if (trackW > 0)
+                {
+                    float scrollDelta = drag.DeltaX * (maxScroll / trackW);
+                    scrollTracked.Offset.X = Math.Clamp(scrollTracked.Offset.X + scrollDelta, 0f, maxScroll);
+                }
+            }
+
+            break;
         }
     }
 
