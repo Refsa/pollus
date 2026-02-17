@@ -221,6 +221,19 @@ public class ArchetypeStore : IDisposable
         return ref archetype.GetComponent<C>(entityInfo.ChunkIndex, entityInfo.RowIndex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref C GetTrackedComponent<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        Guard.IsTrue(entityHandler.IsAlive(entity), $"Entity {entity} does not exist");
+
+        ref var entityInfo = ref entityHandler.GetEntityInfo(entity);
+        var archetype = archetypes[entityInfo.ArchetypeIndex];
+        Guard.IsTrue(archetype.HasComponent<C>(), $"Entity {entity} does not have component {typeof(C)}");
+        archetype.Chunks[entityInfo.ChunkIndex].SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Changed);
+        return ref archetype.GetComponent<C>(entityInfo.ChunkIndex, entityInfo.RowIndex);
+    }
+
     public void AddComponent(in Entity entity, in ComponentID componentID, in ReadOnlySpan<byte> data)
     {
         if (!entityHandler.IsAlive(entity))

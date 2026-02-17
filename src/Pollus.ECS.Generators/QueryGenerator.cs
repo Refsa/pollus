@@ -102,6 +102,13 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref C GetTracked<C>(in Entity entity)
+            where C : unmanaged, IComponent
+        {
+            return ref query.GetTracked<C>(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Has<C>(in Entity entity)
             where C : unmanaged, IComponent
         {
@@ -371,6 +378,19 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
 
         var entityInfo = world.Store.GetEntityInfo(entity);
         return ref world.Store.Archetypes[entityInfo.ArchetypeIndex].Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex, cinfo.ID);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref C GetTracked<C>(in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var cinfo = Component.GetInfo<C>();
+        if (!cids.Contains(cinfo.ID)) return ref Unsafe.NullRef<C>();
+
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        ref var chunk = ref world.Store.Archetypes[entityInfo.ArchetypeIndex].Chunks[entityInfo.ChunkIndex];
+        chunk.SetFlag(entityInfo.RowIndex, cinfo.ID, ComponentFlags.Changed);
+        return ref chunk.GetComponent<C>(entityInfo.RowIndex, cinfo.ID);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
