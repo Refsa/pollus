@@ -306,6 +306,20 @@ public struct Query : IQuery, IQueryCreate<Query>
         return ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex].GetComponent<C>(entityInfo.RowIndex);
     }
 
+    /// <summary>
+    /// Get a mutable reference to a component and mark it as changed.
+    /// Use this instead of Get when you intend to modify the component and want change detection to work.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref C GetTracked<C>(scoped in Entity entity)
+        where C : unmanaged, IComponent
+    {
+        var entityInfo = world.Store.GetEntityInfo(entity);
+        ref var chunk = ref world.Store.GetArchetype(entityInfo.ArchetypeIndex).Chunks[entityInfo.ChunkIndex];
+        chunk.SetFlag<C>(entityInfo.RowIndex, ComponentFlags.Changed);
+        return ref chunk.GetComponent<C>(entityInfo.RowIndex);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ref C TryGet<C>(in Entity entity, out bool exists)
         where C : unmanaged, IComponent
