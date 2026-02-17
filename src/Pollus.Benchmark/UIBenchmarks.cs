@@ -30,6 +30,11 @@ public class UIBenchmarks
     UITreeAdapter gridAdapter = null!;
     int gridRootNodeId;
 
+    // For Sync
+    World syncWorld = null!;
+    UITreeAdapter syncAdapter = null!;
+    Entity syncMiddleEntity;
+
     // For HitTest
     World hitFlatWorld = null!;
     Query hitFlatQuery;
@@ -49,6 +54,7 @@ public class UIBenchmarks
         SetupFlatWorld();
         SetupDeepWorld();
         SetupGridWorld();
+        SetupSyncWorld();
         SetupHitTestFlatWorld();
         SetupHitTestDeepWorld();
     }
@@ -59,6 +65,7 @@ public class UIBenchmarks
         flatWorld?.Dispose();
         deepWorld?.Dispose();
         gridWorld?.Dispose();
+        syncWorld?.Dispose();
         hitFlatWorld?.Dispose();
         hitDeepWorld?.Dispose();
     }
@@ -98,6 +105,27 @@ public class UIBenchmarks
 
         gridAdapter = gridWorld.Resources.Get<UITreeAdapter>();
         gridRootNodeId = gridAdapter.GetNodeId(root);
+    }
+
+    void SetupSyncWorld()
+    {
+        syncWorld = UIBenchmarkHelpers.CreateUIWorld();
+        var commands = syncWorld.GetCommands();
+        var root = UIBenchmarkHelpers.SpawnRoot(commands, 800, 600);
+        UIBenchmarkHelpers.SpawnFlatChildren(commands, root, NodeCount);
+        syncWorld.Update();
+
+        // Advance version so Added flags expire (2-frame lifetime)
+        syncWorld.Update();
+        syncWorld.Update();
+
+        syncAdapter = syncWorld.Resources.Get<UITreeAdapter>();
+
+        // Grab a middle entity for the StyleChanged benchmark
+        var rootNodeId = syncAdapter.GetNodeId(root);
+        var children = syncAdapter.GetChildIds(rootNodeId);
+        if (children.Length > 0)
+            syncMiddleEntity = syncAdapter.GetEntity(children[children.Length / 2]);
     }
 
     void SetupHitTestFlatWorld()
@@ -213,23 +241,40 @@ public class UIBenchmarks
     [BenchmarkCategory("Sync")]
     public void SyncFull_NoChange()
     {
-        var uiNodeQuery = new Query<UINode>(flatWorld);
-        var query = new Query(flatWorld);
-        flatAdapter.SyncFull(uiNodeQuery, query);
+        var uiNodeQuery = new Query<UINode>(syncWorld);
+        var query = new Query(syncWorld);
+        syncAdapter.SyncFull(uiNodeQuery, query);
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("Sync")]
+    public void SyncFull_StyleChanged()
+    {
+        // Mark one entity's style as changed, then sync
+        var query = new Query(syncWorld);
+        query.SetChanged<UIStyle>(syncMiddleEntity);
+
+        var uiNodeQuery = new Query<UINode>(syncWorld);
+        syncAdapter.SyncFull(uiNodeQuery, query);
     }
 
     // ── WriteBack benchmarks ──────────────────────────────────────────
 
     [Benchmark]
     [BenchmarkCategory("WriteBack")]
-    public void WriteBack_AllNodes()
+    public void WriteBack_AllChanged()
     {
-        // Simulate what WriteBack does: iterate active entities, copy layout data
+        // Force all nodes dirty then write back (worst case)
+        flatAdapter.MarkSubtreeDirty(flatRootNodeId);
+        var treeRef = new UITreeRef(flatAdapter);
+        FlexLayout.ComputeFlexbox(ref treeRef, flatRootNodeId, MakeRootInput(800, 600));
+
         var query = new Query(flatWorld);
         foreach (var entity in flatAdapter.ActiveEntities)
         {
             int nodeId = flatAdapter.GetNodeId(entity);
             if (nodeId < 0) continue;
+            if (!flatAdapter.LayoutChanged(nodeId)) continue;
             if (!query.Has<ComputedNode>(entity)) continue;
 
             ref readonly var rounded = ref flatAdapter.GetRoundedLayout(nodeId);
@@ -251,6 +296,26 @@ public class UIBenchmarks
             computed.MarginBottom = rounded.Margin.Bottom;
             computed.UnroundedSize = new Vec2f(rounded.Size.Width, rounded.Size.Height);
             computed.UnroundedPosition = new Vec2f(rounded.Location.X, rounded.Location.Y);
+        }
+        flatAdapter.ClearDirty();
+    }
+
+    [Benchmark]
+    [BenchmarkCategory("WriteBack")]
+    public void WriteBack_NoneChanged()
+    {
+        // Nothing changed — measures skip cost of LayoutChanged check
+        var query = new Query(flatWorld);
+        foreach (var entity in flatAdapter.ActiveEntities)
+        {
+            int nodeId = flatAdapter.GetNodeId(entity);
+            if (nodeId < 0) continue;
+            if (!flatAdapter.LayoutChanged(nodeId)) continue;
+            if (!query.Has<ComputedNode>(entity)) continue;
+
+            ref readonly var rounded = ref flatAdapter.GetRoundedLayout(nodeId);
+            ref var computed = ref query.GetTracked<ComputedNode>(entity);
+            computed.Size = new Vec2f(rounded.Size.Width, rounded.Size.Height);
         }
     }
 

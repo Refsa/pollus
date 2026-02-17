@@ -1,10 +1,13 @@
 namespace Pollus.UI.Layout;
 
-using System.Buffers;
 using System.Runtime.CompilerServices;
 
 public static partial class FlexLayout
 {
+    [ThreadStatic] static FlexArena? t_arena;
+
+    static FlexArena Arena => t_arena ??= new FlexArena();
+
     #region Internal Types
 
     private struct FlexItem
@@ -222,9 +225,9 @@ public static partial class FlexLayout
             return emptyResult;
         }
 
-        var flexItemsArray = ArrayPool<FlexItem>.Shared.Rent(childCount);
-        var absoluteItemIds = ArrayPool<int>.Shared.Rent(childCount);
-        var absoluteItemOrders = ArrayPool<int>.Shared.Rent(childCount);
+        var flexItemsSpan = Arena.Rent<FlexItem>(childCount);
+        var absoluteItemIdsSpan = Arena.Rent<int>(childCount);
+        var absoluteItemOrdersSpan = Arena.Rent<int>(childCount);
         int flexItemCount = 0;
         int absoluteCount = 0;
 
@@ -243,8 +246,8 @@ public static partial class FlexLayout
 
                 if (childStyle.Position == Position.Absolute)
                 {
-                    absoluteItemOrders[absoluteCount] = i;
-                    absoluteItemIds[absoluteCount++] = childId;
+                    absoluteItemOrdersSpan[absoluteCount] = i;
+                    absoluteItemIdsSpan[absoluteCount++] = childId;
                     continue;
                 }
 
@@ -287,7 +290,7 @@ public static partial class FlexLayout
                     marginCrossEndAuto = childStyle.Margin.Right.IsAuto();
                 }
 
-                flexItemsArray[flexItemCount++] = new FlexItem
+                flexItemsSpan[flexItemCount++] = new FlexItem
                 {
                     NodeId = childId,
                     OrderIndex = i,
@@ -314,7 +317,7 @@ public static partial class FlexLayout
                 };
             }
 
-            var flexItems = flexItemsArray.AsSpan(0, flexItemCount);
+            var flexItems = flexItemsSpan.Slice(0, flexItemCount);
 
             StableSort(flexItems);
 
@@ -330,9 +333,9 @@ public static partial class FlexLayout
 
             #region Phase 4: Collect items into flex lines
 
-            FlexLine[]? linesArray = null;
             int lineCount = 0;
             scoped Span<FlexLine> lines;
+            bool linesFromArena = false;
 
             Span<FlexLine> singleLineBuffer = stackalloc FlexLine[1];
 
@@ -350,7 +353,8 @@ public static partial class FlexLayout
             }
             else
             {
-                linesArray = ArrayPool<FlexLine>.Shared.Rent(flexItemCount);
+                lines = Arena.Rent<FlexLine>(flexItemCount);
+                linesFromArena = true;
                 float? mainAvailForWrap = availableSpaceMain.AsDefinite();
                 int lineStart = 0;
                 float lineMainSize = 0f;
@@ -368,7 +372,7 @@ public static partial class FlexLayout
 
                         if (mainAvailForWrap.HasValue && newSize > mainAvailForWrap.Value)
                         {
-                            linesArray[lineCount++] = new FlexLine
+                            lines[lineCount++] = new FlexLine
                             {
                                 StartIndex = lineStart,
                                 Count = i - lineStart,
@@ -386,12 +390,12 @@ public static partial class FlexLayout
                     }
                 }
 
-                linesArray[lineCount++] = new FlexLine
+                lines[lineCount++] = new FlexLine
                 {
                     StartIndex = lineStart,
                     Count = flexItemCount - lineStart,
                 };
-                lines = linesArray.AsSpan(0, lineCount);
+                lines = lines[..lineCount];
             }
 
             #endregion
@@ -503,7 +507,7 @@ public static partial class FlexLayout
                 #region Phase 12: Absolutely-positioned children
 
                 LayoutAbsoluteChildren(ref tree, in style,
-                    absoluteItemIds, absoluteItemOrders, absoluteCount,
+                    absoluteItemIdsSpan, absoluteItemOrdersSpan, absoluteCount,
                     dir, isRow, nodeInnerSize, nodeOuterSize,
                     containerMainSize, containerCrossSize,
                     paddingBorder, paddingBorderSum,
@@ -532,15 +536,15 @@ public static partial class FlexLayout
             }
             finally
             {
-                if (linesArray is not null)
-                    ArrayPool<FlexLine>.Shared.Return(linesArray);
+                if (linesFromArena)
+                    Arena.Return<FlexLine>(flexItemCount);
             }
         }
         finally
         {
-            ArrayPool<FlexItem>.Shared.Return(flexItemsArray);
-            ArrayPool<int>.Shared.Return(absoluteItemIds);
-            ArrayPool<int>.Shared.Return(absoluteItemOrders);
+            Arena.Return<int>(childCount);
+            Arena.Return<int>(childCount);
+            Arena.Return<FlexItem>(childCount);
         }
 
         #endregion
@@ -1001,7 +1005,7 @@ public static partial class FlexLayout
 
     private static void LayoutAbsoluteChildren<TTree>(
         ref TTree tree, in Style style,
-        int[] absoluteItemIds, int[] absoluteItemOrders, int absoluteCount,
+        Span<int> absoluteItemIds, Span<int> absoluteItemOrders, int absoluteCount,
         FlexDirection dir, bool isRow,
         Size<float?> nodeInnerSize, Size<float?> nodeOuterSize,
         float containerMainSize, float containerCrossSize,
