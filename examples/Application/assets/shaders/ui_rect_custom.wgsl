@@ -1,6 +1,3 @@
-// Custom UI rect shader — identical to builtin ui_rect.wgsl but adds
-// diagonal stripe overlay to demonstrate per-entity material overrides.
-
 struct VertexInput {
     @builtin(vertex_index) index: u32,
     @location(0) i_pos_size: vec4f,
@@ -37,6 +34,10 @@ struct UIUniform {
 @group(0) @binding(0) var<uniform> ui: UIUniform;
 @group(0) @binding(1) var tex: texture_2d<f32>;
 @group(0) @binding(2) var samp: sampler;
+
+// custom material bind group
+@group(1) @binding(0) var noise_tex: texture_2d<f32>;
+@group(1) @binding(1) var noise_samp: sampler;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
@@ -115,10 +116,16 @@ fn sd_down_arrow(p: vec2f, size: f32) -> f32 {
     return min(sd_segment(p, a1, b1), sd_segment(p, a2, b2));
 }
 
-// Animated diagonal stripe pattern: returns 0.0 or 1.0
-fn stripe(screen_pos: vec2f, time: f32, spacing: f32, width: f32) -> f32 {
-    let d = (screen_pos.x + screen_pos.y + time * 40.0) % spacing;
-    return step(width, d);
+fn sample_noise(uv: vec2f) -> f32 {
+    return textureSample(noise_tex, noise_samp, fract(uv)).r;
+}
+
+fn custom_palette(t: f32) -> vec3f {
+    let a = vec3f(0.5, 0.5, 0.5);
+    let b = vec3f(0.5, 0.5, 0.5);
+    let c = vec3f(1.0, 1.0, 1.0);
+    let d = vec3f(0.00, 0.10, 0.20);
+    return a + b * cos(6.28318 * (c * t + d));
 }
 
 struct FragmentOutput {
@@ -195,10 +202,23 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
     let aa_outline_inner = max(fwidth(d_outline_inner), 0.5);
 
-    // --- Animated diagonal stripe pattern (the custom effect) ---
-    let stripe_mix = stripe(input.screen_pos, ui.time, 12.0, 6.0);
-    let stripe_tint = mix(vec4f(1.0), vec4f(0.7, 0.8, 1.0, 1.0), 1.0 - stripe_mix);
-    let striped_bg = bg_color * stripe_tint;
+    // --- noise texture from custom material ---
+
+    let local_uv = (input.local_pos - vec2f(expand)) / size;
+    let hue_shift = dot(bg_color.rgb, vec3f(0.299, 0.587, 0.114));
+
+    let to_mouse = ui.mouse_position - input.screen_pos;
+    let mouse_dist = length(to_mouse) + 1.0;
+    let push = exp(-mouse_dist * 0.007);
+    let push_dir = to_mouse / mouse_dist;
+    let uv_pushed = local_uv - (push_dir / size) * push * 80.0;
+
+    let n1 = sample_noise(uv_pushed * 1.5 + vec2f(ui.time * 0.04, ui.time * 0.03));
+    let n2 = sample_noise(uv_pushed * 3.0 + vec2f(-ui.time * 0.03, ui.time * 0.05));
+    let liquid = n1 * 0.6 + n2 * 0.4;
+
+    let color = custom_palette(liquid + hue_shift + ui.time * 0.02) * 0.6;
+    let striped_bg = vec4f(color, bg_color.a);
 
     // --- Branch on shape_type ---
 
