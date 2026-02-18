@@ -25,11 +25,14 @@ struct VertexOutput {
     @location(8) uv: vec2f,
 };
 
-struct UIViewportUniform {
+struct UIUniform {
     viewport_size: vec2f,
+    time: f32,
+    delta_time: f32,
+    mouse_position: vec2f,
 };
 
-@group(0) @binding(0) var<uniform> viewport: UIViewportUniform;
+@group(0) @binding(0) var<uniform> ui: UIUniform;
 @group(0) @binding(1) var tex: texture_2d<f32>;
 @group(0) @binding(2) var samp: sampler;
 
@@ -49,8 +52,8 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let pixel_pos = expanded_pos + vec2f(u, v) * expanded_size;
 
     // Convert screen pixels to NDC: x: [0, width] -> [-1, 1], y: [0, height] -> [1, -1]
-    let ndc_x = pixel_pos.x / viewport.viewport_size.x * 2.0 - 1.0;
-    let ndc_y = 1.0 - pixel_pos.y / viewport.viewport_size.y * 2.0;
+    let ndc_x = pixel_pos.x / ui.viewport_size.x * 2.0 - 1.0;
+    let ndc_y = 1.0 - pixel_pos.y / ui.viewport_size.y * 2.0;
 
     var out: VertexOutput;
     out.pos = vec4f(ndc_x, ndc_y, 0.0, 1.0);

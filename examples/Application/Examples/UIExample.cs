@@ -339,7 +339,6 @@ public class UIExample : IExample
                             Data = [255, 255, 255, 255],
                         }),
                         Sampler = assetServer.Load<SamplerAsset>("internal://samplers/nearest"),
-                        ExtraBindGroups = [[new UniformBinding<SceneUniform>()]],
                     });
 
                     var defaultPanel = UI.Panel(commands)
