@@ -61,11 +61,12 @@ public partial class UIRectMaterial : IMaterial
     };
 
     public IBinding[][] Bindings =>
-    [
-        [new UniformBinding<UIViewportUniform>(), Texture, Sampler]
-    ];
+        ExtraBindGroups is null
+            ? [[new UniformBinding<UIViewportUniform>(), Texture, Sampler]]
+            : [[new UniformBinding<UIViewportUniform>(), Texture, Sampler], .. ExtraBindGroups];
 
     public required Handle<ShaderAsset> ShaderSource { get; set; }
     public required TextureBinding Texture { get; set; }
     public required SamplerBinding Sampler { get; set; }
+    public List<IBinding[]>? ExtraBindGroups { get; set; }
 }

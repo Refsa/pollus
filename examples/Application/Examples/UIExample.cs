@@ -325,6 +325,62 @@ public class UIExample : IExample
                     )
                     .Spawn();
 
+                // --- Custom Material demo ---
+                {
+                    var customMaterial = assetServer.GetAssets<UIRectMaterial>().Add(new UIRectMaterial
+                    {
+                        ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/ui_rect_custom.wgsl"),
+                        Texture = assetServer.GetAssets<Texture2D>().Add(new Texture2D
+                        {
+                            Name = "custom_white_pixel",
+                            Width = 1,
+                            Height = 1,
+                            Format = TextureFormat.Rgba8Unorm,
+                            Data = [255, 255, 255, 255],
+                        }),
+                        Sampler = assetServer.Load<SamplerAsset>("internal://samplers/nearest"),
+                        ExtraBindGroups = [[new UniformBinding<SceneUniform>()]],
+                    });
+
+                    var defaultPanel = UI.Panel(commands)
+                        .Size(160, 100).FlexColumn().Padding(12)
+                        .Background(new Color(0.3f, 0.6f, 0.9f, 1f))
+                        .BorderRadius(12)
+                        .Children(
+                            UI.Text(commands, "Default", fontHandle).FontSize(14f).Spawn()
+                        )
+                        .Spawn();
+
+                    var customPanel = UI.Panel(commands)
+                        .Size(160, 100).FlexColumn().Padding(12)
+                        .Background(new Color(0.3f, 0.6f, 0.9f, 1f))
+                        .BorderRadius(12)
+                        .Material(customMaterial)
+                        .Children(
+                            UI.Text(commands, "Custom", fontHandle).FontSize(14f).Spawn()
+                        )
+                        .Spawn();
+
+                    var customCircle = UI.Panel(commands)
+                        .Size(80, 80)
+                        .Background(new Color(0.9f, 0.4f, 0.3f, 1f))
+                        .Shape(UIShapeType.Circle)
+                        .Material(customMaterial)
+                        .Spawn();
+
+                    _ = UI.Panel(commands)
+                        .FlexColumn().Gap(8)
+                        .ChildOf(mainPanel)
+                        .Children(
+                            UI.Text(commands, "Custom Material", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                            UI.Panel(commands)
+                                .FlexRow().Gap(16).AlignItems(AlignItems.Center)
+                                .Children(defaultPanel, customPanel, customCircle)
+                                .Spawn()
+                        )
+                        .Spawn();
+                }
+
                 // --- UI Images demo ---
                 var testTexture = assetServer.LoadAsync<Texture2D>("textures/test.png");
 
