@@ -136,17 +136,6 @@ struct FragmentOutput {
 fn fs_main(input: VertexOutput) -> FragmentOutput {
     let tex_color = textureSample(tex, samp, input.uv);
 
-    // Text glyph mode
-    if (input.extra.w > 0.5) {
-        let glyph_alpha = tex_color.r * input.bg_color.a;
-        if (glyph_alpha < 0.001) { discard; }
-        var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
-        return out;
-    }
-
-    let bg_color = tex_color * input.bg_color;
-
     let size = input.size;
     let half_size = size * 0.5;
     let shape_type = u32(input.extra.x);
@@ -155,7 +144,8 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let expand = outline_width + outline_offset;
     let p = input.local_pos - vec2f(expand) - half_size;
 
-    // --- Compute ALL SDF values in uniform control flow ---
+    // --- Compute ALL SDF values and fwidth in uniform control flow ---
+    
     let circle_r = min(half_size.x, half_size.y);
     let d_circle = sd_circle(p, circle_r);
     let aa_circle = max(fwidth(d_circle), 0.5);
@@ -204,6 +194,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
     // --- noise texture from custom material ---
 
+    let bg_color = tex_color * input.bg_color;
     let local_uv = (input.local_pos - vec2f(expand)) / size;
     let hue_shift = dot(bg_color.rgb, vec3f(0.299, 0.587, 0.114));
 
@@ -220,7 +211,16 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let color = custom_palette(liquid + hue_shift + ui.time * 0.02) * 0.6;
     let striped_bg = vec4f(color, bg_color.a);
 
-    // --- Branch on shape_type ---
+    // --- Now safe to branch on non-uniform values (no derivative calls below) ---
+
+    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
+    if (input.extra.w > 0.5) {
+        let glyph_alpha = tex_color.r * input.bg_color.a;
+        if (glyph_alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
+        return out;
+    }
 
     if (shape_type == 1u) {
         let element_a = (1.0 - smoothstep(-aa_circle, aa_circle, d_circle)) * striped_bg.a;
