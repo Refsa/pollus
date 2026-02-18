@@ -91,7 +91,7 @@ public partial class ExtractUIRectsSystem
 
             var samplerHandle = rectBatch.Sampler.IsNull() ? (Handle)resources.DefaultSampler : rectBatch.Sampler;
 
-            var uniformBinding = new UniformBinding<UIViewportUniform>();
+            var uniformBinding = new UniformBinding<UIUniform>();
             var textureBinding = new TextureBinding { Image = rectBatch.Texture };
             var samplerBinding = new SamplerBinding { Sampler = samplerHandle };
 

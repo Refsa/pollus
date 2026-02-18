@@ -62,8 +62,8 @@ public partial class UIRectMaterial : IMaterial
 
     public IBinding[][] Bindings =>
         ExtraBindGroups is null
-            ? [[new UniformBinding<UIViewportUniform>(), Texture, Sampler]]
-            : [[new UniformBinding<UIViewportUniform>(), Texture, Sampler], .. ExtraBindGroups];
+            ? [[new UniformBinding<UIUniform>(), Texture, Sampler]]
+            : [[new UniformBinding<UIUniform>(), Texture, Sampler], .. ExtraBindGroups];
 
     public required Handle<ShaderAsset> ShaderSource { get; set; }
     public required TextureBinding Texture { get; set; }

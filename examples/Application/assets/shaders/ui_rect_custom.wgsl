@@ -27,21 +27,16 @@ struct VertexOutput {
     @location(9) screen_pos: vec2f,
 };
 
-struct UIViewportUniform {
+struct UIUniform {
     viewport_size: vec2f,
+    time: f32,
+    delta_time: f32,
+    mouse_position: vec2f,
 };
 
-@group(0) @binding(0) var<uniform> viewport: UIViewportUniform;
+@group(0) @binding(0) var<uniform> ui: UIUniform;
 @group(0) @binding(1) var tex: texture_2d<f32>;
 @group(0) @binding(2) var samp: sampler;
-
-struct SceneUniform {
-    view: mat4x4f,
-    projection: mat4x4f,
-    time: f32,
-};
-
-@group(1) @binding(0) var<uniform> scene: SceneUniform;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
@@ -56,8 +51,8 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let expanded_pos = input.i_pos_size.xy - vec2f(expand);
     let pixel_pos = expanded_pos + vec2f(u, v) * expanded_size;
 
-    let ndc_x = pixel_pos.x / viewport.viewport_size.x * 2.0 - 1.0;
-    let ndc_y = 1.0 - pixel_pos.y / viewport.viewport_size.y * 2.0;
+    let ndc_x = pixel_pos.x / ui.viewport_size.x * 2.0 - 1.0;
+    let ndc_y = 1.0 - pixel_pos.y / ui.viewport_size.y * 2.0;
 
     var out: VertexOutput;
     out.pos = vec4f(ndc_x, ndc_y, 0.0, 1.0);
@@ -201,7 +196,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let aa_outline_inner = max(fwidth(d_outline_inner), 0.5);
 
     // --- Animated diagonal stripe pattern (the custom effect) ---
-    let stripe_mix = stripe(input.screen_pos, scene.time, 12.0, 6.0);
+    let stripe_mix = stripe(input.screen_pos, ui.time, 12.0, 6.0);
     let stripe_tint = mix(vec4f(1.0), vec4f(0.7, 0.8, 1.0, 1.0), 1.0 - stripe_mix);
     let striped_bg = bg_color * stripe_tint;
 
