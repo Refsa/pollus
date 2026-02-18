@@ -19,6 +19,7 @@ public partial class UIRectMaterial : IMaterial
             VertexFormat.Float32x4, // BorderWidths
             VertexFormat.Float32x4, // Extra (x=ShapeType, y=OutlineWidth, z=OutlineOffset, w=reserved)
             VertexFormat.Float32x4, // OutlineColor
+            VertexFormat.Float32x4, // UVRect (minU, minV, sizeU, sizeV)
         ]),
     ];
 
@@ -61,8 +62,10 @@ public partial class UIRectMaterial : IMaterial
 
     public IBinding[][] Bindings =>
     [
-        [new UniformBinding<UIViewportUniform>()]
+        [new UniformBinding<UIViewportUniform>(), Texture, Sampler]
     ];
 
     public required Handle<ShaderAsset> ShaderSource { get; set; }
+    public required TextureBinding Texture { get; set; }
+    public required SamplerBinding Sampler { get; set; }
 }

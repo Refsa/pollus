@@ -18,22 +18,9 @@ public class UITextPlugin : IPlugin
 
     public void Apply(World world)
     {
-        world.AddPlugin(new MaterialPlugin<UIFontMaterial>());
-
-        {
-            var batches = new UIFontBatches()
-            {
-                RendererKey = RendererKey.From<UIFontBatches>(),
-            };
-            var registry = world.Resources.Get<RenderQueueRegistry>();
-            registry.Register(batches.RendererKey, batches);
-            world.Resources.Add(batches);
-        }
-
-        world.Resources.Add(new UITextResources());
+        world.Resources.Add(new UIFontResources());
 
         world.Schedule.AddSystemSet<UITextSystemSet>();
-        world.Schedule.AddSystemSet<ExtractUITextSystem>();
     }
 }
 
@@ -53,11 +40,11 @@ public partial class UITextSystemSet
         RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
     };
 
-    [System(nameof(PropagateUIFontMaterial))]
-    public static readonly SystemBuilderDescriptor PropagateUIFontMaterialDescriptor = new()
+    [System(nameof(PropagateUIFontAtlas))]
+    public static readonly SystemBuilderDescriptor PropagateUIFontAtlasDescriptor = new()
     {
         Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<UIFontMaterial>.PrepareSystem],
+        RunsAfter = [RenderingPlugin.BeginFrameSystem],
     };
 
     [System(nameof(RegisterMeasureFuncs))]
@@ -93,35 +80,29 @@ public partial class UITextSystemSet
             commands.AddComponent(row.Entity, TextMesh.Default);
     }
 
-    static void PrepareUIFont(AssetServer assetServer, UITextResources uiTextResources,
-        EventReader<AssetEvent<FontAsset>> fontEvents,
-        Assets<FontAsset> fonts, Assets<UIFontMaterial> materials, Assets<SamplerAsset> samplers)
+    static void PrepareUIFont(AssetServer assetServer, UIFontResources uiFontResources,
+        EventReader<AssetEvent<FontAsset>> fontEvents, Assets<FontAsset> fonts)
     {
+        var linearSampler = assetServer.Load<SamplerAsset>("internal://samplers/linear");
         foreach (scoped ref readonly var fontEvent in fontEvents.Read())
         {
             if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
             var font = fonts.Get(fontEvent.Handle);
             if (font is null) continue;
-
-            var mat = materials.Add(new UIFontMaterial()
-            {
-                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_font.wgsl"),
-                Sampler = assetServer.Load<SamplerAsset>("internal://samplers/linear"),
-                Texture = font.Atlas,
-            });
-            uiTextResources.SetMaterial(fontEvent.Handle, mat);
+            uiFontResources.SetFontData(fontEvent.Handle, font.Atlas, linearSampler);
         }
     }
 
-    static void PropagateUIFontMaterial(UITextResources uiTextResources, Query<UITextFont> query)
+    static void PropagateUIFontAtlas(UIFontResources uiFontResources, Query<UITextFont> query)
     {
-        query.ForEach(uiTextResources, static (in res, ref textFont) =>
+        query.ForEach(uiFontResources, static (in res, ref textFont) =>
         {
             if (textFont.Font.IsNull()) return;
-            var mat = res.GetMaterial(textFont.Font);
-            if (mat != Handle<UIFontMaterial>.Null)
+            var data = res.GetFontData(textFont.Font);
+            if (data is { } fontData)
             {
-                textFont.Material = mat;
+                textFont.Atlas = fontData.Atlas;
+                textFont.Sampler = fontData.Sampler;
             }
         });
     }

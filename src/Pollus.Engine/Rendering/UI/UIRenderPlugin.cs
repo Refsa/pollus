@@ -1,7 +1,9 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Assets;
 using Pollus.ECS;
 using Pollus.Graphics;
+using Pollus.Graphics.Rendering;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.UI;
@@ -28,7 +30,33 @@ public class UIRenderPlugin : IPlugin
             world.Resources.Add(batches);
         }
 
-        world.Resources.Add(default(UIRenderResources));
+        var assetServer = world.Resources.Get<AssetServer>();
+
+        var whitePixel = assetServer.GetAssets<Texture2D>().Add(new Texture2D
+        {
+            Name = "ui_white_pixel",
+            Width = 1,
+            Height = 1,
+            Format = TextureFormat.Rgba8Unorm,
+            Data = [255, 255, 255, 255],
+        }, "internal://textures/ui_white");
+
+        var defaultSampler = assetServer.Load<SamplerAsset>("internal://samplers/nearest");
+        var linearSampler = assetServer.Load<SamplerAsset>("internal://samplers/linear");
+
+        var rectMaterial = assetServer.GetAssets<UIRectMaterial>().Add(new UIRectMaterial
+        {
+            ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_rect.wgsl"),
+            Texture = whitePixel,
+            Sampler = defaultSampler,
+        });
+
+        world.Resources.Add(new UIRenderResources
+        {
+            Material = rectMaterial,
+            DefaultSampler = defaultSampler,
+            LinearSampler = linearSampler,
+        });
 
         world.AddPlugin(new UniformPlugin<UIViewportUniform, Param<IWindow>>()
         {
