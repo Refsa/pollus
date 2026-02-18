@@ -10,4 +10,5 @@ public partial struct UIUniform
     public float Time;
     public float DeltaTime;
     public Vec2f MousePosition;
+    public float Scale;
 }

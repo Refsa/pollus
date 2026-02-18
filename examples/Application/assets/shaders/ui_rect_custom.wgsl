@@ -29,6 +29,7 @@ struct UIUniform {
     time: f32,
     delta_time: f32,
     mouse_position: vec2f,
+    scale: f32,
 };
 
 @group(0) @binding(0) var<uniform> ui: UIUniform;
@@ -144,53 +145,8 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let expand = outline_width + outline_offset;
     let p = input.local_pos - vec2f(expand) - half_size;
 
-    // --- Compute ALL SDF values and fwidth in uniform control flow ---
-    
-    let circle_r = min(half_size.x, half_size.y);
-    let d_circle = sd_circle(p, circle_r);
-    let aa_circle = max(fwidth(d_circle), 0.5);
-    let d_circle_outline_outer = sd_circle(p, circle_r + outline_offset + outline_width);
-    let aa_circle_outline_outer = max(fwidth(d_circle_outline_outer), 0.5);
-    let d_circle_outline_inner = sd_circle(p, circle_r + outline_offset);
-    let aa_circle_outline_inner = max(fwidth(d_circle_outline_inner), 0.5);
-
-    let check_s = min(half_size.x, half_size.y);
-    let d_check = sd_checkmark(p, check_s);
-    let check_thickness = check_s * 0.15;
-    let aa_check = max(fwidth(d_check), 0.5);
-
-    let arrow_s = min(half_size.x, half_size.y);
-    let d_arrow = sd_down_arrow(p, arrow_s);
-    let arrow_thickness = arrow_s * 0.12;
-    let aa_arrow = max(fwidth(d_arrow), 0.5);
-
-    let max_radius = min(half_size.x, half_size.y);
-    let radii = min(input.border_radius, vec4f(max_radius));
-    let d_outer = sd_rounded_box(p, half_size, radii);
-    let aa_outer = max(fwidth(d_outer), 0.5);
-
-    let border = input.border_widths;
-    let inner_min = vec2f(border.w, border.x);
-    let inner_max = vec2f(border.y, border.z);
-    let inner_size = size - inner_min - inner_max;
-    let inner_half = max(inner_size * 0.5, vec2f(0.0));
-    let inner_center = (inner_min + (size - inner_max)) * 0.5;
-    let inner_p = input.local_pos - vec2f(expand) - inner_center;
-    let inner_radii = max(radii - vec4f(
-        max(border.w, border.x),
-        max(border.y, border.x),
-        max(border.y, border.z),
-        max(border.w, border.z),
-    ), vec4f(0.0));
-    let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
-    let aa_inner = max(fwidth(d_inner), 0.5);
-
-    let outline_outer_radii = radii + vec4f(outline_offset + outline_width);
-    let d_outline_outer = sd_rounded_box(p, half_size + vec2f(outline_offset + outline_width), outline_outer_radii);
-    let aa_outline_outer = max(fwidth(d_outline_outer), 0.5);
-    let outline_inner_radii = radii + vec4f(outline_offset);
-    let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
-    let aa_outline_inner = max(fwidth(d_outline_inner), 0.5);
+    // AA width adjusted for display scale (at 1x scale this is 1.0)
+    let AA = 1.0 / ui.scale;
 
     // --- noise texture from custom material ---
 
@@ -211,8 +167,6 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let color = custom_palette(liquid + hue_shift + ui.time * 0.02) * 0.6;
     let striped_bg = vec4f(color, bg_color.a);
 
-    // --- Now safe to branch on non-uniform values (no derivative calls below) ---
-
     // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
     if (input.extra.w > 0.5) {
         let glyph_alpha = tex_color.r * input.bg_color.a;
@@ -223,10 +177,17 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     }
 
     if (shape_type == 1u) {
-        let element_a = (1.0 - smoothstep(-aa_circle, aa_circle, d_circle)) * striped_bg.a;
-        let co_outer = 1.0 - smoothstep(-aa_circle_outline_outer, aa_circle_outline_outer, d_circle_outline_outer);
-        let co_inner = 1.0 - smoothstep(-aa_circle_outline_inner, aa_circle_outline_inner, d_circle_outline_inner);
+        // Circle
+        let circle_r = min(half_size.x, half_size.y);
+        let d_circle = sd_circle(p, circle_r);
+        let element_a = (1.0 - smoothstep(-AA, AA, d_circle)) * striped_bg.a;
+
+        let d_circle_outline_outer = sd_circle(p, circle_r + outline_offset + outline_width);
+        let d_circle_outline_inner = sd_circle(p, circle_r + outline_offset);
+        let co_outer = 1.0 - smoothstep(-AA, AA, d_circle_outline_outer);
+        let co_inner = 1.0 - smoothstep(-AA, AA, d_circle_outline_inner);
         let co_band = co_outer * (1.0 - co_inner) * input.outline_color.a;
+
         let final_a = element_a + co_band * (1.0 - element_a);
         if (final_a < 0.001) { discard; }
         let final_rgb = select(
@@ -240,7 +201,11 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     }
 
     if (shape_type == 2u) {
-        let alpha = 1.0 - smoothstep(check_thickness - aa_check, check_thickness + aa_check, d_check);
+        // Checkmark
+        let check_s = min(half_size.x, half_size.y);
+        let d_check = sd_checkmark(p, check_s);
+        let check_thickness = check_s * 0.15;
+        let alpha = 1.0 - smoothstep(check_thickness - AA, check_thickness + AA, d_check);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(striped_bg.rgb, striped_bg.a * alpha);
@@ -248,7 +213,11 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     }
 
     if (shape_type == 3u) {
-        let alpha = 1.0 - smoothstep(arrow_thickness - aa_arrow, arrow_thickness + aa_arrow, d_arrow);
+        // Down arrow
+        let arrow_s = min(half_size.x, half_size.y);
+        let d_arrow = sd_down_arrow(p, arrow_s);
+        let arrow_thickness = arrow_s * 0.12;
+        let alpha = 1.0 - smoothstep(arrow_thickness - AA, arrow_thickness + AA, d_arrow);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(striped_bg.rgb, striped_bg.a * alpha);
@@ -256,17 +225,42 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     }
 
     // Default: RoundedRect
-    let outer_alpha = 1.0 - smoothstep(-aa_outer, aa_outer, d_outer);
-    let inner_alpha = 1.0 - smoothstep(-aa_inner, aa_inner, d_inner);
+    let max_radius = min(half_size.x, half_size.y);
+    let radii = min(input.border_radius, vec4f(max_radius));
+    let d_outer = sd_rounded_box(p, half_size, radii);
+    let outer_alpha = 1.0 - smoothstep(-AA, AA, d_outer);
+
+    let border = input.border_widths;
+    let inner_min = vec2f(border.w, border.x);
+    let inner_max = vec2f(border.y, border.z);
+    let inner_size = size - inner_min - inner_max;
+    let inner_half = max(inner_size * 0.5, vec2f(0.0));
+    let inner_center = (inner_min + (size - inner_max)) * 0.5;
+    let inner_p = input.local_pos - vec2f(expand) - inner_center;
+    let inner_radii = max(radii - vec4f(
+        max(border.w, border.x),
+        max(border.y, border.x),
+        max(border.y, border.z),
+        max(border.w, border.z),
+    ), vec4f(0.0));
+    let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
+    let inner_alpha = 1.0 - smoothstep(-AA, AA, d_inner);
+
     let has_border = step(0.001, border.x + border.y + border.z + border.w);
     let blended = mix(input.border_color, striped_bg, inner_alpha);
     let pixel_color = mix(striped_bg, blended, has_border);
     let element_alpha = pixel_color.a * outer_alpha;
 
-    let outline_outer_alpha = 1.0 - smoothstep(-aa_outline_outer, aa_outline_outer, d_outline_outer);
-    let outline_inner_alpha = 1.0 - smoothstep(-aa_outline_inner, aa_outline_inner, d_outline_inner);
+    // Outline band
+    let outline_outer_radii = radii + vec4f(outline_offset + outline_width);
+    let d_outline_outer = sd_rounded_box(p, half_size + vec2f(outline_offset + outline_width), outline_outer_radii);
+    let outline_inner_radii = radii + vec4f(outline_offset);
+    let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
+    let outline_outer_alpha = 1.0 - smoothstep(-AA, AA, d_outline_outer);
+    let outline_inner_alpha = 1.0 - smoothstep(-AA, AA, d_outline_inner);
     let outline_band = outline_outer_alpha * (1.0 - outline_inner_alpha);
     let outline_alpha = outline_band * input.outline_color.a;
+
     let final_alpha = element_alpha + outline_alpha * (1.0 - element_alpha);
 
     if (final_alpha < 0.001) {
