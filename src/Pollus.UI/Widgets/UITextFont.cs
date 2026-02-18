@@ -3,10 +3,11 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Utils;
 
-public partial struct UITextFont : IComponent, IDefault<UITextFont>
+public partial struct UITextFont() : IComponent, IDefault<UITextFont>
 {
-    public static UITextFont Default { get; } = new() { Font = Handle.Null, Material = Handle.Null };
+    public static UITextFont Default { get; } = new() { Font = Handle.Null };
 
     public required Handle Font;
-    public Handle Material;
+    public Handle Atlas = Handle.Null;
+    public Handle Sampler = Handle.Null;
 }

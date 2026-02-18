@@ -8,9 +8,11 @@ using Pollus.Engine.Camera;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.UI;
 using Pollus.Graphics.Windowing;
+using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using Pollus.Graphics.Rendering;
 
 public class UIExample : IExample
 {
@@ -27,16 +29,10 @@ public class UIExample : IExample
             new PerformanceTrackerPlugin(),
         ])
         .AddSystems(CoreStage.PostInit, FnSystem.Create("UIRectSetup",
-            static (Commands commands, Resources resources, AssetServer assetServer, Assets<UIRectMaterial> materials, IWindow window) =>
+            static (Commands commands, AssetServer assetServer, IWindow window) =>
             {
                 // Camera is needed by RenderingPlugin's SceneUniform
                 commands.Spawn(Camera2D.Bundle);
-
-                var material = materials.Add(new UIRectMaterial
-                {
-                    ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/ui_rect.wgsl"),
-                });
-                resources.Add(new UIRenderResources { Material = material });
 
                 var fontHandle = assetServer.LoadAsync<FontAsset>("fonts/SpaceMono-Regular.ttf");
 
@@ -323,6 +319,45 @@ public class UIExample : IExample
                                     .Size(48, 48)
                                     .Background(new Color(0.9f, 0.7f, 0.2f, 1f))
                                     .Shape(UIShapeType.DownArrow)
+                                    .Spawn()
+                            )
+                            .Spawn()
+                    )
+                    .Spawn();
+
+                // --- UI Images demo ---
+                var testTexture = assetServer.LoadAsync<Texture2D>("textures/test.png");
+
+                _ = UI.Panel(commands)
+                    .FlexColumn().Gap(8)
+                    .ChildOf(mainPanel)
+                    .Children(
+                        UI.Text(commands, "Images", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(16).AlignItems(AlignItems.Center).FlexWrap()
+                            .Children(
+                                // Plain image
+                                UI.Image(commands, testTexture)
+                                    .Size(96, 96)
+                                    .Spawn(),
+                                // Image with border radius
+                                UI.Image(commands, testTexture)
+                                    .Size(96, 96)
+                                    .BorderRadius(16)
+                                    .Spawn(),
+                                // Image with color tint
+                                UI.Image(commands, testTexture)
+                                    .Size(96, 96)
+                                    .Background(new Color(0.4f, 0.7f, 1f, 1f))
+                                    .BorderRadius(8)
+                                    .Spawn(),
+                                // Image with UV slice (top-left quadrant)
+                                UI.Image(commands, testTexture)
+                                    .Size(96, 96)
+                                    .Slice(new Rect(Vec2f.Zero, new Vec2f(0.5f, 0.5f)))
+                                    .Border(2)
+                                    .BorderColor(new Color(0.5f, 0.8f, 1f, 1f))
+                                    .BorderRadius(8)
                                     .Spawn()
                             )
                             .Spawn()

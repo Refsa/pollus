@@ -1,6 +1,7 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
+using Pollus.Mathematics;
 using Pollus.Utils;
 
 public static class UI
@@ -40,6 +41,8 @@ public static class UI
     public static UIDropdownBuilder Dropdown(Commands commands) => new(commands);
 
     public static UIDropdownBuilder Dropdown(Commands commands, Handle font) => new UIDropdownBuilder(commands).Font(font);
+
+    public static UIImageBuilder Image(Commands commands, Handle material) => new(commands, material);
 
     public static UIRootBuilder Root(Commands commands, float width, float height) => new(commands, width, height);
 }

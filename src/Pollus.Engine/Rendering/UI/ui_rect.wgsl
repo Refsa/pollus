@@ -7,8 +7,9 @@ struct VertexInput {
     @location(2) i_border_color: vec4f,   // border RGBA
     @location(3) i_border_radius: vec4f,  // topLeft, topRight, bottomRight, bottomLeft
     @location(4) i_border_widths: vec4f,  // top, right, bottom, left
-    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=reserved
+    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=TextMode (>0.5=glyph)
     @location(6) i_outline_color: vec4f,  // outline RGBA
+    @location(7) i_uv_rect: vec4f,       // minU, minV, sizeU, sizeV
 };
 
 struct VertexOutput {
@@ -21,6 +22,7 @@ struct VertexOutput {
     @location(5) @interpolate(flat) border_widths: vec4f,
     @location(6) @interpolate(flat) extra: vec4f,
     @location(7) @interpolate(flat) outline_color: vec4f,
+    @location(8) uv: vec2f,
 };
 
 struct UIViewportUniform {
@@ -28,6 +30,8 @@ struct UIViewportUniform {
 };
 
 @group(0) @binding(0) var<uniform> viewport: UIViewportUniform;
+@group(0) @binding(1) var tex: texture_2d<f32>;
+@group(0) @binding(2) var samp: sampler;
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
@@ -60,6 +64,7 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     out.border_widths = input.i_border_widths;
     out.extra = input.i_extra;
     out.outline_color = input.i_outline_color;
+    out.uv = input.i_uv_rect.xy + vec2f(u, v) * input.i_uv_rect.zw;
     return out;
 }
 
@@ -131,6 +136,19 @@ struct FragmentOutput {
 
 @fragment
 fn fs_main(input: VertexOutput) -> FragmentOutput {
+    let tex_color = textureSample(tex, samp, input.uv);
+
+    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
+    if (input.extra.w > 0.5) {
+        let glyph_alpha = tex_color.r * input.bg_color.a;
+        if (glyph_alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
+        return out;
+    }
+
+    let bg_color = tex_color * input.bg_color;
+
     let size = input.size;
     let half_size = size * 0.5;
     let shape_type = u32(input.extra.x);
@@ -201,7 +219,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
     if (shape_type == 1u) {
         // Circle
-        let element_a = (1.0 - smoothstep(-aa_circle, aa_circle, d_circle)) * input.bg_color.a;
+        let element_a = (1.0 - smoothstep(-aa_circle, aa_circle, d_circle)) * bg_color.a;
 
         // Circle outline band
         let co_outer = 1.0 - smoothstep(-aa_circle_outline_outer, aa_circle_outline_outer, d_circle_outline_outer);
@@ -213,7 +231,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
         let final_rgb = select(
             input.outline_color.rgb,
-            mix(input.outline_color.rgb, input.bg_color.rgb, element_a / final_a),
+            mix(input.outline_color.rgb, bg_color.rgb, element_a / final_a),
             final_a > 0.001
         );
 
@@ -227,7 +245,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         let alpha = 1.0 - smoothstep(check_thickness - aa_check, check_thickness + aa_check, d_check);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        out.color = vec4f(bg_color.rgb, bg_color.a * alpha);
         return out;
     }
 
@@ -236,7 +254,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         let alpha = 1.0 - smoothstep(arrow_thickness - aa_arrow, arrow_thickness + aa_arrow, d_arrow);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, input.bg_color.a * alpha);
+        out.color = vec4f(bg_color.rgb, bg_color.a * alpha);
         return out;
     }
 
@@ -246,8 +264,8 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let inner_alpha = 1.0 - smoothstep(-aa_inner, aa_inner, d_inner);
 
     let has_border = step(0.001, border.x + border.y + border.z + border.w);
-    let blended = mix(input.border_color, input.bg_color, inner_alpha);
-    let pixel_color = mix(input.bg_color, blended, has_border);
+    let blended = mix(input.border_color, bg_color, inner_alpha);
+    let pixel_color = mix(bg_color, blended, has_border);
     let element_alpha = pixel_color.a * outer_alpha;
 
     // Outline band: between outline_inner and outline_outer SDFs
