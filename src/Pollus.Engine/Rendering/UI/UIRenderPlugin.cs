@@ -69,6 +69,7 @@ public class UIRenderPlugin : IPlugin
                 uniform.DeltaTime = time.DeltaTimeF;
                 var mousePos = currentMouse.Value?.Position ?? default;
                 uniform.MousePosition = new Vec2f(mousePos.X, mousePos.Y);
+                uniform.Scale = 1.0f;
             }
         });
 
