@@ -20,6 +20,7 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
     protected UIShapeType? shape;
     protected Outline? outline;
     protected bool noFocusVisual;
+    protected Handle? material;
 
     public UINodeBuilder(Commands commands)
     {
@@ -318,6 +319,12 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
         return (TSelf)this;
     }
 
+    public TSelf Material(Handle handle)
+    {
+        material = handle;
+        return (TSelf)this;
+    }
+
     // Hierarchy
     public TSelf ChildOf(Entity parent)
     {
@@ -394,6 +401,9 @@ public class UINodeBuilder<TSelf> where TSelf : UINodeBuilder<TSelf>
 
         if (outline.HasValue)
             commands.AddComponent(entity, outline.Value);
+
+        if (material.HasValue)
+            commands.AddComponent(entity, new UIMaterial { Material = material.Value });
     }
 
     protected void SetupHierarchy(Entity entity)

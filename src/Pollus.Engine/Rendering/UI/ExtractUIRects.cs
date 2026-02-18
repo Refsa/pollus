@@ -147,10 +147,18 @@ public partial class ExtractUIRectsSystem
         var nodeIndex = sortIndex++;
         var entRef = query.GetEntity(entity);
 
+        var effectiveMaterial = material;
+        if (entRef.Has<UIMaterial>())
+        {
+            var overrideMat = entRef.Get<UIMaterial>().Material;
+            if (!overrideMat.IsNull())
+                effectiveMaterial = overrideMat;
+        }
+
         if (size is { X: > 0, Y: > 0 })
         {
-            EmitRectBackground(batches, material, nodeIndex, entRef, absPos, size, computed, scissor);
-            EmitTextGlyphs(batches, material, meshes, nodeIndex, entRef, absPos, computed, scissor);
+            EmitRectBackground(batches, effectiveMaterial, nodeIndex, entRef, absPos, size, computed, scissor);
+            EmitTextGlyphs(batches, effectiveMaterial, meshes, nodeIndex, entRef, absPos, computed, scissor);
         }
 
         if (size is { X: <= 0, Y: <= 0 }) return;
