@@ -18,6 +18,7 @@ public partial class TextureBinding : IBinding
     public BindingType Type => BindingType.Texture;
 
     public static implicit operator TextureBinding(Handle<Texture2D> image) => new() { Image = image };
+    public static TextureBinding From(Handle<Texture2D> image) => new() { Image = image };
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.TextureEntry(binding, Visibility, TextureSampleType.Float, TextureViewDimension.Dimension2D);
 

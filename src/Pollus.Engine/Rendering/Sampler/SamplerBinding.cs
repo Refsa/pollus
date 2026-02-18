@@ -18,6 +18,7 @@ public partial class SamplerBinding : IBinding
     public BindingType Type => BindingType.Sampler;
 
     public static implicit operator SamplerBinding(Handle<SamplerAsset> sampler) => new() { Sampler = sampler };
+    public static SamplerBinding From(Handle<SamplerAsset> sampler) => new() { Sampler = sampler };
 
     public BindGroupLayoutEntry Layout(uint binding) => BindGroupLayoutEntry.SamplerEntry(binding, Visibility, SamplerBindingType.Filtering);
 

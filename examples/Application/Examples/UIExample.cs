@@ -325,7 +325,7 @@ public class UIExample : IExample
                     )
                     .Spawn();
 
-                // --- Custom Material demo ---
+                // --- custom material ---
                 {
                     var customMaterial = assetServer.GetAssets<UIRectMaterial>().Add(new UIRectMaterial
                     {
@@ -339,31 +339,35 @@ public class UIExample : IExample
                             Data = [255, 255, 255, 255],
                         }),
                         Sampler = assetServer.Load<SamplerAsset>("internal://samplers/nearest"),
+                        ExtraBindGroups = [
+                            [
+                                TextureBinding.From(assetServer.LoadAsync<Texture2D>("textures/perlin.png")),
+                                SamplerBinding.From(assetServer.Load<SamplerAsset>("internal://samplers/linear")),
+                            ],
+                        ],
                     });
 
-                    var defaultPanel = UI.Panel(commands)
-                        .Size(160, 100).FlexColumn().Padding(12)
-                        .Background(new Color(0.3f, 0.6f, 0.9f, 1f))
-                        .BorderRadius(12)
-                        .Children(
-                            UI.Text(commands, "Default", fontHandle).FontSize(14f).Spawn()
-                        )
-                        .Spawn();
-
-                    var customPanel = UI.Panel(commands)
-                        .Size(160, 100).FlexColumn().Padding(12)
-                        .Background(new Color(0.3f, 0.6f, 0.9f, 1f))
+                    var custom1 = UI.Panel(commands)
+                        .Size(200, 120).FlexColumn().Padding(12)
+                        .Background(new Color(0.2f, 0.4f, 0.7f, 1f))
                         .BorderRadius(12)
                         .Material(customMaterial)
                         .Children(
-                            UI.Text(commands, "Custom", fontHandle).FontSize(14f).Spawn()
+                            UI.Text(commands, "Liquid", fontHandle).FontSize(14f).Spawn()
                         )
                         .Spawn();
 
-                    var customCircle = UI.Panel(commands)
-                        .Size(80, 80)
-                        .Background(new Color(0.9f, 0.4f, 0.3f, 1f))
+                    var custom2 = UI.Panel(commands)
+                        .Size(100, 100)
+                        .Background(new Color(0.7f, 0.3f, 0.5f, 1f))
                         .Shape(UIShapeType.Circle)
+                        .Material(customMaterial)
+                        .Spawn();
+
+                    var custom3 = UI.Panel(commands)
+                        .Size(160, 70)
+                        .Background(new Color(0.3f, 0.7f, 0.4f, 1f))
+                        .BorderRadius(35)
                         .Material(customMaterial)
                         .Spawn();
 
@@ -371,10 +375,11 @@ public class UIExample : IExample
                         .FlexColumn().Gap(8)
                         .ChildOf(mainPanel)
                         .Children(
-                            UI.Text(commands, "Custom Material", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                            UI.Text(commands, "Custom Material", fontHandle)
+                                .FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
                             UI.Panel(commands)
                                 .FlexRow().Gap(16).AlignItems(AlignItems.Center)
-                                .Children(defaultPanel, customPanel, customCircle)
+                                .Children(custom1, custom2, custom3)
                                 .Spawn()
                         )
                         .Spawn();
