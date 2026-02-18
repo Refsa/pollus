@@ -141,17 +141,6 @@ struct FragmentOutput {
 fn fs_main(input: VertexOutput) -> FragmentOutput {
     let tex_color = textureSample(tex, samp, input.uv);
 
-    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
-    if (input.extra.w > 0.5) {
-        let glyph_alpha = tex_color.r * input.bg_color.a;
-        if (glyph_alpha < 0.001) { discard; }
-        var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
-        return out;
-    }
-
-    let bg_color = tex_color * input.bg_color;
-
     let size = input.size;
     let half_size = size * 0.5;
     let shape_type = u32(input.extra.x);
@@ -163,7 +152,6 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let p = input.local_pos - vec2f(expand) - half_size;
 
     // --- Compute ALL SDF values and fwidth in uniform control flow ---
-    // (WebGPU forbids fwidth inside non-uniform branches)
 
     // Circle SDF
     let circle_r = min(half_size.x, half_size.y);
@@ -218,7 +206,16 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
     let aa_outline_inner = max(fwidth(d_outline_inner), 0.5);
 
-    // --- Now branch on shape_type (no derivative calls below) ---
+    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
+    if (input.extra.w > 0.5) {
+        let glyph_alpha = tex_color.r * input.bg_color.a;
+        if (glyph_alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
+        return out;
+    }
+
+    let bg_color = tex_color * input.bg_color;
 
     if (shape_type == 1u) {
         // Circle

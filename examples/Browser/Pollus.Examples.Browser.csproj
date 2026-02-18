@@ -58,6 +58,21 @@
         <NativeFileReference Include="bin\Release\$(TargetFramework)\browser-wasm\native\imgui\cimgui.a" />
     </ItemGroup>
 
+    <!-- Re-link native WASM when embedded assets change -->
+    <ItemGroup>
+        <_EmbedAsset Include="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/browser-wasm/assets/**/*" />
+    </ItemGroup>
+    <Target Name="InvalidateNativeCacheOnAssetChange"
+            BeforeTargets="_WasmBuildNative"
+            Inputs="@(_EmbedAsset)"
+            Outputs="$(IntermediateOutputPath)embed-assets.stamp"
+            Condition="'@(_EmbedAsset)' != ''">
+        <Message Importance="high" Text="Embedded assets changed — invalidating native WASM cache" />
+        <RemoveDir Directories="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/browser-wasm/native" />
+        <RemoveDir Directories="$(WasmCachePath)" Condition="Exists('$(WasmCachePath)')" />
+        <Touch Files="$(IntermediateOutputPath)embed-assets.stamp" AlwaysCreate="true" />
+    </Target>
+
     <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
         <ItemGroup>
             <_WasmPInvokeModules Include="__Internal_emscripten" />
