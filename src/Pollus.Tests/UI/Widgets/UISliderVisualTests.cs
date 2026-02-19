@@ -39,9 +39,6 @@ public class UISliderVisualTests
         )).Entity;
 
         commands.AddChild(root, slider);
-        // First update: layout runs, UISliderVisualSystem spawns overlay entities
-        world.Update();
-        // Second update: overlay entities are materialized and positioned
         world.Update();
         return slider;
     }
