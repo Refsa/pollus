@@ -135,7 +135,7 @@ public class UILayoutSystemTests
         using var world = CreateWorld();
         var commands = world.GetCommands();
 
-        // UINode without UILayoutRoot — root detected but skipped by ComputeLayout
+        // UINode without UILayoutRoot - root detected but skipped by ComputeLayout
         var root = commands.Spawn(Entity.With(new UINode())).Entity;
         var child = commands.Spawn(Entity.With(
             new UINode(),
@@ -267,7 +267,7 @@ public class UILayoutSystemTests
         Assert.Equal(16f, childC.Position.X);
         Assert.Equal(16f, childC.Position.Y);
 
-        // Child fills exactly the inner area — no overflow
+        // Child fills exactly the inner area - no overflow
         float childRightEdge = childC.Position.X + childC.Size.X;
         float childBottomEdge = childC.Position.Y + childC.Size.Y;
         Assert.Equal(rootC.Size.X - 16f, childRightEdge);
@@ -286,7 +286,7 @@ public class UILayoutSystemTests
     {
         // For nested containers, each child's Position includes its
         // direct parent's padding.  Absolute screen position is computed
-        // by summing positions up the tree — no extra contentOffset.
+        // by summing positions up the tree - no extra contentOffset.
         using var world = CreateWorld();
         var commands = world.GetCommands();
 

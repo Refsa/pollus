@@ -81,7 +81,7 @@ public class UICaretVisualTests
         using var world = CreateWorld();
         var (inputEntity, _) = SpawnTextInput(world);
 
-        // Not focused — caret should have zero size
+        // Not focused - caret should have zero size
         var input = world.Store.GetComponent<UITextInput>(inputEntity);
         var caretComputed = world.Store.GetComponent<ComputedNode>(input.CaretEntity);
 

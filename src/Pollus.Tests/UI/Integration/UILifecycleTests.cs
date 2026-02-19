@@ -176,7 +176,7 @@ public class UILifecycleTests
         using var world = CreateWorld();
         world.Update();
         world.Update();
-        // No entities — should not crash
+        // No entities - should not crash
     }
 
     [Fact]

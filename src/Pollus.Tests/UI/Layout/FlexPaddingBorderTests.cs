@@ -94,8 +94,6 @@ public class FlexPaddingBorderTests
     [Fact]
     public void ContentBox_ExplicitDimensionsPreserved()
     {
-        // Regression: ContentBoxAdjustment returned (null,null) for ContentBox,
-        // which caused MaybeAdd to erase explicit dimensions.
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle);
         var child = tree.AddNode(DefaultStyle with

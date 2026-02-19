@@ -48,7 +48,7 @@ public class UIExample : IExample
                     .Background(new Color(0.12f, 0.12f, 0.15f, 1f))
                     .Spawn();
 
-                // Header bar — uses .Style() lambda for consolidated layout
+                // Header bar - uses .Style() lambda for consolidated layout
                 var header = UI.Panel(commands)
                     .Style(s => s with
                     {
@@ -68,7 +68,7 @@ public class UIExample : IExample
                     .FlexGrow(1f).FlexRow().Gap(16)
                     .Spawn();
 
-                // Sidebar with interactive buttons — uses .Style() lambda
+                // Sidebar with interactive buttons - uses .Style() lambda
                 var sidebar = UI.Panel(commands)
                     .Style(s => s with
                     {

@@ -175,7 +175,7 @@ public partial class UIScrollSystem
             else if (!scroll.VerticalThumbEntity.IsNull
                      && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
-                // Not needed anymore — hide it
+                // Not needed anymore - hide it
                 query.GetTracked<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
             }
 

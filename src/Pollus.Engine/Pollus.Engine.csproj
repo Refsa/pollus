@@ -42,7 +42,7 @@
     </Content>
   </ItemGroup>
 
-  <!-- WGSL shader validation via naga-cli (optional — skipped if naga is not installed) -->
+  <!-- WGSL shader validation via naga-cli (optional - skipped if naga is not installed) -->
   <Target Name="ValidateWgslShaders" BeforeTargets="Build">
     <Exec Command="naga --version 2>/dev/null" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low">
       <Output TaskParameter="ExitCode" PropertyName="_NagaExitCode" />
@@ -51,7 +51,7 @@
       <_WgslShader Include="$(MSBuildProjectDirectory)/Rendering/**/*.wgsl" Exclude="**/bin/**;**/obj/**" />
     </ItemGroup>
     <Message Condition="'$(_NagaExitCode)' != '0'" Importance="low"
-             Text="naga-cli not found — skipping WGSL validation. Install with: cargo install naga-cli" />
+             Text="naga-cli not found - skipping WGSL validation. Install with: cargo install naga-cli" />
     <Exec Condition="'$(_NagaExitCode)' == '0' and '@(_WgslShader)' != ''"
           Command="naga %(_WgslShader.Identity)" />
   </Target>
