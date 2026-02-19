@@ -1,11 +1,11 @@
+namespace Pollus.Tests.UI.Widgets;
+
 using Pollus.ECS;
 using Pollus.Input;
 using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using LayoutStyle = Pollus.UI.Layout.Style;
-
-namespace Pollus.Tests.UI.Widgets;
 
 public class UITextInputTests
 {
@@ -49,14 +49,15 @@ public class UITextInputTests
         var textBuffers = world.Resources.Get<UITextBuffers>();
 
         // Write text input event targeting the entity
-        var textWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "a" });
+        var textInputWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "a" });
 
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         Assert.Equal("a", textBuffers.Get(entity));
         var input = world.Store.GetComponent<UITextInput>(entity);
@@ -81,8 +82,9 @@ public class UITextInputTests
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         Assert.Equal("hell", textBuffers.Get(entity));
         input = world.Store.GetComponent<UITextInput>(entity);
@@ -106,8 +108,9 @@ public class UITextInputTests
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         Assert.Equal("ello", textBuffers.Get(entity));
         input = world.Store.GetComponent<UITextInput>(entity);
@@ -132,14 +135,15 @@ public class UITextInputTests
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = entity, Key = (int)Key.ArrowRight });
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         input = world.Store.GetComponent<UITextInput>(entity);
         Assert.Equal(2, input.CursorPosition);
 
         // Arrow left
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = entity, Key = (int)Key.ArrowLeft });
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         input = world.Store.GetComponent<UITextInput>(entity);
         Assert.Equal(1, input.CursorPosition);
@@ -163,14 +167,15 @@ public class UITextInputTests
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = entity, Key = (int)Key.Home });
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         input = world.Store.GetComponent<UITextInput>(entity);
         Assert.Equal(0, input.CursorPosition);
 
         // End
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = entity, Key = (int)Key.End });
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         input = world.Store.GetComponent<UITextInput>(entity);
         Assert.Equal(5, input.CursorPosition);
@@ -183,15 +188,16 @@ public class UITextInputTests
         var entity = SpawnTextInput(world, UIInputFilterType.Integer);
         var textBuffers = world.Resources.Get<UITextBuffers>();
 
-        var textWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "a" });
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "5" });
+        var textInputWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "a" });
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "5" });
 
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         Assert.Equal("5", textBuffers.Get(entity));
     }
@@ -203,18 +209,19 @@ public class UITextInputTests
         var entity = SpawnTextInput(world, UIInputFilterType.Decimal);
         var textBuffers = world.Resources.Get<UITextBuffers>();
 
-        var textWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "3" });
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "." });
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "1" });
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "." });
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "4" });
+        var textInputWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "3" });
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "." });
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "1" });
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "." });
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "4" });
 
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         Assert.Equal("3.14", textBuffers.Get(entity));
     }
@@ -226,15 +233,16 @@ public class UITextInputTests
         var entity = SpawnTextInput(world);
         var textBuffers = world.Resources.Get<UITextBuffers>();
 
-        var textWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
-        textWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "x" });
+        var textInputWriter = world.Events.GetWriter<UIInteractionEvents.UITextInputEvent>();
+        textInputWriter.Write(new UIInteractionEvents.UITextInputEvent { Entity = entity, Text = "x" });
 
         var query = new Query(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
         var valueReader = world.Events.GetReader<UITextInputEvents.UITextInputValueChanged>()!;
+        var textWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
 
-        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, world.Events);
+        UITextInputSystem.PerformTextInput(query, textBuffers, keyReader, textReader, textWriter);
 
         var events = valueReader.Read();
         Assert.Equal(1, events.Length);

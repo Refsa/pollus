@@ -19,10 +19,8 @@ public partial class UITextInputSystem
         UITextBuffers textBuffers,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
         EventReader<UIInteractionEvents.UITextInputEvent> textInputReader,
-        Events events)
+        EventWriter<UITextInputEvents.UITextInputValueChanged> valueChanged)
     {
-        var valueChangedWriter = events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
-
         // Handle text input (character insertion)
         foreach (var textEvent in textInputReader.Read())
         {
@@ -44,7 +42,6 @@ public partial class UITextInputSystem
             {
                 if (PassesFilter(ch, input.Filter, text, input.CursorPosition))
                 {
-                    // Single allocation via string.Create instead of ch.ToString() + string.Insert()
                     int pos = input.CursorPosition;
                     text = string.Create(text.Length + 1, (text, pos, ch),
                         static (span, state) =>
@@ -63,7 +60,7 @@ public partial class UITextInputSystem
                 textBuffers.Set(entity, text);
                 SyncTextEntity(query, ref input, text);
                 ResetCaret(ref input);
-                valueChangedWriter.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
+                valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
             }
         }
 
@@ -82,30 +79,48 @@ public partial class UITextInputSystem
                 case Key.Backspace:
                     if (input.CursorPosition > 0)
                     {
-                        text = text.Remove(input.CursorPosition - 1, 1);
-                        input.CursorPosition--;
+                        var toRemove = keyEvent.Modifier.HasFlag(ModifierKey.LeftControl) switch
+                        {
+                            true => GetPrevOffset(text, input.CursorPosition),
+                            false => 1
+                        };
+
+                        text = text.Remove(input.CursorPosition - toRemove, toRemove);
+                        input.CursorPosition -= toRemove;
                         textBuffers.Set(entity, text);
                         SyncTextEntity(query, ref input, text);
                         ResetCaret(ref input);
-                        valueChangedWriter.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
+                        valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
                     }
                     break;
 
                 case Key.Delete:
                     if (input.CursorPosition < text.Length)
                     {
-                        text = text.Remove(input.CursorPosition, 1);
+                        var toRemove = keyEvent.Modifier.HasFlag(ModifierKey.LeftControl) switch
+                        {
+                            true => GetNextOffset(text, input.CursorPosition),
+                            false => 1
+                        };
+
+                        text = text.Remove(input.CursorPosition, toRemove);
                         textBuffers.Set(entity, text);
                         SyncTextEntity(query, ref input, text);
                         ResetCaret(ref input);
-                        valueChangedWriter.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
+                        valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
                     }
                     break;
 
                 case Key.ArrowLeft:
                     if (input.CursorPosition > 0)
                     {
-                        input.CursorPosition--;
+                        var toJump = keyEvent.Modifier.HasFlag(ModifierKey.LeftControl) switch
+                        {
+                            true => GetPrevOffset(text, input.CursorPosition),
+                            false => 1
+                        };
+
+                        input.CursorPosition -= toJump;
                         ResetCaret(ref input);
                     }
                     break;
@@ -113,7 +128,13 @@ public partial class UITextInputSystem
                 case Key.ArrowRight:
                     if (input.CursorPosition < text.Length)
                     {
-                        input.CursorPosition++;
+                        var toJump = keyEvent.Modifier.HasFlag(ModifierKey.LeftControl) switch
+                        {
+                            true => GetNextOffset(text, input.CursorPosition),
+                            false => 1
+                        };
+
+                        input.CursorPosition += toJump;
                         ResetCaret(ref input);
                     }
                     break;
@@ -129,6 +150,24 @@ public partial class UITextInputSystem
                     break;
             }
         }
+    }
+
+    internal static int GetPrevOffset(string text, int cursorPos)
+    {
+        var slice = text.AsSpan(0, cursorPos);
+        var i = cursorPos - 1;
+        while (i > 0 && slice[i - 1] == ' ') i--;
+        while (i > 0 && slice[i - 1] != ' ') i--;
+        return cursorPos - i;
+    }
+
+    internal static int GetNextOffset(string text, int cursorPos)
+    {
+        var slice = text.AsSpan(cursorPos, text.Length - cursorPos);
+        var i = 0;
+        while (i < slice.Length && slice[i] == ' ') i++;
+        while (i < slice.Length && slice[i] != ' ') i++;
+        return i;
     }
 
     static void SyncTextEntity(Query query, ref UITextInput input, string text)

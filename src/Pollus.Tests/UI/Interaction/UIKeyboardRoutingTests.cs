@@ -46,6 +46,8 @@ public class UIKeyboardRoutingTests
         using var world = CreateWorld();
         var child = SpawnFocusableNode(world);
 
+        var keyboard = world.Resources.Get<CurrentDevice<Keyboard>>();
+
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
         UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
@@ -57,7 +59,7 @@ public class UIKeyboardRoutingTests
         var keyReader = world.Events.GetReader<ButtonEvent<Key>>()!;
         var textReader = world.Events.GetReader<TextInputEvent>()!;
 
-        UIKeyboardRoutingSystem.PerformRouting(keyReader, textReader, focusState, world.Events);
+        UIKeyboardRoutingSystem.PerformRouting(keyboard, keyReader, textReader, focusState, world.Events);
 
         var uiKeyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var events = uiKeyReader.Read();
@@ -72,6 +74,8 @@ public class UIKeyboardRoutingTests
         using var world = CreateWorld();
         var child = SpawnFocusableNode(world);
 
+        var keyboard = world.Resources.Get<CurrentDevice<Keyboard>>();
+
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
         UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
@@ -82,7 +86,7 @@ public class UIKeyboardRoutingTests
         var keyReader = world.Events.GetReader<ButtonEvent<Key>>()!;
         var textReader = world.Events.GetReader<TextInputEvent>()!;
 
-        UIKeyboardRoutingSystem.PerformRouting(keyReader, textReader, focusState, world.Events);
+        UIKeyboardRoutingSystem.PerformRouting(keyboard, keyReader, textReader, focusState, world.Events);
 
         var uiKeyReader = world.Events.GetReader<UIInteractionEvents.UIKeyUpEvent>()!;
         var events = uiKeyReader.Read();
@@ -97,6 +101,8 @@ public class UIKeyboardRoutingTests
         using var world = CreateWorld();
         SpawnFocusableNode(world);
 
+        var keyboard = world.Resources.Get<CurrentDevice<Keyboard>>();
+
         var focusState = world.Resources.Get<UIFocusState>();
 
         var keyWriter = world.Events.GetWriter<ButtonEvent<Key>>();
@@ -105,7 +111,7 @@ public class UIKeyboardRoutingTests
         var keyReader = world.Events.GetReader<ButtonEvent<Key>>()!;
         var textReader = world.Events.GetReader<TextInputEvent>()!;
 
-        UIKeyboardRoutingSystem.PerformRouting(keyReader, textReader, focusState, world.Events);
+        UIKeyboardRoutingSystem.PerformRouting(keyboard, keyReader, textReader, focusState, world.Events);
 
         var uiKeyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var events = uiKeyReader.Read();
@@ -118,17 +124,19 @@ public class UIKeyboardRoutingTests
         using var world = CreateWorld();
         var child = SpawnFocusableNode(world);
 
+        var keyboard = world.Resources.Get<CurrentDevice<Keyboard>>();
+
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
         UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
 
-        var textWriter = world.Events.GetWriter<TextInputEvent>();
-        textWriter.Write(new TextInputEvent { DeviceId = Guid.Empty, Text = "hello" });
+        var textInputWriter = world.Events.GetWriter<TextInputEvent>();
+        textInputWriter.Write(new TextInputEvent { DeviceId = Guid.Empty, Text = "hello" });
 
         var keyReader = world.Events.GetReader<ButtonEvent<Key>>()!;
         var textReader = world.Events.GetReader<TextInputEvent>()!;
 
-        UIKeyboardRoutingSystem.PerformRouting(keyReader, textReader, focusState, world.Events);
+        UIKeyboardRoutingSystem.PerformRouting(keyboard, keyReader, textReader, focusState, world.Events);
 
         var uiTextReader = world.Events.GetReader<UIInteractionEvents.UITextInputEvent>()!;
         var events = uiTextReader.Read();
@@ -143,6 +151,8 @@ public class UIKeyboardRoutingTests
         using var world = CreateWorld();
         var child = SpawnFocusableNode(world);
 
+        var keyboard = world.Resources.Get<CurrentDevice<Keyboard>>();
+
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
         UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
@@ -153,7 +163,7 @@ public class UIKeyboardRoutingTests
         var keyReader = world.Events.GetReader<ButtonEvent<Key>>()!;
         var textReader = world.Events.GetReader<TextInputEvent>()!;
 
-        UIKeyboardRoutingSystem.PerformRouting(keyReader, textReader, focusState, world.Events);
+        UIKeyboardRoutingSystem.PerformRouting(keyboard, keyReader, textReader, focusState, world.Events);
 
         var uiKeyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var events = uiKeyReader.Read();
