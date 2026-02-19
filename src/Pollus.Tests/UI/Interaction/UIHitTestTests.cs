@@ -386,7 +386,7 @@ public class UIHitTestTests
             }}
         )).Entity;
 
-        // UIText child — gets UINode+ComputedNode via Required chain
+        // UIText child - gets UINode+ComputedNode via Required chain
         var textChild = commands.Spawn(Entity.With(
             new UIText { Text = new NativeUtf8("Click me"), Size = 14f, Color = Color.WHITE },
             new TextMesh { Mesh = Handle<TextMeshAsset>.Null },
@@ -402,7 +402,7 @@ public class UIHitTestTests
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
 
-        // Should not throw — text child is walked during DFS
+        // Should not throw - text child is walked during DFS
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
 
         Assert.Equal(button, hitResult.HoveredEntity);

@@ -173,7 +173,7 @@ public class UIScrollVisualTests
     public void NoThumbSpawned_WhenContentFits()
     {
         using var world = CreateWorld();
-        // Content is 100px, container is 200px — no overflow
+        // Content is 100px, container is 200px - no overflow
         var container = SpawnScrollContainer(world, contentHeight: 100f);
 
         var scroll = world.Store.GetComponent<UIScrollOffset>(container);
@@ -447,7 +447,7 @@ public class UIScrollVisualTests
             }
         )).Entity;
 
-        // Child 300px wide — wider than container
+        // Child 300px wide - wider than container
         var child = commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle

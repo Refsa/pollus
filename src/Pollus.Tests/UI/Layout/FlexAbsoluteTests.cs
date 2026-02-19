@@ -236,7 +236,7 @@ public class FlexAbsoluteTests
     [Fact]
     public void Absolute_Column_JustifyCenter_CentersOnYAxis()
     {
-        // In column direction, main axis is Y — justify-content should affect Y
+        // In column direction, main axis is Y - justify-content should affect Y
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {

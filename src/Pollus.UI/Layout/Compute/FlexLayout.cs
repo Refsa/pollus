@@ -166,7 +166,7 @@ public static partial class FlexLayout
             ? AvailableSpace.MaxContent
             : input.AvailableSpace.Cross(dir).MaybeSet(containerCrossInnerSize);
 
-        // For scroll axes, children see unbounded space — clear the definite inner size
+        // For scroll axes, children see unbounded space - clear the definite inner size
         var childContainerMainInnerSize = scrollMain ? null : containerMainInnerSize;
         var childContainerCrossInnerSize = scrollCross ? null : containerCrossInnerSize;
 

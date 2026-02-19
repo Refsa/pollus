@@ -93,7 +93,7 @@ public class UIPointerCaptureTests
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
         UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
 
-        // Move to (70, 30) — simulate pointer move while captured
+        // Move to (70, 30) - simulate pointer move while captured
         hitResult.PreviousMousePosition = hitResult.MousePosition;
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(70, 30));
         UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: false);

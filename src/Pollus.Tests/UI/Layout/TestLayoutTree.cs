@@ -3,7 +3,7 @@ using LayoutStyle = Pollus.UI.Layout.Style;
 
 namespace Pollus.Tests.UI.Layout;
 
-/// A simple ILayoutTree for unit tests — stores styles and children in arrays.
+/// A simple ILayoutTree for unit tests - stores styles and children in arrays.
 public class TestLayoutTree : ILayoutTree
 {
     private readonly List<LayoutStyle> _styles = [];

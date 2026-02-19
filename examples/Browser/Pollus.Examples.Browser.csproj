@@ -67,7 +67,7 @@
             Inputs="@(_EmbedAsset)"
             Outputs="$(IntermediateOutputPath)embed-assets.stamp"
             Condition="'@(_EmbedAsset)' != ''">
-        <Message Importance="high" Text="Embedded assets changed — invalidating native WASM cache" />
+        <Message Importance="high" Text="Embedded assets changed - invalidating native WASM cache" />
         <RemoveDir Directories="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/browser-wasm/native" />
         <RemoveDir Directories="$(WasmCachePath)" Condition="Exists('$(WasmCachePath)')" />
         <Touch Files="$(IntermediateOutputPath)embed-assets.stamp" AlwaysCreate="true" />

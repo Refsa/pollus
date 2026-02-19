@@ -66,7 +66,7 @@ public class UILayoutOptimizationTests
         var adapter = world.Resources.Get<UITreeAdapter>();
         Assert.False(adapter.IsDirty);
 
-        // Mutate a style — should trigger dirty
+        // Mutate a style - should trigger dirty
         ref var style = ref world.Store.GetTrackedComponent<UIStyle>(child);
         style.Value = LayoutStyle.Default with
         {
@@ -103,7 +103,7 @@ public class UILayoutOptimizationTests
         world.Update();
         world.Update();
 
-        // Add a new child — hierarchy change
+        // Add a new child - hierarchy change
         commands = world.GetCommands();
         var child2 = commands.Spawn(Entity.With(
             new UINode(),

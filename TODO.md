@@ -112,6 +112,16 @@
 		- [-] widgets
 		- [ ] reactive changes
 		- [ ] animations
+	- Widgets/Systems
+		- [ ] Tabs
+		- [ ] Tooltip
+		- [ ] Modal/Dialog
+		- [ ] Context Menu
+		- [ ] Tree View
+		- [ ] Resizeable views (splitter)
+		- [ ] Accordion
+		- [ ] TextArea
+
 - Rendering
 	- [-] Text/Font
 		- [x] cleanup source files

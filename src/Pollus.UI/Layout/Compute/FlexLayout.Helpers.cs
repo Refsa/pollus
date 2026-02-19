@@ -23,7 +23,7 @@ public static partial class FlexLayout
             usedMain += mainGap * (items.Length - 1);
 
         // When the container has no definite main size (auto height/width), items should
-        // not be shrunk — the container will grow to fit its content. Only constrain items
+        // not be shrunk - the container will grow to fit its content. Only constrain items
         // when the container has a definite main size (explicit or from known dimensions).
         float availMain = containerMainSize ?? usedMain;
         float initialFreeSpace = availMain - usedMain;

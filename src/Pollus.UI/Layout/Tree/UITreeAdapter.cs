@@ -287,7 +287,7 @@ public sealed class UITreeAdapter : ILayoutTree
                 continue;
             }
 
-            // New entity — allocate node and set initial state
+            // New entity - allocate node and set initial state
             int nodeId = AllocateOrReuseNode();
             nodeToEntity[nodeId] = entity;
             EnsureEntityMapCapacity(entity.ID + 1);

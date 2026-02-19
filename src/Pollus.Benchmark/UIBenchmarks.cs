@@ -205,7 +205,7 @@ public class UIBenchmarks
     [BenchmarkCategory("Layout")]
     public LayoutOutput WarmLayout_NoChange()
     {
-        // Caches are populated from Setup — measure cache lookup overhead
+        // Caches are populated from Setup - measure cache lookup overhead
         var treeRef = new UITreeRef(flatAdapter);
         return FlexLayout.ComputeFlexbox(ref treeRef, flatRootNodeId, MakeRootInput(800, 600));
     }
@@ -304,7 +304,7 @@ public class UIBenchmarks
     [BenchmarkCategory("WriteBack")]
     public void WriteBack_NoneChanged()
     {
-        // Nothing changed — measures skip cost of LayoutChanged check
+        // Nothing changed - measures skip cost of LayoutChanged check
         var query = new Query(flatWorld);
         foreach (var entity in flatAdapter.ActiveEntities)
         {
