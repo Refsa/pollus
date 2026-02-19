@@ -15,6 +15,12 @@ public partial class UISliderSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
+    [System(nameof(SetupSlider))]
+    static readonly SystemBuilderDescriptor SetupSliderDescriptor = new()
+    {
+        Stage = CoreStage.Update,
+    };
+
     [System(nameof(UpdateVisuals))]
     static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
     {
@@ -126,35 +132,24 @@ public partial class UISliderSystem
         }
     }
 
-    internal static void UpdateVisuals(
+    internal static void SetupSlider(
         Commands commands,
-        Query query,
-        Query<UISlider, ComputedNode> qSliders)
+        Query<UISlider>.Filter<Added<UISlider>> qNew,
+        EventWriter<UISliderEvents.UISliderReady> eReadyWriter)
     {
-        foreach (var row in qSliders)
+        foreach (var row in qNew)
         {
-            var entity = row.Entity;
             ref var slider = ref row.Component0;
-            ref readonly var computed = ref row.Component1;
-
-            var width = computed.Size.X;
-            var height = computed.Size.Y;
-
-            bool justSpawned = false;
-
-            // Spawn fill entity if needed
             if (slider.FillEntity.IsNull)
             {
                 var fill = commands.Spawn(Entity.With(
                     new ComputedNode(),
                     new BackgroundColor { Color = slider.FillColor }
                 )).Entity;
-                commands.AddChild(entity, fill);
+                commands.AddChild(row.Entity, fill);
                 slider.FillEntity = fill;
-                justSpawned = true;
             }
 
-            // Spawn thumb entity if needed
             if (slider.ThumbEntity.IsNull)
             {
                 var thumb = commands.Spawn(Entity.With(
@@ -162,22 +157,53 @@ public partial class UISliderSystem
                     new BackgroundColor { Color = slider.ThumbColor },
                     new UIShape { Type = UIShapeType.Circle }
                 )).Entity;
-                commands.AddChild(entity, thumb);
+                commands.AddChild(row.Entity, thumb);
                 slider.ThumbEntity = thumb;
-                justSpawned = true;
             }
 
-            // Entities are not materialized until commands flush — skip positioning on spawn frame
-            if (justSpawned) continue;
+            eReadyWriter.Write(new() { Entity = row.Entity });
+        }
+    }
+
+    internal static void UpdateVisuals(
+        Commands commands,
+        EventReader<UISliderEvents.UISliderValueChanged> eValueChanged,
+        EventReader<UISliderEvents.UISliderReady> eSliderReady,
+        Query<ComputedNode, BorderRadius, BackgroundColor> qFill,
+        Query<ComputedNode, BackgroundColor> qKnob,
+        Query<UISlider, ComputedNode> qSliders)
+    {
+        foreach (var ev in eValueChanged.Read())
+        {
+            UpdateVisual(ev.Entity, commands, qFill, qKnob, qSliders);
+        }
+
+        foreach (var ev in eSliderReady.Read())
+        {
+            UpdateVisual(ev.Entity, commands, qFill, qKnob, qSliders);
+        }
+
+        static void UpdateVisual(
+            Entity entity,
+            Commands commands,
+            Query<ComputedNode, BorderRadius, BackgroundColor> qFill,
+            Query<ComputedNode, BackgroundColor> qKnob,
+            Query<UISlider, ComputedNode> qSliders)
+        {
+            var slider = qSliders.Get<UISlider>(entity);
+            var computed = qSliders.Get<ComputedNode>(entity);
+
+            var width = computed.Size.X;
+            var height = computed.Size.Y;
 
             // Compute ratio
             var range = slider.Max - slider.Min;
             var ratio = range > 0 ? Math.Clamp((slider.Value - slider.Min) / range, 0f, 1f) : 0f;
 
             // Update fill entity
-            if (query.Has<ComputedNode>(slider.FillEntity))
+            if (qFill.Has<ComputedNode>(slider.FillEntity))
             {
-                ref var fillComputed = ref query.GetTracked<ComputedNode>(slider.FillEntity);
+                ref var fillComputed = ref qFill.GetTracked<ComputedNode>(slider.FillEntity);
                 var fillW = width * ratio;
                 if (fillW >= 0.5f)
                 {
@@ -190,31 +216,31 @@ public partial class UISliderSystem
                 }
 
                 // Copy parent's border radius
-                if (query.Has<BorderRadius>(entity))
+                if (qFill.Has<BorderRadius>(entity))
                 {
-                    var parentBr = query.Get<BorderRadius>(entity);
-                    if (query.Has<BorderRadius>(slider.FillEntity))
-                        query.GetTracked<BorderRadius>(slider.FillEntity) = parentBr;
+                    var parentBr = qFill.Get<BorderRadius>(entity);
+                    if (qFill.Has<BorderRadius>(slider.FillEntity))
+                        qFill.GetTracked<BorderRadius>(slider.FillEntity) = parentBr;
                     else
                         commands.AddComponent(slider.FillEntity, parentBr);
                 }
 
                 // Sync fill color
-                if (query.Has<BackgroundColor>(slider.FillEntity))
-                    query.GetTracked<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
+                if (qFill.Has<BackgroundColor>(slider.FillEntity))
+                    qFill.GetTracked<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
             }
 
             // Update thumb entity
-            if (query.Has<ComputedNode>(slider.ThumbEntity))
+            if (qKnob.Has<ComputedNode>(slider.ThumbEntity))
             {
-                ref var thumbComputed = ref query.GetTracked<ComputedNode>(slider.ThumbEntity);
+                ref var thumbComputed = ref qKnob.GetTracked<ComputedNode>(slider.ThumbEntity);
                 var d = height * 1.4f;
                 thumbComputed.Position = new Vec2f(width * ratio - d * 0.5f, (height - d) * 0.5f);
                 thumbComputed.Size = new Vec2f(d, d);
 
                 // Sync thumb color
-                if (query.Has<BackgroundColor>(slider.ThumbEntity))
-                    query.GetTracked<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
+                if (qKnob.Has<BackgroundColor>(slider.ThumbEntity))
+                    qKnob.GetTracked<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
             }
         }
     }

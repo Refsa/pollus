@@ -24,4 +24,9 @@ public static class UISliderEvents
         public float Value;
         public float PreviousValue;
     }
+
+    public struct UISliderReady
+    {
+        public Entity Entity;
+    }
 }
