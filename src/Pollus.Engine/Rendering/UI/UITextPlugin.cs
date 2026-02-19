@@ -64,7 +64,8 @@ public partial class UITextSystemSet
     public static readonly SystemBuilderDescriptor CaretMeasureDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UICaretSystem::Update"],
+        RunsAfter = [UICaretSystem.UpdateDescriptor.Label],
+        RunsBefore = [UICaretSystem.UpdateVisualDescriptor.Label],
     };
 
     [System(nameof(Cleanup))]

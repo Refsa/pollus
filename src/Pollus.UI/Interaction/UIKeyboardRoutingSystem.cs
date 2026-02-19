@@ -14,6 +14,7 @@ public partial class UIKeyboardRoutingSystem
     };
 
     internal static void PerformRouting(
+        CurrentDevice<Keyboard> keyboard,
         EventReader<ButtonEvent<Key>> keyReader,
         EventReader<TextInputEvent> textReader,
         UIFocusState focusState,
@@ -25,6 +26,11 @@ public partial class UIKeyboardRoutingSystem
         var keyDownWriter = events.GetWriter<UIInteractionEvents.UIKeyDownEvent>();
         var keyUpWriter = events.GetWriter<UIInteractionEvents.UIKeyUpEvent>();
         var textWriter = events.GetWriter<UIInteractionEvents.UITextInputEvent>();
+        var modifiers = keyboard.Value switch
+        {
+            not null => GetModifiers(keyboard.Value),
+            null => ModifierKey.None,
+        };
 
         foreach (var keyEvent in keyReader.Read())
         {
@@ -37,6 +43,7 @@ public partial class UIKeyboardRoutingSystem
                 {
                     Entity = focused,
                     Key = (int)keyEvent.Button,
+                    Modifier = modifiers,
                 });
             }
             else if (keyEvent.State == ButtonState.JustReleased)
@@ -45,6 +52,7 @@ public partial class UIKeyboardRoutingSystem
                 {
                     Entity = focused,
                     Key = (int)keyEvent.Button,
+                    Modifier = modifiers,
                 });
             }
         }
@@ -57,5 +65,19 @@ public partial class UIKeyboardRoutingSystem
                 Text = textEvent.Text,
             });
         }
+    }
+
+    static ModifierKey GetModifiers(Keyboard keyboard)
+    {
+        var modifiers = ModifierKey.None;
+        if (keyboard.Pressed(Key.LeftShift)) modifiers |= ModifierKey.LeftShift;
+        if (keyboard.Pressed(Key.RightShift)) modifiers |= ModifierKey.RightShift;
+        if (keyboard.Pressed(Key.LeftControl)) modifiers |= ModifierKey.LeftControl;
+        if (keyboard.Pressed(Key.RightControl)) modifiers |= ModifierKey.RightControl;
+        if (keyboard.Pressed(Key.LeftAlt)) modifiers |= ModifierKey.LeftAlt;
+        if (keyboard.Pressed(Key.RightAlt)) modifiers |= ModifierKey.RightAlt;
+        if (keyboard.Pressed(Key.LeftMeta)) modifiers |= ModifierKey.LeftMeta;
+        if (keyboard.Pressed(Key.RightMeta)) modifiers |= ModifierKey.RightMeta;
+        return modifiers;
     }
 }

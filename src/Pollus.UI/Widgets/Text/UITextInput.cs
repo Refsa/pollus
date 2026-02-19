@@ -25,8 +25,6 @@ public partial record struct UITextInput() : IComponent
 
 /// <summary>
 /// Managed resource storing text content for UITextInput entities.
-/// Text is stored separately from the component because strings are managed types
-/// and ECS components must be unmanaged.
 /// </summary>
 public class UITextBuffers
 {

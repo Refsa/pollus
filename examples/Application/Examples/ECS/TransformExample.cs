@@ -6,7 +6,6 @@ using Pollus.Engine;
 using Pollus.Assets;
 using Pollus.Engine.Camera;
 using Pollus.Input;
-using Pollus.Input;
 using Pollus.Engine.Rendering;
 using Pollus.Engine.Transform;
 using Pollus.Graphics;
