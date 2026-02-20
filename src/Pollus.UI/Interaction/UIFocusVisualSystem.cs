@@ -16,16 +16,16 @@ public partial class UIFocusVisualSystem
     static void ApplyFocusOutline(
         UIFocusVisualStyle style,
         UIFocusState focusState,
-        Query query,
+        View<Outline, UIFocusVisual> view,
         EventReader<UIInteractionEvents.UIFocusEvent> focusReader,
         EventReader<UIInteractionEvents.UIBlurEvent> blurReader)
     {
         foreach (var blur in blurReader.Read())
         {
-            var target = ResolveTarget(query, blur.Entity);
-            if (!query.Has<Outline>(target)) continue;
+            var target = ResolveTarget(view, blur.Entity);
+            if (!view.Has<Outline>(target)) continue;
 
-            ref var outline = ref query.Get<Outline>(target);
+            ref var outline = ref view.Get<Outline>(target);
             outline.Width = 0f;
             outline.Color = Color.TRANSPARENT;
         }
@@ -40,9 +40,9 @@ public partial class UIFocusVisualSystem
             float width = style.Width;
             float offset = style.Offset;
 
-            if (query.Has<UIFocusVisual>(entity))
+            if (view.Has<UIFocusVisual>(entity))
             {
-                ref readonly var focusVisual = ref query.Get<UIFocusVisual>(entity);
+                ref readonly var focusVisual = ref view.Read<UIFocusVisual>(entity);
                 if (focusVisual.Disabled) continue;
 
                 if (focusVisual.HasColor) color = focusVisual.Color;
@@ -50,21 +50,21 @@ public partial class UIFocusVisualSystem
                 if (focusVisual.HasOffset) offset = focusVisual.Offset;
             }
 
-            var target = ResolveTarget(query, entity);
-            if (!query.Has<Outline>(target)) continue;
+            var target = ResolveTarget(view, entity);
+            if (!view.Has<Outline>(target)) continue;
 
-            ref var outline = ref query.Get<Outline>(target);
+            ref var outline = ref view.Get<Outline>(target);
             outline.Color = color;
             outline.Width = width;
             outline.Offset = offset;
         }
     }
 
-    static Entity ResolveTarget(Query query, Entity entity)
+    static Entity ResolveTarget(View<Outline, UIFocusVisual> view, Entity entity)
     {
-        if (query.Has<UIFocusVisual>(entity))
+        if (view.Has<UIFocusVisual>(entity))
         {
-            ref readonly var focusVisual = ref query.Get<UIFocusVisual>(entity);
+            ref readonly var focusVisual = ref view.Read<UIFocusVisual>(entity);
             if (!focusVisual.Target.IsNull)
                 return focusVisual.Target;
         }

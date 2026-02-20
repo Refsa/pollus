@@ -71,11 +71,10 @@ public class UIRadioButtonTests
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r1 });
 
         var qRadio = new Query<UIRadioButton>(world);
-        var qInteraction = new Query<UIInteraction>(world);
-        var qBg = new Query<BackgroundColor>(world);
+        var view = new View<UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         var state = world.Store.GetComponent<UIRadioButton>(r1);
         Assert.True(state.IsSelected);
@@ -88,20 +87,19 @@ public class UIRadioButtonTests
         var (r1, r2, r3) = SpawnRadioGroup(world, 1);
 
         var qRadio = new Query<UIRadioButton>(world);
-        var qInteraction = new Query<UIInteraction>(world);
-        var qBg = new Query<BackgroundColor>(world);
+        var view = new View<UIInteraction, BackgroundColor>(world);
 
         // Select r1 first
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r1 });
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         Assert.True(world.Store.GetComponent<UIRadioButton>(r1).IsSelected);
 
         // Now select r2
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r2 });
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         Assert.False(world.Store.GetComponent<UIRadioButton>(r1).IsSelected);
         Assert.True(world.Store.GetComponent<UIRadioButton>(r2).IsSelected);
@@ -140,18 +138,17 @@ public class UIRadioButtonTests
         world.Update();
 
         var qRadio = new Query<UIRadioButton>(world);
-        var qInteraction = new Query<UIInteraction>(world);
-        var qBg = new Query<BackgroundColor>(world);
+        var view = new View<UIInteraction, BackgroundColor>(world);
 
         // Select in group 1
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = g1r1 });
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         // Select in group 2
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = g2r1 });
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         // Both should be selected (different groups)
         Assert.True(world.Store.GetComponent<UIRadioButton>(g1r1).IsSelected);
@@ -168,12 +165,11 @@ public class UIRadioButtonTests
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r1 });
 
         var qRadio = new Query<UIRadioButton>(world);
-        var qInteraction = new Query<UIInteraction>(world);
-        var qBg = new Query<BackgroundColor>(world);
+        var view = new View<UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var radioReader = world.Events.GetReader<UIRadioButtonEvents.UIRadioButtonEvent>()!;
 
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         var events = radioReader.Read();
         Assert.Equal(1, events.Length);
@@ -189,20 +185,19 @@ public class UIRadioButtonTests
         var (r1, _, _) = SpawnRadioGroup(world, 1);
 
         var qRadio = new Query<UIRadioButton>(world);
-        var qInteraction = new Query<UIInteraction>(world);
-        var qBg = new Query<BackgroundColor>(world);
+        var view = new View<UIInteraction, BackgroundColor>(world);
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var radioReader = world.Events.GetReader<UIRadioButtonEvents.UIRadioButtonEvent>()!;
 
         // Select r1
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r1 });
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
         radioReader.Read(); // consume
 
         // Click r1 again
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = r1 });
-        UIRadioButtonSystem.UpdateRadioButtons(qRadio, qInteraction, qBg, clickReader, world.Events);
+        UIRadioButtonSystem.UpdateRadioButtons(qRadio, view, clickReader, world.Events);
 
         Assert.True(world.Store.GetComponent<UIRadioButton>(r1).IsSelected);
 

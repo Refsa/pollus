@@ -17,13 +17,13 @@ public partial class UICaretSystem
     static void Update(
         Time time,
         UIFocusState focusState,
-        Query<UITextInput> qInputs)
+        View<UITextInput> viewInputs)
     {
         var focused = focusState.FocusedEntity;
         if (focused.IsNull) return;
-        if (!qInputs.Has<UITextInput>(focused)) return;
+        if (!viewInputs.Has<UITextInput>(focused)) return;
 
-        ref var input = ref qInputs.GetTracked<UITextInput>(focused);
+        ref var input = ref viewInputs.GetTracked<UITextInput>(focused);
 
         // Tick blink timer
         input.CaretBlinkTimer += time.DeltaTimeF;
@@ -67,7 +67,7 @@ public partial class UICaretSystem
 
     internal static void UpdateVisual(
         UIFocusState focusState,
-        Query<ComputedNode> qComputed,
+        View<ComputedNode> viewComputed,
         Query<UITextInput, ComputedNode>.Filter<All<UIInteraction>> qInputs)
     {
         var focused = focusState.FocusedEntity;
@@ -78,16 +78,16 @@ public partial class UICaretSystem
             ref readonly var input = ref row.Component0;
 
             if (input.CaretEntity.IsNull) continue;
-            if (!qComputed.Has<ComputedNode>(input.CaretEntity)) continue;
+            if (!viewComputed.Has<ComputedNode>(input.CaretEntity)) continue;
 
-            ref var caretComputed = ref qComputed.GetTracked<ComputedNode>(input.CaretEntity);
+            ref var caretComputed = ref viewComputed.GetTracked<ComputedNode>(input.CaretEntity);
 
             bool isFocused = !focused.IsNull && focused == entity;
             if (isFocused && input.CaretVisible && input.CaretHeight > 0
                 && !input.TextEntity.IsNull
-                && qComputed.Has<ComputedNode>(input.TextEntity))
+                && viewComputed.Has<ComputedNode>(input.TextEntity))
             {
-                ref readonly var textComputed = ref qComputed.Get<ComputedNode>(input.TextEntity);
+                ref readonly var textComputed = ref viewComputed.Read<ComputedNode>(input.TextEntity);
                 var caretW = 2f;
                 var caretH = input.CaretHeight;
                 var caretX = textComputed.Position.X + input.CaretXOffset;

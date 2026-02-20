@@ -46,10 +46,11 @@ public class UIInteractionIntegrationTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Step 1: Hover
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(100, 40));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         var interaction = world.Store.GetComponent<UIInteraction>(button);
         Assert.True(interaction.IsHovered, "Should be hovered");
@@ -60,7 +61,7 @@ public class UIInteractionIntegrationTests
 
         // Step 2: Press
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(100, 40));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         interaction = world.Store.GetComponent<UIInteraction>(button);
         Assert.True(interaction.IsPressed, "Should be pressed");
@@ -71,7 +72,7 @@ public class UIInteractionIntegrationTests
 
         // Step 3: Release → Click
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(100, 40));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
 
         interaction = world.Store.GetComponent<UIInteraction>(button);
         Assert.False(interaction.IsPressed, "Should no longer be pressed");
@@ -118,13 +119,14 @@ public class UIInteractionIntegrationTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         var enterReader = world.Events.GetReader<UIInteractionEvents.UIHoverEnterEvent>()!;
         var exitReader = world.Events.GetReader<UIInteractionEvents.UIHoverExitEvent>()!;
 
         // Hover btn1 (at y=0..50)
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         Assert.True(world.Store.GetComponent<UIInteraction>(btn1).IsHovered);
         Assert.False(world.Store.GetComponent<UIInteraction>(btn2).IsHovered);
@@ -135,7 +137,7 @@ public class UIInteractionIntegrationTests
 
         // Move to btn2 (at y=50..100)
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 75));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         Assert.False(world.Store.GetComponent<UIInteraction>(btn1).IsHovered);
         Assert.True(world.Store.GetComponent<UIInteraction>(btn2).IsHovered);
@@ -180,25 +182,26 @@ public class UIInteractionIntegrationTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Build focus order
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, Vec2f.Zero);
 
         // Tab → btn1
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(btn1, focusState.FocusedEntity);
         Assert.True(world.Store.GetComponent<UIInteraction>(btn1).IsFocused);
 
         // Tab → btn2
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(btn2, focusState.FocusedEntity);
         Assert.True(world.Store.GetComponent<UIInteraction>(btn2).IsFocused);
         Assert.False(world.Store.GetComponent<UIInteraction>(btn1).IsFocused);
 
         // Tab → wraps to btn1
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(btn1, focusState.FocusedEntity);
     }
 }

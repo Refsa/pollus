@@ -102,17 +102,17 @@ public static class LayoutHelpers
         return a.Value + b.Value;
     }
 
-    public static Vec2f ComputeAbsolutePosition(Query<ComputedNode, Child> query, Entity entity)
+    public static Vec2f ComputeAbsolutePosition(View<ComputedNode, Child> view, Entity entity)
     {
         var pos = Vec2f.Zero;
         var current = entity;
         while (!current.IsNull)
         {
-            if (query.Has<ComputedNode>(current))
-                pos += query.Get<ComputedNode>(current).Position;
+            if (view.Has<ComputedNode>(current))
+                pos += view.Read<ComputedNode>(current).Position;
 
-            if (query.Has<Child>(current))
-                current = query.Get<Child>(current).Parent;
+            if (view.Has<Child>(current))
+                current = view.Read<Child>(current).Parent;
             else
                 break;
         }

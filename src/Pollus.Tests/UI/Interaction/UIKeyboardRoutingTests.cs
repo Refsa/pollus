@@ -50,7 +50,8 @@ public class UIKeyboardRoutingTests
 
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
+        var view = new View<UIInteraction>(world);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child);
 
         // Write a key event
         var keyWriter = world.Events.GetWriter<ButtonEvent<Key>>();
@@ -78,7 +79,8 @@ public class UIKeyboardRoutingTests
 
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
+        var view = new View<UIInteraction>(world);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child);
 
         var keyWriter = world.Events.GetWriter<ButtonEvent<Key>>();
         keyWriter.Write(new ButtonEvent<Key> { DeviceId = Guid.Empty, Button = Key.KeyA, State = ButtonState.JustReleased });
@@ -128,7 +130,8 @@ public class UIKeyboardRoutingTests
 
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
+        var view = new View<UIInteraction>(world);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child);
 
         var textInputWriter = world.Events.GetWriter<TextInputEvent>();
         textInputWriter.Write(new TextInputEvent { DeviceId = Guid.Empty, Text = "hello" });
@@ -155,7 +158,8 @@ public class UIKeyboardRoutingTests
 
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child);
+        var view = new View<UIInteraction>(world);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child);
 
         var keyWriter = world.Events.GetWriter<ButtonEvent<Key>>();
         keyWriter.Write(new ButtonEvent<Key> { DeviceId = Guid.Empty, Button = Key.Tab, State = ButtonState.JustPressed });

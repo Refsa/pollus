@@ -97,11 +97,10 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -126,11 +125,10 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.Equal(1, dd.SelectedIndex);
@@ -148,12 +146,11 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var ddReader = world.Events.GetReader<UIDropdownEvents.UIDropdownSelectionChanged>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         var events = ddReader.Read();
         Assert.Equal(1, events.Length);
@@ -216,11 +213,10 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         // Display text should be updated from option's child text
         var updatedText = world.Store.GetComponent<UIText>(displayText);
@@ -241,11 +237,10 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(dd.IsOpen);
@@ -259,7 +254,6 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
@@ -270,7 +264,7 @@ public class UIDropdownTests
 
         // Click to open
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -278,7 +272,7 @@ public class UIDropdownTests
 
         // Click to close
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(state.IsOpen);
@@ -332,11 +326,10 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         // Popup panel should be hidden after selection closes dropdown
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
@@ -617,7 +610,6 @@ public class UIDropdownTests
         var query = new Query(world);
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
         adapter.SyncFull(uiNodeQuery, query);
 
         // Run initial compute + writeback
@@ -634,7 +626,7 @@ public class UIDropdownTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         // Verify IsOpen toggled
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
@@ -813,7 +805,6 @@ public class UIDropdownTests
         var query = new Query(world);
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
 
         // === Frame 1: Initial layout (popup hidden) ===
         adapter.SyncFull(uiNodeQuery, query);
@@ -835,7 +826,7 @@ public class UIDropdownTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         // Verify state changes
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);

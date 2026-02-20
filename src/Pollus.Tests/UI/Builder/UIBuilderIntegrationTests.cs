@@ -198,7 +198,6 @@ public class UIBuilderIntegrationTests
         // Verify the dropdown system can interact with builder-created entities
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        var qText = new Query<UIText, Parent>(world);
 
         // Simulate click to open
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
@@ -206,7 +205,7 @@ public class UIBuilderIntegrationTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(new Query<UIInteraction>(world), qDropdown, qDropdownOptions, qText, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
 
         // Dropdown should be open
         var dd = world.Store.GetComponent<UIDropdown>(result.Entity);

@@ -50,9 +50,10 @@ public class UIPointerCaptureTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         Assert.Equal(child, hitResult.CapturedEntity);
     }
@@ -66,15 +67,16 @@ public class UIPointerCaptureTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Press
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
         Assert.Equal(child, hitResult.CapturedEntity);
 
         // Release
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
 
         Assert.True(hitResult.CapturedEntity.IsNull);
     }
@@ -88,15 +90,16 @@ public class UIPointerCaptureTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Press at (50, 25)
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         // Move to (70, 30) - simulate pointer move while captured
         hitResult.PreviousMousePosition = hitResult.MousePosition;
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(70, 30));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: false);
 
         var dragReader = world.Events.GetReader<UIInteractionEvents.UIDragEvent>()!;
         var drags = dragReader.Read();
@@ -117,15 +120,16 @@ public class UIPointerCaptureTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Press at (100, 100)
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(100, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         // Move to (150, 25)
         hitResult.PreviousMousePosition = hitResult.MousePosition;
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(150, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: false);
 
         var dragReader = world.Events.GetReader<UIInteractionEvents.UIDragEvent>()!;
         var drags = dragReader.Read();

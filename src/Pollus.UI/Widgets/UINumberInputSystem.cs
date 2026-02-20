@@ -15,7 +15,7 @@ public partial class UINumberInputSystem
 
     internal static void PerformUpdate(
         Query<UINumberInput> qNumInput,
-        Query<UITextInput> qTextInput,
+        View<UITextInput> viewTextInput,
         UITextBuffers textBuffers,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
         EventReader<UITextInputEvents.UITextInputValueChanged> textChangedReader,
@@ -69,9 +69,9 @@ public partial class UINumberInputSystem
                     var formatted = FormatValue(numInput.Value, numInput.Type);
                     textBuffers.Set(numInput.TextInputEntity, formatted);
 
-                    if (qTextInput.Has<UITextInput>(numInput.TextInputEntity))
+                    if (viewTextInput.Has<UITextInput>(numInput.TextInputEntity))
                     {
-                        ref var textInput = ref qTextInput.GetTracked<UITextInput>(numInput.TextInputEntity);
+                        ref var textInput = ref viewTextInput.GetTracked<UITextInput>(numInput.TextInputEntity);
                         textInput.CursorPosition = formatted.Length;
                     }
 

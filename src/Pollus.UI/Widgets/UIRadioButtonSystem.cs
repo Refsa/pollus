@@ -13,7 +13,7 @@ public partial class UIRadioButtonSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
-    internal static void UpdateRadioButtons(Query<UIRadioButton> qRadio, Query<UIInteraction> qInteraction, Query<BackgroundColor> qBg, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
+    internal static void UpdateRadioButtons(Query<UIRadioButton> qRadio, View<UIInteraction, BackgroundColor> view, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var radioWriter = events.GetWriter<UIRadioButtonEvents.UIRadioButtonEvent>();
 
@@ -22,9 +22,9 @@ public partial class UIRadioButtonSystem
             var entity = click.Entity;
             if (!qRadio.Has<UIRadioButton>(entity)) continue;
 
-            if (qInteraction.Has<UIInteraction>(entity))
+            if (view.Has<UIInteraction>(entity))
             {
-                ref readonly var interaction = ref qInteraction.Get<UIInteraction>(entity);
+                ref readonly var interaction = ref view.Read<UIInteraction>(entity);
                 if (interaction.IsDisabled) continue;
             }
 
@@ -41,28 +41,28 @@ public partial class UIRadioButtonSystem
                 if (r.GroupId != groupId || !r.IsSelected) continue;
 
                 r.IsSelected = false;
-                if (qBg.Has<BackgroundColor>(row.Entity))
+                if (view.Has<BackgroundColor>(row.Entity))
                 {
-                    ref var bg = ref qBg.GetTracked<BackgroundColor>(row.Entity);
+                    ref var bg = ref view.GetTracked<BackgroundColor>(row.Entity);
                     bg.Color = r.UnselectedColor;
                 }
-                if (!r.IndicatorEntity.IsNull && qBg.Has<BackgroundColor>(r.IndicatorEntity))
+                if (!r.IndicatorEntity.IsNull && view.Has<BackgroundColor>(r.IndicatorEntity))
                 {
-                    ref var indicatorBg = ref qBg.GetTracked<BackgroundColor>(r.IndicatorEntity);
+                    ref var indicatorBg = ref view.GetTracked<BackgroundColor>(r.IndicatorEntity);
                     indicatorBg.Color = Color.TRANSPARENT;
                 }
             }
 
             // Select this one
             radio.IsSelected = true;
-            if (qBg.Has<BackgroundColor>(entity))
+            if (view.Has<BackgroundColor>(entity))
             {
-                ref var bg = ref qBg.GetTracked<BackgroundColor>(entity);
+                ref var bg = ref view.GetTracked<BackgroundColor>(entity);
                 bg.Color = radio.SelectedColor;
             }
-            if (!radio.IndicatorEntity.IsNull && qBg.Has<BackgroundColor>(radio.IndicatorEntity))
+            if (!radio.IndicatorEntity.IsNull && view.Has<BackgroundColor>(radio.IndicatorEntity))
             {
-                ref var indicatorBg = ref qBg.GetTracked<BackgroundColor>(radio.IndicatorEntity);
+                ref var indicatorBg = ref view.GetTracked<BackgroundColor>(radio.IndicatorEntity);
                 indicatorBg.Color = radio.IndicatorColor;
             }
 

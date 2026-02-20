@@ -32,16 +32,16 @@ public partial class UILayoutSystem
         adapter.SyncFull(uiNodeQuery, query);
     }
 
-    static void ComputeLayout(UITreeAdapter adapter, Query query)
+    static void ComputeLayout(UITreeAdapter adapter, View<UILayoutRoot> view)
     {
         if (!adapter.IsDirty) return;
 
         foreach (var rootNodeId in adapter.Roots)
         {
             var rootEntity = adapter.GetEntity(rootNodeId);
-            if (!query.Has<UILayoutRoot>(rootEntity)) continue;
+            if (!view.Has<UILayoutRoot>(rootEntity)) continue;
 
-            ref readonly var layoutRoot = ref query.Get<UILayoutRoot>(rootEntity);
+            ref readonly var layoutRoot = ref view.Read<UILayoutRoot>(rootEntity);
             float width = layoutRoot.Size.Width;
             float height = layoutRoot.Size.Height;
 
@@ -93,7 +93,7 @@ public partial class UILayoutSystem
         }
     }
 
-    static void WriteBack(UITreeAdapter adapter, Query query)
+    static void WriteBack(UITreeAdapter adapter, View<ComputedNode> view)
     {
         if (!adapter.IsDirty) return;
 
@@ -102,12 +102,12 @@ public partial class UILayoutSystem
             int nodeId = adapter.GetNodeId(entity);
             if (nodeId < 0) continue;
             if (!adapter.LayoutChanged(nodeId)) continue;
-            if (!query.Has<ComputedNode>(entity)) continue;
+            if (!view.Has<ComputedNode>(entity)) continue;
 
             ref readonly var rounded = ref adapter.GetRoundedLayout(nodeId);
             ref readonly var unrounded = ref adapter.GetUnroundedLayout(nodeId);
 
-            ref var computed = ref query.GetTracked<ComputedNode>(entity);
+            ref var computed = ref view.GetTracked<ComputedNode>(entity);
             computed.Size = new Vec2f(rounded.Size.Width, rounded.Size.Height);
             computed.ContentSize = new Vec2f(rounded.ContentSize.Width, rounded.ContentSize.Height);
             computed.Position = new Vec2f(rounded.Location.X, rounded.Location.Y);

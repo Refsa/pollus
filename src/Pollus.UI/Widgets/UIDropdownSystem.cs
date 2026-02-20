@@ -17,10 +17,9 @@ public partial class UIDropdownSystem
     };
 
     internal static void PerformUpdate(
-        Query<UIInteraction> qInteractions,
+        View<UIInteraction, UIText, Parent> view,
         Query<UIDropdown> qDropdown,
         Query<UIDropdownOptionTag, UIStyle> qDropdownOptions,
-        Query<UIText, Parent> qText,
         EventReader<UIInteractionEvents.UIClickEvent> clickReader,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
         Events events)
@@ -34,9 +33,9 @@ public partial class UIDropdownSystem
         {
             var entity = click.Entity;
 
-            if (qInteractions.Has<UIInteraction>(entity))
+            if (view.Has<UIInteraction>(entity))
             {
-                ref readonly var interaction = ref qInteractions.Get<UIInteraction>(entity);
+                ref readonly var interaction = ref view.Read<UIInteraction>(entity);
                 if (interaction.IsDisabled) continue;
             }
 
@@ -70,7 +69,7 @@ public partial class UIDropdownSystem
                         PreviousIndex = prevIndex,
                     });
 
-                    UpdateDisplayText(qDropdown, qText, dropdownEntity, entity);
+                    UpdateDisplayText(view, dropdownEntity, entity);
                 }
 
                 dirty = true;
@@ -111,20 +110,19 @@ public partial class UIDropdownSystem
     }
 
     internal static void UpdateDisplayText(
-        Query<UIDropdown> qDropdown,
-        Query<UIText, Parent> qText,
+        View<UIInteraction, UIText, Parent> view,
         Entity dropdownEntity, Entity optionEntity)
     {
-        ref readonly var dropdown = ref qDropdown.Get<UIDropdown>(dropdownEntity);
+        ref readonly var dropdown = ref view.Read<UIDropdown>(dropdownEntity);
         if (dropdown.DisplayTextEntity.IsNull) return;
-        if (!qText.Has<UIText>(dropdown.DisplayTextEntity)) return;
+        if (!view.Has<UIText>(dropdown.DisplayTextEntity)) return;
 
-        if (!qText.Has<Parent>(optionEntity)) return;
-        var firstChild = qText.Get<Parent>(optionEntity).FirstChild;
-        if (firstChild.IsNull || !qText.Has<UIText>(firstChild)) return;
+        if (!view.Has<Parent>(optionEntity)) return;
+        var firstChild = view.Read<Parent>(optionEntity).FirstChild;
+        if (firstChild.IsNull || !view.Has<UIText>(firstChild)) return;
 
-        ref readonly var srcText = ref qText.Get<UIText>(firstChild);
-        ref var displayText = ref qText.GetTracked<UIText>(dropdown.DisplayTextEntity);
+        ref readonly var srcText = ref view.Read<UIText>(firstChild);
+        ref var displayText = ref view.GetTracked<UIText>(dropdown.DisplayTextEntity);
         displayText.Text = new NativeUtf8(srcText.Text.ToString().TrimEnd('\0'));
     }
 
