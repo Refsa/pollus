@@ -46,7 +46,7 @@ public class UICheckBoxTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = checkBox });
 
-        var query = new Query(world);
+        var query = new Query<UICheckBox, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
         UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
@@ -80,7 +80,7 @@ public class UICheckBoxTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = checkBox });
 
-        var query = new Query(world);
+        var query = new Query<UICheckBox, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
         UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
@@ -114,7 +114,7 @@ public class UICheckBoxTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = checkBox });
 
-        var query = new Query(world);
+        var query = new Query<UICheckBox, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var cbReader = world.Events.GetReader<UICheckBoxEvents.UICheckBoxEvent>()!;
 
@@ -154,7 +154,7 @@ public class UICheckBoxTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = checkBox });
 
-        var query = new Query(world);
+        var query = new Query<UICheckBox, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
         UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);
@@ -188,7 +188,7 @@ public class UICheckBoxTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = checkBox });
 
-        var query = new Query(world);
+        var query = new Query<UICheckBox, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
         UICheckBoxSystem.UpdateCheckBoxes(query, clickReader, world.Events);

@@ -14,7 +14,8 @@ public partial class UINumberInputSystem
     };
 
     internal static void PerformUpdate(
-        Query query,
+        Query<UINumberInput> qNumInput,
+        Query<UITextInput> qTextInput,
         UITextBuffers textBuffers,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
         EventReader<UITextInputEvents.UITextInputValueChanged> textChangedReader,
@@ -22,32 +23,29 @@ public partial class UINumberInputSystem
     {
         var valueChangedWriter = events.GetWriter<UINumberInputEvents.UINumberInputValueChanged>();
 
-        // Handle text changes from the linked TextInput
         foreach (var textEvent in textChangedReader.Read())
         {
-            // Find the NumberInput that owns this TextInput
-            query.Filtered<All<UINumberInput>>().ForEach((query, textEvent, textBuffers, valueChangedWriter),
-                static (in (Query q, UITextInputEvents.UITextInputValueChanged evt, UITextBuffers bufs, EventWriter<UINumberInputEvents.UINumberInputValueChanged> writer) ctx, in Entity entity) =>
-                {
-                    ref var numInput = ref ctx.q.GetTracked<UINumberInput>(entity);
-                    if (numInput.TextInputEntity != ctx.evt.Entity) return;
+            foreach (var row in qNumInput)
+            {
+                ref var numInput = ref qNumInput.GetTracked<UINumberInput>(row.Entity);
+                if (numInput.TextInputEntity != textEvent.Entity) continue;
 
-                    var text = ctx.bufs.Get(ctx.evt.Entity);
-                    var prevValue = numInput.Value;
-                    if (float.TryParse(text, out var parsed))
+                var text = textBuffers.Get(textEvent.Entity);
+                var prevValue = numInput.Value;
+                if (float.TryParse(text, out var parsed))
+                {
+                    numInput.Value = Math.Clamp(parsed, numInput.Min, numInput.Max);
+                    if (numInput.Value != prevValue)
                     {
-                        numInput.Value = Math.Clamp(parsed, numInput.Min, numInput.Max);
-                        if (numInput.Value != prevValue)
+                        valueChangedWriter.Write(new UINumberInputEvents.UINumberInputValueChanged
                         {
-                            ctx.writer.Write(new UINumberInputEvents.UINumberInputValueChanged
-                            {
-                                Entity = entity,
-                                Value = numInput.Value,
-                                PreviousValue = prevValue,
-                            });
-                        }
+                            Entity = row.Entity,
+                            Value = numInput.Value,
+                            PreviousValue = prevValue,
+                        });
                     }
-                });
+                }
+            }
         }
 
         // Handle arrow key increment/decrement
@@ -56,36 +54,35 @@ public partial class UINumberInputSystem
             var key = (Key)keyEvent.Key;
             if (key != Key.ArrowUp && key != Key.ArrowDown) continue;
 
-            query.Filtered<All<UINumberInput>>().ForEach((query, keyEvent, key, textBuffers, valueChangedWriter),
-                static (in (Query q, UIInteractionEvents.UIKeyDownEvent evt, Key key, UITextBuffers bufs, EventWriter<UINumberInputEvents.UINumberInputValueChanged> writer) ctx, in Entity entity) =>
+            foreach (var row in qNumInput)
+            {
+                ref var numInput = ref qNumInput.GetTracked<UINumberInput>(row.Entity);
+                if (numInput.TextInputEntity != keyEvent.Entity) continue;
+
+                var prevValue = numInput.Value;
+                var delta = key == Key.ArrowUp ? numInput.Step : -numInput.Step;
+                numInput.Value = Math.Clamp(numInput.Value + delta, numInput.Min, numInput.Max);
+
+                if (numInput.Value != prevValue)
                 {
-                    ref var numInput = ref ctx.q.GetTracked<UINumberInput>(entity);
-                    if (numInput.TextInputEntity != ctx.evt.Entity) return;
+                    // Update linked TextInput text
+                    var formatted = FormatValue(numInput.Value, numInput.Type);
+                    textBuffers.Set(numInput.TextInputEntity, formatted);
 
-                    var prevValue = numInput.Value;
-                    var delta = ctx.key == Key.ArrowUp ? numInput.Step : -numInput.Step;
-                    numInput.Value = Math.Clamp(numInput.Value + delta, numInput.Min, numInput.Max);
-
-                    if (numInput.Value != prevValue)
+                    if (qTextInput.Has<UITextInput>(numInput.TextInputEntity))
                     {
-                        // Update linked TextInput text
-                        var formatted = FormatValue(numInput.Value, numInput.Type);
-                        ctx.bufs.Set(numInput.TextInputEntity, formatted);
-
-                        if (ctx.q.Has<UITextInput>(numInput.TextInputEntity))
-                        {
-                            ref var textInput = ref ctx.q.GetTracked<UITextInput>(numInput.TextInputEntity);
-                            textInput.CursorPosition = formatted.Length;
-                        }
-
-                        ctx.writer.Write(new UINumberInputEvents.UINumberInputValueChanged
-                        {
-                            Entity = entity,
-                            Value = numInput.Value,
-                            PreviousValue = prevValue,
-                        });
+                        ref var textInput = ref qTextInput.GetTracked<UITextInput>(numInput.TextInputEntity);
+                        textInput.CursorPosition = formatted.Length;
                     }
-                });
+
+                    valueChangedWriter.Write(new UINumberInputEvents.UINumberInputValueChanged
+                    {
+                        Entity = row.Entity,
+                        Value = numInput.Value,
+                        PreviousValue = prevValue,
+                    });
+                }
+            }
         }
     }
 

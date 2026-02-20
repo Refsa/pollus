@@ -47,7 +47,7 @@ public class UIToggleTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = toggle });
 
-        var query = new Query(world);
+        var query = new Query<UIToggle, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var toggleReader = world.Events.GetReader<UIToggleEvents.UIToggleEvent>()!;
 
@@ -90,7 +90,7 @@ public class UIToggleTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = toggle });
 
-        var query = new Query(world);
+        var query = new Query<UIToggle, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var toggleReader = world.Events.GetReader<UIToggleEvents.UIToggleEvent>()!;
 
@@ -134,7 +134,7 @@ public class UIToggleTests
         var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = toggle });
 
-        var query = new Query(world);
+        var query = new Query<UIToggle, UIInteraction, BackgroundColor>(world);
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
 
         UIToggleSystem.UpdateToggles(query, clickReader, world.Events);
