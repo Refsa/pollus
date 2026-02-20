@@ -11,7 +11,7 @@ public partial class UIToggleSystem
         Stage = CoreStage.PostUpdate,
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
-    internal static void UpdateToggles(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
+    internal static void UpdateToggles(Query<UIToggle, UIInteraction, BackgroundColor> query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var toggleWriter = events.GetWriter<UIToggleEvents.UIToggleEvent>();
 

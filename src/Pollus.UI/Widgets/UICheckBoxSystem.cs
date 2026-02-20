@@ -13,7 +13,7 @@ public partial class UICheckBoxSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
-    internal static void UpdateCheckBoxes(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
+    internal static void UpdateCheckBoxes(Query<UICheckBox, UIInteraction, BackgroundColor> query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var checkBoxWriter = events.GetWriter<UICheckBoxEvents.UICheckBoxEvent>();
 

@@ -102,7 +102,7 @@ public static class LayoutHelpers
         return a.Value + b.Value;
     }
 
-    public static Vec2f ComputeAbsolutePosition(Query query, Entity entity)
+    public static Vec2f ComputeAbsolutePosition(Query<ComputedNode, Child> query, Entity entity)
     {
         var pos = Vec2f.Zero;
         var current = entity;

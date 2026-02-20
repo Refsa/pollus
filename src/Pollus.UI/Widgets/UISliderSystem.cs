@@ -29,7 +29,8 @@ public partial class UISliderSystem
     };
 
     internal static void PerformUpdate(
-        Query query,
+        Query<UISlider> qSlider,
+        Query<ComputedNode, Child> qNodeTree,
         EventReader<UIInteractionEvents.UIClickEvent> clickReader,
         EventReader<UIInteractionEvents.UIDragEvent> dragReader,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
@@ -42,12 +43,12 @@ public partial class UISliderSystem
         foreach (var click in clickReader.Read())
         {
             var entity = click.Entity;
-            if (!query.Has<UISlider>(entity)) continue;
-            if (!query.Has<ComputedNode>(entity)) continue;
+            if (!qSlider.Has<UISlider>(entity)) continue;
+            if (!qNodeTree.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref query.GetTracked<UISlider>(entity);
-            ref readonly var computed = ref query.Get<ComputedNode>(entity);
-            var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
+            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
+            ref readonly var computed = ref qNodeTree.Get<ComputedNode>(entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(qNodeTree, entity);
 
             var prevValue = slider.Value;
             slider.Value = LayoutHelpers.ComputeValueFromPosition(hitResult.MousePosition.X, absPos.X, computed.Size.X, slider);
@@ -67,12 +68,12 @@ public partial class UISliderSystem
         foreach (var drag in dragReader.Read())
         {
             var entity = drag.Entity;
-            if (!query.Has<UISlider>(entity)) continue;
-            if (!query.Has<ComputedNode>(entity)) continue;
+            if (!qSlider.Has<UISlider>(entity)) continue;
+            if (!qNodeTree.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref query.GetTracked<UISlider>(entity);
-            ref readonly var computed = ref query.Get<ComputedNode>(entity);
-            var absPos = LayoutHelpers.ComputeAbsolutePosition(query, entity);
+            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
+            ref readonly var computed = ref qNodeTree.Get<ComputedNode>(entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(qNodeTree, entity);
 
             var prevValue = slider.Value;
             slider.Value = LayoutHelpers.ComputeValueFromPosition(drag.PositionX, absPos.X, computed.Size.X, slider);
@@ -92,10 +93,10 @@ public partial class UISliderSystem
         foreach (var keyEvent in keyDownReader.Read())
         {
             var entity = keyEvent.Entity;
-            if (!query.Has<UISlider>(entity)) continue;
+            if (!qSlider.Has<UISlider>(entity)) continue;
 
             var key = (Key)keyEvent.Key;
-            ref var slider = ref query.GetTracked<UISlider>(entity);
+            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
             var prevValue = slider.Value;
 
             switch (key)

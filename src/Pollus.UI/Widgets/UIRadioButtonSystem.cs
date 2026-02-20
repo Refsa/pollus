@@ -13,57 +13,56 @@ public partial class UIRadioButtonSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
-    internal static void UpdateRadioButtons(Query query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
+    internal static void UpdateRadioButtons(Query<UIRadioButton> qRadio, Query<UIInteraction> qInteraction, Query<BackgroundColor> qBg, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var radioWriter = events.GetWriter<UIRadioButtonEvents.UIRadioButtonEvent>();
 
         foreach (var click in clickReader.Read())
         {
             var entity = click.Entity;
-            if (!query.Has<UIRadioButton>(entity)) continue;
+            if (!qRadio.Has<UIRadioButton>(entity)) continue;
 
-            if (query.Has<UIInteraction>(entity))
+            if (qInteraction.Has<UIInteraction>(entity))
             {
-                ref readonly var interaction = ref query.Get<UIInteraction>(entity);
+                ref readonly var interaction = ref qInteraction.Get<UIInteraction>(entity);
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var radio = ref query.GetTracked<UIRadioButton>(entity);
+            ref var radio = ref qRadio.GetTracked<UIRadioButton>(entity);
             if (radio.IsSelected) continue; // Already selected, do nothing
 
             var groupId = radio.GroupId;
 
             // Deselect others in the same group
-            query.Filtered<All<UIRadioButton>>().ForEach((query, groupId, entity),
-                static (in (Query q, int gid, Entity clicked) ctx, in Entity e) =>
-                {
-                    if (e == ctx.clicked) return;
-                    ref var r = ref ctx.q.GetTracked<UIRadioButton>(e);
-                    if (r.GroupId != ctx.gid || !r.IsSelected) return;
+            foreach (var row in qRadio)
+            {
+                if (row.Entity == entity) continue;
+                ref var r = ref qRadio.GetTracked<UIRadioButton>(row.Entity);
+                if (r.GroupId != groupId || !r.IsSelected) continue;
 
-                    r.IsSelected = false;
-                    if (ctx.q.Has<BackgroundColor>(e))
-                    {
-                        ref var bg = ref ctx.q.GetTracked<BackgroundColor>(e);
-                        bg.Color = r.UnselectedColor;
-                    }
-                    if (!r.IndicatorEntity.IsNull && ctx.q.Has<BackgroundColor>(r.IndicatorEntity))
-                    {
-                        ref var indicatorBg = ref ctx.q.GetTracked<BackgroundColor>(r.IndicatorEntity);
-                        indicatorBg.Color = Color.TRANSPARENT;
-                    }
-                });
+                r.IsSelected = false;
+                if (qBg.Has<BackgroundColor>(row.Entity))
+                {
+                    ref var bg = ref qBg.GetTracked<BackgroundColor>(row.Entity);
+                    bg.Color = r.UnselectedColor;
+                }
+                if (!r.IndicatorEntity.IsNull && qBg.Has<BackgroundColor>(r.IndicatorEntity))
+                {
+                    ref var indicatorBg = ref qBg.GetTracked<BackgroundColor>(r.IndicatorEntity);
+                    indicatorBg.Color = Color.TRANSPARENT;
+                }
+            }
 
             // Select this one
             radio.IsSelected = true;
-            if (query.Has<BackgroundColor>(entity))
+            if (qBg.Has<BackgroundColor>(entity))
             {
-                ref var bg = ref query.GetTracked<BackgroundColor>(entity);
+                ref var bg = ref qBg.GetTracked<BackgroundColor>(entity);
                 bg.Color = radio.SelectedColor;
             }
-            if (!radio.IndicatorEntity.IsNull && query.Has<BackgroundColor>(radio.IndicatorEntity))
+            if (!radio.IndicatorEntity.IsNull && qBg.Has<BackgroundColor>(radio.IndicatorEntity))
             {
-                ref var indicatorBg = ref query.GetTracked<BackgroundColor>(radio.IndicatorEntity);
+                ref var indicatorBg = ref qBg.GetTracked<BackgroundColor>(radio.IndicatorEntity);
                 indicatorBg.Color = radio.IndicatorColor;
             }
 

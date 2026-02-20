@@ -32,13 +32,13 @@ public partial class UIScrollSystem
         CurrentDevice<Keyboard> currentKeyboard,
         UIHitTestResult hitResult,
         EventReader<UIInteractionEvents.UIDragEvent> dragReader,
-        Query query,
+        Query<ComputedNode, Child> qNodeTree,
         Query<UIScrollOffset, ComputedNode> qScroll)
     {
         // Handle drag events on scroll thumbs
         foreach (var drag in dragReader.Read())
         {
-            HandleThumbDrag(in drag, query, qScroll);
+            HandleThumbDrag(in drag, qScroll);
         }
 
         var mouse = currentMouse.Value;
@@ -66,7 +66,7 @@ public partial class UIScrollSystem
             foreach (var row in qScroll)
             {
                 ref readonly var computed = ref row.Component1;
-                var absPos = LayoutHelpers.ComputeAbsolutePosition(query, row.Entity);
+                var absPos = LayoutHelpers.ComputeAbsolutePosition(qNodeTree, row.Entity);
                 if (mousePos.X >= absPos.X && mousePos.X < absPos.X + computed.Size.X &&
                     mousePos.Y >= absPos.Y && mousePos.Y < absPos.Y + computed.Size.Y)
                 {
@@ -78,11 +78,11 @@ public partial class UIScrollSystem
             if (target.IsNull) return;
         }
 
-        var scrollEntity = FindScrollAncestor(query, target);
+        var scrollEntity = FindScrollAncestor(qNodeTree, target);
         if (scrollEntity.IsNull) return;
 
-        ref var scrollOffset = ref query.GetTracked<UIScrollOffset>(scrollEntity);
-        ref readonly var scrollComputed = ref query.Get<ComputedNode>(scrollEntity);
+        ref var scrollOffset = ref qScroll.GetTracked<UIScrollOffset>(scrollEntity);
+        ref readonly var scrollComputed = ref qScroll.Get<ComputedNode>(scrollEntity);
 
         if (scrollY != 0f)
         {
@@ -103,7 +103,7 @@ public partial class UIScrollSystem
 
     internal static void UpdateVisuals(
         Commands commands,
-        Query query,
+        Query<ComputedNode> qThumbComputed,
         Query<UIScrollOffset, ComputedNode, UIStyle> qScroll)
     {
         var scrollbarColor = new Color(1f, 1f, 1f, 0.3f);
@@ -153,9 +153,9 @@ public partial class UIScrollSystem
 
             // Update vertical scrollbar
             if (needsVertical && !scroll.VerticalThumbEntity.IsNull
-                              && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
+                              && qThumbComputed.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
-                ref var thumbComputed = ref query.GetTracked<ComputedNode>(scroll.VerticalThumbEntity);
+                ref var thumbComputed = ref qThumbComputed.GetTracked<ComputedNode>(scroll.VerticalThumbEntity);
 
                 float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
                                - computed.BorderTop - computed.BorderBottom;
@@ -173,17 +173,17 @@ public partial class UIScrollSystem
                 thumbComputed.Size = new Vec2f(ScrollbarThickness, thumbH);
             }
             else if (!scroll.VerticalThumbEntity.IsNull
-                     && query.Has<ComputedNode>(scroll.VerticalThumbEntity))
+                     && qThumbComputed.Has<ComputedNode>(scroll.VerticalThumbEntity))
             {
                 // Not needed anymore - hide it
-                query.GetTracked<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
+                qThumbComputed.GetTracked<ComputedNode>(scroll.VerticalThumbEntity).Size = Vec2f.Zero;
             }
 
             // Update horizontal scrollbar
             if (needsHorizontal && !scroll.HorizontalThumbEntity.IsNull
-                                && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
+                                && qThumbComputed.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
-                ref var thumbComputed = ref query.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity);
+                ref var thumbComputed = ref qThumbComputed.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity);
 
                 float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
                                - computed.BorderLeft - computed.BorderRight;
@@ -200,16 +200,15 @@ public partial class UIScrollSystem
                 thumbComputed.Size = new Vec2f(thumbW, ScrollbarThickness);
             }
             else if (!scroll.HorizontalThumbEntity.IsNull
-                     && query.Has<ComputedNode>(scroll.HorizontalThumbEntity))
+                     && qThumbComputed.Has<ComputedNode>(scroll.HorizontalThumbEntity))
             {
-                query.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
+                qThumbComputed.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity).Size = Vec2f.Zero;
             }
         }
     }
 
     static void HandleThumbDrag(
         in UIInteractionEvents.UIDragEvent drag,
-        Query query,
         Query<UIScrollOffset, ComputedNode> qScroll)
     {
         foreach (var row in qScroll)
@@ -222,7 +221,7 @@ public partial class UIScrollSystem
 
             if (!isVertical && !isHorizontal) continue;
 
-            ref var scrollTracked = ref query.GetTracked<UIScrollOffset>(row.Entity);
+            ref var scrollTracked = ref qScroll.GetTracked<UIScrollOffset>(row.Entity);
             var size = computed.Size;
 
             if (isVertical)
@@ -261,7 +260,7 @@ public partial class UIScrollSystem
         }
     }
 
-    static Entity FindScrollAncestor(Query query, Entity entity)
+    static Entity FindScrollAncestor(Query<ComputedNode, Child> query, Entity entity)
     {
         var current = entity;
         while (!current.IsNull)

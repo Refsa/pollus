@@ -60,11 +60,12 @@ public class UINumberInputTests
         var textChangedWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
         textChangedWriter.Write(new UITextInputEvents.UITextInputValueChanged { Entity = textEntity });
 
-        var query = new Query(world);
+        var qNumInput = new Query<UINumberInput>(world);
+        var qTextInput = new Query<UITextInput>(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UITextInputEvents.UITextInputValueChanged>()!;
 
-        UINumberInputSystem.PerformUpdate(query, textBuffers, keyReader, textReader, world.Events);
+        UINumberInputSystem.PerformUpdate(qNumInput, qTextInput, textBuffers, keyReader, textReader, world.Events);
 
         var state = world.Store.GetComponent<UINumberInput>(numEntity);
         Assert.Equal(100f, state.Value, 0.01f);
@@ -81,7 +82,8 @@ public class UINumberInputTests
         ref var numInput = ref world.Store.GetComponent<UINumberInput>(numEntity);
         numInput.Value = 50;
 
-        var query = new Query(world);
+        var qNumInput = new Query<UINumberInput>(world);
+        var qTextInput = new Query<UITextInput>(world);
 
         // Arrow up
         var keyWriter = world.Events.GetWriter<UIInteractionEvents.UIKeyDownEvent>();
@@ -90,14 +92,14 @@ public class UINumberInputTests
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UITextInputEvents.UITextInputValueChanged>()!;
 
-        UINumberInputSystem.PerformUpdate(query, textBuffers, keyReader, textReader, world.Events);
+        UINumberInputSystem.PerformUpdate(qNumInput, qTextInput, textBuffers, keyReader, textReader, world.Events);
 
         numInput = world.Store.GetComponent<UINumberInput>(numEntity);
         Assert.Equal(55f, numInput.Value, 0.01f);
 
         // Arrow down
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = textEntity, Key = (int)Key.ArrowDown });
-        UINumberInputSystem.PerformUpdate(query, textBuffers, keyReader, textReader, world.Events);
+        UINumberInputSystem.PerformUpdate(qNumInput, qTextInput, textBuffers, keyReader, textReader, world.Events);
 
         numInput = world.Store.GetComponent<UINumberInput>(numEntity);
         Assert.Equal(50f, numInput.Value, 0.01f);
@@ -129,11 +131,12 @@ public class UINumberInputTests
         var textChangedWriter = world.Events.GetWriter<UITextInputEvents.UITextInputValueChanged>();
         textChangedWriter.Write(new UITextInputEvents.UITextInputValueChanged { Entity = textEntity });
 
-        var query = new Query(world);
+        var qNumInput = new Query<UINumberInput>(world);
+        var qTextInput = new Query<UITextInput>(world);
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var textReader = world.Events.GetReader<UITextInputEvents.UITextInputValueChanged>()!;
 
-        UINumberInputSystem.PerformUpdate(query, textBuffers, keyReader, textReader, world.Events);
+        UINumberInputSystem.PerformUpdate(qNumInput, qTextInput, textBuffers, keyReader, textReader, world.Events);
 
         var state = world.Store.GetComponent<UINumberInput>(numEntity);
         Assert.Equal(42.5f, state.Value, 0.01f);
