@@ -75,26 +75,10 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 // SDF for a rounded box (Inigo Quilez)
 // p: point relative to box center, b: box half-extents, r: corner radii (tl, tr, br, bl)
 fn sd_rounded_box(p: vec2f, b: vec2f, r: vec4f) -> f32 {
-    // Select radius based on quadrant
-    var rx: vec2f;
-    if (p.x > 0.0) {
-        rx = vec2f(r.y, r.z); // right side: topRight, bottomRight
-    } else {
-        rx = vec2f(r.x, r.w); // left side: topLeft, bottomLeft
-    }
-    var radius: f32;
-    if (p.y > 0.0) {
-        radius = rx.y; // bottom half
-    } else {
-        radius = rx.x; // top half
-    }
+    let rx = select(r.xw, r.yz, p.x > 0.0);
+    let radius = select(rx.x, rx.y, p.y > 0.0);
     let q = abs(p) - b + vec2f(radius);
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2f(0.0))) - radius;
-}
-
-// SDF for a circle
-fn sd_circle(p: vec2f, r: f32) -> f32 {
-    return length(p) - r;
 }
 
 // SDF for a checkmark (two line segments)
@@ -134,6 +118,14 @@ fn sd_down_arrow(p: vec2f, size: f32) -> f32 {
     return min(d1, d2);
 }
 
+// Outline band alpha for a rounded box shape
+fn outline_band(p: vec2f, half_size: vec2f, radii: vec4f, outline_offset: f32, outline_width: f32, AA: f32) -> f32 {
+    let total = outline_offset + outline_width;
+    let d_outer = sd_rounded_box(p, half_size + vec2f(total), radii + vec4f(total));
+    let d_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), radii + vec4f(outline_offset));
+    return (1.0 - smoothstep(-AA, AA, d_outer)) * smoothstep(-AA, AA, d_inner);
+}
+
 struct FragmentOutput {
     @location(0) color: vec4f,
 };
@@ -164,60 +156,21 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
 
     let bg_color = tex_color * input.bg_color;
 
-    if (shape_type == 1u) {
-        // Circle
-        let circle_r = min(half_size.x, half_size.y);
-        let d_circle = sd_circle(p, circle_r);
-        let element_a = (1.0 - smoothstep(-AA, AA, d_circle)) * bg_color.a;
-
-        // Circle outline band
-        let d_circle_outline_outer = sd_circle(p, circle_r + outline_offset + outline_width);
-        let d_circle_outline_inner = sd_circle(p, circle_r + outline_offset);
-        let co_outer = 1.0 - smoothstep(-AA, AA, d_circle_outline_outer);
-        let co_inner = 1.0 - smoothstep(-AA, AA, d_circle_outline_inner);
-        let co_band = co_outer * (1.0 - co_inner) * input.outline_color.a;
-
-        let final_a = element_a + co_band * (1.0 - element_a);
-        if (final_a < 0.001) { discard; }
-
-        let final_rgb = select(
-            input.outline_color.rgb,
-            mix(input.outline_color.rgb, bg_color.rgb, element_a / final_a),
-            final_a > 0.001
-        );
-
-        var out: FragmentOutput;
-        out.color = vec4f(final_rgb, final_a);
-        return out;
-    }
-
-    if (shape_type == 2u) {
-        // Checkmark
-        let check_s = min(half_size.x, half_size.y);
-        let d_check = sd_checkmark(p, check_s);
-        let check_thickness = check_s * 0.15;
-        let alpha = 1.0 - smoothstep(check_thickness - AA, check_thickness + AA, d_check);
+    // Checkmark / Down arrow (stroke-based shapes)
+    if (shape_type == 2u || shape_type == 3u) {
+        let s = min(half_size.x, half_size.y);
+        let d = select(sd_down_arrow(p, s), sd_checkmark(p, s), shape_type == 2u);
+        let thickness = s * select(0.12, 0.15, shape_type == 2u);
+        let alpha = 1.0 - smoothstep(thickness - AA, thickness + AA, d);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
         out.color = vec4f(bg_color.rgb, bg_color.a * alpha);
         return out;
     }
 
-    if (shape_type == 3u) {
-        // Down arrow
-        let arrow_s = min(half_size.x, half_size.y);
-        let d_arrow = sd_down_arrow(p, arrow_s);
-        let arrow_thickness = arrow_s * 0.12;
-        let alpha = 1.0 - smoothstep(arrow_thickness - AA, arrow_thickness + AA, d_arrow);
-        if (alpha < 0.001) { discard; }
-        var out: FragmentOutput;
-        out.color = vec4f(bg_color.rgb, bg_color.a * alpha);
-        return out;
-    }
-
-    // Default: RoundedRect (shape_type == 0)
+    // RoundedRect (shape_type == 0) or Circle (shape_type == 1, max radii, no border)
     let max_radius = min(half_size.x, half_size.y);
-    let radii = min(input.border_radius, vec4f(max_radius));
+    let radii = select(min(input.border_radius, vec4f(max_radius)), vec4f(max_radius), shape_type == 1u);
     let d_outer = sd_rounded_box(p, half_size, radii);
     let outer_alpha = 1.0 - smoothstep(-AA, AA, d_outer);
 
@@ -237,20 +190,11 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let d_inner = sd_rounded_box(inner_p, inner_half, inner_radii);
     let inner_alpha = 1.0 - smoothstep(-AA, AA, d_inner);
 
-    let has_border = step(0.001, border.x + border.y + border.z + border.w);
-    let blended = mix(input.border_color, bg_color, inner_alpha);
-    let pixel_color = mix(bg_color, blended, has_border);
+    let has_border = step(0.001, dot(border, vec4f(1.0)));
+    let pixel_color = mix(bg_color, mix(input.border_color, bg_color, inner_alpha), has_border);
     let element_alpha = pixel_color.a * outer_alpha;
 
-    // Outline band
-    let outline_outer_radii = radii + vec4f(outline_offset + outline_width);
-    let d_outline_outer = sd_rounded_box(p, half_size + vec2f(outline_offset + outline_width), outline_outer_radii);
-    let outline_inner_radii = radii + vec4f(outline_offset);
-    let d_outline_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), outline_inner_radii);
-    let outline_outer_alpha = 1.0 - smoothstep(-AA, AA, d_outline_outer);
-    let outline_inner_alpha = 1.0 - smoothstep(-AA, AA, d_outline_inner);
-    let outline_band = outline_outer_alpha * (1.0 - outline_inner_alpha);
-    let outline_alpha = outline_band * input.outline_color.a;
+    let outline_alpha = outline_band(p, half_size, radii, outline_offset, outline_width, AA) * input.outline_color.a;
 
     let final_alpha = element_alpha + outline_alpha * (1.0 - element_alpha);
 
@@ -258,11 +202,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         discard;
     }
 
-    let final_rgb = select(
-        input.outline_color.rgb,
-        mix(input.outline_color.rgb, pixel_color.rgb, element_alpha / final_alpha),
-        final_alpha > 0.001
-    );
+    let final_rgb = mix(input.outline_color.rgb, pixel_color.rgb, element_alpha / final_alpha);
 
     var out: FragmentOutput;
     out.color = vec4f(final_rgb, final_alpha);
