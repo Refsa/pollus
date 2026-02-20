@@ -31,7 +31,8 @@ public struct TextureGPUResource : IGPUResource<GPUTexture, TextureDescriptor>, 
 
     public void Dispose()
     {
-        Resource?.Dispose();
+        if (Resource is null) return;
+        Resource.Dispose();
         TextureView.Dispose();
     }
 }

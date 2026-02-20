@@ -103,7 +103,6 @@ public class DrawTriangleExample : IExample
 
             using var commandBuffer = commandEncoder.Finish("""command-buffer""");
             commandBuffer.Submit();
-            commandBuffer.Dispose();
 
             gpuContext.Present();
         }))

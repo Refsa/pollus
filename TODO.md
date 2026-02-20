@@ -121,7 +121,7 @@
 		- [ ] Resizeable views (splitter)
 		- [ ] Accordion
 		- [ ] TextArea
-
+- Serialization
 - Rendering
 	- [-] Text/Font
 		- [x] cleanup source files

@@ -72,7 +72,7 @@ public partial class FontExample : IExample
                         .With(new Counter())
                     );
                 }))
-            .AddSystems(CoreStage.Update, FnSystem.Create("Rotate",
+            .AddSystems(CoreStage.Update, FnSystem.Create("Show seconds",
                 static (Time time, PerformanceTrackerPlugin.PerformanceMetrics perf, Query<TextDraw>.Filter<All<Counter>> query) =>
                 {
                     foreach (var entity in query)

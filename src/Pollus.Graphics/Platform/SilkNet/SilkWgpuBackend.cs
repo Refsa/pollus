@@ -406,9 +406,10 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         var targets = stackalloc Silk.NET.WebGPU.ColorTargetState[8];
         int blendStateCount = 0;
         int targetsCount = 0;
+        Silk.NET.WebGPU.FragmentState fragment = default;
         if (descriptor.FragmentState is FragmentState fragmentState)
         {
-            var fragment = new Silk.NET.WebGPU.FragmentState(
+            fragment = new Silk.NET.WebGPU.FragmentState(
                 module: fragmentState.ShaderModule.Native.As<Silk.NET.WebGPU.ShaderModule>(),
                 entryPoint: (byte*)pins.PinString(fragmentState.EntryPoint).AddrOfPinnedObject()
             );

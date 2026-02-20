@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Text;
 
 [DebuggerDisplay("{ToString()}")]
-unsafe public record struct NativeUtf8 : IDisposable
+unsafe public struct NativeUtf8 : IDisposable
 {
     public static NativeUtf8 Null => new()
     {

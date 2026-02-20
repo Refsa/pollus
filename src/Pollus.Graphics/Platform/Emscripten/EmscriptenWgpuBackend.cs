@@ -551,10 +551,11 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         var blends = stackalloc Pollus.Emscripten.WGPU.WGPUBlendState[8];
         int targetsCount = 0;
         int blendsCount = 0;
+        Pollus.Emscripten.WGPU.WGPUFragmentState f = default;
         if (descriptor.FragmentState is FragmentState fragmentState)
         {
             var entry = pins.PinString(fragmentState.EntryPoint);
-            var f = new Pollus.Emscripten.WGPU.WGPUFragmentState
+            f = new Pollus.Emscripten.WGPU.WGPUFragmentState
             {
                 Module = fragmentState.ShaderModule.Native.As<Pollus.Emscripten.WGPU.WGPUShaderModule>(),
                 EntryPoint = (byte*)entry.AddrOfPinnedObject(),
