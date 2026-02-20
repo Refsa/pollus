@@ -2,6 +2,7 @@ namespace Pollus.Engine.Rendering;
 
 using Collections;
 using ECS;
+using Pollus.Core.Serialization;
 using Transform;
 using Utils;
 
@@ -14,9 +15,9 @@ public interface ITextDraw
 }
 
 [Required<TextMesh>, Required<TextFont>, Required<GlobalTransform>]
-public partial struct TextDraw : IComponent, IDefault<TextDraw>, ITextDraw
+public partial struct TextDraw() : IComponent, IDefault<TextDraw>, ITextDraw
 {
-    public static readonly EntityBuilder<TextDraw, TextMesh, TextFont, Transform2D, GlobalTransform> Bundle = Entity.With(
+    public static EntityBuilder<TextDraw, TextMesh, TextFont, Transform2D, GlobalTransform> Bundle => Entity.With(
         TextDraw.Default,
         TextMesh.Default,
         TextFont.Default,
@@ -24,7 +25,7 @@ public partial struct TextDraw : IComponent, IDefault<TextDraw>, ITextDraw
         GlobalTransform.Default
     );
 
-    public static TextDraw Default { get; } = new TextDraw()
+    public static TextDraw Default { get; } = new()
     {
         Color = Color.WHITE,
         Size = 12f,
@@ -33,11 +34,14 @@ public partial struct TextDraw : IComponent, IDefault<TextDraw>, ITextDraw
 
     public required Color Color { get; set; }
     public required float Size { get; set; }
+    [SerializeIgnore]
     public bool IsDirty { get; set; }
 
+    [SerializeIgnore]
     NativeUtf8 text;
 
-    public required NativeUtf8 Text
+    [SerializeIgnore]
+    public NativeUtf8 Text
     {
         get => text;
         set
@@ -46,11 +50,6 @@ public partial struct TextDraw : IComponent, IDefault<TextDraw>, ITextDraw
             text = value;
             IsDirty = true;
         }
-    }
-
-    public TextDraw()
-    {
-        text = NativeUtf8.Null;
     }
 }
 

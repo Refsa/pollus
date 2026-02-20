@@ -1,8 +1,19 @@
-set -- "net10"
+CLEAN=false
+SKIP_BUILD=false
 
-if [ "$2" == "skip-build" ]; then
-    shift
-else
+for arg in "$@"; do
+    case "$arg" in
+        --clean) CLEAN=true ;;
+        skip-build) SKIP_BUILD=true ;;
+    esac
+done
+
+if [ "$CLEAN" == "true" ]; then
+    echo "Cleaning wasm cache..."
+    rm -rf Browser/bin Browser/obj
+fi
+
+if [ "$SKIP_BUILD" == "false" ]; then
     ./build_web.sh $1
 fi
 
