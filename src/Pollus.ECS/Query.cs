@@ -19,7 +19,7 @@ public class QueryFetch<TQuery> : IFetch<TQuery>
 {
     public static void Register()
     {
-        Fetch.Register(new QueryFetch<TQuery>(), [.. TQuery.Infos.Where(e => e.Write).Select(e => e.Type)]);
+        Fetch.Register(new QueryFetch<TQuery>(), [.. TQuery.Infos.Where(e => e.Write).Select(e => e.Type), typeof(Query)]);
     }
 
     public TQuery DoFetch(World world, ISystem system)
