@@ -147,8 +147,8 @@ public class UISliderTests
         world.Update();
 
         // Slider should be at absolute X=100 (container's left padding)
-        var qSlider = new Query<UISlider>(world);
-        var qNodeTree = new Query<ComputedNode, Child>(world);
+        var viewSlider = new View<UISlider>(world);
+        var viewNodeTree = new View<ComputedNode, Child>(world);
         var hitResult = world.Resources.Get<UIHitTestResult>();
 
         // Simulate click at absolute X=200 → midpoint of 200px track starting at X=100 → value should be 50
@@ -160,7 +160,7 @@ public class UISliderTests
         var dragReader = world.Events.GetReader<UIInteractionEvents.UIDragEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UISliderSystem.PerformUpdate(qSlider, qNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
+        UISliderSystem.PerformUpdate(viewSlider, viewNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
 
         var sliderComp = world.Store.GetComponent<UISlider>(slider);
         Assert.Equal(50f, sliderComp.Value, 1f);
@@ -175,8 +175,8 @@ public class UISliderTests
         ref var sliderComp = ref world.Store.GetComponent<UISlider>(slider);
         sliderComp.Value = 50;
 
-        var qSlider = new Query<UISlider>(world);
-        var qNodeTree = new Query<ComputedNode, Child>(world);
+        var viewSlider = new View<UISlider>(world);
+        var viewNodeTree = new View<ComputedNode, Child>(world);
         var hitResult = world.Resources.Get<UIHitTestResult>();
 
         // Right arrow
@@ -187,14 +187,14 @@ public class UISliderTests
         var dragReader = world.Events.GetReader<UIInteractionEvents.UIDragEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UISliderSystem.PerformUpdate(qSlider, qNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
+        UISliderSystem.PerformUpdate(viewSlider, viewNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
 
         sliderComp = world.Store.GetComponent<UISlider>(slider);
         Assert.Equal(60f, sliderComp.Value, 0.01f);
 
         // Left arrow
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = slider, Key = (int)Key.ArrowLeft });
-        UISliderSystem.PerformUpdate(qSlider, qNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
+        UISliderSystem.PerformUpdate(viewSlider, viewNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
 
         sliderComp = world.Store.GetComponent<UISlider>(slider);
         Assert.Equal(50f, sliderComp.Value, 0.01f);
@@ -212,15 +212,15 @@ public class UISliderTests
         var keyWriter = world.Events.GetWriter<UIInteractionEvents.UIKeyDownEvent>();
         keyWriter.Write(new UIInteractionEvents.UIKeyDownEvent { Entity = slider, Key = (int)Key.ArrowRight });
 
-        var qSlider = new Query<UISlider>(world);
-        var qNodeTree = new Query<ComputedNode, Child>(world);
+        var viewSlider = new View<UISlider>(world);
+        var viewNodeTree = new View<ComputedNode, Child>(world);
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var dragReader = world.Events.GetReader<UIInteractionEvents.UIDragEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var sliderReader = world.Events.GetReader<UISliderEvents.UISliderValueChanged>()!;
 
-        UISliderSystem.PerformUpdate(qSlider, qNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
+        UISliderSystem.PerformUpdate(viewSlider, viewNodeTree, clickReader, dragReader, keyReader, hitResult, world.Events);
 
         var events = sliderReader.Read();
         Assert.Equal(1, events.Length);

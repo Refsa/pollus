@@ -13,32 +13,32 @@ public partial class UICheckBoxSystem
         RunsAfter = ["UIInteractionSystem::UpdateState"],
     };
 
-    internal static void UpdateCheckBoxes(Query<UICheckBox, UIInteraction, BackgroundColor> query, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
+    internal static void UpdateCheckBoxes(View<UICheckBox, UIInteraction, BackgroundColor> view, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var checkBoxWriter = events.GetWriter<UICheckBoxEvents.UICheckBoxEvent>();
 
         foreach (var click in clickReader.Read())
         {
             var entity = click.Entity;
-            if (!query.Has<UICheckBox>(entity)) continue;
-            if (query.Has<UIInteraction>(entity))
+            if (!view.Has<UICheckBox>(entity)) continue;
+            if (view.Has<UIInteraction>(entity))
             {
-                ref readonly var interaction = ref query.Get<UIInteraction>(entity);
+                ref readonly var interaction = ref view.Read<UIInteraction>(entity);
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var checkBox = ref query.GetTracked<UICheckBox>(entity);
+            ref var checkBox = ref view.GetTracked<UICheckBox>(entity);
             checkBox.IsChecked = !checkBox.IsChecked;
 
-            if (query.Has<BackgroundColor>(entity))
+            if (view.Has<BackgroundColor>(entity))
             {
-                ref var bg = ref query.GetTracked<BackgroundColor>(entity);
+                ref var bg = ref view.GetTracked<BackgroundColor>(entity);
                 bg.Color = checkBox.IsChecked ? checkBox.CheckedColor : checkBox.UncheckedColor;
             }
 
-            if (!checkBox.IndicatorEntity.IsNull && query.Has<BackgroundColor>(checkBox.IndicatorEntity))
+            if (!checkBox.IndicatorEntity.IsNull && view.Has<BackgroundColor>(checkBox.IndicatorEntity))
             {
-                ref var indicatorBg = ref query.GetTracked<BackgroundColor>(checkBox.IndicatorEntity);
+                ref var indicatorBg = ref view.GetTracked<BackgroundColor>(checkBox.IndicatorEntity);
                 indicatorBg.Color = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
             }
 

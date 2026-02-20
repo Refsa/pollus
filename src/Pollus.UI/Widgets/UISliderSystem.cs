@@ -29,8 +29,8 @@ public partial class UISliderSystem
     };
 
     internal static void PerformUpdate(
-        Query<UISlider> qSlider,
-        Query<ComputedNode, Child> qNodeTree,
+        View<UISlider> viewSlider,
+        View<ComputedNode, Child> viewNodeTree,
         EventReader<UIInteractionEvents.UIClickEvent> clickReader,
         EventReader<UIInteractionEvents.UIDragEvent> dragReader,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
@@ -43,12 +43,12 @@ public partial class UISliderSystem
         foreach (var click in clickReader.Read())
         {
             var entity = click.Entity;
-            if (!qSlider.Has<UISlider>(entity)) continue;
-            if (!qNodeTree.Has<ComputedNode>(entity)) continue;
+            if (!viewSlider.Has<UISlider>(entity)) continue;
+            if (!viewNodeTree.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
-            ref readonly var computed = ref qNodeTree.Get<ComputedNode>(entity);
-            var absPos = LayoutHelpers.ComputeAbsolutePosition(qNodeTree, entity);
+            ref var slider = ref viewSlider.GetTracked<UISlider>(entity);
+            ref readonly var computed = ref viewNodeTree.Read<ComputedNode>(entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(viewNodeTree, entity);
 
             var prevValue = slider.Value;
             slider.Value = LayoutHelpers.ComputeValueFromPosition(hitResult.MousePosition.X, absPos.X, computed.Size.X, slider);
@@ -68,12 +68,12 @@ public partial class UISliderSystem
         foreach (var drag in dragReader.Read())
         {
             var entity = drag.Entity;
-            if (!qSlider.Has<UISlider>(entity)) continue;
-            if (!qNodeTree.Has<ComputedNode>(entity)) continue;
+            if (!viewSlider.Has<UISlider>(entity)) continue;
+            if (!viewNodeTree.Has<ComputedNode>(entity)) continue;
 
-            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
-            ref readonly var computed = ref qNodeTree.Get<ComputedNode>(entity);
-            var absPos = LayoutHelpers.ComputeAbsolutePosition(qNodeTree, entity);
+            ref var slider = ref viewSlider.GetTracked<UISlider>(entity);
+            ref readonly var computed = ref viewNodeTree.Read<ComputedNode>(entity);
+            var absPos = LayoutHelpers.ComputeAbsolutePosition(viewNodeTree, entity);
 
             var prevValue = slider.Value;
             slider.Value = LayoutHelpers.ComputeValueFromPosition(drag.PositionX, absPos.X, computed.Size.X, slider);
@@ -93,10 +93,10 @@ public partial class UISliderSystem
         foreach (var keyEvent in keyDownReader.Read())
         {
             var entity = keyEvent.Entity;
-            if (!qSlider.Has<UISlider>(entity)) continue;
+            if (!viewSlider.Has<UISlider>(entity)) continue;
 
             var key = (Key)keyEvent.Key;
-            ref var slider = ref qSlider.GetTracked<UISlider>(entity);
+            ref var slider = ref viewSlider.GetTracked<UISlider>(entity);
             var prevValue = slider.Value;
 
             switch (key)
@@ -170,29 +170,25 @@ public partial class UISliderSystem
         Commands commands,
         EventReader<UISliderEvents.UISliderValueChanged> eValueChanged,
         EventReader<UISliderEvents.UISliderReady> eSliderReady,
-        Query<ComputedNode, BorderRadius, BackgroundColor> qFill,
-        Query<ComputedNode, BackgroundColor> qKnob,
-        Query<UISlider, ComputedNode> qSliders)
+        View<UISlider, ComputedNode, BorderRadius, BackgroundColor> view)
     {
         foreach (var ev in eValueChanged.Read())
         {
-            UpdateVisual(ev.Entity, commands, qFill, qKnob, qSliders);
+            UpdateVisual(ev.Entity, commands, view);
         }
 
         foreach (var ev in eSliderReady.Read())
         {
-            UpdateVisual(ev.Entity, commands, qFill, qKnob, qSliders);
+            UpdateVisual(ev.Entity, commands, view);
         }
 
         static void UpdateVisual(
             Entity entity,
             Commands commands,
-            Query<ComputedNode, BorderRadius, BackgroundColor> qFill,
-            Query<ComputedNode, BackgroundColor> qKnob,
-            Query<UISlider, ComputedNode> qSliders)
+            View<UISlider, ComputedNode, BorderRadius, BackgroundColor> view)
         {
-            var slider = qSliders.Get<UISlider>(entity);
-            var computed = qSliders.Get<ComputedNode>(entity);
+            var slider = view.Read<UISlider>(entity);
+            var computed = view.Read<ComputedNode>(entity);
 
             var width = computed.Size.X;
             var height = computed.Size.Y;
@@ -202,9 +198,9 @@ public partial class UISliderSystem
             var ratio = range > 0 ? Math.Clamp((slider.Value - slider.Min) / range, 0f, 1f) : 0f;
 
             // Update fill entity
-            if (qFill.Has<ComputedNode>(slider.FillEntity))
+            if (view.Has<ComputedNode>(slider.FillEntity))
             {
-                ref var fillComputed = ref qFill.GetTracked<ComputedNode>(slider.FillEntity);
+                ref var fillComputed = ref view.GetTracked<ComputedNode>(slider.FillEntity);
                 var fillW = width * ratio;
                 if (fillW >= 0.5f)
                 {
@@ -217,31 +213,31 @@ public partial class UISliderSystem
                 }
 
                 // Copy parent's border radius
-                if (qFill.Has<BorderRadius>(entity))
+                if (view.Has<BorderRadius>(entity))
                 {
-                    var parentBr = qFill.Get<BorderRadius>(entity);
-                    if (qFill.Has<BorderRadius>(slider.FillEntity))
-                        qFill.GetTracked<BorderRadius>(slider.FillEntity) = parentBr;
+                    var parentBr = view.Read<BorderRadius>(entity);
+                    if (view.Has<BorderRadius>(slider.FillEntity))
+                        view.GetTracked<BorderRadius>(slider.FillEntity) = parentBr;
                     else
                         commands.AddComponent(slider.FillEntity, parentBr);
                 }
 
                 // Sync fill color
-                if (qFill.Has<BackgroundColor>(slider.FillEntity))
-                    qFill.GetTracked<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
+                if (view.Has<BackgroundColor>(slider.FillEntity))
+                    view.GetTracked<BackgroundColor>(slider.FillEntity).Color = slider.FillColor;
             }
 
             // Update thumb entity
-            if (qKnob.Has<ComputedNode>(slider.ThumbEntity))
+            if (view.Has<ComputedNode>(slider.ThumbEntity))
             {
-                ref var thumbComputed = ref qKnob.GetTracked<ComputedNode>(slider.ThumbEntity);
+                ref var thumbComputed = ref view.GetTracked<ComputedNode>(slider.ThumbEntity);
                 var d = height * 1.4f;
                 thumbComputed.Position = new Vec2f(width * ratio - d * 0.5f, (height - d) * 0.5f);
                 thumbComputed.Size = new Vec2f(d, d);
 
                 // Sync thumb color
-                if (qKnob.Has<BackgroundColor>(slider.ThumbEntity))
-                    qKnob.GetTracked<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
+                if (view.Has<BackgroundColor>(slider.ThumbEntity))
+                    view.GetTracked<BackgroundColor>(slider.ThumbEntity).Color = slider.ThumbColor;
             }
         }
     }

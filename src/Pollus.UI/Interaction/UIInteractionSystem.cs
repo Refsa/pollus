@@ -73,15 +73,15 @@ public partial class UIInteractionSystem
         UIHitTestResult hitResult,
         UIFocusState focusState,
         Events events,
-        Query query)
+        View<UIInteraction> view)
     {
         bool mouseDown = mouse.JustPressed(MouseButton.Left);
         bool mouseUp = mouse.JustReleased(MouseButton.Left);
-        PerformUpdateState(query, hitResult, focusState, events, mouseDown, mouseUp);
+        PerformUpdateState(view, hitResult, focusState, events, mouseDown, mouseUp);
     }
 
     internal static void PerformUpdateState(
-        Query query, UIHitTestResult hitResult, UIFocusState focusState,
+        View<UIInteraction> view, UIHitTestResult hitResult, UIFocusState focusState,
         Events events, bool mouseDown, bool mouseUp = false)
     {
         var hoverEnterWriter = events.GetWriter<UIInteractionEvents.UIHoverEnterEvent>();
@@ -99,9 +99,9 @@ public partial class UIInteractionSystem
         // Hover exit
         if (!prevHovered.IsNull && prevHovered != hovered)
         {
-            if (query.Has<UIInteraction>(prevHovered))
+            if (view.Has<UIInteraction>(prevHovered))
             {
-                ref var prevInteraction = ref query.GetTracked<UIInteraction>(prevHovered);
+                ref var prevInteraction = ref view.GetTracked<UIInteraction>(prevHovered);
                 prevInteraction.State &= ~InteractionState.Hovered;
                 hoverExitWriter.Write(new UIInteractionEvents.UIHoverExitEvent { Entity = prevHovered });
             }
@@ -110,9 +110,9 @@ public partial class UIInteractionSystem
         // Hover enter
         if (!hovered.IsNull && hovered != prevHovered)
         {
-            if (query.Has<UIInteraction>(hovered))
+            if (view.Has<UIInteraction>(hovered))
             {
-                ref var interaction = ref query.GetTracked<UIInteraction>(hovered);
+                ref var interaction = ref view.GetTracked<UIInteraction>(hovered);
                 if (!interaction.IsDisabled)
                 {
                     interaction.State |= InteractionState.Hovered;
@@ -124,9 +124,9 @@ public partial class UIInteractionSystem
         // Press
         if (mouseDown && !hovered.IsNull)
         {
-            if (query.Has<UIInteraction>(hovered))
+            if (view.Has<UIInteraction>(hovered))
             {
-                ref var interaction = ref query.GetTracked<UIInteraction>(hovered);
+                ref var interaction = ref view.GetTracked<UIInteraction>(hovered);
                 if (!interaction.IsDisabled)
                 {
                     interaction.State |= InteractionState.Pressed;
@@ -136,7 +136,7 @@ public partial class UIInteractionSystem
 
                     // Set focus
                     focusState.FocusSource = FocusSource.Mouse;
-                    SetFocus(query, focusState, events, hovered);
+                    SetFocus(view, focusState, events, hovered);
                 }
             }
         }
@@ -162,9 +162,9 @@ public partial class UIInteractionSystem
         if (mouseUp && !hitResult.PressedEntity.IsNull)
         {
             var pressed = hitResult.PressedEntity;
-            if (query.Has<UIInteraction>(pressed))
+            if (view.Has<UIInteraction>(pressed))
             {
-                ref var interaction = ref query.GetTracked<UIInteraction>(pressed);
+                ref var interaction = ref view.GetTracked<UIInteraction>(pressed);
                 interaction.State &= ~InteractionState.Pressed;
             }
 
@@ -184,22 +184,22 @@ public partial class UIInteractionSystem
         if (mouseDown && !focusState.FocusedEntity.IsNull && focusState.FocusedEntity != hovered)
         {
             bool hoveredIsFocusable = false;
-            if (!hovered.IsNull && query.Has<UIInteraction>(hovered))
+            if (!hovered.IsNull && view.Has<UIInteraction>(hovered))
             {
-                ref readonly var hoveredInteraction = ref query.Get<UIInteraction>(hovered);
+                ref readonly var hoveredInteraction = ref view.Read<UIInteraction>(hovered);
                 hoveredIsFocusable = hoveredInteraction.Focusable && !hoveredInteraction.IsDisabled;
             }
 
             if (!hoveredIsFocusable)
             {
-                ClearFocus(query, focusState, events);
+                ClearFocus(view, focusState, events);
             }
         }
 
         hitResult.PreviousMousePosition = hitResult.MousePosition;
     }
 
-    internal static void SetFocus(Query query, UIFocusState focusState, Events events, Entity entity)
+    internal static void SetFocus(View<UIInteraction> view, UIFocusState focusState, Events events, Entity entity)
     {
         var focusWriter = events.GetWriter<UIInteractionEvents.UIFocusEvent>();
         var blurWriter = events.GetWriter<UIInteractionEvents.UIBlurEvent>();
@@ -207,9 +207,9 @@ public partial class UIInteractionSystem
         // Blur previous
         if (!focusState.FocusedEntity.IsNull && focusState.FocusedEntity != entity)
         {
-            if (query.Has<UIInteraction>(focusState.FocusedEntity))
+            if (view.Has<UIInteraction>(focusState.FocusedEntity))
             {
-                ref var prevInteraction = ref query.GetTracked<UIInteraction>(focusState.FocusedEntity);
+                ref var prevInteraction = ref view.GetTracked<UIInteraction>(focusState.FocusedEntity);
                 prevInteraction.State &= ~InteractionState.Focused;
             }
 
@@ -217,9 +217,9 @@ public partial class UIInteractionSystem
         }
 
         // Focus new
-        if (query.Has<UIInteraction>(entity))
+        if (view.Has<UIInteraction>(entity))
         {
-            ref var interaction = ref query.GetTracked<UIInteraction>(entity);
+            ref var interaction = ref view.GetTracked<UIInteraction>(entity);
             if (interaction.Focusable && !interaction.IsDisabled)
             {
                 interaction.State |= InteractionState.Focused;
@@ -229,15 +229,15 @@ public partial class UIInteractionSystem
         }
     }
 
-    internal static void ClearFocus(Query query, UIFocusState focusState, Events events)
+    internal static void ClearFocus(View<UIInteraction> view, UIFocusState focusState, Events events)
     {
         var blurWriter = events.GetWriter<UIInteractionEvents.UIBlurEvent>();
 
         if (!focusState.FocusedEntity.IsNull)
         {
-            if (query.Has<UIInteraction>(focusState.FocusedEntity))
+            if (view.Has<UIInteraction>(focusState.FocusedEntity))
             {
-                ref var interaction = ref query.GetTracked<UIInteraction>(focusState.FocusedEntity);
+                ref var interaction = ref view.GetTracked<UIInteraction>(focusState.FocusedEntity);
                 interaction.State &= ~InteractionState.Focused;
             }
 
@@ -251,16 +251,16 @@ public partial class UIInteractionSystem
         UIHitTestResult hitResult,
         UIFocusState focusState,
         Events events,
-        Query query)
+        View<UIInteraction> view)
     {
         bool tabPressed = keyboard.JustPressed(Key.Tab);
         bool shiftHeld = keyboard.Pressed(Key.LeftShift) || keyboard.Pressed(Key.RightShift);
         bool activatePressed = keyboard.JustPressed(Key.Enter) || keyboard.JustPressed(Key.Space);
-        PerformFocusNavigation(query, focusState, events, tabPressed && !shiftHeld, tabPressed && shiftHeld, activatePressed);
+        PerformFocusNavigation(view, focusState, events, tabPressed && !shiftHeld, tabPressed && shiftHeld, activatePressed);
     }
 
     internal static void PerformFocusNavigation(
-        Query query, UIFocusState focusState, Events events,
+        View<UIInteraction> view, UIFocusState focusState, Events events,
         bool tabPressed, bool shiftTabPressed, bool activatePressed)
     {
         if (tabPressed && focusState.FocusOrder.Count > 0)
@@ -271,7 +271,7 @@ public partial class UIInteractionSystem
 
             int nextIndex = (currentIndex + 1) % focusState.FocusOrder.Count;
             focusState.FocusSource = FocusSource.Keyboard;
-            SetFocus(query, focusState, events, focusState.FocusOrder[nextIndex]);
+            SetFocus(view, focusState, events, focusState.FocusOrder[nextIndex]);
         }
         else if (shiftTabPressed && focusState.FocusOrder.Count > 0)
         {
@@ -281,7 +281,7 @@ public partial class UIInteractionSystem
 
             int prevIndex = (currentIndex - 1 + focusState.FocusOrder.Count) % focusState.FocusOrder.Count;
             focusState.FocusSource = FocusSource.Keyboard;
-            SetFocus(query, focusState, events, focusState.FocusOrder[prevIndex]);
+            SetFocus(view, focusState, events, focusState.FocusOrder[prevIndex]);
         }
 
         if (activatePressed && !focusState.FocusedEntity.IsNull)

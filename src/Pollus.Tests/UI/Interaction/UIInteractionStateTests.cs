@@ -52,10 +52,11 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Simulate mouse over child
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         var interaction = world.Store.GetComponent<UIInteraction>(child);
         Assert.True(interaction.IsHovered);
@@ -75,10 +76,11 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Hover enter
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         // Consume events from first frame
         world.Events.GetReader<UIInteractionEvents.UIHoverEnterEvent>()!.Read();
@@ -86,7 +88,7 @@ public class UIInteractionStateTests
 
         // Hover exit
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false);
 
         var interaction = world.Store.GetComponent<UIInteraction>(child);
         Assert.False(interaction.IsHovered);
@@ -106,10 +108,11 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Hover + press
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         var interaction = world.Store.GetComponent<UIInteraction>(child);
         Assert.True(interaction.IsPressed);
@@ -121,7 +124,7 @@ public class UIInteractionStateTests
 
         // Release on same entity
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
 
         interaction = world.Store.GetComponent<UIInteraction>(child);
         Assert.False(interaction.IsPressed);
@@ -145,10 +148,11 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Hover + press
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         // Consume events
         world.Events.GetReader<UIInteractionEvents.UIPressEvent>()!.Read();
@@ -157,7 +161,7 @@ public class UIInteractionStateTests
 
         // Move outside and release
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: false, mouseUp: true);
 
         var releaseReader = world.Events.GetReader<UIInteractionEvents.UIReleaseEvent>()!;
         var releases = releaseReader.Read();
@@ -194,9 +198,10 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         var interaction = world.Store.GetComponent<UIInteraction>(child);
         Assert.True(interaction.IsDisabled);
@@ -213,9 +218,10 @@ public class UIInteractionStateTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 50));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         Assert.Equal(child, focusState.FocusedEntity);
 

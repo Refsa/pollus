@@ -15,8 +15,7 @@ public partial class UITextInputSystem
     };
 
     internal static void PerformTextInput(
-        Query<UITextInput, UIInteraction> qInput,
-        Query<UIText> qText,
+        View<UITextInput, UIInteraction, UIText> view,
         UITextBuffers textBuffers,
         EventReader<UIInteractionEvents.UIKeyDownEvent> keyDownReader,
         EventReader<UIInteractionEvents.UITextInputEvent> textInputReader,
@@ -26,15 +25,15 @@ public partial class UITextInputSystem
         foreach (var textEvent in textInputReader.Read())
         {
             var entity = textEvent.Entity;
-            if (!qInput.Has<UITextInput>(entity)) continue;
+            if (!view.Has<UITextInput>(entity)) continue;
 
-            if (qInput.Has<UIInteraction>(entity))
+            if (view.Has<UIInteraction>(entity))
             {
-                ref readonly var interaction = ref qInput.Get<UIInteraction>(entity);
+                ref readonly var interaction = ref view.Read<UIInteraction>(entity);
                 if (interaction.IsDisabled) continue;
             }
 
-            ref var input = ref qInput.GetTracked<UITextInput>(entity);
+            ref var input = ref view.GetTracked<UITextInput>(entity);
             var text = textBuffers.Get(entity);
             var inputText = textEvent.Text;
 
@@ -59,7 +58,7 @@ public partial class UITextInputSystem
             if (changed)
             {
                 textBuffers.Set(entity, text);
-                SyncTextEntity(qText, ref input, text);
+                SyncTextEntity(view, ref input, text);
                 ResetCaret(ref input);
                 valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
             }
@@ -69,9 +68,9 @@ public partial class UITextInputSystem
         foreach (var keyEvent in keyDownReader.Read())
         {
             var entity = keyEvent.Entity;
-            if (!qInput.Has<UITextInput>(entity)) continue;
+            if (!view.Has<UITextInput>(entity)) continue;
 
-            ref var input = ref qInput.GetTracked<UITextInput>(entity);
+            ref var input = ref view.GetTracked<UITextInput>(entity);
             var key = (Key)keyEvent.Key;
             var text = textBuffers.Get(entity);
 
@@ -89,7 +88,7 @@ public partial class UITextInputSystem
                         text = text.Remove(input.CursorPosition - toRemove, toRemove);
                         input.CursorPosition -= toRemove;
                         textBuffers.Set(entity, text);
-                        SyncTextEntity(qText, ref input, text);
+                        SyncTextEntity(view, ref input, text);
                         ResetCaret(ref input);
                         valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
                     }
@@ -106,7 +105,7 @@ public partial class UITextInputSystem
 
                         text = text.Remove(input.CursorPosition, toRemove);
                         textBuffers.Set(entity, text);
-                        SyncTextEntity(qText, ref input, text);
+                        SyncTextEntity(view, ref input, text);
                         ResetCaret(ref input);
                         valueChanged.Write(new UITextInputEvents.UITextInputValueChanged { Entity = entity });
                     }
@@ -171,11 +170,11 @@ public partial class UITextInputSystem
         return i;
     }
 
-    static void SyncTextEntity(Query<UIText> qText, ref UITextInput input, string text)
+    static void SyncTextEntity(View<UITextInput, UIInteraction, UIText> view, ref UITextInput input, string text)
     {
         if (input.TextEntity.IsNull) return;
-        if (!qText.Has<UIText>(input.TextEntity)) return;
-        ref var uiText = ref qText.GetTracked<UIText>(input.TextEntity);
+        if (!view.Has<UIText>(input.TextEntity)) return;
+        ref var uiText = ref view.GetTracked<UIText>(input.TextEntity);
         uiText.Text = new NativeUtf8(text);
     }
 

@@ -72,10 +72,11 @@ public class UIFocusTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Click on child1 (at 0,0 size 200x50)
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(50, 25));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         Assert.Equal(child1, focusState.FocusedEntity);
 
@@ -93,23 +94,23 @@ public class UIFocusTests
 
         BuildFocusOrder(world);
         var focusState = world.Resources.Get<UIFocusState>();
-        var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // No focus initially, Tab should focus first
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(child1, focusState.FocusedEntity);
 
         // Consume events
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
 
         // Tab again → second
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(child2, focusState.FocusedEntity);
 
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
 
         // Tab again → third
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(child3, focusState.FocusedEntity);
     }
 
@@ -121,20 +122,20 @@ public class UIFocusTests
 
         BuildFocusOrder(world);
         var focusState = world.Resources.Get<UIFocusState>();
-        var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Focus the third item first
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child3);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child3);
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
 
         // Shift+Tab → second
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: false, shiftTabPressed: true, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: false, shiftTabPressed: true, activatePressed: false);
         Assert.Equal(child2, focusState.FocusedEntity);
 
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
 
         // Shift+Tab → first
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: false, shiftTabPressed: true, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: false, shiftTabPressed: true, activatePressed: false);
         Assert.Equal(child1, focusState.FocusedEntity);
     }
 
@@ -146,14 +147,14 @@ public class UIFocusTests
 
         BuildFocusOrder(world);
         var focusState = world.Resources.Get<UIFocusState>();
-        var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Focus the last item
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child3);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child3);
         world.Events.GetReader<UIInteractionEvents.UIFocusEvent>()!.Read();
 
         // Tab should wrap to first
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: true, shiftTabPressed: false, activatePressed: false);
         Assert.Equal(child1, focusState.FocusedEntity);
     }
 
@@ -165,13 +166,13 @@ public class UIFocusTests
 
         BuildFocusOrder(world);
         var focusState = world.Resources.Get<UIFocusState>();
-        var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child1);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child1);
         world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!.Read();
 
         // Enter activates focused entity
-        UIInteractionSystem.PerformFocusNavigation(query, focusState, world.Events, tabPressed: false, shiftTabPressed: false, activatePressed: true);
+        UIInteractionSystem.PerformFocusNavigation(view, focusState, world.Events, tabPressed: false, shiftTabPressed: false, activatePressed: true);
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var clicks = clickReader.Read();
@@ -188,14 +189,15 @@ public class UIFocusTests
         var hitResult = world.Resources.Get<UIHitTestResult>();
         var focusState = world.Resources.Get<UIFocusState>();
         var query = new Query(world);
+        var view = new View<UIInteraction>(world);
 
         // Focus child1
-        UIInteractionSystem.SetFocus(query, focusState, world.Events, child1);
+        UIInteractionSystem.SetFocus(view, focusState, world.Events, child1);
         world.Events.GetReader<UIInteractionEvents.UIBlurEvent>()!.Read();
 
         // Click empty space
         UIInteractionSystem.PerformHitTest(query, hitResult, focusState, new Vec2f(500, 500));
-        UIInteractionSystem.PerformUpdateState(query, hitResult, focusState, world.Events, mouseDown: true);
+        UIInteractionSystem.PerformUpdateState(view, hitResult, focusState, world.Events, mouseDown: true);
 
         Assert.True(focusState.FocusedEntity.IsNull);
 
