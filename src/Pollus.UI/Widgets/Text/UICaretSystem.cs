@@ -11,7 +11,7 @@ public partial class UICaretSystem
     public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UITextInputSystem::PerformTextInput"],
+        RunsAfter = ["UITextInputSystem::Update"],
     };
 
     static void Update(

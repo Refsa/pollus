@@ -3,8 +3,6 @@
 ## What is Pollus?
 A small endevour into the possibilities of a "pure" C# game engine that can compile to both native and web platforms. It aims to create a smaller 2D engine as a complete package, but still supporting selecting the underlying core modules to create other types of engines.
 
-You can find the Breakout clone example running [here](https://refsa.github.io/pollus/?breakout)
-
 ## Features
 - ECS with some inspiration from bevy
 - Plugin based features
@@ -33,8 +31,9 @@ Latest known working version can be found under the tag `v0.1.0`, but can be a b
 Browser is built with `dotnet publish --framework net10.0-browser -c Release` and can be hosted locally with `dotnet serve -S -p <port>`.  
 Install the `wasm-tools` and `wasm-experimental` workloads with `dotnet workload install <tool>`
 
-### Example folder
+### Examples
 The [/examples/Application](./examples/Application/) folder in the root directory contains a few different examples for each aspect of the engine.  
+**You can find the examples running [here](https://refsa.github.io/pollus/?breakout)**  
 
 ## Known Issues
 - ImGui has some function signature mismatch between Silk.NET generated bindings and the wasm native library file.

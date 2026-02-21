@@ -243,12 +243,14 @@ public partial class UITextSystemSet
         input.CaretHeight = lineHeight;
     }
 
-    static void Cleanup(UITreeAdapter adapter, RemovedTracker<UIText> tracker)
+    static void Cleanup(UITreeAdapter adapter, UITextBuffers textBuffers, RemovedTracker<UIText> tracker)
     {
         foreach (var removed in tracker)
         {
+            var entity = new Entity(removed.Entity);
             removed.Component.Text.Dispose();
-            adapter.RemoveMeasureFunc(new Entity(removed.Entity));
+            adapter.RemoveMeasureFunc(entity);
+            textBuffers.Remove(entity);
         }
     }
 }

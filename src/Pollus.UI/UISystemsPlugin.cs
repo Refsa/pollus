@@ -52,6 +52,7 @@ public class UISystemsPlugin : IPlugin
         world.Events.InitEvent<UITextInputEvents.UITextInputValueChanged>();
         world.Events.InitEvent<UINumberInputEvents.UINumberInputValueChanged>();
         world.Events.InitEvent<UISliderEvents.UISliderValueChanged>();
+        world.Events.InitEvent<UISliderEvents.UISliderReady>();
         world.Events.InitEvent<UIDropdownEvents.UIDropdownSelectionChanged>();
 
         // Widget resources
