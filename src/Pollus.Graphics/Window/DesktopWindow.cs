@@ -7,6 +7,7 @@ using Pollus.Graphics.SDL;
 public class DesktopWindow : IWindow, INativeWindowSource
 {
     INativeWindow native;
+    bool isDisposed;
 
     public bool IsOpen { get; private set; }
     public WindowOptions Options { get; private set; }
@@ -24,7 +25,8 @@ public class DesktopWindow : IWindow, INativeWindowSource
 
     public void Dispose()
     {
-        if (IsOpen is false) return;
+        if (isDisposed) return;
+        isDisposed = true;
         IsOpen = false;
         SDLWrapper.DestroyWindow(native);
     }
