@@ -107,11 +107,14 @@
 		- [ ] handle some function signature mismatches
 		- [x] Implement as Render Pass
 	- [-] UI engine based on Taffy
-		- [x] layout engine
+		- [x] flex layout
+		- [ ] grid layout
+		- [ ] block layout
 		- [x] rendering
 		- [-] widgets
 		- [ ] reactive changes
 		- [ ] animations
+	- [ ] Theme
 	- Widgets/Systems
 		- [ ] Tabs
 		- [ ] Tooltip
