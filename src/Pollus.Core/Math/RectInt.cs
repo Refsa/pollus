@@ -184,3 +184,13 @@ public partial struct RectInt
         return $"Rect {{Min: {Min}, Max: {Max}}}";
     }
 }
+
+public static class RectIntExt
+{
+    public static bool NullableEquals(this in RectInt? a, in RectInt? b)
+    {
+        if (a.HasValue != b.HasValue) return false;
+        if (!a.HasValue) return true;
+        return a!.Value.Min == b!.Value.Min && a.Value.Max == b.Value.Max;
+    }
+}

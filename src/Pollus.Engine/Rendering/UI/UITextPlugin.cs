@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Rendering;
 
+using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Assets;
 using Pollus.Graphics;
@@ -47,11 +48,33 @@ public partial class UITextSystemSet
         RunsAfter = [RenderingPlugin.BeginFrameSystem],
     };
 
+    class TextMeasureContext
+    {
+        public NativeUtf8 Text;
+        public float Size;
+        public SdfTier Tier = null!;
+
+        public Size<float> Measure(Size<float?> knownDimensions, Size<AvailableSpace> availableSpace)
+        {
+            float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
+            var measured = TextBuilder.MeasureText(Text, Tier, Size, maxWidth);
+            return new Size<float>(
+                knownDimensions.Width ?? measured.X,
+                knownDimensions.Height ?? measured.Y);
+        }
+    }
+
+    class TextMeasureContexts
+    {
+        public readonly Dictionary<Entity, TextMeasureContext> Contexts = [];
+    }
+
     [System(nameof(RegisterMeasureFuncs))]
     public static readonly SystemBuilderDescriptor RegisterMeasureFuncsDescriptor = new()
     {
         Stage = CoreStage.First,
         RunsAfter = [EnsureTextMeshDescriptor.Label, PrepareUIFontDescriptor.Label],
+        Locals = [Local.From(new TextMeasureContexts())],
     };
 
     [System(nameof(BuildUITextMesh))]
@@ -108,8 +131,14 @@ public partial class UITextSystemSet
         });
     }
 
-    static void RegisterMeasureFuncs(UITreeAdapter adapter, Assets<FontAsset> fonts, Query<UIText, ContentSize, UITextFont> query)
+    static void RegisterMeasureFuncs(Local<TextMeasureContexts> local, UITreeAdapter adapter, Assets<FontAsset> fonts,
+        RemovedTracker<UIText> removedTracker, Query<UIText, ContentSize, UITextFont> query)
     {
+        var contexts = local.Value.Contexts;
+
+        foreach (var removed in removedTracker)
+            contexts.Remove(new Entity(removed.Entity));
+
         foreach (var row in query)
         {
             ref var uiText = ref row.Component0;
@@ -117,27 +146,22 @@ public partial class UITextSystemSet
             var entity = row.Entity;
 
             if (!uiText.IsDirty && adapter.GetNodeId(entity) >= 0)
-            {
-                // Already registered and not dirty, skip
                 continue;
-            }
 
             if (textFont.Font.IsNull()) continue;
             var fontAsset = fonts.Get(textFont.Font);
             if (fontAsset is null) continue;
 
-            // Capture current text/size/font for the measure delegate
-            var capturedText = uiText.Text;
-            var capturedSize = uiText.Size;
-            var capturedTier = fontAsset.GetTierForSize(capturedSize);
-            adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
+            if (!contexts.TryGetValue(entity, out var ctx))
             {
-                float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
-                var measured = TextBuilder.MeasureText(capturedText, capturedTier, capturedSize, maxWidth);
-                return new Size<float>(
-                    knownDimensions.Width ?? measured.X,
-                    knownDimensions.Height ?? measured.Y);
-            });
+                ctx = new TextMeasureContext();
+                contexts[entity] = ctx;
+                adapter.SetMeasureFunc(entity, ctx.Measure);
+            }
+
+            ctx.Text = uiText.Text;
+            ctx.Size = uiText.Size;
+            ctx.Tier = fontAsset.GetTierForSize(uiText.Size);
 
             uiText.IsDirty = false;
         }

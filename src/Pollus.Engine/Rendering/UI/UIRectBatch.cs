@@ -5,9 +5,64 @@ using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public readonly record struct UIRectBatchKey(Handle Material, Handle Texture, Handle Sampler, RectInt? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
+public readonly struct UIRectBatchKey : IEquatable<UIRectBatchKey>
 {
-    public int SortKey { get; } = RenderingUtils.PackSortKeys(Material.ID, Texture.ID);
+    public Handle Material { get; }
+    public Handle Texture { get; }
+    public Handle Sampler { get; }
+    public RectInt? ScissorRect { get; }
+    public RenderStep2D RenderStep { get; }
+    public int SortKey { get; }
+
+    public UIRectBatchKey(Handle Material, Handle Texture, Handle Sampler, RectInt? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
+    {
+        this.Material = Material;
+        this.Texture = Texture;
+        this.Sampler = Sampler;
+        this.ScissorRect = ScissorRect;
+        this.RenderStep = RenderStep;
+        SortKey = RenderingUtils.PackSortKeys(Material.ID, Texture.ID);
+    }
+
+    public bool Equals(UIRectBatchKey other)
+    {
+        if (Material != other.Material
+            || Texture != other.Texture
+            || Sampler != other.Sampler
+            || RenderStep != other.RenderStep
+            || ScissorRect.HasValue != other.ScissorRect.HasValue)
+            return false;
+
+        if (!ScissorRect.HasValue) return true;
+
+        var a = ScissorRect.GetValueOrDefault();
+        var b = other.ScissorRect.GetValueOrDefault();
+        return a.Min.X == b.Min.X && a.Min.Y == b.Min.Y
+            && a.Max.X == b.Max.X && a.Max.Y == b.Max.Y;
+    }
+
+    public override bool Equals(object? obj) => obj is UIRectBatchKey other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Material);
+        hash.Add(Texture);
+        hash.Add(Sampler);
+        hash.Add(RenderStep);
+        if (ScissorRect.HasValue)
+        {
+            var r = ScissorRect.GetValueOrDefault();
+            hash.Add(r.Min.X);
+            hash.Add(r.Min.Y);
+            hash.Add(r.Max.X);
+            hash.Add(r.Max.Y);
+        }
+        return hash.ToHashCode();
+    }
+
+    public static bool operator ==(UIRectBatchKey left, UIRectBatchKey right) => left.Equals(right);
+    public static bool operator !=(UIRectBatchKey left, UIRectBatchKey right) => !left.Equals(right);
 }
 
 public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>

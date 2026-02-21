@@ -95,19 +95,17 @@ public partial class ExtractUIRectsSystem
             var textureBinding = new TextureBinding { Image = rectBatch.Texture };
             var samplerBinding = new SamplerBinding { Sampler = samplerHandle };
 
-            IBinding[] bindings = [uniformBinding, textureBinding, samplerBinding];
-
             using var layout = gpuContext.CreateBindGroupLayout(new()
             {
                 Label = "ui-rect-image-bind-group-layout",
-                Entries = [.. bindings.Select((b, i) => b.Layout((uint)i))],
+                Entries = [uniformBinding.Layout(0), textureBinding.Layout(1), samplerBinding.Layout(2)],
             });
 
             var bindGroup = gpuContext.CreateBindGroup(new()
             {
                 Label = "ui-rect-image-bind-group",
                 Layout = layout,
-                Entries = [.. bindings.Select((b, i) => b.Binding(renderAssets, gpuContext, assetServer, (uint)i))],
+                Entries = [uniformBinding.Binding(renderAssets, gpuContext, assetServer, 0), textureBinding.Binding(renderAssets, gpuContext, assetServer, 1), samplerBinding.Binding(renderAssets, gpuContext, assetServer, 2)],
             });
 
             batches.CacheBindGroup(rectBatch.Texture, rectBatch.Sampler, renderAssets.Add(bindGroup));

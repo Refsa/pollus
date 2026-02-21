@@ -46,6 +46,13 @@ unsafe public struct NativeUtf8 : IDisposable
 
     public ReadOnlySpan<byte> AsSpan() => new(Pointer, count);
 
+    public ReadOnlySpan<byte> ContentSpan => count > 0 ? new(Pointer, count - 1) : default;
+
+    public bool ContentEquals(ReadOnlySpan<byte> utf8)
+    {
+        return ContentSpan.SequenceEqual(utf8);
+    }
+
     public override string ToString()
     {
         return Encoding.UTF8.GetString(data.Slice(0, count));
