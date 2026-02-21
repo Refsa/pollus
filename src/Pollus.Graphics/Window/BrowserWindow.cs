@@ -26,6 +26,7 @@ public partial class BrowserWindow : IWindow
     public INativeWindow? Native => null;
 
     nint nativeWindow;
+    bool isDisposed;
 
     public BrowserWindow(WindowOptions options)
     {
@@ -44,7 +45,8 @@ public partial class BrowserWindow : IWindow
 
     public void Dispose()
     {
-        if (IsOpen is false) return;
+        if (isDisposed) return;
+        isDisposed = true;
         IsOpen = false;
 
         Emscripten.ClearMainLoop();
