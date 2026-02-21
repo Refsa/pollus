@@ -10,12 +10,11 @@ public class FontAssetLoader : AssetLoader<FontAsset>
     static readonly string[] extensions = [".ttf", ".otf"];
     public override string[] Extensions => extensions;
 
-    // Uniform padding keeps PixelDistScale=16 for all tiers, matching shader constants.
     static readonly (uint SdfRenderSize, int SdfPadding)[] TierConfigs =
     [
         (24, 8),
         (48, 8),
-        (64, 8),
+        (96, 8),
     ];
 
     const byte OnEdgeValue = 128;

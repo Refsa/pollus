@@ -112,6 +112,37 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         };
     }
 
+    static Pollus.Emscripten.WGPU.WGPUAddressMode Map(Silk.NET.WebGPU.AddressMode value)
+    {
+        return value switch
+        {
+            Silk.NET.WebGPU.AddressMode.ClampToEdge => Pollus.Emscripten.WGPU.WGPUAddressMode.ClampToEdge,
+            Silk.NET.WebGPU.AddressMode.Repeat => Pollus.Emscripten.WGPU.WGPUAddressMode.Repeat,
+            Silk.NET.WebGPU.AddressMode.MirrorRepeat => Pollus.Emscripten.WGPU.WGPUAddressMode.MirrorRepeat,
+            _ => Pollus.Emscripten.WGPU.WGPUAddressMode.ClampToEdge,
+        };
+    }
+
+    static Pollus.Emscripten.WGPU.WGPUFilterMode Map(Silk.NET.WebGPU.FilterMode value)
+    {
+        return value switch
+        {
+            Silk.NET.WebGPU.FilterMode.Nearest => Pollus.Emscripten.WGPU.WGPUFilterMode.Nearest,
+            Silk.NET.WebGPU.FilterMode.Linear => Pollus.Emscripten.WGPU.WGPUFilterMode.Linear,
+            _ => Pollus.Emscripten.WGPU.WGPUFilterMode.Linear,
+        };
+    }
+
+    static Pollus.Emscripten.WGPU.WGPUMipmapFilterMode Map(Silk.NET.WebGPU.MipmapFilterMode value)
+    {
+        return value switch
+        {
+            Silk.NET.WebGPU.MipmapFilterMode.Nearest => Pollus.Emscripten.WGPU.WGPUMipmapFilterMode.Nearest,
+            Silk.NET.WebGPU.MipmapFilterMode.Linear => Pollus.Emscripten.WGPU.WGPUMipmapFilterMode.Linear,
+            _ => Pollus.Emscripten.WGPU.WGPUMipmapFilterMode.Nearest,
+        };
+    }
+
     public NativeHandle<InstanceTag> CreateInstance()
     {
         var instance = wgpu.CreateInstance(null);
@@ -218,12 +249,12 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         var native = new Pollus.Emscripten.WGPU.WGPUSamplerDescriptor
         {
             Label = (byte*)label.Pointer,
-            AddressModeU = (Pollus.Emscripten.WGPU.WGPUAddressMode)descriptor.AddressModeU,
-            AddressModeV = (Pollus.Emscripten.WGPU.WGPUAddressMode)descriptor.AddressModeV,
-            AddressModeW = (Pollus.Emscripten.WGPU.WGPUAddressMode)descriptor.AddressModeW,
-            MagFilter = (Pollus.Emscripten.WGPU.WGPUFilterMode)descriptor.MagFilter,
-            MinFilter = (Pollus.Emscripten.WGPU.WGPUFilterMode)descriptor.MinFilter,
-            MipmapFilter = (Pollus.Emscripten.WGPU.WGPUMipmapFilterMode)descriptor.MipmapFilter,
+            AddressModeU = Map(descriptor.AddressModeU),
+            AddressModeV = Map(descriptor.AddressModeV),
+            AddressModeW = Map(descriptor.AddressModeW),
+            MagFilter = Map(descriptor.MagFilter),
+            MinFilter = Map(descriptor.MinFilter),
+            MipmapFilter = Map(descriptor.MipmapFilter),
             LodMinClamp = descriptor.LodMinClamp,
             LodMaxClamp = descriptor.LodMaxClamp,
             Compare = (Pollus.Emscripten.WGPU.WGPUCompareFunction)descriptor.Compare,
