@@ -515,7 +515,7 @@ public class TextAssetLoader : AssetLoader<TextAsset>
 - Engine has support for compute shaders
 - Functions in the same way as a regular material
 - Configured via ComputeCommands and dispatched on a compute encoder
-- Example can be found in [Compute Example](./examples/ComputeExample.cs)
+- Example can be found in [Compute Example](./examples/Application/Examples/ComputeExample.cs)
 
 ### FrameGraph
 - TODO
@@ -537,7 +537,7 @@ public class TextAssetLoader : AssetLoader<TextAsset>
 - Can save and load flat and hierarchical entities
 - Serialized as JSON
 - Supports hot-reload of scene asset and any used sub-assets
-- Full example can be found in the [Scene Example](./examples/SceneExample.cs)
+- Full example can be found in the [Scene Example](./examples/Application/Examples/ECS/SceneExamples.cs)
 
 ## Tween
 - Engine supports tweening object properties in an efficient ECS way
@@ -577,14 +577,226 @@ Tween.Sequence(commands)
 ## Audio
 - There is a limited audio system that allows playing sounds
 - Very basic right now
-- Example can be found in the [Audio Example](./examples/AudioExample.cs)
+- Example can be found in the [Audio Example](./examples/Application/Examples/AudioExample.cs)
 
 ## Input
 - Keyboard, Mouse and Gamepad input is supported (uses SDL)
 - Inputs are read via the Event system, but can be read via polling as well
     - `EventReader<ButtonEvent<Key>>` to read via events
     - `ButtonInput<Key>` to read via polling
-- Example can be found in the [Input Example](./examples/InputExample.cs)
+- Example can be found in the [Input Example](./examples/Application/Examples/InputExample.cs)
 
 ## UI
 - FlexBox layout engine based on taffy
+- SDF based renderer with support for borders, outlines, shadows, etc.
+- Custom and flexible `Style` support
+- `UIPlugin` is main plugin entry
+    - `UISystemsPlugin` for layout and widgets/controls
+    - `UIRenderPlugin` and `UITextPlugin` for rendering
+- Focus handler, with support for keyboard/gamepad navigation
+    - Still very basic implementation
+- Examples can be found under the [UIExample](./examples/Application/Examples/UIExample.cs)
+
+### UI Builder
+- `UI` class contains a few helpers to build out different UI elements
+- Makes use of a fluent builder API
+
+```cs
+// Fluent styling
+_ = UI.Panel(commands)
+    .FlexRow().AlignItems(AlignItems.Center).JustifyContent(JustifyContent.SpaceBetween)
+    .Size(Length.Percent(1f), Length.Auto)
+    .Children(
+        UI.Text(commands, "Some Text", fontHandle).FontSize(12f).Color(new Color(0.7f, 0.72f, 0.78f, 1f)).Spawn(),
+    )
+    .Spawn();
+
+// Optional access to full Style
+_ = UI.Panel(commands)
+    .Style(s => s with 
+    { 
+        Size = new(Length.Percent(1f), Length.Auto),
+    }) 
+    .Spawn();
+```
+
+### Components
+- UI is designed with Entities and Hierarchy, it lives in the ECS world
+- UI is synced to a layout engine when changes are made
+- Layout engine syncs back with entities used to render the UI
+- Core internal components:
+    - `UINode`, `UIStyle`, `ComputedNode`, `UILayoutRoot`, `UIAutoResize`
+- Core visual components:
+    - `BackgroundColor`, `BorderColor`, `BorderRadius`, `BoxShadow`, `Outline`, `UIShape`, `UIImage`
+- Components make use of `Required Components` in order to ensure that all other required components are spawned
+    - For built-in types it's best to use the `UI` builder class
+    - Custom widgets/controls can be crafted from the base components above
+- `UIInteraction` for interactable UI 
+    - Hovered, Pressed, Focused, Disabled states
+
+### Layout
+- CSS-like flexbox layout
+- Size controlled via `Length` with these options: `Px(float)`, `Percent(float)`, `Auto`
+- Style properties: 
+```cs
+Display, Position,
+FlexDirection, FlexWrap, FlexGrow, FlexShrink, FlexBasis,
+AlignItems, JustifyContent, AlignSelf, AlignContent
+Gap, Padding, Margin,
+Border, Inset,
+Overflow,
+Size, MinSize, MaxSize, AspectRatio,
+BoxSizing, Order,
+```
+
+### Interaction & Events
+- UI is based on ECS events via `EventReader<T>`/`EventWriter<T>`
+- Core events: 
+```cs 
+UIClickEvent, UIPressEvent, UIReleaseEvent, UIDragEvent
+UIHoverEnterEvent, UIHoverExitEvent,
+UIFocusEvent, UIBlurEvent,
+UIKeyDownEvent, UIKeyUpEvent, UITextInputEvent,
+```
+- Focus can be controlled by `Tab navigation` with override for `FocusSource` (Mouse/Keyboard)
+- Visuals for focus can be controlled via `UIFocusVisual` and `UIFocusVisualStyle`
+- Click is emitted only when press and release happen on the same entity.
+- Pointer press captures entity (UIHitTestResult.CapturedEntity) and drag emits UIDragEvent.
+- Clicking empty space (or non-focusable target) blurs current focus.
+- Tab / Shift+Tab changes focus; Enter / Space activates focused entity (emits click).
+- Disabled elements (InteractionState.Disabled) do not receive hover/press/focus transitions.
+
+### Widgets
+- Widget events are nested in static classes (e.g. `UIToggleEvents.UIToggleEvent`)
+- All widgets also receive core interaction events (`UIClickEvent`, `UIHoverEnterEvent`, etc.)
+
+#### Button
+- Color states: normal, hover, pressed, disabled
+- Events: uses the core `UIClickEvent`
+```cs
+UI.Button(commands)
+    .Colors(normal: Color.GRAY, hover: Color.WHITE, pressed: Color.DARK_GRAY, disabled: Color.BLACK)
+    .Spawn();
+```
+
+#### Toggle
+- Events: `UIToggleEvents.UIToggleEvent { Entity, bool IsOn }`
+```cs
+UI.Toggle(commands)
+    .IsOn(true)
+    .OnColor(new Color(0.2f, 0.7f, 0.2f, 1f))
+    .OffColor(new Color(0.8f, 0.8f, 0.8f, 1f))
+    .Spawn();
+```
+
+#### CheckBox
+- Events: `UICheckBoxEvents.UICheckBoxEvent { Entity, bool IsChecked }`
+```cs
+// Single checkbox
+UI.CheckBox(commands)
+    .IsChecked(true)
+    .CheckedColor(new Color(0.2f, 0.6f, 1.0f, 1f))
+    .UncheckedColor(new Color(0.8f, 0.8f, 0.8f, 1f))
+    .CheckmarkColor(Color.WHITE)
+    .Spawn();
+
+// Group with labels
+UI.CheckBoxGroup(commands)
+    .Option("Option A").Option("Option B").Option("Option C")
+    .Checked(0) // pre-check first option
+    .CheckedColor(new Color(0.2f, 0.6f, 1.0f, 1f))
+    .FontSize(14f).TextColor(Color.WHITE).Font(fontHandle)
+    .Spawn();
+```
+
+#### RadioButton
+- Group-aware selection, only one in a group can be selected
+- Events: `UIRadioButtonEvents.UIRadioButtonEvent { Entity, int GroupId, bool IsSelected }`
+```cs
+// Individual radio buttons with shared group
+var groupId = UIRadioButtonBuilder.NextGroupId;
+UI.RadioButton(commands, groupId).IsSelected(true).Spawn();
+UI.RadioButton(commands, groupId).Spawn();
+
+// Group with labels
+UI.RadioGroup(commands)
+    .Option("Option A").Option("Option B").Option("Option C")
+    .Selected(0) // pre-select first option
+    .SelectedColor(new Color(0.2f, 0.6f, 1.0f, 1f))
+    .FontSize(14f).TextColor(Color.WHITE).Font(fontHandle)
+    .Spawn();
+```
+
+#### Slider
+- Events: `UISliderEvents.UISliderValueChanged { Entity, float Value, float PreviousValue }`
+```cs
+UI.Slider(commands)
+    .Value(0.5f)
+    .Range(0f, 1f)
+    .Step(0.1f)
+    .TrackColor(new Color(0.3f, 0.3f, 0.3f, 1f))
+    .FillColor(new Color(0.2f, 0.6f, 1.0f, 1f))
+    .ThumbColor(Color.WHITE)
+    .Spawn();
+```
+
+#### TextInput
+- Supports input filtering: `Any`, `Integer`, `Decimal`, `Alphanumeric`
+- Events: `UITextInputEvents.UITextInputValueChanged { Entity }`
+```cs
+UI.TextInput(commands, fontHandle)
+    .Text("initial text")
+    .Filter(UIInputFilterType.Any)
+    .FontSize(16f)
+    .TextColor(Color.WHITE)
+    .Spawn();
+```
+
+#### NumberInput
+- Numeric-constrained text input with `Float` or `Int` type
+- Events: `UINumberInputEvents.UINumberInputValueChanged { Entity, float Value, float PreviousValue }`
+```cs
+UI.NumberInput(commands)
+    .Value(50f)
+    .Range(0f, 100f)
+    .Step(1f)
+    .Type(NumberInputType.Int)
+    .FontSize(16f)
+    .Spawn();
+```
+
+#### Dropdown
+- Events: `UIDropdownEvents.UIDropdownSelectionChanged { Entity, int SelectedIndex, int PreviousIndex }`
+```cs
+UI.Dropdown(commands, fontHandle)
+    .Placeholder("Select...")
+    .Options("Option A", "Option B", "Option C")
+    .FontSize(14f)
+    .TextColor(Color.WHITE)
+    .Spawn();
+```
+
+### Text
+- Supports text rendering with similar font support as the world space Text
+- Renders text with SDF
+- Content-aware sizing that allows for word wrap, etc.
+
+### Images
+- Allows rendering any texture in the UI
+- Supports UV Slice Rect, to render part of an image or spritesheet
+
+### Rendering
+- Supports different SDF shapes in `UIShape`: `RoundedRect, Circle, Checkmark, DownArrow`
+- Batched rendering as long as UI elements share the same texture
+    - Text, Images and rest of UI is rendered in different batches
+    - Batches can be split based on render ordering
+- Scissor rect use for clipping with the `Overflow` style parameter
+
+### Scroll views
+- Has support for scrollable views
+- `Overflow` style parameter controls it with these options `Visible, Clip, Hidden, Scroll`
+- Draggable thumb
+- `Scroll Wheel` for vertical scroll, `Shift + Scroll Wheel` for horizontal scroll
+
+### Missing stuff
+- `Block` and `Grid` layouts are currently not implemented and functions like `Flex`
