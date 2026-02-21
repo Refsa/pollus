@@ -56,12 +56,19 @@ fn fs_main(
 ) -> FragmentOutput {
     var out: FragmentOutput;
 
-    var sample = textureSample(atlas_texture, atlas_texture_sampler, input.uv).r;
-    out.color = vec4f(1.0, 1.0, 1.0, sample) * input.color;
-    
-    if (out.color.a == 0.0) {
+    let dist = textureSample(atlas_texture, atlas_texture_sampler, input.uv).r;
+
+    // Scale factor: 0.5 * PixelDistScale/255 * AtlasSize = 0.5 * 16/255 * 4096 ~ 128
+    let fw = fwidth(input.uv);
+    let w = min(max(fw.x, fw.y) * 128.0, 0.15);
+    let edge = 0.5;
+    let alpha = smoothstep(edge - w, edge + w, dist);
+
+    if (alpha * input.color.a < 0.01) {
         discard;
     }
-    
+
+    out.color = vec4f(1.0, 1.0, 1.0, alpha) * input.color;
+
     return out;
 }

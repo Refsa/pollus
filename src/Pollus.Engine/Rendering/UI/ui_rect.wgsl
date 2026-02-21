@@ -23,6 +23,7 @@ struct VertexOutput {
     @location(6) @interpolate(flat) extra: vec4f,
     @location(7) @interpolate(flat) outline_color: vec4f,
     @location(8) uv: vec2f,
+    @location(9) @interpolate(flat) uv_rect_size: vec2f,
 };
 
 struct UIUniform {
@@ -69,6 +70,10 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     out.extra = input.i_extra;
     out.outline_color = input.i_outline_color;
     out.uv = input.i_uv_rect.xy + vec2f(u, v) * input.i_uv_rect.zw;
+
+    // Pass UV rect size for derivative-free SDF width computation in fragment shader.
+    out.uv_rect_size = input.i_uv_rect.zw;
+
     return out;
 }
 
@@ -145,12 +150,20 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     // AA width adjusted for display scale (at 1x scale this is 1.0)
     let AA = 1.0 / ui.scale;
 
-    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
+    // Text glyphs
     if (input.extra.w > 0.5) {
-        let glyph_alpha = tex_color.r * input.bg_color.a;
-        if (glyph_alpha < 0.001) { discard; }
+        // Derivative-free SDF smoothstep width: texels_per_pixel * PixelDistScale/255 * 0.5
+        let atlas_dim = vec2f(textureDimensions(tex));
+        let glyph_texels = input.uv_rect_size * atlas_dim;
+        let glyph_pixels = max(size, vec2f(1.0));
+        let tpp = max(glyph_texels.x / glyph_pixels.x, glyph_texels.y / glyph_pixels.y);
+        let sdf_w = min(tpp * (8.0 / 255.0), 0.15);
+        let dist = tex_color.r;
+        let edge = 0.5;
+        let alpha = smoothstep(edge - sdf_w, edge + sdf_w, dist) * input.bg_color.a;
+        if (alpha < 0.01) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
+        out.color = vec4f(input.bg_color.rgb, alpha);
         return out;
     }
 
