@@ -118,7 +118,7 @@ public class DrawGroup<TGroup>
                 idx++;
             }
 
-            if (!Equals(command.ScissorRect, scissorRect))
+            if (!command.ScissorRect.NullableEquals(scissorRect))
             {
                 scissorRect = command.ScissorRect;
                 if (scissorRect.HasValue)

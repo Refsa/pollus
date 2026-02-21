@@ -1,5 +1,6 @@
 namespace Pollus.Examples;
 
+using System.Text.Unicode;
 using Pollus.Assets;
 using Pollus.Collections;
 using Pollus.ECS;
@@ -28,7 +29,6 @@ public class UIExample : IExample
         public Entity ThemeDropdownEntity = Entity.Null;
         public string[] ThemeOptions = [];
         public string LastEventLogText = "";
-        public string LastFocusStatus = "";
         public int EventLogAutoScrollFrames = 0;
         public readonly Dictionary<Entity, string> Labels = [];
         public readonly List<string> EventLog = [];
@@ -614,8 +614,6 @@ public class UIExample : IExample
 
                 // 2) Keyboard + Focus
                 var initialFocusStatus = "Focused: none\nSource: -";
-                state.LastFocusStatus = initialFocusStatus;
-
                 var focusStatusText = UI.Text(commands, initialFocusStatus, fontHandle)
                     .FontSize(12f)
                     .Color(new Color(0.78f, 0.85f, 0.95f, 1f))
@@ -862,8 +860,8 @@ public class UIExample : IExample
                 commands.Entity(contentRow).AddChild(mainPanel);
             }))
         .AddSystems(CoreStage.PostUpdate, FnSystem.Create(new SystemBuilderDescriptor("UIExample::EventConsole")
-            {
-                RunsAfter = [
+        {
+            RunsAfter = [
                     "UIInteractionSystem::UpdateState",
                     "UIInteractionSystem::FocusNavigation",
                     "UIToggleSystem::UpdateToggles",
@@ -874,7 +872,7 @@ public class UIExample : IExample
                     "UINumberInputSystem::PerformUpdate",
                     "UIDropdownSystem::PerformUpdate",
                 ],
-            },
+        },
             static (
                 UIExampleState state,
                 UITextBuffers textBuffers,
@@ -956,13 +954,13 @@ public class UIExample : IExample
                 eventLogText.Text = new NativeUtf8(logText);
             }))
         .AddSystems(CoreStage.PostUpdate, FnSystem.Create(new SystemBuilderDescriptor("UIExample::EventLogAutoScroll")
-            {
-                RunsAfter = [
+        {
+            RunsAfter = [
                     "UIExample::EventConsole",
                     "UILayoutSystem::WriteBack",
                     "UIScrollSystem::UpdateVisuals",
                 ],
-            },
+        },
             static (UIExampleState state, Query<UIScrollOffset, ComputedNode> qScroll) =>
             {
                 if (state.EventLogAutoScrollFrames <= 0 || state.EventLogViewportEntity.IsNull)
@@ -982,9 +980,9 @@ public class UIExample : IExample
                 state.EventLogAutoScrollFrames--;
             }))
         .AddSystems(CoreStage.PostUpdate, FnSystem.Create(new SystemBuilderDescriptor("UIExample::FocusStatus")
-            {
-                RunsAfter = ["UIInteractionSystem::FocusNavigation"],
-            },
+        {
+            RunsAfter = ["UIInteractionSystem::FocusNavigation"],
+        },
             static (UIExampleState state, UIFocusState focusState, View<UIText> viewText) =>
             {
                 if (state.FocusStatusTextEntity.IsNull || !viewText.Has<UIText>(state.FocusStatusTextEntity))
@@ -997,14 +995,16 @@ public class UIExample : IExample
                     ? "-"
                     : (focusState.FocusSource == FocusSource.Keyboard ? "keyboard" : "mouse");
 
-                var nextStatus = $"Focused: {focusedLabel}\nSource: {sourceLabel}";
-                if (nextStatus == state.LastFocusStatus)
+                Span<byte> buf = stackalloc byte[256];
+                if (!Utf8.TryWrite(buf, $"Focused: {focusedLabel}\nSource: {sourceLabel}", out var len))
                     return;
 
-                state.LastFocusStatus = nextStatus;
-
+                var newText = buf[..len];
                 ref var focusStatusText = ref viewText.GetTracked<UIText>(state.FocusStatusTextEntity);
-                focusStatusText.Text = new NativeUtf8(nextStatus);
+                if (focusStatusText.Text.ContentEquals(newText))
+                    return;
+
+                focusStatusText.Text = new NativeUtf8(newText);
             }))
         .Build()).Run();
 }

@@ -282,6 +282,7 @@ public class AssetServer : IDisposable
 
     public void FlushQueue()
     {
+        if (queuedPaths.IsEmpty) return;
         foreach (var kvp in queuedPaths)
         {
             if (kvp.Value > DateTime.UtcNow.AddMilliseconds(-300)) continue;
