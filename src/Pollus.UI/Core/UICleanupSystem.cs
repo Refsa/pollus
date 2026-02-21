@@ -14,19 +14,11 @@ public partial class UICleanupSystem
     };
 
     static void CleanupRemovedEntities(
-        UITreeAdapter adapter,
-        RemovedTracker<UIText> removedTexts,
-        UITextBuffers textBuffers)
+        UITreeAdapter adapter)
     {
-        foreach (var entity in adapter.LastRemovedEntities)
+        /* foreach (var entity in adapter.LastRemovedEntities)
         {
-            if (removedTexts.WasRemoved(entity))
-            {
-                ref var text = ref removedTexts.GetRemoved(entity);
-                text.Text.Dispose();
-            }
-
-            textBuffers.Remove(entity);
-        }
+            
+        } */
     }
 }

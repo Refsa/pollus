@@ -80,6 +80,9 @@
 	- [ ] Bundle
 		- struct that can hold several components to be added as one
 		- needs a source generator for IEntityBuilder
+	- [ ] SystemLabel generator
+		- Currently an issue with how SystemSet labels are generated. Could cause issues when trying to use labels because of static init order.
+		- SystemLabel in SystemSet should be 'public const' so its accessible for all static lifetimes.
 - Scene
 	- [-] Scene Layout
 		- [x] entities

@@ -25,7 +25,7 @@ public partial class UISliderSystem
     static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
     {
         Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UILayoutSystem::WriteBack", "UISliderSystem::PerformUpdate"],
+        RunsAfter = ["UILayoutSystem::WriteBack", "UISliderSystem::Update"],
     };
 
     internal static void PerformUpdate(
