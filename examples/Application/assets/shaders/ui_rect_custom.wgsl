@@ -1,19 +1,21 @@
 struct VertexInput {
     @builtin(vertex_index) index: u32,
-    @location(0) i_pos_size: vec4f,
-    @location(1) i_bg_color: vec4f,
-    @location(2) i_border_color: vec4f,
-    @location(3) i_border_radius: vec4f,
-    @location(4) i_border_widths: vec4f,
-    @location(5) i_extra: vec4f,
-    @location(6) i_outline_color: vec4f,
-    @location(7) i_uv_rect: vec4f,
+
+    // Instance data
+    @location(0) i_pos_size: vec4f,       // xy=position, zw=size (screen pixels)
+    @location(1) i_bg_color: vec4f,       // background RGBA
+    @location(2) i_border_color: vec4f,   // border RGBA
+    @location(3) i_border_radius: vec4f,  // topLeft, topRight, bottomRight, bottomLeft
+    @location(4) i_border_widths: vec4f,  // top, right, bottom, left
+    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=TextMode (>0.5=glyph)
+    @location(6) i_outline_color: vec4f,  // outline RGBA
+    @location(7) i_uv_rect: vec4f,       // minU, minV, sizeU, sizeV
 };
 
 struct VertexOutput {
     @builtin(position) pos: vec4f,
-    @location(0) local_pos: vec2f,
-    @location(1) size: vec2f,
+    @location(0) local_pos: vec2f,         // position within expanded rect [0, expanded_size]
+    @location(1) size: vec2f,              // original element size (before expansion)
     @location(2) @interpolate(flat) bg_color: vec4f,
     @location(3) @interpolate(flat) border_color: vec4f,
     @location(4) @interpolate(flat) border_radius: vec4f,
@@ -21,7 +23,8 @@ struct VertexOutput {
     @location(6) @interpolate(flat) extra: vec4f,
     @location(7) @interpolate(flat) outline_color: vec4f,
     @location(8) uv: vec2f,
-    @location(9) screen_pos: vec2f,
+    @location(9) @interpolate(flat) uv_rect_size: vec2f,
+    @location(10) screen_pos: vec2f,
 };
 
 struct UIUniform {
@@ -42,6 +45,7 @@ struct UIUniform {
 
 @vertex
 fn vs_main(input: VertexInput) -> VertexOutput {
+    // Generate quad corner from vertex_index (0..5 for triangle strip producing 2 triangles)
     let u = f32(input.index & 0x1u);
     let v = f32((input.index & 0x2u) >> 1u);
 
@@ -49,16 +53,20 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let outline_offset = input.i_extra.z;
     let expand = outline_width + outline_offset;
 
+    // Expand quad outward so fragment shader has pixels for the outline
     let expanded_size = input.i_pos_size.zw + vec2f(expand * 2.0);
     let expanded_pos = input.i_pos_size.xy - vec2f(expand);
     let pixel_pos = expanded_pos + vec2f(u, v) * expanded_size;
 
+    // Convert screen pixels to NDC: x: [0, width] -> [-1, 1], y: [0, height] -> [1, -1]
     let ndc_x = pixel_pos.x / ui.viewport_size.x * 2.0 - 1.0;
     let ndc_y = 1.0 - pixel_pos.y / ui.viewport_size.y * 2.0;
 
     var out: VertexOutput;
     out.pos = vec4f(ndc_x, ndc_y, 0.0, 1.0);
+    // local_pos is in the expanded coordinate space
     out.local_pos = vec2f(u, v) * expanded_size;
+    // size is the original element size (unchanged)
     out.size = input.i_pos_size.zw;
     out.bg_color = input.i_bg_color;
     out.border_color = input.i_border_color;
@@ -68,9 +76,14 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     out.outline_color = input.i_outline_color;
     out.uv = input.i_uv_rect.xy + vec2f(u, v) * input.i_uv_rect.zw;
     out.screen_pos = pixel_pos;
+
+    out.uv_rect_size = input.i_uv_rect.zw;
+
     return out;
 }
 
+// SDF for a rounded box (Inigo Quilez)
+// p: point relative to box center, b: box half-extents, r: corner radii (tl, tr, br, bl)
 fn sd_rounded_box(p: vec2f, b: vec2f, r: vec4f) -> f32 {
     let rx = select(r.xw, r.yz, p.x > 0.0);
     let radius = select(rx.x, rx.y, p.y > 0.0);
@@ -78,6 +91,22 @@ fn sd_rounded_box(p: vec2f, b: vec2f, r: vec4f) -> f32 {
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2f(0.0))) - radius;
 }
 
+// SDF for a checkmark (two line segments)
+fn sd_checkmark(p: vec2f, size: f32) -> f32 {
+    let s = size * 0.4;
+    // Segment 1: bottom-left to bottom-center (the short leg)
+    let a1 = vec2f(-s, 0.0);
+    let b1 = vec2f(-s * 0.2, s * 0.7);
+    // Segment 2: bottom-center to top-right (the long leg)
+    let a2 = vec2f(-s * 0.2, s * 0.7);
+    let b2 = vec2f(s, -s * 0.5);
+
+    let d1 = sd_segment(p, a1, b1);
+    let d2 = sd_segment(p, a2, b2);
+    return min(d1, d2);
+}
+
+// SDF for a line segment
 fn sd_segment(p: vec2f, a: vec2f, b: vec2f) -> f32 {
     let pa = p - a;
     let ba = b - a;
@@ -85,22 +114,26 @@ fn sd_segment(p: vec2f, a: vec2f, b: vec2f) -> f32 {
     return length(pa - ba * h);
 }
 
-fn sd_checkmark(p: vec2f, size: f32) -> f32 {
-    let s = size * 0.4;
-    let a1 = vec2f(-s, 0.0);
-    let b1 = vec2f(-s * 0.2, s * 0.7);
-    let a2 = vec2f(-s * 0.2, s * 0.7);
-    let b2 = vec2f(s, -s * 0.5);
-    return min(sd_segment(p, a1, b1), sd_segment(p, a2, b2));
-}
-
+// SDF for a down arrow (chevron/triangle)
 fn sd_down_arrow(p: vec2f, size: f32) -> f32 {
     let s = size * 0.3;
+    // Two line segments forming a V pointing down
     let a1 = vec2f(-s, -s * 0.4);
     let b1 = vec2f(0.0, s * 0.4);
     let a2 = vec2f(0.0, s * 0.4);
     let b2 = vec2f(s, -s * 0.4);
-    return min(sd_segment(p, a1, b1), sd_segment(p, a2, b2));
+
+    let d1 = sd_segment(p, a1, b1);
+    let d2 = sd_segment(p, a2, b2);
+    return min(d1, d2);
+}
+
+// Outline band alpha for a rounded box shape
+fn outline_band(p: vec2f, half_size: vec2f, radii: vec4f, outline_offset: f32, outline_width: f32, AA: f32) -> f32 {
+    let total = outline_offset + outline_width;
+    let d_outer = sd_rounded_box(p, half_size + vec2f(total), radii + vec4f(total));
+    let d_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), radii + vec4f(outline_offset));
+    return (1.0 - smoothstep(-AA, AA, d_outer)) * smoothstep(-AA, AA, d_inner);
 }
 
 fn sample_noise(uv: vec2f) -> f32 {
@@ -113,14 +146,6 @@ fn custom_palette(t: f32) -> vec3f {
     let c = vec3f(1.0, 1.0, 1.0);
     let d = vec3f(0.00, 0.10, 0.20);
     return a + b * cos(6.28318 * (c * t + d));
-}
-
-// Outline band alpha for a rounded box shape
-fn outline_band(p: vec2f, half_size: vec2f, radii: vec4f, outline_offset: f32, outline_width: f32, AA: f32) -> f32 {
-    let total = outline_offset + outline_width;
-    let d_outer = sd_rounded_box(p, half_size + vec2f(total), radii + vec4f(total));
-    let d_inner = sd_rounded_box(p, half_size + vec2f(outline_offset), radii + vec4f(outline_offset));
-    return (1.0 - smoothstep(-AA, AA, d_outer)) * smoothstep(-AA, AA, d_inner);
 }
 
 struct FragmentOutput {
@@ -143,7 +168,6 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let AA = 1.0 / ui.scale;
 
     // --- noise texture from custom material ---
-
     let bg_color = tex_color * input.bg_color;
     let local_uv = (input.local_pos - vec2f(expand)) / size;
     let hue_shift = dot(bg_color.rgb, vec3f(0.299, 0.587, 0.114));
@@ -159,14 +183,22 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let liquid = n1 * 0.6 + n2 * 0.4;
 
     let color = custom_palette(liquid + hue_shift + ui.time * 0.02) * 0.6;
-    let striped_bg = vec4f(color, bg_color.a);
+    let noise_bg = vec4f(color, bg_color.a);
 
-    // Text glyph mode: Extra.w > 0.5 → font atlas, red channel = alpha
+    // Text glyphs
     if (input.extra.w > 0.5) {
-        let glyph_alpha = tex_color.r * input.bg_color.a;
-        if (glyph_alpha < 0.001) { discard; }
+        // Derivative-free SDF smoothstep width: texels_per_pixel * PixelDistScale/255 * 0.5
+        let atlas_dim = vec2f(textureDimensions(tex));
+        let glyph_texels = input.uv_rect_size * atlas_dim;
+        let glyph_pixels = max(size, vec2f(1.0));
+        let tpp = max(glyph_texels.x / glyph_pixels.x, glyph_texels.y / glyph_pixels.y);
+        let sdf_w = min(tpp * (8.0 / 255.0), 0.15);
+        let dist = tex_color.r;
+        let edge = 0.5;
+        let alpha = smoothstep(edge - sdf_w, edge + sdf_w, dist) * input.bg_color.a;
+        if (alpha < 0.01) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, glyph_alpha);
+        out.color = vec4f(input.bg_color.rgb, alpha);
         return out;
     }
 
@@ -178,7 +210,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         let alpha = 1.0 - smoothstep(thickness - AA, thickness + AA, d);
         if (alpha < 0.001) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(striped_bg.rgb, striped_bg.a * alpha);
+        out.color = vec4f(noise_bg.rgb, noise_bg.a * alpha);
         return out;
     }
 
@@ -205,7 +237,7 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let inner_alpha = 1.0 - smoothstep(-AA, AA, d_inner);
 
     let has_border = step(0.001, dot(border, vec4f(1.0)));
-    let pixel_color = mix(striped_bg, mix(input.border_color, striped_bg, inner_alpha), has_border);
+    let pixel_color = mix(noise_bg, mix(input.border_color, noise_bg, inner_alpha), has_border);
     let element_alpha = pixel_color.a * outer_alpha;
 
     let outline_alpha = outline_band(p, half_size, radii, outline_offset, outline_width, AA) * input.outline_color.a;

@@ -59,7 +59,7 @@ public partial class FontExample : IExample
                         {
                             Size = 16f,
                             Text = "Seconds",
-                            Color = Color.BLACK,
+                            Color = Color.ORANGE,
                         })
                         .With(TextFont.Default with
                         {

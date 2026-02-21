@@ -81,12 +81,18 @@ public static class GizmoShaders
 
         @fragment
         fn fs_main(input: VertexOutput) -> @location(0) vec4f {
-            var color: vec4f = input.color;
+            let dist = textureSample(texture, texture_sampler, input.uv).r;
 
-            var sample = textureSample(texture, texture_sampler, input.uv).r;
-            color = vec4f(1.0, 1.0, 1.0, sample) * input.color;
+            let fw = fwidth(input.uv);
+            let w = min(max(fw.x, fw.y) * 128.0, 0.15);
+            let edge = 0.5;
+            let alpha = smoothstep(edge - w, edge + w, dist);
 
-            return color;
+            if (alpha * input.color.a < 0.01) {
+                discard;
+            }
+
+            return vec4f(1.0, 1.0, 1.0, alpha) * input.color;
         }
         """;
     

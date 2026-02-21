@@ -129,11 +129,11 @@ public partial class UITextSystemSet
             // Capture current text/size/font for the measure delegate
             var capturedText = uiText.Text;
             var capturedSize = uiText.Size;
-            var capturedFont = fontAsset;
+            var capturedTier = fontAsset.GetTierForSize(capturedSize);
             adapter.SetMeasureFunc(entity, (knownDimensions, availableSpace) =>
             {
                 float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
-                var measured = TextBuilder.MeasureText(capturedText, capturedFont, capturedSize, maxWidth);
+                var measured = TextBuilder.MeasureText(capturedText, capturedTier, capturedSize, maxWidth);
                 return new Size<float>(
                     knownDimensions.Width ?? measured.X,
                     knownDimensions.Height ?? measured.Y);
@@ -157,6 +157,8 @@ public partial class UITextSystemSet
             var fontAsset = data.fonts.Get(textFont.Font);
             if (fontAsset == null) return;
 
+            var tier = fontAsset.GetTierForSize(uiText.Size);
+
             TextMeshAsset tma;
             if (mesh.Mesh == Handle<TextMeshAsset>.Null)
             {
@@ -175,7 +177,7 @@ public partial class UITextSystemSet
 
             tma.Vertices.Clear();
             tma.Indices.Clear();
-            var result = TextBuilder.BuildMesh(uiText.Text, fontAsset, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
+            var result = TextBuilder.BuildMesh(uiText.Text, tier, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
             tma.Bounds = result.Bounds;
 
             uiText.LastBuildMaxWidth = maxWidth;
@@ -206,13 +208,14 @@ public partial class UITextSystemSet
             fontSize = query.Get<UIText>(input.TextEntity).Size;
         }
 
+        var tier = fontAsset.GetTierForSize(fontSize);
+
         var text = textBuffers.Get(focused);
         var cursorPos = Math.Min(input.CursorPosition, text.Length);
 
         // Use same sizing logic as TextBuilder.BuildMesh
-        var sizePow = ((uint)fontSize).Clamp(8u, 128u).Snap(4u);
-        var scale = fontSize / sizePow;
-        var glyphKey = new GlyphKey(fontAsset.Handle, sizePow, '\0');
+        var scale = fontSize / tier.SdfRenderSize;
+        var glyphKey = new GlyphKey(tier.FontHandle, '\0');
 
         // Compute X offset matching BuildMesh rounding behavior
         float cursorX = 0f;
@@ -220,7 +223,7 @@ public partial class UITextSystemSet
         for (int i = 0; i < cursorPos; i++)
         {
             glyphKey.Character = text[i];
-            if (!fontAsset.Glyphs.TryGetValue(glyphKey, out var glyph))
+            if (!tier.Glyphs.TryGetValue(glyphKey, out var glyph))
                 continue;
             if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
             cursorX = float.Round(cursorX + glyph.Advance * scale);
@@ -230,7 +233,7 @@ public partial class UITextSystemSet
         if (lineHeight == 0f)
         {
             glyphKey.Character = ' ';
-            if (fontAsset.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
+            if (tier.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
                 lineHeight = spaceGlyph.LineHeight * scale;
             else
                 lineHeight = fontSize;

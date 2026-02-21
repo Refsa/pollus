@@ -28,7 +28,7 @@ public partial class TextBuilder
 
     public static Result BuildMesh(
         NativeUtf8 text,
-        FontAsset font,
+        SdfTier tier,
         Vec2f startPos,
         Vec4f color,
         float size,
@@ -38,7 +38,7 @@ public partial class TextBuilder
         float maxWidth = 0f)
     {
         var bounds = Rect.Zero;
-        foreach (scoped ref readonly var quad in BuildMesh(text, font, startPos, color, size, (uint)vertices.Count, mode, maxWidth))
+        foreach (scoped ref readonly var quad in BuildMesh(text, tier, startPos, color, size, (uint)vertices.Count, mode, maxWidth))
         {
             foreach (scoped ref readonly var point in quad.Vertices) bounds.Expand(point.Position);
 
@@ -52,16 +52,15 @@ public partial class TextBuilder
         };
     }
 
-    public static Enumerable BuildMesh(NativeUtf8 text, FontAsset font, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp, float maxWidth = 0f)
+    public static Enumerable BuildMesh(NativeUtf8 text, SdfTier tier, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp, float maxWidth = 0f)
     {
-        return new Enumerable(text, font, startPos, color, size, indexOffset, mode, maxWidth);
+        return new Enumerable(text, tier, startPos, color, size, indexOffset, mode, maxWidth);
     }
 
-    public static Vec2f MeasureText(NativeUtf8 text, FontAsset font, float size, float maxWidth = 0f)
+    public static Vec2f MeasureText(NativeUtf8 text, SdfTier tier, float size, float maxWidth = 0f)
     {
-        var sizePow = ((uint)size).Clamp(8u, 128u).Snap(4u);
-        var scale = size / sizePow;
-        var glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
+        var scale = size / tier.SdfRenderSize;
+        var glyphKey = new GlyphKey(tier.FontHandle, '\0');
 
         float cursorX = 0f;
         float wordStartX = 0f;
@@ -83,7 +82,7 @@ public partial class TextBuilder
             }
 
             glyphKey.Character = c;
-            if (!font.Glyphs.TryGetValue(glyphKey, out var glyph))
+            if (!tier.Glyphs.TryGetValue(glyphKey, out var glyph))
             {
                 continue;
             }
@@ -153,7 +152,7 @@ public partial class TextBuilder
     public readonly ref struct Enumerable
     {
         readonly NativeUtf8 text;
-        readonly FontAsset font;
+        readonly SdfTier tier;
         readonly Vec2f startPos;
         readonly Vec4f color;
         readonly float size;
@@ -162,7 +161,7 @@ public partial class TextBuilder
         readonly float maxWidth;
 
         public Enumerable(NativeUtf8 text,
-            FontAsset font,
+            SdfTier tier,
             Vec2f startPos,
             Vec4f color,
             float size,
@@ -172,7 +171,7 @@ public partial class TextBuilder
         )
         {
             this.text = text;
-            this.font = font;
+            this.tier = tier;
             this.startPos = startPos;
             this.color = color;
             this.size = size;
@@ -183,7 +182,7 @@ public partial class TextBuilder
 
         public BuilderEnumerator GetEnumerator()
         {
-            return new BuilderEnumerator(text, font, startPos, color, size, indexOffset, mode, maxWidth);
+            return new BuilderEnumerator(text, tier, startPos, color, size, indexOffset, mode, maxWidth);
         }
     }
 
@@ -192,7 +191,7 @@ public partial class TextBuilder
         readonly byte* textData;
         readonly int textLength;
         int textIndex;
-        readonly FontAsset font;
+        readonly SdfTier tier;
         readonly Vec4f color;
         readonly Vec2f startPos;
         readonly float size;
@@ -212,7 +211,7 @@ public partial class TextBuilder
         public ref readonly CharQuad Current => ref Unsafe.AsRef(ref current);
 
         public BuilderEnumerator(NativeUtf8 text,
-            FontAsset font,
+            SdfTier tier,
             Vec2f startPos,
             Vec4f color,
             float size,
@@ -226,7 +225,7 @@ public partial class TextBuilder
             this.textData = text.Pointer;
             this.textLength = text.AsSpan().Length;
             this.textIndex = 0;
-            this.font = font;
+            this.tier = tier;
             this.size = size;
             this.indexOffset = indexOffset;
             this.mode = mode;
@@ -234,12 +233,11 @@ public partial class TextBuilder
 
             cursorX = startPos.X;
             cursorY = startPos.Y;
-            texWidth = font.AtlasWidth;
-            texHeight = font.AtlasHeight;
-            var sizePow = ((uint)size).Clamp(8u, 128u).Snap(4u);
-            scale = size / sizePow;
+            texWidth = tier.AtlasWidth;
+            texHeight = tier.AtlasHeight;
+            scale = size / tier.SdfRenderSize;
 
-            glyphKey = new GlyphKey(font.Handle, sizePow, '\0');
+            glyphKey = new GlyphKey(tier.FontHandle, '\0');
             current = new CharQuad();
             atWordStart = true;
         }
@@ -255,7 +253,7 @@ public partial class TextBuilder
                     if (mode == TextCoordinateMode.YDown)
                     {
                         glyphKey.Character = 'A';
-                        if (font.Glyphs.TryGetValue(glyphKey, out var lhGlyph))
+                        if (tier.Glyphs.TryGetValue(glyphKey, out var lhGlyph))
                             cursorY += lhGlyph.LineHeight * scale;
                         else
                             cursorY += size + 2f;
@@ -274,7 +272,7 @@ public partial class TextBuilder
                 }
 
                 glyphKey.Character = c;
-                if (!font.Glyphs.TryGetValue(glyphKey, out var glyph))
+                if (!tier.Glyphs.TryGetValue(glyphKey, out var glyph))
                 {
                     continue;
                 }
@@ -289,7 +287,7 @@ public partial class TextBuilder
                         if (mode == TextCoordinateMode.YDown)
                         {
                             glyphKey.Character = 'A';
-                            if (font.Glyphs.TryGetValue(glyphKey, out var lhGlyph2))
+                            if (tier.Glyphs.TryGetValue(glyphKey, out var lhGlyph2))
                                 cursorY += lhGlyph2.LineHeight * scale;
                             else
                                 cursorY += size + 2f;
@@ -439,7 +437,7 @@ public partial class TextBuilder
                 if (c == ' ' || c == '\n') break;
 
                 glyphKey.Character = c;
-                if (font.Glyphs.TryGetValue(glyphKey, out var glyph))
+                if (tier.Glyphs.TryGetValue(glyphKey, out var glyph))
                 {
                     cursor = float.Round(cursor + glyph.Advance * scale);
                 }

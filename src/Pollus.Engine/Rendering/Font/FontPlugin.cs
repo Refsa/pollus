@@ -174,6 +174,8 @@ public class TextDrawPlugin<C> : IPlugin
                     var fontAsset = userData.fonts.Get(font.Font);
                     if (fontAsset == null) return;
 
+                    var tier = fontAsset.GetTierForSize(draw.Size);
+
                     TextMeshAsset tma;
                     if (mesh.Mesh == Handle<TextMeshAsset>.Null)
                     {
@@ -192,7 +194,7 @@ public class TextDrawPlugin<C> : IPlugin
 
                     tma.Vertices.Clear();
                     tma.Indices.Clear();
-                    var result = TextBuilder.BuildMesh(draw.Text, fontAsset, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
+                    var result = TextBuilder.BuildMesh(draw.Text, tier, Vec2f.Zero, draw.Color, draw.Size, tma.Vertices, tma.Indices);
                     tma.Bounds = result.Bounds;
 
                     draw.IsDirty = false;

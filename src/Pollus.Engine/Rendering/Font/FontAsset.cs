@@ -5,6 +5,18 @@ using Pollus.Mathematics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
+public class SdfTier
+{
+    public required Handle FontHandle { get; init; }
+    public required uint SdfRenderSize { get; init; }
+    public required int SdfPadding { get; init; }
+
+    public required uint AtlasWidth { get; init; }
+    public required uint AtlasHeight { get; init; }
+
+    public required Dictionary<GlyphKey, Glyph> Glyphs { get; init; }
+}
+
 [Asset]
 public partial class FontAsset
 {
@@ -16,11 +28,21 @@ public partial class FontAsset
     public required uint AtlasWidth { get; init; }
     public required uint AtlasHeight { get; init; }
 
-    public required Dictionary<GlyphKey, Glyph> Glyphs { get; init; }
-    public required FontAtlasPacker Packer { get; init; }
+    public required SdfTier[] Tiers { get; init; }
+
+    public SdfTier GetTierForSize(float size)
+    {
+        var tiers = Tiers;
+        for (int i = 0; i < tiers.Length; i++)
+        {
+            if (tiers[i].SdfRenderSize >= size)
+                return tiers[i];
+        }
+        return tiers[^1];
+    }
 }
 
-public record struct GlyphKey(Handle Font, uint Size, char Character);
+public record struct GlyphKey(Handle Font, char Character);
 
 public class Glyph
 {
