@@ -218,8 +218,8 @@ public class Gizmos
         Guard.IsNotNull(font, "Gizmos::DrawText: Font is not set");
 
         Span<GizmoVertex> vertices = stackalloc GizmoVertex[6];
-        var tier = font.GetTierForSize(size);
-        foreach (scoped ref readonly var quad in TextBuilder.BuildMesh(text, tier, position, color, size))
+        var set = font.GetSetForSize(size);
+        foreach (scoped ref readonly var quad in TextBuilder.BuildMesh(text, set, position, color, size))
         {
             for (int i = 0; i < 6; i++)
             {

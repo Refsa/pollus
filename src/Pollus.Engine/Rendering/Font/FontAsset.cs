@@ -5,7 +5,7 @@ using Pollus.Mathematics;
 using Pollus.Graphics.Rendering;
 using Pollus.Utils;
 
-public class SdfTier
+public class GlyphSet
 {
     public required Handle FontHandle { get; init; }
     public required uint SdfRenderSize { get; init; }
@@ -28,17 +28,17 @@ public partial class FontAsset
     public required uint AtlasWidth { get; init; }
     public required uint AtlasHeight { get; init; }
 
-    public required SdfTier[] Tiers { get; init; }
+    public required GlyphSet[] GlyphSets { get; init; }
 
-    public SdfTier GetTierForSize(float size)
+    public GlyphSet GetSetForSize(float size)
     {
-        var tiers = Tiers;
-        for (int i = 0; i < tiers.Length; i++)
+        var set = GlyphSets;
+        for (int i = 0; i < set.Length; i++)
         {
-            if (tiers[i].SdfRenderSize >= size)
-                return tiers[i];
+            if (set[i].SdfRenderSize >= size)
+                return set[i];
         }
-        return tiers[^1];
+        return set[^1];
     }
 }
 

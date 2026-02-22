@@ -8,6 +8,7 @@ using Pollus.Mathematics;
 using Pollus.UI;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using Pollus.Debugging;
 
 public class UITextPlugin : IPlugin
 {
@@ -53,13 +54,15 @@ public partial class UITextSystemSet
         public NativeUtf8 Text;
         public float Size;
         public float LineHeight;
-        public SdfTier Tier = null!;
+        public GlyphSet? Set;
 
         public Size<float> Measure(Size<float?> knownDimensions, Size<AvailableSpace> availableSpace)
         {
+            Guard.IsNotNull(Set, "Set is null");
+
             float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
             float? lineHeightOverride = LineHeight > 0f ? Size * LineHeight : null;
-            var measured = TextBuilder.MeasureText(Text, Tier, Size, maxWidth, lineHeightOverride);
+            var measured = TextBuilder.MeasureText(Text, Set, Size, maxWidth, lineHeightOverride);
             return new Size<float>(
                 knownDimensions.Width ?? measured.X,
                 knownDimensions.Height ?? measured.Y);
@@ -164,7 +167,7 @@ public partial class UITextSystemSet
             ctx.Text = uiText.Text;
             ctx.Size = uiText.Size;
             ctx.LineHeight = uiText.LineHeight;
-            ctx.Tier = fontAsset.GetTierForSize(uiText.Size);
+            ctx.Set = fontAsset.GetSetForSize(uiText.Size);
 
             adapter.MarkEntityDirty(entity);
             uiText.IsDirty = false;
@@ -189,7 +192,7 @@ public partial class UITextSystemSet
             var fontAsset = data.fonts.Get(textFont.Font);
             if (fontAsset == null) return;
 
-            var tier = fontAsset.GetTierForSize(uiText.Size);
+            var set = fontAsset.GetSetForSize(uiText.Size);
 
             TextMeshAsset tma;
             if (mesh.Mesh == Handle<TextMeshAsset>.Null)
@@ -210,7 +213,7 @@ public partial class UITextSystemSet
             tma.Vertices.Clear();
             tma.Indices.Clear();
             float lineHeightPx = uiText.LineHeight > 0f ? uiText.Size * uiText.LineHeight : 0f;
-            var result = TextBuilder.BuildMesh(uiText.Text, tier, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth, lineHeightPx);
+            var result = TextBuilder.BuildMesh(uiText.Text, set, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth, lineHeightPx);
 
             // Normalize glyph vertices to start at Y=0 and center when there is free space.
             if (tma.Vertices.Count > 0)
@@ -264,14 +267,14 @@ public partial class UITextSystemSet
             fontSize = query.Get<UIText>(input.TextEntity).Size;
         }
 
-        var tier = fontAsset.GetTierForSize(fontSize);
+        var set = fontAsset.GetSetForSize(fontSize);
 
         var text = textBuffers.Get(focused);
         var cursorPos = Math.Min(input.CursorPosition, text.Length);
 
         // Use same sizing logic as TextBuilder.BuildMesh
-        var scale = fontSize / tier.SdfRenderSize;
-        var glyphKey = new GlyphKey(tier.FontHandle, '\0');
+        var scale = fontSize / set.SdfRenderSize;
+        var glyphKey = new GlyphKey(set.FontHandle, '\0');
 
         // Compute X offset matching BuildMesh rounding behavior
         float cursorX = 0f;
@@ -279,7 +282,7 @@ public partial class UITextSystemSet
         for (int i = 0; i < cursorPos; i++)
         {
             glyphKey.Character = text[i];
-            if (!tier.Glyphs.TryGetValue(glyphKey, out var glyph))
+            if (!set.Glyphs.TryGetValue(glyphKey, out var glyph))
                 continue;
             if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
             cursorX = float.Round(cursorX + glyph.Advance * scale);
@@ -289,7 +292,7 @@ public partial class UITextSystemSet
         if (lineHeight == 0f)
         {
             glyphKey.Character = ' ';
-            if (tier.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
+            if (set.Glyphs.TryGetValue(glyphKey, out var spaceGlyph))
                 lineHeight = spaceGlyph.LineHeight * scale;
             else
                 lineHeight = fontSize;
