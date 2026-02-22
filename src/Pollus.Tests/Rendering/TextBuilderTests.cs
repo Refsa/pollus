@@ -38,7 +38,7 @@ public class TextBuilderTests
             };
         }
 
-        var tier = new SdfTier
+        var set = new GlyphSet
         {
             FontHandle = handle,
             SdfRenderSize = 16,
@@ -55,7 +55,7 @@ public class TextBuilderTests
             Atlas = Handle<Texture2D>.Null,
             AtlasWidth = 256,
             AtlasHeight = 256,
-            Tiers = [tier],
+            GlyphSets = [set],
         };
     }
 
@@ -63,12 +63,12 @@ public class TextBuilderTests
     public void YUp_ExistingBehavior_Preserved()
     {
         var font = CreateTestFont();
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB");
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
 
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, verts, indices);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, verts, indices);
 
         // Y-up: bearingY goes up (positive Y)
         Assert.True(verts.Count >= 4, "Should have at least 4 vertices for first char");
@@ -84,12 +84,12 @@ public class TextBuilderTests
     public void YDown_FirstChar_PositionedCorrectly()
     {
         var font = CreateTestFont();
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("A");
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
 
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown);
 
         // Y-down: y = cursorY + (ascender - bearingY) * scale = 0 + (16 - 14) * 1 = 2
         Assert.Equal(2f, verts[0].Position.Y);
@@ -103,12 +103,12 @@ public class TextBuilderTests
     public void YDown_Newline_CursorMovesDown()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("A\nB");
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
 
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown);
 
         // First char 'A' at line 0: y = 0 + (16 - 14) = 2
         Assert.Equal(2f, verts[0].Position.Y);
@@ -124,16 +124,16 @@ public class TextBuilderTests
     public void YDown_XPositionSameAsYUp()
     {
         var font = CreateTestFont();
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB");
 
         var vertsUp = new ArrayList<TextBuilder.TextVertex>();
         var indicesUp = new ArrayList<uint>();
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, vertsUp, indicesUp);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, vertsUp, indicesUp);
 
         var vertsDown = new ArrayList<TextBuilder.TextVertex>();
         var indicesDown = new ArrayList<uint>();
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, vertsDown, indicesDown, TextCoordinateMode.YDown);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, vertsDown, indicesDown, TextCoordinateMode.YDown);
 
         // X positions should be the same regardless of coordinate mode
         Assert.Equal(vertsUp[0].Position.X, vertsDown[0].Position.X);
@@ -146,10 +146,10 @@ public class TextBuilderTests
     public void MeasureText_SingleLine_ReturnsAdvanceWidth()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         // Two chars, each with advance=10, scale=1 -> width = 20
         Assert.Equal(20f, size.X);
@@ -163,10 +163,10 @@ public class TextBuilderTests
     public void MeasureText_TrailingSpaces_IncludedInWidth()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("A ");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         // 'A' advance=10, ' ' advance=5, scale=1 -> width = 15
         Assert.Equal(15f, size.X);
@@ -178,10 +178,10 @@ public class TextBuilderTests
     public void MeasureText_MultiLine_ReturnsMaxWidthAndTotalHeight()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB\nA");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         // Line 1: "AB" = 20, Line 2: "A" = 10, max = 20
         Assert.Equal(20f, size.X);
@@ -195,10 +195,10 @@ public class TextBuilderTests
     public void MeasureText_LeadingNewline_CountsBlankFirstLine()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("\nAB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         Assert.Equal(20f, size.X);
         Assert.Equal(40f, size.Y);
@@ -210,10 +210,10 @@ public class TextBuilderTests
     public void MeasureText_EmptyText_ReturnsZero()
     {
         var font = CreateTestFont();
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         Assert.Equal(0f, size.X);
         Assert.Equal(0f, size.Y);
@@ -225,10 +225,10 @@ public class TextBuilderTests
     public void MeasureText_WithScale_AppliesCorrectly()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("A");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f);
+        var size = TextBuilder.MeasureText(text, set, 16f);
 
         // advance=10, scale=1 -> width = 10
         Assert.Equal(10f, size.X);
@@ -243,10 +243,10 @@ public class TextBuilderTests
     public void MeasureText_SingleWord_FitsWithinMaxWidth_NoWrap()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 30f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 30f);
 
         // "AB" = 20, fits within 30 -> no wrap
         Assert.Equal(20f, size.X);
@@ -259,10 +259,10 @@ public class TextBuilderTests
     public void MeasureText_TwoWords_SecondWraps()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 25f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 25f);
 
         // "AB " = 25, "AB" wraps to line 2
         // Width = max(25, 20) = 25, Height = 2 * 20 = 40
@@ -276,10 +276,10 @@ public class TextBuilderTests
     public void MeasureText_LongWord_ExceedsMaxWidth_NoCharBreak()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("ABBA");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 15f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 15f);
 
         // "ABBA" = 40, exceeds 15 but no word break possible -> stays 1 line
         Assert.Equal(40f, size.X);
@@ -292,10 +292,10 @@ public class TextBuilderTests
     public void MeasureText_MultipleWordsWrap()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("A B A B");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 15f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 15f);
 
         // "A " = 15, "B " wraps -> "B " = 15, "A " wraps -> "A " = 15, "B" wraps -> "B" = 10
         // 4 lines, maxWidth = 15, height = 80
@@ -309,10 +309,10 @@ public class TextBuilderTests
     public void MeasureText_MaxWidthZero_NoWrap()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 0f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 0f);
 
         // maxWidth=0 means no wrapping -> "AB AB" = 10+10+5+10+10 = 45, 1 line
         Assert.Equal(45f, size.X);
@@ -325,10 +325,10 @@ public class TextBuilderTests
     public void MeasureText_ExplicitNewline_PlusWordWrap()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB\nAB AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 25f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 25f);
 
         // Line 1: "AB" = 20 (explicit \n)
         // Line 2: "AB " = 25, then "AB" wraps to line 3
@@ -343,10 +343,10 @@ public class TextBuilderTests
     public void MeasureText_WordAtExactMaxWidth_Wraps()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB AB");
 
-        var size = TextBuilder.MeasureText(text, tier, 16f, maxWidth: 25f);
+        var size = TextBuilder.MeasureText(text, set, 16f, maxWidth: 25f);
 
         // "AB " = 25, exactly at maxWidth -> "AB" wraps to line 2
         // 2 lines
@@ -362,12 +362,12 @@ public class TextBuilderTests
     public void BuildMesh_WordWrap_YDown_SecondWordOnNewLine()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("AB AB");
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
 
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 25f);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 25f);
 
         // 5 chars produce quads (A, B, space, A, B): 5 * 4 = 20 verts
         // verts[0..3]=A, [4..7]=B, [8..11]=space, [12..15]=A, [16..19]=B
@@ -388,12 +388,12 @@ public class TextBuilderTests
     public void BuildMesh_WordWrap_YDown_LongWord_StaysOnLine()
     {
         var font = CreateTestFont(lineHeight: 20f);
-        var tier = font.Tiers[0];
+        var set = font.GlyphSets[0];
         var text = new NativeUtf8("ABBA");
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
 
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 15f);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, 16f, verts, indices, TextCoordinateMode.YDown, maxWidth: 15f);
 
         // All 4 chars on same line since no word break possible
         Assert.Equal(2f, verts[0].Position.Y);   // A
@@ -405,12 +405,12 @@ public class TextBuilderTests
     }
 
     [Fact]
-    public void GetTierForSize_SelectsSmallestSufficientTier()
+    public void GetsetForSize_SelectsSmallestSufficientset()
     {
         var handle = new Handle<FontAsset>(1);
         var glyphs = new Dictionary<GlyphKey, Glyph>();
 
-        SdfTier MakeTier(uint sdfSize) => new SdfTier
+        GlyphSet Makeset(uint sdfSize) => new GlyphSet
         {
             FontHandle = handle,
             SdfRenderSize = sdfSize,
@@ -427,23 +427,23 @@ public class TextBuilderTests
             Atlas = Handle<Texture2D>.Null,
             AtlasWidth = 256,
             AtlasHeight = 256,
-            Tiers = [MakeTier(24), MakeTier(48), MakeTier(64)],
+            GlyphSets = [Makeset(24), Makeset(48), Makeset(64)],
         };
 
-        // Size <= 24 -> tier 0
-        Assert.Equal(24u, font.GetTierForSize(8f).SdfRenderSize);
-        Assert.Equal(24u, font.GetTierForSize(24f).SdfRenderSize);
+        // Size <= 24 -> set 0
+        Assert.Equal(24u, font.GetSetForSize(8f).SdfRenderSize);
+        Assert.Equal(24u, font.GetSetForSize(24f).SdfRenderSize);
 
-        // 24 < size <= 48 -> tier 1
-        Assert.Equal(48u, font.GetTierForSize(25f).SdfRenderSize);
-        Assert.Equal(48u, font.GetTierForSize(48f).SdfRenderSize);
+        // 24 < size <= 48 -> set 1
+        Assert.Equal(48u, font.GetSetForSize(25f).SdfRenderSize);
+        Assert.Equal(48u, font.GetSetForSize(48f).SdfRenderSize);
 
-        // size > 48 -> tier 2
-        Assert.Equal(64u, font.GetTierForSize(49f).SdfRenderSize);
-        Assert.Equal(64u, font.GetTierForSize(64f).SdfRenderSize);
+        // size > 48 -> set 2
+        Assert.Equal(64u, font.GetSetForSize(49f).SdfRenderSize);
+        Assert.Equal(64u, font.GetSetForSize(64f).SdfRenderSize);
 
-        // size > all -> largest tier
-        Assert.Equal(64u, font.GetTierForSize(200f).SdfRenderSize);
+        // size > all -> largest set
+        Assert.Equal(64u, font.GetSetForSize(200f).SdfRenderSize);
     }
 
     [Fact]
@@ -475,7 +475,7 @@ public class TextBuilderTests
             };
         }
 
-        var tier = new SdfTier
+        var set = new GlyphSet
         {
             FontHandle = handle, SdfRenderSize = 16, SdfPadding = 0,
             AtlasWidth = 256, AtlasHeight = 256, Glyphs = glyphs,
@@ -485,14 +485,14 @@ public class TextBuilderTests
         float fontSize = 16f;
         float maxWidth = 372f;
 
-        var measured = TextBuilder.MeasureText(text, tier, fontSize, maxWidth);
+        var measured = TextBuilder.MeasureText(text, set, fontSize, maxWidth);
 
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
 
         // Count rendered lines by finding distinct cursorY values
-        float scale = fontSize / tier.SdfRenderSize;
+        float scale = fontSize / set.SdfRenderSize;
         var lineYs = new HashSet<float>();
         for (int i = 0; i < verts.Count; i += 4)
         {
@@ -552,7 +552,7 @@ public class TextBuilderTests
             };
         }
 
-        var tier = new SdfTier
+        var set = new GlyphSet
         {
             FontHandle = handle, SdfRenderSize = 24, SdfPadding = sdfPadding,
             AtlasWidth = 256, AtlasHeight = 256, Glyphs = glyphs,
@@ -562,11 +562,11 @@ public class TextBuilderTests
         float fontSize = 16f;
         float maxWidth = 80f;
 
-        var measured = TextBuilder.MeasureText(text, tier, fontSize, maxWidth);
+        var measured = TextBuilder.MeasureText(text, set, fontSize, maxWidth);
 
         var verts = new ArrayList<TextBuilder.TextVertex>();
         var indices = new ArrayList<uint>();
-        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
+        TextBuilder.BuildMesh(text, set, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
 
         float minY = float.MaxValue, maxY = float.MinValue;
         for (int i = 0; i < verts.Count; i++)

@@ -10,7 +10,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
     static readonly string[] extensions = [".ttf", ".otf"];
     public override string[] Extensions => extensions;
 
-    static readonly (uint SdfRenderSize, int SdfPadding)[] TierConfigs =
+    static readonly (uint SdfRenderSize, int SdfPadding)[] SetConfigs =
     [
         (24, 8),
         (48, 8),
@@ -32,16 +32,16 @@ public class FontAssetLoader : AssetLoader<FontAsset>
         int ascent, descent, lineGap;
         StbTrueType.stbtt_GetFontVMetrics(info, &ascent, &descent, &lineGap);
 
-        // Single shared atlas for all tiers
+        // Single shared atlas for all sets
         var packer = new FontAtlasPacker(AtlasSize, AtlasSize);
         byte[] atlasData = new byte[AtlasSize * AtlasSize];
-        var tiers = new SdfTier[TierConfigs.Length];
+        var sets = new GlyphSet[SetConfigs.Length];
 
         fixed (byte* atlasPtr = atlasData)
         {
-            for (int t = 0; t < TierConfigs.Length; t++)
+            for (int t = 0; t < SetConfigs.Length; t++)
             {
-                var (sdfRenderSize, sdfPadding) = TierConfigs[t];
+                var (sdfRenderSize, sdfPadding) = SetConfigs[t];
                 float pixelDistScale = 128.0f / sdfPadding;
 
                 var glyphs = new Dictionary<GlyphKey, Glyph>();
@@ -103,7 +103,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
                     StbTrueType.stbtt_FreeSDF(sdfData, null);
                 }
 
-                tiers[t] = new SdfTier
+                sets[t] = new GlyphSet
                 {
                     FontHandle = context.Handle,
                     SdfRenderSize = sdfRenderSize,
@@ -131,7 +131,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
             Atlas = context.AssetServer.Assets.AddAsset(texture, context.Path + ":atlas.png"),
             AtlasWidth = AtlasSize,
             AtlasHeight = AtlasSize,
-            Tiers = tiers,
+            GlyphSets = sets,
         };
 
         context.SetAsset(asset);
