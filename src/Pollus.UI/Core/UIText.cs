@@ -29,11 +29,31 @@ public partial struct UIText() : IComponent, IDefault<UIText>
         }
     }
 
+    /// <summary>
+    /// Line height multiplier. When > 0, measured height per line = fontSize * LineHeight
+    /// instead of the font's natural line height (ascent + descent).
+    /// A value of 1.0 means line height equals font size. 0 uses font metrics (default).
+    /// </summary>
+    public float LineHeight
+    {
+        get => lineHeight;
+        set
+        {
+            if (lineHeight != value)
+            {
+                lineHeight = value;
+                IsDirty = true;
+            }
+        }
+    }
+
     public bool IsDirty { get; set; }
     public float LastBuildMaxWidth { get; set; } = -1f;
+    public float LastBuildContentHeight { get; set; } = -1f;
 
     NativeUtf8 text;
     float size;
+    float lineHeight;
 
     public required NativeUtf8 Text
     {

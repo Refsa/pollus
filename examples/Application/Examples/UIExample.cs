@@ -23,17 +23,16 @@ public class UIExample : IExample
 
     sealed class UIExampleState
     {
-        public Entity EventLogTextEntity = Entity.Null;
+        public Handle FontHandle;
         public Entity EventLogViewportEntity = Entity.Null;
         public Entity FocusStatusTextEntity = Entity.Null;
         public Entity ThemeDropdownEntity = Entity.Null;
         public string[] ThemeOptions = [];
-        public string LastEventLogText = "";
         public int EventLogAutoScrollFrames = 0;
         public readonly Dictionary<Entity, string> Labels = [];
-        public readonly List<string> EventLog = [];
+        public readonly List<Entity> EventLog = [];
 
-        public const int MaxEventLines = 16;
+        public const int MaxEventLines = 256;
     }
 
     static void RegisterLabel(UIExampleState state, Entity entity, string label)
@@ -46,13 +45,6 @@ public class UIExample : IExample
         return state.Labels.TryGetValue(entity, out var label) ? label : entity.ToString();
     }
 
-    static void PushEventLog(UIExampleState state, string line)
-    {
-        state.EventLog.Add(line);
-        while (state.EventLog.Count > UIExampleState.MaxEventLines)
-            state.EventLog.RemoveAt(0);
-    }
-
     static void DisableInteraction(Commands commands, Entity entity)
     {
         commands.SetComponent(entity, new UIInteraction
@@ -60,6 +52,27 @@ public class UIExample : IExample
             State = InteractionState.Disabled,
             Focusable = false,
         });
+    }
+
+    static void SpawnEventLogLine(UIExampleState state, Commands commands, string text, Entity parent, Handle fontHandle)
+    {
+        var newLine = UI.Text(commands, text, fontHandle)
+            .FontSize(12f)
+            .Size(Length.Percent(1f), Length.Auto)
+            .LineHeight(1f)
+            .Padding(8)
+            .Background(new Color(0.11f, 0.11f, 0.11f, 1f))
+            .Color(new Color(0.78f, 0.85f, 0.95f, 1f))
+            .ChildOf(parent)
+            .Spawn();
+
+        state.EventLog.Add(newLine);
+        state.EventLogAutoScrollFrames = 3;
+        while (state.EventLog.Count > UIExampleState.MaxEventLines)
+        {
+            commands.DespawnHierarchy(state.EventLog[0]);
+            state.EventLog.RemoveAt(0);
+        }
     }
 
     public void Stop() => app?.Shutdown();
@@ -84,6 +97,7 @@ public class UIExample : IExample
                 focusVisualStyle.KeyboardOnly = true;
 
                 var fontHandle = assetServer.LoadAsync<FontAsset>("fonts/SpaceMono-Regular.ttf");
+                state.FontHandle = fontHandle;
 
                 var viewportW = (float)window.Size.X;
                 var viewportH = (float)window.Size.Y;
@@ -101,17 +115,18 @@ public class UIExample : IExample
                 var header = UI.Panel(commands)
                     .Style(s => s with
                     {
-                        Size = new(Length.Auto, 60),
-                        Padding = Rect<Length>.All(20),
+                        Size = new(Length.Auto, 80),
+                        Padding = Rect<Length>.All(16),
                         AlignItems = AlignItems.Center,
                         JustifyContent = JustifyContent.SpaceBetween,
                     })
                     .Background(new Color(0.2f, 0.4f, 0.8f, 1f))
                     .BorderRadius(8)
                     .Children(
-                        UI.Text(commands, "UI Demo Workspace", fontHandle).FontSize(20f).Spawn(),
+                        UI.Text(commands, "UI Demo Workspace", fontHandle)
+                            .FontSize(20f).LineHeight(1f).Spawn(),
                         UI.Text(commands, "Main controls on left, live event console on right", fontHandle)
-                            .FontSize(12f).Color(new Color(0.88f, 0.92f, 1f, 1f)).Spawn()
+                            .FontSize(12f).LineHeight(1f).Color(new Color(0.88f, 0.92f, 1f, 1f)).Spawn()
                     )
                     .Spawn();
 
@@ -256,7 +271,7 @@ public class UIExample : IExample
                 {
                     var baseColor = new Color(0.2f, 0.2f, 0.25f, 1f);
                     var card = UI.Button(commands)
-                        .Size(160, 120)
+                        .Size(160, Length.Auto)
                         .FlexColumn().Padding(12).Border(2)
                         .Colors(
                             baseColor,
@@ -556,62 +571,6 @@ public class UIExample : IExample
                     )
                     .Spawn();
 
-                // 1) Event Console
-                state.EventLog.Clear();
-                PushEventLog(state, "[system] Events will be shown here");
-
-                var initialEventLog = string.Join("\n", state.EventLog);
-                state.LastEventLogText = initialEventLog;
-
-                var eventLogText = UI.Text(commands, initialEventLog, fontHandle)
-                    .FontSize(12f)
-                    .Color(new Color(0.78f, 0.85f, 0.95f, 1f))
-                    .Style(s => s with
-                    {
-                        Size = new(Length.Percent(1f), Length.Auto),
-                    })
-                    .Spawn();
-
-                state.EventLogTextEntity = eventLogText;
-
-                var eventLogViewport = UI.Panel(commands)
-                    .FlexGrow(1f)
-                    .Style(s => s with
-                    {
-                        MinSize = new(Length.Px(0), Length.Px(0)),
-                    })
-                    .Padding(10)
-                    .Overflow(Overflow.Hidden, Overflow.Scroll)
-                    .Background(new Color(0.11f, 0.11f, 0.15f, 1f))
-                    .Border(1)
-                    .BorderColor(new Color(0.22f, 0.22f, 0.29f, 1f))
-                    .BorderRadius(8)
-                    .Children(eventLogText)
-                    .Spawn();
-                state.EventLogViewportEntity = eventLogViewport;
-                state.EventLogAutoScrollFrames = 3;
-
-                _ = UI.Panel(commands)
-                    .FlexGrow(1f).FlexColumn().Gap(8)
-                    .Style(s => s with
-                    {
-                        MinSize = new(Length.Px(0), Length.Px(0)),
-                    })
-                    .Padding(12)
-                    .Background(new Color(0.16f, 0.16f, 0.21f, 1f))
-                    .Border(1)
-                    .BorderColor(new Color(0.25f, 0.25f, 0.32f, 1f))
-                    .BorderRadius(10)
-                    .ChildOf(inspectorColumn)
-                    .Children(
-                        UI.Text(commands, "Event Console", fontHandle)
-                            .FontSize(16f).Color(new Color(0.55f, 0.85f, 1f, 1f)).Spawn(),
-                        UI.Text(commands, "Live stream of click, toggle, slider, input and dropdown events.", fontHandle)
-                            .FontSize(12f).Color(new Color(0.68f, 0.73f, 0.82f, 1f)).Spawn(),
-                        eventLogViewport
-                    )
-                    .Spawn();
-
                 // 2) Keyboard + Focus
                 var initialFocusStatus = "Focused: none\nSource: -";
                 var focusStatusText = UI.Text(commands, initialFocusStatus, fontHandle)
@@ -850,6 +809,75 @@ public class UIExample : IExample
                     )
                     .Spawn();
 
+                // --- Long Text ---
+                _ = UI.Panel(commands)
+                        .FlexGrow(1).FlexColumn()
+                        .Size(Length.Px(400), Length.Auto)
+                        .Overflow(Overflow.Clip, Overflow.Clip)
+                        .Padding(12).Border(2)
+                        .Background(new Color(0.15f, 0.15f, 0.15f, 1f))
+                        .BorderColor(Color.BLACK)
+                        .BorderRadius(4)
+                        .ChildOf(mainPanel)
+                        .Children(
+                            UI.Text(commands, "Long Text", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                            UI.Text(commands,
+@"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce varius lobortis urna at egestas. Praesent dictum enim ac massa convallis tempor. Integer nibh sem, pretium suscipit congue non, aliquam id risus. Cras condimentum lectus convallis sem dapibus, non interdum felis hendrerit. Donec auctor arcu in blandit laoreet. In iaculis quam id purus congue mollis. Morbi velit risus, viverra nec sem quis, fringilla varius justo. Cras at eleifend nisi. Praesent leo elit, tincidunt sit amet euismod in, porttitor ornare turpis. Nam in commodo risus. Sed consectetur erat eget nisi ullamcorper, eget hendrerit risus porta. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Fusce nec consequat lorem, a lacinia tellus. Phasellus sed nulla ex.
+
+Aliquam erat volutpat. In ut neque elit. Sed iaculis bibendum pretium. Sed hendrerit nulla ut ultricies hendrerit. Pellentesque malesuada vehicula augue, ac porttitor arcu vestibulum in. Vivamus suscipit iaculis finibus. Quisque sit amet metus id turpis consequat iaculis. Sed in laoreet sem. Praesent suscipit finibus felis nec vestibulum. Ut eu sollicitudin diam, nec viverra justo. Nunc nisl felis, tempus ac quam eu, viverra feugiat purus. Sed vel tortor et nisi elementum pellentesque. Nunc accumsan ultricies dolor, in ultricies nisl maximus sit amet. Curabitur quis consequat est.
+
+Suspendisse in placerat tortor. Etiam sit amet efficitur justo, quis suscipit nulla. Phasellus mollis euismod eros et vulputate. Aliquam vel sem rutrum, laoreet quam non, aliquet libero. Nunc pulvinar sodales suscipit. Sed pulvinar egestas ipsum et bibendum. Quisque laoreet sapien pellentesque, ornare neque eu, accumsan nisi. Phasellus et lorem enim. Fusce ac convallis magna. Aenean gravida risus dolor, sit amet tempor velit ultricies vel. Quisque a dictum nulla.
+
+Praesent tincidunt sit amet urna quis viverra. Praesent id turpis viverra, congue justo in, semper dui. Duis feugiat turpis eu tempus placerat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam vitae tortor ac quam hendrerit mollis. Cras rhoncus mauris aliquam massa pharetra, quis elementum nulla accumsan. Quisque varius lobortis luctus. Fusce scelerisque in turpis eget consectetur. Sed purus turpis, congue a turpis vitae, venenatis molestie leo. Vestibulum ligula nibh, hendrerit nec suscipit sit amet, rutrum nec magna. Morbi nulla metus, eleifend et ante vitae, pellentesque malesuada urna. Donec neque elit, consectetur at ornare et, imperdiet euismod lorem. Sed ac quam viverra, dapibus tortor sed, rutrum risus.
+
+Vestibulum purus augue, pellentesque eu tincidunt ut, scelerisque sit amet lectus. Quisque sed urna euismod, porta nulla nec, venenatis odio. Maecenas dignissim rutrum.", fontHandle)
+                            .Spawn()
+                        )
+                        .Spawn();
+
+                // 1) Event Console
+                state.EventLog.Clear();
+                const float eventLogInset = 10f;
+
+                var eventLogViewport = UI.Panel(commands)
+                    .FlexGrow(1f).FlexColumn().Gap(4)
+                    .Style(s => s with
+                    {
+                        MinSize = new(Length.Px(0), Length.Px(0)),
+                    })
+                    .Padding(eventLogInset)
+                    .Overflow(Overflow.Hidden, Overflow.Scroll)
+                    .Background(new Color(0.11f, 0.11f, 0.15f, 1f))
+                    .Border(1)
+                    .BorderColor(new Color(0.22f, 0.22f, 0.29f, 1f))
+                    .BorderRadius(8)
+                    .Spawn();
+                state.EventLogViewportEntity = eventLogViewport;
+                state.EventLogAutoScrollFrames = 3;
+
+                SpawnEventLogLine(state, commands, "[system] Events will be shown here\nbelow this message", state.EventLogViewportEntity, fontHandle);
+
+                _ = UI.Panel(commands)
+                    .FlexGrow(1f).FlexColumn().Gap(8)
+                    .Style(s => s with
+                    {
+                        MinSize = new(Length.Px(0), Length.Px(0)),
+                    })
+                    .Padding(12)
+                    .Background(new Color(0.16f, 0.16f, 0.21f, 1f))
+                    .Border(1)
+                    .BorderColor(new Color(0.25f, 0.25f, 0.32f, 1f))
+                    .BorderRadius(10)
+                    .ChildOf(inspectorColumn)
+                    .Children(
+                        UI.Text(commands, "Event Console", fontHandle)
+                            .FontSize(16f).Color(new Color(0.55f, 0.85f, 1f, 1f)).Spawn(),
+                        UI.Text(commands, "Live stream of click, toggle, slider, input and dropdown events.", fontHandle)
+                            .FontSize(12f).Color(new Color(0.68f, 0.73f, 0.82f, 1f)).Spawn(),
+                        eventLogViewport
+                    )
+                    .Spawn();
+
                 // Build hierarchy
                 commands.Entity(root).AddChild(header);
                 commands.Entity(root).AddChild(workspace);
@@ -874,6 +902,7 @@ public class UIExample : IExample
                 ],
         },
             static (
+                Commands commands,
                 UIExampleState state,
                 UITextBuffers textBuffers,
                 View<UIText> viewText,
@@ -886,49 +915,40 @@ public class UIExample : IExample
                 EventReader<UINumberInputEvents.UINumberInputValueChanged> numberEvents,
                 EventReader<UIDropdownEvents.UIDropdownSelectionChanged> dropdownEvents) =>
             {
-                bool changed = false;
-
                 foreach (var ev in clickEvents.Read())
                 {
-                    PushEventLog(state, $"[click] {GetLabel(state, ev.Entity)}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[click] {GetLabel(state, ev.Entity)}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in toggleEvents.Read())
                 {
-                    PushEventLog(state, $"[toggle] {GetLabel(state, ev.Entity)} -> {(ev.IsOn ? "on" : "off")}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[toggle] {GetLabel(state, ev.Entity)} -> {(ev.IsOn ? "on" : "off")}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in checkBoxEvents.Read())
                 {
-                    PushEventLog(state, $"[checkbox] {GetLabel(state, ev.Entity)} -> {(ev.IsChecked ? "checked" : "unchecked")}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[checkbox] {GetLabel(state, ev.Entity)} -> {(ev.IsChecked ? "checked" : "unchecked")}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in radioEvents.Read())
                 {
-                    PushEventLog(state, $"[radio] {GetLabel(state, ev.Entity)} -> selected={ev.IsSelected}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[radio] {GetLabel(state, ev.Entity)} -> selected={ev.IsSelected}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in sliderEvents.Read())
                 {
-                    PushEventLog(state, $"[slider] {GetLabel(state, ev.Entity)} {ev.PreviousValue:0.##} -> {ev.Value:0.##}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[slider] {GetLabel(state, ev.Entity)} {ev.PreviousValue:0.##} -> {ev.Value:0.##}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in textInputEvents.Read())
                 {
                     var value = textBuffers.Get(ev.Entity);
-                    PushEventLog(state, $"[text] {GetLabel(state, ev.Entity)} = \"{value}\"");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[text] {GetLabel(state, ev.Entity)} = \"{value}\"", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in numberEvents.Read())
                 {
-                    PushEventLog(state, $"[number] {GetLabel(state, ev.Entity)} {ev.PreviousValue:0.##} -> {ev.Value:0.##}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[number] {GetLabel(state, ev.Entity)} {ev.PreviousValue:0.##} -> {ev.Value:0.##}", state.EventLogViewportEntity, state.FontHandle);
                 }
 
                 foreach (var ev in dropdownEvents.Read())
@@ -936,22 +956,8 @@ public class UIExample : IExample
                     var selected = ev.SelectedIndex >= 0 && ev.SelectedIndex < state.ThemeOptions.Length
                         ? state.ThemeOptions[ev.SelectedIndex]
                         : $"#{ev.SelectedIndex}";
-                    PushEventLog(state, $"[dropdown] {GetLabel(state, ev.Entity)} -> {selected}");
-                    changed = true;
+                    SpawnEventLogLine(state, commands, $"[dropdown] {GetLabel(state, ev.Entity)} -> {selected}", state.EventLogViewportEntity, state.FontHandle);
                 }
-
-                if (!changed || state.EventLogTextEntity.IsNull || !viewText.Has<UIText>(state.EventLogTextEntity))
-                    return;
-
-                var logText = string.Join("\n", state.EventLog);
-                if (logText == state.LastEventLogText)
-                    return;
-
-                state.LastEventLogText = logText;
-                state.EventLogAutoScrollFrames = 3;
-
-                ref var eventLogText = ref viewText.GetTracked<UIText>(state.EventLogTextEntity);
-                eventLogText.Text = new NativeUtf8(logText);
             }))
         .AddSystems(CoreStage.PostUpdate, FnSystem.Create(new SystemBuilderDescriptor("UIExample::EventLogAutoScroll")
         {
@@ -973,7 +979,8 @@ public class UIExample : IExample
                 ref readonly var computed = ref qScroll.Get<ComputedNode>(state.EventLogViewportEntity);
                 var innerHeight = computed.Size.Y - computed.PaddingTop - computed.PaddingBottom
                                   - computed.BorderTop - computed.BorderBottom;
-                var maxScrollY = MathF.Max(0f, computed.ContentSize.Y - innerHeight);
+                var contentHeight = computed.ContentSize.Y - computed.PaddingTop - computed.BorderTop;
+                var maxScrollY = MathF.Max(0f, contentHeight - innerHeight);
 
                 ref var scroll = ref qScroll.GetTracked<UIScrollOffset>(state.EventLogViewportEntity);
                 scroll.Offset.Y = maxScrollY;

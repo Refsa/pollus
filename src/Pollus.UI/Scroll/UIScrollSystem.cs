@@ -88,7 +88,8 @@ public partial class UIScrollSystem
         {
             var innerHeight = scrollComputed.Size.Y - scrollComputed.PaddingTop - scrollComputed.PaddingBottom
                               - scrollComputed.BorderTop - scrollComputed.BorderBottom;
-            var maxScrollY = MathF.Max(0, scrollComputed.ContentSize.Y - innerHeight);
+            var contentHeight = scrollComputed.ContentSize.Y - scrollComputed.PaddingTop - scrollComputed.BorderTop;
+            var maxScrollY = MathF.Max(0, contentHeight - innerHeight);
             scrollOffset.Offset.Y = Math.Clamp(scrollOffset.Offset.Y - scrollY * ScrollSpeed, 0f, maxScrollY);
         }
 
@@ -96,7 +97,8 @@ public partial class UIScrollSystem
         {
             var innerWidth = scrollComputed.Size.X - scrollComputed.PaddingLeft - scrollComputed.PaddingRight
                              - scrollComputed.BorderLeft - scrollComputed.BorderRight;
-            var maxScrollX = MathF.Max(0, scrollComputed.ContentSize.X - innerWidth);
+            var contentWidth = scrollComputed.ContentSize.X - scrollComputed.PaddingLeft - scrollComputed.BorderLeft;
+            var maxScrollX = MathF.Max(0, contentWidth - innerWidth);
             scrollOffset.Offset.X = Math.Clamp(scrollOffset.Offset.X - scrollX * ScrollSpeed, 0f, maxScrollX);
         }
     }
@@ -118,8 +120,17 @@ public partial class UIScrollSystem
             var size = computed.Size;
             bool justSpawned = false;
 
-            bool needsVertical = style.Value.Overflow.Y == Overflow.Scroll && computed.ContentSize.Y > size.Y;
-            bool needsHorizontal = style.Value.Overflow.X == Overflow.Scroll && computed.ContentSize.X > size.X;
+            // ContentSize includes the container's padding+border offset where children start,
+            // so subtract it to get the actual content extent for comparison.
+            float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
+                           - computed.BorderTop - computed.BorderBottom;
+            float contentH = computed.ContentSize.Y - computed.PaddingTop - computed.BorderTop;
+            bool needsVertical = style.Value.Overflow.Y == Overflow.Scroll && contentH > innerH;
+
+            float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
+                           - computed.BorderLeft - computed.BorderRight;
+            float contentW = computed.ContentSize.X - computed.PaddingLeft - computed.BorderLeft;
+            bool needsHorizontal = style.Value.Overflow.X == Overflow.Scroll && contentW > innerW;
 
             // Spawn vertical thumb entity if needed
             if (needsVertical && scroll.VerticalThumbEntity.IsNull)
@@ -157,11 +168,9 @@ public partial class UIScrollSystem
             {
                 ref var thumbComputed = ref viewThumbComputed.GetTracked<ComputedNode>(scroll.VerticalThumbEntity);
 
-                float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
-                               - computed.BorderTop - computed.BorderBottom;
-                float contentH = computed.ContentSize.Y;
-                float thumbH = contentH > 0 ? MathF.Max(20f, (innerH / contentH) * innerH) : 20f;
-                float maxScroll = contentH - innerH;
+                float thumbContentH = computed.ContentSize.Y - computed.PaddingTop - computed.BorderTop;
+                float thumbH = thumbContentH > 0 ? MathF.Max(20f, (innerH / thumbContentH) * innerH) : 20f;
+                float maxScroll = thumbContentH - innerH;
                 float scrollRatio = maxScroll > 0 ? scroll.Offset.Y / maxScroll : 0f;
                 float trackH = innerH - thumbH;
 
@@ -185,11 +194,9 @@ public partial class UIScrollSystem
             {
                 ref var thumbComputed = ref viewThumbComputed.GetTracked<ComputedNode>(scroll.HorizontalThumbEntity);
 
-                float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
-                               - computed.BorderLeft - computed.BorderRight;
-                float contentW = computed.ContentSize.X;
-                float thumbW = contentW > 0 ? MathF.Max(20f, (innerW / contentW) * innerW) : 20f;
-                float maxScroll = contentW - innerW;
+                float thumbContentW = computed.ContentSize.X - computed.PaddingLeft - computed.BorderLeft;
+                float thumbW = thumbContentW > 0 ? MathF.Max(20f, (innerW / thumbContentW) * innerW) : 20f;
+                float maxScroll = thumbContentW - innerW;
                 float scrollRatio = maxScroll > 0 ? scroll.Offset.X / maxScroll : 0f;
                 float trackW = innerW - thumbW;
 
@@ -228,7 +235,7 @@ public partial class UIScrollSystem
             {
                 float innerH = size.Y - computed.PaddingTop - computed.PaddingBottom
                                - computed.BorderTop - computed.BorderBottom;
-                float contentH = computed.ContentSize.Y;
+                float contentH = computed.ContentSize.Y - computed.PaddingTop - computed.BorderTop;
                 float thumbH = contentH > 0 ? MathF.Max(20f, (innerH / contentH) * innerH) : 20f;
                 float trackH = innerH - thumbH;
                 float maxScroll = MathF.Max(0, contentH - innerH);
@@ -244,7 +251,7 @@ public partial class UIScrollSystem
             {
                 float innerW = size.X - computed.PaddingLeft - computed.PaddingRight
                                - computed.BorderLeft - computed.BorderRight;
-                float contentW = computed.ContentSize.X;
+                float contentW = computed.ContentSize.X - computed.PaddingLeft - computed.BorderLeft;
                 float thumbW = contentW > 0 ? MathF.Max(20f, (innerW / contentW) * innerW) : 20f;
                 float trackW = innerW - thumbW;
                 float maxScroll = MathF.Max(0, contentW - innerW);

@@ -220,4 +220,157 @@ public class FlexMeasureTests
         Assert.Equal(200, layout.Size.Width);
         Assert.Equal(60, layout.Size.Height);
     }
+
+    [Fact]
+    public void MeasureFunc_WithPadding_OuterSizeIncludesPadding()
+    {
+        // Default BoxSizing is BorderBox, default direction is Row.
+        // Use AlignItems.FlexStart to prevent cross-axis stretching so we
+        // can verify the intrinsic height is content + padding.
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Px(400), Length.Px(300)),
+            AlignItems = AlignItems.FlexStart,
+        });
+        var leaf = tree.AddNode(LayoutStyle.Default with
+        {
+            Padding = Rect<Length>.All(10),
+        });
+        tree.AddChild(root, leaf);
+
+        tree.SetMeasureFunc(leaf, _ => new LayoutOutput
+        {
+            Size = new Size<float>(100, 20),
+        });
+
+        tree.ComputeRoot(root, 400, 300);
+        var layout = tree.GetNodeLayout(leaf);
+
+        // Content (100x20) + padding (10 each side) = outer 120x40
+        Assert.Equal(120, layout.Size.Width);
+        Assert.Equal(40, layout.Size.Height);
+        Assert.Equal(10, layout.Padding.Left);
+        Assert.Equal(10, layout.Padding.Top);
+    }
+
+    [Fact]
+    public void MeasureFunc_WithPadding_ContentAreaNotShrunk()
+    {
+        // Regression: padding was double-subtracted, making the content area too small.
+        // Column layout, leaf with width=100% height=Auto padding=8.
+        // Default BoxSizing is BorderBox so 100% width includes padding.
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Px(300), Length.Px(200)),
+            FlexDirection = FlexDirection.Column,
+        });
+        var leaf = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Percent(1f), Length.Auto),
+            Padding = Rect<Length>.All(8),
+        });
+        tree.AddChild(root, leaf);
+
+        // Simulate text: measured at available width, returns content size
+        tree.SetMeasureFunc(leaf, input =>
+        {
+            float w = input.KnownDimensions.Width
+                      ?? input.AvailableSpace.Width.UnwrapOr(float.MaxValue);
+            return new LayoutOutput
+            {
+                Size = new Size<float>(w, 40),
+            };
+        });
+
+        tree.ComputeRoot(root, 300, 200);
+        var layout = tree.GetNodeLayout(leaf);
+
+        // BorderBox: 100% of 300 = 300 outer, content = 300 - 16 = 284
+        Assert.Equal(300, layout.Size.Width);
+        // Height: 40 content + 16 padding = 56 outer
+        Assert.Equal(56, layout.Size.Height);
+
+        // Content area = outer - padding = the original measured size
+        float contentW = layout.Size.Width - layout.Padding.Left - layout.Padding.Right;
+        float contentH = layout.Size.Height - layout.Padding.Top - layout.Padding.Bottom;
+        Assert.Equal(284, contentW);
+        Assert.Equal(40, contentH);
+    }
+
+    [Fact]
+    public void MeasureFunc_WithPadding_FlexGrowRespectsPadding()
+    {
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Px(400), Length.Px(200)),
+            FlexDirection = FlexDirection.Row,
+        });
+
+        var measured = tree.AddNode(LayoutStyle.Default with
+        {
+            FlexGrow = 1,
+            Padding = Rect<Length>.All(10),
+        });
+        var fixedChild = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Px(100), Length.Auto),
+        });
+        tree.AddChild(root, measured);
+        tree.AddChild(root, fixedChild);
+
+        tree.SetMeasureFunc(measured, _ => new LayoutOutput
+        {
+            Size = new Size<float>(50, 30),
+        });
+
+        tree.ComputeRoot(root, 400, 200);
+        var measuredLayout = tree.GetNodeLayout(measured);
+
+        // Intrinsic outer = 50 + 20 (padding) = 70. Fixed = 100.
+        // Total = 170, free = 230. Measured grows by 230 -> outer = 300.
+        // Content = 300 - 20 = 280.
+        Assert.Equal(300, measuredLayout.Size.Width);
+        float contentW = measuredLayout.Size.Width - measuredLayout.Padding.Left - measuredLayout.Padding.Right;
+        Assert.Equal(280, contentW);
+    }
+
+    [Fact]
+    public void MeasureFunc_WithMargin_OffsetsPosition()
+    {
+        // Verify margin on a measured leaf creates a gap from the parent edge.
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(LayoutStyle.Default with
+        {
+            Size = new Size<Length>(Length.Px(300), Length.Px(200)),
+            FlexDirection = FlexDirection.Column,
+            AlignItems = AlignItems.FlexStart,
+        });
+        var leaf = tree.AddNode(LayoutStyle.Default with
+        {
+            Margin = new Rect<Length>(Length.Px(0), Length.Px(0), Length.Px(5), Length.Px(5)),
+        });
+        tree.AddChild(root, leaf);
+
+        tree.SetMeasureFunc(leaf, _ => new LayoutOutput
+        {
+            Size = new Size<float>(80, 30),
+        });
+
+        tree.ComputeRoot(root, 300, 200);
+        var layout = tree.GetNodeLayout(leaf);
+
+        // Column: main=Y, cross=X. Margin top=5, bottom=5.
+        // Position should be offset by margin from parent's content box.
+        Assert.Equal(5, layout.Margin.Top);
+        Assert.Equal(5, layout.Margin.Bottom);
+        Assert.Equal(5, layout.Location.Y);
+        Assert.Equal(0, layout.Location.X);
+
+        // Outer size should NOT include margin (margin is external).
+        Assert.Equal(80, layout.Size.Width);
+        Assert.Equal(30, layout.Size.Height);
+    }
 }

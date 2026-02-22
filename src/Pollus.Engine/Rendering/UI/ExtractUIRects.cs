@@ -140,6 +140,9 @@ public partial class ExtractUIRectsSystem
     static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, Assets<TextMeshAsset> meshes, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor,
         List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
     {
+        if (scissor.HasValue && (scissor.Value.Width <= 0 || scissor.Value.Height <= 0))
+            return;
+
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
         var nodeIndex = sortIndex++;
@@ -170,6 +173,8 @@ public partial class ExtractUIRectsSystem
             if (style.Value.Overflow.X != Overflow.Visible || style.Value.Overflow.Y != Overflow.Visible)
             {
                 childScissor = ComputeChildScissor(scissor, absPos, size, computed);
+                if (childScissor.HasValue && (childScissor.Value.Width <= 0 || childScissor.Value.Height <= 0))
+                    return;
             }
         }
 
