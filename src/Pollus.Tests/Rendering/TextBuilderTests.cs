@@ -192,6 +192,21 @@ public class TextBuilderTests
     }
 
     [Fact]
+    public void MeasureText_LeadingNewline_CountsBlankFirstLine()
+    {
+        var font = CreateTestFont(lineHeight: 20f);
+        var tier = font.Tiers[0];
+        var text = new NativeUtf8("\nAB");
+
+        var size = TextBuilder.MeasureText(text, tier, 16f);
+
+        Assert.Equal(20f, size.X);
+        Assert.Equal(40f, size.Y);
+
+        text.Dispose();
+    }
+
+    [Fact]
     public void MeasureText_EmptyText_ReturnsZero()
     {
         var font = CreateTestFont();
@@ -429,5 +444,140 @@ public class TextBuilderTests
 
         // size > all -> largest tier
         Assert.Equal(64u, font.GetTierForSize(200f).SdfRenderSize);
+    }
+
+    [Fact]
+    public void MeasureText_WrappingLineCount_MatchesBuildMesh()
+    {
+        // Use non-integer advances to stress rounding behavior
+        var handle = new Handle<FontAsset>(1);
+        var glyphs = new Dictionary<GlyphKey, Glyph>();
+        var chars = new (char c, float advance)[]
+        {
+            ('L', 9.3f), ('o', 7.8f), ('r', 5.2f), ('e', 7.1f), ('m', 9.7f),
+            ('i', 4.1f), ('p', 7.8f), ('s', 6.3f), ('u', 7.8f), ('d', 7.8f),
+            ('l', 4.1f), ('a', 7.1f), ('t', 5.6f), ('c', 6.5f), ('n', 7.8f),
+            ('g', 7.8f), ('v', 7.1f), ('.', 4.5f), (',', 4.5f),
+            (' ', 4.2f),
+        };
+        float lineHeight = 24f;
+        float ascender = 18f;
+
+        foreach (var (ch, adv) in chars)
+        {
+            glyphs[new GlyphKey(handle, ch)] = new Glyph
+            {
+                Character = ch, Advance = adv,
+                BearingX = 1f, BearingY = 14f,
+                Bounds = new RectInt(0, 0, (int)adv, 16),
+                Scale = 1f, LineHeight = lineHeight,
+                Ascender = ascender, Descender = -6f,
+            };
+        }
+
+        var tier = new SdfTier
+        {
+            FontHandle = handle, SdfRenderSize = 16, SdfPadding = 0,
+            AtlasWidth = 256, AtlasHeight = 256, Glyphs = glyphs,
+        };
+
+        var text = new NativeUtf8("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet.");
+        float fontSize = 16f;
+        float maxWidth = 372f;
+
+        var measured = TextBuilder.MeasureText(text, tier, fontSize, maxWidth);
+
+        var verts = new ArrayList<TextBuilder.TextVertex>();
+        var indices = new ArrayList<uint>();
+        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
+
+        // Count rendered lines by finding distinct cursorY values
+        float scale = fontSize / tier.SdfRenderSize;
+        var lineYs = new HashSet<float>();
+        for (int i = 0; i < verts.Count; i += 4)
+        {
+            float y = verts[i].Position.Y - (ascender - 14f) * scale; // undo glyph offset to get cursorY
+            lineYs.Add(MathF.Round(y));
+        }
+
+        int measuredLineCount = (int)(measured.Y / (lineHeight * scale));
+        int renderedLineCount = lineYs.Count;
+
+        Assert.True(measuredLineCount == renderedLineCount,
+            $"MeasureText says {measuredLineCount} lines (height={measured.Y}), but BuildMesh rendered {renderedLineCount} lines. lineHeight={lineHeight * scale}");
+
+        // Also verify the rendered glyph extent fits within the measured height
+        float minY = float.MaxValue, maxY = float.MinValue;
+        for (int i = 0; i < verts.Count; i++)
+        {
+            float y = verts[i].Position.Y;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+        float glyphExtent = maxY - minY;
+
+        Assert.True(glyphExtent <= measured.Y,
+            $"Rendered glyph extent ({glyphExtent}) exceeds measured height ({measured.Y})");
+
+        text.Dispose();
+    }
+
+    [Fact]
+    public void MeasureText_WithSdfPadding_HeightAccommodatesVertexExtent()
+    {
+        var handle = new Handle<FontAsset>(1);
+        var glyphs = new Dictionary<GlyphKey, Glyph>();
+        float lineHeight = 28f;
+        float ascender = 22f;
+        float descender = -6f;
+        int sdfPadding = 8;
+
+        // BearingY includes SDF padding (matching FontAssetLoader behavior)
+        var chars = new (char c, float advance, float bearingY, int boundsH)[]
+        {
+            ('A', 10f, ascender + sdfPadding, (int)ascender + 2 * sdfPadding),
+            ('g', 8f, 14f + sdfPadding, 14 + (int)(-descender) + 2 * sdfPadding),
+            (' ', 5f, 0f, 0),
+        };
+
+        foreach (var (c, advance, bearingY, boundsH) in chars)
+        {
+            glyphs[new GlyphKey(handle, c)] = new Glyph
+            {
+                Character = c, Advance = advance,
+                BearingX = 1f + sdfPadding, BearingY = bearingY,
+                Bounds = new RectInt(0, 0, (int)advance + 2 * sdfPadding, boundsH),
+                Scale = 1f, LineHeight = lineHeight,
+                Ascender = ascender, Descender = descender,
+            };
+        }
+
+        var tier = new SdfTier
+        {
+            FontHandle = handle, SdfRenderSize = 24, SdfPadding = sdfPadding,
+            AtlasWidth = 256, AtlasHeight = 256, Glyphs = glyphs,
+        };
+
+        using var text = new NativeUtf8("Ag Ag Ag Ag Ag Ag Ag Ag");
+        float fontSize = 16f;
+        float maxWidth = 80f;
+
+        var measured = TextBuilder.MeasureText(text, tier, fontSize, maxWidth);
+
+        var verts = new ArrayList<TextBuilder.TextVertex>();
+        var indices = new ArrayList<uint>();
+        TextBuilder.BuildMesh(text, tier, Vec2f.Zero, Vec4f.One, fontSize, verts, indices, TextCoordinateMode.YDown, maxWidth);
+
+        float minY = float.MaxValue, maxY = float.MinValue;
+        for (int i = 0; i < verts.Count; i++)
+        {
+            float y = verts[i].Position.Y;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+        float glyphExtent = maxY - minY;
+
+        Assert.True(glyphExtent <= measured.Y,
+            $"With SdfPadding={sdfPadding}: rendered extent ({glyphExtent:F2}) exceeds measured height ({measured.Y:F2})");
     }
 }

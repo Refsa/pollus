@@ -197,8 +197,8 @@ public static partial class FlexLayout
             {
                 var measured = tree.Measure(nodeId, input);
                 var measuredSize = new Size<float>(
-                    Clamp(measured.Size.Width, adjustedMinSize.Width, adjustedMaxSize.Width),
-                    Clamp(measured.Size.Height, adjustedMinSize.Height, adjustedMaxSize.Height)
+                    Clamp(measured.Size.Width, adjustedMinSize.Width, adjustedMaxSize.Width) + paddingBorderSum.Width,
+                    Clamp(measured.Size.Height, adjustedMinSize.Height, adjustedMaxSize.Height) + paddingBorderSum.Height
                 );
                 var measuredResult = new LayoutOutput
                 {
@@ -430,17 +430,24 @@ public static partial class FlexLayout
 
                 #region Phase 8: Determine container size
 
+                // Scroll containers with auto size on the scroll axis should not
+                // include scrollable overflow in their measured size. Their actual
+                // size is determined by the parent's flex algorithm (flex-grow/shrink)
                 float containerMainSize = containerMainInnerSize
-                                          ?? MathF.Max(MathF.Min(
-                                                  totalMainContent,
-                                                  adjustedMaxSize.Main(dir) ?? float.PositiveInfinity),
-                                              adjustedMinSize.Main(dir) ?? 0f);
+                                          ?? (scrollMain
+                                              ? MathF.Max(adjustedMinSize.Main(dir) ?? 0f, 0f)
+                                              : MathF.Max(MathF.Min(
+                                                      totalMainContent,
+                                                      adjustedMaxSize.Main(dir) ?? float.PositiveInfinity),
+                                                  adjustedMinSize.Main(dir) ?? 0f));
 
                 float containerCrossSize = containerCrossInnerSize
-                                           ?? MathF.Max(MathF.Min(
-                                                   totalCrossContent,
-                                                   adjustedMaxSize.Cross(dir) ?? float.PositiveInfinity),
-                                               adjustedMinSize.Cross(dir) ?? 0f);
+                                           ?? (scrollCross
+                                               ? MathF.Max(adjustedMinSize.Cross(dir) ?? 0f, 0f)
+                                               : MathF.Max(MathF.Min(
+                                                       totalCrossContent,
+                                                       adjustedMaxSize.Cross(dir) ?? float.PositiveInfinity),
+                                                   adjustedMinSize.Cross(dir) ?? 0f));
 
                 var containerOuterMainSize = containerMainSize + paddingBorderSum.Main(dir);
                 var containerOuterCrossSize = containerCrossSize + paddingBorderSum.Cross(dir);
@@ -880,22 +887,23 @@ public static partial class FlexLayout
                 float itemOuterCross = item.TargetCrossSize
                                        + item.MarginCrossAxisSum(dir)
                                        + item.PaddingBorderCrossAxisSum(dir);
-                float lineFreeForItem = MathF.Max(line.CrossSize - itemOuterCross, 0f);
+                float lineFreeForItem = line.CrossSize - itemOuterCross;
 
                 float crossOffset = 0f;
                 if (item.MarginCrossStartAuto && item.MarginCrossEndAuto)
                 {
-                    float halfMargin = lineFreeForItem / 2f;
+                    // CSS spec: auto margins are zero when free space is negative
+                    float halfMargin = Math.Max(lineFreeForItem, 0f) / 2f;
                     SetCrossMarginStart(ref item, dir, halfMargin);
                     SetCrossMarginEnd(ref item, dir, halfMargin);
                 }
                 else if (item.MarginCrossStartAuto)
                 {
-                    SetCrossMarginStart(ref item, dir, lineFreeForItem);
+                    SetCrossMarginStart(ref item, dir, Math.Max(lineFreeForItem, 0f));
                 }
                 else if (item.MarginCrossEndAuto)
                 {
-                    SetCrossMarginEnd(ref item, dir, lineFreeForItem);
+                    SetCrossMarginEnd(ref item, dir, Math.Max(lineFreeForItem, 0f));
                 }
                 else
                 {

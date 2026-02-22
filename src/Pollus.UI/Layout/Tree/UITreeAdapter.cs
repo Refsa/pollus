@@ -596,4 +596,12 @@ public sealed class UITreeAdapter : ILayoutTree
 
     public void MarkDirty(int nodeId)
         => caches[nodeId].Clear();
+
+    /// Marks a node and all its ancestors dirty by entity.
+    public void MarkEntityDirty(Entity entity)
+    {
+        int nodeId = GetNodeId(entity);
+        if (nodeId >= 0)
+            MarkDirtyWithAncestors(nodeId);
+    }
 }

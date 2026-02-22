@@ -8,6 +8,7 @@ public class UITextBuilder : UINodeBuilder<UITextBuilder>
 {
     string text;
     float fontSize = 16f;
+    float lineHeight;
     Color textColor = Pollus.Utils.Color.WHITE;
     Handle font = Handle.Null;
 
@@ -34,12 +35,18 @@ public class UITextBuilder : UINodeBuilder<UITextBuilder>
         return this;
     }
 
+    public UITextBuilder LineHeight(float value)
+    {
+        lineHeight = value;
+        return this;
+    }
+
     public override Entity Spawn()
     {
         var entity = commands.Spawn(Entity.With(
             new UINode(),
             new ContentSize(),
-            new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(text) },
+            new UIText { Color = textColor, Size = fontSize, LineHeight = lineHeight, Text = new NativeUtf8(text) },
             new UIStyle { Value = style }
         )).Entity;
 

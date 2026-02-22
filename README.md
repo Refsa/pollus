@@ -13,7 +13,7 @@ A small endevour into the possibilities of a "pure" C# game engine that can comp
 - Simple input plugin
 - Build to Windows, Linux and Browser (WASM)
 - Dear ImGui renderer
-- UI based on taffy, SDF based renderer
+- UI based on taffy, SDF based renderer (still WIP)
 
 Currently requires `net10.0` targets and the `wasm-tools`/`wasm-experimental` workload for browser support.
 

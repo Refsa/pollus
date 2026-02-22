@@ -130,8 +130,10 @@ public class DrawGroup<TGroup>
                     var h = (uint)Math.Max(0, rect.Height);
                     if (viewport.HasValue)
                     {
-                        w = Math.Min(w, viewport.Value.X - Math.Min(x, viewport.Value.X));
-                        h = Math.Min(h, viewport.Value.Y - Math.Min(y, viewport.Value.Y));
+                        x = Math.Min(x, viewport.Value.X);
+                        y = Math.Min(y, viewport.Value.Y);
+                        w = Math.Min(w, viewport.Value.X - x);
+                        h = Math.Min(h, viewport.Value.Y - y);
                     }
                     encoder.SetScissorRect(x, y, w, h);
                 }

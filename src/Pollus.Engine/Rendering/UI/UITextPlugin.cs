@@ -52,12 +52,14 @@ public partial class UITextSystemSet
     {
         public NativeUtf8 Text;
         public float Size;
+        public float LineHeight;
         public SdfTier Tier = null!;
 
         public Size<float> Measure(Size<float?> knownDimensions, Size<AvailableSpace> availableSpace)
         {
             float maxWidth = knownDimensions.Width ?? availableSpace.Width.AsDefinite() ?? float.MaxValue;
-            var measured = TextBuilder.MeasureText(Text, Tier, Size, maxWidth);
+            float? lineHeightOverride = LineHeight > 0f ? Size * LineHeight : null;
+            var measured = TextBuilder.MeasureText(Text, Tier, Size, maxWidth, lineHeightOverride);
             return new Size<float>(
                 knownDimensions.Width ?? measured.X,
                 knownDimensions.Height ?? measured.Y);
@@ -161,8 +163,10 @@ public partial class UITextSystemSet
 
             ctx.Text = uiText.Text;
             ctx.Size = uiText.Size;
+            ctx.LineHeight = uiText.LineHeight;
             ctx.Tier = fontAsset.GetTierForSize(uiText.Size);
 
+            adapter.MarkEntityDirty(entity);
             uiText.IsDirty = false;
         }
     }
@@ -175,8 +179,12 @@ public partial class UITextSystemSet
                              - computed.BorderLeft - computed.BorderRight;
             if (maxWidth < 0f) maxWidth = 0f;
 
+            float contentHeight = computed.Size.Y - computed.PaddingTop - computed.PaddingBottom
+                                  - computed.BorderTop - computed.BorderBottom;
+
             bool widthChanged = uiText.LastBuildMaxWidth != maxWidth;
-            if (!uiText.IsDirty && !widthChanged) return;
+            bool heightChanged = uiText.LastBuildContentHeight != contentHeight;
+            if (!uiText.IsDirty && !widthChanged && !heightChanged) return;
 
             var fontAsset = data.fonts.Get(textFont.Font);
             if (fontAsset == null) return;
@@ -201,10 +209,34 @@ public partial class UITextSystemSet
 
             tma.Vertices.Clear();
             tma.Indices.Clear();
-            var result = TextBuilder.BuildMesh(uiText.Text, tier, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth);
+            float lineHeightPx = uiText.LineHeight > 0f ? uiText.Size * uiText.LineHeight : 0f;
+            var result = TextBuilder.BuildMesh(uiText.Text, tier, Vec2f.Zero, Vec4f.One, uiText.Size, tma.Vertices, tma.Indices, TextCoordinateMode.YDown, maxWidth, lineHeightPx);
+
+            // Normalize glyph vertices to start at Y=0 and center when there is free space.
+            if (tma.Vertices.Count > 0)
+            {
+                var verts = tma.Vertices.AsSpan();
+                float minY = float.MaxValue;
+                float maxY = float.MinValue;
+                for (int i = 0; i < verts.Length; i++)
+                {
+                    float y = verts[i].Position.Y;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+                float glyphExtent = maxY - minY;
+                float freeSpace = contentHeight - glyphExtent;
+                float offset = -minY; // normalize to Y=0
+                if (freeSpace > 0f)
+                    offset += freeSpace / 2f; // center only when there is room
+                for (int i = 0; i < verts.Length; i++)
+                    verts[i].Position.Y += offset;
+            }
+
             tma.Bounds = result.Bounds;
 
             uiText.LastBuildMaxWidth = maxWidth;
+            uiText.LastBuildContentHeight = contentHeight;
             data.meshes.Set(mesh.Mesh, tma);
         });
     }

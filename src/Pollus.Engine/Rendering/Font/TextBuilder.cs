@@ -35,10 +35,11 @@ public partial class TextBuilder
         ArrayList<TextVertex> vertices,
         ArrayList<uint> indices,
         TextCoordinateMode mode = TextCoordinateMode.YUp,
-        float maxWidth = 0f)
+        float maxWidth = 0f,
+        float lineHeightOverride = 0f)
     {
         var bounds = Rect.Zero;
-        foreach (scoped ref readonly var quad in BuildMesh(text, tier, startPos, color, size, (uint)vertices.Count, mode, maxWidth))
+        foreach (scoped ref readonly var quad in BuildMesh(text, tier, startPos, color, size, (uint)vertices.Count, mode, maxWidth, lineHeightOverride))
         {
             foreach (scoped ref readonly var point in quad.Vertices) bounds.Expand(point.Position);
 
@@ -52,71 +53,108 @@ public partial class TextBuilder
         };
     }
 
-    public static Enumerable BuildMesh(NativeUtf8 text, SdfTier tier, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp, float maxWidth = 0f)
+    public static Enumerable BuildMesh(NativeUtf8 text, SdfTier tier, Vec2f startPos, Vec4f color, float size, uint indexOffset = 0, TextCoordinateMode mode = TextCoordinateMode.YUp, float maxWidth = 0f, float lineHeightOverride = 0f)
     {
-        return new Enumerable(text, tier, startPos, color, size, indexOffset, mode, maxWidth);
+        return new Enumerable(text, tier, startPos, color, size, indexOffset, mode, maxWidth, lineHeightOverride);
     }
 
-    public static Vec2f MeasureText(NativeUtf8 text, SdfTier tier, float size, float maxWidth = 0f)
+    public static Vec2f MeasureText(NativeUtf8 text, SdfTier tier, float size, float maxWidth = 0f, float? lineHeightOverride = null)
     {
         var scale = size / tier.SdfRenderSize;
         var glyphKey = new GlyphKey(tier.FontHandle, '\0');
+        var enumerator = text.GetEnumerator();
 
         float cursorX = 0f;
-        float wordStartX = 0f;
+        float cursorY = 0f;
         float maxLineWidth = 0f;
-        float lineHeight = 0f;
+        float lineHeight = lineHeightOverride ?? 0f;
         int lineCount = 0;
+        bool atWordStart = true;
 
-        foreach (var c in text)
+        while (enumerator.MoveNext())
         {
+            var c = enumerator.Current;
             if (lineCount == 0) lineCount = 1;
 
             if (c == '\n')
             {
                 maxLineWidth = float.Max(maxLineWidth, cursorX);
                 cursorX = 0f;
-                wordStartX = 0f;
+                atWordStart = true;
+                if (lineHeight == 0f)
+                    lineHeight = ResolveLineHeight(tier, ref glyphKey, scale, size, lineHeightOverride);
+                cursorY += lineHeight;
+                cursorY = float.Round(cursorY);
                 lineCount++;
                 continue;
             }
 
+            if (c == ' ')
+                atWordStart = true;
+
             glyphKey.Character = c;
             if (!tier.Glyphs.TryGetValue(glyphKey, out var glyph))
-            {
                 continue;
-            }
 
-            if (lineHeight == 0f) lineHeight = glyph.LineHeight * scale;
+            if (lineHeight == 0f)
+                lineHeight = lineHeightOverride ?? glyph.LineHeight * scale;
 
             float advance = glyph.Advance * scale;
 
-            if (c == ' ')
+            if (maxWidth > 0f && c != ' ' && atWordStart)
             {
-                cursorX = float.Round(cursorX + advance);
-                wordStartX = cursorX;
-            }
-            else
-            {
-                if (maxWidth > 0f && cursorX + advance > maxWidth && wordStartX > 0f)
+                float wordEnd = MeasureWordEnd(text, enumerator.ByteIndex, tier, glyphKey, cursorX, advance, scale);
+                if (wordEnd > maxWidth && cursorX > 0f)
                 {
-                    // Wrap: current word moves to new line
-                    maxLineWidth = float.Max(maxLineWidth, wordStartX);
-                    cursorX = float.Round((cursorX - wordStartX) + advance);
-                    wordStartX = 0f;
+                    maxLineWidth = float.Max(maxLineWidth, cursorX);
+                    cursorX = 0f;
+                    cursorY += lineHeight;
+                    cursorY = float.Round(cursorY);
                     lineCount++;
                 }
-                else
-                {
-                    cursorX = float.Round(cursorX + advance);
-                }
+                atWordStart = false;
             }
+
+            cursorX = float.Round(cursorX + advance);
         }
 
         if (lineCount == 0) return Vec2f.Zero;
+        if (lineHeight == 0f)
+            lineHeight = ResolveLineHeight(tier, ref glyphKey, scale, size, lineHeightOverride);
 
         maxLineWidth = float.Max(maxLineWidth, cursorX);
-        return new Vec2f(maxLineWidth, lineCount * lineHeight);
+        float sdfExtra = 2f * tier.SdfPadding * scale;
+        return new Vec2f(maxLineWidth, cursorY + lineHeight + sdfExtra);
+    }
+
+    static float ResolveLineHeight(SdfTier tier, ref GlyphKey glyphKey, float scale, float size, float? lineHeightOverride)
+    {
+        if (lineHeightOverride.HasValue && lineHeightOverride.Value > 0f)
+            return lineHeightOverride.Value;
+
+        var saved = glyphKey.Character;
+        glyphKey.Character = 'A';
+        float result = tier.Glyphs.TryGetValue(glyphKey, out var glyph)
+            ? glyph.LineHeight * scale
+            : size + 2f;
+        glyphKey.Character = saved;
+        return result;
+    }
+
+    static float MeasureWordEnd(NativeUtf8 text, int fromIndex, SdfTier tier, GlyphKey glyphKey, float cursor, float firstAdvance, float scale)
+    {
+        cursor = float.Round(cursor + firstAdvance);
+        var peek = text.GetEnumeratorFrom(fromIndex);
+        while (peek.MoveNext())
+        {
+            var c = peek.Current;
+            if (c == ' ' || c == '\n') break;
+
+            glyphKey.Character = c;
+            if (tier.Glyphs.TryGetValue(glyphKey, out var glyph))
+                cursor = float.Round(cursor + glyph.Advance * scale);
+        }
+        return cursor;
     }
 
     public struct CharQuad
@@ -159,6 +197,7 @@ public partial class TextBuilder
         readonly uint indexOffset;
         readonly TextCoordinateMode mode;
         readonly float maxWidth;
+        readonly float lineHeightOverride;
 
         public Enumerable(NativeUtf8 text,
             SdfTier tier,
@@ -167,7 +206,8 @@ public partial class TextBuilder
             float size,
             uint indexOffset = 0,
             TextCoordinateMode mode = TextCoordinateMode.YUp,
-            float maxWidth = 0f
+            float maxWidth = 0f,
+            float lineHeightOverride = 0f
         )
         {
             this.text = text;
@@ -178,25 +218,26 @@ public partial class TextBuilder
             this.indexOffset = indexOffset;
             this.mode = mode;
             this.maxWidth = maxWidth;
+            this.lineHeightOverride = lineHeightOverride;
         }
 
         public BuilderEnumerator GetEnumerator()
         {
-            return new BuilderEnumerator(text, tier, startPos, color, size, indexOffset, mode, maxWidth);
+            return new BuilderEnumerator(text, tier, startPos, color, size, indexOffset, mode, maxWidth, lineHeightOverride);
         }
     }
 
-    public unsafe ref struct BuilderEnumerator
+    public ref struct BuilderEnumerator
     {
-        readonly byte* textData;
-        readonly int textLength;
-        int textIndex;
+        NativeUtf8 text;
+        NativeUtf8.Enumerator textEnumerator;
         readonly SdfTier tier;
         readonly Vec4f color;
         readonly Vec2f startPos;
         readonly float size;
         readonly TextCoordinateMode mode;
         readonly float maxWidth;
+        readonly float lineHeightOverride;
 
         GlyphKey glyphKey;
         float cursorX;
@@ -217,19 +258,20 @@ public partial class TextBuilder
             float size,
             uint indexOffset = 0,
             TextCoordinateMode mode = TextCoordinateMode.YUp,
-            float maxWidth = 0f
+            float maxWidth = 0f,
+            float lineHeightOverride = 0f
         )
         {
             this.startPos = startPos;
             this.color = color;
-            this.textData = text.Pointer;
-            this.textLength = text.AsSpan().Length;
-            this.textIndex = 0;
+            this.text = text;
+            this.textEnumerator = text.GetEnumerator();
             this.tier = tier;
             this.size = size;
             this.indexOffset = indexOffset;
             this.mode = mode;
             this.maxWidth = maxWidth;
+            this.lineHeightOverride = lineHeightOverride;
 
             cursorX = startPos.X;
             cursorY = startPos.Y;
@@ -244,24 +286,15 @@ public partial class TextBuilder
 
         public bool MoveNext()
         {
-            while (DecodeNext(out var c))
+            while (textEnumerator.MoveNext())
             {
+                var c = textEnumerator.Current;
+
                 if (c == '\n')
                 {
                     cursorX = startPos.X;
                     atWordStart = true;
-                    if (mode == TextCoordinateMode.YDown)
-                    {
-                        glyphKey.Character = 'A';
-                        if (tier.Glyphs.TryGetValue(glyphKey, out var lhGlyph))
-                            cursorY += lhGlyph.LineHeight * scale;
-                        else
-                            cursorY += size + 2f;
-                    }
-                    else
-                    {
-                        cursorY -= size + 2f;
-                    }
+                    cursorY += AdvanceLine();
                     cursorY = float.Round(cursorY);
                     continue;
                 }
@@ -277,26 +310,13 @@ public partial class TextBuilder
                     continue;
                 }
 
-                // Word wrapping: at word boundary, measure full word and wrap if needed
                 if (maxWidth > 0f && c != ' ' && atWordStart)
                 {
-                    float wordEnd = MeasureWordEnd(cursorX, glyph.Advance * scale);
+                    float wordEnd = MeasureWordEnd(text, textEnumerator.ByteIndex, tier, glyphKey, cursorX, glyph.Advance * scale, scale);
                     if (wordEnd > maxWidth && cursorX > startPos.X)
                     {
                         cursorX = startPos.X;
-                        if (mode == TextCoordinateMode.YDown)
-                        {
-                            glyphKey.Character = 'A';
-                            if (tier.Glyphs.TryGetValue(glyphKey, out var lhGlyph2))
-                                cursorY += lhGlyph2.LineHeight * scale;
-                            else
-                                cursorY += size + 2f;
-                            glyphKey.Character = c;
-                        }
-                        else
-                        {
-                            cursorY -= size + 2f;
-                        }
+                        cursorY += AdvanceLine();
                         cursorY = float.Round(cursorY);
                     }
                     atWordStart = false;
@@ -348,102 +368,23 @@ public partial class TextBuilder
             return false;
         }
 
-        bool DecodeNext(out char c)
+        float AdvanceLine()
         {
-            if (textIndex >= textLength)
+            if (lineHeightOverride > 0f)
+                return mode == TextCoordinateMode.YDown ? lineHeightOverride : -lineHeightOverride;
+
+            if (mode == TextCoordinateMode.YDown)
             {
-                c = '\0';
-                return false;
+                var saved = glyphKey.Character;
+                glyphKey.Character = 'A';
+                float result = tier.Glyphs.TryGetValue(glyphKey, out var lhGlyph)
+                    ? lhGlyph.LineHeight * scale
+                    : size + 2f;
+                glyphKey.Character = saved;
+                return result;
             }
 
-            var b = textData[textIndex];
-            if (b == 0)
-            {
-                c = '\0';
-                return false;
-            }
-
-            if ((b & 0x80) == 0)
-            {
-                c = (char)b;
-                textIndex++;
-                return true;
-            }
-
-            if ((b & 0xE0) == 0xC0)
-            {
-                c = (char)(((b & 0x1F) << 6) | (textData[textIndex + 1] & 0x3F));
-                textIndex += 2;
-                return true;
-            }
-
-            if ((b & 0xF0) == 0xE0)
-            {
-                c = (char)(((b & 0x0F) << 12) | ((textData[textIndex + 1] & 0x3F) << 6) | (textData[textIndex + 2] & 0x3F));
-                textIndex += 3;
-                return true;
-            }
-
-            if ((b & 0xF8) == 0xF0)
-            {
-                c = '?';
-                textIndex += 4;
-                return true;
-            }
-
-            c = '\0';
-            textIndex++;
-            return false;
-        }
-
-        /// Predicts the cursor position after rendering the current word,
-        /// using the same float.Round accumulation as the actual rendering.
-        float MeasureWordEnd(float cursor, float firstAdvance)
-        {
-            cursor = float.Round(cursor + firstAdvance);
-            int i = textIndex;
-
-            while (i < textLength)
-            {
-                var b = textData[i];
-                if (b == 0) break;
-
-                char c;
-                if ((b & 0x80) == 0)
-                {
-                    c = (char)b;
-                    i++;
-                }
-                else if ((b & 0xE0) == 0xC0)
-                {
-                    c = (char)(((b & 0x1F) << 6) | (textData[i + 1] & 0x3F));
-                    i += 2;
-                }
-                else if ((b & 0xF0) == 0xE0)
-                {
-                    c = (char)(((b & 0x0F) << 12) | ((textData[i + 1] & 0x3F) << 6) | (textData[i + 2] & 0x3F));
-                    i += 3;
-                }
-                else if ((b & 0xF8) == 0xF0)
-                {
-                    c = '?';
-                    i += 4;
-                }
-                else
-                {
-                    break;
-                }
-
-                if (c == ' ' || c == '\n') break;
-
-                glyphKey.Character = c;
-                if (tier.Glyphs.TryGetValue(glyphKey, out var glyph))
-                {
-                    cursor = float.Round(cursor + glyph.Advance * scale);
-                }
-            }
-
-            return cursor;
+            return -(size + 2f);
         }
     }
 }

@@ -44,6 +44,8 @@ unsafe public struct NativeUtf8 : IDisposable
 
     public Enumerator GetEnumerator() => new(Pointer, count);
 
+    public Enumerator GetEnumeratorFrom(int byteIndex) => new(Pointer, count, byteIndex);
+
     public ReadOnlySpan<byte> AsSpan() => new(Pointer, count);
 
     public ReadOnlySpan<byte> ContentSpan => count > 0 ? new(Pointer, count - 1) : default;
@@ -66,11 +68,21 @@ unsafe public struct NativeUtf8 : IDisposable
 
         public char Current { get; private set; }
 
+        public int ByteIndex => index;
+
         public Enumerator(byte* data, int length)
         {
             this.data = data;
             this.length = length;
             index = 0;
+            Current = '\0';
+        }
+
+        public Enumerator(byte* data, int length, int startIndex)
+        {
+            this.data = data;
+            this.length = length;
+            index = startIndex;
             Current = '\0';
         }
 
