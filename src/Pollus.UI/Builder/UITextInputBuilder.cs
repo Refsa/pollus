@@ -4,19 +4,29 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UITextInputBuilder : UINodeBuilder<UITextInputBuilder>
+public struct UITextInputBuilder : IUINodeBuilder<UITextInputBuilder>
 {
-    UITextInput textInput = new();
-    string initialText = "";
-    float fontSize = 16f;
-    Color textColor = Color.WHITE;
-    Handle font = Handle.Null;
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UITextInputBuilder(Commands commands) : base(commands)
+    UITextInput textInput;
+    string initialText;
+    float fontSize;
+    Color textColor;
+    Handle font;
+
+    public UITextInputBuilder(Commands commands)
     {
-        focusable = true;
+        state = new UINodeBuilderState(commands);
+        state.focusable = true;
+        textInput = new();
+        initialText = "";
+        fontSize = 16f;
+        textColor = Color.WHITE;
+        font = Handle.Null;
     }
 
     public UITextInputBuilder Text(string text)
@@ -49,10 +59,10 @@ public class UITextInputBuilder : UINodeBuilder<UITextInputBuilder>
         return this;
     }
 
-    public new TextInputResult Spawn()
+    public TextInputResult Spawn()
     {
         // Create text display child entity
-        var textEntity = commands.Spawn(Entity.With(
+        var textEntity = state.commands.Spawn(Entity.With(
             new UINode(),
             new ContentSize(),
             new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(initialText) },
@@ -66,31 +76,31 @@ public class UITextInputBuilder : UINodeBuilder<UITextInputBuilder>
         )).Entity;
 
         if (!font.IsNull())
-            commands.AddComponent(textEntity, new UITextFont { Font = font });
+            state.commands.AddComponent(textEntity, new UITextFont { Font = font });
 
         textInput.TextEntity = textEntity;
 
-        interactable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             textInput,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        commands.AddChild(entity, textEntity);
+        state.commands.AddChild(entity, textEntity);
 
         // Defer text buffer initialization
         var capturedEntity = entity;
         var capturedText = initialText;
-        commands.Defer(world =>
+        state.commands.Defer(world =>
         {
             var bufs = world.Resources.Get<UITextBuffers>();
             bufs.Set(capturedEntity, capturedText);
         });
 
-        Setup(entity);
+        state.Setup(entity);
 
         return new TextInputResult { Entity = entity, TextEntity = textEntity };
     }

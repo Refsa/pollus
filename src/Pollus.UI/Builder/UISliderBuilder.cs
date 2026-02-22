@@ -2,12 +2,20 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UISliderBuilder : UINodeBuilder<UISliderBuilder>
+public struct UISliderBuilder : IUINodeBuilder<UISliderBuilder>
 {
-    UISlider slider = new();
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UISliderBuilder(Commands commands) : base(commands) { }
+    UISlider slider;
+
+    public UISliderBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        slider = new();
+    }
 
     public UISliderBuilder Value(float value)
     {
@@ -46,19 +54,19 @@ public class UISliderBuilder : UINodeBuilder<UISliderBuilder>
         return this;
     }
 
-    public new SliderResult Spawn()
+    public SliderResult Spawn()
     {
-        interactable = true;
-        focusable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.focusable = true;
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             slider,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
+        state.Setup(entity);
 
         return new SliderResult { Entity = entity };
     }

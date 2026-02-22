@@ -4,17 +4,29 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
+public struct UIDropdownBuilder : IUINodeBuilder<UIDropdownBuilder>
 {
-    readonly List<string> options = [];
-    string placeholder = "";
-    float fontSize = 16f;
-    Color textColor = Color.WHITE;
-    Handle font = Handle.Null;
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UIDropdownBuilder(Commands commands) : base(commands) { }
+    List<string> options;
+    string placeholder;
+    float fontSize;
+    Color textColor;
+    Handle font;
+
+    public UIDropdownBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        options = [];
+        placeholder = "";
+        fontSize = 16f;
+        textColor = Color.WHITE;
+        font = Handle.Null;
+    }
 
     public UIDropdownBuilder Placeholder(string text)
     {
@@ -28,9 +40,10 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
         return this;
     }
 
-    public UIDropdownBuilder Options(params string[] texts)
+    public UIDropdownBuilder Options(params ReadOnlySpan<string> texts)
     {
-        options.AddRange(texts);
+        foreach (var text in texts)
+            options.Add(text);
         return this;
     }
 
@@ -52,10 +65,10 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
         return this;
     }
 
-    public new DropdownResult Spawn()
+    public DropdownResult Spawn()
     {
         // 1. Create display text entity
-        var displayText = commands.Spawn(Entity.With(
+        var displayText = state.commands.Spawn(Entity.With(
             new UINode(),
             new ContentSize(),
             new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(placeholder) },
@@ -69,28 +82,28 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
         )).Entity;
 
         if (!font.IsNull())
-            commands.AddComponent(displayText, new UITextFont { Font = font });
+            state.commands.AddComponent(displayText, new UITextFont { Font = font });
 
         // 2. Create trigger entity (the dropdown itself)
-        interactable = true;
-        focusable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.focusable = true;
+        state.backgroundColor ??= new Color();
 
-        var trigger = commands.Spawn(Entity.With(
+        var trigger = state.commands.Spawn(Entity.With(
             new UINode(),
             new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText },
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        commands.AddChild(trigger, displayText);
+        state.commands.AddChild(trigger, displayText);
 
         // 3. Create absolute popup panel for options
-        var heightPx = style.Size.Height.Tag == Length.Kind.Px ? style.Size.Height.Value : 0f;
-        var padTopPx = style.Padding.Top.Tag == Length.Kind.Px ? style.Padding.Top.Value : 0f;
-        var borderTopPx = style.Border.Top.Tag == Length.Kind.Px ? style.Border.Top.Value : 0f;
+        var heightPx = state.style.Size.Height.Tag == Length.Kind.Px ? state.style.Size.Height.Value : 0f;
+        var padTopPx = state.style.Padding.Top.Tag == Length.Kind.Px ? state.style.Padding.Top.Value : 0f;
+        var borderTopPx = state.style.Border.Top.Tag == Length.Kind.Px ? state.style.Border.Top.Value : 0f;
         var insetTop = Length.Px(heightPx - padTopPx - borderTopPx);
 
-        var popupPanel = commands.Spawn(Entity.With(
+        var popupPanel = state.commands.Spawn(Entity.With(
             new UINode(),
             new UIStyle
             {
@@ -105,14 +118,14 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
             }
         )).Entity;
 
-        if (backgroundColor.HasValue)
-            commands.AddComponent(popupPanel, new BackgroundColor { Color = backgroundColor.Value });
+        if (state.backgroundColor.HasValue)
+            state.commands.AddComponent(popupPanel, new BackgroundColor { Color = state.backgroundColor.Value });
 
-        if (borderColor.HasValue)
-            commands.AddComponent(popupPanel, borderColor.Value);
+        if (state.borderColor.HasValue)
+            state.commands.AddComponent(popupPanel, state.borderColor.Value);
 
-        if (borderRadius.HasValue)
-            commands.AddComponent(popupPanel, borderRadius.Value);
+        if (state.borderRadius.HasValue)
+            state.commands.AddComponent(popupPanel, state.borderRadius.Value);
 
         // 4. Create option entities inside the popup panel
         var optionEntities = new Entity[options.Count];
@@ -120,7 +133,7 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
         for (int i = 0; i < options.Count; i++)
         {
             // Option text child
-            var optionText = commands.Spawn(Entity.With(
+            var optionText = state.commands.Spawn(Entity.With(
                 new UINode(),
                 new ContentSize(),
                 new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(options[i]) },
@@ -134,11 +147,11 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
             )).Entity;
 
             if (!font.IsNull())
-                commands.AddComponent(optionText, new UITextFont { Font = font });
+                state.commands.AddComponent(optionText, new UITextFont { Font = font });
 
             // Option entity - acts as a button with hover/active states
-            var optionBg = backgroundColor.HasValue ? backgroundColor.Value : new Color(0.2f, 0.2f, 0.25f, 1f);
-            var option = commands.Spawn(Entity.With(
+            var optionBg = state.backgroundColor.HasValue ? state.backgroundColor.Value : new Color(0.2f, 0.2f, 0.25f, 1f);
+            var option = state.commands.Spawn(Entity.With(
                 new UINode(),
                 new UIInteraction { Focusable = true },
                 new Outline(),
@@ -154,26 +167,26 @@ public class UIDropdownBuilder : UINodeBuilder<UIDropdownBuilder>
                 {
                     Value = LayoutStyle.Default with
                     {
-                        Size = new Size<Length>(Length.Percent(1f), style.Size.Height),
-                        Padding = style.Padding,
-                        AlignItems = style.AlignItems,
+                        Size = new Size<Length>(Length.Percent(1f), state.style.Size.Height),
+                        Padding = state.style.Padding,
+                        AlignItems = state.style.AlignItems,
                     }
                 }
             )).Entity;
 
-            commands.AddChild(option, optionText);
-            commands.AddChild(popupPanel, option);
+            state.commands.AddChild(option, optionText);
+            state.commands.AddChild(popupPanel, option);
             optionEntities[i] = option;
             optionTextEntities[i] = optionText;
         }
 
         // 5. Apply visual components and hierarchy to trigger
-        Setup(trigger);
+        state.Setup(trigger);
 
-        commands.AddChild(trigger, popupPanel);
+        state.commands.AddChild(trigger, popupPanel);
 
         // Set PopupRootEntity on the dropdown component
-        commands.SetComponent(trigger, new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText, PopupRootEntity = popupPanel });
+        state.commands.SetComponent(trigger, new UIDropdown { SelectedIndex = -1, DisplayTextEntity = displayText, PopupRootEntity = popupPanel });
 
         return new DropdownResult
         {
