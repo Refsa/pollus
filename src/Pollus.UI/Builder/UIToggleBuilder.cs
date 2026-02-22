@@ -2,12 +2,20 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UIToggleBuilder : UINodeBuilder<UIToggleBuilder>
+public struct UIToggleBuilder : IUINodeBuilder<UIToggleBuilder>
 {
-    UIToggle toggle = new();
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UIToggleBuilder(Commands commands) : base(commands) { }
+    UIToggle toggle;
+
+    public UIToggleBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        toggle = new();
+    }
 
     public UIToggleBuilder IsOn(bool value = true)
     {
@@ -27,19 +35,19 @@ public class UIToggleBuilder : UINodeBuilder<UIToggleBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        interactable = true;
-        focusable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.focusable = true;
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             toggle,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
+        state.Setup(entity);
 
         return entity;
     }

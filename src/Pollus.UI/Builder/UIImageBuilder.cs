@@ -3,13 +3,18 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.Mathematics;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UIImageBuilder : UINodeBuilder<UIImageBuilder>
+public struct UIImageBuilder : IUINodeBuilder<UIImageBuilder>
 {
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
+
     UIImage image;
 
-    public UIImageBuilder(Commands commands, Handle texture) : base(commands)
+    public UIImageBuilder(Commands commands, Handle texture)
     {
+        state = new UINodeBuilderState(commands);
         image = new UIImage { Texture = texture };
     }
 
@@ -25,17 +30,17 @@ public class UIImageBuilder : UINodeBuilder<UIImageBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        backgroundColor ??= Color.WHITE;
+        state.backgroundColor ??= Color.WHITE;
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             image,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
+        state.Setup(entity);
 
         return entity;
     }

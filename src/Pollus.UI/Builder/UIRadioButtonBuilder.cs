@@ -2,17 +2,22 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UIRadioButtonBuilder : UINodeBuilder<UIRadioButtonBuilder>
+public struct UIRadioButtonBuilder : IUINodeBuilder<UIRadioButtonBuilder>
 {
     static volatile int groupIdCounter = -1;
     public static int NextGroupId => Interlocked.Increment(ref groupIdCounter);
 
-    UIRadioButton radioButton = new();
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UIRadioButtonBuilder(Commands commands, int? groupId) : base(commands)
+    UIRadioButton radioButton;
+
+    public UIRadioButtonBuilder(Commands commands, int? groupId)
     {
-        radioButton.GroupId = groupId ?? NextGroupId;
+        state = new UINodeBuilderState(commands);
+        radioButton = new() { GroupId = groupId ?? NextGroupId };
     }
 
     public UIRadioButtonBuilder IsSelected(bool value = true)
@@ -33,19 +38,19 @@ public class UIRadioButtonBuilder : UINodeBuilder<UIRadioButtonBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        interactable = true;
-        focusable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.focusable = true;
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             radioButton,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
+        state.Setup(entity);
 
         return entity;
     }

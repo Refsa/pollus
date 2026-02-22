@@ -4,20 +4,32 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
+public struct UICheckBoxGroupBuilder : IUINodeBuilder<UICheckBoxGroupBuilder>
 {
-    readonly List<string?> options = [];
-    readonly HashSet<int> checkedIndices = [];
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
+
+    List<string?> options;
+    HashSet<int> checkedIndices;
     Color? checkedColor;
     Color? uncheckedColor;
     Color? checkmarkColor;
-    float fontSize = 16f;
-    Color textColor = Color.WHITE;
-    Handle font = Handle.Null;
+    float fontSize;
+    Color textColor;
+    Handle font;
 
-    public UICheckBoxGroupBuilder(Commands commands) : base(commands) { }
+    public UICheckBoxGroupBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        options = [];
+        checkedIndices = [];
+        fontSize = 16f;
+        textColor = Color.WHITE;
+        font = Handle.Null;
+    }
 
     public UICheckBoxGroupBuilder Option()
     {
@@ -73,14 +85,14 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
         return this;
     }
 
-    public new CheckBoxGroupResult Spawn()
+    public CheckBoxGroupResult Spawn()
     {
-        var container = commands.Spawn(Entity.With(
+        var container = state.commands.Spawn(Entity.With(
             new UINode(),
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(container);
+        state.Setup(container);
 
         var optionEntities = new Entity[options.Count];
         for (int i = 0; i < options.Count; i++)
@@ -106,7 +118,7 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                 MinSize = new Size<Length>(Length.Px(18), Length.Px(18)),
             };
 
-            var indicator = commands.Spawn(Entity.With(
+            var indicator = state.commands.Spawn(Entity.With(
                 new UINode(),
                 new BackgroundColor { Color = indicatorColor },
                 new UIShape { Type = UIShapeType.Checkmark },
@@ -123,7 +135,7 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
 
             if (hasLabel)
             {
-                var row = commands.Spawn(Entity.With(
+                var row = state.commands.Spawn(Entity.With(
                     new UINode(),
                     new UIStyle
                     {
@@ -136,7 +148,7 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                     }
                 )).Entity;
 
-                var cbEntity = commands.Spawn(Entity.With(
+                var cbEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     checkBox,
                     new UIInteraction { Focusable = true },
@@ -145,9 +157,9 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                     new UIStyle { Value = cbStyle }
                 )).Entity;
 
-                commands.AddChild(cbEntity, indicator);
+                state.commands.AddChild(cbEntity, indicator);
 
-                var textEntity = commands.Spawn(Entity.With(
+                var textEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     new ContentSize(),
                     new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(options[i]!) },
@@ -162,16 +174,16 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                 )).Entity;
 
                 if (!font.IsNull())
-                    commands.AddComponent(textEntity, new UITextFont { Font = font });
+                    state.commands.AddComponent(textEntity, new UITextFont { Font = font });
 
-                commands.AddChild(row, cbEntity);
-                commands.AddChild(row, textEntity);
-                commands.AddChild(container, row);
+                state.commands.AddChild(row, cbEntity);
+                state.commands.AddChild(row, textEntity);
+                state.commands.AddChild(container, row);
                 optionEntities[i] = row;
             }
             else
             {
-                var cbEntity = commands.Spawn(Entity.With(
+                var cbEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     checkBox,
                     new UIInteraction { Focusable = true },
@@ -180,8 +192,8 @@ public class UICheckBoxGroupBuilder : UINodeBuilder<UICheckBoxGroupBuilder>
                     new UIStyle { Value = cbStyle }
                 )).Entity;
 
-                commands.AddChild(cbEntity, indicator);
-                commands.AddChild(container, cbEntity);
+                state.commands.AddChild(cbEntity, indicator);
+                state.commands.AddChild(container, cbEntity);
                 optionEntities[i] = cbEntity;
             }
         }

@@ -6,7 +6,7 @@ using Pollus.Utils;
 
 public static class UI
 {
-    public static PanelBuilder Panel(Commands commands) => new(commands);
+    public static UIPanelBuilder Panel(Commands commands) => new(commands);
 
     public static UITextBuilder Text(Commands commands, string text) => new(commands, text);
 

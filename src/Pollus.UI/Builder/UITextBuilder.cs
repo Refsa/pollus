@@ -3,18 +3,26 @@ namespace Pollus.UI;
 using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UITextBuilder : UINodeBuilder<UITextBuilder>
+public struct UITextBuilder : IUINodeBuilder<UITextBuilder>
 {
-    string text;
-    float fontSize = 16f;
-    float lineHeight;
-    Color textColor = Pollus.Utils.Color.WHITE;
-    Handle font = Handle.Null;
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UITextBuilder(Commands commands, string text) : base(commands)
+    string text;
+    float fontSize;
+    float lineHeight;
+    Color textColor;
+    Handle font;
+
+    public UITextBuilder(Commands commands, string text)
     {
+        state = new UINodeBuilderState(commands);
         this.text = text;
+        fontSize = 16f;
+        textColor = Pollus.Utils.Color.WHITE;
+        font = Handle.Null;
     }
 
     public UITextBuilder FontSize(float size)
@@ -41,19 +49,19 @@ public class UITextBuilder : UINodeBuilder<UITextBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             new ContentSize(),
             new UIText { Color = textColor, Size = fontSize, LineHeight = lineHeight, Text = new NativeUtf8(text) },
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
         if (!font.IsNull())
-            commands.AddComponent(entity, new UITextFont { Font = font });
+            state.commands.AddComponent(entity, new UITextFont { Font = font });
 
-        Setup(entity);
+        state.Setup(entity);
 
         return entity;
     }

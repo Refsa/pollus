@@ -4,18 +4,27 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
+public struct UINumberInputBuilder : IUINodeBuilder<UINumberInputBuilder>
 {
-    UINumberInput numberInput = new();
-    float fontSize = 16f;
-    Color textColor = Color.WHITE;
-    Handle font = Handle.Null;
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UINumberInputBuilder(Commands commands) : base(commands)
+    UINumberInput numberInput;
+    float fontSize;
+    Color textColor;
+    Handle font;
+
+    public UINumberInputBuilder(Commands commands)
     {
-        focusable = true;
+        state = new UINodeBuilderState(commands);
+        state.focusable = true;
+        numberInput = new();
+        fontSize = 16f;
+        textColor = Color.WHITE;
+        font = Handle.Null;
     }
 
     public UINumberInputBuilder Value(float value)
@@ -61,12 +70,12 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
         return this;
     }
 
-    public new NumberInputResult Spawn()
+    public NumberInputResult Spawn()
     {
         // Create text input child (with its own text child)
         var formatted = UINumberInputSystem.FormatValue(numberInput.Value, numberInput.Type);
 
-        var textEntity = commands.Spawn(Entity.With(
+        var textEntity = state.commands.Spawn(Entity.With(
             new UINode(),
             new ContentSize(),
             new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(formatted) },
@@ -80,7 +89,7 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
         )).Entity;
 
         if (!font.IsNull())
-            commands.AddComponent(textEntity, new UITextFont { Font = font });
+            state.commands.AddComponent(textEntity, new UITextFont { Font = font });
 
         var textInput = new UITextInput
         {
@@ -90,9 +99,9 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
                 : UIInputFilterType.Decimal,
         };
 
-        var textInputEntity = commands.Spawn(Entity.With(
+        var textInputEntity = state.commands.Spawn(Entity.With(
             new UINode(),
-            new UIInteraction { Focusable = focusable },
+            new UIInteraction { Focusable = state.focusable },
             textInput,
             new UIStyle
             {
@@ -103,35 +112,35 @@ public class UINumberInputBuilder : UINodeBuilder<UINumberInputBuilder>
             }
         )).Entity;
 
-        commands.AddChild(textInputEntity, textEntity);
+        state.commands.AddChild(textInputEntity, textEntity);
 
         numberInput.TextInputEntity = textInputEntity;
 
-        backgroundColor ??= new Color();
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             new Outline(),
             numberInput,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
         // Redirect focus outline from inner text input to outer container
-        commands.AddComponent(textInputEntity, new UIFocusVisual { Target = entity });
+        state.commands.AddComponent(textInputEntity, new UIFocusVisual { Target = entity });
 
-        commands.AddChild(entity, textInputEntity);
+        state.commands.AddChild(entity, textInputEntity);
 
         // Defer text buffer initialization
         var capturedTextInputEntity = textInputEntity;
         var capturedFormatted = formatted;
-        commands.Defer(world =>
+        state.commands.Defer(world =>
         {
             var bufs = world.Resources.Get<UITextBuffers>();
             bufs.Set(capturedTextInputEntity, capturedFormatted);
         });
 
-        AddVisualComponents(entity);
-        SetupHierarchy(entity);
+        state.AddVisualComponents(entity);
+        state.SetupHierarchy(entity);
 
         return new NumberInputResult
         {

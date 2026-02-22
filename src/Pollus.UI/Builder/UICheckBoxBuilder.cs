@@ -3,13 +3,21 @@ namespace Pollus.UI;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
+public struct UICheckBoxBuilder : IUINodeBuilder<UICheckBoxBuilder>
 {
-    UICheckBox checkBox = new();
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UICheckBoxBuilder(Commands commands) : base(commands) { }
+    UICheckBox checkBox;
+
+    public UICheckBoxBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        checkBox = new();
+    }
 
     public UICheckBoxBuilder IsChecked(bool value = true)
     {
@@ -35,14 +43,14 @@ public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        interactable = true;
-        focusable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.focusable = true;
+        state.backgroundColor ??= new Color();
 
         var indicatorColor = checkBox.IsChecked ? checkBox.CheckmarkColor : Color.TRANSPARENT;
-        var indicator = commands.Spawn(Entity.With(
+        var indicator = state.commands.Spawn(Entity.With(
             new UINode(),
             new BackgroundColor { Color = indicatorColor },
             new UIShape { Type = UIShapeType.Checkmark },
@@ -57,14 +65,14 @@ public class UICheckBoxBuilder : UINodeBuilder<UICheckBoxBuilder>
 
         checkBox.IndicatorEntity = indicator;
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             checkBox,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
-        commands.AddChild(entity, indicator);
+        state.Setup(entity);
+        state.commands.AddChild(entity, indicator);
 
         return entity;
     }

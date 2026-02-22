@@ -2,12 +2,20 @@ namespace Pollus.UI;
 
 using Pollus.ECS;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 
-public class UIButtonBuilder : UINodeBuilder<UIButtonBuilder>
+public struct UIButtonBuilder : IUINodeBuilder<UIButtonBuilder>
 {
-    UIButton button = new();
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
 
-    public UIButtonBuilder(Commands commands) : base(commands) { }
+    UIButton button;
+
+    public UIButtonBuilder(Commands commands)
+    {
+        state = new UINodeBuilderState(commands);
+        button = new();
+    }
 
     public UIButtonBuilder Colors(Color normal, Color? hover = null, Color? pressed = null, Color? disabled = null)
     {
@@ -18,18 +26,18 @@ public class UIButtonBuilder : UINodeBuilder<UIButtonBuilder>
         return this;
     }
 
-    public override Entity Spawn()
+    public Entity Spawn()
     {
-        interactable = true;
-        backgroundColor ??= new Color();
+        state.interactable = true;
+        state.backgroundColor ??= new Color();
 
-        var entity = commands.Spawn(Entity.With(
+        var entity = state.commands.Spawn(Entity.With(
             new UINode(),
             button,
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(entity);
+        state.Setup(entity);
 
         return entity;
     }

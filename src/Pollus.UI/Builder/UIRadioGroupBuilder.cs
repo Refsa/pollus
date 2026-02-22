@@ -4,23 +4,33 @@ using Pollus.Collections;
 using Pollus.ECS;
 using Pollus.UI.Layout;
 using Pollus.Utils;
+using System.Diagnostics.CodeAnalysis;
 using LayoutStyle = Pollus.UI.Layout.Style;
 
-public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
+public struct UIRadioGroupBuilder : IUINodeBuilder<UIRadioGroupBuilder>
 {
-    readonly int groupId;
-    readonly List<string?> options = [];
-    int selectedIndex = -1;
+    internal UINodeBuilderState state;
+    [UnscopedRef] public ref UINodeBuilderState State => ref state;
+
+    int groupId;
+    List<string?> options;
+    int selectedIndex;
     Color? selectedColor;
     Color? unselectedColor;
     Color? indicatorColor;
-    float fontSize = 16f;
-    Color textColor = Color.WHITE;
-    Handle font = Handle.Null;
+    float fontSize;
+    Color textColor;
+    Handle font;
 
-    public UIRadioGroupBuilder(Commands commands, int? groupId) : base(commands)
+    public UIRadioGroupBuilder(Commands commands, int? groupId)
     {
+        state = new UINodeBuilderState(commands);
         this.groupId = groupId ?? UIRadioButtonBuilder.NextGroupId;
+        options = [];
+        selectedIndex = -1;
+        fontSize = 16f;
+        textColor = Color.WHITE;
+        font = Handle.Null;
     }
 
     public UIRadioGroupBuilder Option()
@@ -77,15 +87,15 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
         return this;
     }
 
-    public new RadioGroupResult Spawn()
+    public RadioGroupResult Spawn()
     {
         // 1. Create container panel
-        var container = commands.Spawn(Entity.With(
+        var container = state.commands.Spawn(Entity.With(
             new UINode(),
-            new UIStyle { Value = style }
+            new UIStyle { Value = state.style }
         )).Entity;
 
-        Setup(container);
+        state.Setup(container);
 
         // 2. Create option entities
         var optionEntities = new Entity[options.Count];
@@ -112,7 +122,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 Size = new Size<Length>(Length.Px(18), Length.Px(18)),
             };
 
-            var indicator = commands.Spawn(Entity.With(
+            var indicator = state.commands.Spawn(Entity.With(
                 new UINode(),
                 new BackgroundColor { Color = indicatorBgColor },
                 new UIShape { Type = UIShapeType.Circle },
@@ -131,7 +141,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
             if (hasLabel)
             {
                 // Create a row container for the radio button + text
-                var row = commands.Spawn(Entity.With(
+                var row = state.commands.Spawn(Entity.With(
                     new UINode(),
                     new UIStyle
                     {
@@ -145,7 +155,7 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 )).Entity;
 
                 // Radio button entity
-                var rbEntity = commands.Spawn(Entity.With(
+                var rbEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     radioButton,
                     new UIInteraction { Focusable = true },
@@ -155,10 +165,10 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                     new UIShape { Type = UIShapeType.Circle }
                 )).Entity;
 
-                commands.AddChild(rbEntity, indicator);
+                state.commands.AddChild(rbEntity, indicator);
 
                 // Text label entity
-                var textEntity = commands.Spawn(Entity.With(
+                var textEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     new ContentSize(),
                     new UIText { Color = textColor, Size = fontSize, Text = new NativeUtf8(options[i]!) },
@@ -173,17 +183,17 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                 )).Entity;
 
                 if (!font.IsNull())
-                    commands.AddComponent(textEntity, new UITextFont { Font = font });
+                    state.commands.AddComponent(textEntity, new UITextFont { Font = font });
 
-                commands.AddChild(row, rbEntity);
-                commands.AddChild(row, textEntity);
-                commands.AddChild(container, row);
+                state.commands.AddChild(row, rbEntity);
+                state.commands.AddChild(row, textEntity);
+                state.commands.AddChild(container, row);
                 optionEntities[i] = row;
             }
             else
             {
                 // Bare radio button - direct child of container
-                var rbEntity = commands.Spawn(Entity.With(
+                var rbEntity = state.commands.Spawn(Entity.With(
                     new UINode(),
                     radioButton,
                     new UIInteraction { Focusable = true },
@@ -193,8 +203,8 @@ public class UIRadioGroupBuilder : UINodeBuilder<UIRadioGroupBuilder>
                     new UIShape { Type = UIShapeType.Circle }
                 )).Entity;
 
-                commands.AddChild(rbEntity, indicator);
-                commands.AddChild(container, rbEntity);
+                state.commands.AddChild(rbEntity, indicator);
+                state.commands.AddChild(container, rbEntity);
                 optionEntities[i] = rbEntity;
             }
         }
