@@ -1129,7 +1129,7 @@ public static partial class FlexLayout
                 float alignOffsetX;
                 if (isRow)
                 {
-                    var jc = style.JustifyContent ?? JustifyContent.FlexStart;
+                    var jc = ToJustifyContent(childStyle.JustifySelf) ?? style.JustifyContent ?? JustifyContent.FlexStart;
                     if (dir.IsReverse()) jc = FlipJustify(jc);
                     alignOffsetX = AbsAlignOffset(jc, freeX);
                 }
@@ -1157,7 +1157,7 @@ public static partial class FlexLayout
                 float alignOffsetY;
                 if (!isRow)
                 {
-                    var jc = style.JustifyContent ?? JustifyContent.FlexStart;
+                    var jc = ToJustifyContent(childStyle.JustifySelf) ?? style.JustifyContent ?? JustifyContent.FlexStart;
                     if (dir.IsReverse()) jc = FlipJustify(jc);
                     alignOffsetY = AbsAlignOffset(jc, freeY);
                 }

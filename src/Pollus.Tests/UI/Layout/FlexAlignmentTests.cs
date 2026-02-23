@@ -327,4 +327,101 @@ public class FlexAlignmentTests
         Assert.Equal(12f, text2Layout.Size.Height);
         Assert.Equal(30f, text2Layout.Location.Y + text2Layout.Size.Height / 2f);
     }
+
+    [Fact]
+    public void JustifySelf_Center_Absolute()
+    {
+        // Absolute child with JustifySelf.Center should center on main axis
+        // regardless of parent's JustifyContent
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(200f, 200f),
+            JustifyContent = JustifyContent.FlexStart,
+        });
+        var child = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(50f, 50f),
+            Position = Position.Absolute,
+            JustifySelf = JustifySelf.Center,
+        });
+        tree.AddChild(root, child);
+        tree.ComputeRoot(root, 200f, 200f);
+
+        var layout = tree.GetNodeLayout(child);
+        // 200 - 50 = 150 free space, centered = 75
+        Assert.Equal(75f, layout.Location.X);
+    }
+
+    [Fact]
+    public void JustifySelf_FlexEnd_Absolute()
+    {
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(200f, 200f),
+            JustifyContent = JustifyContent.FlexStart,
+        });
+        var child = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(50f, 50f),
+            Position = Position.Absolute,
+            JustifySelf = JustifySelf.FlexEnd,
+        });
+        tree.AddChild(root, child);
+        tree.ComputeRoot(root, 200f, 200f);
+
+        var layout = tree.GetNodeLayout(child);
+        // 200 - 50 = 150 free space, flex-end = 150
+        Assert.Equal(150f, layout.Location.X);
+    }
+
+    [Fact]
+    public void JustifySelf_Center_Absolute_Column()
+    {
+        // In column direction, main axis is vertical, so JustifySelf affects Y
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(DefaultStyle with
+        {
+            FlexDirection = FlexDirection.Column,
+            Size = FixedSize(200f, 200f),
+            JustifyContent = JustifyContent.FlexStart,
+        });
+        var child = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(50f, 50f),
+            Position = Position.Absolute,
+            JustifySelf = JustifySelf.Center,
+        });
+        tree.AddChild(root, child);
+        tree.ComputeRoot(root, 200f, 200f);
+
+        var layout = tree.GetNodeLayout(child);
+        // Column: main axis = Y. 200 - 50 = 150 free, centered = 75
+        Assert.Equal(75f, layout.Location.Y);
+    }
+
+    [Fact]
+    public void JustifySelf_Null_FallsBackToJustifyContent()
+    {
+        // When JustifySelf is null, should fall back to parent's JustifyContent
+        var tree = new TestLayoutTree();
+        var root = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(200f, 200f),
+            JustifyContent = JustifyContent.Center,
+        });
+        var child = tree.AddNode(DefaultStyle with
+        {
+            Size = FixedSize(50f, 50f),
+            Position = Position.Absolute,
+            // JustifySelf not set - should use parent's JustifyContent.Center
+        });
+        tree.AddChild(root, child);
+        tree.ComputeRoot(root, 200f, 200f);
+
+        var layout = tree.GetNodeLayout(child);
+        Assert.Equal(75f, layout.Location.X);
+    }
+
 }

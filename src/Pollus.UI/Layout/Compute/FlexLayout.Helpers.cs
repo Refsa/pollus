@@ -300,6 +300,13 @@ public static partial class FlexLayout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static JustifyContent? ToJustifyContent(JustifySelf? justifySelf)
+    {
+        if (!justifySelf.HasValue) return null;
+        return (JustifyContent)(byte)justifySelf.Value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static float AbsAlignOffset(JustifyContent jc, float freeSpace) => jc switch
     {
         JustifyContent.End or JustifyContent.FlexEnd => freeSpace,
