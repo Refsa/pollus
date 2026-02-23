@@ -124,5 +124,10 @@ public class TestLayoutTree : ILayoutTree
         return rootLayout;
     }
 
+    public void UpdateStyle(int nodeId, LayoutStyle style)
+    {
+        _styles[nodeId] = style;
+    }
+
     public NodeLayout GetNodeLayout(int nodeId) => _layouts[nodeId];
 }

@@ -235,6 +235,14 @@ public static class UINodeBuilderExtensions
         return self;
     }
 
+    public static TSelf JustifySelf<TSelf>(this TSelf self, JustifySelf justify)
+        where TSelf : struct, IUINodeBuilder<TSelf>
+    {
+        ref var s = ref self.State;
+        s.style = s.style with { JustifySelf = justify };
+        return self;
+    }
+
     // Layout: Position
 
     public static TSelf PositionAbsolute<TSelf>(this TSelf self)

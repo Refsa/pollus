@@ -35,6 +35,7 @@ public record struct Style
     public AlignSelf? AlignSelf;
     public AlignContent? AlignContent;
     public JustifyContent? JustifyContent;
+    public JustifySelf? JustifySelf;
 
     // CSS order
     public int Order;
@@ -68,6 +69,7 @@ public record struct Style
         AlignSelf = null,
         AlignContent = null,
         JustifyContent = null,
+        JustifySelf = null,
         Order = 0,
     };
 }

@@ -47,3 +47,14 @@ public enum JustifyContent : byte
     SpaceAround = 7,
     SpaceEvenly = 8,
 }
+
+public enum JustifySelf : byte
+{
+    Start = 0,
+    End = 1,
+    FlexStart = 2,
+    FlexEnd = 3,
+    Center = 4,
+    Baseline = 5,  // no-op milestone 1
+    Stretch = 6,
+}
