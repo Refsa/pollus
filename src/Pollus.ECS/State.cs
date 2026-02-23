@@ -1,5 +1,7 @@
 namespace Pollus.ECS;
 
+using Pollus.Debugging;
+
 public enum StateTransition
 {
     Enter,
@@ -52,18 +54,26 @@ public class StateRunCriteria<T> : IRunCriteria
 {
     T state;
     StateTransition target;
+    EventReader<StateEvent<T>>? eventReader;
 
     public bool ShouldRun(World world)
     {
-        var events = world.Events.ReadEvents<StateEvent<T>>();
+        eventReader ??= world.Events.GetReader<StateEvent<T>>();
+        Guard.IsNotNull(eventReader, "eventReader was null");
+
+        var events = eventReader.Read();
         if (events.Length == 0)
         {
             var stateRes = world.Resources.Get<State<T>>();
             return EqualityComparer<T>.Default.Equals(stateRes.Current, state) && target == StateTransition.Current;
         }
 
-        var head = events[^1];
-        return head.Transition == target && EqualityComparer<T>.Default.Equals(head.State, state);
+        for (int i = 0; i < events.Length; i++)
+        {
+            if (events[i].Transition == target && EqualityComparer<T>.Default.Equals(events[i].State, state))
+                return true;
+        }
+        return false;
     }
 
     public static StateRunCriteria<T> OnEnter(T state)

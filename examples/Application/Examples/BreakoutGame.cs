@@ -1,6 +1,5 @@
 namespace Pollus.Examples;
 
-using ImGuiNET;
 using Pollus.Coroutine;
 using Pollus.Debugging;
 using Pollus.ECS;
@@ -9,7 +8,6 @@ using Pollus.Assets;
 using Pollus.Engine.Audio;
 using Pollus.Engine.Camera;
 using Pollus.Engine.Debug;
-using Pollus.Engine.Imgui;
 using Pollus.Input;
 using Pollus.Engine.Physics;
 using Pollus.Engine.Rendering;
@@ -18,7 +16,11 @@ using Pollus.Graphics.Rendering;
 using Pollus.Graphics.Windowing;
 using Pollus.Mathematics;
 using Pollus.Mathematics.Collision2D;
+using Pollus.Collections;
 using Pollus.Utils;
+using Pollus.UI;
+using Pollus.Engine.UI;
+using Pollus.UI.Layout;
 
 public partial class BreakoutGame : IExample
 {
@@ -43,6 +45,19 @@ public partial class BreakoutGame : IExample
 
     partial struct MainMixer : IComponent;
 
+    class Palette
+    {
+        public static Color PanelBackground = new Color(0.05f, 0.05f, 0.05f, 0.95f);
+        public static Color PanelTextColor = new Color(1f, 0.6f, 0.1f, 1f);
+        public static Color ButtonNormal = new Color(0.8f, 0.4f, 0f, 1f);
+        public static Color ButtonHover = new Color(1f, 0.5f, 0.05f, 1f);
+        public static Color ButtonPressed = new Color(0.6f, 0.3f, 0f, 1f);
+        public static Color ButtonDisabled = new Color(0.3f, 0.2f, 0.1f, 0.5f);
+        public static Color ButtonTextColor = new Color(0.05f, 0.05f, 0.05f, 1f);
+        public static Color BorderColor = new Color(1f, 0.5f, 0f, 1f);
+        public static Color AccentColor = new Color(1f, 0.65f, 0.15f, 1f);
+    }
+
     struct Event
     {
         public struct BrickDestroyed;
@@ -60,6 +75,14 @@ public partial class BreakoutGame : IExample
         {
             public required int Count;
         }
+
+        public struct ScoreChanged
+        {
+            public required int OldScore;
+            public required int NewScore;
+        }
+
+        public struct LivesChanged;
     }
 
 
@@ -68,16 +91,30 @@ public partial class BreakoutGame : IExample
         NewGame,
         SpawnBall,
         Play,
-        GameOver,
-        Won,
+        GameEnd,
     }
 
     class GameState
     {
         public int Lives;
         public int Score;
+        public bool Won;
 
         public Handle<SpriteMaterial> spritesheet;
+    }
+
+    class UIState
+    {
+        public Handle Font;
+
+        public Entity Root;
+        public Entity GameUI;
+        public Entity GameEndUI;
+        public Entity GameEndTitleText;
+        public Entity GameEndScoreText;
+        public Entity GameEndRestartButton;
+        public Entity GameUIScoreText;
+        public Entity GameUILivesText;
     }
 
     public void Run() => (application = Application.Builder
@@ -95,13 +132,14 @@ public partial class BreakoutGame : IExample
                 AssetPlugin.Default,
                 new RenderingPlugin(),
                 new InputPlugin(),
-                new ImguiPlugin(),
                 new AudioPlugin(),
                 new PerformanceTrackerPlugin(),
                 new RandomPlugin(),
                 new StatePlugin<State>(State.NewGame),
+                new UIPlugin(),
             ])
             .AddResource(new GameState { Lives = 3, Score = 0 })
+            .AddResource(new UIState())
             .AddSystems(CoreStage.Init, FnSystem.Create("LogSchedule",
                 static (World world) =>
                 {
@@ -140,6 +178,58 @@ public partial class BreakoutGame : IExample
                         }
                     ));
                 }))
+            .AddSystem(CoreStage.PostInit, FnSystem.Create(new("UISetupSystem"),
+            static (AssetServer assetServer, UIState state, Commands commands) =>
+            {
+                state.Font = assetServer.LoadAsync<FontAsset>("builtin/fonts/SmoochSans-Light.ttf");
+
+                state.Root = UI.Root(commands, 1, 1)
+                    .AutoResize()
+                    .Background(Color.TRANSPARENT)
+                    .Spawn();
+
+                state.GameUI = UI.Panel(commands)
+                    .ChildOf(state.Root)
+                    .DisplayNone()
+                    .PositionAbsolute()
+                    .MinSize(Length.Px(150), Length.Auto)
+                    .Size(Length.Auto, Length.Auto)
+                    .AlignSelf(AlignSelf.FlexStart)
+                    .Margin(32).Padding(8)
+                    .FlexColumn()
+                    .Background(Palette.PanelBackground.WithAlpha(0.75f))
+                    .BorderColor(Palette.BorderColor).BorderRadius(8)
+                    .Children([
+                        state.GameUIScoreText = UI.Text(commands, "Score: 0", state.Font).FontSize(24).LineHeight(1f).Color(Palette.PanelTextColor).Spawn(),
+                        state.GameUILivesText = UI.Text(commands, "Lives: 3", state.Font).FontSize(24).LineHeight(1f).Color(Palette.AccentColor).Spawn(),
+                    ])
+                    .Spawn();
+
+                state.GameEndUI = UI.Panel(commands)
+                    .ChildOf(state.Root)
+                    .DisplayNone()
+                    .PositionAbsolute()
+                    .Size(Length.Px(500), Length.Auto)
+                    .FlexColumn().Gap(8)
+                    .AlignItems(AlignItems.Center)
+                    .AlignSelf(AlignSelf.Center).JustifySelf(JustifySelf.Center)
+                    .Background(Palette.PanelBackground)
+                    .BorderColor(Palette.BorderColor)
+                    .BorderRadius(8)
+                    .Padding(8)
+                    .Children([
+                        state.GameEndTitleText = UI.Text(commands, "", state.Font).FontSize(32).FlexGrow(1).LineHeight(1).Color(Palette.PanelTextColor).Spawn(),
+                        state.GameEndScoreText = UI.Text(commands, "", state.Font).FontSize(32).LineHeight(1).Color(Palette.AccentColor).Spawn(),
+                        state.GameEndRestartButton = UI.Button(commands)
+                            .Colors(Palette.ButtonNormal, Palette.ButtonHover, Palette.ButtonPressed, Palette.ButtonDisabled)
+                            .Padding(32)
+                            .Children([
+                                UI.Text(commands, "Restart", state.Font).FontSize(32).Color(Palette.ButtonTextColor).Spawn()
+                            ])
+                            .Spawn()
+                    ])
+                    .Spawn();
+            }))
             .AddSystems(CoreStage.PreUpdate, FnSystem.Create(new("NewGameStateSystem")
             {
                 RunCriteria = StateRunCriteria<State>.OnEnter(State.NewGame)
@@ -160,38 +250,57 @@ public partial class BreakoutGame : IExample
             .AddSystems(CoreStage.Update, FnSystem.Create(new("PlayStateSystem")
             {
                 RunCriteria = StateRunCriteria<State>.OnCurrent(State.Play)
-            }, static (Query<Brick> qBricks, State<State> state) =>
+            }, static (Query<Brick> qBricks, State<State> state, GameState gameState) =>
             {
-                if (qBricks.EntityCount() == 0) state.Set(State.Won);
-            }))
-            .AddSystems(CoreStage.Update, FnSystem.Create(new("GameOverStateSystem")
-            {
-                RunCriteria = StateRunCriteria<State>.OnCurrent(State.GameOver)
-            }, static (State<State> state, GameState gameState) =>
-            {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
-                if (ImGui.Begin("Game Over", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
+                if (qBricks.EntityCount() == 0)
                 {
-                    ImGui.TextUnformatted("Game Over");
-                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
-                    if (ImGui.Button("Restart")) state.Set(State.NewGame);
-                    ImGui.End();
+                    gameState.Won = true;
+                    state.Set(State.GameEnd);
                 }
             }))
-            .AddSystems(CoreStage.Update, FnSystem.Create(new("GameOverStateSystem")
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("GameEndEnter")
             {
-                RunCriteria = StateRunCriteria<State>.OnCurrent(State.GameOver)
-            }, static (State<State> state, GameState gameState) =>
+                RunCriteria = StateRunCriteria<State>.OnEnter(State.GameEnd)
+            }, static (Commands commands, Query<Ball> qBalls, View<UIStyle, UIText> view, UIState uiState, GameState gameState) =>
             {
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(200, 100), ImGuiCond.Always);
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(350, 250), ImGuiCond.Always);
-                if (ImGui.Begin("You Won!", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
+                foreach (var ball in qBalls)
                 {
-                    ImGui.TextUnformatted("You Won!");
-                    ImGui.TextUnformatted($"Final Score: {gameState.Score}");
-                    if (ImGui.Button("Restart")) state.Set(State.NewGame);
-                    ImGui.End();
+                    commands.DespawnHierarchy(ball.Entity);
+                }
+
+                ref var gameUiStyle = ref view.GetTracked<UIStyle>(uiState.GameUI);
+                gameUiStyle.Value = gameUiStyle.Value with { Display = Display.None };
+
+                ref var panelStyle = ref view.GetTracked<UIStyle>(uiState.GameEndUI);
+                panelStyle.Value = panelStyle.Value with { Display = Display.Flex };
+
+                ref var titleText = ref view.GetTracked<UIText>(uiState.GameEndTitleText);
+                titleText.Text = new NativeUtf8(gameState.Won ? "You Won!" : "Game Over");
+
+                ref var scoreText = ref view.GetTracked<UIText>(uiState.GameEndScoreText);
+                scoreText.Text = new NativeUtf8($"Score: {gameState.Score}");
+            }))
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("GameEndExit")
+            {
+                RunCriteria = StateRunCriteria<State>.OnExit(State.GameEnd)
+            }, static (View<UIStyle> view, UIState uiState) =>
+            {
+                ref var panelStyle = ref view.GetTracked<UIStyle>(uiState.GameEndUI);
+                panelStyle.Value = panelStyle.Value with { Display = Display.None };
+            }))
+            .AddSystems(CoreStage.Update, FnSystem.Create(new("GameEndUI")
+            {
+                RunCriteria = WhenAll.Create([
+                    StateRunCriteria<State>.OnCurrent(State.GameEnd),
+                    EventRunCriteria<UIInteractionEvents.UIClickEvent>.Create,
+                ]),
+            }, static (State<State> state, View<UIButton> buttons, UIState uiState, EventReader<UIInteractionEvents.UIClickEvent> eUiClicks) =>
+            {
+                foreach (var ev in eUiClicks.Read())
+                {
+                    if (!buttons.Has<UIButton>(ev.Entity)) return;
+                    if (ev.Entity != uiState.GameEndRestartButton) return;
+                    state.Set(State.NewGame);
                 }
             }))
             .AddSystems(CoreStage.First, Coroutine.Create(new("BrickSpawner"),
@@ -206,7 +315,7 @@ public partial class BreakoutGame : IExample
                         while (!eRestartGame.HasAny) yield return Yield.Return;
                         eRestartGame.Consume();
 
-                        qBricks.ForEach(delegate(in Entity brickEntity, ref Transform2D brickTransform, ref Brick brick)
+                        qBricks.ForEach(delegate (in Entity brickEntity, ref Transform2D brickTransform, ref Brick brick)
                         {
                             commands.Despawn(brickEntity);
                         });
@@ -268,19 +377,34 @@ public partial class BreakoutGame : IExample
                             CollisionShape.Circle(8f)
                         ));
                 }))
-            .AddSystems(CoreStage.Update, FnSystem.Create("UI",
-                static (GameState gameState) =>
+            .AddSystem(CoreStage.Update, FnSystem.Create(new("PlayEnterUI")
+            {
+                RunCriteria = StateRunCriteria<State>.OnEnter(State.Play)
+            },
+            static (View<UIStyle, UIText> view, UIState uiState, GameState gameState) =>
+            {
+                ref var panelStyle = ref view.GetTracked<UIStyle>(uiState.GameUI);
+                panelStyle.Value = panelStyle.Value with { Display = Display.Flex };
+            }))
+            .AddSystem(CoreStage.PostUpdate, FnSystem.Create(new("PlayUpdateUI")
+            {
+                RunCriteria = StateRunCriteria<State>.OnCurrent(State.Play)
+            },
+            static (View<UIText> view, UIState uiState, GameState gameState,
+                EventReader<Event.LivesChanged> eLivesChanged, EventReader<Event.ScoreChanged> eScoreChanged) =>
+            {
+                if (eScoreChanged.Read() is { Length: > 0 })
                 {
-                    ImGui.SetNextWindowSize(new System.Numerics.Vector2(100, 50), ImGuiCond.FirstUseEver);
-                    ImGui.SetNextWindowPos(new System.Numerics.Vector2(5, 5), ImGuiCond.FirstUseEver);
-                    if (ImGui.Begin("Breakout Game", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings))
-                    {
-                        ImGui.TextUnformatted($"Score: {gameState.Score}".AsSpan());
-                        ImGui.TextUnformatted($"Lives: {gameState.Lives}".AsSpan());
+                    ref var scoreText = ref view.GetTracked<UIText>(uiState.GameUIScoreText);
+                    scoreText.Text = new NativeUtf8($"Score: {gameState.Score}");
+                }
 
-                        ImGui.End();
-                    }
-                }))
+                if (eLivesChanged.Read() is { Length: > 0 })
+                {
+                    ref var livesText = ref view.GetTracked<UIText>(uiState.GameUILivesText);
+                    livesText.Text = new NativeUtf8($"Lives: {gameState.Lives}");
+                }
+            }))
             .AddSystems(CoreStage.Update, FnSystem.Create("PlayerUpdate",
                 static (Commands commands, ButtonInput<Key> keys, AxisInput<GamepadAxis> gAxis,
                     Time time, IWindow window, Query query,
@@ -378,9 +502,9 @@ public partial class BreakoutGame : IExample
                     }
                 }))
             .AddSystems(CoreStage.Update, FnSystem.Create(new("CollisionResponseSystem")
-                {
-                    RunsAfter = ["CollisionSystem"],
-                },
+            {
+                RunsAfter = ["CollisionSystem"],
+            },
                 static (Commands commands, EventReader<Event.Collision> eCollision,
                     EventWriter<Event.BrickDestroyed> eBrickDestroyed,
                     Query query, Query<Transform2D, Velocity, CollisionShape> qBodies
@@ -428,9 +552,9 @@ public partial class BreakoutGame : IExample
                     }
                 }))
             .AddSystems(CoreStage.Update, FnSystem.Create(new("VelocitySystem")
-                {
-                    RunsAfter = ["CollisionResponseSystem"],
-                },
+            {
+                RunsAfter = ["CollisionResponseSystem"],
+            },
                 static (Query<Transform2D, Velocity> qTransforms, Time time) =>
                 {
                     qTransforms.ForEach(time.DeltaTimeF,
@@ -440,11 +564,12 @@ public partial class BreakoutGame : IExample
                         });
                 }))
             .AddSystems(CoreStage.Update, FnSystem.Create(new("BallOutOfBoundsSystem")
-                {
-                    RunsAfter = ["VelocitySystem"],
-                },
+            {
+                RunsAfter = ["VelocitySystem"],
+            },
                 static (Commands commands, GameState gameState,
                     State<State> state, EventWriter<Event.BrickDestroyed> eBrickDestroyed,
+                    EventWriter<Event.LivesChanged> eLivesChanged,
                     Query<Transform2D, Ball> qBalls, IWindow window
                 ) =>
                 {
@@ -453,23 +578,35 @@ public partial class BreakoutGame : IExample
                         ref var ballTransform = ref ball.Component0;
                         if (ballTransform.Position.Y > 16f) continue;
                         commands.Despawn(ball.Entity);
-                        state.Set(--gameState.Lives switch
+                        eLivesChanged.Write(new());
+                        if (--gameState.Lives <= 0)
                         {
-                            0 => State.GameOver,
-                            _ => State.SpawnBall,
-                        });
+                            gameState.Won = false;
+                            state.Set(State.GameEnd);
+                        }
+                        else
+                        {
+                            state.Set(State.SpawnBall);
+                        }
                     }
                 }))
             .AddSystems(CoreStage.Last, FnSystem.Create("BrickEventsSystem",
                 static (Commands commands, GameState gameState,
                     AssetServer assetServer, Random random,
                     EventReader<Event.BrickDestroyed> eBrickDestroyed,
-                    EventReader<Event.Collision> eCollision
+                    EventReader<Event.Collision> eCollision,
+                    EventWriter<Event.ScoreChanged> eScoreChanged
                 ) =>
                 {
                     if (eBrickDestroyed.HasAny)
                     {
+                        var oldScore = gameState.Score;
                         gameState.Score += eBrickDestroyed.Count * 100;
+                        eScoreChanged.Write(new()
+                        {
+                            NewScore = gameState.Score,
+                            OldScore = oldScore,
+                        });
                         eBrickDestroyed.Consume();
                     }
 
