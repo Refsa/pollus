@@ -21,6 +21,50 @@ public class RunOnce : IRunCriteria
     }
 }
 
+public class WhenAll : IRunCriteria
+{
+    IRunCriteria[] criterias;
+
+    public WhenAll(ReadOnlySpan<IRunCriteria> criterias)
+    {
+        this.criterias = criterias.ToArray();
+    }
+
+    public static WhenAll Create(params ReadOnlySpan<IRunCriteria> criterias) => new(criterias);
+
+    public bool ShouldRun(World world)
+    {
+        var s = criterias.AsSpan();
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (!s[i].ShouldRun(world)) return false;
+        }
+        return true;
+    }
+}
+
+public class WhenAny : IRunCriteria
+{
+    IRunCriteria[] criterias;
+
+    public WhenAny(ReadOnlySpan<IRunCriteria> criterias)
+    {
+        this.criterias = criterias.ToArray();
+    }
+
+    public static WhenAny Create(params ReadOnlySpan<IRunCriteria> criterias) => new(criterias);
+
+    public bool ShouldRun(World world)
+    {
+        var s = criterias.AsSpan();
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (s[i].ShouldRun(world)) return true;
+        }
+        return false;
+    }
+}
+
 public class RunFixed : IRunCriteria
 {
     long previousTicks = 0;

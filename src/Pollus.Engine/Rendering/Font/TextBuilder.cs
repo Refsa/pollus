@@ -123,8 +123,7 @@ public partial class TextBuilder
             lineHeight = ResolveLineHeight(set, ref glyphKey, scale, size, lineHeightOverride);
 
         maxLineWidth = float.Max(maxLineWidth, cursorX);
-        float sdfExtra = 2f * set.SdfPadding * scale;
-        return new Vec2f(maxLineWidth, cursorY + lineHeight + sdfExtra);
+        return new Vec2f(maxLineWidth, cursorY + lineHeight);
     }
 
     static float ResolveLineHeight(GlyphSet set, ref GlyphKey glyphKey, float scale, float size, float? lineHeightOverride)
