@@ -75,7 +75,7 @@ public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>
         public required Vec4f BorderColor;
         public required Vec4f BorderRadius;
         public required Vec4f BorderWidths;
-        public required Vec4f Extra; // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=TextMode (>0.5=glyph)
+        public required Vec4f Extra; // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow, 4=Shadow, 5=Text), y=OutlineWidth/ShadowBlur, z=OutlineOffset/ShadowSpread, w=OriginalShapeType(shadow)/TextBlur(text)
         public required Vec4f OutlineColor;
         public required Vec4f UVRect; // minU, minV, sizeU, sizeV
     }

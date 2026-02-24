@@ -8,6 +8,8 @@ public enum UIShapeType : uint
     Circle = 1,
     Checkmark = 2,
     DownArrow = 3,
+    Shadow = 4,
+    Text = 5,
 }
 
 public partial record struct UIShape() : IComponent

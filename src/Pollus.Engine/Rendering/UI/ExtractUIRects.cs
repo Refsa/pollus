@@ -134,7 +134,10 @@ public partial class ExtractUIRectsSystem
         return nodeRect;
     }
 
-    const int SortSlotsPerNode = 4;
+    const int SortSlotsPerNode = 5;
+    const int ShadowSortOffset = 0;
+    const int BgSortOffset = 1;
+    const int TextShadowSortOffset = 2;
     const int TextSortOffset = 3;
 
     static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, Assets<TextMeshAsset> meshes, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor,
@@ -257,7 +260,7 @@ public partial class ExtractUIRectsSystem
         float outlineOffset = 0f;
         var outlineColor = Vec4f.Zero;
         bool hasOutline = false;
-        if (entRef.Has<Outline>())
+        if (entRef.Has<Outline>() && !entRef.Has<UIText>())
         {
             var outline = entRef.Get<Outline>();
             outlineWidth = outline.Width;
@@ -282,16 +285,49 @@ public partial class ExtractUIRectsSystem
 
         if (hasBg || hasBorder || hasOutline)
         {
+            float hasShadowBehind = 0f;
+            if (entRef.Has<BoxShadow>())
+            {
+                var shadow = entRef.Get<BoxShadow>();
+                if (shadow.Color.A > 0f && (shadow.Blur > 0f || shadow.Spread > 0f))
+                {
+                    hasShadowBehind = 1f;
+
+                    // Circle shapes don't use BorderRadius - override to max radii.
+                    var shadowRadius = borderRadius;
+                    if (shapeType == (float)UIShapeType.Circle)
+                    {
+                        var maxR = MathF.Min(size.X, size.Y) * 0.5f;
+                        shadowRadius = new Vec4f(maxR, maxR, maxR, maxR);
+                    }
+
+                    // Vertex shader expands the quad by Extra.y + Extra.z (blur + spread).
+                    var shadowBatchKey = new UIRectBatchKey(material, Handle.Null, Handle.Null, scissor);
+                    var shadowBatch = batches.GetOrCreate(shadowBatchKey);
+                    shadowBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + ShadowSortOffset, new UIRectBatch.InstanceData
+                    {
+                        PosSize = new Vec4f(absPos.X + shadow.Offset.X, absPos.Y + shadow.Offset.Y, size.X, size.Y),
+                        BackgroundColor = (Vec4f)shadow.Color,
+                        BorderColor = Vec4f.Zero,
+                        BorderRadius = shadowRadius,
+                        BorderWidths = new Vec4f(shadow.Offset.X, shadow.Offset.Y, 0, 0),
+                        Extra = new Vec4f((float)UIShapeType.Shadow, shadow.Blur, shadow.Spread, shapeType),
+                        OutlineColor = Vec4f.Zero,
+                        UVRect = new Vec4f(0, 0, 1, 1),
+                    });
+                }
+            }
+
             var batchKey = new UIRectBatchKey(material, texture, sampler, scissor);
             var batch = batches.GetOrCreate(batchKey);
-            batch.Draw((ulong)nodeIndex * SortSlotsPerNode, new UIRectBatch.InstanceData
+            batch.Draw((ulong)nodeIndex * SortSlotsPerNode + BgSortOffset, new UIRectBatch.InstanceData
             {
                 PosSize = new Vec4f(absPos.X, absPos.Y, size.X, size.Y),
                 BackgroundColor = bgColor,
                 BorderColor = borderColor,
                 BorderRadius = borderRadius,
                 BorderWidths = borderWidths,
-                Extra = new Vec4f(shapeType, outlineWidth, outlineOffset, 0f),
+                Extra = new Vec4f(shapeType, outlineWidth, outlineOffset, hasShadowBehind),
                 OutlineColor = outlineColor,
                 UVRect = uvRect,
             });
@@ -327,6 +363,22 @@ public partial class ExtractUIRectsSystem
         var textBatchKey = new UIRectBatchKey(material, textFont.Atlas, textFont.Sampler, scissor);
         var textBatch = batches.GetOrCreate(textBatchKey);
 
+        var hasShadow = entRef.Has<BoxShadow>();
+        BoxShadow shadow = default;
+        if (hasShadow)
+        {
+            shadow = entRef.Get<BoxShadow>();
+            hasShadow = shadow.Color.A > 0f && (shadow.Blur > 0f || shadow.Spread > 0f);
+        }
+
+        var hasOutline = entRef.Has<Outline>();
+        Outline outline = default;
+        if (hasOutline)
+        {
+            outline = entRef.Get<Outline>();
+            hasOutline = outline.Width > 0f && outline.Color.A > 0f;
+        }
+
         // 4 vertices per glyph: [0]=TL, [1]=TR, [2]=BL, [3]=BR
         var verts = tma.Vertices.AsSpan();
         for (int g = 0; g + 3 < verts.Length; g += 4)
@@ -336,18 +388,38 @@ public partial class ExtractUIRectsSystem
             var glyphSize = new Vec2f(br.Position.X - tl.Position.X, br.Position.Y - tl.Position.Y);
             if (glyphSize.X <= 0 || glyphSize.Y <= 0) continue;
 
+            var glyphX = textOrigin.X + tl.Position.X;
+            var glyphY = textOrigin.Y + tl.Position.Y;
+            var uvRect = new Vec4f(tl.UV.X, tl.UV.Y,
+                                   br.UV.X - tl.UV.X, br.UV.Y - tl.UV.Y);
+
+            if (hasShadow)
+            {
+                // Extra.w carries shadow blur for text SDF widening.
+                textBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + TextShadowSortOffset, new UIRectBatch.InstanceData
+                {
+                    PosSize = new Vec4f(glyphX + shadow.Offset.X, glyphY + shadow.Offset.Y,
+                                        glyphSize.X, glyphSize.Y),
+                    BackgroundColor = (Vec4f)shadow.Color,
+                    BorderColor = Vec4f.Zero,
+                    BorderRadius = Vec4f.Zero,
+                    BorderWidths = Vec4f.Zero,
+                    Extra = new Vec4f((float)UIShapeType.Text, 0f, 0f, shadow.Blur),
+                    OutlineColor = Vec4f.Zero,
+                    UVRect = uvRect,
+                });
+            }
+
             textBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + TextSortOffset, new UIRectBatch.InstanceData
             {
-                PosSize = new Vec4f(textOrigin.X + tl.Position.X, textOrigin.Y + tl.Position.Y,
-                                    glyphSize.X, glyphSize.Y),
+                PosSize = new Vec4f(glyphX, glyphY, glyphSize.X, glyphSize.Y),
                 BackgroundColor = textColor,
                 BorderColor = Vec4f.Zero,
                 BorderRadius = Vec4f.Zero,
                 BorderWidths = Vec4f.Zero,
-                Extra = new Vec4f(0f, 0f, 0f, 1f),
-                OutlineColor = Vec4f.Zero,
-                UVRect = new Vec4f(tl.UV.X, tl.UV.Y,
-                                   br.UV.X - tl.UV.X, br.UV.Y - tl.UV.Y),
+                Extra = new Vec4f((float)UIShapeType.Text, hasOutline ? outline.Width : 0f, hasOutline ? outline.Offset : 0f, 0f),
+                OutlineColor = hasOutline ? (Vec4f)outline.Color : Vec4f.Zero,
+                UVRect = uvRect,
             });
         }
     }
