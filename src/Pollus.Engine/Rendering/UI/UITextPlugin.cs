@@ -178,10 +178,6 @@ public partial class UITextSystemSet
     {
         query.ForEach((fonts, meshes), static (in data, ref uiText, ref mesh, ref textFont, ref computed) =>
         {
-            // Use unrounded width to avoid RoundLayout reducing the width by 1px
-            // when the text node's absolute X has a .5 fractional part (e.g., odd
-            // intrinsic width centered in an even container). The MeasureFunc uses
-            // unrounded values, so the mesh must match to prevent spurious word wrapping.
             float maxWidth = computed.UnroundedSize.X - computed.PaddingLeft - computed.PaddingRight
                              - computed.BorderLeft - computed.BorderRight;
             if (maxWidth < 0f) maxWidth = 0f;
