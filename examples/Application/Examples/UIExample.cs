@@ -476,6 +476,198 @@ public class UIExample : IExample
                     )
                     .Spawn();
 
+                // --- Box Shadow demo ---
+                _ = UI.Panel(commands)
+                    .FlexColumn().Gap(8)
+                    .ChildOf(mainPanel)
+                    .Children(
+                        UI.Text(commands, "Box Shadow", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                // Soft shadow
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(8)
+                                    .Shadow(2f, 4f, 12f, 0f, new Color(0f, 0f, 0f, 0.5f))
+                                    .Children(
+                                        UI.Text(commands, "Soft", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn(),
+                                // Spread shadow
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(8)
+                                    .Shadow(0f, 0f, 8f, 4f, new Color(0.3f, 0.5f, 0.9f, 0.4f))
+                                    .Children(
+                                        UI.Text(commands, "Spread", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn(),
+                                // Hard shadow (no blur)
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(12)
+                                    .Shadow(4f, 4f, 1f, 0f, new Color(0f, 0f, 0f, 0.7f))
+                                    .Children(
+                                        UI.Text(commands, "Hard", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn(),
+                                // Colored glow
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(8)
+                                    .Shadow(0f, 0f, 16f, 2f, new Color(0.9f, 0.3f, 0.3f, 0.5f))
+                                    .Children(
+                                        UI.Text(commands, "Glow", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn()
+                            )
+                            .Spawn(),
+                        // Shape shadows row
+                        UI.Text(commands, "Shape Shadows", fontHandle).FontSize(13f).Color(new Color(0.6f, 0.7f, 0.85f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.9f, 0.3f, 0.3f, 1f))
+                                    .BorderRadius(8)
+                                    .Shape(UIShapeType.RoundedRect)
+                                    .Shadow(2f, 3f, 8f, 0f, new Color(0.9f, 0.3f, 0.3f, 0.4f))
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.3f, 0.8f, 0.4f, 1f))
+                                    .Shape(UIShapeType.Circle)
+                                    .Shadow(2f, 3f, 8f, 0f, new Color(0.3f, 0.8f, 0.4f, 0.4f))
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.3f, 0.5f, 0.9f, 1f))
+                                    .Shape(UIShapeType.Checkmark)
+                                    .Shadow(2f, 3f, 6f, 0f, new Color(0.3f, 0.5f, 0.9f, 0.5f))
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.9f, 0.7f, 0.2f, 1f))
+                                    .Shape(UIShapeType.DownArrow)
+                                    .Shadow(2f, 3f, 6f, 0f, new Color(0.9f, 0.7f, 0.2f, 0.5f))
+                                    .Spawn()
+                            )
+                            .Spawn(),
+                        // Text shadows row
+                        UI.Text(commands, "Text Shadows", fontHandle).FontSize(13f).Color(new Color(0.6f, 0.7f, 0.85f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                UI.Text(commands, "Drop Shadow", fontHandle)
+                                    .FontSize(32f)
+                                    .Shadow(1f, 2f, 4f, 0f, new Color(0f, 0f, 0f, 0.6f))
+                                    .Spawn(),
+                                UI.Text(commands, "Neon Glow", fontHandle)
+                                    .FontSize(32f)
+                                    .Color(new Color(0.3f, 1f, 0.5f, 1f))
+                                    .Shadow(0f, 0f, 8f, 0f, new Color(0.3f, 1f, 0.5f, 0.5f))
+                                    .Spawn(),
+                                UI.Text(commands, "Fire Text", fontHandle)
+                                    .FontSize(32f)
+                                    .Color(new Color(1f, 0.85f, 0.2f, 1f))
+                                    .Shadow(0f, -2f, 6f, 0f, new Color(1f, 0.3f, 0.1f, 0.6f))
+                                    .Spawn()
+                            )
+                            .Spawn()
+                    )
+                    .Spawn();
+
+                // --- Outline demo ---
+                _ = UI.Panel(commands)
+                    .FlexColumn().Gap(8)
+                    .ChildOf(mainPanel)
+                    .Children(
+                        UI.Text(commands, "Outline", fontHandle).FontSize(16f).Color(new Color(0.5f, 0.8f, 1f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(8)
+                                    .Outline(new Color(0f, 0f, 0f, 0.5f), 2f, 0f)
+                                    .Children(
+                                        UI.Text(commands, "Tight", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(100, 60)
+                                    .Background(new Color(0.22f, 0.22f, 0.28f, 1f))
+                                    .BorderRadius(8)
+                                    .Outline(new Color(0.3f, 0.5f, 0.9f, 0.4f), 2f, 8f)
+                                    .Children(
+                                        UI.Text(commands, "Offset", fontHandle).FontSize(12f).Padding(8).Spawn()
+                                    )
+                                    .Spawn()
+                            )
+                            .Spawn(),
+                        // Shape outlines
+                        UI.Text(commands, "Shape outlines", fontHandle).FontSize(13f).Color(new Color(0.6f, 0.7f, 0.85f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.9f, 0.3f, 0.3f, 1f))
+                                    .BorderRadius(8)
+                                    .Shape(UIShapeType.RoundedRect)
+                                    .Outline(new Color(0.9f, 0.3f, 0.3f, 0.4f), 2f, 0f)
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.3f, 0.8f, 0.4f, 1f))
+                                    .Shape(UIShapeType.Circle)
+                                    .Outline(new Color(0.3f, 0.8f, 0.4f, 0.4f), 2f, 0f)
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.3f, 0.5f, 0.9f, 1f))
+                                    .Shape(UIShapeType.Checkmark)
+                                    .Outline(new Color(0.3f, 0.5f, 0.9f, 0.5f), 2f, 0f)
+                                    .Spawn(),
+                                UI.Panel(commands)
+                                    .Size(48, 48)
+                                    .Background(new Color(0.9f, 0.7f, 0.2f, 1f))
+                                    .Shape(UIShapeType.DownArrow)
+                                    .Outline(new Color(0.9f, 0.7f, 0.2f, 0.5f), 2f, 0f)
+                                    .Spawn()
+                            )
+                            .Spawn(),
+                        // Text outlines
+                        UI.Text(commands, "Text outlines", fontHandle).FontSize(13f).Color(new Color(0.6f, 0.7f, 0.85f, 1f)).Spawn(),
+                        UI.Panel(commands)
+                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .Children(
+                                UI.Text(commands, "Outlined", fontHandle)
+                                    .FontSize(32f)
+                                    .Outline(new Color(0f, 0f, 0f, 0.6f), 2f, 0f)
+                                    .Spawn(),
+                                UI.Text(commands, "Neon Glow", fontHandle)
+                                    .FontSize(32f)
+                                    .Color(new Color(0.3f, 1f, 0.5f, 1f))
+                                    .Outline(new Color(0.3f, 1f, 0.5f, 0.5f), 2f, 8f)
+                                    .Spawn(),
+                                UI.Text(commands, "Fire Text", fontHandle)
+                                    .FontSize(32f)
+                                    .Color(new Color(1f, 0.85f, 0.2f, 1f))
+                                    .Outline(new Color(1f, 0.3f, 0.1f, 0.6f), 4f, 0f)
+                                    .Spawn()
+                            )
+                            .Spawn()
+                    )
+                    .Spawn();
+
                 // --- custom material ---
                 {
                     var customMaterial = assetServer.GetAssets<UIRectMaterial>().Add(new UIRectMaterial

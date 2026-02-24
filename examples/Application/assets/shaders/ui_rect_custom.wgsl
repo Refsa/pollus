@@ -7,7 +7,7 @@ struct VertexInput {
     @location(2) i_border_color: vec4f,   // border RGBA
     @location(3) i_border_radius: vec4f,  // topLeft, topRight, bottomRight, bottomLeft
     @location(4) i_border_widths: vec4f,  // top, right, bottom, left
-    @location(5) i_extra: vec4f,          // x=ShapeType (0=RoundedRect, 1=Circle, 2=Checkmark, 3=DownArrow), y=OutlineWidth, z=OutlineOffset, w=TextMode (>0.5=glyph)
+    @location(5) i_extra: vec4f,          // x=ShapeType (0..3=shapes, 4=Shadow, 5=Text), y=OutlineWidth|Blur, z=OutlineOffset|Spread, w=OriginalShape(shadow)|TextBlur(text)|HasShadowBehind(rect/circle)
     @location(6) i_outline_color: vec4f,  // outline RGBA
     @location(7) i_uv_rect: vec4f,       // minU, minV, sizeU, sizeV
 };
@@ -49,8 +49,10 @@ fn vs_main(input: VertexInput) -> VertexOutput {
     let u = f32(input.index & 0x1u);
     let v = f32((input.index & 0x2u) >> 1u);
 
-    let outline_width = input.i_extra.y;
-    let outline_offset = input.i_extra.z;
+    // Text glyphs use SDF-based outline, no quad expansion needed.
+    let is_text = (u32(input.i_extra.x) == 5u);
+    let outline_width = select(input.i_extra.y, 0.0, is_text);
+    let outline_offset = select(input.i_extra.z, 0.0, is_text);
     let expand = outline_width + outline_offset;
 
     // Expand quad outward so fragment shader has pixels for the outline
@@ -83,12 +85,17 @@ fn vs_main(input: VertexInput) -> VertexOutput {
 }
 
 // SDF for a rounded box (Inigo Quilez)
-// p: point relative to box center, b: box half-extents, r: corner radii (tl, tr, br, bl)
 fn sd_rounded_box(p: vec2f, b: vec2f, r: vec4f) -> f32 {
     let rx = select(r.xw, r.yz, p.x > 0.0);
     let radius = select(rx.x, rx.y, p.y > 0.0);
     let q = abs(p) - b + vec2f(radius);
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2f(0.0))) - radius;
+}
+
+// Clamp radii to fit the box; circles use max radius for all corners.
+fn resolve_radii(radii: vec4f, half_size: vec2f, is_circle: bool) -> vec4f {
+    let max_r = min(half_size.x, half_size.y);
+    return select(min(radii, vec4f(max_r)), vec4f(max_r), is_circle);
 }
 
 // SDF for a checkmark (two line segments)
@@ -185,20 +192,60 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
     let color = custom_palette(liquid + hue_shift + ui.time * 0.02) * 0.6;
     let noise_bg = vec4f(color, bg_color.a);
 
-    // Text glyphs
-    if (input.extra.w > 0.5) {
-        // Derivative-free SDF smoothstep width: texels_per_pixel * PixelDistScale/255 * 0.5
+    // Box shadow
+    if (shape_type == 4u) {
+        let blur = max(input.extra.y, AA);
+        let spread = input.extra.z;
+        let original_shape = u32(input.extra.w);
+        let is_circle = original_shape == 1u;
+        let shadow_half = half_size + vec2f(spread);
+        let shadow_radii = resolve_radii(input.border_radius + vec4f(spread), shadow_half, is_circle);
+        let d = sd_rounded_box(p, shadow_half, shadow_radii);
+        let shadow_fade = 1.0 - smoothstep(0.0, blur, d);
+
+        let p_elem = p + input.border_widths.xy;
+        let elem_radii = resolve_radii(input.border_radius, half_size, is_circle);
+        let d_elem = sd_rounded_box(p_elem, half_size, elem_radii);
+        let elem_mask = select(1.0, smoothstep(0.0, AA, d_elem), original_shape <= 1u);
+
+        let alpha = shadow_fade * elem_mask * bg_color.a;
+        if (alpha < 0.001) { discard; }
+        var out: FragmentOutput;
+        out.color = vec4f(bg_color.rgb, alpha);
+        return out;
+    }
+
+    // Text glyphs (shape_type == 5, Extra.y = outline width, Extra.w = shadow blur)
+    if (shape_type == 5u) {
         let atlas_dim = vec2f(textureDimensions(tex));
         let glyph_texels = input.uv_rect_size * atlas_dim;
         let glyph_pixels = max(size, vec2f(1.0));
         let tpp = max(glyph_texels.x / glyph_pixels.x, glyph_texels.y / glyph_pixels.y);
-        let sdf_w = min(tpp * (8.0 / 255.0), 0.15);
+        let pixel_to_sdf = tpp * (8.0 / 255.0);
+        let base_sdf_w = min(pixel_to_sdf, 0.15);
+        let shadow_blur = input.extra.w;
+        let sdf_w = min(base_sdf_w + shadow_blur * tpp * 0.03, 0.5);
         let dist = tex_color.r;
         let edge = 0.5;
-        let alpha = smoothstep(edge - sdf_w, edge + sdf_w, dist) * input.bg_color.a;
-        if (alpha < 0.01) { discard; }
+
+        let fill_a = smoothstep(edge - sdf_w, edge + sdf_w, dist) * input.bg_color.a;
+        let outline_sdf = input.extra.y * pixel_to_sdf;
+        let offset_sdf = input.extra.z * pixel_to_sdf;
+        // Clamp to usable SDF range (0.5 from edge to outer limit, minus AA margin).
+        let max_range = edge - sdf_w;
+        let total_sdf = outline_sdf + offset_sdf;
+        let scale = min(1.0, max_range / max(total_sdf, 0.001));
+        let c_outline = outline_sdf * scale;
+        let c_offset = offset_sdf * scale;
+        let outline_outer = smoothstep(edge - c_offset - c_outline - sdf_w, edge - c_offset - c_outline + sdf_w, dist);
+        let outline_inner = smoothstep(edge - c_offset - sdf_w, edge - c_offset + sdf_w, dist);
+        let outline_a = max(outline_outer - outline_inner, 0.0) * input.outline_color.a;
+        let combined_a = fill_a + outline_a * (1.0 - fill_a);
+
+        if (combined_a < 0.01) { discard; }
+        let final_rgb = mix(input.outline_color.rgb, input.bg_color.rgb, fill_a / combined_a);
         var out: FragmentOutput;
-        out.color = vec4f(input.bg_color.rgb, alpha);
+        out.color = vec4f(final_rgb, combined_a);
         return out;
     }
 
@@ -214,11 +261,11 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         return out;
     }
 
-    // RoundedRect (shape_type == 0) or Circle (shape_type == 1, max radii, no border)
-    let max_radius = min(half_size.x, half_size.y);
-    let radii = select(min(input.border_radius, vec4f(max_radius)), vec4f(max_radius), shape_type == 1u);
+    // RoundedRect (0) or Circle (1)
+    let radii = resolve_radii(input.border_radius, half_size, shape_type == 1u);
     let d_outer = sd_rounded_box(p, half_size, radii);
-    let outer_alpha = 1.0 - smoothstep(-AA, AA, d_outer);
+    let has_shadow_behind = input.extra.w > 0.5;
+    let outer_alpha = select(1.0 - smoothstep(-AA, AA, d_outer), 1.0 - smoothstep(AA, 2.0 * AA, d_outer), has_shadow_behind);
 
     let border = input.border_widths;
     let inner_min = vec2f(border.w, border.x);
