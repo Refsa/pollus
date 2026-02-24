@@ -109,16 +109,15 @@
 	- [x] IMGUI
 		- [ ] handle some function signature mismatches
 		- [x] Implement as Render Pass
-	- [-] UI engine based on Taffy
+	- [-] UI engine
 		- [x] flex layout
 		- [ ] grid layout
 		- [ ] block layout
 		- [x] rendering
-		- [-] widgets
 		- [ ] reactive changes
 		- [ ] animations
 	- [ ] Theme
-	- Widgets/Systems
+	- [-] Widgets/Systems
 		- [ ] Tabs
 		- [ ] Tooltip
 		- [ ] Modal/Dialog
@@ -127,6 +126,8 @@
 		- [ ] Resizeable views (splitter)
 		- [ ] Accordion
 		- [ ] TextArea
+	- [ ] Performance pass
+	- [ ] Simplify and clean up shaders
 - Serialization
 - Rendering
 	- [-] Text/Font
