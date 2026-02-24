@@ -1,7 +1,7 @@
 export const config = /*json-start*/{
   "mainAssemblyName": "Pollus.Examples.Browser.dll",
   "resources": {
-    "hash": "sha256-LZnmA41tz2WqqOa0QyVMLz9/EKq26eSinGpNFJmuFaQ=",
+    "hash": "sha256-OH6I/IE0mbxowO4gHPb00KKK22Kqfq/WSG3lrJ+HecU=",
     "jsModuleNative": [
       {
         "name": "dotnet.native.js"
@@ -15,7 +15,7 @@ export const config = /*json-start*/{
     "wasmNative": [
       {
         "name": "dotnet.native.wasm",
-        "integrity": "sha256-/l1WMQgByoEBp3x3ITDmgt2pyOi4fMWEm78vquoOCsY="
+        "integrity": "sha256-9KQaK/if3RPDjc1VcORCVEWVvqw7tBtnOZMIf1fpbs8="
       }
     ],
     "icu": [
@@ -39,47 +39,72 @@ export const config = /*json-start*/{
       {
         "virtualPath": "ImGui.NET.wasm",
         "name": "ImGui.NET.wasm",
-        "integrity": "sha256-q21qgZGim3N5/XRQ4akxMJ+ZMFvf0tQsE1KpuoJ1eA8="
+        "integrity": "sha256-MGsdjelIHNabGDsxtBJjwnGl43i/bj0PY/5SqfH1kAw="
+      },
+      {
+        "virtualPath": "Pollus.Assets.wasm",
+        "name": "Pollus.Assets.wasm",
+        "integrity": "sha256-EggrgkZNsBje2bbuBfX4CEHN95/gdL15eh2Gano0EPc="
       },
       {
         "virtualPath": "Pollus.Audio.wasm",
         "name": "Pollus.Audio.wasm",
-        "integrity": "sha256-bpem7XiQgPE9aOos7SuG7TILJWF0Bu5ITeCLLEDTXFA="
+        "integrity": "sha256-BmxHWkdOeE8PUjACF1/99VEfYzWz2U28tEsgwLKaMF0="
       },
       {
         "virtualPath": "Pollus.Core.wasm",
         "name": "Pollus.Core.wasm",
-        "integrity": "sha256-QtUvTIEgoHdLtjNvM7OUHjrPc31YDkFvVkyDaaEjxU8="
+        "integrity": "sha256-kZNOeAdKJb5/CSOrHwEwIe/prTpVHbEV0v/xVCtmtk0="
       },
       {
         "virtualPath": "Pollus.ECS.wasm",
         "name": "Pollus.ECS.wasm",
-        "integrity": "sha256-VqZuL+57KRXjmgpMHLdajzjUNQ5ei3K3STBciwJe7HI="
+        "integrity": "sha256-BHMxiXHd1ik+O5PprxzPbcfnUMMkbm32OkV519By4/E="
       },
       {
         "virtualPath": "Pollus.Emscripten.wasm",
         "name": "Pollus.Emscripten.wasm",
-        "integrity": "sha256-A9Zu+hzHs9jROY/csNfAWKnfv0UVBvNgMdoUGKIqrtY="
+        "integrity": "sha256-+9DP0NT0G4MbHFu0Neh7m+wB0tO0CTjvIGXLNrU1+TA="
       },
       {
         "virtualPath": "Pollus.Engine.wasm",
         "name": "Pollus.Engine.wasm",
-        "integrity": "sha256-P0VxJ7MAQVyT4v9Ksex8Kms+RY5JoT9j2As/XvrwaZg="
+        "integrity": "sha256-tPufw/BH4lmH2V4AjNEAtXQ9W3o1oBnb7jZRqTCF0r0="
       },
       {
         "virtualPath": "Pollus.Examples.Application.wasm",
         "name": "Pollus.Examples.Application.wasm",
-        "integrity": "sha256-tgPBTh2R9dSCs9VLRwGdxFxMtJZ7wIhGiEp6ogyQ784="
+        "integrity": "sha256-ZSk0ze2ZRYgB0j6odhBKmxIscQ7NPcaSDu+BAutXDVI="
       },
       {
         "virtualPath": "Pollus.Examples.Browser.wasm",
         "name": "Pollus.Examples.Browser.wasm",
-        "integrity": "sha256-0/tfhTFB0BTWDWLYG37aDv7i80PDWmJLdfhHZO2hZGo="
+        "integrity": "sha256-88wkn+OiJ56O3VsV80xUhvV/Gv9/OWEZZfPAfl8HmVE="
       },
       {
         "virtualPath": "Pollus.Graphics.wasm",
         "name": "Pollus.Graphics.wasm",
-        "integrity": "sha256-etzoPjY8tYX2s2Ak/xKqeq69AXTCG9CDuP8VoSbA+24="
+        "integrity": "sha256-/uCE6b8FBDjEGVEdSDb82dqfqFZ2PABC0w2fB/s0wMs="
+      },
+      {
+        "virtualPath": "Pollus.Input.wasm",
+        "name": "Pollus.Input.wasm",
+        "integrity": "sha256-yfF4rMsrYdkNO7Dpe+if1ABeKuRdlceRClopM8YO1vo="
+      },
+      {
+        "virtualPath": "Pollus.Platform.wasm",
+        "name": "Pollus.Platform.wasm",
+        "integrity": "sha256-ShenKHWLEZA4wJHNkUuwgGZGKifTI6e8G+ne0uYP1jI="
+      },
+      {
+        "virtualPath": "Pollus.Tween.wasm",
+        "name": "Pollus.Tween.wasm",
+        "integrity": "sha256-5QRl6PR68HhYzO7ijLhExVEK3fwTAQkeAfkhUjs2OI8="
+      },
+      {
+        "virtualPath": "Pollus.UI.wasm",
+        "name": "Pollus.UI.wasm",
+        "integrity": "sha256-sw6DYkZDhWmG+owK31b7hOIuTqVht6VswUcvvPkioes="
       },
       {
         "virtualPath": "Silk.NET.Core.wasm",
@@ -109,57 +134,82 @@ export const config = /*json-start*/{
       {
         "virtualPath": "StbTrueTypeSharp.wasm",
         "name": "StbTrueTypeSharp.wasm",
-        "integrity": "sha256-tRcQwT5jSPtkzWMSY57DIjMivm5vomAh+Fg0lBkx9VY="
+        "integrity": "sha256-j/kgnYZ+9hdSMycPXi4KcoapFyXSMGthudXctyVWmiQ="
       },
       {
         "virtualPath": "System.Collections.Concurrent.wasm",
         "name": "System.Collections.Concurrent.wasm",
-        "integrity": "sha256-XRs2n20SU+dmO9vSwP2Vidys3ZJgpmMuYlCA0lBjJdk="
+        "integrity": "sha256-bc7iQtJKLBUO79DGMaoWJ8EEag/9J960bpnS9D+1G60="
       },
       {
         "virtualPath": "System.Collections.wasm",
         "name": "System.Collections.wasm",
-        "integrity": "sha256-HRjswU+izv3QDWSY5d4T2NesMt4bNVkt4nDW3XW2NPM="
+        "integrity": "sha256-eR5hD3bX5oWF4qEjkZSZUTbyTN5ijVwaXW33ViqzXws="
+      },
+      {
+        "virtualPath": "System.ComponentModel.Primitives.wasm",
+        "name": "System.ComponentModel.Primitives.wasm",
+        "integrity": "sha256-aFWH4MTDbqxjKCZ1GwhkV+oLKHsgp3JN4qxl/ZeGEJc="
       },
       {
         "virtualPath": "System.Console.wasm",
         "name": "System.Console.wasm",
-        "integrity": "sha256-SEdIqderINm5fCzr/rPWXXov4mGWyon+kyMt1HlIgX4="
+        "integrity": "sha256-dKeOJPgfECmkfrp4Pm5xblTOI5LRcJVufAAcvVwceV4="
+      },
+      {
+        "virtualPath": "System.IO.FileSystem.Watcher.wasm",
+        "name": "System.IO.FileSystem.Watcher.wasm",
+        "integrity": "sha256-bnnCnEjAiaXpWi7IFJ4DznvtP8HcpoQ7jUEx/YJkGJk="
+      },
+      {
+        "virtualPath": "System.IO.Pipelines.wasm",
+        "name": "System.IO.Pipelines.wasm",
+        "integrity": "sha256-A6Trx9F0sQmCOSbm4AlptRSNh92f0OTjUFShZeGn+1c="
       },
       {
         "virtualPath": "System.Linq.wasm",
         "name": "System.Linq.wasm",
-        "integrity": "sha256-EMec647QZdX7vfMifPlsm5/2S6f+tKAGpVLMUGFf1zI="
+        "integrity": "sha256-4lFOBL06LznI+m+KbA6XfUqkOZTTzuYT0HAHM41tVYw="
       },
       {
         "virtualPath": "System.Linq.Expressions.wasm",
         "name": "System.Linq.Expressions.wasm",
-        "integrity": "sha256-o3oVDseBPO9Gm7bVyAw1KMgKkCxlePvULmM11ZwW3fo="
+        "integrity": "sha256-/+PTjfd0zosQEV+RE0OTBzxzA9XWXbCPTVxOFt2q0XI="
       },
       {
         "virtualPath": "System.Memory.wasm",
         "name": "System.Memory.wasm",
-        "integrity": "sha256-bVI3OCbPLixXdou99IDf/p7x9itxPHEH+cf4V/G+OUs="
+        "integrity": "sha256-e7/uhG5yAbcCSaG/8WFjJ355x8XZm5pvx0g2lhPBMKw="
       },
       {
         "virtualPath": "System.Private.CoreLib.wasm",
         "name": "System.Private.CoreLib.wasm",
-        "integrity": "sha256-SIwSazdO5eQm61JI1tqKf8mJZ3lx2dMD1PK93BGWjXo="
+        "integrity": "sha256-j96TllHXR+I9Bv6IoXVgQvi77NQjfzSV60xEa7UOeq8="
       },
       {
         "virtualPath": "System.Runtime.InteropServices.JavaScript.wasm",
         "name": "System.Runtime.InteropServices.JavaScript.wasm",
-        "integrity": "sha256-gme7uqrIZczg9ckrE0+RFuZv85/QCgcV2uW3uGWPLP8="
+        "integrity": "sha256-0ACLOlpLspwmYRvRqDYaxymrF+n6bJiovYJN451PYfs="
+      },
+      {
+        "virtualPath": "System.Security.Cryptography.wasm",
+        "name": "System.Security.Cryptography.wasm",
+        "integrity": "sha256-Qty+ZNM0jlrG/c6Su5fMUvbr8z+9YsV+3QyaVxNI78s="
+      },
+      {
+        "virtualPath": "System.Text.Encodings.Web.wasm",
+        "name": "System.Text.Encodings.Web.wasm",
+        "integrity": "sha256-XQ2EuThnKEPjTGYmlj4xxlttlBbdJfepOFW56COFnAY="
+      },
+      {
+        "virtualPath": "System.Text.Json.wasm",
+        "name": "System.Text.Json.wasm",
+        "integrity": "sha256-Kf1eMq7XClphtxx9yTJ1efK03V+Pq+hEAcjhfFkNcLs="
       },
       {
         "virtualPath": "Utf8StringInterpolation.wasm",
         "name": "Utf8StringInterpolation.wasm",
         "integrity": "sha256-YU20oUYVeWOWKUp/pI8vwuC3qfDGddJLXCewEeB6JSM="
-      },
-      {
-        "virtualPath": "aot-instances.wasm",
-        "name": "aot-instances.wasm",
-        "integrity": "sha256-ZKYH8qGQXmng3POhMUcorr9bMYF+uQANtiduldY9GFo="
       }
     ],
     "assembly": []

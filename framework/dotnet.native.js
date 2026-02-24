@@ -30,11 +30,11 @@ Module['ready'] = new Promise((resolve, reject) => {
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
-// include: C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Runtime.Mono.browser-wasm\10.0.0\runtimes\browser-wasm\native\src\es6\dotnet.es6.pre.js
+// include: /home/ole/.dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/10.0.2/runtimes/browser-wasm/native/src/es6/dotnet.es6.pre.js
 if (_nativeModuleLoaded) throw new Error("Native module already loaded");
 _nativeModuleLoaded = true;
 createDotnetRuntime = Module = moduleArg(Module);
-// end include: C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Runtime.Mono.browser-wasm\10.0.0\runtimes\browser-wasm\native\src\es6\dotnet.es6.pre.js
+// end include: /home/ole/.dotnet/packs/Microsoft.NETCore.App.Runtime.Mono.browser-wasm/10.0.2/runtimes/browser-wasm/native/src/es6/dotnet.es6.pre.js
 
 
 // Sometimes an existing Module object exists with properties
@@ -815,22 +815,22 @@ function createWasm() {
 // === Body ===
 
 var ASM_CONSTS = {
-  3813196: ($0) => { var str = UTF8ToString($0) + '\n\n' + 'Abort/Retry/Ignore/AlwaysIgnore? [ariA] :'; var reply = window.prompt(str, "i"); if (reply === null) { reply = "i"; } return allocate(intArrayFromString(reply), 'i8', ALLOC_NORMAL); },  
- 3813421: () => { if (typeof(AudioContext) !== 'undefined') { return true; } else if (typeof(webkitAudioContext) !== 'undefined') { return true; } return false; },  
- 3813568: () => { if ((typeof(navigator.mediaDevices) !== 'undefined') && (typeof(navigator.mediaDevices.getUserMedia) !== 'undefined')) { return true; } else if (typeof(navigator.webkitGetUserMedia) !== 'undefined') { return true; } return false; },  
- 3813802: ($0) => { if(typeof(Module['SDL2']) === 'undefined') { Module['SDL2'] = {}; } var SDL2 = Module['SDL2']; if (!$0) { SDL2.audio = {}; } else { SDL2.capture = {}; } if (!SDL2.audioContext) { if (typeof(AudioContext) !== 'undefined') { SDL2.audioContext = new AudioContext(); } else if (typeof(webkitAudioContext) !== 'undefined') { SDL2.audioContext = new webkitAudioContext(); } if (SDL2.audioContext) { autoResumeAudioContext(SDL2.audioContext); } } return SDL2.audioContext === undefined ? -1 : 0; },  
- 3814295: () => { var SDL2 = Module['SDL2']; return SDL2.audioContext.sampleRate; },  
- 3814363: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; var have_microphone = function(stream) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); SDL2.capture.silenceTimer = undefined; } SDL2.capture.mediaStreamNode = SDL2.audioContext.createMediaStreamSource(stream); SDL2.capture.scriptProcessorNode = SDL2.audioContext.createScriptProcessor($1, $0, 1); SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) { if ((SDL2 === undefined) || (SDL2.capture === undefined)) { return; } audioProcessingEvent.outputBuffer.getChannelData(0).fill(0.0); SDL2.capture.currentCaptureBuffer = audioProcessingEvent.inputBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.mediaStreamNode.connect(SDL2.capture.scriptProcessorNode); SDL2.capture.scriptProcessorNode.connect(SDL2.audioContext.destination); SDL2.capture.stream = stream; }; var no_microphone = function(error) { }; SDL2.capture.silenceBuffer = SDL2.audioContext.createBuffer($0, $1, SDL2.audioContext.sampleRate); SDL2.capture.silenceBuffer.getChannelData(0).fill(0.0); var silence_callback = function() { SDL2.capture.currentCaptureBuffer = SDL2.capture.silenceBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.silenceTimer = setTimeout(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1000); if ((navigator.mediaDevices !== undefined) && (navigator.mediaDevices.getUserMedia !== undefined)) { navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(have_microphone).catch(no_microphone); } else if (navigator.webkitGetUserMedia !== undefined) { navigator.webkitGetUserMedia({ audio: true, video: false }, have_microphone, no_microphone); } },  
- 3816015: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; SDL2.audio.scriptProcessorNode = SDL2.audioContext['createScriptProcessor']($1, 0, $0); SDL2.audio.scriptProcessorNode['onaudioprocess'] = function (e) { if ((SDL2 === undefined) || (SDL2.audio === undefined)) { return; } SDL2.audio.currentOutputBuffer = e['outputBuffer']; dynCall('vi', $2, [$3]); }; SDL2.audio.scriptProcessorNode['connect'](SDL2.audioContext['destination']); },  
- 3816425: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.capture.currentCaptureBuffer.getChannelData(c); if (channelData.length != $1) { throw 'Web Audio capture buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } if (numChannels == 1) { for (var j = 0; j < $1; ++j) { setValue($0 + (j * 4), channelData[j], 'float'); } } else { for (var j = 0; j < $1; ++j) { setValue($0 + (((j * numChannels) + c) * 4), channelData[j], 'float'); } } } },  
- 3817030: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.audio.currentOutputBuffer['numberOfChannels']; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.audio.currentOutputBuffer['getChannelData'](c); if (channelData.length != $1) { throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } for (var j = 0; j < $1; ++j) { channelData[j] = HEAPF32[$0 + ((j*numChannels + c) << 2) >> 2]; } } },  
- 3817510: ($0) => { var SDL2 = Module['SDL2']; if ($0) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); } if (SDL2.capture.stream !== undefined) { var tracks = SDL2.capture.stream.getAudioTracks(); for (var i = 0; i < tracks.length; i++) { SDL2.capture.stream.removeTrack(tracks[i]); } SDL2.capture.stream = undefined; } if (SDL2.capture.scriptProcessorNode !== undefined) { SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) {}; SDL2.capture.scriptProcessorNode.disconnect(); SDL2.capture.scriptProcessorNode = undefined; } if (SDL2.capture.mediaStreamNode !== undefined) { SDL2.capture.mediaStreamNode.disconnect(); SDL2.capture.mediaStreamNode = undefined; } if (SDL2.capture.silenceBuffer !== undefined) { SDL2.capture.silenceBuffer = undefined } SDL2.capture = undefined; } else { if (SDL2.audio.scriptProcessorNode != undefined) { SDL2.audio.scriptProcessorNode.disconnect(); SDL2.audio.scriptProcessorNode = undefined; } SDL2.audio = undefined; } if ((SDL2.audioContext !== undefined) && (SDL2.audio === undefined) && (SDL2.capture === undefined)) { SDL2.audioContext.close(); SDL2.audioContext = undefined; } },  
- 3818682: ($0, $1, $2) => { var w = $0; var h = $1; var pixels = $2; if (!Module['SDL2']) Module['SDL2'] = {}; var SDL2 = Module['SDL2']; if (SDL2.ctxCanvas !== Module['canvas']) { SDL2.ctx = Module['createContext'](Module['canvas'], false, true); SDL2.ctxCanvas = Module['canvas']; } if (SDL2.w !== w || SDL2.h !== h || SDL2.imageCtx !== SDL2.ctx) { SDL2.image = SDL2.ctx.createImageData(w, h); SDL2.w = w; SDL2.h = h; SDL2.imageCtx = SDL2.ctx; } var data = SDL2.image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = 0xff; src++; dst += 4; } } else { if (SDL2.data32Data !== data) { SDL2.data32 = new Int32Array(data.buffer); SDL2.data8 = new Uint8Array(data.buffer); SDL2.data32Data = data; } var data32 = SDL2.data32; num = data32.length; data32.set(HEAP32.subarray(src, src + num)); var data8 = SDL2.data8; var i = 3; var j = i + 4*num; if (num % 8 == 0) { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; } } else { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; } } } SDL2.ctx.putImageData(SDL2.image, 0, 0); },  
- 3820151: ($0, $1, $2, $3, $4) => { var w = $0; var h = $1; var hot_x = $2; var hot_y = $3; var pixels = $4; var canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h; var ctx = canvas.getContext("2d"); var image = ctx.createImageData(w, h); var data = image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = (val >> 24) & 0xff; src++; dst += 4; } } else { var data32 = new Int32Array(data.buffer); num = data32.length; data32.set(HEAP32.subarray(src, src + num)); } ctx.putImageData(image, 0, 0); var url = hot_x === 0 && hot_y === 0 ? "url(" + canvas.toDataURL() + "), auto" : "url(" + canvas.toDataURL() + ") " + hot_x + " " + hot_y + ", auto"; var urlBuf = _malloc(url.length + 1); stringToUTF8(url, urlBuf, url.length + 1); return urlBuf; },  
- 3821140: ($0) => { if (Module['canvas']) { Module['canvas'].style['cursor'] = UTF8ToString($0); } },  
- 3821223: () => { if (Module['canvas']) { Module['canvas'].style['cursor'] = 'none'; } },  
- 3821292: () => { return window.innerWidth; },  
- 3821322: () => { return window.innerHeight; }
+  5191492: ($0) => { var str = UTF8ToString($0) + '\n\n' + 'Abort/Retry/Ignore/AlwaysIgnore? [ariA] :'; var reply = window.prompt(str, "i"); if (reply === null) { reply = "i"; } return allocate(intArrayFromString(reply), 'i8', ALLOC_NORMAL); },  
+ 5191717: () => { if (typeof(AudioContext) !== 'undefined') { return true; } else if (typeof(webkitAudioContext) !== 'undefined') { return true; } return false; },  
+ 5191864: () => { if ((typeof(navigator.mediaDevices) !== 'undefined') && (typeof(navigator.mediaDevices.getUserMedia) !== 'undefined')) { return true; } else if (typeof(navigator.webkitGetUserMedia) !== 'undefined') { return true; } return false; },  
+ 5192098: ($0) => { if(typeof(Module['SDL2']) === 'undefined') { Module['SDL2'] = {}; } var SDL2 = Module['SDL2']; if (!$0) { SDL2.audio = {}; } else { SDL2.capture = {}; } if (!SDL2.audioContext) { if (typeof(AudioContext) !== 'undefined') { SDL2.audioContext = new AudioContext(); } else if (typeof(webkitAudioContext) !== 'undefined') { SDL2.audioContext = new webkitAudioContext(); } if (SDL2.audioContext) { autoResumeAudioContext(SDL2.audioContext); } } return SDL2.audioContext === undefined ? -1 : 0; },  
+ 5192591: () => { var SDL2 = Module['SDL2']; return SDL2.audioContext.sampleRate; },  
+ 5192659: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; var have_microphone = function(stream) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); SDL2.capture.silenceTimer = undefined; } SDL2.capture.mediaStreamNode = SDL2.audioContext.createMediaStreamSource(stream); SDL2.capture.scriptProcessorNode = SDL2.audioContext.createScriptProcessor($1, $0, 1); SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) { if ((SDL2 === undefined) || (SDL2.capture === undefined)) { return; } audioProcessingEvent.outputBuffer.getChannelData(0).fill(0.0); SDL2.capture.currentCaptureBuffer = audioProcessingEvent.inputBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.mediaStreamNode.connect(SDL2.capture.scriptProcessorNode); SDL2.capture.scriptProcessorNode.connect(SDL2.audioContext.destination); SDL2.capture.stream = stream; }; var no_microphone = function(error) { }; SDL2.capture.silenceBuffer = SDL2.audioContext.createBuffer($0, $1, SDL2.audioContext.sampleRate); SDL2.capture.silenceBuffer.getChannelData(0).fill(0.0); var silence_callback = function() { SDL2.capture.currentCaptureBuffer = SDL2.capture.silenceBuffer; dynCall('vi', $2, [$3]); }; SDL2.capture.silenceTimer = setTimeout(silence_callback, ($1 / SDL2.audioContext.sampleRate) * 1000); if ((navigator.mediaDevices !== undefined) && (navigator.mediaDevices.getUserMedia !== undefined)) { navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(have_microphone).catch(no_microphone); } else if (navigator.webkitGetUserMedia !== undefined) { navigator.webkitGetUserMedia({ audio: true, video: false }, have_microphone, no_microphone); } },  
+ 5194311: ($0, $1, $2, $3) => { var SDL2 = Module['SDL2']; SDL2.audio.scriptProcessorNode = SDL2.audioContext['createScriptProcessor']($1, 0, $0); SDL2.audio.scriptProcessorNode['onaudioprocess'] = function (e) { if ((SDL2 === undefined) || (SDL2.audio === undefined)) { return; } SDL2.audio.currentOutputBuffer = e['outputBuffer']; dynCall('vi', $2, [$3]); }; SDL2.audio.scriptProcessorNode['connect'](SDL2.audioContext['destination']); },  
+ 5194721: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.capture.currentCaptureBuffer.numberOfChannels; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.capture.currentCaptureBuffer.getChannelData(c); if (channelData.length != $1) { throw 'Web Audio capture buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } if (numChannels == 1) { for (var j = 0; j < $1; ++j) { setValue($0 + (j * 4), channelData[j], 'float'); } } else { for (var j = 0; j < $1; ++j) { setValue($0 + (((j * numChannels) + c) * 4), channelData[j], 'float'); } } } },  
+ 5195326: ($0, $1) => { var SDL2 = Module['SDL2']; var numChannels = SDL2.audio.currentOutputBuffer['numberOfChannels']; for (var c = 0; c < numChannels; ++c) { var channelData = SDL2.audio.currentOutputBuffer['getChannelData'](c); if (channelData.length != $1) { throw 'Web Audio output buffer length mismatch! Destination size: ' + channelData.length + ' samples vs expected ' + $1 + ' samples!'; } for (var j = 0; j < $1; ++j) { channelData[j] = HEAPF32[$0 + ((j*numChannels + c) << 2) >> 2]; } } },  
+ 5195806: ($0) => { var SDL2 = Module['SDL2']; if ($0) { if (SDL2.capture.silenceTimer !== undefined) { clearTimeout(SDL2.capture.silenceTimer); } if (SDL2.capture.stream !== undefined) { var tracks = SDL2.capture.stream.getAudioTracks(); for (var i = 0; i < tracks.length; i++) { SDL2.capture.stream.removeTrack(tracks[i]); } SDL2.capture.stream = undefined; } if (SDL2.capture.scriptProcessorNode !== undefined) { SDL2.capture.scriptProcessorNode.onaudioprocess = function(audioProcessingEvent) {}; SDL2.capture.scriptProcessorNode.disconnect(); SDL2.capture.scriptProcessorNode = undefined; } if (SDL2.capture.mediaStreamNode !== undefined) { SDL2.capture.mediaStreamNode.disconnect(); SDL2.capture.mediaStreamNode = undefined; } if (SDL2.capture.silenceBuffer !== undefined) { SDL2.capture.silenceBuffer = undefined } SDL2.capture = undefined; } else { if (SDL2.audio.scriptProcessorNode != undefined) { SDL2.audio.scriptProcessorNode.disconnect(); SDL2.audio.scriptProcessorNode = undefined; } SDL2.audio = undefined; } if ((SDL2.audioContext !== undefined) && (SDL2.audio === undefined) && (SDL2.capture === undefined)) { SDL2.audioContext.close(); SDL2.audioContext = undefined; } },  
+ 5196978: ($0, $1, $2) => { var w = $0; var h = $1; var pixels = $2; if (!Module['SDL2']) Module['SDL2'] = {}; var SDL2 = Module['SDL2']; if (SDL2.ctxCanvas !== Module['canvas']) { SDL2.ctx = Module['createContext'](Module['canvas'], false, true); SDL2.ctxCanvas = Module['canvas']; } if (SDL2.w !== w || SDL2.h !== h || SDL2.imageCtx !== SDL2.ctx) { SDL2.image = SDL2.ctx.createImageData(w, h); SDL2.w = w; SDL2.h = h; SDL2.imageCtx = SDL2.ctx; } var data = SDL2.image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = 0xff; src++; dst += 4; } } else { if (SDL2.data32Data !== data) { SDL2.data32 = new Int32Array(data.buffer); SDL2.data8 = new Uint8Array(data.buffer); SDL2.data32Data = data; } var data32 = SDL2.data32; num = data32.length; data32.set(HEAP32.subarray(src, src + num)); var data8 = SDL2.data8; var i = 3; var j = i + 4*num; if (num % 8 == 0) { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; data8[i] = 0xff; i = i + 4 | 0; } } else { while (i < j) { data8[i] = 0xff; i = i + 4 | 0; } } } SDL2.ctx.putImageData(SDL2.image, 0, 0); },  
+ 5198447: ($0, $1, $2, $3, $4) => { var w = $0; var h = $1; var hot_x = $2; var hot_y = $3; var pixels = $4; var canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h; var ctx = canvas.getContext("2d"); var image = ctx.createImageData(w, h); var data = image.data; var src = pixels >> 2; var dst = 0; var num; if (typeof CanvasPixelArray !== 'undefined' && data instanceof CanvasPixelArray) { num = data.length; while (dst < num) { var val = HEAP32[src]; data[dst ] = val & 0xff; data[dst+1] = (val >> 8) & 0xff; data[dst+2] = (val >> 16) & 0xff; data[dst+3] = (val >> 24) & 0xff; src++; dst += 4; } } else { var data32 = new Int32Array(data.buffer); num = data32.length; data32.set(HEAP32.subarray(src, src + num)); } ctx.putImageData(image, 0, 0); var url = hot_x === 0 && hot_y === 0 ? "url(" + canvas.toDataURL() + "), auto" : "url(" + canvas.toDataURL() + ") " + hot_x + " " + hot_y + ", auto"; var urlBuf = _malloc(url.length + 1); stringToUTF8(url, urlBuf, url.length + 1); return urlBuf; },  
+ 5199436: ($0) => { if (Module['canvas']) { Module['canvas'].style['cursor'] = UTF8ToString($0); } },  
+ 5199519: () => { if (Module['canvas']) { Module['canvas'].style['cursor'] = 'none'; } },  
+ 5199588: () => { return window.innerWidth; },  
+ 5199618: () => { return window.innerHeight; }
 };
 
 // end include: preamble.js
@@ -11689,6 +11689,23 @@ var ASM_CONSTS = {
       return WebGPU.mgrCommandBuffer.create(commandEncoder.finish());
     };
 
+  
+  var _wgpuCommandEncoderInsertDebugMarker = (encoderId, markerLabelPtr) => {
+      var encoder = WebGPU.mgrCommandEncoder.get(encoderId);
+      encoder.insertDebugMarker(UTF8ToString(markerLabelPtr));
+    };
+
+  var _wgpuCommandEncoderPopDebugGroup = (encoderId) => {
+      var encoder = WebGPU.mgrCommandEncoder.get(encoderId);
+      encoder.popDebugGroup();
+    };
+
+  
+  var _wgpuCommandEncoderPushDebugGroup = (encoderId, groupLabelPtr) => {
+      var encoder = WebGPU.mgrCommandEncoder.get(encoderId);
+      encoder.pushDebugGroup(UTF8ToString(groupLabelPtr));
+    };
+
   var _wgpuCommandEncoderRelease = (id) => WebGPU.mgrCommandEncoder.release(id);
 
   var _wgpuComputePassEncoderDispatchWorkgroups = (passId, x, y, z) => {
@@ -12539,10 +12556,14 @@ var ASM_CONSTS = {
 
   var _wgpuShaderModuleRelease = (id) => WebGPU.mgrShaderModule.release(id);
 
+  var _wgpuSurfaceRelease = (id) => WebGPU.mgrSurface.release(id);
+
   var _wgpuSwapChainGetCurrentTextureView = (swapChainId) => {
       var context = WebGPU.mgrSwapChain.get(swapChainId);
       return WebGPU.mgrTextureView.create(context.getCurrentTexture().createView());
     };
+
+  var _wgpuSwapChainRelease = (id) => WebGPU.mgrSwapChain.release(id);
 
   
   var _wgpuTextureCreateView = (textureId, descriptor) => {
@@ -12894,7 +12915,7 @@ var miniTempWebGLIntBuffersStorage = new Int32Array(288);
   for (/**@suppress{duplicate}*/var i = 0; i < 288; ++i) {
     miniTempWebGLIntBuffers[i] = miniTempWebGLIntBuffersStorage.subarray(0, i+1);
   };
-DOTNET.setup({ wasmEnableSIMD: true,wasmEnableEH: true,enableAotProfiler: false, enableDevToolsProfiler: false, enableLogProfiler: false, enableEventPipe: false, runAOTCompilation: true, wasmEnableThreads: false, gitHash: "b0f34d51fccc69fd334253924abd8d6853fad7aa", });;
+DOTNET.setup({ wasmEnableSIMD: true,wasmEnableEH: true,enableAotProfiler: false, enableDevToolsProfiler: false, enableLogProfiler: false, enableEventPipe: false, runAOTCompilation: true, wasmEnableThreads: false, gitHash: "44525024595742ebe09023abe709df51de65009b", });;
 WebGPU.initManagers();;
 var wasmImports = {
   /** @export */
@@ -13508,6 +13529,12 @@ var wasmImports = {
   /** @export */
   wgpuCommandEncoderFinish: _wgpuCommandEncoderFinish,
   /** @export */
+  wgpuCommandEncoderInsertDebugMarker: _wgpuCommandEncoderInsertDebugMarker,
+  /** @export */
+  wgpuCommandEncoderPopDebugGroup: _wgpuCommandEncoderPopDebugGroup,
+  /** @export */
+  wgpuCommandEncoderPushDebugGroup: _wgpuCommandEncoderPushDebugGroup,
+  /** @export */
   wgpuCommandEncoderRelease: _wgpuCommandEncoderRelease,
   /** @export */
   wgpuComputePassEncoderDispatchWorkgroups: _wgpuComputePassEncoderDispatchWorkgroups,
@@ -13596,7 +13623,11 @@ var wasmImports = {
   /** @export */
   wgpuShaderModuleRelease: _wgpuShaderModuleRelease,
   /** @export */
+  wgpuSurfaceRelease: _wgpuSurfaceRelease,
+  /** @export */
   wgpuSwapChainGetCurrentTextureView: _wgpuSwapChainGetCurrentTextureView,
+  /** @export */
+  wgpuSwapChainRelease: _wgpuSwapChainRelease,
   /** @export */
   wgpuTextureCreateView: _wgpuTextureCreateView,
   /** @export */
@@ -13656,30 +13687,41 @@ var _mono_wasm_assembly_load = Module['_mono_wasm_assembly_load'] = (a0) => (_mo
 var _mono_wasm_assembly_find_class = Module['_mono_wasm_assembly_find_class'] = (a0, a1, a2) => (_mono_wasm_assembly_find_class = Module['_mono_wasm_assembly_find_class'] = wasmExports['mono_wasm_assembly_find_class'])(a0, a1, a2);
 var _mono_wasm_assembly_find_method = Module['_mono_wasm_assembly_find_method'] = (a0, a1, a2) => (_mono_wasm_assembly_find_method = Module['_mono_wasm_assembly_find_method'] = wasmExports['mono_wasm_assembly_find_method'])(a0, a1, a2);
 var _mono_aot_ImGui_NET_get_method = Module['_mono_aot_ImGui_NET_get_method'] = (a0) => (_mono_aot_ImGui_NET_get_method = Module['_mono_aot_ImGui_NET_get_method'] = wasmExports['mono_aot_ImGui_NET_get_method'])(a0);
+var _mono_aot_Pollus_Assets_get_method = Module['_mono_aot_Pollus_Assets_get_method'] = (a0) => (_mono_aot_Pollus_Assets_get_method = Module['_mono_aot_Pollus_Assets_get_method'] = wasmExports['mono_aot_Pollus_Assets_get_method'])(a0);
 var _mono_aot_Pollus_Audio_get_method = Module['_mono_aot_Pollus_Audio_get_method'] = (a0) => (_mono_aot_Pollus_Audio_get_method = Module['_mono_aot_Pollus_Audio_get_method'] = wasmExports['mono_aot_Pollus_Audio_get_method'])(a0);
 var _mono_aot_Pollus_Core_get_method = Module['_mono_aot_Pollus_Core_get_method'] = (a0) => (_mono_aot_Pollus_Core_get_method = Module['_mono_aot_Pollus_Core_get_method'] = wasmExports['mono_aot_Pollus_Core_get_method'])(a0);
 var _mono_aot_Pollus_ECS_get_method = Module['_mono_aot_Pollus_ECS_get_method'] = (a0) => (_mono_aot_Pollus_ECS_get_method = Module['_mono_aot_Pollus_ECS_get_method'] = wasmExports['mono_aot_Pollus_ECS_get_method'])(a0);
 var _mono_aot_Pollus_Emscripten_get_method = Module['_mono_aot_Pollus_Emscripten_get_method'] = (a0) => (_mono_aot_Pollus_Emscripten_get_method = Module['_mono_aot_Pollus_Emscripten_get_method'] = wasmExports['mono_aot_Pollus_Emscripten_get_method'])(a0);
 var _mono_aot_Pollus_Engine_get_method = Module['_mono_aot_Pollus_Engine_get_method'] = (a0) => (_mono_aot_Pollus_Engine_get_method = Module['_mono_aot_Pollus_Engine_get_method'] = wasmExports['mono_aot_Pollus_Engine_get_method'])(a0);
+var _sin = Module['_sin'] = (a0) => (_sin = Module['_sin'] = wasmExports['sin'])(a0);
 var _mono_aot_Pollus_Examples_Application_get_method = Module['_mono_aot_Pollus_Examples_Application_get_method'] = (a0) => (_mono_aot_Pollus_Examples_Application_get_method = Module['_mono_aot_Pollus_Examples_Application_get_method'] = wasmExports['mono_aot_Pollus_Examples_Application_get_method'])(a0);
 var _mono_aot_Pollus_Examples_Browser_get_method = Module['_mono_aot_Pollus_Examples_Browser_get_method'] = (a0) => (_mono_aot_Pollus_Examples_Browser_get_method = Module['_mono_aot_Pollus_Examples_Browser_get_method'] = wasmExports['mono_aot_Pollus_Examples_Browser_get_method'])(a0);
 var _mono_aot_Pollus_Graphics_get_method = Module['_mono_aot_Pollus_Graphics_get_method'] = (a0) => (_mono_aot_Pollus_Graphics_get_method = Module['_mono_aot_Pollus_Graphics_get_method'] = wasmExports['mono_aot_Pollus_Graphics_get_method'])(a0);
+var _mono_aot_Pollus_Input_get_method = Module['_mono_aot_Pollus_Input_get_method'] = (a0) => (_mono_aot_Pollus_Input_get_method = Module['_mono_aot_Pollus_Input_get_method'] = wasmExports['mono_aot_Pollus_Input_get_method'])(a0);
+var _mono_aot_Pollus_Platform_get_method = Module['_mono_aot_Pollus_Platform_get_method'] = (a0) => (_mono_aot_Pollus_Platform_get_method = Module['_mono_aot_Pollus_Platform_get_method'] = wasmExports['mono_aot_Pollus_Platform_get_method'])(a0);
+var _mono_aot_Pollus_Tween_get_method = Module['_mono_aot_Pollus_Tween_get_method'] = (a0) => (_mono_aot_Pollus_Tween_get_method = Module['_mono_aot_Pollus_Tween_get_method'] = wasmExports['mono_aot_Pollus_Tween_get_method'])(a0);
+var _mono_aot_Pollus_UI_get_method = Module['_mono_aot_Pollus_UI_get_method'] = (a0) => (_mono_aot_Pollus_UI_get_method = Module['_mono_aot_Pollus_UI_get_method'] = wasmExports['mono_aot_Pollus_UI_get_method'])(a0);
 var _mono_aot_Silk_NET_Core_get_method = Module['_mono_aot_Silk_NET_Core_get_method'] = (a0) => (_mono_aot_Silk_NET_Core_get_method = Module['_mono_aot_Silk_NET_Core_get_method'] = wasmExports['mono_aot_Silk_NET_Core_get_method'])(a0);
 var _mono_aot_Silk_NET_OpenAL_get_method = Module['_mono_aot_Silk_NET_OpenAL_get_method'] = (a0) => (_mono_aot_Silk_NET_OpenAL_get_method = Module['_mono_aot_Silk_NET_OpenAL_get_method'] = wasmExports['mono_aot_Silk_NET_OpenAL_get_method'])(a0);
 var _mono_aot_Silk_NET_SDL_get_method = Module['_mono_aot_Silk_NET_SDL_get_method'] = (a0) => (_mono_aot_Silk_NET_SDL_get_method = Module['_mono_aot_Silk_NET_SDL_get_method'] = wasmExports['mono_aot_Silk_NET_SDL_get_method'])(a0);
 var _mono_aot_Silk_NET_WebGPU_get_method = Module['_mono_aot_Silk_NET_WebGPU_get_method'] = (a0) => (_mono_aot_Silk_NET_WebGPU_get_method = Module['_mono_aot_Silk_NET_WebGPU_get_method'] = wasmExports['mono_aot_Silk_NET_WebGPU_get_method'])(a0);
 var _mono_aot_StbImageSharp_get_method = Module['_mono_aot_StbImageSharp_get_method'] = (a0) => (_mono_aot_StbImageSharp_get_method = Module['_mono_aot_StbImageSharp_get_method'] = wasmExports['mono_aot_StbImageSharp_get_method'])(a0);
+var _cos = Module['_cos'] = (a0) => (_cos = Module['_cos'] = wasmExports['cos'])(a0);
 var _mono_aot_StbTrueTypeSharp_get_method = Module['_mono_aot_StbTrueTypeSharp_get_method'] = (a0) => (_mono_aot_StbTrueTypeSharp_get_method = Module['_mono_aot_StbTrueTypeSharp_get_method'] = wasmExports['mono_aot_StbTrueTypeSharp_get_method'])(a0);
 var _mono_aot_System_Collections_Concurrent_get_method = Module['_mono_aot_System_Collections_Concurrent_get_method'] = (a0) => (_mono_aot_System_Collections_Concurrent_get_method = Module['_mono_aot_System_Collections_Concurrent_get_method'] = wasmExports['mono_aot_System_Collections_Concurrent_get_method'])(a0);
 var _mono_aot_System_Collections_get_method = Module['_mono_aot_System_Collections_get_method'] = (a0) => (_mono_aot_System_Collections_get_method = Module['_mono_aot_System_Collections_get_method'] = wasmExports['mono_aot_System_Collections_get_method'])(a0);
+var _mono_aot_System_ComponentModel_Primitives_get_method = Module['_mono_aot_System_ComponentModel_Primitives_get_method'] = (a0) => (_mono_aot_System_ComponentModel_Primitives_get_method = Module['_mono_aot_System_ComponentModel_Primitives_get_method'] = wasmExports['mono_aot_System_ComponentModel_Primitives_get_method'])(a0);
 var _mono_aot_System_Console_get_method = Module['_mono_aot_System_Console_get_method'] = (a0) => (_mono_aot_System_Console_get_method = Module['_mono_aot_System_Console_get_method'] = wasmExports['mono_aot_System_Console_get_method'])(a0);
+var _mono_aot_System_IO_FileSystem_Watcher_get_method = Module['_mono_aot_System_IO_FileSystem_Watcher_get_method'] = (a0) => (_mono_aot_System_IO_FileSystem_Watcher_get_method = Module['_mono_aot_System_IO_FileSystem_Watcher_get_method'] = wasmExports['mono_aot_System_IO_FileSystem_Watcher_get_method'])(a0);
+var _mono_aot_System_IO_Pipelines_get_method = Module['_mono_aot_System_IO_Pipelines_get_method'] = (a0) => (_mono_aot_System_IO_Pipelines_get_method = Module['_mono_aot_System_IO_Pipelines_get_method'] = wasmExports['mono_aot_System_IO_Pipelines_get_method'])(a0);
 var _mono_aot_System_Linq_get_method = Module['_mono_aot_System_Linq_get_method'] = (a0) => (_mono_aot_System_Linq_get_method = Module['_mono_aot_System_Linq_get_method'] = wasmExports['mono_aot_System_Linq_get_method'])(a0);
 var _mono_aot_System_Linq_Expressions_get_method = Module['_mono_aot_System_Linq_Expressions_get_method'] = (a0) => (_mono_aot_System_Linq_Expressions_get_method = Module['_mono_aot_System_Linq_Expressions_get_method'] = wasmExports['mono_aot_System_Linq_Expressions_get_method'])(a0);
 var _mono_aot_System_Memory_get_method = Module['_mono_aot_System_Memory_get_method'] = (a0) => (_mono_aot_System_Memory_get_method = Module['_mono_aot_System_Memory_get_method'] = wasmExports['mono_aot_System_Memory_get_method'])(a0);
-var _cos = Module['_cos'] = (a0) => (_cos = Module['_cos'] = wasmExports['cos'])(a0);
-var _sin = Module['_sin'] = (a0) => (_sin = Module['_sin'] = wasmExports['sin'])(a0);
 var _mono_aot_corlib_get_method = Module['_mono_aot_corlib_get_method'] = (a0) => (_mono_aot_corlib_get_method = Module['_mono_aot_corlib_get_method'] = wasmExports['mono_aot_corlib_get_method'])(a0);
 var _mono_aot_System_Runtime_InteropServices_JavaScript_get_method = Module['_mono_aot_System_Runtime_InteropServices_JavaScript_get_method'] = (a0) => (_mono_aot_System_Runtime_InteropServices_JavaScript_get_method = Module['_mono_aot_System_Runtime_InteropServices_JavaScript_get_method'] = wasmExports['mono_aot_System_Runtime_InteropServices_JavaScript_get_method'])(a0);
+var _mono_aot_System_Security_Cryptography_get_method = Module['_mono_aot_System_Security_Cryptography_get_method'] = (a0) => (_mono_aot_System_Security_Cryptography_get_method = Module['_mono_aot_System_Security_Cryptography_get_method'] = wasmExports['mono_aot_System_Security_Cryptography_get_method'])(a0);
+var _mono_aot_System_Text_Encodings_Web_get_method = Module['_mono_aot_System_Text_Encodings_Web_get_method'] = (a0) => (_mono_aot_System_Text_Encodings_Web_get_method = Module['_mono_aot_System_Text_Encodings_Web_get_method'] = wasmExports['mono_aot_System_Text_Encodings_Web_get_method'])(a0);
+var _mono_aot_System_Text_Json_get_method = Module['_mono_aot_System_Text_Json_get_method'] = (a0) => (_mono_aot_System_Text_Json_get_method = Module['_mono_aot_System_Text_Json_get_method'] = wasmExports['mono_aot_System_Text_Json_get_method'])(a0);
 var _mono_aot_Utf8StringInterpolation_get_method = Module['_mono_aot_Utf8StringInterpolation_get_method'] = (a0) => (_mono_aot_Utf8StringInterpolation_get_method = Module['_mono_aot_Utf8StringInterpolation_get_method'] = wasmExports['mono_aot_Utf8StringInterpolation_get_method'])(a0);
 var _mono_aot_aot_instances_get_method = Module['_mono_aot_aot_instances_get_method'] = (a0) => (_mono_aot_aot_instances_get_method = Module['_mono_aot_aot_instances_get_method'] = wasmExports['mono_aot_aot_instances_get_method'])(a0);
 var _mono_wasm_send_dbg_command_with_parms = Module['_mono_wasm_send_dbg_command_with_parms'] = (a0, a1, a2, a3, a4, a5, a6) => (_mono_wasm_send_dbg_command_with_parms = Module['_mono_wasm_send_dbg_command_with_parms'] = wasmExports['mono_wasm_send_dbg_command_with_parms'])(a0, a1, a2, a3, a4, a5, a6);
@@ -13819,7 +13861,7 @@ var ___trap = () => (___trap = wasmExports['__trap'])();
 var stackSave = Module['stackSave'] = () => (stackSave = Module['stackSave'] = wasmExports['stackSave'])();
 var stackRestore = Module['stackRestore'] = (a0) => (stackRestore = Module['stackRestore'] = wasmExports['stackRestore'])(a0);
 var stackAlloc = Module['stackAlloc'] = (a0) => (stackAlloc = Module['stackAlloc'] = wasmExports['stackAlloc'])(a0);
-var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 3317400;
+var ___emscripten_embedded_file_data = Module['___emscripten_embedded_file_data'] = 4623512;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

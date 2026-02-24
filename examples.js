@@ -25,6 +25,11 @@ export function setupExampleButtons() {
         "ecs-iter",
         "query-filter",
         "font",
+        "scene",
+        "render-order",
+        "sprite-material",
+        "sprite-animation",
+        "ui"
     ];
 
     for (const example of examples) {
