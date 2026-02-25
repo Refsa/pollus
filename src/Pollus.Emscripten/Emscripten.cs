@@ -35,6 +35,12 @@ public static partial class Emscripten
     unsafe private static partial void emscripten_console_log(byte* message);
 
     [LibraryImport("__Internal_emscripten")]
+    unsafe private static partial int emscripten_set_canvas_element_size(byte* target, int width, int height);
+
+    [LibraryImport("__Internal_emscripten")]
+    unsafe private static partial int emscripten_get_element_css_size(byte* target, double* width, double* height);
+
+    [LibraryImport("__Internal_emscripten")]
     unsafe private static partial void emscripten_request_animation_frame_loop(nint callback, nint userData);
 
     [Conditional("BROWSER")]
@@ -102,5 +108,22 @@ public static partial class Emscripten
     {
         using var messagePtr = TemporaryPin.PinString(message);
         emscripten_console_log((byte*)messagePtr.Ptr);
+    }
+
+    [Conditional("BROWSER")]
+    unsafe public static void SetCanvasElementSize(string target, int width, int height)
+    {
+        using var targetPtr = TemporaryPin.PinString(target);
+        emscripten_set_canvas_element_size((byte*)targetPtr.Ptr, width, height);
+    }
+
+    unsafe public static bool TryGetElementCSSSize(string target, out int width, out int height)
+    {
+        using var targetPtr = TemporaryPin.PinString(target);
+        double w, h;
+        int result = emscripten_get_element_css_size((byte*)targetPtr.Ptr, &w, &h);
+        width = (int)w;
+        height = (int)h;
+        return result == 0;
     }
 }

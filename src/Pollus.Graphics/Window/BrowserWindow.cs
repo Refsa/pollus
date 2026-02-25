@@ -22,8 +22,18 @@ public partial class BrowserWindow : IWindow
 
     public bool IsOpen { get; private set; }
     public WindowOptions Options { get; private set; }
-    public Vec2<uint> Size { get; set; }
     public INativeWindow? Native => null;
+
+    Vec2<uint> size;
+    public Vec2<uint> Size
+    {
+        get => size;
+        set
+        {
+            size = value;
+            Emscripten.SetCanvasElementSize("#canvas", (int)value.X, (int)value.Y);
+        }
+    }
 
     nint nativeWindow;
     bool isDisposed;
@@ -32,7 +42,6 @@ public partial class BrowserWindow : IWindow
     {
         instance = this;
         Options = options;
-        Size = new Vec2<uint>(options.Width, options.Height);
 
         EmscriptenSDL.Init(SDLInitFlags.InitVideo | SDLInitFlags.InitJoystick);
         nativeWindow = EmscriptenSDL.CreateWindow(options.Title,

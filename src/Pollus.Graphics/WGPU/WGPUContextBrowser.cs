@@ -106,7 +106,7 @@ unsafe public class WGPUContextBrowser : IWGPUContext
                 CreateQueue();
                 Log.Debug("WGPU: Queue created");
 
-                preferredFormat = TextureFormat.Bgra8Unorm;
+                preferredFormat = (TextureFormat)wgpu.SurfaceGetPreferredFormat(surface, adapter);
                 CreateSwapChain();
                 Log.Debug("WGPU: Swap chain created");
                 state = SetupState.Ready;

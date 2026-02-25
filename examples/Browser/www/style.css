@@ -6,16 +6,23 @@ body {
     color: #fff;
 }
 
+h1 {
+    align-self: center;
+    font-size: 1rem;
+    padding-right: 3rem;
+}
+
 .canvas-container {
     padding: 1rem;
-    aspect-ratio: 16 / 9;
-    width: 100%;
-    height: auto;
 }
 
 canvas {
-    object-fit: cover;
-    background-color: #666;
+    display: block;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+    max-height: 90vh;
+    background-color: #444;
 }
 
 .buttons {
@@ -28,8 +35,8 @@ canvas {
 }
 
 .button {
-    width: 150px;
-    height: 50px;
+    width: auto;
+    height: 30px;
     background: #FF4742;
     border: 1px solid #FF4742;
     border-radius: 6px;
@@ -52,6 +59,7 @@ canvas {
     -webkit-user-select: none;
     touch-action: manipulation;
     vertical-align: middle;
+    font-size: 0.7rem;
 }
 
 .button:hover,

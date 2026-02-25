@@ -16,14 +16,14 @@
         <WasmNativeStrip>true</WasmNativeStrip>
         <WasmBuildNative>true</WasmBuildNative>
         <WasmNativeWorkload>true</WasmNativeWorkload>
-        <WasmEnableThreads>false</WasmEnableThreads>
+        <WasmEnableThreads>true</WasmEnableThreads>
 
         <WasmCachePath>$([System.IO.Path]::GetTempPath())pollus/wasm-cache</WasmCachePath>
 
         <!-- Embed assets from the output directory -->
         <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
 
-        <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864</EmccExtraLDFlags>
+        <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864 -sOFFSCREENCANVAS_SUPPORT</EmccExtraLDFlags>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Mode)' == 'NoAOT' ">
