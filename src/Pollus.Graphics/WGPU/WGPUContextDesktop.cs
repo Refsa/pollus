@@ -120,6 +120,15 @@ unsafe public class WGPUContextDesktop : IWGPUContext
 
         var formats = new Span<Silk.NET.WebGPU.TextureFormat>(surfaceCapabilities.Formats, (int)surfaceCapabilities.FormatCount);
         var targetFormat = formats[0];
+        foreach (var fmt in formats)
+        {
+            if (fmt == Silk.NET.WebGPU.TextureFormat.Bgra8Unorm)
+            {
+                targetFormat = fmt;
+                break;
+            }
+        }
+        Log.Debug($"WGPU: Selected surface format: {targetFormat}");
 
         surfaceConfiguration = new(
             device: device,
