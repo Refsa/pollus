@@ -71,6 +71,10 @@ public partial class TextBuilder
         int lineCount = 0;
         bool atWordStart = true;
 
+        // SDF padding vertex overflow beyond typographic line bounds
+        float maxTopOverflow = 0f;
+        float maxBottomExtent = 0f;
+
         while (enumerator.MoveNext())
         {
             var c = enumerator.Current;
@@ -116,14 +120,22 @@ public partial class TextBuilder
             }
 
             cursorX = float.Round(cursorX + advance);
+
+            if (glyph.Bounds.Height > 0)
+            {
+                float topOffset = (glyph.Ascender - glyph.BearingY) * scale;
+                maxTopOverflow = float.Max(maxTopOverflow, -topOffset);
+                maxBottomExtent = float.Max(maxBottomExtent, topOffset + glyph.Bounds.Height * scale);
+            }
         }
 
         if (lineCount == 0) return Vec2f.Zero;
         if (lineHeight == 0f)
             lineHeight = ResolveLineHeight(set, ref glyphKey, scale, size, lineHeightOverride);
 
+        float bottomOverflow = float.Max(0f, maxBottomExtent - lineHeight);
         maxLineWidth = float.Max(maxLineWidth, cursorX);
-        return new Vec2f(maxLineWidth, cursorY + lineHeight);
+        return new Vec2f(maxLineWidth, cursorY + lineHeight + maxTopOverflow + bottomOverflow);
     }
 
     static float ResolveLineHeight(GlyphSet set, ref GlyphKey glyphKey, float scale, float size, float? lineHeightOverride)

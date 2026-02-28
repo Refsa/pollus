@@ -647,11 +647,24 @@ public class UIExample : IExample
                         // Text outlines
                         UI.Text(commands, "Text outlines", fontHandle).FontSize(13f).Color(new Color(0.6f, 0.7f, 0.85f, 1f)).Spawn(),
                         UI.Panel(commands)
-                            .FlexRow().Gap(32).AlignItems(AlignItems.Center).Padding(16)
+                            .FlexColumn().Gap(32).AlignItems(AlignItems.Center).Padding(16)
                             .Children(
-                                UI.Text(commands, "Outlined", fontHandle)
-                                    .FontSize(32f)
-                                    .Outline(new Color(0f, 0f, 0f, 0.6f), 2f, 0f)
+                                UI.Panel(commands)
+                                    .FlexRow().Gap(32)
+                                    .Children([
+                                        UI.Text(commands, "Outlined", fontHandle)
+                                            .FontSize(12f)
+                                            .Outline(new Color(0f, 0f, 0f, 0.6f), 1f, 0f)
+                                            .Spawn(),
+                                        UI.Text(commands, "Outlined", fontHandle)
+                                            .FontSize(24f)
+                                            .Outline(new Color(0f, 0f, 0f, 0.6f), 2f, 0f)
+                                            .Spawn(),
+                                        UI.Text(commands, "Outlined", fontHandle)
+                                            .FontSize(48f)
+                                            .Outline(new Color(0f, 0f, 0f, 0.6f), 4f, 0f)
+                                            .Spawn()
+                                    ])
                                     .Spawn(),
                                 UI.Text(commands, "Neon Glow", fontHandle)
                                     .FontSize(32f)

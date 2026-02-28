@@ -130,6 +130,8 @@ fn sd_down_arrow(p: vec2f, size: f32) -> f32 {
     return min(d1, d2);
 }
 
+fn max_component(v: vec2f) -> f32 { return max(v.x, v.y); }
+
 // Outline band alpha for a rounded box shape
 fn outline_band(p: vec2f, half_size: vec2f, radii: vec4f, outline_offset: f32, outline_width: f32, AA: f32) -> f32 {
     let total = outline_offset + outline_width;
@@ -181,37 +183,30 @@ fn fs_main(input: VertexOutput) -> FragmentOutput {
         return out;
     }
 
-    // Text glyphs (shape_type == 5, Extra.y = outline width, Extra.w = shadow blur)
+    // Text glyphs (SDF). extra: x=5(Text), y=OutlineWidth, z=OutlineOffset, w=ShadowBlur
     if (shape_type == 5u) {
-        let atlas_dim = vec2f(textureDimensions(tex));
-        let glyph_texels = input.uv_rect_size * atlas_dim;
-        let glyph_pixels = max(size, vec2f(1.0));
-        let tpp = max(glyph_texels.x / glyph_pixels.x, glyph_texels.y / glyph_pixels.y);
-        let pixel_to_sdf = tpp * (8.0 / 255.0);
-        let base_sdf_w = min(pixel_to_sdf, 0.15);
-        let shadow_blur = input.extra.w;
-        let sdf_w = min(base_sdf_w + shadow_blur * tpp * 0.03, 0.5);
+        let texels_per_pixel = max_component(input.uv_rect_size * vec2f(textureDimensions(tex)) / max(size, vec2f(1.0)));
+        let pixel_to_sdf = texels_per_pixel * (8.0 / 255.0);
+        let sdf_aa = min(min(pixel_to_sdf, 0.15) + input.extra.w * pixel_to_sdf, 0.5);
         let dist = tex_color.r;
-        let edge = 0.5;
 
-        let fill_a = smoothstep(edge - sdf_w, edge + sdf_w, dist) * input.bg_color.a;
-        let outline_sdf = input.extra.y * pixel_to_sdf;
-        let offset_sdf = input.extra.z * pixel_to_sdf;
-        // Clamp to usable SDF range (0.5 from edge to outer limit, minus AA margin).
-        let max_range = edge - sdf_w;
-        let total_sdf = outline_sdf + offset_sdf;
-        let scale = min(1.0, max_range / max(total_sdf, 0.001));
-        let c_outline = outline_sdf * scale;
-        let c_offset = offset_sdf * scale;
-        let outline_outer = smoothstep(edge - c_offset - c_outline - sdf_w, edge - c_offset - c_outline + sdf_w, dist);
-        let outline_inner = smoothstep(edge - c_offset - sdf_w, edge - c_offset + sdf_w, dist);
-        let outline_a = max(outline_outer - outline_inner, 0.0) * input.outline_color.a;
-        let combined_a = fill_a + outline_a * (1.0 - fill_a);
+        let fill_a = smoothstep(0.5 - sdf_aa, 0.5 + sdf_aa, dist) * input.bg_color.a;
 
-        if (combined_a < 0.01) { discard; }
-        let final_rgb = mix(input.outline_color.rgb, input.bg_color.rgb, fill_a / combined_a);
+        // Outline band (skipped when no outline color)
+        var outline_a = 0.0;
+        if (input.outline_color.a > 0.0) {
+            let outline_width = input.extra.y * pixel_to_sdf;
+            let outline_offset = input.extra.z * pixel_to_sdf;
+            let scale = min(1.0, max(0.5 - sdf_aa, 0.0) / max(outline_width + outline_offset, 0.001));
+            let outer = smoothstep(0.5 - (outline_offset + outline_width) * scale - sdf_aa, 0.5 - (outline_offset + outline_width) * scale + sdf_aa, dist);
+            let inner = smoothstep(0.5 - outline_offset * scale - sdf_aa, 0.5 - outline_offset * scale + sdf_aa, dist);
+            outline_a = max(outer - inner, 0.0) * input.outline_color.a;
+        }
+
+        let alpha = fill_a + outline_a * (1.0 - fill_a);
+        if (alpha <= 0.0) { discard; }
         var out: FragmentOutput;
-        out.color = vec4f(final_rgb, combined_a);
+        out.color = vec4f(mix(input.outline_color.rgb, input.bg_color.rgb, fill_a / alpha), alpha);
         return out;
     }
 
