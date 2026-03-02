@@ -70,9 +70,8 @@ public partial class Shape
             UVs = [
                 Vec2f.Zero,
                 new Vec2f(1, 0),
-                Vec2f.One,
                 new Vec2f(0, 1),
-                Vec2f.Zero,
+                Vec2f.One,
             ],
         };
     }
@@ -83,21 +82,21 @@ public partial class Shape
         var uvs = new Vec2f[resolution * 2];
 
         angle = angle.Radians();
-        var currAngle = -angle / 2 + float.Pi / 2 + angleOffset.Radians();
+        var startAngle = -angle / 2 + float.Pi / 2 + angleOffset.Radians();
         var step = angle / (resolution - 1);
 
-        for (int i = 0; i < resolution * 2 - 1; i += 2)
+        for (int i = 0; i < resolution; i++)
         {
-            positions[i] = position + new Vec2f(Math.Cos(currAngle), Math.Sin(currAngle)) * radius;
-            uvs[i] = new Vec2f(Math.Cos(currAngle) * 0.5f + 0.5f, Math.Sin(currAngle) * 0.5f + 0.5f);
-            currAngle += step;
+            var currAngle = startAngle + i * step;
+            var cos = Math.Cos(currAngle);
+            var sin = Math.Sin(currAngle);
 
-            positions[i + 1] = position;
-            uvs[i + 1] = new Vec2f(0.5f, 0.5f);
+            positions[i * 2] = position + new Vec2f(cos, sin) * radius;
+            uvs[i * 2] = new Vec2f(cos * 0.5f + 0.5f, sin * 0.5f + 0.5f);
+
+            positions[i * 2 + 1] = position;
+            uvs[i * 2 + 1] = new Vec2f(0.5f, 0.5f);
         }
-
-        positions[^1] = positions[0];
-        uvs[^1] = uvs[0];
 
         return new()
         {
@@ -109,26 +108,29 @@ public partial class Shape
 
     public static Shape Polygon(Vec2f position, float radius, int sides = 6)
     {
-        sides += 1;
-        var positions = new Vec2f[sides * 2];
-        var uvs = new Vec2f[sides * 2];
+        var vertexCount = (sides + 1) * 2;
+        var positions = new Vec2f[vertexCount];
+        var uvs = new Vec2f[vertexCount];
 
-        for (int i = 0; i < sides * 2 - 1; i += 2)
+        for (int i = 0; i <= sides; i++)
         {
-            float angle = i / 2 * float.Pi * 2f / (sides - 1);
-            positions[i] = position + new Vec2f(Math.Cos(angle), Math.Sin(angle)) * radius;
-            uvs[i] = new Vec2f(Math.Cos(angle) * 0.5f + 0.5f, Math.Sin(angle) * 0.5f + 0.5f);
+            float angle = i * float.Pi * 2f / sides;
+            var cos = Math.Cos(angle);
+            var sin = Math.Sin(angle);
 
-            positions[i + 1] = position;
-            uvs[i + 1] = new Vec2f(0.5f, 0.5f);
+            positions[i * 2] = position + new Vec2f(cos, sin) * radius;
+            uvs[i * 2] = new Vec2f(cos * 0.5f + 0.5f, sin * 0.5f + 0.5f);
+
+            positions[i * 2 + 1] = position;
+            uvs[i * 2 + 1] = new Vec2f(0.5f, 0.5f);
         }
 
-        positions[^1] = positions[0];
-        uvs[^1] = uvs[0];
+        positions[sides * 2] = positions[0];
+        uvs[sides * 2] = uvs[0];
 
         return new()
         {
-            Name = "Circle",
+            Name = "Polygon",
             Positions = positions,
             UVs = uvs,
         };
@@ -162,19 +164,49 @@ public partial class Shape
     public static Shape Capsule(Vec2f start, Vec2f end, float radius, int resolution = 32)
     {
         var direction = (end - start).Normalized();
-        var perpendicular = new Vec2f(-direction.Y, direction.X);
-        var angleOffset = (Math.Atan2(direction.Y, direction.X) + float.Pi * 0.5f).Degrees();
+        var baseAngle = Math.Atan2(direction.Y, direction.X);
+        var fanCenter = (start + end) * 0.5f;
 
-        var arc1 = Arc(start, radius, 180f, resolution, angleOffset);
-        var arc2 = Arc(end, radius, 180f, resolution, 180f + angleOffset);
-        var line1 = Line(start - perpendicular * radius, end + perpendicular * radius);
-        var line2 = Line(start - perpendicular * radius, end + perpendicular * radius);
+        var perimCount = resolution * 2;
+        var vertexCount = (perimCount + 1) * 2;
+        var positions = new Vec2f[vertexCount];
+        var uvs = new Vec2f[vertexCount];
+
+        for (int i = 0; i < resolution; i++)
+        {
+            float angle = baseAngle + float.Pi * 0.5f + float.Pi * i / (resolution - 1);
+            var cos = Math.Cos(angle);
+            var sin = Math.Sin(angle);
+
+            positions[i * 2] = start + new Vec2f(cos, sin) * radius;
+            uvs[i * 2] = new Vec2f(cos * 0.5f + 0.5f, sin * 0.5f + 0.5f);
+            positions[i * 2 + 1] = fanCenter;
+            uvs[i * 2 + 1] = new Vec2f(0.5f, 0.5f);
+        }
+
+        int offset = resolution * 2;
+        for (int i = 0; i < resolution; i++)
+        {
+            float angle = baseAngle - float.Pi * 0.5f + float.Pi * i / (resolution - 1);
+            var cos = Math.Cos(angle);
+            var sin = Math.Sin(angle);
+
+            positions[offset + i * 2] = end + new Vec2f(cos, sin) * radius;
+            uvs[offset + i * 2] = new Vec2f(cos * 0.5f + 0.5f, sin * 0.5f + 0.5f);
+            positions[offset + i * 2 + 1] = fanCenter;
+            uvs[offset + i * 2 + 1] = new Vec2f(0.5f, 0.5f);
+        }
+
+        positions[^2] = positions[0];
+        uvs[^2] = uvs[0];
+        positions[^1] = fanCenter;
+        uvs[^1] = new Vec2f(0.5f, 0.5f);
 
         return new()
         {
             Name = "Capsule",
-            Positions = [.. arc1.Positions, .. line1.Positions, .. line2.Positions, .. arc2.Positions],
-            UVs = [.. arc1.UVs, .. line1.UVs, .. line2.UVs, .. arc2.UVs],
+            Positions = positions,
+            UVs = uvs,
         };
     }
 

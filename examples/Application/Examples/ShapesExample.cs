@@ -34,65 +34,71 @@ public class ShapesExample : IExample
             ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/shape.wgsl"),
         });
 
+        SpawnSet(commands, shapeMaterial, shapes, new(), 1f);
+        SpawnSet(commands, shapeMaterial, shapes, new(0f, 256f), 0.5f);
+    })).Build()
+    ).Run();
+
+    static void SpawnSet(Commands commands, Handle<ShapeMaterial> shapeMaterial, Assets<Shape> shapes, Vec2f startPos, float alpha)
+    {
         commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
-                Position = new Vec2f(128f, 128f),
+                Position = startPos + new Vec2f(128f, 128f),
             })
             .Set(new ShapeDraw()
             {
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shapes.Add(Shape.Rectangle(Vec2f.Zero, Vec2f.One * 64f)),
-                Color = Color.RED,
+                Color = Color.RED.WithAlpha(alpha),
             }));
 
         commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
-                Position = new Vec2f(256f, 128f),
+                Position = startPos + new Vec2f(256f, 128f),
             })
             .Set(new ShapeDraw()
             {
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shapes.Add(Shape.Polygon(Vec2f.Zero, 64f)),
-                Color = Color.GREEN,
+                Color = Color.GREEN.WithAlpha(alpha),
             }));
 
         commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
-                Position = new Vec2f(384f, 128f),
+                Position = startPos + new Vec2f(384f, 128f),
             })
             .Set(new ShapeDraw()
             {
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shapes.Add(Shape.Arc(Vec2f.Zero, 64f, 135f)),
-                Color = Color.BLUE,
+                Color = Color.BLUE.WithAlpha(alpha),
             }));
 
         commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
-                Position = new Vec2f(512f, 128f),
+                Position = startPos + new Vec2f(512f, 128f),
             })
             .Set(new ShapeDraw()
             {
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shapes.Add(Shape.Circle(Vec2f.Zero, 64f)),
-                Color = Color.ORANGE,
+                Color = Color.ORANGE.WithAlpha(alpha),
             }));
 
         commands.Spawn(ShapeDraw.Bundle
             .Set(Transform2D.Default with
             {
-                Position = new Vec2f(640f, 128f),
+                Position = startPos + new Vec2f(640f, 128f),
             })
             .Set(new ShapeDraw()
             {
                 MaterialHandle = shapeMaterial,
                 ShapeHandle = shapes.Add(Shape.Capsule(Vec2f.Down * 32f, Vec2f.Up * 32f, 32f)),
-                Color = Color.ORANGE,
+                Color = Color.ORANGE.WithAlpha(alpha),
             }));
-    })).Build()
-    ).Run();
+    }
 }
