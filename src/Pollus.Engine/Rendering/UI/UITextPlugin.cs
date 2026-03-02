@@ -170,7 +170,6 @@ public partial class UITextSystemSet
             ctx.Set = fontAsset.GetSetForSize(uiText.Size);
 
             adapter.MarkEntityDirty(entity);
-            uiText.IsDirty = false;
         }
     }
 
@@ -240,6 +239,7 @@ public partial class UITextSystemSet
 
             uiText.LastBuildMaxWidth = maxWidth;
             uiText.LastBuildContentHeight = contentHeight;
+            uiText.IsDirty = false;
             data.meshes.Set(mesh.Mesh, tma);
         });
     }
