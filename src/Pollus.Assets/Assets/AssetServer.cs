@@ -8,12 +8,24 @@ using Pollus.Utils;
 
 public class AssetServer : IDisposable
 {
+    enum LoadPhase
+    {
+        Loading,
+        WaitingForDeps,
+    }
+
     struct AssetLoadState
     {
         public required Handle Handle { get; init; }
         public required AssetPath Path { get; init; }
-        public required Task<Result<byte[], AssetIO.Error>> Task { get; init; }
         public required IAssetLoader Loader { get; init; }
+
+        public Task<Result<byte[], AssetIO.Error>>? Task { get; init; }
+        public byte[]? Data { get; init; }
+
+        public LoadPhase Phase { get; set; }
+        public object? State { get; set; }
+        public HashSet<Handle>? Dependencies { get; set; }
     }
 
     List<IAssetLoader> loaders = new();
@@ -21,7 +33,7 @@ public class AssetServer : IDisposable
 
     ConcurrentDictionary<AssetPath, DateTime> queuedPaths = new();
     ArrayList<AssetLoadState> loadStates = new();
-    CancellationTokenSource loadStateCancellationTokenSource = new();
+    CancellationTokenSource loadCts = new();
 
     bool isDisposed;
 
@@ -44,8 +56,8 @@ public class AssetServer : IDisposable
         GC.SuppressFinalize(this);
         Assets.Dispose();
 
-        loadStateCancellationTokenSource.Cancel();
-        loadStateCancellationTokenSource.Dispose();
+        loadCts.Cancel();
+        loadCts.Dispose();
         loadStates.Clear();
     }
 
@@ -105,6 +117,7 @@ public class AssetServer : IDisposable
     public Handle<TAsset> Queue<TAsset>(AssetPath path)
         where TAsset : IAsset
     {
+        Assets.InitAssets<TAsset>();
         return Queue(path);
     }
 
@@ -139,7 +152,7 @@ public class AssetServer : IDisposable
 
     public Handle Load(AssetPath path, bool reload = false)
     {
-        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
+        if (!reload && Assets.TryGetHandle(path, out var handle) && Assets.IsLoaded(handle)) return handle;
         if (!AssetIO.Exists(path))
         {
             Log.Error((FormattableString)$"AssetServer::Load asset {path} does not exist");
@@ -149,39 +162,33 @@ public class AssetServer : IDisposable
         if (!loaderLookup.TryGetValue(Path.GetExtension(path.Path), out var loaderIdx)) return Handle.Null;
 
         var loadResult = AssetIO.LoadPath(path);
-        if (loadResult.IsErr())
+        if (loadResult.TryErr(out var error))
         {
-            Log.Error((FormattableString)$"AssetServer::Load failed to load asset {path}:\n{loadResult.ToErr()}");
+            Log.Error((FormattableString)$"AssetServer::Load failed to load asset {path}:\n{error}");
             return Handle.Null;
         }
 
         var loader = loaders[loaderIdx];
-        var loadContext = new LoadContext()
+        var loadState = new AssetLoadState()
         {
-            Path = path,
-            FileName = Path.GetFileNameWithoutExtension(path.Path),
             Handle = Assets.GetHandle(path, loader.AssetType),
-            AssetServer = this,
+            Path = path,
+            Loader = loader,
+            Data = loadResult.Unwrap(),
         };
 
-        loader.Load(loadResult.Unwrap(), ref loadContext);
-        if (loadContext.Status == AssetStatus.Loaded)
+        if (!ProcessLoadState(ref loadState) &&
+            loadState is { Phase: LoadPhase.WaitingForDeps, Dependencies.Count: > 0 })
         {
-            var expectedType = TypeLookup.GetType(loader.AssetType);
-            var asset = loadContext.Asset;
-            Guard.IsNotNull(asset, "AssetServer::Load asset was null");
-            Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {path}");
-
-            if (loadContext.Dependencies is { Count: > 0 })
+            foreach (var dep in loadState.Dependencies)
             {
-                asset.Dependencies.UnionWith(loadContext.Dependencies);
+                if (!Assets.IsLoaded(dep) && Assets.GetInfo(dep)?.Path is { } depPath)
+                    Load(depPath);
             }
-
-            handle = Assets.AddAsset(asset, loader.AssetType, path);
-            return handle;
+            ProcessLoadState(ref loadState);
         }
 
-        return Handle.Null;
+        return Assets.IsLoaded(loadState.Handle) ? loadState.Handle : Handle.Null;
     }
 
     public Handle<TAsset> LoadAsync<TAsset>(AssetPath path, bool reload = false)
@@ -196,7 +203,7 @@ public class AssetServer : IDisposable
         if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
         if (!AssetIO.Exists(path))
         {
-            Log.Error((FormattableString)$"AssetServer::Load asset {path} does not exist");
+            Log.Error((FormattableString)$"AssetServer::LoadAsync asset {path} does not exist");
             return Handle.Null;
         }
 
@@ -207,8 +214,8 @@ public class AssetServer : IDisposable
         {
             Handle = Assets.GetHandle(path, loader.AssetType),
             Path = path,
-            Task = AssetIO.LoadPathAsync(path, loadStateCancellationTokenSource.Token),
             Loader = loader,
+            Task = AssetIO.LoadPathAsync(path, loadCts.Token),
         };
         loadStates.Add(loadState);
         return loadState.Handle;
@@ -216,54 +223,127 @@ public class AssetServer : IDisposable
 
     public void Update()
     {
-        var count = loadStates.Count;
-        for (int i = count - 1; i >= 0; i--)
+        for (int i = loadStates.Count - 1; i >= 0; i--)
         {
-            ref var loadState = ref loadStates.Get(i);
-            var info = Assets.GetInfo(loadState.Handle);
-            if (info is null || info.Status == AssetStatus.Failed)
-            {
+            if (ProcessLoadState(ref loadStates.Get(i)))
                 loadStates.RemoveAt(i);
-                continue;
-            }
-
-            if (loadState.Task.IsCompleted is false) continue;
-
-            var loadResult = loadState.Task.Result;
-            if (loadResult.IsErr())
-            {
-                Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
-                Assets.SetFailed(loadState.Handle);
-                loadStates.RemoveAt(i);
-                continue;
-            }
-
-            var loadContext = new LoadContext()
-            {
-                Path = loadState.Path,
-                FileName = Path.GetFileNameWithoutExtension(loadState.Path.Path),
-                Handle = loadState.Handle,
-                AssetServer = this,
-            };
-
-            loadState.Loader.Load(loadResult.Unwrap(), ref loadContext);
-            if (loadContext.Status == AssetStatus.Loaded)
-            {
-                var expectedType = TypeLookup.GetType(loadState.Loader.AssetType);
-                var asset = loadContext.Asset;
-                Guard.IsNotNull(asset, $"AssetServer::Load expected asset on path {loadState.Path}");
-                Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::Load expected type {expectedType} but got {asset.GetType()} on path {loadState.Path}");
-
-                if (loadContext.Dependencies is { Count: > 0 })
-                {
-                    asset.Dependencies.UnionWith(loadContext.Dependencies);
-                }
-
-                Assets.AddAsset(asset, loadState.Loader.AssetType, loadState.Path);
-            }
-
-            loadStates.RemoveAt(i);
         }
+    }
+
+    bool ProcessLoadState(ref AssetLoadState loadState)
+    {
+        var info = Assets.GetInfo(loadState.Handle);
+        if (info is null or { Status: AssetStatus.Failed })
+            return true;
+
+        if (loadState.Phase is LoadPhase.Loading)
+        {
+            byte[] data;
+            if (loadState.Data is not null)
+            {
+                data = loadState.Data;
+            }
+            else if (loadState.Task is { } task)
+            {
+                if (!task.IsCompleted) return false;
+
+                var loadResult = task.Result;
+                if (loadResult.IsErr())
+                {
+                    Log.Error($"AssetServer::Update failed to load asset {loadState.Path}:\n{loadResult.ToErr()}");
+                    Assets.SetFailed(loadState.Handle);
+                    return true;
+                }
+                data = loadResult.Unwrap();
+            }
+            else
+            {
+                return true;
+            }
+
+            var loadContext = CreateLoadContext(ref loadState);
+            loadState.Loader.Load(data, ref loadContext);
+
+            if (loadContext.Status == AssetLoadStatus.Loaded)
+            {
+                FinalizeAsset(ref loadContext);
+                return true;
+            }
+
+            if (loadContext.Status != AssetLoadStatus.Preprocess)
+            {
+                Log.Warn($"AssetServer::Update loader for {loadState.Path} produced no asset");
+                return true;
+            }
+
+            loadState.State = loadContext.State;
+            loadState.Dependencies = loadContext.Dependencies;
+            loadState.Phase = LoadPhase.WaitingForDeps;
+        }
+
+        if (loadState.Phase is LoadPhase.WaitingForDeps)
+        {
+            bool depsReady = AreDependenciesReady(loadState.Dependencies, loadState.Handle, out bool failed);
+            if (failed) return true;
+            if (!depsReady) return false;
+
+            var resolveContext = CreateLoadContext(ref loadState);
+            resolveContext.State = loadState.State;
+            resolveContext.Dependencies = loadState.Dependencies;
+            loadState.Loader.Resolve(ref resolveContext);
+
+            if (resolveContext.Status == AssetLoadStatus.Loaded)
+            {
+                FinalizeAsset(ref resolveContext);
+            }
+        }
+
+        return true;
+    }
+
+    LoadContext CreateLoadContext(ref AssetLoadState loadState)
+    {
+        return new LoadContext()
+        {
+            Path = loadState.Path,
+            FileName = Path.GetFileNameWithoutExtension(loadState.Path.Path),
+            Handle = loadState.Handle,
+            AssetServer = this,
+            Loader = loadState.Loader,
+        };
+    }
+
+    bool AreDependenciesReady(HashSet<Handle>? dependencies, Handle owner, out bool failed)
+    {
+        failed = false;
+        if (dependencies is not { Count: > 0 }) return true;
+
+        foreach (var dep in dependencies)
+        {
+            if (Assets.IsFailed(dep))
+            {
+                failed = true;
+                Assets.SetFailed(owner);
+                return false;
+            }
+            if (!Assets.IsLoaded(dep)) return false;
+        }
+        return true;
+    }
+
+    void FinalizeAsset(ref LoadContext loadContext)
+    {
+        var expectedType = TypeLookup.GetType(loadContext.Loader.AssetType);
+        var asset = loadContext.Asset;
+        Guard.IsNotNull(asset, $"AssetServer::FinalizeAsset expected asset on path {loadContext.Path}");
+        Guard.IsTrue(asset.GetType() == expectedType, $"AssetServer::FinalizeAsset expected type {expectedType} but got {asset.GetType()} on path {loadContext.Path}");
+
+        if (loadContext.Dependencies is { Count: > 0 })
+        {
+            asset.Dependencies.UnionWith(loadContext.Dependencies);
+        }
+
+        Assets.AddAsset(asset, loadContext.Loader.AssetType, loadContext.Path);
     }
 
     public void FlushLoading()
@@ -272,6 +352,7 @@ public class AssetServer : IDisposable
         while (loadStates.Count > 0 && DateTime.UtcNow < timeout)
         {
             Update();
+            Thread.Yield();
         }
 
         if (loadStates.Count > 0)

@@ -479,6 +479,12 @@ static void MySystem(EventReader<AssetEvent<MyAsset>> myAssetEvents)
 - Supports asset hot-reload on supported systems via FileSystemWatcher
     - Shaders, Textures, Scenes, and other internal engine assets supports hot-reload
     - Custom asset types needs to implement handling of hot-reload
+- Two base classes available:
+    - `AssetLoader<TAsset>` for simple loaders that produce an asset directly
+    - `AssetLoader<TAsset, TState>` for two-phase loaders with dependencies
+
+#### Simple loader
+Override `Load` to parse raw bytes and call `SetAsset`.
 
 ```cs
 world.Resources.Get<AssetServer>().AddLoader(new TextAssetLoader());
@@ -491,6 +497,42 @@ public class TextAssetLoader : AssetLoader<TextAsset>
     {
         var asset = new TextAsset(Encoding.UTF8.GetString(data));
         context.SetAsset(asset);
+    }
+}
+```
+
+#### Two-phase loader with dependencies
+Override `Preprocess` to parse raw bytes, declare dependencies via `LoadDependency<T>`, and return typed state. Override `Load` to build the final asset once dependencies are ready.
+
+```cs
+class SceneAssetLoader : AssetLoader<Scene, SceneAssetLoader.LoadState>
+{
+    public struct LoadState
+    {
+        public Scene Scene { get; set; }
+    }
+
+    public override string[] Extensions => [".scene", ".prefab"];
+    public required SceneSerializer SceneSerializer { get; set; }
+
+    protected override LoadState Preprocess(ReadOnlySpan<byte> data, ref LoadContext context)
+    {
+        using var reader = SceneSerializer.GetReader(new());
+        var ctx = new WorldSerializationContext() { AssetServer = context.AssetServer };
+        var scene = reader.Parse(ctx, data);
+        scene.Assets.UnionWith(ctx.Dependencies);
+
+        foreach (var path in scene.Scenes.Keys)
+        {
+            _ = context.LoadDependency<Scene>(path);
+        }
+
+        return new() { Scene = scene };
+    }
+
+    protected override void Load(LoadState state, ref LoadContext context)
+    {
+        context.SetAsset(state.Scene);
     }
 }
 ```

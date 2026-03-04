@@ -39,10 +39,11 @@ public class AssetsTests
             FileName = "test.txt",
             Handle = new Handle<TextAsset>(1),
             AssetServer = null!,
+            Loader = assetLoader,
         };
 
         assetLoader.Load(File.ReadAllBytes("Assets/TestFiles/test.txt"), ref loadContext);
-        Assert.Equal(AssetStatus.Loaded, loadContext.Status);
+        Assert.Equal(AssetLoadStatus.Loaded, loadContext.Status);
         Assert.Equal("this is some text", ((TextAsset)loadContext.Asset!).Content);
     }
 

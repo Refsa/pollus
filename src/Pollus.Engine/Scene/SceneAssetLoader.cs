@@ -2,14 +2,19 @@ namespace Pollus.Engine;
 
 using Pollus.Assets;
 
-public class SceneAssetLoader : AssetLoader<Scene>
+public class SceneAssetLoader : AssetLoader<Scene, SceneAssetLoader.LoadState>
 {
+    public struct LoadState
+    {
+        public Scene Scene { get; set; }
+    }
+
     static readonly string[] extensions = [".scene", ".prefab"];
     public override string[] Extensions => extensions;
 
     public required SceneSerializer SceneSerializer { get; set; }
 
-    protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    protected override LoadState Preprocess(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         using var reader = SceneSerializer.GetReader(new());
         var ctx = new WorldSerializationContext() { AssetServer = context.AssetServer };
@@ -18,9 +23,17 @@ public class SceneAssetLoader : AssetLoader<Scene>
 
         foreach (var path in scene.Scenes.Keys)
         {
-            _ = context.AssetServer.LoadAsync<Scene>(path);
+            _ = context.LoadDependency<Scene>(path);
         }
 
-        context.SetAsset(scene);
+        return new()
+        {
+            Scene = scene,
+        };
+    }
+
+    protected override void Load(LoadState state, ref LoadContext context)
+    {
+        context.SetAsset(state.Scene);
     }
 }
