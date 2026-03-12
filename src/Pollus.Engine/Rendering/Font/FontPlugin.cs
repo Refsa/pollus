@@ -57,13 +57,6 @@ public class FontPlugin : IPlugin
 [SystemSet]
 public partial class FontSystemSet
 {
-    [System(nameof(PrepareFont))]
-    public static readonly SystemBuilderDescriptor PrepareFontDescriptor = new()
-    {
-        Stage = CoreStage.First,
-        RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
-    };
-
     [System(nameof(FontMaterialChanged))]
     public static readonly SystemBuilderDescriptor FontMaterialChangedDescriptor = new()
     {
@@ -85,25 +78,6 @@ public partial class FontSystemSet
         RunsAfter = [RenderingPlugin.BeginFrameSystem],
         RunCriteria = EventRunCriteria<AssetEvent<TextMeshAsset>>.Create,
     };
-
-    static void PrepareFont(AssetServer assetServer, EventReader<AssetEvent<FontAsset>> fontEvents,
-        Assets<FontAsset> fonts, Assets<FontMaterial> materials, Assets<SamplerAsset> samplers,
-        Query<TextFont> qFonts)
-    {
-        foreach (scoped ref readonly var fontEvent in fontEvents.Read())
-        {
-            if (fontEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
-            var font = fonts.Get(fontEvent.Handle);
-            if (font is null) continue;
-
-            font.Material = materials.Add(new FontMaterial()
-            {
-                ShaderSource = assetServer.LoadAsync<ShaderAsset>("shaders/builtin/font.wgsl"),
-                Sampler = assetServer.Load<SamplerAsset>("internal://samplers/linear"),
-                Texture = font.Atlas,
-            });
-        }
-    }
 
     static void FontMaterialChanged(Assets<FontAsset> fonts, EventReader<AssetEvent<FontMaterial>> fontMaterialEvents, Query<TextFont> query)
     {
@@ -162,9 +136,9 @@ public class TextDrawPlugin<C> : IPlugin
             }));
 
         world.Schedule.AddSystem(CoreStage.First, FnSystem.Create(new(BuildTextMeshSystem)
-            {
-                RunsAfter = [FontSystemSet.PrepareFontDescriptor.Label],
-            },
+        {
+            RunsAfter = [],
+        },
             static (Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<C, TextMesh, TextFont> query) =>
             {
                 query.ForEach((fonts, meshes), static (in userData, ref draw, ref mesh, ref font) =>

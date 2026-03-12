@@ -5,8 +5,13 @@ using Pollus.Graphics.Rendering;
 using StbTrueTypeSharp;
 using Utils;
 
-public class FontAssetLoader : AssetLoader<FontAsset>
+public class FontAssetLoader : AssetLoader<FontAsset, FontAssetLoader.LoadState>
 {
+    public struct LoadState
+    {
+        public FontAsset FontAsset;
+    }
+
     static readonly string[] extensions = [".ttf", ".otf"];
     public override string[] Extensions => extensions;
 
@@ -20,7 +25,7 @@ public class FontAssetLoader : AssetLoader<FontAsset>
     const byte OnEdgeValue = 128;
     const int AtlasSize = 4096;
 
-    unsafe protected override void Load(ReadOnlySpan<byte> data, ref LoadContext context)
+    unsafe protected override LoadState Preprocess(ReadOnlySpan<byte> data, ref LoadContext context)
     {
         var info = new StbTrueType.stbtt_fontinfo();
         fixed (byte* ptr = data)
@@ -124,16 +129,35 @@ public class FontAssetLoader : AssetLoader<FontAsset>
             Data = atlasData
         };
 
+        var atlasHandle = context.AssetServer.Assets.AddAsset(texture, context.Path + ":atlas.png");
+        var material = context.AssetServer.Assets.AddAsset(new FontMaterial()
+        {
+            ShaderSource = context.LoadDependency<ShaderAsset>("shaders/builtin/font.wgsl"),
+            Sampler = context.LoadDependency<SamplerAsset>("internal://samplers/linear"),
+            Texture = atlasHandle,
+        });
+        context.AddDependency(atlasHandle);
+        context.AddDependency(material);
+
         var asset = new FontAsset
         {
             Handle = context.Handle,
             Name = context.FileName,
-            Atlas = context.AssetServer.Assets.AddAsset(texture, context.Path + ":atlas.png"),
+            Atlas = atlasHandle,
             AtlasWidth = AtlasSize,
             AtlasHeight = AtlasSize,
             GlyphSets = sets,
+            Material = material,
         };
 
-        context.SetAsset(asset);
+        return new LoadState()
+        {
+            FontAsset = asset,
+        };
+    }
+
+    protected override void Load(LoadState state, ref LoadContext context)
+    {
+        context.SetAsset(state.FontAsset);
     }
 }
