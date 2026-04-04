@@ -1,0 +1,94 @@
+{
+    "$schema": "https://json.schemastore.org/template",
+    "author": "Pollus Engine",
+    "classifications": ["Game", "Pollus"],
+    "identity": "Pollus.Game.Template",
+    "name": "Pollus Game Project",
+    "shortName": "pollus-game",
+    "tags": {
+        "language": "C#",
+        "type": "solution"
+    },
+    "sourceName": "PollusGame",
+    "preferNameDirectory": true,
+    "symbols": {
+        "pollusPath": {
+            "type": "parameter",
+            "datatype": "string",
+            "description": "Relative or absolute path to the Pollus engine src directory",
+            "defaultValue": "../pollus/src",
+            "replaces": "POLLUS_ENGINE_PATH"
+        },
+        "pollusVersion": {
+            "type": "parameter",
+            "datatype": "string",
+            "description": "Pollus NuGet package version (uses NuGet packages instead of project references). Set defaultValue to a version to switch to NuGet by default.",
+            "defaultValue": "",
+            "replaces": "POLLUS_NUGET_VERSION"
+        },
+        "useProjectReference": {
+            "type": "computed",
+            "value": "(pollusVersion == \"\")"
+        },
+        "skipBrowser": {
+            "type": "parameter",
+            "datatype": "bool",
+            "description": "Skip the Browser (WASM) project",
+            "defaultValue": "false"
+        },
+        "skipDesktop": {
+            "type": "parameter",
+            "datatype": "bool",
+            "description": "Skip the Desktop project",
+            "defaultValue": "false"
+        }
+    },
+    "sources": [
+        {
+            "modifiers": [
+                {
+                    "condition": "(skipBrowser)",
+                    "exclude": [
+                        "PollusGame.Browser/**",
+                        "build_web.sh",
+                        "run_web.sh"
+                    ]
+                },
+                {
+                    "condition": "(skipDesktop)",
+                    "exclude": [
+                        "PollusGame.Desktop/**",
+                        "run.sh"
+                    ]
+                }
+            ]
+        }
+    ],
+    "specialCustomOperations": {
+        "**.sln": {
+            "operations": [
+                {
+                    "type": "conditional",
+                    "configuration": {
+                        "if": ["#if"],
+                        "else": ["#else"],
+                        "elseif": ["#elseif"],
+                        "endif": ["#endif"],
+                        "trim": true,
+                        "wholeLine": true
+                    }
+                }
+            ]
+        }
+    },
+    "postActions": [
+        {
+            "actionId": "D396686C-DE0E-4DE6-906D-291CD29FC5DE",
+            "continueOnError": true,
+            "description": "Restore NuGet packages",
+            "manualInstructions": [
+                { "text": "Run 'dotnet restore'" }
+            ]
+        }
+    ]
+}

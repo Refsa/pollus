@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>$(TargetFrameworkBaseVersion)</TargetFramework>
+        <RunWorkingDirectory>./bin/$(Configuration)/$(TargetFramework)/</RunWorkingDirectory>
+
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PollusGame\PollusGame.csproj" />
+    </ItemGroup>
+</Project>

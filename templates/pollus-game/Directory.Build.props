@@ -1,0 +1,38 @@
+<Project>
+    <PropertyGroup>
+        <TargetFrameworkBaseVersion>net10.0</TargetFrameworkBaseVersion>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+
+        <PollusAssetsPath>$(MSBuildThisFileDirectory)PollusGame/assets</PollusAssetsPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Utf8StringInterpolation" Version="1.3.2" />
+    </ItemGroup>
+
+    <!--#if (useProjectReference) -->
+    <PropertyGroup>
+        <PollusEnginePath>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', 'POLLUS_ENGINE_PATH'))</PollusEnginePath>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(PollusEnginePath)/Pollus.Engine/Pollus.Engine.csproj" />
+        <ProjectReference Include="$(PollusEnginePath)/Pollus.Generators/Pollus.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+    <!--#else -->
+    <ItemGroup>
+        <PackageReference Include="Pollus.Engine" Version="POLLUS_NUGET_VERSION" />
+        <PackageReference Include="Pollus.Generators" Version="POLLUS_NUGET_VERSION" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+    <!--#endif -->
+
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>PollusAssetsPath</_Parameter1>
+            <_Parameter2>$(PollusAssetsPath)</_Parameter2>
+        </AssemblyAttribute>
+    </ItemGroup>
+</Project>

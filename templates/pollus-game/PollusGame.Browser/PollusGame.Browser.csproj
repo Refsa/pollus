@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>$(TargetFrameworkBaseVersion)-browser</TargetFramework>
+        <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+
+        <RunAOTCompilation>true</RunAOTCompilation>
+        <SelfContained>true</SelfContained>
+        <PublishTrimmed>true</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
+
+        <WasmEmitSymbolMap>false</WasmEmitSymbolMap>
+        <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
+        <WasmEnableSIMD>true</WasmEnableSIMD>
+        <WasmNativeStrip>true</WasmNativeStrip>
+        <WasmBuildNative>true</WasmBuildNative>
+        <WasmNativeWorkload>true</WasmNativeWorkload>
+        <WasmEnableThreads>true</WasmEnableThreads>
+
+        <WasmCachePath>$([System.IO.Path]::GetTempPath())pollus/wasm-cache</WasmCachePath>
+
+        <EmccFlags>--embed-file '$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)','bin','$(Configuration)','$(TargetFramework)','browser-wasm','assets'))'@assets</EmccFlags>
+
+        <EmccExtraLDFlags>-sUSE_WEBGPU=1 -sALLOW_MEMORY_GROWTH -lSDL -sUSE_SDL=2 -sUSE_OGG=1 -lopenal -sTOTAL_MEMORY=67108864 -sOFFSCREENCANVAS_SUPPORT</EmccExtraLDFlags>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Mode)' == 'NoAOT' ">
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <SelfContained>false</SelfContained>
+        <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+        <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Mode)' == 'WithSymbols' ">
+        <TrimmerRemoveSymbols>false</TrimmerRemoveSymbols>
+        <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
+        <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+        <WasmEmitSymbolMap>true</WasmEmitSymbolMap>
+        <WasmEmitSourceMap>true</WasmEmitSourceMap>
+        <WasmDebugLevel>1</WasmDebugLevel>
+        <WasmNativeStrip>false</WasmNativeStrip>
+        <WasmNativeDebugSymbols>true</WasmNativeDebugSymbols>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\PollusGame\PollusGame.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <WasmExtraFilesToDeploy Include="www/index.html" />
+        <WasmExtraFilesToDeploy Include="www/main.js" />
+        <WasmExtraFilesToDeploy Include="www/*.js" />
+        <WasmExtraFilesToDeploy Include="www/*.css" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <_EmbedAsset Include="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/browser-wasm/assets/**/*" />
+    </ItemGroup>
+    <Target Name="InvalidateNativeCacheOnAssetChange"
+            BeforeTargets="_WasmBuildNative"
+            Inputs="@(_EmbedAsset)"
+            Outputs="$(IntermediateOutputPath)embed-assets.stamp"
+            Condition="'@(_EmbedAsset)' != ''">
+        <Message Importance="high" Text="Embedded assets changed - invalidating native WASM cache" />
+        <RemoveDir Directories="$(MSBuildProjectDirectory)/bin/$(Configuration)/$(TargetFramework)/browser-wasm/native" />
+        <RemoveDir Directories="$(WasmCachePath)" Condition="Exists('$(WasmCachePath)')" />
+        <Touch Files="$(IntermediateOutputPath)embed-assets.stamp" AlwaysCreate="true" />
+    </Target>
+
+    <Target Name="AddBrowserDeps" BeforeTargets="_GenerateManagedToNative" DependsOnTargets="PrepareForWasmBuildNative">
+        <ItemGroup>
+            <_WasmPInvokeModules Include="__Internal_emscripten" />
+            <_WasmPInvokeModules Include="OpenAL" />
+            <_WasmPInvokeModules Include="SDL" />
+        </ItemGroup>
+    </Target>
+</Project>
