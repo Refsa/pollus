@@ -629,7 +629,8 @@ Tween.Sequence(commands)
 - Example can be found in the [Input Example](./examples/Application/Examples/InputExample.cs)
 
 ## UI
-**UI is still very much WIP and weird layout bugs might show up**
+**UI is still very much WIP and weird layout bugs might show up.**  
+**Pollus.UI was coded with the use of AI, but general plan and implementation was structured by me**  
 - FlexBox layout engine based on taffy
 - SDF based renderer with support for borders, outlines, shadows, etc.
 - Custom and flexible `Style` support
