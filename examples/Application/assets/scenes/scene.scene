@@ -6,10 +6,9 @@
   },
   "entities": [
     {
-      "id": 1,
       "name": "entity 1",
       "components": {
-        "Transform2D": { "Position": [ 256, 256 ], "Scale": [ 6, 6 ], "Rotation": 0 },
+        "Transform2D": { "Position  ": [256, 256], "Scale": [6, 6], "Rotation": 0 },
         "Sprite": {
           "Material": {
             "$type": "Pollus.Engine.Rendering.SpriteMaterial",
@@ -17,14 +16,11 @@
             "Texture": { "Image": "sprites/test_sheet.png", "Visibility": "Fragment" },
             "Sampler": { "Sampler": "nearest", "Visibility": "Fragment" }
           },
-          "Slice": { "Min": [ 0, 0 ], "Max": [ 16, 16 ] },
-          "Color": [ 1, 1, 1, 1 ]
+          "Slice": { "Min": [0, 0], "Max": [16, 16] },
+          "Color": [1, 1, 1, 1]
         },
-        "Rotate": {
-          "Speed": 45
-        }
-      },
-      "children": [ ]
+        "Rotate": { "Speed": 45 }
+      }
     }
   ]
 }

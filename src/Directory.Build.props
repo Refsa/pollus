@@ -2,6 +2,6 @@
     <PropertyGroup>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <NoWarn>$(NoWarn);CA2255</NoWarn>
+        <NoWarn>$(NoWarn);CA2255;IDE0290</NoWarn>
     </PropertyGroup>
 </Project>
