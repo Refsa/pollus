@@ -16,6 +16,7 @@ namespace Pollus.Generators
         {
             public TypeInfo TypeInfo;
             public TypeInfo ContainingType;
+            public string SystemGroupRunCriteria;
             public List<SystemModel> SystemModels;
             public List<CoroutineModel> CoroutineModels;
         }
@@ -43,6 +44,16 @@ namespace Pollus.Generators
                 {
                     var data = context.TargetSymbol as ITypeSymbol;
                     if (data is null) throw new Exception("Target symbol is null");
+
+                    var systemGroupAttribute = data.GetAttributes().FirstOrDefault(a =>
+                        a.AttributeClass is { Name: "SystemGroup", IsGenericType: true } named
+                        && named.ContainingNamespace.ToDisplayString() == "Pollus.ECS");
+                    string systemGroupRunCriteria = null;
+                    if (systemGroupAttribute != null)
+                    {
+                        var enumName = systemGroupAttribute.AttributeClass.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        systemGroupRunCriteria = $"StateRunCriteria<{enumName}>.OnCurrent({systemGroupAttribute.ConstructorArguments[0].ToCSharpString()})";
+                    }
 
                     var systemModels = new List<SystemModel>();
                     var coroutineModels = new List<CoroutineModel>();
@@ -107,16 +118,32 @@ namespace Pollus.Generators
                         ContainingType = data.ContainingType != null ? Common.CreateTypeInfo(data.ContainingType) : null,
                         SystemModels = systemModels,
                         CoroutineModels = coroutineModels,
+                        SystemGroupRunCriteria = systemGroupRunCriteria,
                     };
                 }
             );
 
             context.RegisterSourceOutput(pipeline, (context, model) =>
             {
+
                 var setups = new StringBuilder();
                 foreach (var systemModel in model.SystemModels)
                 {
                     var lowerName = systemModel.DescriptorField.Name.ToLower();
+                    var runCriteria = "";
+                    if (!string.IsNullOrEmpty(model.SystemGroupRunCriteria))
+                    {
+                        runCriteria = $$"""
+                        if ({{lowerName}}.RunCriteria is null or Pollus.ECS.RunAlways)
+                        {
+                            {{lowerName}}.RunCriteria = {{model.SystemGroupRunCriteria}};
+                        }
+                        else 
+                        {
+                            {{lowerName}}.RunCriteria = WhenAll.Create({{lowerName}}.RunCriteria, {{model.SystemGroupRunCriteria}});
+                        }
+                        """;
+                    }
 
                     setups.Append(
                         $$"""
@@ -125,6 +152,7 @@ namespace Pollus.Generators
                                   {
                                       {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.FullClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
                                   }
+                                  {{runCriteria}}
                                   schedule.AddSystems({{lowerName}}.Stage, FnSystem.Create({{lowerName}}, (SystemDelegate<{{string.Join(", ", systemModel.SystemCallbackMethod.Parameters)}}>){{systemModel.SystemCallbackMethod.Name}}));
                           """);
                 }

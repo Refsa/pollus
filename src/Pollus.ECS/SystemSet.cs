@@ -32,3 +32,15 @@ public sealed class CoroutineAttribute : Attribute
         CallbackMethod = callbackMethod;
     }
 }
+
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class SystemGroup<T> : Attribute
+    where T : Enum
+{
+    public T Group { get; }
+
+    public SystemGroup(T group)
+    {
+        Group = group;
+    }
+}

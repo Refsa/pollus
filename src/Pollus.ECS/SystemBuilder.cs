@@ -28,7 +28,7 @@ public struct SystemBuilderDescriptor
     public HashSet<SystemLabel> RunsAfter { get; init; }
     public HashSet<Type> Dependencies { get; init; }
     public HashSet<Local> Locals { get; init; }
-    public IRunCriteria RunCriteria { get; init; }
+    public IRunCriteria RunCriteria { get; set; }
     public bool IsExclusive { get; init; } = false;
 
     public SystemBuilderDescriptor()
