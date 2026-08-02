@@ -26,6 +26,8 @@ public partial record struct Vec2f
         Y = y;
     }
 
+    public static Vec2f Splat(float val) => new Vec2f(val, val);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Vec2f(in System.Numerics.Vector2 vector2)
     {

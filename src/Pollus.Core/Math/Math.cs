@@ -144,6 +144,9 @@ public static class Math
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vec2f Lerp(Vec2f a, Vec2f b, float t) => Vec2f.Lerp(a, b, t);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Smoothstep<T>(T a, T b, T v)
         where T : struct, INumber<T>
     {

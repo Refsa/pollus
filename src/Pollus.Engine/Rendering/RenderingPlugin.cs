@@ -55,6 +55,7 @@ public class RenderingPlugin : IPlugin
             samplerAssets.Add(SamplerDescriptor.Default, "internal://samplers/linear");
         }
         assetServer.InitAssets<StorageBuffer>();
+        assetServer.InitAssets<ShaderAsset>();
 
         world.AddPlugins(true, [
             new ImagePlugin(),

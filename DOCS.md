@@ -195,16 +195,7 @@ class ExampleSystem : SystemBase<Time, Query<Velocity>>
 [SystemSet]
 static partial class GeneratedSystemSet
 {
-    // `nameof(ExampleSystem)` is the method that should run for this system
-    [System(nameof(ExampleSystem))] 
-    static readonly SystemBuilderDescriptor ExampleSystemDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-        RunsBefore = ["BeforeThis"],
-        RunsAfter = ["AfterThis"],
-        Locals = [Local.From(10)],
-    };
-
+    [System(nameof(CoreStage.Update), RunsBefore = ["BeforeThis"], RunsAfter = ["AfterThis"], Local<float>(10))] 
     static void ExampleSystem(Local<int> local, Time time, Query<Velocity> qVelocity)
     {
         qVelocity.ForEach(time.DeltaTimeF, static (in deltaTime, ref velocity) =>
@@ -256,13 +247,7 @@ Coroutines can also be auto generated in system sets
 [SystemSet]
 static partial class GeneratedSystemSet
 {
-    // `nameof(ExampleSystem)` is the method that should run for this coroutine
-    [Coroutine(nameof(ExampleSystem))] 
-    static readonly SystemBuilderDescriptor ExampleSystemDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-    };
-
+    [System(nameof(CoreStage.Update))]
     static IEnumerable<Yield> ExampleSystem(Time time)
     {
         yield return Yield.WaitForSeconds(1f);
