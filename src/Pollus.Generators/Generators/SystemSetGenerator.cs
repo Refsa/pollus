@@ -140,7 +140,7 @@ namespace Pollus.Generators
                         }
                         else 
                         {
-                            {{lowerName}}.RunCriteria = WhenAll.Create({{lowerName}}.RunCriteria, {{model.SystemGroupRunCriteria}});
+                            {{lowerName}}.RunCriteria = WhenAll.Create({{model.SystemGroupRunCriteria}}, {{lowerName}}.RunCriteria);
                         }
                         """;
                     }

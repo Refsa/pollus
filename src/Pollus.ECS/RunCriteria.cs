@@ -1,5 +1,8 @@
 namespace Pollus.ECS;
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
 public interface IRunCriteria
 {
     bool ShouldRun(World world);
@@ -80,11 +83,14 @@ public class RunFixed : IRunCriteria
         if (TargetFrameTime == 0) return true;
 
         var time = world.Resources.Get<Time>();
+        if (previousTicks == 0) previousTicks = time.Ticks;
 
         float deltaTime = DeltaTime(time.Ticks);
         if (deltaTime < TargetFrameTime) return false;
 
-        previousTicks = time.Ticks;
+        var targetTicks = (long)(TargetFrameTime * Stopwatch.Frequency);
+        previousTicks += targetTicks;
+        if (time.Ticks - previousTicks >= targetTicks) previousTicks = time.Ticks;
         return true;
     }
 
