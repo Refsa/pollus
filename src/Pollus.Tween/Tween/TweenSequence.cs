@@ -60,11 +60,7 @@ public struct TweenSequenceBuilder
 [SystemSet]
 public partial class TweenSequenceSystemSet
 {
-    [System(nameof(SequenceSystem))] static readonly SystemBuilderDescriptor SequenceSystemDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-    };
-
+    [System(CoreStage.Last)]
     static void SequenceSystem(Commands commands, Time time, Query query, Query<TweenSequence, Read<Parent>> qSequences)
     {
         qSequences.ForEach((commands, query), static (in userData, in entity, ref sequence, ref parent) =>

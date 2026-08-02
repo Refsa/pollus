@@ -7,22 +7,24 @@ using Pollus.Utils;
 public record struct StageLabel(string Value)
 {
     public override string ToString() => $"Stage<{Value}>";
+
+    public static implicit operator StageLabel(string label) => new(label);
 }
 
 public static class CoreStage
 {
-    public static readonly StageLabel Init = new(nameof(Init));
-    public static readonly StageLabel PostInit = new(nameof(PostInit));
+    public const string Init = nameof(Init);
+    public const string PostInit = nameof(PostInit);
 
-    public static readonly StageLabel First = new(nameof(First));
-    public static readonly StageLabel PreUpdate = new(nameof(PreUpdate));
-    public static readonly StageLabel Update = new(nameof(Update));
-    public static readonly StageLabel PostUpdate = new(nameof(PostUpdate));
-    public static readonly StageLabel Last = new(nameof(Last));
+    public const string First = nameof(First);
+    public const string PreUpdate = nameof(PreUpdate);
+    public const string Update = nameof(Update);
+    public const string PostUpdate = nameof(PostUpdate);
+    public const string Last = nameof(Last);
 
-    public static readonly StageLabel PreRender = new(nameof(PreRender));
-    public static readonly StageLabel Render = new(nameof(Render));
-    public static readonly StageLabel PostRender = new(nameof(PostRender));
+    public const string PreRender = nameof(PreRender);
+    public const string Render = nameof(Render);
+    public const string PostRender = nameof(PostRender);
 }
 
 public record class Stage : IDisposable

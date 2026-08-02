@@ -7,13 +7,7 @@ using Pollus.Input;
 [SystemSet]
 public partial class UITextInputSystem
 {
-    [System(nameof(PerformTextInput))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIKeyboardRoutingSystem::RouteKeys"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIKeyboardRoutingSystem::RouteKeys"])]
     internal static void PerformTextInput(
         View<UITextInput, UIInteraction, UIText> view,
         UITextBuffers textBuffers,

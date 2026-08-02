@@ -9,26 +9,7 @@ using Pollus.UI.Layout;
 [SystemSet]
 public partial class UIInteractionSystem
 {
-    [System(nameof(HitTest))]
-    static readonly SystemBuilderDescriptor HitTestDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-    };
-
-    [System(nameof(UpdateState))]
-    static readonly SystemBuilderDescriptor UpdateStateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::HitTest"],
-    };
-
-    [System(nameof(FocusNavigation))]
-    static readonly SystemBuilderDescriptor FocusNavigationDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
-
+    [System(CoreStage.PostUpdate)]
     static void HitTest(
         CurrentDevice<Mouse> currentMouse,
         UIHitTestResult hitResult,
@@ -68,6 +49,7 @@ public partial class UIInteractionSystem
         deferred.Clear();
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = [nameof(HitTest)])]
     static void UpdateState(
         ButtonInput<MouseButton> mouse,
         UIHitTestResult hitResult,
@@ -246,6 +228,7 @@ public partial class UIInteractionSystem
         }
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     static void FocusNavigation(
         ButtonInput<Key> keyboard,
         UIHitTestResult hitResult,

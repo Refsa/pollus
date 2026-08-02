@@ -25,14 +25,7 @@ public partial class ExtractUIRectsSystem
         public List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)> Deferred = new();
     }
 
-    [System(nameof(ExtractUIRects))]
-    public static readonly SystemBuilderDescriptor ExtractUIRectsDescriptor = new()
-    {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem, "UITextSystemSet::PropagateUIFontAtlas"],
-        Locals = [Local.From(new LocalData())],
-    };
-
+    [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem, "UITextSystemSet::PropagateUIFontAtlas"]), Local<LocalData>()]
     static void ExtractUIRects(
         Local<LocalData> localData,
         UIRectBatches batches,
@@ -66,13 +59,7 @@ public partial class ExtractUIRectsSystem
         localData.Value.Deferred.Clear();
     }
 
-    [System(nameof(PrepareUIImageBindGroups))]
-    public static readonly SystemBuilderDescriptor PrepareUIImageBindGroupsDescriptor = new()
-    {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [nameof(ExtractUIRects)],
-    };
-
+    [System(nameof(CoreStage.PreRender), RunsAfter = [nameof(ExtractUIRects)])]
     static void PrepareUIImageBindGroups(
         UIRectBatches batches,
         UIRenderResources resources,

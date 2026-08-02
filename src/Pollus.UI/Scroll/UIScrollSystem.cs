@@ -13,20 +13,7 @@ public partial class UIScrollSystem
     const float ScrollbarThickness = 6f;
     const float ScrollbarPadding = 2f;
 
-    [System(nameof(Update))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
-
-    [System(nameof(UpdateVisuals))]
-    static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UILayoutSystem::WriteBack", "UIScrollSystem::Update"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     static void Update(
         CurrentDevice<Mouse> currentMouse,
         CurrentDevice<Keyboard> currentKeyboard,
@@ -103,6 +90,7 @@ public partial class UIScrollSystem
         }
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = ["UILayoutSystem::WriteBack", nameof(Update)])]
     internal static void UpdateVisuals(
         Commands commands,
         View<ComputedNode> viewThumbComputed,

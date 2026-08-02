@@ -7,13 +7,10 @@ using Pollus.Utils;
 [SystemSet]
 public partial class UICaretSystem
 {
-    [System(nameof(Update))]
-    public static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UITextInputSystem::Update"],
-    };
+    public const string UpdateLabel = "UICaretSystem::Update";
+    public const string UpdateVisualLabel = "UICaretSystem::UpdateVisual";
 
+    [System(CoreStage.PostUpdate, RunsAfter = ["UITextInputSystem::PerformTextInput"])]
     static void Update(
         Time time,
         UIFocusState focusState,
@@ -34,12 +31,7 @@ public partial class UICaretSystem
         }
     }
 
-    [System(nameof(SetupCaret))]
-    static readonly SystemBuilderDescriptor SetupCaretDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-    };
-
+    [System(CoreStage.Update)]
     internal static void SetupCaret(
         Commands commands,
         Query<UITextInput>.Filter<(Added<UITextInput>, All<UIInteraction>)> qNew)
@@ -58,13 +50,7 @@ public partial class UICaretSystem
         }
     }
 
-    [System(nameof(UpdateVisual))]
-    public static readonly SystemBuilderDescriptor UpdateVisualDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UICaretSystem::Update"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = [UpdateLabel])]
     internal static void UpdateVisual(
         UIFocusState focusState,
         View<ComputedNode> viewComputed,

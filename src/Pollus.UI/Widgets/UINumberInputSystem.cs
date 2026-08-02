@@ -6,13 +6,7 @@ using Pollus.Input;
 [SystemSet]
 public partial class UINumberInputSystem
 {
-    [System(nameof(PerformUpdate))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UITextInputSystem::Update"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UITextInputSystem::PerformTextInput"])]
     internal static void PerformUpdate(
         Query<UINumberInput> qNumInput,
         View<UITextInput> viewTextInput,

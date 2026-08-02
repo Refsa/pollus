@@ -26,9 +26,9 @@ public partial class CoroutineExample : IExample
             ])
             .AddSystemSet<CoroutineSystemSet>()
             .AddSystems(CoreStage.Update, Coroutine.Create(new("TestCoroutine")
-                {
-                    Locals = [Local.From(1f)],
-                },
+            {
+                Locals = [Local.From(1f)],
+            },
                 static (param) =>
                 {
                     return Routine();
@@ -66,12 +66,7 @@ public partial class CoroutineExample : IExample
     [SystemSet]
     public partial class CoroutineSystemSet
     {
-        [Coroutine(nameof(Routine))]
-        static readonly SystemBuilderDescriptor RoutineDescriptor = new()
-        {
-            Stage = CoreStage.Update,
-        };
-
+        [System(nameof(CoreStage.Update))]
         static IEnumerable<Yield> Routine(Time time)
         {
             var frames = int.Min((int)(1f / time.DeltaTimeF), 100_000);

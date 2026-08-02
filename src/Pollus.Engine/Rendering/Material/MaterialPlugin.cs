@@ -8,10 +8,14 @@ using Pollus.Graphics.WGPU;
 public class MaterialPlugin<TMaterial> : IPlugin
     where TMaterial : IMaterial, IAsset
 {
-    public static readonly string PrepareSystem = $"MaterialPlugin<{typeof(TMaterial).Name}>::PrepareSystem";
-    public static readonly string ReloadSystem = $"MaterialPlugin<{typeof(TMaterial).Name}>::ReloadSystem";
+    public sealed class PrepareSystemLabel : ISystemLabelProvider
+    {
+        public static string Label => PrepareSystem;
+    }
 
-    public static MaterialPlugin<TMaterial> Default => new MaterialPlugin<TMaterial>();
+    public static readonly string PrepareSystem = $"MaterialPlugin<{typeof(TMaterial).Name}>::PrepareSystem";
+
+    public static MaterialPlugin<TMaterial> Default => new();
 
     public PluginDependency[] Dependencies =>
     [
@@ -24,10 +28,10 @@ public class MaterialPlugin<TMaterial> : IPlugin
         world.Resources.Get<RenderAssets>().AddLoader(new MaterialRenderDataLoader<TMaterial>());
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(PrepareSystem)
-            {
-                RunsAfter = [RenderingPlugin.BeginFrameSystem],
-                RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
-            },
+        {
+            RunsAfter = [RenderingPlugin.BeginFrameSystem],
+            RunCriteria = EventRunCriteria<AssetEvent<TMaterial>>.Create,
+        },
             static (RenderAssets renderAssets, AssetServer assetServer, IWGPUContext gpuContext, EventReader<AssetEvent<TMaterial>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())

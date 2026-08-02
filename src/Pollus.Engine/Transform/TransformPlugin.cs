@@ -13,16 +13,7 @@ public interface ITransform
 public partial class TransformPlugin<TTransform> : IPlugin
     where TTransform : unmanaged, ITransform, IComponent
 {
-    [System(nameof(HandleDynamic))] static readonly SystemBuilderDescriptor HandleDynamicSystemDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-    };
-
-    [System(nameof(HandleStatic))] static readonly SystemBuilderDescriptor HandleStaticSystemDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-    };
-
+    [System(CoreStage.PostUpdate)]
     static void HandleDynamic(
         Commands commands,
         Query query,
@@ -47,6 +38,7 @@ public partial class TransformPlugin<TTransform> : IPlugin
         });
     }
 
+    [System(CoreStage.PostUpdate)]
     static void HandleStatic(
         Commands commands,
         Query query,

@@ -57,28 +57,9 @@ public class FontPlugin : IPlugin
 [SystemSet]
 public partial class FontSystemSet
 {
-    [System(nameof(FontMaterialChanged))]
-    public static readonly SystemBuilderDescriptor FontMaterialChangedDescriptor = new()
-    {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem, MaterialPlugin<FontMaterial>.PrepareSystem],
-        RunCriteria = EventRunCriteria<AssetEvent<FontMaterial>>.Create,
-    };
-
-    [System(nameof(Cleanup))]
-    public static readonly SystemBuilderDescriptor CleanupDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-    };
-
-    [System(nameof(PrepareTextMesh))]
-    public static readonly SystemBuilderDescriptor PrepareTextMeshDescriptor = new()
-    {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem],
-        RunCriteria = EventRunCriteria<AssetEvent<TextMeshAsset>>.Create,
-    };
-
+    [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem])]
+    [RunsAfter<MaterialPlugin<FontMaterial>.PrepareSystemLabel>]
+    [RunCriteria<EventRunCriteria<AssetEvent<FontMaterial>>>]
     static void FontMaterialChanged(Assets<FontAsset> fonts, EventReader<AssetEvent<FontMaterial>> fontMaterialEvents, Query<TextFont> query)
     {
         foreach (scoped ref readonly var fontMaterialEvent in fontMaterialEvents.Read())
@@ -93,6 +74,8 @@ public partial class FontSystemSet
         }
     }
 
+    [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem])]
+    [RunCriteria<EventRunCriteria<AssetEvent<TextMeshAsset>>>]
     static void PrepareTextMesh(IWGPUContext gpuContext, RenderAssets renderAssets, AssetServer assetServer, Assets<TextMeshAsset> meshes, EventReader<AssetEvent<TextMeshAsset>> textMeshAssetEvents)
     {
         foreach (scoped ref readonly var textMeshAssetEvent in textMeshAssetEvents.Read())
@@ -106,6 +89,7 @@ public partial class FontSystemSet
         }
     }
 
+    [System(nameof(CoreStage.Last))]
     static void Cleanup(Assets<TextMeshAsset> meshes, RemovedTracker<TextMesh> textMeshTracker)
     {
         foreach (var entity in textMeshTracker)

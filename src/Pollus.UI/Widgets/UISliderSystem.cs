@@ -8,26 +8,7 @@ using Pollus.Mathematics;
 [SystemSet]
 public partial class UISliderSystem
 {
-    [System(nameof(PerformUpdate))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
-
-    [System(nameof(SetupSlider))]
-    static readonly SystemBuilderDescriptor SetupSliderDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-    };
-
-    [System(nameof(UpdateVisuals))]
-    static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UILayoutSystem::WriteBack", "UISliderSystem::Update"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     internal static void PerformUpdate(
         View<UISlider> viewSlider,
         View<ComputedNode, Child> viewNodeTree,
@@ -133,6 +114,7 @@ public partial class UISliderSystem
         }
     }
 
+    [System(CoreStage.Update)]
     internal static void SetupSlider(
         Commands commands,
         Query<UISlider>.Filter<Added<UISlider>> qNew,
@@ -166,6 +148,7 @@ public partial class UISliderSystem
         }
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = ["UILayoutSystem::WriteBack", nameof(PerformUpdate)])]
     internal static void UpdateVisuals(
         Commands commands,
         EventReader<UISliderEvents.UISliderValueChanged> eValueChanged,

@@ -80,11 +80,7 @@ public class SceneSerializer
 [SystemSet]
 public partial class SceneSystems
 {
-    [System(nameof(LoadScene))] static readonly SystemBuilderDescriptor LoadSceneDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-    };
-
+    [System(nameof(CoreStage.Last))]
     static void LoadScene(Commands commands, Assets<Scene> sceneAssets, Query<PendingSceneLoad> qPendingSceneLoad)
     {
         foreach (var pendingSceneLoad in qPendingSceneLoad)

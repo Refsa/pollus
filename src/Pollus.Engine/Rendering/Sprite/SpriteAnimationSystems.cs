@@ -6,20 +6,7 @@ using Pollus.Assets;
 [SystemSet]
 public partial class SpriteAnimationSystems
 {
-    [System(nameof(HandleClipTransitions))]
-    public static readonly SystemBuilderDescriptor HandleClipTransitionsDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-        RunCriteria = EventRunCriteria<SpriteAnimatorEvents.ClipChangeRequest>.Create,
-    };
-
-    [System(nameof(TickSpriteAnimation))]
-    public static readonly SystemBuilderDescriptor TickSpriteAnimationDescriptor = new()
-    {
-        Stage = CoreStage.Update,
-        RunsAfter = ["SpriteAnimationSystems::HandleClipTransitions"],
-    };
-
+    [System(nameof(CoreStage.Update)), RunCriteria<EventRunCriteria<SpriteAnimatorEvents.ClipChangeRequest>>]
     static void HandleClipTransitions(
         World world,
         Assets<SpriteAnimation> animations,
@@ -77,6 +64,7 @@ public partial class SpriteAnimationSystems
         }
     }
 
+    [System(nameof(CoreStage.Update), RunsAfter = [nameof(HandleClipTransitions)])]
     static void TickSpriteAnimation(
         Time time,
         World world,

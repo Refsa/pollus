@@ -29,26 +29,6 @@ public class UITextPlugin : IPlugin
 [SystemSet]
 public partial class UITextSystemSet
 {
-    [System(nameof(EnsureTextMesh))]
-    public static readonly SystemBuilderDescriptor EnsureTextMeshDescriptor = new()
-    {
-        Stage = CoreStage.First,
-    };
-
-    [System(nameof(PrepareUIFont))]
-    public static readonly SystemBuilderDescriptor PrepareUIFontDescriptor = new()
-    {
-        Stage = CoreStage.First,
-        RunCriteria = EventRunCriteria<AssetEvent<FontAsset>>.Create,
-    };
-
-    [System(nameof(PropagateUIFontAtlas))]
-    public static readonly SystemBuilderDescriptor PropagateUIFontAtlasDescriptor = new()
-    {
-        Stage = CoreStage.PreRender,
-        RunsAfter = [RenderingPlugin.BeginFrameSystem],
-    };
-
     class TextMeasureContext
     {
         public NativeUtf8 Text;
@@ -74,41 +54,14 @@ public partial class UITextSystemSet
         public readonly Dictionary<Entity, TextMeasureContext> Contexts = [];
     }
 
-    [System(nameof(RegisterMeasureFuncs))]
-    public static readonly SystemBuilderDescriptor RegisterMeasureFuncsDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsBefore = ["UILayoutSystem::SyncTree"],
-        Locals = [Local.From(new TextMeasureContexts())],
-    };
-
-    [System(nameof(BuildUITextMesh))]
-    public static readonly SystemBuilderDescriptor BuildUITextMeshDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-    };
-
-    [System(nameof(CaretMeasure))]
-    public static readonly SystemBuilderDescriptor CaretMeasureDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = [UICaretSystem.UpdateDescriptor.Label],
-        RunsBefore = [UICaretSystem.UpdateVisualDescriptor.Label],
-    };
-
-    [System(nameof(Cleanup))]
-    public static readonly SystemBuilderDescriptor CleanupDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-        RunsAfter = [BuildUITextMeshDescriptor.Label],
-    };
-
+    [System(nameof(CoreStage.First))]
     static void EnsureTextMesh(Commands commands, Query<UITextFont>.Filter<None<TextMesh>> query)
     {
         foreach (var row in query)
             commands.AddComponent(row.Entity, TextMesh.Default);
     }
 
+    [System(nameof(CoreStage.First)), RunCriteria<EventRunCriteria<AssetEvent<FontAsset>>>]
     static void PrepareUIFont(AssetServer assetServer, UIFontResources uiFontResources,
         EventReader<AssetEvent<FontAsset>> fontEvents, Assets<FontAsset> fonts)
     {
@@ -122,6 +75,7 @@ public partial class UITextSystemSet
         }
     }
 
+    [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem])]
     static void PropagateUIFontAtlas(UIFontResources uiFontResources, Query<UITextFont> query)
     {
         query.ForEach(uiFontResources, static (in res, ref textFont) =>
@@ -136,6 +90,7 @@ public partial class UITextSystemSet
         });
     }
 
+    [System(nameof(CoreStage.PostUpdate), RunsBefore = ["UILayoutSystem::SyncTree"]), Local<TextMeasureContexts>()]
     static void RegisterMeasureFuncs(Local<TextMeasureContexts> local, UITreeAdapter adapter, Assets<FontAsset> fonts,
         RemovedTracker<UIText> removedTracker, Query<UIText, ContentSize, UITextFont> query)
     {
@@ -173,6 +128,7 @@ public partial class UITextSystemSet
         }
     }
 
+    [System(nameof(CoreStage.Last))]
     static void BuildUITextMesh(Assets<FontAsset> fonts, Assets<TextMeshAsset> meshes, Query<UIText, TextMesh, UITextFont, ComputedNode> query)
     {
         query.ForEach((fonts, meshes), static (in data, ref uiText, ref mesh, ref textFont, ref computed) =>
@@ -244,6 +200,7 @@ public partial class UITextSystemSet
         });
     }
 
+    [System(nameof(CoreStage.PostUpdate), RunsAfter = [UICaretSystem.UpdateLabel], RunsBefore = [UICaretSystem.UpdateVisualLabel])]
     static void CaretMeasure(UIFocusState focusState, UITextBuffers textBuffers, Assets<FontAsset> fonts, Query query)
     {
         var focused = focusState.FocusedEntity;
@@ -302,6 +259,7 @@ public partial class UITextSystemSet
         input.CaretHeight = lineHeight;
     }
 
+    [System(nameof(CoreStage.Last), RunsAfter = [nameof(BuildUITextMesh)])]
     static void Cleanup(UITreeAdapter adapter, UITextBuffers textBuffers, RemovedTracker<UIText> tracker)
     {
         foreach (var removed in tracker)

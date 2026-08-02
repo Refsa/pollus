@@ -31,20 +31,6 @@ public struct SnapshotDeserializeEvent
 [SystemSet]
 public partial class SnapshotSerializationPlugin : IPlugin
 {
-    [System(nameof(Serialize))] static readonly SystemBuilderDescriptor SerializeDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-        RunCriteria = new EventRunCriteria<SnapshotSerializeEvent>(),
-        Dependencies = [typeof(ExclusiveSystemMarker)],
-    };
-
-    [System(nameof(Deserialize))] static readonly SystemBuilderDescriptor DeserializeDescriptor = new()
-    {
-        Stage = CoreStage.Last,
-        RunCriteria = new EventRunCriteria<SnapshotDeserializeEvent>(),
-        Dependencies = [typeof(ExclusiveSystemMarker)],
-    };
-
     public void Apply(World world)
     {
         world.Events.InitEvent<SnapshotSerializeEvent>();
@@ -54,6 +40,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
         world.Schedule.AddSystemSet<SnapshotSerializationPlugin>();
     }
 
+    [System(CoreStage.Last, Dependencies = [typeof(ExclusiveSystemMarker)]), RunCriteria<EventRunCriteria<SnapshotSerializeEvent>>]
     static void Serialize(ISerialization serialization,
         EventReader<SnapshotSerializeEvent> reader, EventWriter<SnapshotSerializeResultEvent> writer,
         World world, AssetServer assetServer)
@@ -100,6 +87,7 @@ public partial class SnapshotSerializationPlugin : IPlugin
         writer.Write(new SnapshotSerializeResultEvent { SnapshotHandle = handle });
     }
 
+    [System(CoreStage.Last, Dependencies = [typeof(ExclusiveSystemMarker)]), RunCriteria<EventRunCriteria<SnapshotDeserializeEvent>>]
     static void Deserialize(ISerialization serialization, EventReader<SnapshotDeserializeEvent> reader, Assets<WorldSnapshot> snapshots, World world)
     {
         var events = reader.Read();

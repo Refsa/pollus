@@ -6,13 +6,7 @@ using Pollus.Utils;
 [SystemSet]
 public partial class UIRadioButtonSystem
 {
-    [System(nameof(UpdateRadioButtons))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     internal static void UpdateRadioButtons(Query<UIRadioButton> qRadio, View<UIInteraction, BackgroundColor> view, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var radioWriter = events.GetWriter<UIRadioButtonEvents.UIRadioButtonEvent>();

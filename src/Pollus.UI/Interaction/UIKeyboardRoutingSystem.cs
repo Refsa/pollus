@@ -6,13 +6,7 @@ using Pollus.Input;
 [SystemSet]
 public partial class UIKeyboardRoutingSystem
 {
-    [System(nameof(PerformRouting))]
-    static readonly SystemBuilderDescriptor RouteKeysDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::FocusNavigation"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::FocusNavigation"])]
     internal static void PerformRouting(
         CurrentDevice<Keyboard> keyboard,
         EventReader<ButtonEvent<Key>> keyReader,

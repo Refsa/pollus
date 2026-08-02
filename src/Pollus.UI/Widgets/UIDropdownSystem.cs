@@ -8,14 +8,7 @@ using Pollus.UI.Layout;
 [SystemSet]
 public partial class UIDropdownSystem
 {
-    [System(nameof(PerformUpdate))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-        RunsBefore = ["UILayoutSystem::SyncTree"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"], RunsBefore = ["UILayoutSystem::SyncTree"])]
     internal static void PerformUpdate(
         View<UIInteraction, UIText, Parent> view,
         Query<UIDropdown> qDropdown,

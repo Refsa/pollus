@@ -7,31 +7,13 @@ using Pollus.UI.Layout;
 [SystemSet]
 public partial class UILayoutSystem
 {
-    [System(nameof(SyncTree))]
-    static readonly SystemBuilderDescriptor SyncTreeDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-    };
-
-    [System(nameof(ComputeLayout))]
-    static readonly SystemBuilderDescriptor ComputeLayoutDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UILayoutSystem::SyncTree"],
-    };
-
-    [System(nameof(WriteBack))]
-    static readonly SystemBuilderDescriptor WriteBackDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UILayoutSystem::ComputeLayout"],
-    };
-
+    [System(CoreStage.PostUpdate)]
     static void SyncTree(UITreeAdapter adapter, Query<UINode> uiNodeQuery, Query query)
     {
         adapter.SyncFull(uiNodeQuery, query);
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = [nameof(SyncTree)])]
     static void ComputeLayout(UITreeAdapter adapter, View<UILayoutRoot> view)
     {
         if (!adapter.IsDirty) return;
@@ -93,6 +75,7 @@ public partial class UILayoutSystem
         }
     }
 
+    [System(CoreStage.PostUpdate, RunsAfter = [nameof(ComputeLayout)])]
     static void WriteBack(UITreeAdapter adapter, View<ComputedNode> view)
     {
         if (!adapter.IsDirty) return;

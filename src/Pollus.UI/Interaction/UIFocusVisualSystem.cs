@@ -6,13 +6,7 @@ using Pollus.Utils;
 [SystemSet]
 public partial class UIFocusVisualSystem
 {
-    [System(nameof(ApplyFocusOutline))]
-    static readonly SystemBuilderDescriptor ApplyFocusOutlineDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::FocusNavigation"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::FocusNavigation"])]
     static void ApplyFocusOutline(
         UIFocusVisualStyle style,
         UIFocusState focusState,

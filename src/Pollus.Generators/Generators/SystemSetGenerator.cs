@@ -12,25 +12,29 @@ namespace Pollus.Generators
     [Generator]
     public class SystemSetGenerator : IIncrementalGenerator
     {
+        const string CoroutineReturnType = "global::System.Collections.Generic.IEnumerable<global::Pollus.Coroutine.Yield>";
+        const string DefaultStage = "Update";
+
         class Model
         {
             public TypeInfo TypeInfo;
             public TypeInfo ContainingType;
-            public string SystemGroupRunCriteria;
             public List<SystemModel> SystemModels;
-            public List<CoroutineModel> CoroutineModels;
         }
 
         class SystemModel
         {
-            public Field DescriptorField;
             public Method SystemCallbackMethod;
-        }
-
-        class CoroutineModel
-        {
-            public Field DescriptorField;
-            public Method CoroutineCallbackMethod;
+            public bool IsCoroutine;
+            public string Label;
+            public string Stage;
+            public string RunCriteria;
+            public string DescriptorCallback;
+            public bool IsExclusive;
+            public List<string> RunsAfter = new();
+            public List<string> RunsBefore = new();
+            public List<string> Dependencies = new();
+            public List<string> Locals = new();
         }
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -45,137 +49,55 @@ namespace Pollus.Generators
                     var data = context.TargetSymbol as ITypeSymbol;
                     if (data is null) throw new Exception("Target symbol is null");
 
-                    var systemGroupAttribute = data.GetAttributes().FirstOrDefault(a =>
-                        a.AttributeClass is { Name: "SystemGroup", IsGenericType: true } named
-                        && named.ContainingNamespace.ToDisplayString() == "Pollus.ECS");
+                    var typeInfo = Common.CreateTypeInfo(data);
+
                     string systemGroupRunCriteria = null;
-                    if (systemGroupAttribute != null)
+                    if (context.Attributes[0] is { ConstructorArguments.Length: > 0 } attr
+                        && attr.ConstructorArguments[0] is { Type.TypeKind: TypeKind.Enum } arg)
                     {
-                        var enumName = systemGroupAttribute.AttributeClass.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        systemGroupRunCriteria = $"StateRunCriteria<{enumName}>.OnCurrent({systemGroupAttribute.ConstructorArguments[0].ToCSharpString()})";
+                        systemGroupRunCriteria = CreateStateRunCriteria(arg, "OnCurrent");
+                    }
+
+                    var systems = new List<(IMethodSymbol Method, AttributeData Attribute)>();
+                    foreach (var member in data.GetMembers())
+                    {
+                        if (member is not IMethodSymbol methodSymbol) continue;
+
+                        var systemAttr = member.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "SystemAttribute");
+                        if (systemAttr is null) continue;
+
+                        systems.Add((methodSymbol, systemAttr));
+                    }
+
+                    // labels are resolved up front so siblings can be referenced with nameof(Method)
+                    var labels = new Dictionary<string, string>();
+                    foreach (var (method, attribute) in systems)
+                    {
+                        labels[method.Name] = GetNamedArgument(attribute, "Label")?.Value as string
+                            ?? $"{typeInfo.FullClassName}::{method.Name}";
                     }
 
                     var systemModels = new List<SystemModel>();
-                    var coroutineModels = new List<CoroutineModel>();
-                    foreach (var field in data.GetMembers())
+                    foreach (var (method, attribute) in systems)
                     {
-                        if (field is not IFieldSymbol fieldSymbol) continue;
-
-                        var systemAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass.Name == "SystemAttribute");
-                        if (systemAttr is not null)
-                        {
-                            var systemCallbackMethod = data.GetMembers().FirstOrDefault(e => e.Name == systemAttr.ConstructorArguments[0].Value as string);
-                            if (systemCallbackMethod == null) continue;
-
-                            if (systemCallbackMethod is not IMethodSymbol methodSymbol) continue;
-
-                            systemModels.Add(new SystemModel()
-                            {
-                                DescriptorField = new()
-                                {
-                                    Name = fieldSymbol.Name,
-                                    Type = fieldSymbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                },
-                                SystemCallbackMethod = new()
-                                {
-                                    Name = methodSymbol.Name,
-                                    ReturnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                    Parameters = methodSymbol.Parameters.Select(e => e.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToList(),
-                                },
-                            });
-                        }
-
-                        var coroutineAttr = field.GetAttributes().FirstOrDefault(a => a.AttributeClass.Name == "CoroutineAttribute");
-                        if (coroutineAttr is not null)
-                        {
-                            var coroutineCallbackMethod = data.GetMembers().FirstOrDefault(e => e.Name == coroutineAttr.ConstructorArguments[0].Value as string);
-                            if (coroutineCallbackMethod == null) continue;
-                            if (coroutineCallbackMethod is not IMethodSymbol methodSymbol) continue;
-
-                            var returnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                            if (returnType != "global::System.Collections.Generic.IEnumerable<global::Pollus.Coroutine.Yield>") continue;
-
-                            coroutineModels.Add(new CoroutineModel()
-                            {
-                                DescriptorField = new()
-                                {
-                                    Name = fieldSymbol.Name,
-                                    Type = fieldSymbol.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                },
-                                CoroutineCallbackMethod = new()
-                                {
-                                    Name = methodSymbol.Name,
-                                    ReturnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                    Parameters = methodSymbol.Parameters.Select(e => e.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)).ToList(),
-                                },
-                            });
-                        }
+                        systemModels.Add(CreateSystemModel(data, method, attribute, labels, systemGroupRunCriteria));
                     }
 
                     return new Model()
                     {
-                        TypeInfo = Common.CreateTypeInfo(data),
+                        TypeInfo = typeInfo,
                         ContainingType = data.ContainingType != null ? Common.CreateTypeInfo(data.ContainingType) : null,
                         SystemModels = systemModels,
-                        CoroutineModels = coroutineModels,
-                        SystemGroupRunCriteria = systemGroupRunCriteria,
                     };
                 }
             );
 
             context.RegisterSourceOutput(pipeline, (context, model) =>
             {
-
                 var setups = new StringBuilder();
                 foreach (var systemModel in model.SystemModels)
                 {
-                    var lowerName = systemModel.DescriptorField.Name.ToLower();
-                    var runCriteria = "";
-                    if (!string.IsNullOrEmpty(model.SystemGroupRunCriteria))
-                    {
-                        runCriteria = $$"""
-                        if ({{lowerName}}.RunCriteria is null or Pollus.ECS.RunAlways)
-                        {
-                            {{lowerName}}.RunCriteria = {{model.SystemGroupRunCriteria}};
-                        }
-                        else 
-                        {
-                            {{lowerName}}.RunCriteria = WhenAll.Create({{model.SystemGroupRunCriteria}}, {{lowerName}}.RunCriteria);
-                        }
-                        """;
-                    }
-
-                    setups.Append(
-                        $$"""
-                                  var {{lowerName}} = {{systemModel.DescriptorField.Name}};
-                                  if (string.IsNullOrEmpty({{lowerName}}.Label.Value))
-                                  {
-                                      {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.FullClassName}}::{{systemModel.DescriptorField.Name.Replace("Descriptor", "")}}");
-                                  }
-                                  {{runCriteria}}
-                                  schedule.AddSystems({{lowerName}}.Stage, FnSystem.Create({{lowerName}}, (SystemDelegate<{{string.Join(", ", systemModel.SystemCallbackMethod.Parameters)}}>){{systemModel.SystemCallbackMethod.Name}}));
-                          """);
-                }
-
-                foreach (var coroutineModel in model.CoroutineModels)
-                {
-                    var lowerName = coroutineModel.DescriptorField.Name.ToLower();
-                    var paramUnwrap = string.Join(", ", coroutineModel.CoroutineCallbackMethod.Parameters.Select((e, i) => $"param.Param{i}"));
-
-                    setups.Append(
-                        $$"""
-                                var {{lowerName}} = {{coroutineModel.DescriptorField.Name}};
-                                if (string.IsNullOrEmpty({{lowerName}}.Label.Value))
-                                {
-                                    {{lowerName}}.Label = new SystemLabel("{{model.TypeInfo.FullClassName}}::{{coroutineModel.DescriptorField.Name.Replace("Descriptor", "")}}");
-                                }
-                                schedule.AddSystems({{lowerName}}.Stage, Coroutine.Create({{lowerName}}, 
-                                static (Param<{{string.Join(", ", coroutineModel.CoroutineCallbackMethod.Parameters)}}> param) =>
-                                {
-                                    return {{coroutineModel.CoroutineCallbackMethod.Name}}({{paramUnwrap}});
-                                }
-                                ));
-                          """);
+                    setups.AppendLine(CreateSetup(systemModel));
                 }
 
                 var classTemplate =
@@ -209,6 +131,191 @@ namespace Pollus.Generators
 
                 context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.TypeInfo.ClassName}.SystemSet.gen.cs", source);
             });
+        }
+
+        static SystemModel CreateSystemModel(ITypeSymbol owner, IMethodSymbol method, AttributeData systemAttribute,
+            Dictionary<string, string> labels, string systemGroupRunCriteria)
+        {
+            var model = new SystemModel()
+            {
+                Label = labels[method.Name],
+                IsCoroutine = FullyQualified(method.ReturnType) == CoroutineReturnType,
+                DescriptorCallback = GetNamedArgument(systemAttribute, "DescriptorCallback")?.Value as string,
+                IsExclusive = GetNamedArgument(systemAttribute, "IsExclusive")?.Value is true,
+                SystemCallbackMethod = new()
+                {
+                    Name = method.Name,
+                    ReturnType = FullyQualified(method.ReturnType),
+                    Parameters = method.Parameters.Select(e => FullyQualified(e.Type)).ToList(),
+                },
+            };
+
+            if (systemAttribute.ConstructorArguments.Length > 0
+                && systemAttribute.ConstructorArguments[0].Value is string stage)
+            {
+                model.Stage = Literal(stage);
+            }
+
+            foreach (var value in GetArrayArgument(systemAttribute, "RunsAfter"))
+            {
+                if (value.Value is string label) model.RunsAfter.Add(ResolveLabel(label, labels));
+            }
+
+            foreach (var value in GetArrayArgument(systemAttribute, "RunsBefore"))
+            {
+                if (value.Value is string label) model.RunsBefore.Add(ResolveLabel(label, labels));
+            }
+
+            foreach (var value in GetArrayArgument(systemAttribute, "Dependencies"))
+            {
+                if (value.Value is ITypeSymbol dependency) model.Dependencies.Add($"typeof({FullyQualified(dependency)})");
+            }
+
+            var runCriterias = new List<string>();
+            if (!string.IsNullOrEmpty(systemGroupRunCriteria)) runCriterias.Add(systemGroupRunCriteria);
+
+            foreach (var attribute in method.GetAttributes())
+            {
+                switch (attribute.AttributeClass?.Name)
+                {
+                    case "RunsAfterAttribute":
+                        model.RunsAfter.Add($"{FullyQualified(attribute.AttributeClass.TypeArguments[0])}.Label");
+                        break;
+                    case "RunsBeforeAttribute":
+                        model.RunsBefore.Add($"{FullyQualified(attribute.AttributeClass.TypeArguments[0])}.Label");
+                        break;
+                    case "LocalAttribute":
+                        model.Locals.Add(CreateLocal(owner, attribute));
+                        break;
+                    case "RunCriteriaAttribute":
+                        runCriterias.Add(CreateRunCriteria(attribute));
+                        break;
+                    case "InStateAttribute":
+                        runCriterias.Add(CreateStateRunCriteria(attribute.ConstructorArguments[0], "OnCurrent"));
+                        break;
+                    case "OnStateEnterAttribute":
+                        if (model.Stage is null) model.Stage = $"StateEnter.On({attribute.ConstructorArguments[0].ToCSharpString()})";
+                        else runCriterias.Add(CreateStateRunCriteria(attribute.ConstructorArguments[0], "OnEnter"));
+                        break;
+                    case "OnStateExitAttribute":
+                        if (model.Stage is null) model.Stage = $"StateExit.On({attribute.ConstructorArguments[0].ToCSharpString()})";
+                        else runCriterias.Add(CreateStateRunCriteria(attribute.ConstructorArguments[0], "OnExit"));
+                        break;
+                }
+            }
+
+            model.Stage ??= Literal(DefaultStage);
+            model.RunCriteria = runCriterias.Count switch
+            {
+                0 => null,
+                1 => runCriterias[0],
+                _ => $"WhenAll.Create({string.Join(", ", runCriterias)})",
+            };
+
+            return model;
+        }
+
+        static string CreateSetup(SystemModel model)
+        {
+            var name = model.SystemCallbackMethod.Name;
+            var descriptor = $"{char.ToLowerInvariant(name[0])}{name.Substring(1)}Descriptor";
+            var parameters = model.SystemCallbackMethod.Parameters;
+
+            var initializers = new List<string>() { $"Stage = {model.Stage}," };
+            if (model.RunsAfter.Count > 0) initializers.Add($"RunsAfter = [{string.Join(", ", model.RunsAfter)}],");
+            if (model.RunsBefore.Count > 0) initializers.Add($"RunsBefore = [{string.Join(", ", model.RunsBefore)}],");
+            if (model.Dependencies.Count > 0) initializers.Add($"Dependencies = [{string.Join(", ", model.Dependencies)}],");
+            if (model.Locals.Count > 0) initializers.Add($"Locals = [{string.Join(", ", model.Locals)}],");
+            if (model.RunCriteria != null) initializers.Add($"RunCriteria = {model.RunCriteria},");
+            if (model.IsExclusive) initializers.Add("IsExclusive = true,");
+
+            string create;
+            if (model.IsCoroutine)
+            {
+                var parameter = parameters.Count == 0 ? "EmptyParam" : $"Param<{string.Join(", ", parameters)}>";
+                var arguments = string.Join(", ", parameters.Select((e, i) => $"param.Param{i}"));
+                create = $"Coroutine.Create({descriptor}, static ({parameter} param) => {name}({arguments}))";
+            }
+            else
+            {
+                var delegateType = parameters.Count == 0 ? "SystemDelegate" : $"SystemDelegate<{string.Join(", ", parameters)}>";
+                create = $"FnSystem.Create({descriptor}, ({delegateType}){name})";
+            }
+
+            var setup = new StringBuilder();
+            setup.AppendLine($"var {descriptor} = new SystemBuilderDescriptor({Literal(model.Label)})");
+            setup.AppendLine("{");
+            foreach (var initializer in initializers) setup.AppendLine($"    {initializer}");
+            setup.AppendLine("};");
+            if (!string.IsNullOrEmpty(model.DescriptorCallback)) setup.AppendLine($"{model.DescriptorCallback}(ref {descriptor});");
+            setup.AppendLine($"schedule.AddSystems({descriptor}.Stage, {create});");
+
+            return Indent(setup.ToString(), "        ");
+        }
+
+        static string CreateLocal(ITypeSymbol owner, AttributeData attribute)
+        {
+            var type = FullyQualified(attribute.AttributeClass.TypeArguments[0]);
+
+            if (attribute.ConstructorArguments.Length == 0) return $"Local.From<{type}>(new {type}())";
+            if (IsFactoryArgument(attribute)) return $"Local.From<{type}>({MemberAccess(owner, "", (string)attribute.ConstructorArguments[0].Value)})";
+            return $"Local.From<{type}>({attribute.ConstructorArguments[0].ToCSharpString()})";
+        }
+
+        static string CreateRunCriteria(AttributeData attribute)
+        {
+            var typeSymbol = attribute.AttributeClass.TypeArguments[0];
+            var type = FullyQualified(typeSymbol);
+
+            if (attribute.ConstructorArguments.Length == 0) return $"new {type}()";
+            if (IsFactoryArgument(attribute)) return MemberAccess(typeSymbol, $"{type}.", (string)attribute.ConstructorArguments[0].Value);
+            return $"new {type}({attribute.ConstructorArguments[0].ToCSharpString()})";
+        }
+
+        static string CreateStateRunCriteria(TypedConstant state, string transition)
+        {
+            return $"StateRunCriteria<{FullyQualified(state.Type)}>.{transition}({state.ToCSharpString()})";
+        }
+
+        static string ResolveLabel(string label, Dictionary<string, string> labels)
+        {
+            return Literal(labels.TryGetValue(label, out var resolved) ? resolved : label);
+        }
+
+        static string MemberAccess(ITypeSymbol owner, string prefix, string memberName)
+        {
+            var member = owner.GetMembers(memberName).FirstOrDefault();
+            return member is IMethodSymbol ? $"{prefix}{memberName}()" : $"{prefix}{memberName}";
+        }
+
+        static bool IsFactoryArgument(AttributeData attribute)
+        {
+            return attribute.AttributeConstructor is { Parameters.Length: 1 } constructor && constructor.Parameters[0].Name == "factory";
+        }
+
+        static TypedConstant? GetNamedArgument(AttributeData attribute, string name)
+        {
+            foreach (var argument in attribute.NamedArguments)
+            {
+                if (argument.Key == name) return argument.Value;
+            }
+            return null;
+        }
+
+        static IEnumerable<TypedConstant> GetArrayArgument(AttributeData attribute, string name)
+        {
+            if (GetNamedArgument(attribute, name) is { Kind: TypedConstantKind.Array, IsNull: false } argument) return argument.Values;
+            return Enumerable.Empty<TypedConstant>();
+        }
+
+        static string FullyQualified(ITypeSymbol type) => type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        static string Literal(string value) => SymbolDisplay.FormatLiteral(value, true);
+
+        static string Indent(string value, string indent)
+        {
+            var lines = value.TrimEnd().Split('\n');
+            return string.Join("\n", lines.Select(e => $"{indent}{e.TrimEnd('\r')}"));
         }
     }
 }

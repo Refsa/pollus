@@ -51,31 +51,20 @@ public partial class SystemGroupExample : IExample
         app?.Shutdown();
     }
 
-    [SystemSet, SystemGroup<SystemGroups>(SystemGroups.Group1)]
+    [SystemSet(SystemGroups.Group1)]
     partial class SystemGroup1
     {
-        [System(nameof(SystemInGroup1))]
-        public static readonly SystemBuilderDescriptor SystemInGroup1Descriptor = new()
-        {
-            Stage = CoreStage.Update,
-            RunCriteria = new RunFixed(1),
-        };
-
+        [System(nameof(CoreStage.Update)), RunCriteria<RunFixed>(1f)]
         static void SystemInGroup1(Time time)
         {
             Log.Info("Group 1");
         }
     }
 
-    [SystemSet, SystemGroup<SystemGroups>(SystemGroups.Group2)]
+    [SystemSet(SystemGroups.Group2)]
     partial class SystemGroup2
     {
-        [System(nameof(SystemInGroup2))]
-        public static readonly SystemBuilderDescriptor SystemInGroup2Descriptor = new()
-        {
-            Stage = CoreStage.Update,
-        };
-
+        [System(nameof(CoreStage.Update))]
         static void SystemInGroup2(Time time)
         {
             if (time.FrameCount % 100 == 0)

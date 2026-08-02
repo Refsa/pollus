@@ -5,12 +5,7 @@ using Pollus.ECS;
 [SystemSet]
 public partial class UIToggleSystem
 {
-    [System(nameof(UpdateToggles))]
-    static readonly SystemBuilderDescriptor UpdateDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     internal static void UpdateToggles(View<UIToggle, UIInteraction, BackgroundColor> view, EventReader<UIInteractionEvents.UIClickEvent> clickReader, Events events)
     {
         var toggleWriter = events.GetWriter<UIToggleEvents.UIToggleEvent>();

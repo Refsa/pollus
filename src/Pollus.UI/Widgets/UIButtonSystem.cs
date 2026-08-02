@@ -5,13 +5,7 @@ using Pollus.ECS;
 [SystemSet]
 public partial class UIButtonSystem
 {
-    [System(nameof(UpdateVisuals))]
-    static readonly SystemBuilderDescriptor UpdateVisualsDescriptor = new()
-    {
-        Stage = CoreStage.PostUpdate,
-        RunsAfter = ["UIInteractionSystem::UpdateState"],
-    };
-
+    [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
     static void UpdateVisuals(Query<UIButton, UIInteraction, BackgroundColor> qButtons)
     {
         qButtons.ForEach(static (ref button, ref interaction, ref bg) =>
