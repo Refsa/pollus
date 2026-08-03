@@ -58,12 +58,14 @@ public class SpriteBenchmark : IExample
                     fps.Value.Time += time.DeltaTimeF;
                     if (fps.Value.Time < 5.0f) return;
 
-                    Log.Info($"FPS: {fps.Value.Frames} | Sprites: {qSprites.EntityCount()}");
+                    var measuredFps = fps.Value.Frames / fps.Value.Time;
+                    Log.Info($"FPS: {measuredFps:F1} | Sprites: {qSprites.EntityCount()}");
 
-                    if (fps.Value.Frames > 60)
+                    if (measuredFps > 60)
                     {
-                        var targetDist = fps.Value.Frames - 60;
-                        for (int i = 0; i < int.Min(targetDist * 10000, 100_000); i++)
+                        var targetDist = measuredFps - 60;
+                        var toSpawn = int.Min((int)(float.Abs(targetDist) * 1_000f), 25_000);
+                        for (int i = 0; i < toSpawn; i++)
                         {
                             commands.Spawn(Entity.With(
                                 Transform2D.Default with
@@ -79,10 +81,10 @@ public class SpriteBenchmark : IExample
                             ));
                         }
                     }
-                    else if (fps.Value.Frames < 60)
+                    else if (measuredFps < 60)
                     {
-                        var targetDist = 60 - fps.Value.Frames;
-                        var toDespawn = targetDist * 100;
+                        var targetDist = 60 - measuredFps;
+                        var toDespawn = int.Min((int)(float.Abs(targetDist) * 1_000f), 25_000);
                         foreach (var entity in qSprites)
                         {
                             if (toDespawn-- <= 0) break;
