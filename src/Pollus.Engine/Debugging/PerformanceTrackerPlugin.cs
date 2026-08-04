@@ -4,6 +4,7 @@ using Pollus.Platform.Window;
 using Pollus.Debugging;
 using Pollus.ECS;
 using Pollus.Graphics.Windowing;
+using System.Net;
 
 public class PerformanceTrackerPlugin : IPlugin
 {
@@ -38,14 +39,17 @@ public class PerformanceTrackerPlugin : IPlugin
     {
         world.Resources.Add(new PerformanceMetrics());
 
-        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("LogPerformanceMetrics")
-        {
-            RunCriteria = new RunFixed(1f)
-        },
-        static (IWindow window, PerformanceMetrics metrics, Time time) =>
+        world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("LogPerformanceMetrics"),
+        static (Local<float> timer, IWindow window, PerformanceMetrics metrics, Time time) =>
         {
             metrics.AddFrameTime(time.DeltaTimeF);
-            window.SetTitle($"Pollus - {metrics.AverageFPS:F2} FPS");
+
+            timer.Value += time.DeltaTimeF;
+            if (timer.Value >= 1f)
+            {
+                window.SetTitle($"Pollus - {metrics.AverageFPS:F2} FPS");
+                timer.Value = 0f;
+            }
         }));
     }
 }

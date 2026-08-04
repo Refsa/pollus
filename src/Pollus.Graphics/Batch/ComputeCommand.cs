@@ -35,6 +35,11 @@ public struct ComputeCommands : IDisposable
         commands = ArrayPool<byte>.Shared.Rent(256);
     }
 
+    public static ComputeCommands Empty => new()
+    {
+        commands = Array.Empty<byte>(),
+    };
+
     public static ComputeCommands Builder => new();
 
     public void Dispose()

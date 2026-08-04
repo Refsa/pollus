@@ -177,10 +177,10 @@ public partial class ComputeExample : IExample
                     });
                 }))
             .AddSystems(CoreStage.PreRender, FnSystem.Create(new("PrepareRender")
-                {
-                    RunsAfter = [FrameGraph2DPlugin.BeginFrame],
-                },
-                static (FrameGraph2D frameGraph) =>
+            {
+                RunsAfter = [FrameGraph2DPlugin.BeginFrame],
+            },
+                static (FrameGraph2D frameGraph, ComputeData computeData) =>
                 {
                     frameGraph.FrameGraph.AddBuffer(BufferDescriptor.Storage<Particle>("particles_buffer", 1_000_000));
 
@@ -189,7 +189,8 @@ public partial class ComputeExample : IExample
                         static (context, in param, in data) =>
                         {
                             var computeData = param.Resources.Get<ComputeData>();
-                            var compute = param.RenderAssets.Get<ComputeRenderData>(computeData.Compute);
+                            if (!param.RenderAssets.TryGet<ComputeRenderData>(computeData.Compute, out var compute)) return;
+
                             using var computeEncoder = context.GetCurrentCommandEncoder().BeginComputePass("""particles_compute""");
 
                             ComputeCommands.Builder
@@ -208,7 +209,8 @@ public partial class ComputeExample : IExample
                         static (context, in param, in data) =>
                         {
                             var computeData = param.Resources.Get<ComputeData>();
-                            var particleMaterial = param.RenderAssets.Get<MaterialRenderData>(computeData.ParticleMaterial);
+                            if (!param.RenderAssets.TryGet<MaterialRenderData>(computeData.ParticleMaterial, out var particleMaterial)) return;
+
                             using var renderEncoder = context.GetCurrentCommandEncoder().BeginRenderPass(new()
                             {
                                 Label = """particles_render""",

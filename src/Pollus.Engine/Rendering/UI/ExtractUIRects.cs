@@ -73,7 +73,10 @@ public partial class ExtractUIRectsSystem
             if (rectBatch.Texture.IsNull()) continue;
             if (batches.HasBindGroup(rectBatch.Texture, rectBatch.Sampler)) continue;
 
-            renderAssets.Prepare(gpuContext, assetServer, rectBatch.Texture);
+            if (assetServer.Assets.IsLoaded(rectBatch.Texture))
+            {
+                renderAssets.Prepare(gpuContext, assetServer, rectBatch.Texture);
+            }
             if (!renderAssets.Has(rectBatch.Texture)) continue;
 
             var samplerHandle = rectBatch.Sampler.IsNull() ? (Handle)resources.DefaultSampler : rectBatch.Sampler;

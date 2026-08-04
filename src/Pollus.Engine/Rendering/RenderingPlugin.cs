@@ -103,7 +103,7 @@ public class RenderingPlugin : IPlugin
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is AssetEventType.Unloaded) continue;
+                    if (assetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
                     renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
                 }
 
