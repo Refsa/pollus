@@ -41,12 +41,12 @@ public partial struct Transform2D : ITransform, IComponent, IDefault<Transform2D
 
     public readonly Mat4f ToMat4f()
     {
-        return Mat4f.FromTRS(new Vec3f(Position, ZIndex), Rotation.Radians(), Scale);
+        return Mat4f.FromTRS(new Vec3f(Position, ZIndex), Rotation * (float)Math.DEG2RAD, Scale);
     }
 
     public readonly Mat4f ToMat4f_Row()
     {
-        return Mat4f.FromTRS_Row(new Vec3f(Position, ZIndex), Rotation.Radians(), Scale);
+        return Mat4f.FromTRS_Row(new Vec3f(Position, ZIndex), Rotation * (float)Math.DEG2RAD, Scale);
     }
 
     public readonly GlobalTransform ToGlobalTransform(Mat4f parentTransform)
