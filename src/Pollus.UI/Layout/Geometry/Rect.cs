@@ -1,15 +1,15 @@
-using System.Runtime.CompilerServices;
-
 namespace Pollus.UI.Layout;
 
-public record struct Rect<T>
+using System.Runtime.CompilerServices;
+
+public record struct LayoutRect<T>
 {
     public T Left;
     public T Right;
     public T Top;
     public T Bottom;
 
-    public Rect(T left, T right, T top, T bottom)
+    public LayoutRect(T left, T right, T top, T bottom)
     {
         Left = left;
         Right = right;
@@ -17,32 +17,32 @@ public record struct Rect<T>
         Bottom = bottom;
     }
 
-    public static Rect<T> All(T value) => new(value, value, value, value);
-    public static readonly Rect<T> Zero = default;
+    public static LayoutRect<T> All(T value) => new(value, value, value, value);
+    public static readonly LayoutRect<T> Zero = default;
 }
 
-public static class RectFloatExtensions
+public static class LayoutRectFloatExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float HorizontalAxisSum(this Rect<float> self) => self.Left + self.Right;
+    public static float HorizontalAxisSum(this LayoutRect<float> self) => self.Left + self.Right;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float VerticalAxisSum(this Rect<float> self) => self.Top + self.Bottom;
+    public static float VerticalAxisSum(this LayoutRect<float> self) => self.Top + self.Bottom;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Size<float> SumAxes(this Rect<float> self) =>
+    public static Size<float> SumAxes(this LayoutRect<float> self) =>
         new(self.Left + self.Right, self.Top + self.Bottom);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float MainAxisSum(this Rect<float> self, FlexDirection direction) =>
+    public static float MainAxisSum(this LayoutRect<float> self, FlexDirection direction) =>
         direction.IsRow() ? self.HorizontalAxisSum() : self.VerticalAxisSum();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float CrossAxisSum(this Rect<float> self, FlexDirection direction) =>
+    public static float CrossAxisSum(this LayoutRect<float> self, FlexDirection direction) =>
         direction.IsRow() ? self.VerticalAxisSum() : self.HorizontalAxisSum();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float MainStart(this Rect<float> self, FlexDirection direction) =>
+    public static float MainStart(this LayoutRect<float> self, FlexDirection direction) =>
         direction switch
         {
             FlexDirection.Row => self.Left,
@@ -53,7 +53,7 @@ public static class RectFloatExtensions
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float MainEnd(this Rect<float> self, FlexDirection direction) =>
+    public static float MainEnd(this LayoutRect<float> self, FlexDirection direction) =>
         direction switch
         {
             FlexDirection.Row => self.Right,
@@ -64,10 +64,10 @@ public static class RectFloatExtensions
         };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float CrossStart(this Rect<float> self, FlexDirection direction) =>
+    public static float CrossStart(this LayoutRect<float> self, FlexDirection direction) =>
         direction.IsRow() ? self.Top : self.Left;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static float CrossEnd(this Rect<float> self, FlexDirection direction) =>
+    public static float CrossEnd(this LayoutRect<float> self, FlexDirection direction) =>
         direction.IsRow() ? self.Bottom : self.Right;
 }

@@ -116,7 +116,7 @@ public class UIExample : IExample
                     .Style(s => s with
                     {
                         Size = new(Length.Auto, 80),
-                        Padding = Rect<Length>.All(16),
+                        Padding = LayoutRect<Length>.All(16),
                         AlignItems = AlignItems.Center,
                         JustifyContent = JustifyContent.SpaceBetween,
                     })
@@ -191,7 +191,7 @@ public class UIExample : IExample
                     {
                         Size = new(210, Length.Auto),
                         FlexDirection = FlexDirection.Column,
-                        Padding = Rect<Length>.All(12),
+                        Padding = LayoutRect<Length>.All(12),
                         Gap = new(8, 8),
                     })
                     .Background(new Color(0.18f, 0.18f, 0.22f, 1f))

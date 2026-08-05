@@ -16,9 +16,9 @@ public static partial class FlexLayout
         public int OrderIndex;
         public int CssOrder;
 
-        public Rect<float> Padding;
-        public Rect<float> Border;
-        public Rect<float> Margin;
+        public LayoutRect<float> Padding;
+        public LayoutRect<float> Border;
+        public LayoutRect<float> Margin;
 
         public float InnerFlexBasis;
         public float TargetMainSize;
@@ -105,7 +105,7 @@ public static partial class FlexLayout
 
         var padding = LayoutHelpers.ResolvePadding(in style, parentSize);
         var border = LayoutHelpers.ResolveBorder(in style, parentSize);
-        var paddingBorder = new Rect<float>(
+        var paddingBorder = new LayoutRect<float>(
             padding.Left + border.Left,
             padding.Right + border.Right,
             padding.Top + border.Top,
@@ -782,7 +782,7 @@ public static partial class FlexLayout
         JustifyContent justifyContent, float containerMainSize, float mainGap,
         AlignContent alignContent, AlignItems defaultAlignItems,
         int lineCount, float containerCrossSize, float totalLineCross,
-        float crossGap, Rect<float> paddingBorder, bool isWrapReverse)
+        float crossGap, LayoutRect<float> paddingBorder, bool isWrapReverse)
     {
         // Compute line cross offsets first (all lines needed before per-item pass)
         float freeCross = MathF.Max(containerCrossSize - totalLineCross, 0f);
@@ -1017,7 +1017,7 @@ public static partial class FlexLayout
         FlexDirection dir, bool isRow,
         Size<float?> nodeInnerSize, Size<float?> nodeOuterSize,
         float containerMainSize, float containerCrossSize,
-        Rect<float> paddingBorder, Size<float> paddingBorderSum,
+        LayoutRect<float> paddingBorder, Size<float> paddingBorderSum,
         AvailableSpace availableSpaceMain, AvailableSpace availableSpaceCross)
         where TTree : ILayoutTree
     {

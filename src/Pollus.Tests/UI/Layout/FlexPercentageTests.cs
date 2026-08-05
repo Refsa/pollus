@@ -48,7 +48,7 @@ public class FlexPercentageTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = new Rect<Length>(
+            Padding = new LayoutRect<Length>(
                 Length.Percent(0.1f), Length.Zero,
                 Length.Zero, Length.Zero
             ),
@@ -72,7 +72,7 @@ public class FlexPercentageTests
         var child = tree.AddNode(DefaultStyle with
         {
             Size = new Size<Length>(Length.Px(50f), Length.Px(50f)),
-            Margin = new Rect<Length>(
+            Margin = new LayoutRect<Length>(
                 Length.Percent(0.1f), Length.Zero,
                 Length.Zero, Length.Zero
             ),

@@ -10,21 +10,21 @@ public class FlexConformanceTests
     static Size<Length> Px(float w, float h) =>
         new(Length.Px(w), Length.Px(h));
 
-    static Rect<Length> PadAll(float v) =>
+    static LayoutRect<Length> PadAll(float v) =>
         new(Length.Px(v), Length.Px(v),
             Length.Px(v), Length.Px(v));
 
-    static Rect<Length> PadLRTB(float l, float r, float t, float b) =>
+    static LayoutRect<Length> PadLRTB(float l, float r, float t, float b) =>
         new(Length.Px(l), Length.Px(r),
             Length.Px(t), Length.Px(b));
 
-    static Rect<Length> BorderAll(float v) => PadAll(v);
+    static LayoutRect<Length> BorderAll(float v) => PadAll(v);
 
-    static Rect<Length> MarginAll(float v) =>
+    static LayoutRect<Length> MarginAll(float v) =>
         new(Length.Px(v), Length.Px(v),
             Length.Px(v), Length.Px(v));
 
-    static Rect<Length> MarginLRTB(float l, float r, float t, float b) =>
+    static LayoutRect<Length> MarginLRTB(float l, float r, float t, float b) =>
         new(Length.Px(l), Length.Px(r),
             Length.Px(t), Length.Px(b));
 
@@ -544,7 +544,7 @@ public class FlexConformanceTests
         var tree = ComputeFlat(
             S with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Percent(0.1f), Length.Percent(0.1f),
                     Length.Percent(0.1f), Length.Percent(0.1f)),
             },
@@ -620,7 +620,7 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Px(10), Length.Auto,
                     Length.Px(20), Length.Auto),
                 Size = Px(50, 50),
@@ -636,7 +636,7 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Auto, Length.Px(10),
                     Length.Auto, Length.Px(20)),
                 Size = Px(50, 50),
@@ -652,7 +652,7 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Px(0), Length.Auto,
                     Length.Px(0), Length.Auto),
                 Size = Px(50, 50),
@@ -670,7 +670,7 @@ public class FlexConformanceTests
             S with
             {
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(20), Length.Px(20)),
             });

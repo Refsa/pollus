@@ -131,7 +131,7 @@ public struct UIRadioGroupBuilder : IUINodeBuilder<UIRadioGroupBuilder>
                     Value = LayoutStyle.Default with
                     {
                         Size = new Size<Length>(Length.Percent(0.5f), Length.Percent(0.5f)),
-                        Margin = Rect<Length>.All(Length.Auto),
+                        Margin = LayoutRect<Length>.All(Length.Auto),
                     }
                 }
             )).Entity;

@@ -163,7 +163,7 @@ public class FlexAlignmentTests
         {
             FlexDirection = FlexDirection.Row,
             Size = new Size<Length>(Length.Auto, Length.Px(60)),
-            Padding = Rect<Length>.All(Length.Px(16)),
+            Padding = LayoutRect<Length>.All(Length.Px(16)),
             AlignItems = AlignItems.Center,
             JustifyContent = JustifyContent.SpaceBetween,
             BoxSizing = BoxSizing.BorderBox,
@@ -230,8 +230,8 @@ public class FlexAlignmentTests
         {
             FlexDirection = FlexDirection.Row,
             Size = new Size<Length>(Length.Px(200), Length.Px(34)),
-            // Rect<Length> ctor is (left, right, top, bottom), NOT CSS order
-            Padding = new Rect<Length>(Length.Px(10), Length.Px(10), Length.Px(6), Length.Px(6)),
+            // LayoutRect<Length> ctor is (left, right, top, bottom), NOT CSS order
+            Padding = new LayoutRect<Length>(Length.Px(10), Length.Px(10), Length.Px(6), Length.Px(6)),
             AlignItems = AlignItems.Center,
             BoxSizing = BoxSizing.BorderBox,
         });
@@ -279,7 +279,7 @@ public class FlexAlignmentTests
         {
             FlexDirection = FlexDirection.Row,
             Size = new Size<Length>(Length.Auto, Length.Px(60)),
-            Padding = Rect<Length>.All(Length.Px(16)),
+            Padding = LayoutRect<Length>.All(Length.Px(16)),
             AlignItems = AlignItems.Center,
             JustifyContent = JustifyContent.SpaceBetween,
             BoxSizing = BoxSizing.BorderBox,

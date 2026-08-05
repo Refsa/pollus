@@ -33,7 +33,7 @@ public class EventConsoleLayoutTests
         {
             FlexDirection = FlexDirection.Column,
             Size = new Size<Length>(Length.Px(800), Length.Px(600)),
-            Padding = Rect<Length>.All(Length.Px(16)),
+            Padding = LayoutRect<Length>.All(Length.Px(16)),
             Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
         });
 
@@ -87,8 +87,8 @@ public class EventConsoleLayoutTests
             FlexDirection = FlexDirection.Column,
             Overflow = new Point<Overflow>(Overflow.Scroll, Overflow.Scroll),
             MinSize = new Size<Length>(Length.Px(0), Length.Px(0)),
-            Padding = Rect<Length>.All(Length.Px(16)),
-            Border = Rect<Length>.All(Length.Px(2)),
+            Padding = LayoutRect<Length>.All(Length.Px(16)),
+            Border = LayoutRect<Length>.All(Length.Px(2)),
             Gap = new Size<Length>(Length.Px(16), Length.Px(16)),
         });
         // Lots of content that overflows
@@ -110,8 +110,8 @@ public class EventConsoleLayoutTests
             Gap = new Size<Length>(Length.Px(0), Length.Px(0)),
             Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Hidden),
             MinSize = new Size<Length>(Length.Px(0), Length.Px(0)),
-            Padding = Rect<Length>.All(Length.Px(12)),
-            Border = Rect<Length>.All(Length.Px(1)),
+            Padding = LayoutRect<Length>.All(Length.Px(12)),
+            Border = LayoutRect<Length>.All(Length.Px(1)),
         });
 
         var eventConsoleWrapper = tree.AddNode(DefaultStyle with
@@ -120,8 +120,8 @@ public class EventConsoleLayoutTests
             FlexDirection = FlexDirection.Column,
             Gap = new Size<Length>(Length.Px(8), Length.Px(8)),
             MinSize = new Size<Length>(Length.Px(0), Length.Px(0)),
-            Padding = Rect<Length>.All(Length.Px(12)),
-            Border = Rect<Length>.All(Length.Px(1)),
+            Padding = LayoutRect<Length>.All(Length.Px(12)),
+            Border = LayoutRect<Length>.All(Length.Px(1)),
         });
 
         // Title text
@@ -149,8 +149,8 @@ public class EventConsoleLayoutTests
             // Default FlexDirection = Row
             MinSize = new Size<Length>(Length.Px(0), Length.Px(0)),
             Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Scroll),
-            Padding = Rect<Length>.All(Length.Px(10)),
-            Border = Rect<Length>.All(Length.Px(1)),
+            Padding = LayoutRect<Length>.All(Length.Px(10)),
+            Border = LayoutRect<Length>.All(Length.Px(1)),
         });
 
         // Event log text (multi-line, measured) - tall enough to require scrolling

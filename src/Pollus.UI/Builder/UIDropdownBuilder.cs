@@ -111,7 +111,7 @@ public struct UIDropdownBuilder : IUINodeBuilder<UIDropdownBuilder>
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(Length.Px(0), Length.Auto, insetTop, Length.Auto),
+                    Inset = new LayoutRect<Length>(Length.Px(0), Length.Auto, insetTop, Length.Auto),
                     FlexDirection = FlexDirection.Column,
                     Size = new Size<Length>(Length.Percent(1f), Length.Auto),
                 }

@@ -19,7 +19,7 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(50f, 50f),
-            Inset = new Rect<Length>(
+            Inset = new LayoutRect<Length>(
                 Length.Px(10f),
                 Length.Auto,
                 Length.Px(20f),
@@ -45,7 +45,7 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(50f, 50f),
-            Inset = new Rect<Length>(
+            Inset = new LayoutRect<Length>(
                 Length.Auto,
                 Length.Px(10f),
                 Length.Auto,
@@ -70,7 +70,7 @@ public class FlexAbsoluteTests
         var child = tree.AddNode(DefaultStyle with
         {
             Position = Position.Absolute,
-            Inset = new Rect<Length>(
+            Inset = new LayoutRect<Length>(
                 Length.Px(10f),
                 Length.Px(10f),
                 Length.Auto,
@@ -94,7 +94,7 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = FixedSize(100f, 100f),
-            Inset = new Rect<Length>(
+            Inset = new LayoutRect<Length>(
                 Length.Px(0f),
                 Length.Auto,
                 Length.Px(0f),
@@ -216,7 +216,7 @@ public class FlexAbsoluteTests
         {
             Position = Position.Absolute,
             Size = new Size<Length>(Length.Auto, Length.Px(50f)),
-            Inset = new Rect<Length>(
+            Inset = new LayoutRect<Length>(
                 Length.Px(10f),
                 Length.Px(20f),
                 Length.Auto,

@@ -201,7 +201,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(20), Length.Px(20)
                 ),
@@ -245,7 +245,7 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 FlexDirection = FlexDirection.Column,
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(16), Length.Px(16),
                     Length.Px(16), Length.Px(16)),
             }},
@@ -294,7 +294,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(10), Length.Px(10)),
             }},
@@ -306,7 +306,7 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Size = new Size<Length>(Length.Px(200), Length.Px(100)),
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(8), Length.Px(8),
                     Length.Px(8), Length.Px(8)),
             }}
@@ -359,7 +359,7 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 Size = new Size<Length>(Length.Px(200), Length.Px(100)),
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(10), Length.Px(10)
                 ),
@@ -456,7 +456,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(16), Length.Px(16),
                     Length.Px(16), Length.Px(16)),
             }},
@@ -480,7 +480,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(20), Length.Px(20),
                     Length.Px(10), Length.Px(10)),
             }},
@@ -512,10 +512,10 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(10), Length.Px(10),
                     Length.Px(10), Length.Px(10)),
-                Border = new Rect<Length>(
+                Border = new LayoutRect<Length>(
                     Length.Px(2), Length.Px(2),
                     Length.Px(2), Length.Px(2)),
             }},
@@ -552,7 +552,7 @@ public class UILayoutSystemTests
             new UIStyle { Value = LayoutStyle.Default with
             {
                 BoxSizing = BoxSizing.ContentBox,
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(20), Length.Px(20),
                     Length.Px(20), Length.Px(20)),
             }},
@@ -588,7 +588,7 @@ public class UILayoutSystemTests
             new UINode(),
             new UIStyle { Value = LayoutStyle.Default with
             {
-                Padding = new Rect<Length>(
+                Padding = new LayoutRect<Length>(
                     Length.Px(16), Length.Px(16),
                     Length.Px(16), Length.Px(16)),
             }},

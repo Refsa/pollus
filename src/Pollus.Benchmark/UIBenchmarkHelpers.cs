@@ -66,7 +66,7 @@ public static class UIBenchmarkHelpers
                     {
                         FlexDirection = FlexDirection.Column,
                         Size = new Size<Length>(Length.Percent(100), Length.Auto),
-                        Padding = Rect<Length>.All(Length.Px(2)),
+                        Padding = LayoutRect<Length>.All(Length.Px(2)),
                     }
                 }
             )).Entity;
@@ -144,7 +144,7 @@ public static class UIBenchmarkHelpers
                     {
                         FlexDirection = FlexDirection.Column,
                         Size = new Size<Length>(Length.Percent(100), Length.Auto),
-                        Padding = Rect<Length>.All(Length.Px(2)),
+                        Padding = LayoutRect<Length>.All(Length.Px(2)),
                     }
                 }
             )).Entity;

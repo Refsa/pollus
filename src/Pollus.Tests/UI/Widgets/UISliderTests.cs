@@ -128,7 +128,7 @@ public class UISliderTests
                 Value = LayoutStyle.Default with
                 {
                     Size = new Size<Length>(Length.Px(800), Length.Px(600)),
-                    Padding = new Rect<Length>(
+                    Padding = new LayoutRect<Length>(
                         Length.Px(100), Length.Px(100),
                         Length.Px(50), Length.Px(50)),
                 }

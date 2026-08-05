@@ -36,7 +36,7 @@ public class FlexRoundingTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = new Rect<Length>(
+            Padding = new LayoutRect<Length>(
                 Length.Px(10.3f), Length.Px(10.3f),
                 Length.Px(10.7f), Length.Px(10.7f)
             ),

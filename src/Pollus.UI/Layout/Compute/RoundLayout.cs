@@ -72,7 +72,7 @@ public static class RoundLayout
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static Rect<float> RoundRect(Rect<float> r) => new(
+    private static LayoutRect<float> RoundRect(LayoutRect<float> r) => new(
         MathF.Round(r.Left),
         MathF.Round(r.Right),
         MathF.Round(r.Top),

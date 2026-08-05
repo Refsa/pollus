@@ -13,7 +13,7 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = Rect<Length>.All(Length.Px(10f)),
+            Padding = LayoutRect<Length>.All(Length.Px(10f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -35,7 +35,7 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Border = Rect<Length>.All(Length.Px(5f)),
+            Border = LayoutRect<Length>.All(Length.Px(5f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -57,8 +57,8 @@ public class FlexPaddingBorderTests
         var tree = new TestLayoutTree();
         var root = tree.AddNode(DefaultStyle with
         {
-            Padding = Rect<Length>.All(Length.Px(10f)),
-            Border = Rect<Length>.All(Length.Px(5f)),
+            Padding = LayoutRect<Length>.All(Length.Px(10f)),
+            Border = LayoutRect<Length>.All(Length.Px(5f)),
         });
         var child = tree.AddNode(DefaultStyle with
         {
@@ -81,7 +81,7 @@ public class FlexPaddingBorderTests
         {
             BoxSizing = BoxSizing.BorderBox,
             Size = new Size<Length>(Length.Px(100f), Length.Px(100f)),
-            Padding = Rect<Length>.All(Length.Px(10f)),
+            Padding = LayoutRect<Length>.All(Length.Px(10f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 200f, 200f);
@@ -100,8 +100,8 @@ public class FlexPaddingBorderTests
         {
             BoxSizing = BoxSizing.ContentBox,
             Size = new Size<Length>(Length.Px(80f), Length.Px(60f)),
-            Padding = Rect<Length>.All(Length.Px(10f)),
-            Border = Rect<Length>.All(Length.Px(2f)),
+            Padding = LayoutRect<Length>.All(Length.Px(10f)),
+            Border = LayoutRect<Length>.All(Length.Px(2f)),
         });
         tree.AddChild(root, child);
         tree.ComputeRoot(root, 300f, 300f);

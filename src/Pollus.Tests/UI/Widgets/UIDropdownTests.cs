@@ -46,7 +46,7 @@ public class UIDropdownTests
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    Inset = new LayoutRect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
                     FlexDirection = FlexDirection.Column,
                     Size = new Size<Length>(Length.Px(200), Length.Auto),
                 }
@@ -394,17 +394,17 @@ public class UIDropdownTests
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(
+                    Inset = new LayoutRect<Length>(
                         Length.Px(0),
                         Length.Auto,
                         Length.Px(40),
                         Length.Auto),
                     FlexDirection = FlexDirection.Column,
-                    Padding = new Rect<Length>(
+                    Padding = new LayoutRect<Length>(
                         Length.Px(2), Length.Px(2),
                         Length.Px(2), Length.Px(2)),
                     Gap = new Size<Length>(Length.Px(2), Length.Px(2)),
-                    Border = new Rect<Length>(
+                    Border = new LayoutRect<Length>(
                         Length.Px(1), Length.Px(1),
                         Length.Px(1), Length.Px(1)),
                 }
@@ -426,7 +426,7 @@ public class UIDropdownTests
                     {
                         Display = Display.None,
                         Size = new Size<Length>(Length.Px(200), Length.Px(28)),
-                        Padding = new Rect<Length>(
+                        Padding = new LayoutRect<Length>(
                             Length.Px(10), Length.Px(10),
                             Length.Px(4), Length.Px(4)),
                         AlignItems = AlignItems.Center,
@@ -562,7 +562,7 @@ public class UIDropdownTests
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    Inset = new LayoutRect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
                     FlexDirection = FlexDirection.Column,
                     Size = new Size<Length>(Length.Px(200), Length.Auto),
                 }
@@ -758,7 +758,7 @@ public class UIDropdownTests
                 {
                     Display = Display.None,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
+                    Inset = new LayoutRect<Length>(Length.Auto, Length.Auto, Length.Auto, Length.Auto) with { Top = Length.Px(30) },
                     FlexDirection = FlexDirection.Column,
                     Size = new Size<Length>(Length.Px(200), Length.Auto),
                 }
@@ -914,7 +914,7 @@ public class UIDropdownTests
                 {
                     Display = Display.Flex,
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(
+                    Inset = new LayoutRect<Length>(
                         Length.Px(0),
                         Length.Auto,
                         Length.Px(40),
@@ -1172,17 +1172,17 @@ public class UIDropdownTests
                 Value = LayoutStyle.Default with
                 {
                     Position = Position.Absolute,
-                    Inset = new Rect<Length>(
+                    Inset = new LayoutRect<Length>(
                         Length.Px(0),
                         Length.Auto,
                         Length.Px(40),
                         Length.Auto),
                     FlexDirection = FlexDirection.Column,
-                    Padding = new Rect<Length>(
+                    Padding = new LayoutRect<Length>(
                         Length.Px(2), Length.Px(2),
                         Length.Px(2), Length.Px(2)),
                     Gap = new Size<Length>(Length.Px(2), Length.Px(2)),
-                    Border = new Rect<Length>(
+                    Border = new LayoutRect<Length>(
                         Length.Px(1), Length.Px(1),
                         Length.Px(1), Length.Px(1)),
                 }
@@ -1202,7 +1202,7 @@ public class UIDropdownTests
                     Value = LayoutStyle.Default with
                     {
                         Size = new Size<Length>(Length.Px(200), Length.Px(28)),
-                        Padding = new Rect<Length>(
+                        Padding = new LayoutRect<Length>(
                             Length.Px(10), Length.Px(10),
                             Length.Px(4), Length.Px(4)),
                         AlignItems = AlignItems.Center,

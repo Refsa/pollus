@@ -6,9 +6,9 @@ public record struct NodeLayout
     public Point<float> Location;
     public Size<float> Size;
     public Size<float> ContentSize;
-    public Rect<float> Border;
-    public Rect<float> Padding;
-    public Rect<float> Margin;
+    public LayoutRect<float> Border;
+    public LayoutRect<float> Padding;
+    public LayoutRect<float> Margin;
     public Size<float> ScrollbarSize;
 
     public static readonly NodeLayout Zero = default;

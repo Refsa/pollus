@@ -498,8 +498,8 @@ public class UIScrollVisualTests
                     FlexDirection = FlexDirection.Column,
                     Size = new Size<Length>(Length.Px(400), Length.Px(300)),
                     Overflow = new Point<Overflow>(Overflow.Hidden, Overflow.Scroll),
-                    Padding = Rect<Length>.All(16),
-                    Border = Rect<Length>.All(2),
+                    Padding = LayoutRect<Length>.All(16),
+                    Border = LayoutRect<Length>.All(2),
                     Gap = new Size<Length>(0, 12),
                 }
             }

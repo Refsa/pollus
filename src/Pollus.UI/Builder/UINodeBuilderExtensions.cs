@@ -163,7 +163,7 @@ public static class UINodeBuilderExtensions
         where TSelf : struct, IUINodeBuilder<TSelf>
     {
         ref var s = ref self.State;
-        s.style = s.style with { Padding = Rect<Length>.All(Length.Px(all)) };
+        s.style = s.style with { Padding = LayoutRect<Length>.All(Length.Px(all)) };
         return self;
     }
 
@@ -173,7 +173,7 @@ public static class UINodeBuilderExtensions
         ref var s = ref self.State;
         s.style = s.style with
         {
-            Padding = new Rect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
+            Padding = new LayoutRect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
         };
         return self;
     }
@@ -184,7 +184,7 @@ public static class UINodeBuilderExtensions
         where TSelf : struct, IUINodeBuilder<TSelf>
     {
         ref var s = ref self.State;
-        s.style = s.style with { Margin = Rect<Length>.All(Length.Px(all)) };
+        s.style = s.style with { Margin = LayoutRect<Length>.All(Length.Px(all)) };
         return self;
     }
 
@@ -194,7 +194,7 @@ public static class UINodeBuilderExtensions
         ref var s = ref self.State;
         s.style = s.style with
         {
-            Margin = new Rect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
+            Margin = new LayoutRect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
         };
         return self;
     }
@@ -205,7 +205,7 @@ public static class UINodeBuilderExtensions
         where TSelf : struct, IUINodeBuilder<TSelf>
     {
         ref var s = ref self.State;
-        s.style = s.style with { Border = Rect<Length>.All(Length.Px(all)) };
+        s.style = s.style with { Border = LayoutRect<Length>.All(Length.Px(all)) };
         return self;
     }
 
@@ -259,7 +259,7 @@ public static class UINodeBuilderExtensions
         ref var s = ref self.State;
         s.style = s.style with
         {
-            Inset = new Rect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
+            Inset = new LayoutRect<Length>(Length.Px(left), Length.Px(right), Length.Px(top), Length.Px(bottom))
         };
         return self;
     }

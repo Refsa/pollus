@@ -7,10 +7,10 @@ using Mathematics;
 public static class LayoutHelpers
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Rect<float> ResolvePadding(in Style style, Size<float?> parentSize)
+    public static LayoutRect<float> ResolvePadding(in Style style, Size<float?> parentSize)
     {
         float parentWidth = parentSize.Width ?? 0f;
-        return new Rect<float>(
+        return new LayoutRect<float>(
             style.Padding.Left.ResolveOr(parentWidth, 0f),
             style.Padding.Right.ResolveOr(parentWidth, 0f),
             style.Padding.Top.ResolveOr(parentWidth, 0f),
@@ -19,10 +19,10 @@ public static class LayoutHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Rect<float> ResolveBorder(in Style style, Size<float?> parentSize)
+    public static LayoutRect<float> ResolveBorder(in Style style, Size<float?> parentSize)
     {
         float parentWidth = parentSize.Width ?? 0f;
-        return new Rect<float>(
+        return new LayoutRect<float>(
             style.Border.Left.ResolveOr(parentWidth, 0f),
             style.Border.Right.ResolveOr(parentWidth, 0f),
             style.Border.Top.ResolveOr(parentWidth, 0f),
@@ -31,10 +31,10 @@ public static class LayoutHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Rect<float> ResolveMargin(in Style style, Size<float?> parentSize)
+    public static LayoutRect<float> ResolveMargin(in Style style, Size<float?> parentSize)
     {
         float parentWidth = parentSize.Width ?? 0f;
-        return new Rect<float>(
+        return new LayoutRect<float>(
             style.Margin.Left.ResolveOr(parentWidth, 0f),
             style.Margin.Right.ResolveOr(parentWidth, 0f),
             style.Margin.Top.ResolveOr(parentWidth, 0f),
@@ -43,11 +43,11 @@ public static class LayoutHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Rect<float?> ResolveInset(in Style style, Size<float?> parentSize)
+    public static LayoutRect<float?> ResolveInset(in Style style, Size<float?> parentSize)
     {
         float pw = parentSize.Width ?? 0f;
         float ph = parentSize.Height ?? 0f;
-        return new Rect<float?>(
+        return new LayoutRect<float?>(
             style.Inset.Left.Resolve(pw),
             style.Inset.Right.Resolve(pw),
             style.Inset.Top.Resolve(ph),
@@ -82,7 +82,7 @@ public static class LayoutHelpers
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Size<float?> ContentBoxAdjustment(BoxSizing boxSizing, Rect<float> padding, Rect<float> border)
+    public static Size<float?> ContentBoxAdjustment(BoxSizing boxSizing, LayoutRect<float> padding, LayoutRect<float> border)
     {
         if (boxSizing == BoxSizing.BorderBox)
         {

@@ -15,10 +15,10 @@ public record struct Style
     public float? AspectRatio;
 
     // Spacing
-    public Rect<Length> Margin;
-    public Rect<Length> Padding;
-    public Rect<Length> Border;
-    public Rect<Length> Inset;
+    public LayoutRect<Length> Margin;
+    public LayoutRect<Length> Padding;
+    public LayoutRect<Length> Border;
+    public LayoutRect<Length> Inset;
 
     // Flex container
     public FlexDirection FlexDirection;
@@ -50,10 +50,10 @@ public record struct Style
         MinSize = new Size<Length>(Length.Auto, Length.Auto),
         MaxSize = new Size<Length>(Length.Auto, Length.Auto),
         AspectRatio = null,
-        Margin = Rect<Length>.Zero,
-        Padding = Rect<Length>.Zero,
-        Border = Rect<Length>.Zero,
-        Inset = new Rect<Length>(
+        Margin = LayoutRect<Length>.Zero,
+        Padding = LayoutRect<Length>.Zero,
+        Border = LayoutRect<Length>.Zero,
+        Inset = new LayoutRect<Length>(
             Length.Auto,
             Length.Auto,
             Length.Auto,

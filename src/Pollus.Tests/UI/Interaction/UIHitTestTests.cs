@@ -108,7 +108,7 @@ public class UIHitTestTests
             {
                 Size = new Size<Length>(Length.Px(200), Length.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Px(0), Length.Auto,
                     Length.Px(0), Length.Auto
                 ),
@@ -123,7 +123,7 @@ public class UIHitTestTests
             {
                 Size = new Size<Length>(Length.Px(200), Length.Px(200)),
                 Position = Position.Absolute,
-                Inset = new Rect<Length>(
+                Inset = new LayoutRect<Length>(
                     Length.Px(0), Length.Auto,
                     Length.Px(0), Length.Auto
                 ),

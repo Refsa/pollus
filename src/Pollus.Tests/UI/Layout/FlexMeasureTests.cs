@@ -235,7 +235,7 @@ public class FlexMeasureTests
         });
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
-            Padding = Rect<Length>.All(10),
+            Padding = LayoutRect<Length>.All(10),
         });
         tree.AddChild(root, leaf);
 
@@ -269,7 +269,7 @@ public class FlexMeasureTests
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
             Size = new Size<Length>(Length.Percent(1f), Length.Auto),
-            Padding = Rect<Length>.All(8),
+            Padding = LayoutRect<Length>.All(8),
         });
         tree.AddChild(root, leaf);
 
@@ -312,7 +312,7 @@ public class FlexMeasureTests
         var measured = tree.AddNode(LayoutStyle.Default with
         {
             FlexGrow = 1,
-            Padding = Rect<Length>.All(10),
+            Padding = LayoutRect<Length>.All(10),
         });
         var fixedChild = tree.AddNode(LayoutStyle.Default with
         {
@@ -350,7 +350,7 @@ public class FlexMeasureTests
         });
         var leaf = tree.AddNode(LayoutStyle.Default with
         {
-            Margin = new Rect<Length>(Length.Px(0), Length.Px(0), Length.Px(5), Length.Px(5)),
+            Margin = new LayoutRect<Length>(Length.Px(0), Length.Px(0), Length.Px(5), Length.Px(5)),
         });
         tree.AddChild(root, leaf);
 

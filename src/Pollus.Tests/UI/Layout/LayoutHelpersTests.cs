@@ -9,7 +9,7 @@ public class LayoutHelpersTests
     public void ResolvePadding_Px()
     {
         var style = LayoutStyle.Default;
-        style.Padding = new Rect<Length>(
+        style.Padding = new LayoutRect<Length>(
             Length.Px(10f),
             Length.Px(20f),
             Length.Px(5f),
@@ -26,7 +26,7 @@ public class LayoutHelpersTests
     public void ResolvePadding_Percent_UsesParentWidth()
     {
         var style = LayoutStyle.Default;
-        style.Padding = new Rect<Length>(
+        style.Padding = new LayoutRect<Length>(
             Length.Percent(0.1f),
             Length.Percent(0.2f),
             Length.Percent(0.05f),
@@ -43,7 +43,7 @@ public class LayoutHelpersTests
     public void ResolveBorder_Px()
     {
         var style = LayoutStyle.Default;
-        style.Border = Rect<Length>.All(Length.Px(2f));
+        style.Border = LayoutRect<Length>.All(Length.Px(2f));
         var result = LayoutHelpers.ResolveBorder(style, new Size<float?>(100f, 100f));
         Assert.Equal(2f, result.Left);
         Assert.Equal(2f, result.Right);
@@ -55,7 +55,7 @@ public class LayoutHelpersTests
     public void ResolveMargin_Px()
     {
         var style = LayoutStyle.Default;
-        style.Margin = new Rect<Length>(
+        style.Margin = new LayoutRect<Length>(
             Length.Px(5f),
             Length.Px(10f),
             Length.Px(15f),
@@ -72,7 +72,7 @@ public class LayoutHelpersTests
     public void ResolveMargin_Auto_ResolvesToZero()
     {
         var style = LayoutStyle.Default;
-        style.Margin = Rect<Length>.All(Length.Auto);
+        style.Margin = LayoutRect<Length>.All(Length.Auto);
         var result = LayoutHelpers.ResolveMargin(style, new Size<float?>(100f, 100f));
         Assert.Equal(0f, result.Left);
         Assert.Equal(0f, result.Right);
@@ -84,7 +84,7 @@ public class LayoutHelpersTests
     public void ResolveInset_Px()
     {
         var style = LayoutStyle.Default;
-        style.Inset = new Rect<Length>(
+        style.Inset = new LayoutRect<Length>(
             Length.Px(10f),
             Length.Px(20f),
             Length.Px(30f),
@@ -174,8 +174,8 @@ public class LayoutHelpersTests
     [Fact]
     public void ContentBoxAdjustment_BorderBox()
     {
-        var padding = new Rect<float>(10f, 10f, 5f, 5f);
-        var border = new Rect<float>(2f, 2f, 2f, 2f);
+        var padding = new LayoutRect<float>(10f, 10f, 5f, 5f);
+        var border = new LayoutRect<float>(2f, 2f, 2f, 2f);
         var adj = LayoutHelpers.ContentBoxAdjustment(BoxSizing.BorderBox, padding, border);
         Assert.Equal(-24f, adj.Width);
         Assert.Equal(-14f, adj.Height);
@@ -184,8 +184,8 @@ public class LayoutHelpersTests
     [Fact]
     public void ContentBoxAdjustment_ContentBox_IsZero()
     {
-        var padding = new Rect<float>(10f, 10f, 5f, 5f);
-        var border = new Rect<float>(2f, 2f, 2f, 2f);
+        var padding = new LayoutRect<float>(10f, 10f, 5f, 5f);
+        var border = new LayoutRect<float>(2f, 2f, 2f, 2f);
         var adj = LayoutHelpers.ContentBoxAdjustment(BoxSizing.ContentBox, padding, border);
         Assert.Equal(0f, adj.Width);
         Assert.Equal(0f, adj.Height);
