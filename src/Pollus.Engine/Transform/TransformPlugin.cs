@@ -1,5 +1,6 @@
 namespace Pollus.Engine.Transform;
 
+using System.Runtime.CompilerServices;
 using Pollus.ECS;
 using Pollus.Mathematics;
 
@@ -87,9 +88,10 @@ public partial class Transform2DSystems
             in Span<Read<Transform2D>> transforms
         )
         {
+            if (globalTransforms.Length != transforms.Length) return;
             for (var i = 0; i < globalTransforms.Length; i++)
             {
-                globalTransforms[i].Value = transforms[i].Component.ToMat4f();
+                transforms[i].Component.Write(ref globalTransforms[i].Value);
             }
         }
     }
@@ -97,7 +99,7 @@ public partial class Transform2DSystems
     [System(CoreStage.PostUpdate)]
     static void HandleDynamic(
         Query query,
-        Query<GlobalTransform, Read<Transform2D>, Read<Parent>>.Filter<None<Child, Static>> qRoots,
+        Query<GlobalTransform>.Filter<(All<Transform2D, Parent>, None<Child, Static>)> qRoots,
         Query<GlobalTransform, Read<Transform2D>>.Filter<(Any<Parent, Child>, None<Static>)> qTreeTransforms,
         Query<GlobalTransform, Read<Transform2D>>.Filter<None<Parent, Child, Static>> qOrphans
     )
@@ -105,7 +107,7 @@ public partial class Transform2DSystems
         qOrphans.ForEachChunk(new UpdateLocalTransforms());
         qTreeTransforms.ForEachChunk(new UpdateLocalTransforms());
 
-        qRoots.ForEach(query, static (in query, in root, ref _, ref _, ref _) =>
+        qRoots.ForEach(query, static (in query, in root, ref _) =>
         {
             TransformPropagation.Propagate(root, query, Mat4f.Identity());
         });
@@ -141,6 +143,7 @@ public partial class Transform2DSystems
 
 static class TransformPropagation
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Propagate(in Entity current, in Query query, in Mat4f parentTransform)
     {
         ref var child = ref query.TryGet<Child>(current, out var hasChild);
@@ -150,10 +153,7 @@ static class TransformPropagation
         }
 
         ref var globalTransform = ref query.TryGet<GlobalTransform>(current, out var hasGlobalTransform);
-        if (!hasGlobalTransform)
-        {
-            return;
-        }
+        if (!hasGlobalTransform) return;
 
         globalTransform.Value = parentTransform * globalTransform.Value;
 
