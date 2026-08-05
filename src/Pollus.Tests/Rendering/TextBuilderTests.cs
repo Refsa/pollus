@@ -27,7 +27,7 @@ public class TextBuilderTests
             glyphs[key] = new Glyph
             {
                 Character = c,
-                Bounds = new RectInt(0, 0, w, h),
+                Bounds = new Rect<int>(0, 0, w, h),
                 Advance = advance,
                 BearingX = bearingX,
                 BearingY = bearingY,
@@ -469,7 +469,7 @@ public class TextBuilderTests
             {
                 Character = ch, Advance = adv,
                 BearingX = 1f, BearingY = 14f,
-                Bounds = new RectInt(0, 0, (int)adv, 16),
+                Bounds = new Rect<int>(0, 0, (int)adv, 16),
                 Scale = 1f, LineHeight = lineHeight,
                 Ascender = ascender, Descender = -6f,
             };
@@ -546,7 +546,7 @@ public class TextBuilderTests
             {
                 Character = c, Advance = advance,
                 BearingX = 1f + sdfPadding, BearingY = bearingY,
-                Bounds = new RectInt(0, 0, (int)advance + 2 * sdfPadding, boundsH),
+                Bounds = new Rect<int>(0, 0, (int)advance + 2 * sdfPadding, boundsH),
                 Scale = 1f, LineHeight = lineHeight,
                 Ascender = ascender, Descender = descender,
             };

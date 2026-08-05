@@ -1,1 +1,1 @@
-dotnet publish Browser/Pollus.Examples.Browser.csproj -c Release
+dotnet publish Browser/Pollus.Examples.Browser.csproj -c Release "$@"

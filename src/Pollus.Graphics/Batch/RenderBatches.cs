@@ -26,6 +26,10 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
 {
     readonly ArrayList<TBatch> batches = [];
     readonly Dictionary<TKey, int> batchLookup = [];
+
+    TBatch? lastBatch;
+    TKey lastBatchKey = default!;
+
     bool isDisposed;
 
     public RendererKey RendererKey { get; set; }
@@ -85,12 +89,22 @@ public abstract class RenderBatches<TBatch, TKey> : IRenderBatches<TBatch>, IDis
 
     public TBatch GetOrCreate(in TKey key)
     {
-        if (batchLookup.TryGetValue(key, out var batchIdx)) return batches[batchIdx];
+        if (lastBatch != null && EqualityComparer<TKey>.Default.Equals(key, lastBatchKey)) return lastBatch;
+
+        if (batchLookup.TryGetValue(key, out var batchIdx))
+        {
+            lastBatch = batches[batchIdx];
+            lastBatchKey = key;
+            return lastBatch;
+        }
 
         var batch = CreateBatch(key);
         batch.BatchID = batches.Count;
         batchLookup.Add(key, batches.Count);
         batches.Add(batch);
+
+        lastBatch = batch;
+        lastBatchKey = key;
         return batch;
     }
 

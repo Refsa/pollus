@@ -10,9 +10,10 @@ public partial class SpriteMaterial : IMaterial
 {
     public static readonly VertexFormat[] InstanceFormats =
     [
-        VertexFormat.Mat3x4,
         VertexFormat.Float32x4,
-        VertexFormat.Float32x4,
+        VertexFormat.Float32x3,
+        VertexFormat.Uint16x4,
+        VertexFormat.Uint32,
     ];
 
     public static string Name => "SpriteMaterial";

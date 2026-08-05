@@ -15,10 +15,9 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     public partial struct InstanceData
     {
         public required Vec4f Model0;
-        public required Vec4f Model1;
-        public required Vec4f Model2;
-        public required Vec4f Slice;
-        public required Vec4f Color;
+        public required Vec3f Model1;
+        public required PackedU16x4 Slice;
+        public required uint Color;
     }
 
     public Handle Material { get; init; }

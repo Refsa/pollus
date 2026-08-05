@@ -11,11 +11,19 @@ public partial struct Sprite : IComponent, IDefault<Sprite>
     public static Sprite Default { get; } = new Sprite()
     {
         Material = Handle<SpriteMaterial>.Null,
-        Slice = Rect.Zero,
+        Slice = Rect<int>.Zero,
         Color = Color.WHITE,
     };
 
     public required Handle Material;
-    public required Rect Slice;
-    public Color Color;
+    public required Rect<int> Slice;
+    uint packedColor;
+
+    public Color Color
+    {
+        readonly get => PackUtils.UnpackUnorm8x4(packedColor);
+        set => packedColor = PackUtils.PackUnorm8x4(value);
+    }
+
+    public uint PackedColor => packedColor;
 }

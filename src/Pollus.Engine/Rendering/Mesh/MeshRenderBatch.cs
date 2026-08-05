@@ -4,7 +4,7 @@ using Pollus.Graphics;
 using Pollus.Mathematics;
 using Pollus.Utils;
 
-public record struct MeshBatchKey(Handle<MeshAsset> Mesh, Handle Material, RenderStep2D RenderStep = RenderStep2D.Main)
+public record struct MeshBatchKey(Handle<MeshAsset> Mesh, Handle Material, RenderStep2D RenderStep = RenderStep2D.Main, bool IsStatic = false)
 {
     public int SortKey { get; } = RenderingUtils.PackSortKeys(Mesh.ID, Material.ID);
 }
@@ -19,6 +19,7 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
     {
         Mesh = key.Mesh;
         Material = key.Material;
+        IsStatic = key.IsStatic;
         RenderStep = (int)key.RenderStep;
         RequiredResources = [Mesh, Material];
     }

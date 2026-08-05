@@ -1,10 +1,12 @@
 CLEAN=false
 SKIP_BUILD=false
+WITH_SYMBOLS=false
 
 for arg in "$@"; do
     case "$arg" in
         --clean) CLEAN=true ;;
         skip-build) SKIP_BUILD=true ;;
+        symbols|--symbols) WITH_SYMBOLS=true ;;
     esac
 done
 
@@ -14,7 +16,12 @@ if [ "$CLEAN" == "true" ]; then
 fi
 
 if [ "$SKIP_BUILD" == "false" ]; then
-    ./build_web.sh $1
+    BUILD_ARGS=()
+    if [ "$WITH_SYMBOLS" == "true" ]; then
+        BUILD_ARGS+=("-p:Mode=WithSymbols")
+    fi
+
+    ./build_web.sh "${BUILD_ARGS[@]}"
 fi
 
 if [ $? -ne 0 ]; then
