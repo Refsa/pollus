@@ -1,5 +1,6 @@
 namespace Pollus.Utils;
 
+using System.Runtime.CompilerServices;
 using Core.Serialization;
 using Pollus.Graphics;
 using Pollus.Mathematics;
@@ -391,7 +392,8 @@ public partial struct Color
     }
 }
 
-public struct Color8
+[ShaderType]
+public partial struct Color8
 {
     public byte R;
     public byte G;
@@ -402,11 +404,17 @@ public struct Color8
     {
         return new Color8
         {
-            R = (byte)(color.R * 255),
-            G = (byte)(color.G * 255),
-            B = (byte)(color.B * 255),
-            A = (byte)(color.A * 255)
+            R = ToUnorm8(color.R),
+            G = ToUnorm8(color.G),
+            B = ToUnorm8(color.B),
+            A = ToUnorm8(color.A)
         };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte ToUnorm8(float value)
+    {
+        return (byte)(value * 255f + 0.5f);
     }
 }
 

@@ -43,7 +43,7 @@ public record struct Draw
     public uint InstanceCount = 1;
     public uint InstanceOffset;
 
-    public RectInt? ScissorRect;
+    public Rect<int>? ScissorRect;
 
     public bool IsEmpty => Pipeline == Handle<GPURenderPipeline>.Null;
 
@@ -121,7 +121,7 @@ public record struct Draw
         return this;
     }
 
-    public Draw SetScissorRect(RectInt? rect)
+    public Draw SetScissorRect(Rect<int>? rect)
     {
         ScissorRect = rect;
         return this;

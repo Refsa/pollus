@@ -10,11 +10,11 @@ public readonly struct UIRectBatchKey : IEquatable<UIRectBatchKey>
     public Handle Material { get; }
     public Handle Texture { get; }
     public Handle Sampler { get; }
-    public RectInt? ScissorRect { get; }
+    public Rect<int>? ScissorRect { get; }
     public RenderStep2D RenderStep { get; }
     public int SortKey { get; }
 
-    public UIRectBatchKey(Handle Material, Handle Texture, Handle Sampler, RectInt? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
+    public UIRectBatchKey(Handle Material, Handle Texture, Handle Sampler, Rect<int>? ScissorRect = null, RenderStep2D RenderStep = RenderStep2D.UI)
     {
         this.Material = Material;
         this.Texture = Texture;
@@ -83,7 +83,7 @@ public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>
     public Handle Material { get; init; }
     public Handle Texture { get; init; }
     public Handle Sampler { get; init; }
-    public RectInt? ScissorRect { get; init; }
+    public Rect<int>? ScissorRect { get; init; }
     public override Handle[] RequiredResources { get; }
 
     public UIRectBatch(in UIRectBatchKey key) : base(key.SortKey, RenderSortKeyLayout.Direct)

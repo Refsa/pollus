@@ -64,7 +64,7 @@ public class FrameGraphExample : IExample
                         new Sprite
                         {
                             Material = spriteMaterial,
-                            Slice = new Rect(16, 0, 48, 16),
+                            Slice = new Rect<int>(16, 0, 48, 16),
                             Color = Color.WHITE,
                         }
                     ));

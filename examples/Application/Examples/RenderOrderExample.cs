@@ -56,7 +56,7 @@ public partial class RenderOrderExample : IExample
                         new Sprite()
                         {
                             Material = i % 2 == 0 ? spriteMaterial1 : spriteMaterial2,
-                            Slice = Rect.FromOriginSize(new Vec2f((i % 4) * 16, (i / 4) * 16), new Vec2f(16, 16)),
+                            Slice = Rect<int>.FromOriginSize(new(i % 4 * 16, i / 4 * 16), new(16, 16)),
                             Color = i == 0 ? Color.RED : Color.WHITE,
                         },
                         Transform2D.Default with

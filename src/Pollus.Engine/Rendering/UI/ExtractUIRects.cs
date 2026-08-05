@@ -22,7 +22,7 @@ public partial class ExtractUIRectsSystem
 {
     class LocalData
     {
-        public List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)> Deferred = new();
+        public List<(Entity entity, Vec2f parentAbsPos, Rect<int>? scissor)> Deferred = new();
     }
 
     [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem, "UITextSystemSet::PropagateUIFontAtlas"]), Local<LocalData>()]
@@ -102,18 +102,18 @@ public partial class ExtractUIRectsSystem
         }
     }
 
-    static RectInt IntersectScissorRects(RectInt a, RectInt b)
+    static Rect<int> IntersectScissorRects(Rect<int> a, Rect<int> b)
     {
         var left = Math.Max(a.Min.X, b.Min.X);
         var top = Math.Max(a.Min.Y, b.Min.Y);
         var right = Math.Min(a.Max.X, b.Max.X);
         var bottom = Math.Min(a.Max.Y, b.Max.Y);
-        return new RectInt(left, top, Math.Max(left, right), Math.Max(top, bottom));
+        return new Rect<int>(left, top, Math.Max(left, right), Math.Max(top, bottom));
     }
 
-    static RectInt? ComputeChildScissor(RectInt? parentScissor, Vec2f absPos, Vec2f size, in ComputedNode computed)
+    static Rect<int>? ComputeChildScissor(Rect<int>? parentScissor, Vec2f absPos, Vec2f size, in ComputedNode computed)
     {
-        var nodeRect = new RectInt(
+        var nodeRect = new Rect<int>(
             (int)(absPos.X + computed.BorderLeft),
             (int)(absPos.Y + computed.BorderTop),
             (int)(absPos.X + size.X - computed.BorderRight),
@@ -130,8 +130,8 @@ public partial class ExtractUIRectsSystem
     const uint TextShadowSortOffset = 2;
     const uint TextSortOffset = 3;
 
-    static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, Assets<TextMeshAsset> meshes, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor,
-        List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
+    static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, Assets<TextMeshAsset> meshes, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, Rect<int>? scissor,
+        List<(Entity entity, Vec2f parentAbsPos, Rect<int>? scissor)>? deferred)
     {
         if (scissor.HasValue && (scissor.Value.Width <= 0 || scissor.Value.Height <= 0))
             return;
@@ -210,7 +210,7 @@ public partial class ExtractUIRectsSystem
         Vec2f absPos,
         Vec2f size,
         in ComputedNode computed,
-        RectInt? scissor)
+        Rect<int>? scissor)
     {
         var bgColor = Vec4f.Zero;
         var borderColor = Vec4f.Zero;
@@ -332,7 +332,7 @@ public partial class ExtractUIRectsSystem
         EntityRef entRef,
         Vec2f absPos,
         in ComputedNode computed,
-        RectInt? scissor)
+        Rect<int>? scissor)
     {
         if (!entRef.Has<UIText>() || !entRef.Has<TextMesh>() || !entRef.Has<UITextFont>()) return;
 

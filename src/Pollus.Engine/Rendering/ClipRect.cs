@@ -5,9 +5,9 @@ using Pollus.Mathematics;
 
 public partial struct ClipRect : IComponent
 {
-    public RectInt Rect;
+    public Rect<int> Rect;
 
-    public static RectInt Intersect(RectInt a, RectInt b)
+    public static Rect<int> Intersect(Rect<int> a, Rect<int> b)
     {
         var minX = int.Max(a.Min.X, b.Min.X);
         var minY = int.Max(a.Min.Y, b.Min.Y);
@@ -16,9 +16,9 @@ public partial struct ClipRect : IComponent
 
         if (minX > maxX || minY > maxY)
         {
-            return new RectInt(0, 0, 0, 0);
+            return new Rect<int>(0, 0, 0, 0);
         }
 
-        return new RectInt(minX, minY, maxX, maxY);
+        return new Rect<int>(minX, minY, maxX, maxY);
     }
 }

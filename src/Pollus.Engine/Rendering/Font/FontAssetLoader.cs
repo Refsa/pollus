@@ -68,7 +68,7 @@ public class FontAssetLoader : AssetLoader<FontAsset, FontAssetLoader.LoadState>
                         glyphs[glyphKey] = new Glyph
                         {
                             Character = c,
-                            Bounds = new Mathematics.RectInt(0, 0, 0, 0),
+                            Bounds = new Mathematics.Rect<int>(0, 0, 0, 0),
                             Advance = advance * scale,
                             BearingX = 0,
                             BearingY = 0,

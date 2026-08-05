@@ -81,7 +81,7 @@ public class DrawGroup<TGroup>
         Span<Handle<GPUBuffer>> vertexBufferHandles = stackalloc Handle<GPUBuffer>[Draw.MAX_VERTEX_BUFFERS] { Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null, Handle<GPUBuffer>.Null };
         Handle<GPUBuffer> indexBufferHandle = Handle<GPUBuffer>.Null;
         Handle<GPURenderPipeline> pipelineHandle = Handle<GPURenderPipeline>.Null;
-        RectInt? scissorRect = null;
+        Rect<int>? scissorRect = null;
 
         // TODO: Sort commands by resource usage
         foreach (scoped ref readonly var command in drawLists.Commands)

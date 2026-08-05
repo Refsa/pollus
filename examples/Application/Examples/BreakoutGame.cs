@@ -173,7 +173,7 @@ public partial class BreakoutGame : IExample
                         new Sprite
                         {
                             Material = spriteMaterial,
-                            Slice = new Rect(16, 0, 48, 16),
+                            Slice = new Rect<int>(16, 0, 48, 16),
                             Color = Color.WHITE,
                         }
                     ));
@@ -342,7 +342,7 @@ public partial class BreakoutGame : IExample
                                     Sprite.Default with
                                     {
                                         Material = gameState.spritesheet,
-                                        Slice = Rect.FromOriginSize(new Vec2f(16f, (x + y) % 3 * 16f), new Vec2f(48f, 16f)),
+                                        Slice = Rect<int>.FromOriginSize(new(16, (ushort)((x + y) % 3 * 16)), new(48, 16)),
                                     }
                                 ));
                             }
@@ -371,7 +371,7 @@ public partial class BreakoutGame : IExample
                             new Sprite
                             {
                                 Material = gameState.spritesheet,
-                                Slice = new Rect(0, 0, 16, 16),
+                                Slice = new Rect<int>(0, 0, 16, 16),
                                 Color = Color.WHITE,
                             },
                             CollisionShape.Circle(8f)

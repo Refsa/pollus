@@ -13,20 +13,12 @@ using Microsoft.CodeAnalysis.Text;
 [Generator(LanguageNames.CSharp)]
 public class ShaderTypeGenerator : IIncrementalGenerator
 {
-    class TypeInfo
-    {
-        public string Namespace;
-        public string ClassName;
-        public string FullTypeKind;
-        public string Visibility;
-    }
-
     class Model
     {
         public TypeInfo TypeInfo;
         public TypeInfo ContainingType;
-        public int SizeOf;
-        public int AlignOf;
+        public string SizeOf;
+        public string AlignOf;
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -47,33 +39,22 @@ public class ShaderTypeGenerator : IIncrementalGenerator
                 TypeInfo containingType = null;
                 if (data.ContainingType?.TypeKind is TypeKind.Struct or TypeKind.Class or TypeKind.Interface)
                 {
-                    var containingTypeKind = data.ContainingType.TypeKind.ToString().ToLower();
-                    if (data.ContainingType.IsRecord && containingTypeKind != "record") containingTypeKind = $"record {containingTypeKind}";
-                    containingType = new TypeInfo()
-                    {
-                        Namespace = data.ContainingNamespace.ToDisplayString(),
-                        ClassName = data.ContainingType.Name,
-                        FullTypeKind = containingTypeKind,
-                        Visibility = data.ContainingType.DeclaredAccessibility.ToString().ToLower(),
-                    };
+                    containingType = Common.CreateTypeInfo(data.ContainingType);
                 }
 
-                var fullTypeKind = data.TypeKind.ToString().ToLower();
-                if (data.IsRecord && fullTypeKind != "record") fullTypeKind = $"record {fullTypeKind}";
-                TypeInfo typeInfo = new()
-                {
-                    Namespace = data.ContainingNamespace.ToDisplayString(),
-                    ClassName = data.Name,
-                    FullTypeKind = fullTypeKind,
-                    Visibility = data.DeclaredAccessibility.ToString().ToLower(),
-                };
+                var typeInfo = Common.CreateTypeInfo(data);
+                var isGeneric = data is INamedTypeSymbol { IsGenericType: true };
 
                 return new Model()
                 {
                     TypeInfo = typeInfo,
                     ContainingType = containingType,
-                    SizeOf = sizeOf,
-                    AlignOf = alignOf,
+                    SizeOf = isGeneric
+                        ? $"(uint)global::System.Runtime.CompilerServices.Unsafe.SizeOf<{typeInfo.FullClassName}>()"
+                        : $"{sizeOf}u",
+                    AlignOf = isGeneric
+                        ? "SizeOf switch { <= 2u => 2u, <= 4u => 4u, <= 8u => 8u, _ => 16u }"
+                        : $"{alignOf}u",
                 };
             }
         );
@@ -81,7 +62,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(pipeline, (context, model) =>
         {
             var partialExt = $$"""
-            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.ClassName}} : Pollus.Graphics.IShaderType
+            {{model.TypeInfo.Visibility}} partial {{model.TypeInfo.FullTypeKind}} {{model.TypeInfo.FullClassName}} : Pollus.Graphics.IShaderType
             {
                 public static uint SizeOf => {{model.SizeOf}};
                 public static uint AlignOf => {{model.AlignOf}};
@@ -91,7 +72,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             if (model.ContainingType != null)
             {
                 partialExt = $$"""
-                {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.ClassName}}
+                {{model.ContainingType.Visibility}} partial {{model.ContainingType.FullTypeKind}} {{model.ContainingType.FullClassName}}
                 {
                     {{partialExt}}
                 }
@@ -103,7 +84,7 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             {{partialExt}}
             """, Encoding.UTF8);
 
-            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.ClassName ?? "root"}_{model.TypeInfo.ClassName}.ShaderType.gen.cs", source);
+            context.AddSource($"{model.TypeInfo.Namespace.Replace('.', '_')}_{model.ContainingType?.FileName ?? "root"}_{model.TypeInfo.FileName}.ShaderType.gen.cs", source);
         });
     }
 

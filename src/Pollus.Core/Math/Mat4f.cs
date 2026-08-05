@@ -125,6 +125,7 @@ public partial record struct Mat4f
             Unsafe.As<Vector128<float>, Vec4f>(ref col3));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vec4f operator *(in Mat4f left, in Vec4f right)
     {
         return new(
@@ -135,6 +136,7 @@ public partial record struct Mat4f
         );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f operator *(in Mat4f left, float right)
     {
         return new(
@@ -179,7 +181,8 @@ public partial record struct Mat4f
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f FromTRS(Vec2f translation, float rotation, Vec2f scale)
     {
-        var (sin, cos) = Math.SinCos(rotation);
+        var (sin, cos) = rotation == 0f ? (0f, 1f) : Math.SinCos(rotation);
+        
         return new(
             new Vec4f(cos * scale.X, sin * scale.X, 0f, 0f),
             new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, 0f),
@@ -191,7 +194,7 @@ public partial record struct Mat4f
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Mat4f FromTRS(Vec3f translation, float rotation, Vec2f scale)
     {
-        var (sin, cos) = Math.SinCos(rotation);
+        var (sin, cos) = rotation == 0f ? (0f, 1f) : Math.SinCos(rotation);
         return new(
             new Vec4f(cos * scale.X, sin * scale.X, 0f, 0f),
             new Vec4f(-sin * scale.Y, cos * scale.Y, 0f, 0f),

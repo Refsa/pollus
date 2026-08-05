@@ -9,7 +9,7 @@ public partial class SpriteAnimation
 {
     public struct Frame()
     {
-        public required Rect Rect { get; init; }
+        public required Rect<int> Rect { get; init; }
         public required float Duration { get; init; } = 100;
     }
 
@@ -17,7 +17,7 @@ public partial class SpriteAnimation
     public required Handle<TextureAtlas> AtlasHandle { get; init; }
     public required Frame[] Frames { get; init; }
 
-    public Rect GetUVRect(int frame) => Frames[frame].Rect;
+    public Rect<int> GetUVRect(int frame) => Frames[frame].Rect;
     public Frame GetFrame(int frame) => Frames[frame];
 
     public static SpriteAnimation From(string name, Handle atlasHandle, TextureAtlas atlas, int frameRate, ReadOnlySpan<string> slices)

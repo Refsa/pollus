@@ -172,9 +172,9 @@ public partial class SpriteAnimationExample : IExample
                         });
                 }))
             .AddSystems(CoreStage.Update, FnSystem.Create(new SystemBuilderDescriptor("OnClipEnded")
-                {
-                    RunsAfter = ["SpriteAnimationSystems::TickSpriteAnimation"],
-                },
+            {
+                RunsAfter = ["SpriteAnimationSystems::TickSpriteAnimation"],
+            },
                 static (EventReader<SpriteAnimatorEvents.ClipEnded> eClipEnded,
                     EventWriter<SpriteAnimatorEvents.ClipChangeRequest> eClipChange,
                     Query q

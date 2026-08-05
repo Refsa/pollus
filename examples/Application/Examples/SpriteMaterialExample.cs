@@ -37,7 +37,7 @@ public class SpriteMaterialExample : IExample
                         new Sprite()
                         {
                             Material = material,
-                            Slice = Rect.FromOriginSize(Vec2f.Zero, Vec2f.One * 16),
+                            Slice = Rect<int>.FromOriginSize(Vec2<int>.Zero, Vec2<int>.One * 16),
                             Color = Color.WHITE,
                         },
                         Transform2D.Default with
@@ -58,7 +58,7 @@ public class SpriteMaterialExample : IExample
                         new Sprite()
                         {
                             Material = customShader,
-                            Slice = Rect.FromOriginSize(Vec2f.Zero, Vec2f.One * 16),
+                            Slice = Rect<int>.FromOriginSize(Vec2<int>.Zero, Vec2<int>.One * 16),
                             Color = Color.WHITE,
                         },
                         Transform2D.Default with

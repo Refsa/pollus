@@ -47,7 +47,7 @@ public record struct GlyphKey(Handle Font, char Character);
 public class Glyph
 {
     public char Character { get; init; }
-    public RectInt Bounds { get; init; }
+    public Rect<int> Bounds { get; init; }
 
     public float Advance { get; init; }
     public float BearingX { get; init; }
@@ -66,7 +66,7 @@ public class FontAtlasPacker(int width, int height)
     private int rowHeight;
     private int padding = 1;
 
-    public bool TryPack(int glyphWidth, int glyphHeight, out RectInt bounds)
+    public bool TryPack(int glyphWidth, int glyphHeight, out Rect<int> bounds)
     {
         if (currentX + glyphWidth + padding > width)
         {
@@ -81,7 +81,7 @@ public class FontAtlasPacker(int width, int height)
             return false;
         }
 
-        bounds = new RectInt(currentX, currentY, currentX + glyphWidth, currentY + glyphHeight);
+        bounds = new Rect<int>(currentX, currentY, currentX + glyphWidth, currentY + glyphHeight);
 
         currentX += glyphWidth + padding;
         rowHeight = int.Max(rowHeight, glyphHeight);
