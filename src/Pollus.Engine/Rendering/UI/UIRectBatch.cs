@@ -86,7 +86,7 @@ public partial class UIRectBatch : RenderBatch<UIRectBatch.InstanceData>
     public RectInt? ScissorRect { get; init; }
     public override Handle[] RequiredResources { get; }
 
-    public UIRectBatch(in UIRectBatchKey key) : base(key.SortKey)
+    public UIRectBatch(in UIRectBatchKey key) : base(key.SortKey, RenderSortKeyLayout.Direct)
     {
         Material = key.Material;
         Texture = key.Texture;

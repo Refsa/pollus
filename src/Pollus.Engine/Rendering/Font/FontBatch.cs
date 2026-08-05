@@ -24,7 +24,7 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
     public Handle<TextMeshAsset> TextMesh { get; }
     public override Handle[] RequiredResources { get; }
 
-    public FontBatch(in FontBatchKey key) : base(key.SortKey)
+    public FontBatch(in FontBatchKey key) : base(key.SortKey, RenderSortKeyLayout.DepthThenBatch(key.SortKey))
     {
         Material = key.Material;
         TextMesh = key.TextMesh;
@@ -32,7 +32,7 @@ public partial class FontBatch : RenderBatch<FontBatch.InstanceData>
         RequiredResources = [Material, TextMesh];
     }
 
-    public void Draw(ulong sortKey, Mat4f model, Color color)
+    public void Draw(uint sortKey, Mat4f model, Color color)
     {
         var tModel = model.Transpose();
         base.Draw(sortKey, new InstanceData()

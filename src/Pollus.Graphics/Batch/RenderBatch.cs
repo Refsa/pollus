@@ -1,6 +1,7 @@
 namespace Pollus.Graphics;
 
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
 using Pollus.Graphics.WGPU;
@@ -14,6 +15,7 @@ public interface IRenderBatch
     bool IsStatic { get; }
     bool IsDirty { get; set; }
     int Key { get; }
+    public RenderSortKeyLayout KeyLayout { get; set; }
     int BatchID { get; set; }
     int RenderStep { get; }
     Handle<GPUBuffer> InstanceBufferHandle { get; set; }
@@ -32,7 +34,7 @@ public interface IRenderBatch<TInstanceData> : IRenderBatch
     where TInstanceData : unmanaged, IShaderType
 {
     Span<TInstanceData> Data { get; }
-    void Draw(ulong sortKey, in TInstanceData data);
+    void Draw(uint sortKey, in TInstanceData data);
 }
 
 public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, IDisposable
@@ -44,6 +46,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
 
     public int Key { get; init; }
     public int BatchID { get; set; } = -1;
+    public RenderSortKeyLayout KeyLayout { get; set; }
     public Handle<GPUBuffer> InstanceBufferHandle { get; set; } = Handle<GPUBuffer>.Null;
     public abstract Handle[] RequiredResources { get; }
     public Span<TInstanceData> Data => data.AsSpan(0, count);
@@ -62,11 +65,17 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
     {
         data = new TInstanceData[16];
         sortBuffer = new SortBuffer(16);
+        KeyLayout = RenderSortKeyLayout.Direct;
     }
 
     protected RenderBatch(int key) : this()
     {
         Key = key;
+    }
+
+    protected RenderBatch(int key, RenderSortKeyLayout layout) : this(key)
+    {
+        KeyLayout = layout;
     }
 
     public void Dispose()
@@ -80,7 +89,7 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
         IsDirty = true;
     }
 
-    public void Draw(ulong sortKey, in TInstanceData instanceData)
+    public void Draw(uint sortKey, in TInstanceData instanceData)
     {
         if (count == data.Length) ResizeScratch(count * 2);
 
@@ -90,11 +99,24 @@ public abstract class RenderBatch<TInstanceData> : IRenderBatch<TInstanceData>, 
         IsDirty = true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref TInstanceData Draw(uint sortKey)
+    {
+        if (count == data.Length) ResizeScratch(count * 2);
+
+        var instanceIndex = count++;
+        sortBuffer.Add(sortKey, instanceIndex);
+        IsDirty = true;
+        return ref data[instanceIndex];
+    }
+
     public void Prepare()
     {
         if (!IsDirty || sortBuffer.Count == 0) return;
 
-        sortBuffer.Sort();
+        var requiresPermutation = sortBuffer.Sort();
+        if (!requiresPermutation) return;
+
         var entries = sortBuffer.Entries;
         var n = entries.Length;
 

@@ -4,6 +4,7 @@ using Collections;
 using Pollus.ECS;
 using Pollus.Graphics;
 using Pollus.Graphics.WGPU;
+using Silk.NET.SDL;
 
 public class RenderQueueRegistry
 {
@@ -48,25 +49,16 @@ public class WriteRenderBuffersSystem : SystemBase<RenderQueueRegistry, RenderAs
 
 public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAssets, DrawGroups2D>
 {
-    struct DrawEntry : IComparable<DrawEntry>
+    struct BatchCursor
     {
-        public ulong SortKey;
-        public RendererKey RendererKey;
-        public int BatchID;
-        public int SortedIndex;
-        public int RenderStep;
-
-        public int CompareTo(DrawEntry other)
-        {
-            var renderStepComparison = RenderStep.CompareTo(other.RenderStep);
-            if (renderStepComparison != 0) return renderStepComparison;
-            var sortKeyComparison = SortKey.CompareTo(other.SortKey);
-            if (sortKeyComparison != 0) return sortKeyComparison;
-            return SortedIndex.CompareTo(other.SortedIndex);
-        }
+        public required IRenderBatches Owner;
+        public required IRenderBatch Batch;
+        public int NextIndex;
+        public int RunOrdinal;
     }
 
-    readonly ArrayList<DrawEntry> drawOrder = new(1024);
+    readonly ArrayList<BatchCursor> cursors = new(64);
+    readonly PriorityQueue<int, RenderQueueSortKey> mergeQueue = new(RenderQueueSortKeyComparer.Instance);
 
     public SubmitRenderQueueSystem() : base(new SystemDescriptor(RenderQueueSystems.SubmitRenderQueueSystem)
     {
@@ -78,74 +70,142 @@ public class SubmitRenderQueueSystem : SystemBase<RenderQueueRegistry, RenderAss
 
     protected override void OnTick(RenderQueueRegistry registry, RenderAssets renderAssets, DrawGroups2D drawGroups)
     {
-        drawOrder.Clear();
+        cursors.Clear();
+        mergeQueue.Clear();
 
+        int runOrdinal = 0;
         foreach (scoped ref readonly var batches in registry.Batches)
         {
             foreach (scoped ref readonly var batch in batches.Batches)
             {
                 var entries = batch.SortEntries;
-                drawOrder.EnsureCapacity(drawOrder.Count + entries.Length);
-                for (int i = 0; i < entries.Length; i++)
+                if (entries.Length == 0)
                 {
-                    drawOrder.Add(new DrawEntry
-                    {
-                        SortKey = entries[i].SortKey,
-                        RendererKey = batches.RendererKey,
-                        BatchID = batch.BatchID,
-                        SortedIndex = i,
-                        RenderStep = batch.RenderStep,
-                    });
+                    continue;
                 }
+
+                var cursorIndex = cursors.Count;
+
+                cursors.Add(new BatchCursor
+                {
+                    Owner = batches,
+                    Batch = batch,
+                    NextIndex = 0,
+                    RunOrdinal = runOrdinal,
+                });
+
+                mergeQueue.Enqueue(
+                    cursorIndex,
+                    new RenderQueueSortKey(
+                        batch.RenderStep,
+                        batch.KeyLayout.Compose(entries[0].SortKey),
+                        0,
+                        runOrdinal
+                    )
+                );
+
+                runOrdinal++;
             }
         }
 
-        if (drawOrder.Count == 0) return;
+        if (cursors.Count == 0) return;
+        if (cursors.Count == 1)
+        {
+            ref var cursor = ref cursors.Get(0);
+            var entries = cursor.Batch.SortEntries;
 
-        drawOrder.AsSpan().Sort();
+            var draw = cursor.Owner.GetDrawCall(
+                cursor.Batch.BatchID,
+                0,
+                entries.Length,
+                renderAssets
+            );
 
-        RendererKey currentRendererKey = RendererKey.Null;
+            if (!draw.IsEmpty)
+            {
+                drawGroups
+                    .GetDrawList((RenderStep2D)cursor.Batch.RenderStep)
+                    .Add(draw);
+            }
+
+            return;
+        }
+
+        IRenderBatches? currentOwner = null;
         int currentBatchID = -1;
         int currentRenderStep = -1;
-        int start = 0;
-        int count = 0;
+        int rangeStart = 0;
+        int rangeCount = 0;
 
-        for (int i = 0; i < drawOrder.Count; i++)
+        while (mergeQueue.TryDequeue(out var cursorIndex, out _))
         {
-            var entry = drawOrder[i];
+            ref var cursor = ref cursors.Get(cursorIndex);
+            var entries = cursor.Batch.SortEntries;
+            var sortedIndex = cursor.NextIndex;
 
-            var isNewBatch = entry.RendererKey != currentRendererKey || entry.BatchID != currentBatchID;
-            var isNewRenderStep = entry.RenderStep != currentRenderStep;
-            var isNonContiguous = !isNewBatch && (start + count) != entry.SortedIndex;
+            var isNewBatch =
+                !ReferenceEquals(cursor.Owner, currentOwner) ||
+                cursor.Batch.BatchID != currentBatchID;
+
+            var isNewRenderStep =
+                cursor.Batch.RenderStep != currentRenderStep;
+
+            var isNonContiguous =
+                !isNewBatch &&
+                rangeStart + rangeCount != sortedIndex;
 
             if (isNewBatch || isNewRenderStep || isNonContiguous)
             {
-                if (count > 0 && currentRendererKey != RendererKey.Null)
-                {
-                    var draw = registry.Get(currentRendererKey).GetDrawCall(currentBatchID, start, count, renderAssets);
-                    if (!draw.IsEmpty)
-                    {
-                        var drawList = drawGroups.GetDrawList((RenderStep2D)currentRenderStep);
-                        drawList.Add(draw);
-                    }
-                }
+                FlushRange();
 
-                currentRendererKey = entry.RendererKey;
-                currentBatchID = entry.BatchID;
-                currentRenderStep = entry.RenderStep;
-                start = entry.SortedIndex;
-                count = 0;
+                currentOwner = cursor.Owner;
+                currentBatchID = cursor.Batch.BatchID;
+                currentRenderStep = cursor.Batch.RenderStep;
+                rangeStart = sortedIndex;
+                rangeCount = 0;
             }
 
-            count++;
+            rangeCount++;
+            cursor.NextIndex++;
+
+            if (cursor.NextIndex < entries.Length)
+            {
+                var nextEntry = entries[cursor.NextIndex];
+
+                mergeQueue.Enqueue(
+                    cursorIndex,
+                    new RenderQueueSortKey(
+                        cursor.Batch.RenderStep,
+                        cursor.Batch.KeyLayout.Compose(nextEntry.SortKey),
+                        cursor.NextIndex,
+                        cursor.RunOrdinal
+                    )
+                );
+            }
         }
 
-        if (count > 0 && currentRendererKey != RendererKey.Null)
+        FlushRange();
+
+        void FlushRange()
         {
-            var draw = registry.Get(currentRendererKey).GetDrawCall(currentBatchID, start, count, renderAssets);
+            if (currentOwner is null || rangeCount == 0)
+            {
+                return;
+            }
+
+            var draw = currentOwner.GetDrawCall(
+                currentBatchID,
+                rangeStart,
+                rangeCount,
+                renderAssets
+            );
+
             if (!draw.IsEmpty)
             {
-                var drawList = drawGroups.GetDrawList((RenderStep2D)currentRenderStep);
+                var drawList = drawGroups.GetDrawList(
+                    (RenderStep2D)currentRenderStep
+                );
+
                 drawList.Add(draw);
             }
         }

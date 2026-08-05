@@ -124,11 +124,11 @@ public partial class ExtractUIRectsSystem
         return nodeRect;
     }
 
-    const int SortSlotsPerNode = 5;
-    const int ShadowSortOffset = 0;
-    const int BgSortOffset = 1;
-    const int TextShadowSortOffset = 2;
-    const int TextSortOffset = 3;
+    const uint SortSlotsPerNode = 5;
+    const uint ShadowSortOffset = 0;
+    const uint BgSortOffset = 1;
+    const uint TextShadowSortOffset = 2;
+    const uint TextSortOffset = 3;
 
     static void EmitNode(UIRectBatches batches, Handle<UIRectMaterial> material, Assets<TextMeshAsset> meshes, ref uint sortIndex, Query query, Entity entity, in ComputedNode computed, Vec2f parentAbsPos, RectInt? scissor,
         List<(Entity entity, Vec2f parentAbsPos, RectInt? scissor)>? deferred)
@@ -294,7 +294,7 @@ public partial class ExtractUIRectsSystem
                     // Vertex shader expands the quad by Extra.y + Extra.z (blur + spread).
                     var shadowBatchKey = new UIRectBatchKey(material, Handle.Null, Handle.Null, scissor);
                     var shadowBatch = batches.GetOrCreate(shadowBatchKey);
-                    shadowBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + ShadowSortOffset, new UIRectBatch.InstanceData
+                    shadowBatch.Draw(nodeIndex * SortSlotsPerNode + ShadowSortOffset, new UIRectBatch.InstanceData
                     {
                         PosSize = new Vec4f(absPos.X + shadow.Offset.X, absPos.Y + shadow.Offset.Y, size.X, size.Y),
                         BackgroundColor = (Vec4f)shadow.Color,
@@ -310,7 +310,7 @@ public partial class ExtractUIRectsSystem
 
             var batchKey = new UIRectBatchKey(material, texture, sampler, scissor);
             var batch = batches.GetOrCreate(batchKey);
-            batch.Draw((ulong)nodeIndex * SortSlotsPerNode + BgSortOffset, new UIRectBatch.InstanceData
+            batch.Draw(nodeIndex * SortSlotsPerNode + BgSortOffset, new UIRectBatch.InstanceData
             {
                 PosSize = new Vec4f(absPos.X, absPos.Y, size.X, size.Y),
                 BackgroundColor = bgColor,
@@ -386,7 +386,7 @@ public partial class ExtractUIRectsSystem
             if (hasShadow)
             {
                 // Extra.w carries shadow blur for text SDF widening.
-                textBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + TextShadowSortOffset, new UIRectBatch.InstanceData
+                textBatch.Draw(nodeIndex * SortSlotsPerNode + TextShadowSortOffset, new UIRectBatch.InstanceData
                 {
                     PosSize = new Vec4f(glyphX + shadow.Offset.X, glyphY + shadow.Offset.Y,
                                         glyphSize.X, glyphSize.Y),
@@ -400,7 +400,7 @@ public partial class ExtractUIRectsSystem
                 });
             }
 
-            textBatch.Draw((ulong)nodeIndex * SortSlotsPerNode + TextSortOffset, new UIRectBatch.InstanceData
+            textBatch.Draw(nodeIndex * SortSlotsPerNode + TextSortOffset, new UIRectBatch.InstanceData
             {
                 PosSize = new Vec4f(glyphX, glyphY, glyphSize.X, glyphSize.Y),
                 BackgroundColor = textColor,

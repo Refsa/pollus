@@ -24,7 +24,7 @@ public partial class SpriteBatch : RenderBatch<SpriteBatch.InstanceData>
     public Handle Material { get; init; }
     public override Handle[] RequiredResources { get; }
 
-    public SpriteBatch(in SpriteBatchKey key) : base(key.SortKey)
+    public SpriteBatch(in SpriteBatchKey key) : base(key.SortKey, RenderSortKeyLayout.DepthThenBatch(key.SortKey))
     {
         Material = key.Material;
         IsStatic = key.IsStatic;

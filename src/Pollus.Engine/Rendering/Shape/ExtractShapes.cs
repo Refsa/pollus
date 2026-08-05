@@ -14,7 +14,7 @@ public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch
         {
             var matrix = transform.Value.Translated(shape.Offset.XYZ());
             var batch = batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle));
-            var sortKey = RenderingUtils.CreateSortKey2D(matrix.Col3.Z, batch.Key);
+            var sortKey = RenderingUtils.CreateDepthSortKey2D(matrix.Col3.Z);
             batch.Draw(sortKey, matrix, shape.Color);
         });
     }

@@ -24,7 +24,7 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
     public Handle<Shape> Shape { get; }
     public override Handle[] RequiredResources { get; }
 
-    public ShapeBatch(in ShapeBatchKey key) : base(key.SortKey)
+    public ShapeBatch(in ShapeBatchKey key) : base(key.SortKey, RenderSortKeyLayout.DepthThenBatch(key.SortKey))
     {
         Material = key.Material;
         Shape = key.Shape;
@@ -32,7 +32,7 @@ public partial class ShapeBatch : RenderBatch<ShapeBatch.InstanceData>
         RequiredResources = [Material, Shape];
     }
 
-    public void Draw(ulong sortKey, Mat4f model, Color color)
+    public void Draw(uint sortKey, Mat4f model, Color color)
     {
         var tModel = model.Transpose();
         base.Draw(sortKey, new InstanceData()

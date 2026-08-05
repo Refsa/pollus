@@ -14,7 +14,7 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
         var batch = userData.batches.GetOrCreate(new SpriteBatchKey(sprite.Material, userData.isStatic));
         var matrix = transform.Value.Transpose();
         var extents = sprite.Slice.Size();
-        var sortKey = RenderingUtils.CreateSortKey2D(matrix.Col2.W, batch.Key);
+        var sortKey = RenderingUtils.CreateDepthSortKey2D(matrix.Col2.W);
 
         batch.Draw(sortKey, new SpriteBatch.InstanceData
         {

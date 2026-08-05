@@ -17,7 +17,7 @@ public class ExtractMeshDrawSystem<TMaterial> : ExtractDrawSystem<MeshRenderBatc
         query.ForEach(batches, static (in batches, ref transform, ref renderable) =>
         {
             var batch = batches.GetOrCreate(new MeshBatchKey(renderable.Mesh, renderable.Material));
-            var sortKey = RenderingUtils.CreateSortKey2D(transform.Value.Col3.Z, batch.Key);
+            var sortKey = RenderingUtils.CreateDepthSortKey2D(transform.Value.Col3.Z);
             batch.Draw(sortKey, transform.Value);
         });
     }

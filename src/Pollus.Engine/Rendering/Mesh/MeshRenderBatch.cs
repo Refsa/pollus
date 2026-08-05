@@ -15,7 +15,7 @@ public class MeshRenderBatch : RenderBatch<Mat4f>
     public Handle Material { get; init; }
     public override Handle[] RequiredResources { get; }
 
-    public MeshRenderBatch(in MeshBatchKey key) : base(key.SortKey)
+    public MeshRenderBatch(in MeshBatchKey key) : base(key.SortKey, RenderSortKeyLayout.DepthThenBatch(key.SortKey))
     {
         Mesh = key.Mesh;
         Material = key.Material;
