@@ -16,7 +16,7 @@ public class SpriteAnimationTests
         {
             frames[i] = new SpriteAnimation.Frame
             {
-                Rect = new Rect { Min = new Vec2f(i * 16, 0), Max = new Vec2f((i + 1) * 16, 16) },
+                Rect = Rect<int>.FromMinMax(new Vec2<int>(i * 16, 0), new Vec2<int>((i + 1) * 16, 16)),
                 Duration = frameDuration,
             };
         }
@@ -63,7 +63,7 @@ public class SpriteAnimationTests
         })).Entity;
 
         var animatorEntity = commands.Spawn(Entity.With(
-            new Sprite { Material = Handle<SpriteMaterial>.Null, Slice = Rect.Zero, Color = Color.WHITE },
+            new Sprite { Material = Handle<SpriteMaterial>.Null, Slice = Rect<int>.Zero, Color = Color.WHITE },
             new SpriteAnimator
             {
                 PlaybackSpeed = 1f,
@@ -553,7 +553,7 @@ public class SpriteAnimationTests
         })).Entity;
 
         var animatorEntity = commands.Spawn(Entity.With(
-            new Sprite { Material = Handle<SpriteMaterial>.Null, Slice = Rect.Zero, Color = Color.WHITE },
+            new Sprite { Material = Handle<SpriteMaterial>.Null, Slice = Rect<int>.Zero, Color = Color.WHITE },
             new SpriteAnimator
             {
                 PlaybackSpeed = 1f,
