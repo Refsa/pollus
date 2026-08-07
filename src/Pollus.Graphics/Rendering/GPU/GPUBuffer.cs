@@ -4,6 +4,7 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Graphics.Platform;
 using System.Runtime.InteropServices;
+using Pollus.Utils;
 
 unsafe public class GPUBuffer : GPUResourceWrapper
 {
@@ -39,27 +40,25 @@ unsafe public class GPUBuffer : GPUResourceWrapper
     public void Write<TElement>(ReadOnlySpan<TElement> data, int offset = 0)
         where TElement : unmanaged, IShaderType
     {
-        var alignedSize = Alignment.AlignedSize<TElement>((uint)data.Length);
-        Write(data, alignedSize, offset);
+        Write(data, SizeUtil.SizeOf<TElement>(data.Length), offset);
     }
 
-    public void Write<TElement>(ReadOnlySpan<TElement> data, uint alignedSize, int offset = 0)
+    public void Write<TElement>(ReadOnlySpan<TElement> data, uint size, int offset = 0)
         where TElement : unmanaged
     {
-        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(data), alignedSize);
+        context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(data), size);
     }
 
     public void Write<TElement>(in TElement element, int offset)
         where TElement : unmanaged, IShaderType
     {
-        var alignedSize = Alignment.AlignedSize<TElement>(1);
-        Write(element, alignedSize, offset);
+        Write(element, SizeUtil.SizeOf<TElement>(1), offset);
     }
 
     public void Write<TElement>(in TElement element, uint alignedSize, int offset)
         where TElement : unmanaged
     {
-        ReadOnlySpan<TElement> span = stackalloc TElement[] { element };
+        ReadOnlySpan<TElement> span = MemoryMarshal.CreateReadOnlySpan(in element, 1);
         context.Backend.QueueWriteBuffer(context.QueueHandle, native, (nuint)offset, MemoryMarshal.Cast<TElement, byte>(span), alignedSize);
     }
 
