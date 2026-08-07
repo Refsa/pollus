@@ -96,6 +96,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
     void ConfigureSurface()
     {
         wgpu.SurfaceGetCapabilities(surface, adapter, ref surfaceCapabilities);
+        var presentMode = window.Options.VSync ? Silk.NET.WebGPU.PresentMode.Fifo : Silk.NET.WebGPU.PresentMode.Immediate;
 
         {
             Log.Debug("WGPU: Surface capabilities");
@@ -112,10 +113,13 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             }
 
             Log.Debug("\tPresent Modes");
+            var hasPresentMode = false;
             for (uint i = 0; i < surfaceCapabilities.PresentModeCount; i++)
             {
+                if (surfaceCapabilities.PresentModes[i] == presentMode) hasPresentMode = true;
                 Log.Debug("\t\tPresent Mode: " + surfaceCapabilities.PresentModes[i]);
             }
+            if (!hasPresentMode) presentMode = surfaceCapabilities.PresentModes[0];
         }
 
         var formats = new Span<Silk.NET.WebGPU.TextureFormat>(surfaceCapabilities.Formats, (int)surfaceCapabilities.FormatCount);
@@ -135,7 +139,7 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             format: targetFormat,
             alphaMode: surfaceCapabilities.AlphaModes[0],
             usage: Silk.NET.WebGPU.TextureUsage.RenderAttachment,
-            presentMode: Silk.NET.WebGPU.PresentMode.Immediate,
+            presentMode: presentMode,
             width: Window.Size.X,
             height: Window.Size.Y
         );

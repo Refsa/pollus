@@ -42,6 +42,7 @@ public partial class BrowserWindow : IWindow
     {
         instance = this;
         Options = options;
+        size = new(options.Width, options.Height);
 
         EmscriptenSDL.Init(SDLInitFlags.InitVideo | SDLInitFlags.InitJoystick);
         nativeWindow = EmscriptenSDL.CreateWindow(options.Title,
