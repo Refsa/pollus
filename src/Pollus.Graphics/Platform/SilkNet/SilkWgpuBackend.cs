@@ -536,6 +536,21 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             ColorAttachmentCount = (uint)descriptor.ColorAttachments.Length,
             ColorAttachments = colorAttachments
         };
+        Silk.NET.WebGPU.RenderPassDepthStencilAttachment depthStencilAttachment;
+        if (descriptor.DepthStencilAttachment is RenderPassDepthStencilAttachment dsa)
+        {
+            depthStencilAttachment = new Silk.NET.WebGPU.RenderPassDepthStencilAttachment(
+                view: dsa.View.Native.As<Silk.NET.WebGPU.TextureView>(),
+                depthLoadOp: (Silk.NET.WebGPU.LoadOp)dsa.DepthLoadOp,
+                depthStoreOp: (Silk.NET.WebGPU.StoreOp)dsa.DepthStoreOp,
+                depthClearValue: dsa.DepthClearValue,
+                depthReadOnly: dsa.DepthReadOnly,
+                stencilLoadOp: (Silk.NET.WebGPU.LoadOp)dsa.StencilLoadOp,
+                stencilStoreOp: (Silk.NET.WebGPU.StoreOp)dsa.StencilStoreOp,
+                stencilClearValue: dsa.StencilClearValue,
+                stencilReadOnly: dsa.StencilReadOnly);
+            rp.DepthStencilAttachment = &depthStencilAttachment;
+        }
         var handle = wgpu.CommandEncoderBeginRenderPass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in rp);
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
