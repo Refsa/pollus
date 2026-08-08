@@ -190,4 +190,39 @@ public class UISliderVisualTests
         var thumbChild = world.Store.GetComponent<Child>(sliderComp.ThumbEntity);
         Assert.Equal(slider, thumbChild.Parent);
     }
+
+    [Fact]
+    public void Thumb_AppearsWhenHiddenParentBecomesVisible()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) }
+        )).Entity;
+        var slider = Pollus.UI.UI.Slider(commands)
+            .Value(50)
+            .Range(0, 100)
+            .Size(200, 20)
+            .Spawn().Entity;
+        var panel = Pollus.UI.UI.Panel(commands)
+            .Style(static style => style with { Display = Display.None })
+            .Children(slider)
+            .ChildOf(root)
+            .Spawn();
+
+        world.Update();
+
+        var sliderComponent = world.Store.GetComponent<UISlider>(slider);
+        Assert.Equal(Vec2f.Zero, world.Store.GetComponent<ComputedNode>(sliderComponent.ThumbEntity).Size);
+
+        ref var panelStyle = ref new Query<UIStyle>(world).GetTracked<UIStyle>(panel);
+        panelStyle.Value.Display = Display.Flex;
+        world.Update();
+
+        var thumb = world.Store.GetComponent<ComputedNode>(sliderComponent.ThumbEntity);
+        Assert.True(thumb.Size.X > 0f);
+        Assert.True(thumb.Size.Y > 0f);
+    }
 }

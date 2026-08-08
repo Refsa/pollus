@@ -153,6 +153,7 @@ public partial class UISliderSystem
         Commands commands,
         EventReader<UISliderEvents.UISliderValueChanged> eValueChanged,
         EventReader<UISliderEvents.UISliderReady> eSliderReady,
+        Query<UISlider, ComputedNode>.Filter<Changed<ComputedNode>> qLayoutChanged,
         View<UISlider, ComputedNode, BorderRadius, BackgroundColor> view)
     {
         foreach (var ev in eValueChanged.Read())
@@ -163,6 +164,11 @@ public partial class UISliderSystem
         foreach (var ev in eSliderReady.Read())
         {
             UpdateVisual(ev.Entity, commands, view);
+        }
+
+        foreach (var row in qLayoutChanged)
+        {
+            UpdateVisual(row.Entity, commands, view);
         }
 
         static void UpdateVisual(
