@@ -86,6 +86,164 @@ public class UIDropdownTests
         return (dropdown, popupPanel, opt0, opt1, opt2);
     }
 
+    static DropdownResult SpawnScrollableDropdownInAbsoluteWindow(World world)
+    {
+        var commands = world.GetCommands();
+        var root = UI.Root(commands, 800, 600).Spawn();
+        var dropdown = UI.Dropdown(commands)
+            .Placeholder("Choose")
+            .Options(Enumerable.Range(0, 22).Select(static i => $"Option {i}").ToArray())
+            .Size(Length.Px(400), Length.Px(30))
+            .Padding(6, 10, 6, 10)
+            .Spawn();
+        var spacer = UI.Panel(commands).Height(150).Spawn();
+
+        UI.Panel(commands)
+            .ChildOf(root)
+            .PositionAbsolute()
+            .Style(static style => style with
+            {
+                Inset = new LayoutRect<Length>(Length.Px(360), Length.Auto, Length.Px(80), Length.Auto),
+            })
+            .Size(Length.Px(420), Length.Auto)
+            .FlexColumn()
+            .Padding(8)
+            .Interactable()
+            .Children(spacer, dropdown.Entity)
+            .Spawn();
+
+        world.Update();
+
+        var qDropdown = new Query<UIDropdown>(world);
+        var qOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
+        ref var dropdownComponent = ref qDropdown.GetTracked<UIDropdown>(dropdown.Entity);
+        dropdownComponent.IsOpen = true;
+        UIDropdownSystem.SyncOptionVisibility(qOptions, qDropdown, new Query<UIDropdownPopup, UIScrollOffset>(world));
+        world.Update();
+        world.Update();
+
+        return dropdown;
+    }
+
+    [Fact]
+    public void PopupOption_ClickSelectsOptionInsideAbsoluteWindow()
+    {
+        using var world = CreateWorld();
+        var dropdown = SpawnScrollableDropdownInAbsoluteWindow(world);
+        var option = dropdown.OptionEntities[0];
+        var tree = new View<ComputedNode, Child>(world);
+        var optionPosition = LayoutHelpers.ComputeAbsolutePosition(tree, option);
+        var optionSize = world.Store.GetComponent<ComputedNode>(option).Size;
+        var mousePosition = optionPosition + optionSize * 0.5f;
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+
+        UIInteractionSystem.PerformHitTest(new Query(world), hitResult, focusState, mousePosition);
+        Assert.True(hitResult.HoveredEntity == option,
+            $"Expected option {option} at {optionPosition} size {optionSize}, got {hitResult.HoveredEntity}; popup position " +
+            $"{LayoutHelpers.ComputeAbsolutePosition(tree, dropdown.PopupPanelEntity)} size {world.Store.GetComponent<ComputedNode>(dropdown.PopupPanelEntity).Size}");
+        UIInteractionSystem.PerformUpdateState(new View<UIInteraction>(world), hitResult, focusState, world.Events, true);
+        UIInteractionSystem.PerformUpdateState(new View<UIInteraction>(world), hitResult, focusState, world.Events, false, true);
+        UIDropdownSystem.PerformUpdate(
+            new View<UIInteraction, UIText, Parent>(world),
+            new Query<UIDropdown>(world),
+            new Query<UIDropdownOptionTag, UIStyle>(world),
+            new Query<UIDropdownPopup, UIScrollOffset>(world),
+            world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!,
+            world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!,
+            world.Events);
+
+        Assert.Equal(0, world.Store.GetComponent<UIDropdown>(dropdown.Entity).SelectedIndex);
+    }
+
+    [Fact]
+    public void Popup_WheelScrollsInsideAbsoluteWindow()
+    {
+        using var world = CreateWorld();
+        var dropdown = SpawnScrollableDropdownInAbsoluteWindow(world);
+        var popupPosition = LayoutHelpers.ComputeAbsolutePosition(new View<ComputedNode, Child>(world), dropdown.PopupPanelEntity);
+        var popupSize = world.Store.GetComponent<ComputedNode>(dropdown.PopupPanelEntity).Size;
+        var mouse = new Mouse(0);
+        mouse.SetPosition((int)(popupPosition.X + popupSize.X * 0.5f), (int)(popupPosition.Y + popupSize.Y * 0.5f));
+        mouse.SetAxisState(MouseAxis.ScrollY, -1f);
+        world.Resources.Get<CurrentDevice<Mouse>>().Value = mouse;
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        UIInteractionSystem.PerformHitTest(new Query(world), hitResult, world.Resources.Get<UIFocusState>(), new Vec2f(mouse.Position.X, mouse.Position.Y));
+        Assert.True(hitResult.PointerOverUI || !hitResult.HoveredEntity.IsNull,
+            $"Popup at {popupPosition} size {popupSize}, hovered {hitResult.HoveredEntity}");
+
+        world.Update();
+
+        Assert.True(world.Store.GetComponent<UIScrollOffset>(dropdown.PopupPanelEntity).Offset.Y > 0f);
+    }
+
+    [Fact]
+    public void PopupSurface_OwnsPointerInsideAbsoluteWindow()
+    {
+        using var world = CreateWorld();
+        var dropdown = SpawnScrollableDropdownInAbsoluteWindow(world);
+        var popupPosition = LayoutHelpers.ComputeAbsolutePosition(new View<ComputedNode, Child>(world), dropdown.PopupPanelEntity);
+        var popupSize = world.Store.GetComponent<ComputedNode>(dropdown.PopupPanelEntity).Size;
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+
+        UIInteractionSystem.PerformHitTest(
+            new Query(world),
+            hitResult,
+            world.Resources.Get<UIFocusState>(),
+            new Vec2f(popupPosition.X + popupSize.X - 10f, popupPosition.Y + popupSize.Y - 10f));
+
+        Assert.True(hitResult.PointerOverUI);
+    }
+
+    [Fact]
+    public void PopupSurface_ClickDoesNotDismissDropdown()
+    {
+        using var world = CreateWorld();
+        var dropdown = SpawnScrollableDropdownInAbsoluteWindow(world);
+        var clickWriter = world.Events.GetWriter<UIInteractionEvents.UIClickEvent>();
+        clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown.PopupPanelEntity });
+
+        UIDropdownSystem.PerformUpdate(
+            new View<UIInteraction, UIText, Parent>(world),
+            new Query<UIDropdown>(world),
+            new Query<UIDropdownOptionTag, UIStyle>(world),
+            new Query<UIDropdownPopup, UIScrollOffset>(world),
+            world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!,
+            world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!,
+            world.Events);
+
+        Assert.True(world.Store.GetComponent<UIDropdown>(dropdown.Entity).IsOpen);
+    }
+
+    [Fact]
+    public void PopupPlacement_FlipsAboveAndClampsTallContentToViewport()
+    {
+        var placement = UIDropdownSystem.CalculatePopupPlacement(
+            new Vec2f(0, 0),
+            new Vec2f(800, 600),
+            new Vec2f(700, 550),
+            new Vec2f(200, 30),
+            new Vec2f(200, 700));
+
+        Assert.Equal(new Vec2f(600, 0), placement.Position);
+        Assert.Equal(new Vec2f(200, 550), placement.Size);
+    }
+
+    [Fact]
+    public void PopupPlacement_UsesSpaceBelowWhenItFits()
+    {
+        var placement = UIDropdownSystem.CalculatePopupPlacement(
+            new Vec2f(0, 0),
+            new Vec2f(800, 600),
+            new Vec2f(100, 100),
+            new Vec2f(200, 30),
+            new Vec2f(200, 120));
+
+        Assert.Equal(new Vec2f(100, 130), placement.Position);
+        Assert.Equal(new Vec2f(200, 120), placement.Size);
+    }
+
     [Fact]
     public void Click_OpensDropdownAndShowsOptions()
     {
@@ -100,7 +258,7 @@ public class UIDropdownTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -128,7 +286,7 @@ public class UIDropdownTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.Equal(1, dd.SelectedIndex);
@@ -150,7 +308,7 @@ public class UIDropdownTests
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
         var ddReader = world.Events.GetReader<UIDropdownEvents.UIDropdownSelectionChanged>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         var events = ddReader.Read();
         Assert.Equal(1, events.Length);
@@ -216,7 +374,7 @@ public class UIDropdownTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         // Display text should be updated from option's child text
         var updatedText = world.Store.GetComponent<UIText>(displayText);
@@ -240,7 +398,7 @@ public class UIDropdownTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         dd = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(dd.IsOpen);
@@ -259,12 +417,12 @@ public class UIDropdownTests
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
         // Sync initial state - popup panel hidden
-        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown, new Query<UIDropdownPopup, UIScrollOffset>(world));
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
 
         // Click to open
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         var state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.True(state.IsOpen);
@@ -272,7 +430,7 @@ public class UIDropdownTests
 
         // Click to close
         clickWriter.Write(new UIInteractionEvents.UIClickEvent { Entity = dropdown });
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         state = world.Store.GetComponent<UIDropdown>(dropdown);
         Assert.False(state.IsOpen);
@@ -289,7 +447,7 @@ public class UIDropdownTests
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
 
         // Dropdown starts closed - sync should hide popup panel
-        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown, new Query<UIDropdownPopup, UIScrollOffset>(world));
 
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
@@ -305,7 +463,7 @@ public class UIDropdownTests
 
         var qDropdown = new Query<UIDropdown>(world);
         var qDropdownOptions = new Query<UIDropdownOptionTag, UIStyle>(world);
-        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown);
+        UIDropdownSystem.SyncOptionVisibility(qDropdownOptions, qDropdown, new Query<UIDropdownPopup, UIScrollOffset>(world));
 
         Assert.Equal(Display.Flex, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
     }
@@ -329,7 +487,7 @@ public class UIDropdownTests
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
 
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         // Popup panel should be hidden after selection closes dropdown
         Assert.Equal(Display.None, world.Store.GetComponent<UIStyle>(popupPanel).Value.Display);
@@ -626,7 +784,7 @@ public class UIDropdownTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         // Verify IsOpen toggled
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
@@ -826,7 +984,7 @@ public class UIDropdownTests
 
         var clickReader = world.Events.GetReader<UIInteractionEvents.UIClickEvent>()!;
         var keyReader = world.Events.GetReader<UIInteractionEvents.UIKeyDownEvent>()!;
-        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, clickReader, keyReader, world.Events);
+        UIDropdownSystem.PerformUpdate(new View<UIInteraction, UIText, Parent>(world), qDropdown, qDropdownOptions, new Query<UIDropdownPopup, UIScrollOffset>(world), clickReader, keyReader, world.Events);
 
         // Verify state changes
         Assert.True(world.Store.GetComponent<UIDropdown>(dropdown).IsOpen);
@@ -1018,11 +1176,12 @@ public class UIDropdownTests
         SimulateDeferredEmitNode(query, drawOrder, root, rootComputed, Vec2f.Zero, deferred);
 
         // Process deferred absolute nodes
-        foreach (var (entity, parentAbsPos) in deferred)
+        for (var i = 0; i < deferred.Count; i++)
         {
+            var (entity, parentAbsPos) = deferred[i];
             if (!query.Has<ComputedNode>(entity)) continue;
             ref readonly var computed = ref query.Get<ComputedNode>(entity);
-            SimulateDeferredEmitNode(query, drawOrder, entity, computed, parentAbsPos, null);
+            SimulateDeferredEmitNode(query, drawOrder, entity, computed, parentAbsPos, deferred);
         }
 
         return drawOrder;

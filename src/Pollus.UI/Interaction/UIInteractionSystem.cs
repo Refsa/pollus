@@ -26,6 +26,7 @@ public partial class UIInteractionSystem
     {
         hitResult.PreviousHoveredEntity = hitResult.HoveredEntity;
         hitResult.HoveredEntity = Entity.Null;
+        hitResult.PointerOverUI = false;
         hitResult.MousePosition = mousePos;
         focusState.FocusOrder.Clear();
 
@@ -35,17 +36,19 @@ public partial class UIInteractionSystem
         {
             if (!query.Has<ComputedNode>(rootEntity)) continue;
             ref readonly var computed = ref query.Get<ComputedNode>(rootEntity);
-            HitTestNode(query, ref hitResult.HoveredEntity, focusState, rootEntity, computed, Vec2f.Zero, mousePos, deferred);
+            HitTestNode(query, ref hitResult.HoveredEntity, focusState, rootEntity, computed, Vec2f.Zero, mousePos, null, deferred);
         }
 
         // Hit-test deferred absolute-positioned nodes last so they win over normal flow
-        foreach (var (deferredEntity, parentAbsPos) in deferred)
+        for (var i = 0; i < deferred.Count; i++)
         {
+            var (deferredEntity, parentAbsPos, clip) = deferred[i];
             if (!query.Has<ComputedNode>(deferredEntity)) continue;
             ref readonly var computed = ref query.Get<ComputedNode>(deferredEntity);
-            HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, computed, parentAbsPos, mousePos, null);
+            HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, computed, parentAbsPos, mousePos, clip, deferred);
         }
 
+        hitResult.PointerOverUI = !hitResult.HoveredEntity.IsNull;
         deferred.Clear();
     }
 
@@ -277,7 +280,8 @@ public partial class UIInteractionSystem
     internal static void HitTestNode(
         Query query, ref Entity hitEntity, UIFocusState focusState,
         Entity entity, in ComputedNode computed, Vec2f parentAbsPos, Vec2f mousePos,
-        List<(Entity entity, Vec2f parentAbsPos)>? deferred)
+        UIClipRect? clip,
+        List<(Entity entity, Vec2f parentAbsPos, UIClipRect? clip)>? deferred)
     {
         var absPos = parentAbsPos + computed.Position;
         var size = computed.Size;
@@ -292,7 +296,7 @@ public partial class UIInteractionSystem
                 focusState.FocusOrder.Add(entity);
             }
 
-            if (size.X > 0 && size.Y > 0 && !interaction.IsDisabled)
+            if (size.X > 0 && size.Y > 0 && !interaction.IsDisabled && (!clip.HasValue || clip.Value.Contains(mousePos)))
             {
                 if (mousePos.X >= absPos.X && mousePos.X < absPos.X + size.X &&
                     mousePos.Y >= absPos.Y && mousePos.Y < absPos.Y + size.Y)
@@ -306,6 +310,21 @@ public partial class UIInteractionSystem
         if (size.X <= 0 && size.Y <= 0) return;
 
         if (!entRef.Has<Parent>()) return;
+
+        var childClip = clip;
+        if (entRef.Has<UIStyle>())
+        {
+            ref readonly var style = ref entRef.Get<UIStyle>();
+            if (style.Value.Overflow.X != Overflow.Visible || style.Value.Overflow.Y != Overflow.Visible)
+            {
+                var nodeClip = new UIClipRect(
+                    absPos.X + computed.BorderLeft,
+                    absPos.Y + computed.BorderTop,
+                    absPos.X + size.X - computed.BorderRight,
+                    absPos.Y + size.Y - computed.BorderBottom);
+                childClip = childClip.HasValue ? childClip.Value.Intersect(nodeClip) : nodeClip;
+            }
+        }
 
         // Apply scroll offset for children hit testing
         var childAbsPos = absPos;
@@ -325,12 +344,12 @@ public partial class UIInteractionSystem
                 if (deferred != null && childRef.Has<UIStyle>()
                                      && childRef.Get<UIStyle>().Value.Position == Position.Absolute)
                 {
-                    deferred.Add((childEntity, childAbsPos));
+                    deferred.Add((childEntity, childAbsPos, childClip));
                 }
                 else
                 {
                     ref var childComputed = ref childRef.Get<ComputedNode>();
-                    HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, childAbsPos, mousePos, deferred);
+                    HitTestNode(query, ref hitEntity, focusState, childEntity, childComputed, childAbsPos, mousePos, childClip, deferred);
                 }
             }
 

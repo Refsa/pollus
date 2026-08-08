@@ -1,6 +1,7 @@
 namespace Pollus.UI;
 
 using Pollus.ECS;
+using Pollus.Mathematics;
 
 public partial record struct UIDropdown() : IComponent
 {
@@ -14,6 +15,14 @@ public partial record struct UIDropdownOptionTag() : IComponent
 {
     public Entity DropdownEntity = Entity.Null;
     public int OptionIndex;
+}
+
+public partial record struct UIDropdownPopup() : IComponent
+{
+    public Entity DropdownEntity = Entity.Null;
+    public Vec2f NaturalSize;
+    public float AnchorOffsetY;
+    public bool NeedsMeasure = true;
 }
 
 public static class UIDropdownEvents

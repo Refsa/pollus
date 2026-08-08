@@ -105,6 +105,9 @@ public struct UIDropdownBuilder : IUINodeBuilder<UIDropdownBuilder>
 
         var popupPanel = state.commands.Spawn(Entity.With(
             new UINode(),
+            new UIScrollOffset(),
+            new UIInteraction(),
+            new UIDropdownPopup { DropdownEntity = trigger, AnchorOffsetY = heightPx - padTopPx - borderTopPx },
             new UIStyle
             {
                 Value = LayoutStyle.Default with

@@ -46,13 +46,14 @@ public partial class ExtractUIRectsSystem
             EmitNode(batches, resources.Material, meshes, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, localData.Value.Deferred);
         }
 
-        foreach (var (deferredEntity, parentAbsPos, deferredScissor) in localData.Value.Deferred)
+        for (var i = 0; i < localData.Value.Deferred.Count; i++)
         {
+            var (deferredEntity, parentAbsPos, deferredScissor) = localData.Value.Deferred[i];
             var entRef = query.GetEntity(deferredEntity);
             if (entRef.Has<ComputedNode>())
             {
                 ref var computed = ref entRef.Get<ComputedNode>();
-                EmitNode(batches, resources.Material, meshes, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, null);
+                EmitNode(batches, resources.Material, meshes, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, localData.Value.Deferred);
             }
         }
 

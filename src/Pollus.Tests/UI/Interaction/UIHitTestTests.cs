@@ -435,4 +435,89 @@ public class UIHitTestTests
         Assert.True(query.Has<ComputedNode>(textEntity), "UIText entity should have ComputedNode via Required chain");
         Assert.True(query.Has<ContentSize>(textEntity), "UIText entity should have ContentSize via Required chain");
     }
+
+    [Fact]
+    public void NestedAbsoluteOverlay_WinsOverLaterAbsoluteSibling()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) },
+            new ComputedNode { Size = new Vec2f(800, 600) }
+        )).Entity;
+
+        var window = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { Position = Position.Absolute } },
+            new ComputedNode { Position = new Vec2f(20, 20), Size = new Vec2f(300, 300) }
+        )).Entity;
+
+        var popup = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { Position = Position.Absolute } },
+            new ComputedNode { Position = new Vec2f(20, 40), Size = new Vec2f(160, 120) }
+        )).Entity;
+
+        var option = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new ComputedNode { Size = new Vec2f(160, 40) }
+        )).Entity;
+
+        var laterWindow = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with { Position = Position.Absolute } },
+            new ComputedNode { Position = new Vec2f(40, 60), Size = new Vec2f(200, 200) }
+        )).Entity;
+
+        commands.AddChild(root, window);
+        commands.AddChild(window, popup);
+        commands.AddChild(popup, option);
+        commands.AddChild(root, laterWindow);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        UIInteractionSystem.PerformHitTest(new Query(world), hitResult, focusState, new Vec2f(70, 70));
+
+        Assert.Equal(option, hitResult.HoveredEntity);
+    }
+
+    [Fact]
+    public void OverflowClip_ChildOutsideContainerCannotBeHit()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var root = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600) },
+            new ComputedNode { Size = new Vec2f(800, 600) }
+        )).Entity;
+
+        var clip = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIStyle { Value = LayoutStyle.Default with { Overflow = new Point<Overflow>(Overflow.Visible, Overflow.Scroll) } },
+            new ComputedNode { Position = new Vec2f(20, 20), Size = new Vec2f(100, 50) }
+        )).Entity;
+
+        var child = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new ComputedNode { Position = new Vec2f(0, 60), Size = new Vec2f(100, 30) }
+        )).Entity;
+
+        commands.AddChild(root, clip);
+        commands.AddChild(clip, child);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+        UIInteractionSystem.PerformHitTest(new Query(world), hitResult, focusState, new Vec2f(30, 85));
+
+        Assert.True(hitResult.HoveredEntity.IsNull);
+    }
 }

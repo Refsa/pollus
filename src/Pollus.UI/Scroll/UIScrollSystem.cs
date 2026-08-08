@@ -90,7 +90,7 @@ public partial class UIScrollSystem
         }
     }
 
-    [System(CoreStage.PostUpdate, RunsAfter = ["UILayoutSystem::WriteBack", nameof(Update)])]
+    [System(CoreStage.PostUpdate, RunsAfter = ["UILayoutSystem::WriteBack", "UIDropdownSystem::PlaceOpenPopups", nameof(Update)])]
     internal static void UpdateVisuals(
         Commands commands,
         View<ComputedNode> viewThumbComputed,

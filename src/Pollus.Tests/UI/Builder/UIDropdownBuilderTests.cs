@@ -152,6 +152,10 @@ public class UIDropdownBuilderTests
         var panelStyle = world.Store.GetComponent<UIStyle>(result.PopupPanelEntity);
         Assert.Equal(Display.None, panelStyle.Value.Display);
         Assert.Equal(Position.Absolute, panelStyle.Value.Position);
+        Assert.Equal(Overflow.Visible, panelStyle.Value.Overflow.Y);
+        Assert.True(world.Store.HasComponent<UIScrollOffset>(result.PopupPanelEntity));
+        Assert.True(world.Store.HasComponent<UIInteraction>(result.PopupPanelEntity));
+        Assert.True(world.Store.HasComponent<UIDropdownPopup>(result.PopupPanelEntity));
     }
 
     [Fact]
