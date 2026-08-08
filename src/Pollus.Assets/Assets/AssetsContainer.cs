@@ -328,7 +328,11 @@ public class AssetsContainer : IDisposable
             }
         }
 
-        if (info.Status == newStatus)
+        if (newStatus == AssetStatus.WaitingForDependency)
+        {
+
+        }
+        else if (info.Status == newStatus)
         {
             storage.AppendEvent(handle, AssetEventType.Changed);
         }
