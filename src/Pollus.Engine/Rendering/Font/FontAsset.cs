@@ -81,7 +81,7 @@ public class FontAtlasPacker(int width, int height)
             return false;
         }
 
-        bounds = new Rect<int>(currentX, currentY, currentX + glyphWidth, currentY + glyphHeight);
+        bounds = new Rect<int>(currentX, currentY, glyphWidth, glyphHeight);
 
         currentX += glyphWidth + padding;
         rowHeight = int.Max(rowHeight, glyphHeight);
