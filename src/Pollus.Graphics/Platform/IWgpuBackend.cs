@@ -4,13 +4,17 @@ using System;
 using Pollus.Collections;
 using Pollus.Graphics.Rendering;
 
-public interface IWgpuBackend : IDisposable
+public unsafe interface IWgpuBackend : IDisposable
 {
     NativeHandle<InstanceTag> CreateInstance();
     void ReleaseInstance(NativeHandle<InstanceTag> instance);
     NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label);
     void BufferDestroy(in NativeHandle<BufferTag> buffer);
     void BufferRelease(in NativeHandle<BufferTag> buffer);
+    void BufferMapReadAsync(in NativeHandle<BufferTag> buffer, nuint offset, nuint size, Silk.NET.WebGPU.PfnBufferMapCallback callback, void* userData);
+    void* BufferGetConstMappedRange(in NativeHandle<BufferTag> buffer, nuint offset, nuint size);
+    void BufferUnmap(in NativeHandle<BufferTag> buffer);
+    void DevicePoll(in NativeHandle<DeviceTag> device);
     void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize);
     NativeHandle<TextureTag> DeviceCreateTexture(in NativeHandle<DeviceTag> device, in TextureDescriptor descriptor, in NativeUtf8 label);
     void TextureDestroy(in NativeHandle<TextureTag> texture);
@@ -54,6 +58,7 @@ public interface IWgpuBackend : IDisposable
     void RenderPassEncoderDrawIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset);
     void RenderPassEncoderDrawIndexed(in NativeHandle<RenderPassEncoderTag> pass, uint indexCount, uint instanceCount, uint firstIndex, int baseVertex, uint firstInstance);
     void RenderPassEncoderDrawIndexedIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset);
+    void CommandEncoderCopyBufferToBuffer(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<BufferTag> source, ulong sourceOffset, in NativeHandle<BufferTag> destination, ulong destinationOffset, ulong size);
     void CommandEncoderCopyTextureToTexture(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<TextureTag> srcTexture, in NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers);
     NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label);
     void ComputePassEncoderEnd(in NativeHandle<ComputePassEncoderTag> pass);

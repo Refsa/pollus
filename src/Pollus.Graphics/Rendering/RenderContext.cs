@@ -10,22 +10,26 @@ public class RenderContext : IDisposable
     readonly ArrayList<GPUCommandEncoder> commandEncoders = new();
     readonly ArrayList<GPUCommandBuffer> commandBuffers = new();
     readonly RenderResourceCache resources = new();
+    readonly GPUReadbackQueue readbacks = new();
 
     GPUSurfaceTexture? surfaceTexture;
     public GPUTextureView? SurfaceTextureView => surfaceTexture?.TextureView;
 
     public required IWGPUContext GPUContext { get; init; }
     public RenderResourceCache Resources => resources;
+    public GPUReadbackQueue Readbacks => readbacks;
     public bool SkipFrame { get; private set; }
 
     public void Dispose()
     {
         resources.Cleanup();
+        readbacks.Dispose();
         CleanupFrame();
     }
 
     public bool PrepareFrame()
     {
+        readbacks.Update(GPUContext);
         SkipFrame = false;
         var nextSurfaceTexture = GPUContext.CreateSurfaceTexture();
         if (!nextSurfaceTexture.Prepare())
@@ -90,6 +94,12 @@ public class RenderContext : IDisposable
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
 
         {
+            if (readbacks.HasPendingRequests)
+            {
+                ref var encoder = ref CreateCommandEncoder("gpu-readback");
+                readbacks.RecordPending(GPUContext, encoder);
+            }
+
             Span<NativeHandle<CommandBufferTag>> commandBufferHandles = stackalloc NativeHandle<CommandBufferTag>[commandEncoders.Count];
             for (int i = 0; i < commandEncoders.Count; i++)
             {
@@ -99,6 +109,7 @@ public class RenderContext : IDisposable
             }
 
             GPUContext.Backend.QueueSubmit(GPUContext.QueueHandle, commandBufferHandles);
+            readbacks.NotifySubmitted(GPUContext);
         }
 
         GPUContext.Present();

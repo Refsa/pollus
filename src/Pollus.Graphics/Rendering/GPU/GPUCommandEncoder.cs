@@ -72,6 +72,17 @@ public readonly struct GPUCommandEncoder : IDisposable
         );
     }
 
+    public void CopyBufferToBuffer(GPUBuffer source, GPUBuffer destination, ulong size, ulong sourceOffset = 0, ulong destinationOffset = 0)
+    {
+        context.Backend.CommandEncoderCopyBufferToBuffer(
+            native,
+            source.Native,
+            sourceOffset,
+            destination.Native,
+            destinationOffset,
+            size);
+    }
+
     public ref struct DebugGroupScopeHandler : IDisposable
     {
         GPUCommandEncoder encoder;

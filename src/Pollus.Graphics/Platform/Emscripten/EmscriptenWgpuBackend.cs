@@ -177,6 +177,25 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         wgpu.BufferRelease(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>());
     }
 
+    public void BufferMapReadAsync(in NativeHandle<BufferTag> buffer, nuint offset, nuint size, Silk.NET.WebGPU.PfnBufferMapCallback callback, void* userData)
+    {
+        wgpu.BufferMapAsync(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), Pollus.Emscripten.WGPU.WGPUMapMode.Read, offset, size, callback, userData);
+    }
+
+    public void* BufferGetConstMappedRange(in NativeHandle<BufferTag> buffer, nuint offset, nuint size)
+    {
+        return wgpu.BufferGetConstMappedRange(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), offset, size);
+    }
+
+    public void BufferUnmap(in NativeHandle<BufferTag> buffer)
+    {
+        wgpu.BufferUnmap(buffer.As<Pollus.Emscripten.WGPU.WGPUBuffer>());
+    }
+
+    public void DevicePoll(in NativeHandle<DeviceTag> device)
+    {
+    }
+
     public void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
     {
         fixed (byte* p = data)
@@ -855,6 +874,17 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         var src = new Pollus.Emscripten.WGPU.WGPUImageCopyTexture { Texture = srcTexture.As<Pollus.Emscripten.WGPU.WGPUTexture>() };
         var dst = new Pollus.Emscripten.WGPU.WGPUImageCopyTexture { Texture = dstTexture.As<Pollus.Emscripten.WGPU.WGPUTexture>() };
         wgpu.CommandEncoderCopyTextureToTexture(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), in src, in dst, in size);
+    }
+
+    public void CommandEncoderCopyBufferToBuffer(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<BufferTag> source, ulong sourceOffset, in NativeHandle<BufferTag> destination, ulong destinationOffset, ulong size)
+    {
+        wgpu.CommandEncoderCopyBufferToBuffer(
+            encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(),
+            source.As<Pollus.Emscripten.WGPU.WGPUBuffer>(),
+            sourceOffset,
+            destination.As<Pollus.Emscripten.WGPU.WGPUBuffer>(),
+            destinationOffset,
+            size);
     }
 
     public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)

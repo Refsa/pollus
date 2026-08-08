@@ -50,6 +50,29 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         wgpu.BufferRelease(buffer.As<Silk.NET.WebGPU.Buffer>());
     }
 
+    public void BufferMapReadAsync(in NativeHandle<BufferTag> buffer, nuint offset, nuint size, Silk.NET.WebGPU.PfnBufferMapCallback callback, void* userData)
+    {
+        wgpu.BufferMapAsync(buffer.As<Silk.NET.WebGPU.Buffer>(), Silk.NET.WebGPU.MapMode.Read, offset, size, callback, userData);
+    }
+
+    public void* BufferGetConstMappedRange(in NativeHandle<BufferTag> buffer, nuint offset, nuint size)
+    {
+        return wgpu.BufferGetConstMappedRange(buffer.As<Silk.NET.WebGPU.Buffer>(), offset, size);
+    }
+
+    public void BufferUnmap(in NativeHandle<BufferTag> buffer)
+    {
+        wgpu.BufferUnmap(buffer.As<Silk.NET.WebGPU.Buffer>());
+    }
+
+    public void DevicePoll(in NativeHandle<DeviceTag> device)
+    {
+        WgpuDevicePoll(device.Ptr, 0, 0);
+    }
+
+    [DllImport("wgpu_native", EntryPoint = "wgpuDevicePoll", CallingConvention = CallingConvention.Cdecl)]
+    static extern uint WgpuDevicePoll(nint device, uint wait, nint wrappedSubmissionIndex);
+
     public void QueueWriteBuffer(in NativeHandle<QueueTag> queue, in NativeHandle<BufferTag> buffer, nuint offset, ReadOnlySpan<byte> data, uint alignedSize)
     {
         fixed (byte* p = data)
@@ -638,6 +661,17 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         var src = new Silk.NET.WebGPU.ImageCopyTexture(texture: srcTexture.As<Silk.NET.WebGPU.Texture>());
         var dst = new Silk.NET.WebGPU.ImageCopyTexture(texture: dstTexture.As<Silk.NET.WebGPU.Texture>());
         wgpu.CommandEncoderCopyTextureToTexture(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in src, in dst, in size);
+    }
+
+    public void CommandEncoderCopyBufferToBuffer(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<BufferTag> source, ulong sourceOffset, in NativeHandle<BufferTag> destination, ulong destinationOffset, ulong size)
+    {
+        wgpu.CommandEncoderCopyBufferToBuffer(
+            encoder.As<Silk.NET.WebGPU.CommandEncoder>(),
+            source.As<Silk.NET.WebGPU.Buffer>(),
+            sourceOffset,
+            destination.As<Silk.NET.WebGPU.Buffer>(),
+            destinationOffset,
+            size);
     }
 
     public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
