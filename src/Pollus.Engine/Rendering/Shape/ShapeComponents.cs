@@ -24,4 +24,9 @@ public partial struct ShapeDraw : IComponent
     public required Handle<Shape> ShapeHandle;
     public required Color Color;
     public Vec2f Offset;
+    public RenderStep2D RenderStep { get; set; } = RenderStep2D.Main;
+
+    public ShapeDraw()
+    {
+    }
 }

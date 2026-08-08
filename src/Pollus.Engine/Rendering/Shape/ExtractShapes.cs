@@ -36,9 +36,9 @@ public class ExtractShapeDrawSystem : ExtractDrawSystem<ShapeBatches, ShapeBatch
                 ref var shape = ref shapes[i];
                 var shapeId = shape.ShapeHandle.ID;
                 var materialId = shape.MaterialHandle.ID;
-                var batch = shapeId == lastShapeId && materialId == lastMaterialId
+                var batch = shapeId == lastShapeId && materialId == lastMaterialId && lastBatch?.RenderStep == (int)shape.RenderStep
                     ? lastBatch!
-                    : batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle, IsStatic: isStatic));
+                    : batches.GetOrCreate(new ShapeBatchKey(shape.ShapeHandle, shape.MaterialHandle, shape.RenderStep, IsStatic: isStatic));
 
                 lastShapeId = shapeId;
                 lastMaterialId = materialId;
