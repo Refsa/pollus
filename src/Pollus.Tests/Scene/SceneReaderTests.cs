@@ -638,6 +638,7 @@ public class SceneReaderTests
         var spriteComp = components[0];
         var sprite = MemoryMarshal.AsRef<Sprite>(spriteComp.Data);
         Assert.NotEqual((Handle)Handle<SpriteMaterial>.Null, sprite.Material);
+        Assert.Equal(new Pollus.Mathematics.Rect<int>(0, 0, 1, 1), sprite.Slice);
 
         var material = context.AssetServer.GetAssets<SpriteMaterial>().Get(sprite.Material);
         Assert.NotNull(material);
