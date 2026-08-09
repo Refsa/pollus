@@ -1,5 +1,6 @@
 namespace Pollus.Graphics.Rendering;
 
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Core.Assets;
 
@@ -34,7 +35,13 @@ public partial class StorageBuffer : IBufferData
     public static StorageBuffer From<TElement>(uint capacity, BufferUsage usage)
         where TElement : unmanaged, IShaderType
     {
-        return new StorageBuffer(TElement.SizeOf, TElement.AlignOf, capacity)
+        var hostSize = (uint)Unsafe.SizeOf<TElement>();
+        if (hostSize != TElement.PaddedSize)
+        {
+            throw new InvalidOperationException($"{typeof(TElement).Name} host size {hostSize} does not match shader stride {TElement.PaddedSize}.");
+        }
+
+        return new StorageBuffer(TElement.PaddedSize, TElement.AlignOf, capacity)
         {
             Usage = BufferUsage.Storage | usage
         };
@@ -43,6 +50,12 @@ public partial class StorageBuffer : IBufferData
     public Span<TElement> AsSpan<TElement>()
         where TElement : unmanaged, IShaderType
     {
+        var hostSize = (uint)Unsafe.SizeOf<TElement>();
+        if (hostSize != Stride)
+        {
+            throw new InvalidOperationException($"{typeof(TElement).Name} host size {hostSize} does not match storage buffer stride {Stride}.");
+        }
+
         return MemoryMarshal.Cast<byte, TElement>(data.AsSpan());
     }
 

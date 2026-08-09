@@ -1,9 +1,7 @@
 namespace Pollus.Generators;
 
 using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -66,7 +64,8 @@ public class ShaderTypeGenerator : IIncrementalGenerator
             {
                 public static uint SizeOf => {{model.SizeOf}};
                 public static uint AlignOf => {{model.AlignOf}};
-            } 
+                public static uint PaddedSize => global::Pollus.Graphics.Alignment.RoundUp(SizeOf, AlignOf);
+            }
             """;
 
             if (model.ContainingType != null)

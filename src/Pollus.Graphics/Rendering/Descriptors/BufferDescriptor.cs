@@ -46,6 +46,12 @@ public struct BufferDescriptor
     public static BufferDescriptor Uniform<TUniform>(string label, ulong? dynamicLength = null)
         where TUniform : unmanaged, IShaderType
     {
+        var hostSize = (uint)Unsafe.SizeOf<TUniform>();
+        if (hostSize != TUniform.SizeOf && hostSize != TUniform.PaddedSize)
+        {
+            throw new InvalidOperationException($"{typeof(TUniform).Name} host size {hostSize} does not match shader size {TUniform.SizeOf} or padded size {TUniform.PaddedSize}.");
+        }
+
         return new BufferDescriptor
         {
             Label = label,

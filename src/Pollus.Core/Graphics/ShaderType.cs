@@ -4,6 +4,7 @@ public interface IShaderType
 {
     static abstract uint SizeOf { get; }
     static abstract uint AlignOf { get; }
+    static abstract uint PaddedSize { get; }
 }
 
 /// <summary>

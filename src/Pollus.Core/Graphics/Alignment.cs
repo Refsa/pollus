@@ -8,7 +8,7 @@ public static class Alignment
     public static uint AlignedSize<T>(uint count)
         where T : unmanaged, IShaderType
     {
-        return RoundUp(count * T.SizeOf, T.AlignOf);
+        return checked(count * T.PaddedSize);
     }
 
     public static uint AlignedSize<T>(uint count, uint alignment)
