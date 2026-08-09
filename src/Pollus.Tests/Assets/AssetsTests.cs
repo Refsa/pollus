@@ -294,6 +294,19 @@ public class AssetsTests
     }
 
     [Fact]
+    public void AssetServer_LoadAsync_AlreadyPending()
+    {
+        var assetServer = new AssetServer(new FileAssetIO("Assets/TestFiles"))
+            .AddLoader<TextAssetLoader>();
+
+        var handle1 = assetServer.LoadAsync<TextAsset>("test.txt");
+        var handle2 = assetServer.LoadAsync<TextAsset>("test.txt");
+
+        Assert.Equal(handle1, handle2);
+        Assert.Equal(1, assetServer.PendingLoads);
+    }
+
+    [Fact]
     public void AssetServer_LoadAsync_Reload()
     {
         var assetServer = new AssetServer(new FileAssetIO("Assets/TestFiles"))

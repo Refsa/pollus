@@ -200,7 +200,15 @@ public class AssetServer : IDisposable
 
     public Handle LoadAsync(AssetPath path, bool reload = false)
     {
-        if (!reload && Assets.TryGetHandle(path, out var handle)) return handle;
+        if (!reload)
+        {
+            if (Assets.TryGetHandle(path, out var handle)) return handle;
+            for (int i = 0; i < loadStates.Count; i++)
+            {
+                ref var pendingState = ref loadStates.Get(i);
+                if (pendingState.Path == path) return pendingState.Handle;
+            }
+        }
         if (!AssetIO.Exists(path))
         {
             Log.Error((FormattableString)$"AssetServer::LoadAsync asset {path} does not exist");
