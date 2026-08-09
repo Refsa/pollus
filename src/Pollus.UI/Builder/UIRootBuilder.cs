@@ -12,6 +12,7 @@ public struct UIRootBuilder : IUINodeBuilder<UIRootBuilder>
 
     float viewportWidth;
     float viewportHeight;
+    float zIndex;
     bool autoResize;
 
     public UIRootBuilder(Commands commands, float width, float height)
@@ -34,11 +35,17 @@ public struct UIRootBuilder : IUINodeBuilder<UIRootBuilder>
         return this;
     }
 
+    public UIRootBuilder ZIndex(float zIndex)
+    {
+        this.zIndex = zIndex;
+        return this;
+    }
+
     public Entity Spawn()
     {
         var entity = state.commands.Spawn(Entity.With(
             new UINode(),
-            new UILayoutRoot { Size = new Size<float>(viewportWidth, viewportHeight) },
+            new UILayoutRoot { Size = new Size<float>(viewportWidth, viewportHeight), ZIndex = zIndex },
             new UIStyle { Value = state.style }
         )).Entity;
 

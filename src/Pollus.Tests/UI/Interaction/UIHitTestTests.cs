@@ -145,6 +145,52 @@ public class UIHitTestTests
     }
 
     [Fact]
+    public void OverlappingRoots_HigherZIndexWins()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var highRoot = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600), ZIndex = 10f }
+        )).Entity;
+
+        var highChild = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
+            }}
+        )).Entity;
+
+        var lowRoot = commands.Spawn(Entity.With(
+            new UINode(),
+            new UILayoutRoot { Size = new Size<float>(800, 600), ZIndex = -10f }
+        )).Entity;
+
+        var lowChild = commands.Spawn(Entity.With(
+            new UINode(),
+            new UIInteraction(),
+            new UIStyle { Value = LayoutStyle.Default with
+            {
+                Size = new Size<Length>(Length.Px(200), Length.Px(100)),
+            }}
+        )).Entity;
+
+        commands.AddChild(highRoot, highChild);
+        commands.AddChild(lowRoot, lowChild);
+        world.Update();
+
+        var hitResult = world.Resources.Get<UIHitTestResult>();
+        var focusState = world.Resources.Get<UIFocusState>();
+
+        UIInteractionSystem.PerformHitTest(new Query(world), hitResult, focusState, new Vec2f(50, 50));
+
+        Assert.Equal(highChild, hitResult.HoveredEntity);
+    }
+
+    [Fact]
     public void NestedChild_ChildWinsOverParent()
     {
         using var world = CreateWorld();

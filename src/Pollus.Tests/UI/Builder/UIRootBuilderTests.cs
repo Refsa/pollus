@@ -50,6 +50,19 @@ public class UIRootBuilderTests
     }
 
     [Fact]
+    public void Root_ZIndex_SetsDrawOrder()
+    {
+        using var world = CreateWorld();
+        var commands = world.GetCommands();
+
+        var entity = Root(commands, 800, 600).ZIndex(12f).Spawn();
+        world.Update();
+
+        var layoutRoot = world.Store.GetComponent<UILayoutRoot>(entity);
+        Assert.Equal(12f, layoutRoot.ZIndex);
+    }
+
+    [Fact]
     public void Root_DefaultStyle_SetsFullSizeAndColumn()
     {
         using var world = CreateWorld();

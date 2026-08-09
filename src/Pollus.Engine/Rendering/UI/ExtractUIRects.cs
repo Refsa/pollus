@@ -20,13 +20,14 @@ public record struct UIRenderResources
 [SystemSet]
 public partial class ExtractUIRectsSystem
 {
-    class LocalData
+    internal class LocalData
     {
         public List<(Entity entity, Vec2f parentAbsPos, Rect<int>? scissor)> Deferred = new();
+        public List<(Entity entity, ComputedNode computed, float zIndex, int order)> Roots = new();
     }
 
     [System(nameof(CoreStage.PreRender), RunsAfter = [RenderingPlugin.BeginFrameSystem, "UITextSystemSet::PropagateUIFontAtlas"]), Local<LocalData>()]
-    static void ExtractUIRects(
+    internal static void ExtractUIRects(
         Local<LocalData> localData,
         UIRectBatches batches,
         UIRenderResources resources,
@@ -37,27 +38,39 @@ public partial class ExtractUIRectsSystem
         batches.Reset();
 
         uint sortIndex = 0;
+        var roots = localData.Value.Roots;
+        var order = 0;
 
         foreach (var root in qRoots)
         {
-            var rootEntity = root.Entity;
-            ref readonly var rootComputed = ref root.Component1;
-
-            EmitNode(batches, resources.Material, meshes, ref sortIndex, query, rootEntity, rootComputed, Vec2f.Zero, null, localData.Value.Deferred);
+            roots.Add((root.Entity, root.Component1, root.Component0.ZIndex, order++));
         }
 
-        for (var i = 0; i < localData.Value.Deferred.Count; i++)
+        roots.Sort(static (a, b) =>
         {
-            var (deferredEntity, parentAbsPos, deferredScissor) = localData.Value.Deferred[i];
-            var entRef = query.GetEntity(deferredEntity);
-            if (entRef.Has<ComputedNode>())
+            var result = a.zIndex.CompareTo(b.zIndex);
+            return result != 0 ? result : a.order.CompareTo(b.order);
+        });
+
+        foreach (var root in roots)
+        {
+            EmitNode(batches, resources.Material, meshes, ref sortIndex, query, root.entity, root.computed, Vec2f.Zero, null, localData.Value.Deferred);
+
+            for (var i = 0; i < localData.Value.Deferred.Count; i++)
             {
-                ref var computed = ref entRef.Get<ComputedNode>();
-                EmitNode(batches, resources.Material, meshes, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, localData.Value.Deferred);
+                var (deferredEntity, parentAbsPos, deferredScissor) = localData.Value.Deferred[i];
+                var entRef = query.GetEntity(deferredEntity);
+                if (entRef.Has<ComputedNode>())
+                {
+                    ref var computed = ref entRef.Get<ComputedNode>();
+                    EmitNode(batches, resources.Material, meshes, ref sortIndex, query, deferredEntity, computed, parentAbsPos, deferredScissor, localData.Value.Deferred);
+                }
             }
+
+            localData.Value.Deferred.Clear();
         }
 
-        localData.Value.Deferred.Clear();
+        roots.Clear();
     }
 
     [System(nameof(CoreStage.PreRender), RunsAfter = [nameof(ExtractUIRects)])]

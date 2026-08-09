@@ -17,6 +17,7 @@ public class UIHitTestResult
 
     // Reusable buffer for deferred absolute-positioned hit test nodes
     internal readonly List<(Entity entity, Vec2f parentAbsPos, UIClipRect? clip)> DeferredBuffer = [];
+    internal readonly List<(Entity entity, float zIndex, int order)> RootBuffer = [];
 }
 
 internal readonly record struct UIClipRect(float Left, float Top, float Right, float Bottom)

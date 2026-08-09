@@ -31,25 +31,39 @@ public partial class UIInteractionSystem
         focusState.FocusOrder.Clear();
 
         var deferred = hitResult.DeferredBuffer;
+        var roots = hitResult.RootBuffer;
+        var order = 0;
 
         foreach (var rootEntity in query.Filtered<All<UILayoutRoot>>())
         {
             if (!query.Has<ComputedNode>(rootEntity)) continue;
-            ref readonly var computed = ref query.Get<ComputedNode>(rootEntity);
-            HitTestNode(query, ref hitResult.HoveredEntity, focusState, rootEntity, computed, Vec2f.Zero, mousePos, null, deferred);
+            roots.Add((rootEntity, query.Get<UILayoutRoot>(rootEntity).ZIndex, order++));
         }
 
-        // Hit-test deferred absolute-positioned nodes last so they win over normal flow
-        for (var i = 0; i < deferred.Count; i++)
+        roots.Sort(static (a, b) =>
         {
-            var (deferredEntity, parentAbsPos, clip) = deferred[i];
-            if (!query.Has<ComputedNode>(deferredEntity)) continue;
-            ref readonly var computed = ref query.Get<ComputedNode>(deferredEntity);
-            HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, computed, parentAbsPos, mousePos, clip, deferred);
+            var result = a.zIndex.CompareTo(b.zIndex);
+            return result != 0 ? result : a.order.CompareTo(b.order);
+        });
+
+        foreach (var root in roots)
+        {
+            ref readonly var computed = ref query.Get<ComputedNode>(root.entity);
+            HitTestNode(query, ref hitResult.HoveredEntity, focusState, root.entity, computed, Vec2f.Zero, mousePos, null, deferred);
+
+            for (var i = 0; i < deferred.Count; i++)
+            {
+                var (deferredEntity, parentAbsPos, clip) = deferred[i];
+                if (!query.Has<ComputedNode>(deferredEntity)) continue;
+                ref readonly var deferredComputed = ref query.Get<ComputedNode>(deferredEntity);
+                HitTestNode(query, ref hitResult.HoveredEntity, focusState, deferredEntity, deferredComputed, parentAbsPos, mousePos, clip, deferred);
+            }
+
+            deferred.Clear();
         }
 
         hitResult.PointerOverUI = !hitResult.HoveredEntity.IsNull;
-        deferred.Clear();
+        roots.Clear();
     }
 
     [System(CoreStage.PostUpdate, RunsAfter = [nameof(HitTest)])]
