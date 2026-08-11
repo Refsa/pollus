@@ -61,9 +61,6 @@ public sealed unsafe class GPUReadbackQueue : IDisposable
 
     sealed record MapRequest(GPUReadbackQueue Owner, IWGPUContext Context, BatchHandle Batch);
 
-    static readonly Silk.NET.WebGPU.BufferMapCallback MapCallbackDelegate = OnMapCompleted;
-    static readonly Silk.NET.WebGPU.PfnBufferMapCallback MapCallback = MapCallbackDelegate;
-
     readonly int resultRetentionFrames;
     readonly int maxBatchBytes;
     readonly string label;
@@ -459,7 +456,7 @@ public sealed unsafe class GPUReadbackQueue : IDisposable
                 slot.Buffer!.Native,
                 0,
                 (nuint)slot.ByteLength,
-                MapCallback,
+                new Silk.NET.WebGPU.PfnBufferMapCallback(&OnMapCompleted),
                 userData);
         }
         catch
@@ -473,6 +470,7 @@ public sealed unsafe class GPUReadbackQueue : IDisposable
     /// <summary>
     /// WPGU Callback
     /// </summary>
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     static void OnMapCompleted(Silk.NET.WebGPU.BufferMapAsyncStatus status, void* userData)
     {
         var handle = GCHandle.FromIntPtr((nint)userData);

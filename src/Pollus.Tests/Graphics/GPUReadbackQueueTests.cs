@@ -1,10 +1,20 @@
 namespace Pollus.Tests.Graphics;
 
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Pollus.Graphics.Rendering;
 
 public class GPUReadbackQueueTests
 {
+    [Fact]
+    public void NativeMapCallbackUsesAnUnmanagedEntryPoint()
+    {
+        var callback = typeof(GPUReadbackQueue).GetMethod("OnMapCompleted", BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.NotNull(callback);
+        Assert.NotNull(callback.GetCustomAttribute<UnmanagedCallersOnlyAttribute>());
+    }
+
     [Fact]
     public void PublishedBytesCanBeReadAsTypedValues()
     {
