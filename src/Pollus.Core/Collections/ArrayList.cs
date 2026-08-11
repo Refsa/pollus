@@ -10,6 +10,7 @@ public class ArrayList<T> : IEnumerable
     private int count;
 
     public int Count => count;
+    public int Capacity => items.Length;
 
     public T this[int index]
     {

@@ -64,8 +64,9 @@ public partial struct Rect : IEquatable<Rect>, IEqualityComparer<Rect>
     public void ScaleCentered(Vec2f scale)
     {
         var center = Center();
-        Min = center - (Max - Min) * scale / 2;
-        Max = center + (Max - Min) * scale / 2;
+        var extents = (Max - Min) * scale / 2;
+        Min = center - extents;
+        Max = center + extents;
     }
 
     public void Move(Vec2f offset)
