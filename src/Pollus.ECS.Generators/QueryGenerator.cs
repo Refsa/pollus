@@ -18,6 +18,7 @@ namespace Pollus.ECS.Generators
             const string TEMPLATE =
                 @"namespace Pollus.ECS;
 using System.Runtime.CompilerServices;
+using Pollus.Jobs;
 
 public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     $gen_constraints$
@@ -73,6 +74,13 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
             where TForEach : struct, IChunkForEach<$gen_args$>
         {
             query.ForEachChunk(pred);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public JobHandle ForEachPar<TForEach>(JobScheduler jobs, TForEach iter, params ReadOnlySpan<JobHandle> deps)
+            where TForEach : struct, IForEach<$gen_args$>
+        {
+            return query.ForEachPar(jobs, iter, deps);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,6 +295,21 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public JobHandle ForEachPar<TForEach>(JobScheduler jobs, TForEach iter, params ReadOnlySpan<JobHandle> deps)
+        where TForEach : struct, IForEach<$gen_args$>
+    {
+        var join = jobs.BeginJoin();
+        var archetypes = world.Store.GetMatchedArchetypes(cidsHash, cids);
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(archetypes, filterArchetype, filterChunk))
+        {
+            var handle = jobs.Schedule(new ChunkParIter<TForEach>(chunk, iter), deps);
+            join.Add(handle);
+        }
+
+        return join.EndJoin();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ForEachRawChunk<TForEach>(TForEach pred)
         where TForEach : IRawChunkForEach
     {
@@ -439,6 +462,32 @@ public struct Query<$gen_args$> : IQuery, IQueryCreate<Query<$gen_args$>>
         internal ref Entity entity;
         $entity_row_fields$
         public readonly ref readonly Entity Entity => ref entity;
+    }
+
+    public struct ChunkParIter<TForEach> : IJob
+        where TForEach : struct, IForEach<$gen_args$>
+    {
+        ArchetypeChunk chunk;
+        TForEach iter;
+
+        public ChunkParIter(ArchetypeChunk chunk, TForEach iter)
+        {
+            this.chunk = chunk;
+            this.iter = iter;
+        }
+
+        public void Execute()
+        {
+            var count = chunk.Count;
+            $comp_refs$
+            scoped ref var entity = ref chunk.GetEntity(0);
+            while (count-- > 0)
+            {
+                iter.Execute(entity, $comp_args$);
+                entity = ref Unsafe.Add(ref entity, 1);
+                $comp_increments$
+            }
+        }
     }
 }";
 

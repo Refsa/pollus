@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pollus.Core\Pollus.Core.csproj" />
+    <ProjectReference Include="..\Pollus.Jobs\Pollus.Jobs.csproj" />
 
     <ProjectReference Include="..\Pollus.ECS.Generators\Pollus.ECS.Generators.csproj"
       OutputItemType="Analyzer"

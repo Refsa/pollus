@@ -1,6 +1,7 @@
 namespace Pollus.ECS;
 
 using System.Runtime.CompilerServices;
+using Pollus.Jobs;
 
 public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     where C0 : unmanaged, IComponent
@@ -270,6 +271,21 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public JobHandle ForEachPar<TForEach>(JobScheduler jobs, TForEach iter, params ReadOnlySpan<JobHandle> deps)
+        where TForEach : struct, IForEach<C0>
+    {
+        var join = jobs.BeginJoin(deps);
+        var archetypes = world.Store.GetMatchedArchetypes(cidsHash, cids);
+        foreach (ref var chunk in new ArchetypeChunkEnumerable(archetypes, filterArchetype, filterChunk))
+        {
+            var handle = jobs.Schedule(new ChunkParIter<TForEach>(chunk, iter), deps);
+            join.Add(handle);
+        }
+
+        return join.EndJoin();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int EntityCount<TFilters>()
         where TFilters : ITuple, new()
     {
@@ -412,5 +428,31 @@ public struct Query<C0> : IQuery, IQueryCreate<Query<C0>>
         internal ref Entity entity;
         public ref C0 Component0;
         public readonly ref readonly Entity Entity => ref entity;
+    }
+
+    public struct ChunkParIter<TForEach> : IJob
+        where TForEach : struct, IForEach<C0>
+    {
+        ArchetypeChunk c0;
+        TForEach iter;
+
+        public ChunkParIter(ArchetypeChunk c0, TForEach iter)
+        {
+            this.c0 = c0;
+            this.iter = iter;
+        }
+
+        public void Execute()
+        {
+            var count = c0.Count;
+            scoped ref var curr = ref c0.GetComponent<C0>(0, cids[0]);
+            scoped ref var ent = ref c0.GetEntity(0);
+            while (count-- > 0)
+            {
+                iter.Execute(ent, ref curr);
+                curr = ref Unsafe.Add(ref curr, 1);
+                ent = ref Unsafe.Add(ref ent, 1);
+            }
+        }
     }
 }

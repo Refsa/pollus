@@ -20,6 +20,7 @@
     <ProjectReference Include="..\Pollus.Platform\Pollus.Platform.csproj" />
     <ProjectReference Include="..\Pollus.Input\Pollus.Input.csproj" />
     <ProjectReference Include="..\Pollus.UI\Pollus.UI.csproj" />
+    <ProjectReference Include="..\Pollus.Jobs\Pollus.Jobs.csproj" />
 
     <ProjectReference Include="..\Pollus.Generators\Pollus.Generators.csproj"
       OutputItemType="Analyzer"

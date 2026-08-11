@@ -8,5 +8,6 @@ public static class DefaultPlugins
 {
     public static IPlugin[] Core => [new TimePlugin()];
     public static IPlugin[] Platform => [new PlatformEventsPlugin(), new WindowPlugin()];
-    public static IPlugin[] Full => [..Core, ..Platform];
+    public static IPlugin[] Jobs => [new JobsPlugin()];
+    public static IPlugin[] Full => [..Core, ..Platform, ..Jobs];
 }

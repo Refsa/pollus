@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
 using Pollus.ECS;
+using Pollus.Jobs;
 
 [MemoryDiagnoser]
 // [ReturnValueValidator(failOnError: true)]
@@ -16,11 +17,13 @@ public class QueryBenchmarks
     const int SIZE = 100_000;
     World oneComponentWorld;
     World twoComponentWorld;
+    JobScheduler jobPool;
 
     public QueryBenchmarks()
     {
         oneComponentWorld = new();
         twoComponentWorld = new();
+        jobPool = new();
         for (int i = 0; i < SIZE; i++)
         {
             Entity.With(new Component1()).Spawn(oneComponentWorld);
@@ -54,6 +57,15 @@ public class QueryBenchmarks
         var q = new Query<Component1>(oneComponentWorld);
         q.ForEach(new ForEachOne());
         return 0;
+    }
+
+    [Benchmark]
+    public void Query_One_ForEach_IForEach_Parallel()
+    {
+        var q = new Query<Component1>(oneComponentWorld);
+        var handle = q.ForEachPar(jobPool, new ForEachOne());
+        handle.Complete();
+        jobPool.Flush();
     }
 
     [Benchmark]
@@ -97,6 +109,15 @@ public class QueryBenchmarks
     {
         var q = new Query<Component1, Component2>(twoComponentWorld);
         q.ForEach(new ForEachTwo());
+    }
+
+    [Benchmark]
+    public void Query_Two_ForEach_IForEach_Parallel()
+    {
+        var q = new Query<Component1, Component2>(twoComponentWorld);
+        var handle = q.ForEachPar(jobPool, new ForEachTwo());
+        handle.Complete();
+        jobPool.Flush();
     }
 
     [Benchmark]
