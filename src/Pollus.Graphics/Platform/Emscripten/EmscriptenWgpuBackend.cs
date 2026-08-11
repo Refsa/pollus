@@ -681,7 +681,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             depthStencilStateTmp = new Pollus.Emscripten.WGPU.WGPUDepthStencilState
             {
                 NextInChain = null,
-                Format = (Pollus.Emscripten.WGPU.WGPUTextureFormat)ds.Format,
+                Format = Map(ds.Format),
                 DepthWriteEnabled = ds.DepthWriteEnabled,
                 DepthCompare = (Pollus.Emscripten.WGPU.WGPUCompareFunction)ds.DepthCompare,
                 StencilFront = new Pollus.Emscripten.WGPU.WGPUStencilFaceState
