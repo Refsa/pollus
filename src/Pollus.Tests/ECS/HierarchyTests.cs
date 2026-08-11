@@ -156,6 +156,25 @@ public class HierarchyTests
     }
 
     [Fact]
+    public void DespawnHierarchyDoesNotQueueCleanupForDestroyedChildren()
+    {
+        using var world = new World();
+        world.AddPlugin(new HierarchyPlugin());
+        world.Prepare();
+        var commands = world.GetCommands();
+        var parent = commands.Spawn().Entity;
+        var child = commands.Spawn().SetParent(parent).Entity;
+        world.Update();
+
+        world.GetCommands().DespawnHierarchy(parent);
+
+        world.Update();
+
+        Assert.False(world.Store.EntityExists(parent));
+        Assert.False(world.Store.EntityExists(child));
+    }
+
+    [Fact]
     public void RemoveChildrenCommand_RemovesAllChildren()
     {
         using var world = new World();

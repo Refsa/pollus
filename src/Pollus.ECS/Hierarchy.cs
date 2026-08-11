@@ -34,6 +34,7 @@ public class HierarchyPlugin : IPlugin
     {
         world.Schedule.AddSystems(CoreStage.Last, FnSystem.Create(new("Hierarchy::Maintenance"),
             static (
+                World world,
                 Commands commands,
                 Query query,
                 RemovedTracker<Parent> parentRemovedTracker,
@@ -43,6 +44,8 @@ public class HierarchyPlugin : IPlugin
             {
                 foreach (var child in childRemovedTracker)
                 {
+                    if (!world.Store.EntityExists(child.Component.Parent)) continue;
+
                     ref var parent = ref query.Get<Parent>(child.Component.Parent);
                     parent.ChildCount--;
                 }
@@ -52,6 +55,8 @@ public class HierarchyPlugin : IPlugin
                     var childEntity = parent.Component.FirstChild;
                     while (childEntity.IsNull is false)
                     {
+                        if (!world.Store.EntityExists(childEntity) || !query.Has<Child>(childEntity)) break;
+
                         commands.RemoveComponent<Child>(childEntity);
                         childEntity = query.Get<Child>(childEntity).NextSibling;
                     }
