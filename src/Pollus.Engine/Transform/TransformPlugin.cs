@@ -2,6 +2,7 @@ namespace Pollus.Engine.Transform;
 
 using System.Runtime.CompilerServices;
 using Pollus.ECS;
+using Pollus.Jobs;
 using Pollus.Mathematics;
 
 public interface ITransform
@@ -80,7 +81,7 @@ public partial class TransformPlugin<TTransform> : IPlugin
 [SystemSet]
 public partial class Transform2DSystems
 {
-    readonly struct UpdateLocalTransforms : IChunkForEach<GlobalTransform, Read<Transform2D>>
+    readonly struct UpdateLocalTransforms : IChunkForEach<GlobalTransform, Read<Transform2D>>, IForEach<GlobalTransform, Read<Transform2D>>
     {
         public void Execute(
             scoped in ReadOnlySpan<Entity> entities,
@@ -94,18 +95,26 @@ public partial class Transform2DSystems
                 transforms[i].Component.Write(ref globalTransforms[i].Value);
             }
         }
+
+        public void Execute(in Entity entity, ref GlobalTransform globalTransform, ref Read<Transform2D> transform)
+        {
+            transform.Component.Write(ref globalTransform.Value);
+        }
     }
 
     [System(CoreStage.PostUpdate)]
     static void HandleDynamic(
+        JobScheduler jobs,
         Query query,
         Query<GlobalTransform>.Filter<(All<Transform2D, Parent>, None<Child, Static>)> qRoots,
         Query<GlobalTransform, Read<Transform2D>>.Filter<(Any<Parent, Child>, None<Static>)> qTreeTransforms,
         Query<GlobalTransform, Read<Transform2D>>.Filter<None<Parent, Child, Static>> qOrphans
     )
     {
-        qOrphans.ForEachChunk(new UpdateLocalTransforms());
-        qTreeTransforms.ForEachChunk(new UpdateLocalTransforms());
+        var join = jobs.BeginJoin();
+        join.Add(qOrphans.ForEachPar(jobs, new UpdateLocalTransforms()));
+        join.Add(qTreeTransforms.ForEachPar(jobs, new UpdateLocalTransforms()));
+        join.EndJoin().Complete();
 
         qRoots.ForEach(query, static (in query, in root, ref _) =>
         {

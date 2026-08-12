@@ -12,6 +12,7 @@ export function setupExampleButtons() {
         "collision",
         "frame-graph",
         "sprite-benchmark",
+        "transform-benchmark",
         "compute",
         "mesh-rendering",
         "coroutine",

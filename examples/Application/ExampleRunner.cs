@@ -19,6 +19,7 @@ public static class ExampleRunner
             new CollisionExample(),
             new FrameGraphExample(),
             new SpriteBenchmark(),
+            new TransformBenchmark(),
             new ComputeExample(),
             new MeshRenderingExample(),
             new CoroutineExample(),
