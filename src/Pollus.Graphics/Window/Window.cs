@@ -1,19 +1,26 @@
 namespace Pollus.Graphics.Windowing;
 
-using Pollus.Debugging;
 using Pollus.Mathematics;
 using Silk.NET.Core.Contexts;
-using System.Runtime.InteropServices;
+
+public enum WindowPositioning
+{
+    Default,
+    Centered,
+    Position,
+}
 
 public record class WindowOptions
 {
     public static WindowOptions Default => new();
 
     public string Title { get; set; } = "Pollus";
+    public int? TargetDisplay { get; set; }
+    public WindowPositioning Positioning { get; set; }
     public uint Width { get; set; } = 1600;
     public uint Height { get; set; } = 900;
-    public int X { get; set; } = 100;
-    public int Y { get; set; } = 100;
+    public int X { get; set; } = 0;
+    public int Y { get; set; } = 0;
     public bool VSync { get; set; } = false;
     public int FramesPerSecond { get; set; } = 144;
     public bool Resizeable { get; set; } = true;
