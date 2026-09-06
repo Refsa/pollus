@@ -5,6 +5,7 @@ using Pollus.Utils;
 public class Resources : IDisposable
 {
     readonly Dictionary<int, object> resources = [];
+    readonly List<int> resourceOrder = [];
     bool isDisposed;
 
     public void Dispose()
@@ -13,14 +14,15 @@ public class Resources : IDisposable
         isDisposed = true;
         GC.SuppressFinalize(this);
 
-        foreach (var resource in resources.Values)
+        for (int i = resourceOrder.Count - 1; i >= 0; i--)
         {
-            if (resource is IDisposable disposable)
+            if (resources[resourceOrder[i]] is IDisposable disposable)
             {
                 disposable.Dispose();
             }
         }
         resources.Clear();
+        resourceOrder.Clear();
     }
 
     public int Init<TResource>()
@@ -34,18 +36,19 @@ public class Resources : IDisposable
         where TResource : notnull, new()
     {
         ResourceFetch<TResource>.Register();
-        resources[TypeLookup.ID<TResource>()] = new TResource();
+        Add(new TResource(), TypeLookup.ID<TResource>());
     }
 
     public void Add<TResource>(TResource resource)
         where TResource : notnull
     {
         ResourceFetch<TResource>.Register();
-        resources[TypeLookup.ID<TResource>()] = resource;
+        Add(resource, TypeLookup.ID<TResource>());
     }
 
     public void Add(object obj, int typeId)
     {
+        if (!resources.ContainsKey(typeId)) resourceOrder.Add(typeId);
         resources[typeId] = obj;
     }
 
