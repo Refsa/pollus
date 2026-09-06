@@ -316,7 +316,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                 StorageTexture = new Pollus.Emscripten.WGPU.WGPUStorageTextureBindingLayout
                 {
                     Access = (Pollus.Emscripten.WGPU.WGPUStorageTextureAccess)descriptor.Entries[i].StorageTexture.Access,
-                    Format = (Pollus.Emscripten.WGPU.WGPUTextureFormat)descriptor.Entries[i].StorageTexture.Format,
+                    Format = Map(descriptor.Entries[i].StorageTexture.Format),
                     ViewDimension = (Pollus.Emscripten.WGPU.WGPUTextureViewDimension)descriptor.Entries[i].StorageTexture.ViewDimension
                 }
             };
@@ -643,7 +643,7 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
                     targets[targetIdx] = new Pollus.Emscripten.WGPU.WGPUColorTargetState
                     {
                         NextInChain = null,
-                        Format = (Pollus.Emscripten.WGPU.WGPUTextureFormat)ct.Format,
+                        Format = Map(ct.Format),
                         Blend = null,
                         WriteMask = (Pollus.Emscripten.WGPU.WGPUColorWriteMask)ct.WriteMask
                     };

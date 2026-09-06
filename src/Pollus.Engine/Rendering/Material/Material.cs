@@ -8,7 +8,8 @@ public interface IMaterial
     public static abstract string Name { get; }
     public static abstract VertexBufferLayout[] VertexLayouts { get; }
     public static abstract RenderPipelineDescriptor PipelineDescriptor { get; }
-    public static virtual BlendState? Blend { get; } = null;
+    public static virtual BlendState? Blend { get; } = BlendState.Default;
+    public static virtual TextureFormat? ColorTargetFormat { get; } = null;
 
     Handle<ShaderAsset> ShaderSource { get; set; }
     IBinding[][] Bindings { get; }

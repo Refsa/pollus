@@ -16,6 +16,12 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         this.wgpu = wgpu;
     }
 
+    static Silk.NET.WebGPU.TextureFormat NativeTextureFormat(TextureFormat format)
+    {
+        if (Enum.TryParse<Silk.NET.WebGPU.TextureFormat>(format.ToString(), out var nativeFormat)) return nativeFormat;
+        throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported Silk.NET WebGPU texture format");
+    }
+
     public NativeHandle<InstanceTag> CreateInstance()
     {
         var desc = new Silk.NET.WebGPU.InstanceDescriptor();
@@ -88,7 +94,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             usage: (Silk.NET.WebGPU.TextureUsage)descriptor.Usage,
             dimension: (Silk.NET.WebGPU.TextureDimension)descriptor.Dimension,
             size: descriptor.Size,
-            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
+            format: NativeTextureFormat(descriptor.Format),
             mipLevelCount: descriptor.MipLevelCount,
             sampleCount: descriptor.SampleCount
         );
@@ -100,7 +106,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         }
 
         var viewFormats = stackalloc Silk.NET.WebGPU.TextureFormat[viewFormatCount];
-        for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = (Silk.NET.WebGPU.TextureFormat)descriptor.ViewFormats[i];
+        for (int i = 0; i < viewFormatCount; i++) viewFormats[i] = NativeTextureFormat(descriptor.ViewFormats[i]);
         nativeDescriptor.ViewFormatCount = (nuint)viewFormatCount;
         nativeDescriptor.ViewFormats = viewFormats;
         var texture = wgpu.DeviceCreateTexture(device.As<Silk.NET.WebGPU.Device>(), in nativeDescriptor);
@@ -185,7 +191,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 ),
                 storageTexture: new Silk.NET.WebGPU.StorageTextureBindingLayout(
                     access: (Silk.NET.WebGPU.StorageTextureAccess)descriptor.Entries[i].StorageTexture.Access,
-                    format: (Silk.NET.WebGPU.TextureFormat)descriptor.Entries[i].StorageTexture.Format,
+                    format: NativeTextureFormat(descriptor.Entries[i].StorageTexture.Format),
                     viewDimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Entries[i].StorageTexture.ViewDimension
                 )
             );
@@ -362,7 +368,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
     {
         var native = new Silk.NET.WebGPU.TextureViewDescriptor(
             label: label.Pointer,
-            format: (Silk.NET.WebGPU.TextureFormat)descriptor.Format,
+            format: NativeTextureFormat(descriptor.Format),
             dimension: (Silk.NET.WebGPU.TextureViewDimension)descriptor.Dimension,
             baseMipLevel: descriptor.BaseMipLevel,
             mipLevelCount: descriptor.MipLevelCount,
@@ -461,7 +467,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
 
                     var colorTargetState = colorTargetStates[i];
                     targets[targetIdx] = new(
-                        format: (Silk.NET.WebGPU.TextureFormat)colorTargetState.Format,
+                        format: NativeTextureFormat(colorTargetState.Format),
                         blend: (Silk.NET.WebGPU.BlendState*)nint.Zero,
                         writeMask: colorTargetState.WriteMask
                     );
@@ -483,7 +489,7 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         if (descriptor.DepthStencilState is DepthStencilState depthStencilState)
         {
             depthStencilStateTmp = new Silk.NET.WebGPU.DepthStencilState(
-                format: (Silk.NET.WebGPU.TextureFormat)depthStencilState.Format,
+                format: NativeTextureFormat(depthStencilState.Format),
                 depthWriteEnabled: depthStencilState.DepthWriteEnabled,
                 depthCompare: depthStencilState.DepthCompare,
                 depthBias: depthStencilState.DepthBias,
