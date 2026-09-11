@@ -149,7 +149,7 @@ public class RenderAssets : IRenderAssets, IDisposable
         if (renderData.TryGetValue(handle, out var data))
         {
             if (loaders.TryGetValue(handle.Type, out var loader)) loader.Unload(this, handle);
-            else if (data is IDisposable disposable) disposable.Dispose();
+            else if (data.Asset is IDisposable disposable) disposable.Dispose();
             renderData.Remove(handle);
         }
     }
