@@ -101,7 +101,26 @@ public class UIRectBatches : RenderBatches<UIRectBatch, UIRectBatchKey>
 {
     readonly Dictionary<(Handle, Handle), Handle<GPUBindGroup>> bindGroupCache = new();
 
-    public bool HasBindGroup(Handle texture, Handle sampler) => bindGroupCache.ContainsKey((texture, sampler));
+    public bool HasBindGroup(Handle texture, Handle sampler, RenderAssets renderAssets)
+    {
+        if (!bindGroupCache.TryGetValue((texture, sampler), out var handle)) return false;
+        var info = renderAssets.GetInfo(handle);
+        if (info is not null)
+        {
+            bool valid = true;
+            foreach (var dependency in info.Dependencies)
+            {
+                if (renderAssets.Has(dependency)) continue;
+                valid = false;
+                break;
+            }
+            if (valid) return true;
+        }
+
+        bindGroupCache.Remove((texture, sampler));
+        renderAssets.Unload(handle);
+        return false;
+    }
 
     public void CacheBindGroup(Handle texture, Handle sampler, Handle<GPUBindGroup> bindGroup)
     {

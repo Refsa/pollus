@@ -33,6 +33,15 @@ public class RenderingPlugin : IPlugin
         PluginDependency.From(() => AssetPlugin.Default),
     ];
 
+    internal static void PrepareTexture(IWGPUContext gpuContext, RenderAssets renderAssets, AssetServer assetServer, in AssetEvent<Texture2D> assetEvent)
+    {
+        if (assetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) return;
+        var prepared = renderAssets.GetInfo(assetEvent.Handle);
+        var source = assetServer.Assets.GetInfo(assetEvent.Handle);
+        if (prepared is not null && source is not null && source.LastModified <= prepared.LastModified) return;
+        renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+    }
+
     public void Apply(World world)
     {
         world.Resources.Init<RenderContext>();
@@ -98,15 +107,19 @@ public class RenderingPlugin : IPlugin
         ));
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
-            BeginFrameSystem,
-            static (RenderContext context, IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, EventReader<AssetEvent<Texture2D>> assetEvents) =>
+            new("Rendering::PrepareTextureAssets") { RunsBefore = [BeginFrameSystem] },
+            static (IWGPUContext gpuContext, AssetServer assetServer, RenderAssets renderAssets, EventReader<AssetEvent<Texture2D>> assetEvents) =>
             {
                 foreach (scoped ref readonly var assetEvent in assetEvents.Read())
                 {
-                    if (assetEvent.Type is not (AssetEventType.Loaded or AssetEventType.Changed)) continue;
-                    renderAssets.Prepare(gpuContext, assetServer, assetEvent.Handle, assetEvent.Type is AssetEventType.Changed);
+                    PrepareTexture(gpuContext, renderAssets, assetServer, assetEvent);
                 }
+            }
+        ));
 
+        world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(
+            BeginFrameSystem, static (RenderContext context) =>
+            {
                 context.PrepareFrame();
             }
         ));

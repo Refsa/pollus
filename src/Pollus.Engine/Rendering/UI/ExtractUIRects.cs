@@ -73,7 +73,7 @@ public partial class ExtractUIRectsSystem
         roots.Clear();
     }
 
-    [System(nameof(CoreStage.PreRender), RunsAfter = [nameof(ExtractUIRects)])]
+    [System(nameof(CoreStage.PreRender), RunsAfter = [nameof(ExtractUIRects), "UIUniform::PrepareSystem"])]
     static void PrepareUIImageBindGroups(
         UIRectBatches batches,
         UIRenderResources resources,
@@ -85,7 +85,7 @@ public partial class ExtractUIRectsSystem
         {
             if (batch is not UIRectBatch rectBatch) continue;
             if (rectBatch.Texture.IsNull()) continue;
-            if (batches.HasBindGroup(rectBatch.Texture, rectBatch.Sampler)) continue;
+            if (batches.HasBindGroup(rectBatch.Texture, rectBatch.Sampler, renderAssets)) continue;
 
             if (assetServer.Assets.IsLoaded(rectBatch.Texture))
             {
@@ -112,7 +112,17 @@ public partial class ExtractUIRectsSystem
                 Entries = [uniformBinding.Binding(renderAssets, gpuContext, assetServer, 0), textureBinding.Binding(renderAssets, gpuContext, assetServer, 1), samplerBinding.Binding(renderAssets, gpuContext, assetServer, 2)],
             });
 
-            batches.CacheBindGroup(rectBatch.Texture, rectBatch.Sampler, renderAssets.Add(bindGroup));
+            var handle = renderAssets.Add(bindGroup);
+            var textureData = renderAssets.Get<TextureRenderData>(rectBatch.Texture);
+            var uniformData = renderAssets.Get<UniformRenderData>(new Handle<Uniform<UIUniform>>(0));
+            var samplerData = renderAssets.Get<SamplerRenderData>(samplerHandle);
+            renderAssets.GetInfo(handle)!.Dependencies.UnionWith([
+                textureData.Texture,
+                textureData.View,
+                uniformData.UniformBuffer,
+                samplerData.Sampler,
+            ]);
+            batches.CacheBindGroup(rectBatch.Texture, rectBatch.Sampler, handle);
         }
     }
 
