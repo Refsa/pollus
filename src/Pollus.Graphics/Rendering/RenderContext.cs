@@ -4,6 +4,7 @@ using Pollus.Collections;
 using Pollus.Graphics.WGPU;
 using Pollus.Debugging;
 using Pollus.Graphics.Platform;
+using System.Diagnostics;
 
 public class RenderContext : IDisposable
 {
@@ -19,20 +20,31 @@ public class RenderContext : IDisposable
     public RenderResourceCache Resources => resources;
     public GPUReadbackQueue Readbacks => readbacks;
     public bool SkipFrame { get; private set; }
+    public bool TrackTimings { get; set; }
+    public long ReadbackPollTicks { get; private set; }
+    public long SurfaceAcquireTicks { get; private set; }
+    public GPUProfiler? Profiler { get; set; }
 
     public void Dispose()
     {
         resources.Cleanup();
         readbacks.Dispose();
+        Profiler?.Dispose();
         CleanupFrame();
     }
 
     public bool PrepareFrame()
     {
+        var start = TrackTimings ? Stopwatch.GetTimestamp() : 0;
         readbacks.Update(GPUContext);
+        ReadbackPollTicks = TrackTimings ? Stopwatch.GetTimestamp() - start : 0;
+        Profiler?.BeginFrame(readbacks);
         SkipFrame = false;
+        start = TrackTimings ? Stopwatch.GetTimestamp() : 0;
         var nextSurfaceTexture = GPUContext.CreateSurfaceTexture();
-        if (!nextSurfaceTexture.Prepare())
+        var prepared = nextSurfaceTexture.Prepare();
+        SurfaceAcquireTicks = TrackTimings ? Stopwatch.GetTimestamp() - start : 0;
+        if (!prepared)
         {
             Log.Error("Failed to prepare surface texture");
             nextSurfaceTexture.Dispose();
@@ -94,6 +106,7 @@ public class RenderContext : IDisposable
         Guard.IsNotNull(SurfaceTextureView, "SurfaceTexture is null");
 
         {
+            Profiler?.EndFrame(this);
             if (readbacks.HasPendingRequests)
             {
                 ref var encoder = ref CreateCommandEncoder("gpu-readback");
@@ -117,7 +130,7 @@ public class RenderContext : IDisposable
 
     public ref GPUCommandEncoder CreateCommandEncoder(string label)
     {
-        var encoder = GPUContext.CreateCommandEncoder(label);
+        var encoder = new GPUCommandEncoder(GPUContext, label, Profiler);
         commandEncoders.Add(encoder);
         return ref commandEncoders.Get(commandEncoders.Count - 1);
     }

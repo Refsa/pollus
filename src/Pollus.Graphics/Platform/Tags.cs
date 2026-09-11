@@ -7,6 +7,7 @@ public struct DeviceTag { }
 public struct QueueTag { }
 public struct SwapChainTag { }
 public struct BufferTag { }
+public struct QuerySetTag { }
 public struct TextureTag { }
 public struct TextureViewTag { }
 public struct SamplerTag { }

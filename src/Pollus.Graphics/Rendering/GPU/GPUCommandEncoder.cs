@@ -7,13 +7,15 @@ using Pollus.Graphics.Platform;
 public readonly struct GPUCommandEncoder : IDisposable
 {
     readonly IWGPUContext context;
+    readonly GPUProfiler? profiler;
     readonly NativeHandle<CommandEncoderTag> native;
 
     public NativeHandle<CommandEncoderTag> Native => native;
 
-    public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label)
+    public GPUCommandEncoder(IWGPUContext context, ReadOnlySpan<char> label, GPUProfiler? profiler = null)
     {
         this.context = context;
+        this.profiler = profiler;
         using var labelPtr = new NativeUtf8(label);
         native = context.Backend.DeviceCreateCommandEncoder(context.DeviceHandle, labelPtr);
     }
@@ -32,12 +34,14 @@ public readonly struct GPUCommandEncoder : IDisposable
 
     public GPURenderPassEncoder BeginRenderPass(in RenderPassDescriptor descriptor)
     {
-        return new GPURenderPassEncoder(context, this, descriptor);
+        var timed = descriptor;
+        if (timed.TimestampWrites.QuerySet.IsNull) timed.TimestampWrites = profiler?.BeginPass(descriptor.Label) ?? default;
+        return new GPURenderPassEncoder(context, this, timed);
     }
 
     public GPUComputePassEncoder BeginComputePass(ReadOnlySpan<char> label)
     {
-        return new GPUComputePassEncoder(context, this, label);
+        return new GPUComputePassEncoder(context, this, label, profiler?.BeginPass(label) ?? default);
     }
 
     public void InsertDebugMarker(ReadOnlySpan<char> label)

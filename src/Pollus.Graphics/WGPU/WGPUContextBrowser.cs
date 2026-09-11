@@ -197,15 +197,18 @@ unsafe public class WGPUContextBrowser : IWGPUContext
         };
         var requiredLimitsPtr = Unsafe.AsPointer(ref requiredLimits);
 
-        var requiredFeatures = stackalloc Emscripten.WGPU.WGPUFeatureName[]
+        var requiredFeatures = stackalloc Emscripten.WGPU.WGPUFeatureName[2];
+        requiredFeatures[0] = Emscripten.WGPU.WGPUFeatureName.IndirectFirstInstance;
+        nuint requiredFeatureCount = 1;
+        if (wgpu.AdapterHasFeature(adapter, Emscripten.WGPU.WGPUFeatureName.TimestampQuery))
         {
-            Emscripten.WGPU.WGPUFeatureName.IndirectFirstInstance,
-        };
+            requiredFeatures[requiredFeatureCount++] = Emscripten.WGPU.WGPUFeatureName.TimestampQuery;
+        }
 
         var deviceDescriptor = new Emscripten.WGPU.WGPUDeviceDescriptor()
         {
             RequiredLimits = (Emscripten.WGPU.WGPURequiredLimits*)requiredLimitsPtr,
-            RequiredFeatureCount = 1,
+            RequiredFeatureCount = requiredFeatureCount,
             RequiredFeatures = requiredFeatures,
         };
 

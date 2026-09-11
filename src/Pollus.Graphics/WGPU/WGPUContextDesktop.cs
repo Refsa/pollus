@@ -199,14 +199,17 @@ unsafe public class WGPUContextDesktop : IWGPUContext
             },
         };
 
-        var requiredFeatures = stackalloc Silk.NET.WebGPU.FeatureName[]
+        var requiredFeatures = stackalloc Silk.NET.WebGPU.FeatureName[2];
+        requiredFeatures[0] = Silk.NET.WebGPU.FeatureName.IndirectFirstInstance;
+        nuint requiredFeatureCount = 1;
+        if (wgpu.AdapterHasFeature(adapter, Silk.NET.WebGPU.FeatureName.TimestampQuery))
         {
-            Silk.NET.WebGPU.FeatureName.IndirectFirstInstance,
-        };
+            requiredFeatures[requiredFeatureCount++] = Silk.NET.WebGPU.FeatureName.TimestampQuery;
+        }
 
         var deviceDescriptor = new Silk.NET.WebGPU.DeviceDescriptor(
             requiredLimits: &requiredLimits,
-            requiredFeatureCount: (nuint)1,
+            requiredFeatureCount: requiredFeatureCount,
             requiredFeatures: requiredFeatures
         );
 

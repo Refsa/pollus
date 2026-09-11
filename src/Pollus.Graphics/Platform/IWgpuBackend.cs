@@ -6,6 +6,12 @@ using Pollus.Graphics.Rendering;
 
 public unsafe interface IWgpuBackend : IDisposable
 {
+    bool DeviceSupportsTimestamps(in NativeHandle<DeviceTag> device) => false;
+    double QueueTimestampPeriod(in NativeHandle<QueueTag> queue) => 0;
+    NativeHandle<QuerySetTag> DeviceCreateTimestampQuerySet(in NativeHandle<DeviceTag> device, uint count) => throw new NotSupportedException();
+    void QuerySetRelease(in NativeHandle<QuerySetTag> querySet) => throw new NotSupportedException();
+    void CommandEncoderResolveTimestamps(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<QuerySetTag> querySet, uint count, in NativeHandle<BufferTag> destination)
+        => throw new NotSupportedException();
     NativeHandle<InstanceTag> CreateInstance();
     void ReleaseInstance(NativeHandle<InstanceTag> instance);
     NativeHandle<BufferTag> DeviceCreateBuffer(in NativeHandle<DeviceTag> device, in BufferDescriptor descriptor, in NativeUtf8 label);
@@ -60,7 +66,7 @@ public unsafe interface IWgpuBackend : IDisposable
     void RenderPassEncoderDrawIndexedIndirect(in NativeHandle<RenderPassEncoderTag> pass, in NativeHandle<BufferTag> buffer, uint offset);
     void CommandEncoderCopyBufferToBuffer(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<BufferTag> source, ulong sourceOffset, in NativeHandle<BufferTag> destination, ulong destinationOffset, ulong size);
     void CommandEncoderCopyTextureToTexture(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<TextureTag> srcTexture, in NativeHandle<TextureTag> dstTexture, uint width, uint height, uint depthOrArrayLayers);
-    NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label);
+    NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label, GPUTimestampWrites timestamps = default);
     void ComputePassEncoderEnd(in NativeHandle<ComputePassEncoderTag> pass);
     void ComputePassEncoderSetPipeline(in NativeHandle<ComputePassEncoderTag> pass, in NativeHandle<ComputePipelineTag> pipeline);
     void ComputePassEncoderSetBindGroup(in NativeHandle<ComputePassEncoderTag> pass, uint groupIndex, in NativeHandle<BindGroupTag> bindGroup, ReadOnlySpan<uint> dynamicOffsets);

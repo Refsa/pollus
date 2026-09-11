@@ -143,6 +143,29 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
         };
     }
 
+    public bool DeviceSupportsTimestamps(in NativeHandle<DeviceTag> device)
+    {
+        return wgpu.DeviceHasFeature(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), Pollus.Emscripten.WGPU.WGPUFeatureName.TimestampQuery);
+    }
+
+    public NativeHandle<QuerySetTag> DeviceCreateTimestampQuerySet(in NativeHandle<DeviceTag> device, uint count)
+    {
+        var descriptor = new Pollus.Emscripten.WGPU.WGPUQuerySetDescriptor { Type = Pollus.Emscripten.WGPU.WGPUQueryType.Timestamp, Count = count };
+        return new((nint)wgpu.DeviceCreateQuerySet(device.As<Pollus.Emscripten.WGPU.WGPUDevice>(), in descriptor));
+    }
+
+    public void QuerySetRelease(in NativeHandle<QuerySetTag> querySet)
+    {
+        wgpu.QuerySetRelease(querySet.As<Pollus.Emscripten.WGPU.WGPUQuerySet>());
+    }
+
+    public void CommandEncoderResolveTimestamps(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<QuerySetTag> querySet, uint count, in NativeHandle<BufferTag> destination)
+    {
+        wgpu.CommandEncoderResolveQuerySet(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), querySet.As<Pollus.Emscripten.WGPU.WGPUQuerySet>(), 0, count, destination.As<Pollus.Emscripten.WGPU.WGPUBuffer>(), 0);
+    }
+
+    public double QueueTimestampPeriod(in NativeHandle<QueueTag> queue) => 1;
+
     public NativeHandle<InstanceTag> CreateInstance()
     {
         var instance = wgpu.CreateInstance(null);
@@ -787,6 +810,15 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             rp.DepthStencilAttachment = &nativeDsa;
         }
 
+        var timestamps = new Pollus.Emscripten.WGPU.WGPURenderPassTimestampWrites
+        {
+            QuerySet = descriptor.TimestampWrites.QuerySet.As<Pollus.Emscripten.WGPU.WGPUQuerySet>(),
+            BeginningOfPassWriteIndex = descriptor.TimestampWrites.BeginIndex,
+            EndOfPassWriteIndex = descriptor.TimestampWrites.EndIndex,
+        };
+        if (!descriptor.TimestampWrites.QuerySet.IsNull) rp.TimestampWrites = &timestamps;
+        using var label = new NativeUtf8(descriptor.Label);
+        rp.Label = label.Pointer;
         var handle = wgpu.CommandEncoderBeginRenderPass(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), rp);
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
@@ -887,12 +919,19 @@ public unsafe class EmscriptenWgpuBackend : IWgpuBackend
             size);
     }
 
-    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label, GPUTimestampWrites timestamps = default)
     {
         var desc = new Pollus.Emscripten.WGPU.WGPUComputePassDescriptor
         {
             Label = (byte*)label.Pointer
         };
+        var writes = new Pollus.Emscripten.WGPU.WGPUComputePassTimestampWrites
+        {
+            QuerySet = timestamps.QuerySet.As<Pollus.Emscripten.WGPU.WGPUQuerySet>(),
+            BeginningOfPassWriteIndex = timestamps.BeginIndex,
+            EndOfPassWriteIndex = timestamps.EndIndex,
+        };
+        if (!timestamps.QuerySet.IsNull) desc.TimestampWrites = &writes;
         var enc = wgpu.CommandEncoderBeginComputePass(encoder.As<Pollus.Emscripten.WGPU.WGPUCommandEncoder>(), in desc);
         return new NativeHandle<ComputePassEncoderTag>((nint)enc);
     }

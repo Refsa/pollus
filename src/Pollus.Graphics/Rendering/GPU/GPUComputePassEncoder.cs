@@ -10,11 +10,11 @@ public readonly struct GPUComputePassEncoder : IDisposable
     readonly NativeHandle<ComputePassEncoderTag> native;
     public NativeHandle<ComputePassEncoderTag> Native => native;
 
-    public GPUComputePassEncoder(IWGPUContext context, in GPUCommandEncoder commandEncoder, ReadOnlySpan<char> label)
+    public GPUComputePassEncoder(IWGPUContext context, in GPUCommandEncoder commandEncoder, ReadOnlySpan<char> label, GPUTimestampWrites timestamps = default)
     {
         this.context = context;
         using var labelPtr = new NativeUtf8(label);
-        native = context.Backend.CommandEncoderBeginComputePass(commandEncoder.Native, labelPtr);
+        native = context.Backend.CommandEncoderBeginComputePass(commandEncoder.Native, labelPtr, timestamps);
     }
 
     public void Dispose()

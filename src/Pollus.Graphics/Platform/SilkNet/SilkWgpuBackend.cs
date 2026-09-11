@@ -22,6 +22,27 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
         throw new ArgumentOutOfRangeException(nameof(format), format, "Unsupported Silk.NET WebGPU texture format");
     }
 
+    public bool DeviceSupportsTimestamps(in NativeHandle<DeviceTag> device)
+    {
+        return wgpu.DeviceHasFeature(device.As<Silk.NET.WebGPU.Device>(), Silk.NET.WebGPU.FeatureName.TimestampQuery);
+    }
+
+    public NativeHandle<QuerySetTag> DeviceCreateTimestampQuerySet(in NativeHandle<DeviceTag> device, uint count)
+    {
+        var descriptor = new Silk.NET.WebGPU.QuerySetDescriptor { Type = Silk.NET.WebGPU.QueryType.Timestamp, Count = count };
+        return new((nint)wgpu.DeviceCreateQuerySet(device.As<Silk.NET.WebGPU.Device>(), in descriptor));
+    }
+
+    public void QuerySetRelease(in NativeHandle<QuerySetTag> querySet)
+    {
+        wgpu.QuerySetRelease(querySet.As<Silk.NET.WebGPU.QuerySet>());
+    }
+
+    public void CommandEncoderResolveTimestamps(in NativeHandle<CommandEncoderTag> encoder, in NativeHandle<QuerySetTag> querySet, uint count, in NativeHandle<BufferTag> destination)
+    {
+        wgpu.CommandEncoderResolveQuerySet(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), querySet.As<Silk.NET.WebGPU.QuerySet>(), 0, count, destination.As<Silk.NET.WebGPU.Buffer>(), 0);
+    }
+
     public NativeHandle<InstanceTag> CreateInstance()
     {
         var desc = new Silk.NET.WebGPU.InstanceDescriptor();
@@ -580,6 +601,15 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
                 stencilReadOnly: dsa.StencilReadOnly);
             rp.DepthStencilAttachment = &depthStencilAttachment;
         }
+        var timestamps = new Silk.NET.WebGPU.RenderPassTimestampWrites
+        {
+            QuerySet = descriptor.TimestampWrites.QuerySet.As<Silk.NET.WebGPU.QuerySet>(),
+            BeginningOfPassWriteIndex = descriptor.TimestampWrites.BeginIndex,
+            EndOfPassWriteIndex = descriptor.TimestampWrites.EndIndex,
+        };
+        if (!descriptor.TimestampWrites.QuerySet.IsNull) rp.TimestampWrites = &timestamps;
+        using var label = new NativeUtf8(descriptor.Label);
+        rp.Label = label.Pointer;
         var handle = wgpu.CommandEncoderBeginRenderPass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in rp);
         return new NativeHandle<RenderPassEncoderTag>((nint)handle);
     }
@@ -680,9 +710,16 @@ public unsafe class SilkWgpuBackend : IWgpuBackend
             size);
     }
 
-    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label)
+    public NativeHandle<ComputePassEncoderTag> CommandEncoderBeginComputePass(in NativeHandle<CommandEncoderTag> encoder, in NativeUtf8 label, GPUTimestampWrites timestamps = default)
     {
         var desc = new Silk.NET.WebGPU.ComputePassDescriptor(label: label.Pointer);
+        var writes = new Silk.NET.WebGPU.ComputePassTimestampWrites
+        {
+            QuerySet = timestamps.QuerySet.As<Silk.NET.WebGPU.QuerySet>(),
+            BeginningOfPassWriteIndex = timestamps.BeginIndex,
+            EndOfPassWriteIndex = timestamps.EndIndex,
+        };
+        if (!timestamps.QuerySet.IsNull) desc.TimestampWrites = &writes;
         var enc = wgpu.CommandEncoderBeginComputePass(encoder.As<Silk.NET.WebGPU.CommandEncoder>(), in desc);
         return new NativeHandle<ComputePassEncoderTag>((nint)enc);
     }
