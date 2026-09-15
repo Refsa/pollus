@@ -10,7 +10,7 @@ using Pollus.Utils;
 public partial class UIScrollSystem
 {
     const float ScrollSpeed = 30f;
-    const float ScrollbarThickness = 6f;
+    const float ScrollbarThickness = 12f;
     const float ScrollbarPadding = 2f;
 
     [System(CoreStage.PostUpdate, RunsAfter = ["UIInteractionSystem::UpdateState"])]
@@ -126,7 +126,7 @@ public partial class UIScrollSystem
                 var thumb = commands.Spawn(Entity.With(
                     new ComputedNode(),
                     new BackgroundColor { Color = scrollbarColor },
-                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f },
+                    new BorderRadius { TopLeft = 6f, TopRight = 6f, BottomRight = 6f, BottomLeft = 6f },
                     new UIInteraction()
                 )).Entity;
                 commands.AddChild(entity, thumb);
@@ -140,7 +140,7 @@ public partial class UIScrollSystem
                 var thumb = commands.Spawn(Entity.With(
                     new ComputedNode(),
                     new BackgroundColor { Color = scrollbarColor },
-                    new BorderRadius { TopLeft = 3f, TopRight = 3f, BottomRight = 3f, BottomLeft = 3f },
+                    new BorderRadius { TopLeft = 6f, TopRight = 6f, BottomRight = 6f, BottomLeft = 6f },
                     new UIInteraction()
                 )).Entity;
                 commands.AddChild(entity, thumb);

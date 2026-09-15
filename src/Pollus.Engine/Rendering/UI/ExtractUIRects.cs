@@ -132,16 +132,14 @@ public partial class ExtractUIRectsSystem
         var top = Math.Max(a.Min.Y, b.Min.Y);
         var right = Math.Min(a.Max.X, b.Max.X);
         var bottom = Math.Min(a.Max.Y, b.Max.Y);
-        return new Rect<int>(left, top, Math.Max(left, right), Math.Max(top, bottom));
+        return new Rect<int>(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
     }
 
     static Rect<int>? ComputeChildScissor(Rect<int>? parentScissor, Vec2f absPos, Vec2f size, in ComputedNode computed)
     {
-        var nodeRect = new Rect<int>(
-            (int)(absPos.X + computed.BorderLeft),
-            (int)(absPos.Y + computed.BorderTop),
-            (int)(absPos.X + size.X - computed.BorderRight),
-            (int)(absPos.Y + size.Y - computed.BorderBottom));
+        var nodeRect = Rect<int>.FromMinMax(
+            new Vec2<int>((int)(absPos.X + computed.BorderLeft), (int)(absPos.Y + computed.BorderTop)),
+            new Vec2<int>((int)(absPos.X + size.X - computed.BorderRight), (int)(absPos.Y + size.Y - computed.BorderBottom)));
 
         if (parentScissor.HasValue)
             return IntersectScissorRects(parentScissor.Value, nodeRect);

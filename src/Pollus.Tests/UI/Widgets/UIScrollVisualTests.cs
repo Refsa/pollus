@@ -140,8 +140,7 @@ public class UIScrollVisualTests
         var scroll = world.Store.GetComponent<UIScrollOffset>(container);
         var thumbComputed = world.Store.GetComponent<ComputedNode>(scroll.VerticalThumbEntity);
 
-        // Thickness should be 6px
-        Assert.Equal(6f, thumbComputed.Size.X, 0.1f);
+        Assert.Equal(12f, thumbComputed.Size.X, 0.1f);
         // Height: innerH=200, contentH=400, thumbH = max(20, (200/400)*200) = 100
         Assert.True(thumbComputed.Size.Y > 90f && thumbComputed.Size.Y < 110f,
             $"Expected thumb height ~100, got {thumbComputed.Size.Y}");
