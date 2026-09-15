@@ -37,7 +37,9 @@ class ExtractSpritesSystem : ExtractDrawSystem<SpriteBatches, SpriteBatch, Query
             {
                 ref var sprite = ref sprites[i];
 
-                var batch = (sprite.Material.ID == lastMaterialId) ? lastBatch! : batches.GetOrCreate(new SpriteBatchKey(sprite.Material, isStatic));
+                var batch = sprite.Material.ID == lastMaterialId && lastBatch?.RenderStep == (int)sprite.RenderStep
+                    ? lastBatch
+                    : batches.GetOrCreate(new SpriteBatchKey(sprite.Material, isStatic, sprite.RenderStep));
                 lastMaterialId = sprite.Material.ID;
                 lastBatch = batch;
 

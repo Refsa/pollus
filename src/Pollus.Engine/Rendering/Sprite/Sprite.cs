@@ -18,6 +18,13 @@ public partial struct Sprite : IComponent, IDefault<Sprite>
     public required Handle Material;
     public required Rect<int> Slice;
     uint packedColor;
+    RenderStep2D renderStep;
+
+    public RenderStep2D RenderStep
+    {
+        readonly get => renderStep == 0 ? RenderStep2D.Main : renderStep;
+        set => renderStep = value;
+    }
 
     public Color Color
     {
