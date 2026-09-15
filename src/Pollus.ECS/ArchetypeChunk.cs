@@ -161,9 +161,9 @@ public struct ArchetypeChunk : IDisposable
 
     internal void SetAllFlags(int row, ComponentFlags flag)
     {
-        foreach (ref var value in changes)
+        for (int i = 0; i < components.Length; i++)
         {
-            value.SetFlag(row, flag, version);
+            changes[i].SetFlag(row, flag, version);
         }
     }
 

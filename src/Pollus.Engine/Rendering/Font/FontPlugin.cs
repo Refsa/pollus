@@ -30,6 +30,7 @@ public class FontPlugin : IPlugin
     public void Apply(World world)
     {
         world.Resources.Init<FontAsset>();
+        world.Resources.Get<AssetServer>().InitAssets<FontAsset>();
         world.Resources.Get<AssetServer>().AddLoader<FontAssetLoader>();
         world.Resources.Get<RenderAssets>().AddLoader<FontMeshRenderDataLoader>();
 

@@ -133,7 +133,7 @@ public class FontAssetLoader : AssetLoader<FontAsset, FontAssetLoader.LoadState>
         var material = context.AssetServer.Assets.AddAsset(new FontMaterial()
         {
             ShaderSource = context.LoadDependency<ShaderAsset>("shaders/builtin/font.wgsl"),
-            Sampler = context.LoadDependency<SamplerAsset>("internal://samplers/linear"),
+            Sampler = context.LoadDependency<SamplerAsset>("internal://samplers/nearest"),
             Texture = atlasHandle,
         });
         context.AddDependency(atlasHandle);
