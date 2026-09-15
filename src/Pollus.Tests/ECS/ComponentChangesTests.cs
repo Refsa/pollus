@@ -62,4 +62,34 @@ public class ComponentChangesTests
         var info = world.Store.GetEntityInfo(entity);
         Assert.True(world.Store.Removed.GetTracker<TestComponent1>().WasRemoved(entity));
     }
+
+    [Fact]
+    public void SpawnAndCloneAfterRemovalOnlyFlagPresentComponents()
+    {
+        using var world = new World();
+        var original = world.Spawn(Entity.With(new TestComponent1 { Value = 1 }, new TestComponent2()));
+        world.Store.RemoveComponent<TestComponent2>(original);
+        var originalInfo = world.Store.GetEntityInfo(original);
+        Assert.True(world.Store.Archetypes[originalInfo.ArchetypeIndex].Chunks[originalInfo.ChunkIndex].HasFlag<TestComponent2>(-1, ComponentFlags.Removed));
+        world.Update();
+        world.Update();
+        var commands = world.GetCommands();
+        var spawned = commands.Spawn(Entity.With(new TestComponent1 { Value = 2 })).Entity;
+        var cloned = commands.Clone(original).Entity;
+
+        world.Update();
+
+        Assert.Equal(2, world.Store.GetComponent<TestComponent1>(spawned).Value);
+        Assert.Equal(1, world.Store.GetComponent<TestComponent1>(cloned).Value);
+        foreach (var entity in new[] { spawned, cloned })
+        {
+            var info = world.Store.GetEntityInfo(entity);
+            Assert.Equal(originalInfo.ArchetypeIndex, info.ArchetypeIndex);
+            ref var chunk = ref world.Store.Archetypes[info.ArchetypeIndex].Chunks[info.ChunkIndex];
+            Assert.True(chunk.HasFlag<TestComponent1>(info.RowIndex, ComponentFlags.Added));
+            Assert.False(chunk.HasComponent<TestComponent2>());
+            Assert.False(chunk.HasFlag<TestComponent2>(-1, ComponentFlags.Added));
+            Assert.False(chunk.HasFlag<TestComponent2>(-1, ComponentFlags.Removed));
+        }
+    }
 }

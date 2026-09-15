@@ -52,6 +52,7 @@ public class Blit
                                 """;
 
     Handle<GPUSampler>? samplerHandle;
+    Handle<GPUSampler>? nearestSamplerHandle;
     Handle<GPUBindGroupLayout>? bindGroupLayoutHandle;
     Handle<GPUShader>? blitShaderModuleHandle;
     Handle<GPUShader>? clearShaderModuleHandle;
@@ -59,9 +60,14 @@ public class Blit
     Dictionary<int, Handle<GPUBindGroup>> bindGroups = new();
     Dictionary<int, Handle<GPURenderPipeline>> pipelines = new();
 
-    [MemberNotNull(nameof(samplerHandle), nameof(bindGroupLayoutHandle), nameof(blitShaderModuleHandle), nameof(clearShaderModuleHandle))]
+    [MemberNotNull(nameof(nearestSamplerHandle), nameof(samplerHandle), nameof(bindGroupLayoutHandle), nameof(blitShaderModuleHandle), nameof(clearShaderModuleHandle))]
     void CreateSharedResources(IWGPUContext gpuContext, IRenderAssets renderAssets)
     {
+        if (nearestSamplerHandle is null)
+        {
+            nearestSamplerHandle = renderAssets.Add(gpuContext.CreateSampler(SamplerDescriptor.Nearest));
+        }
+
         if (samplerHandle is null)
         {
             var sampler = gpuContext.CreateSampler(SamplerDescriptor.Default);
@@ -186,14 +192,14 @@ public class Blit
         return pipeline;
     }
 
-    GPUBindGroup GetBindGroup(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView source)
+    GPUBindGroup GetBindGroup(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUTextureView source, bool nearest)
     {
-        var bindGroupHash = source.Native.GetHashCode();
+        var bindGroupHash = HashCode.Combine(source.Native, nearest);
         if (bindGroups.TryGetValue(bindGroupHash, out var bindGroupHandle)) return renderAssets.Get(bindGroupHandle);
 
         CreateSharedResources(gpuContext, renderAssets);
         var bindGroupLayout = renderAssets.Get(bindGroupLayoutHandle.Value);
-        var sampler = renderAssets.Get(samplerHandle.Value);
+        var sampler = renderAssets.Get(nearest ? nearestSamplerHandle.Value : samplerHandle.Value);
 
         var bindGroup = gpuContext.CreateBindGroup(new()
         {
@@ -206,10 +212,10 @@ public class Blit
         return bindGroup;
     }
 
-    public void BlitTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUCommandEncoder encoder, in GPUTextureView source, in GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null)
+    public void BlitTexture(IWGPUContext gpuContext, IRenderAssets renderAssets, in GPUCommandEncoder encoder, in GPUTextureView source, in GPUTextureView dest, Color? clearValue = null, GPUTextureView? msaaResolve = null, bool nearest = false)
     {
         var pipeline = GetBlitRenderPipeline(gpuContext, renderAssets, dest, msaaResolve);
-        var bindGroup = GetBindGroup(gpuContext, renderAssets, source);
+        var bindGroup = GetBindGroup(gpuContext, renderAssets, source, nearest);
 
         using var pass = encoder.BeginRenderPass(new()
         {

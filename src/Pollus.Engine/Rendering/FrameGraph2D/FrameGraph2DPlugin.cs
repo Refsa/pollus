@@ -22,15 +22,17 @@ public class FrameGraph2DPlugin : IPlugin
     public void Apply(World world)
     {
         world.Resources.Add(new FrameGraph2D());
+        world.Resources.Add(new FrameGraph2DSettings());
 
         world.Schedule.AddSystems(CoreStage.PreRender, FnSystem.Create(new(BeginFrame)
-            {
-                RunsAfter = [RenderingPlugin.BeginFrameSystem]
-            },
+        {
+            RunsAfter = [RenderingPlugin.BeginFrameSystem]
+        },
             static (RenderContext renderContext, RenderAssets renderAssets,
                 DrawGroups2D drawGroups, Resources resources,
                 IWindow window, FrameGraph2D renderGraph) =>
             {
+                var settings = resources.Get<FrameGraph2DSettings>();
                 var param = new FrameGraph2DParam()
                 {
                     RenderAssets = renderAssets,
@@ -38,6 +40,8 @@ public class FrameGraph2DPlugin : IPlugin
                     Resources = resources,
                     BackbufferFormat = renderContext.SurfaceTextureView!.Value.Descriptor.Format,
                     BackbufferSize = window.Size,
+                    RenderSize = settings.RenderSize,
+                    UpscaleNearest = settings.UpscaleNearest,
                 };
 
                 var frameGraph = new FrameGraph<FrameGraph2DParam>();
@@ -50,111 +54,21 @@ public class FrameGraph2DPlugin : IPlugin
                 var backbufferHandle = frameGraph.AddTexture(new(FrameGraph2D.Textures.Backbuffer, backbufferDesc));
                 renderContext.Resources.SetTexture(backbufferHandle, new(null, renderContext.SurfaceTextureView!.Value, backbufferDesc));
 
-                frameGraph.AddPass(RenderStep2D.First, param,
-                    static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref PrepareTexturesPass data) =>
-                    {
-                        data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
-                            FrameGraph2D.Textures.ColorTarget,
-                            TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
-                            param.BackbufferFormat,
-                            param.BackbufferSize
-                        ));
-                    },
-                    static (context, in param, in data) =>
-                    {
-                        ref var commandEncoder = ref context.GetCurrentCommandEncoder();
-                        using var _debugScope = commandEncoder.DebugGroupScope("Clear Color");
-                        commandEncoder.InsertDebugMarker("Clear Color");
-
-                        ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
-
-                        param.RenderAssets.Get(Blit.Handle).ClearTexture(
-                            context.GPUContext, param.RenderAssets, commandEncoder,
-                            colorTexture.TextureView, new Color(0.1f, 0.1f, 0.1f, 1.0f));
-                    });
-
-                frameGraph.AddPass(RenderStep2D.Main, param,
-                    static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref MainPass data) => { data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget); },
-                    static (context, in param, in data) =>
-                    {
-                        ref var commandEncoder = ref context.GetCurrentCommandEncoder();
-                        using var _debugScope = commandEncoder.DebugGroupScope("Main Pass");
-                        commandEncoder.InsertDebugMarker("Main Pass");
-
-                        using var passEncoder = commandEncoder.BeginRenderPass(new()
-                        {
-                            Label = "Main Pass",
-                            ColorAttachments = stackalloc RenderPassColorAttachment[]
-                            {
-                                new()
-                                {
-                                    View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
-                                    LoadOp = LoadOp.Load,
-                                    StoreOp = StoreOp.Store,
-                                }
-                            }
-                        });
-
-                        var stage = param.DrawGroups.Groups[RenderStep2D.Main];
-                        stage.Execute(passEncoder, param.RenderAssets);
-                    });
-
-                frameGraph.AddPass(RenderStep2D.UI, param,
-                    static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref UIPass data) => { data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget); },
-                    static (context, in param, in data) =>
-                    {
-                        ref var commandEncoder = ref context.GetCurrentCommandEncoder();
-                        using var _debugScope = commandEncoder.DebugGroupScope("UI Pass");
-                        commandEncoder.InsertDebugMarker("UI Pass");
-
-                        using var passEncoder = commandEncoder.BeginRenderPass(new()
-                        {
-                            Label = "UI Pass",
-                            ColorAttachments = stackalloc RenderPassColorAttachment[]
-                            {
-                                new()
-                                {
-                                    View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
-                                    LoadOp = LoadOp.Load,
-                                    StoreOp = StoreOp.Store,
-                                }
-                            }
-                        });
-
-                        var stage = param.DrawGroups.Groups[RenderStep2D.UI];
-                        stage.Execute(passEncoder, param.RenderAssets, param.BackbufferSize);
-                    });
-
-                frameGraph.AddPass(RenderStep2D.Last, param,
-                    static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref FinalBlitPass data) =>
-                    {
-                        data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
-                        data.Backbuffer = builder.Writes<TextureResource>(FrameGraph2D.Textures.Backbuffer);
-                    },
-                    static (context, in param, in data) =>
-                    {
-                        ref var commandEncoder = ref context.GetCurrentCommandEncoder();
-                        using var _debugScope = commandEncoder.DebugGroupScope("Final Blit");
-                        commandEncoder.InsertDebugMarker("Final Blit");
-
-                        ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
-                        ref var backbufferTexture = ref context.Resources.GetTexture(data.Backbuffer);
-
-                        param.RenderAssets.Get(Blit.Handle).BlitTexture(
-                            context.GPUContext, param.RenderAssets, commandEncoder,
-                            colorTexture.TextureView, backbufferTexture.TextureView, Color.BLACK);
-                    });
+                AddDefaultPasses(ref frameGraph, param);
 
                 renderGraph.BeginFrame(ref frameGraph, ref param);
             }));
 
         world.Schedule.AddSystems(CoreStage.Render, FnSystem.Create(Render,
-            static (FrameGraph2D renderGraph, RenderContext context) => { renderGraph.Compile().Execute(context, renderGraph.Param); }));
+            static (FrameGraph2D renderGraph, RenderContext context) =>
+            {
+                renderGraph.Compile().Execute(context, renderGraph.Param);
+            }));
 
         world.Schedule.AddSystems(CoreStage.PostRender, FnSystem.Create(new(Cleanup)
-            {
-                RunsAfter = [RenderingPlugin.EndFrameSystem],
-            },
+        {
+            RunsAfter = [RenderingPlugin.EndFrameSystem],
+        },
             static (RenderContext context, FrameGraph2D renderGraph) =>
             {
                 if (renderGraph.FrameGraph.Resources.ResourceByName.TryGetValue(FrameGraph2D.Textures.Backbuffer, out var backbufferHandle))
@@ -164,5 +78,103 @@ public class FrameGraph2DPlugin : IPlugin
 
                 renderGraph.Cleanup();
             }));
+    }
+
+    public static void AddDefaultPasses(ref FrameGraph<FrameGraph2DParam> frameGraph, in FrameGraph2DParam param)
+    {
+        frameGraph.AddPass(RenderStep2D.First, param,
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref PrepareTexturesPass data) =>
+            {
+                data.ColorAttachment = builder.Creates<TextureResource>(TextureDescriptor.D2(
+                    FrameGraph2D.Textures.ColorTarget,
+                    TextureUsage.RenderAttachment | TextureUsage.TextureBinding,
+                    param.BackbufferFormat,
+                    param.WorldSize
+                ));
+            },
+            static (context, in param, in data) =>
+            {
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                using var _debugScope = commandEncoder.DebugGroupScope("Clear Color");
+                commandEncoder.InsertDebugMarker("Clear Color");
+
+                ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
+
+                param.RenderAssets.Get(Blit.Handle).ClearTexture(
+                    context.GPUContext, param.RenderAssets, commandEncoder,
+                    colorTexture.TextureView, new Color(0.1f, 0.1f, 0.1f, 1.0f));
+            });
+
+        frameGraph.AddPass(RenderStep2D.Main, param,
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref MainPass data) => { data.ColorAttachment = builder.Writes<TextureResource>(FrameGraph2D.Textures.ColorTarget); },
+            static (context, in param, in data) =>
+            {
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                using var _debugScope = commandEncoder.DebugGroupScope("Main Pass");
+                commandEncoder.InsertDebugMarker("Main Pass");
+
+                using var passEncoder = commandEncoder.BeginRenderPass(new()
+                {
+                    Label = "Main Pass",
+                    ColorAttachments = stackalloc RenderPassColorAttachment[]
+                    {
+                        new()
+                        {
+                            View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
+                            LoadOp = LoadOp.Load,
+                            StoreOp = StoreOp.Store,
+                        }
+                    }
+                });
+
+                var stage = param.DrawGroups.Groups[RenderStep2D.Main];
+                stage.Execute(passEncoder, param.RenderAssets);
+            });
+
+        frameGraph.AddPass(RenderStep2D.UI, param,
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref UIPass data) => { data.ColorAttachment = builder.Writes<TextureResource>(param.UiTarget); },
+            static (context, in param, in data) =>
+            {
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                using var _debugScope = commandEncoder.DebugGroupScope("UI Pass");
+                commandEncoder.InsertDebugMarker("UI Pass");
+
+                using var passEncoder = commandEncoder.BeginRenderPass(new()
+                {
+                    Label = "UI Pass",
+                    ColorAttachments = stackalloc RenderPassColorAttachment[]
+                    {
+                        new()
+                        {
+                            View = context.Resources.GetTexture(data.ColorAttachment).TextureView.Native,
+                            LoadOp = LoadOp.Load,
+                            StoreOp = StoreOp.Store,
+                        }
+                    }
+                });
+
+                var stage = param.DrawGroups.Groups[RenderStep2D.UI];
+                stage.Execute(passEncoder, param.RenderAssets, param.BackbufferSize);
+            });
+
+        frameGraph.AddPass(param.IsScaled ? (RenderStep2D)((int)RenderStep2D.UI - 1) : RenderStep2D.Last, param,
+            static (ref FrameGraph<FrameGraph2DParam>.Builder builder, in FrameGraph2DParam param, ref FinalBlitPass data) =>
+            {
+                data.ColorAttachment = builder.Reads<TextureResource>(FrameGraph2D.Textures.ColorTarget);
+                data.Backbuffer = builder.Writes<TextureResource>(FrameGraph2D.Textures.Backbuffer);
+            },
+            static (context, in param, in data) =>
+            {
+                ref var commandEncoder = ref context.GetCurrentCommandEncoder();
+                using var _debugScope = commandEncoder.DebugGroupScope("Final Blit");
+                commandEncoder.InsertDebugMarker("Final Blit");
+
+                ref var colorTexture = ref context.Resources.GetTexture(data.ColorAttachment);
+                ref var backbufferTexture = ref context.Resources.GetTexture(data.Backbuffer);
+
+                param.RenderAssets.Get(Blit.Handle).BlitTexture(
+                    context.GPUContext, param.RenderAssets, commandEncoder,
+                    colorTexture.TextureView, backbufferTexture.TextureView, Color.BLACK, nearest: param.UpscaleNearest);
+            });
     }
 }

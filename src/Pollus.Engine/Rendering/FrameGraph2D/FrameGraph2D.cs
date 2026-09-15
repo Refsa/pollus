@@ -6,6 +6,12 @@ using Pollus.Graphics;
 using Pollus.Graphics.Rendering;
 using Pollus.Mathematics;
 
+public sealed class FrameGraph2DSettings
+{
+    public Vec2<uint> RenderSize { get; set; }
+    public bool UpscaleNearest { get; set; }
+}
+
 public struct FrameGraph2DParam
 {
     public required RenderAssets RenderAssets { get; init; }
@@ -13,6 +19,12 @@ public struct FrameGraph2DParam
     public required Resources Resources;
     public required TextureFormat BackbufferFormat;
     public required Vec2<uint> BackbufferSize;
+    public Vec2<uint> RenderSize;
+    public bool UpscaleNearest;
+
+    public readonly Vec2<uint> WorldSize => RenderSize.X > 0 && RenderSize.Y > 0 ? RenderSize : BackbufferSize;
+    public readonly bool IsScaled => WorldSize != BackbufferSize;
+    public readonly string UiTarget => IsScaled ? FrameGraph2D.Textures.Backbuffer : FrameGraph2D.Textures.ColorTarget;
 }
 
 public struct PrepareTexturesPass
